@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentStandardDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentStandardEntity">
+		select * from nx_department_standard where nx_department_standard_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDepartmentStandardEntity">
+		select * from nx_department_standard 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_standard 
+	</select>
+    <select id="queryDepGoodsStandards" resultType="com.nongxinle.entity.NxDepartmentStandardEntity">
+		select * from nx_department_standard where nx_DDS_dds_goods_id =#{depGoodsId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentStandardEntity" useGeneratedKeys="true"
+	keyProperty="nxDepartmentStandardId">
+		insert into nx_department_standard
+		(
+			`nx_department_standard_id`, 
+			`nx_DDS_dds_goods_id`, 
+			`nx_DDS_standard_name`, 
+			`nx_DDS_standard_sort`
+		)
+		values
+		(
+			#{nxDepartmentStandardId}, 
+			#{nxDdsDdsGoodsId}, 
+			#{nxDdsStandardName}, 
+			#{nxDdsStandardSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentStandardEntity">
+		update nx_department_standard 
+		<set>
+			<if test="nxDdsDdsGoodsId != null">`nx_DDS_dds_goods_id` = #{nxDdsDdsGoodsId}, </if>
+			<if test="nxDdsStandardName != null">`nx_DDS_standard_name` = #{nxDdsStandardName}, </if>
+			<if test="nxDdsStandardSort != null">`nx_DDS_standard_sort` = #{nxDdsStandardSort}</if>
+		</set>
+		where nx_department_standard_id = #{nxDepartmentStandardId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_standard where nx_department_standard_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_standard where nx_department_standard_id in 
+		<foreach item="nxDepartmentStandardId" collection="array" open="(" separator="," close=")">
+			#{nxDepartmentStandardId}
+		</foreach>
+	</delete>
+
+</mapper>

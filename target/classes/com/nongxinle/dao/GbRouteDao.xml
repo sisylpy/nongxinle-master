@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbRouteDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbRouteEntity">
+		select * from gb_route where gb_route_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbRouteEntity">
+		select * from gb_route 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_route 
+	</select>
+
+	<resultMap id="deps" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+	</resultMap>
+
+	<resultMap id="disRoutes" type="GbRouteEntity">
+		<id property="gbRouteId" column="gb_route_id"/>
+		<result property="gbRouteName" column="gb_route_name"/>
+		<collection property="departmentEntities" resultMap="deps"/>
+	</resultMap>
+
+	<select id="getDisRoutesByDisId" resultMap="disRoutes">
+		select  * from gb_route  as rou
+		left join gb_department as dep on dep.gb_department_route_id = rou.gb_route_id
+        <where>
+			<if test="disId != null">
+				and gb_route_dis_id = #{disId}
+			</if>
+            and dep.gb_department_route_id != -1
+
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbRouteEntity" useGeneratedKeys="true"
+	  keyProperty="gbRouteId">
+		insert into gb_route
+		(
+			`gb_route_id`, 
+			`gb_route_name`,
+		 	`gb_route_dis_id`
+		)
+		values
+		(
+			#{gbRouteId}, 
+			#{gbRouteName},
+		 	#{gbRouteDisId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbRouteEntity">
+		update gb_route 
+		<set>
+			<if test="gbRouteName != null">`gb_route_name` = #{gbRouteName}</if>
+			<if test="gbRouteDisId != null">`gb_route_dis_id` = #{gbRouteDisId}</if>
+		</set>
+		where gb_route_id = #{gbRouteId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_route where gb_route_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_route where gb_route_id in 
+		<foreach item="gbRouteId" collection="array" open="(" separator="," close=")">
+			#{gbRouteId}
+		</foreach>
+	</delete>
+
+</mapper>

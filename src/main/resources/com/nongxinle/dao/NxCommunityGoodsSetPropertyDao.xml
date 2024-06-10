@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityGoodsSetPropertyDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityGoodsSetPropertyEntity">
+		select * from nx_community_goods_set_property where nx_community_goods_set_property_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityGoodsSetPropertyEntity">
+		select * from nx_community_goods_set_property 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_goods_set_property 
+	</select>
+    <select id="queryCgGoodsPropertyListByParams"
+            resultType="com.nongxinle.entity.NxCommunityGoodsSetPropertyEntity">
+		select * from nx_community_goods_set_property
+		<where>
+			<if test="goodsId != null">
+				and nx_cgsp_cg_goods_id = #{goodsId}
+			</if>
+		</where>
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityGoodsSetPropertyEntity">
+		insert into nx_community_goods_set_property
+		(
+			`nx_community_goods_set_property_id`, 
+			`nx_cgsp_name`, 
+			`nx_cgsp_sort`, 
+			`nx_cgsp_cg_goods_id`
+		)
+		values
+		(
+			#{nxCommunityGoodsSetPropertyId}, 
+			#{nxCgspName}, 
+			#{nxCgspSort}, 
+			#{nxCgspCgGoodsId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityGoodsSetPropertyEntity">
+		update nx_community_goods_set_property 
+		<set>
+			<if test="nxCgspName != null">`nx_cgsp_name` = #{nxCgspName}, </if>
+			<if test="nxCgspSort != null">`nx_cgsp_sort` = #{nxCgspSort}, </if>
+			<if test="nxCgspCgGoodsId != null">`nx_cgsp_cg_goods_id` = #{nxCgspCgGoodsId}</if>
+		</set>
+		where nx_community_goods_set_property_id = #{nxCommunityGoodsSetPropertyId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_goods_set_property where nx_community_goods_set_property_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_goods_set_property where nx_community_goods_set_property_id in 
+		<foreach item="nxCommunityGoodsSetPropertyId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityGoodsSetPropertyId}
+		</foreach>
+	</delete>
+
+</mapper>

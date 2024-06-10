@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyNxDisCorpUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyNxDisCorpUserEntity">
+		select * from qy_nx_dis_corp_user where qy_nx_dis_corp_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyNxDisCorpUserEntity">
+		select * from qy_nx_dis_corp_user
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_nx_dis_corp_user
+	</select>
+
+	<resultMap id="corp" type="QyNxDisCorpEntity">
+		<id property="qyNxDisCorpId" column="qy_nx_dis_corp_id"/>
+		<result property="qyNxDisCorpName" column="qy_nx_dis_corp_name"/>
+		<result property="qyNxDisCorpRoundLogoUrl" column="qy_nx_dis_corp_round_logo_url"/>
+		<result property="qyNxDisCorpAccessToken"  column="qy_nx_dis_corp_access_token"/>
+
+	</resultMap>
+
+	<resultMap id="qyDisUserWithCorp" type="QyNxDisCorpUserEntity">
+		<id property="qyNxDisCorpUserId" column="qy_nx_dis_corp_user_id"/>
+		<result property="qyNxDisCorpUserName" column="qy_nx_dis_corp_user_name"/>
+		<result property="qyNxDisCorpOpenUserId" column="qy_nx_dis_corp_open_user_id"/>
+		<result property="qyNxDisCorpUserUrl" column="qy_nx_dis_corp_user_url"/>
+		<result property="qyNxDisCorpQyCorpId" column="qy_nx_dis_corp_qy_corp_id"/>
+		<association property="qyNxDisCorpEntity" resultMap="corp"/>
+	</resultMap>
+
+
+    <select id="queryQyUserByUserId" resultMap="qyDisUserWithCorp">
+		select * from qy_nx_dis_corp_user as corpUer
+		left join qy_nx_dis_corp as corp on corp.qy_nx_dis_corp_id = corpUer.qy_nx_dis_corp_qy_corp_id
+		where  qy_nx_dis_corp_open_user_id = #{userId}
+
+	</select>
+	<select id="queryCorpUserListByCorpId" resultType="com.nongxinle.entity.QyNxDisCorpUserEntity">
+		select * from qy_nx_dis_corp_user where qy_nx_dis_corp_qy_corp_id = #{corpid}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.QyNxDisCorpUserEntity" useGeneratedKeys="true"
+			keyProperty="qyNxDisCorpUserId">
+		insert into qy_nx_dis_corp_user
+		(
+			`qy_nx_dis_corp_user_id`, 
+			`qy_nx_dis_corp_user_name`, 
+			`qy_nx_dis_corp_user_url`, 
+			`qy_nx_dis_corp_open_user_id`, 
+			`qy_nx_dis_corp_qy_corp_id`,
+			`qy_nx_distributer_id`,
+			`qy_nx_dis_corp_session_key`,
+			`qy_nx_dis_corp_user_join_date`
+		)
+		values
+		(
+			#{qyNxDisCorpUserId}, 
+			#{qyNxDisCorpUserName}, 
+			#{qyNxDisCorpUserUrl}, 
+			#{qyNxDisCorpOpenUserId}, 
+			#{qyNxDisCorpQyCorpId},
+			#{qyNxDistributerId},
+			#{qyNxDisCorpSessionKey},
+			#{qyNxDisCorpUserJoinDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyNxDisCorpUserEntity">
+		update qy_nx_dis_corp_user
+		<set>
+			<if test="qyNxDisCorpUserName != null">`qy_nx_dis_corp_user_name` = #{qyNxDisCorpUserName}, </if>
+			<if test="qyNxDisCorpUserUrl != null">`qy_nx_dis_corp_user_url` = #{qyNxDisCorpUserUrl}, </if>
+			<if test="qyNxDisCorpOpenUserId != null">`qy_nx_dis_corp_open_user_id` = #{qyNxDisCorpOpenUserId}, </if>
+			<if test="qyNxDisCorpSessionKey != null">`qy_nx_dis_corp_session_key` = #{qyNxDisCorpSessionKey}, </if>
+			<if test="qyNxDistributerId != null">`qy_nx_distributer_id` = #{qyNxDistributerId}, </if>
+			<if test="qyNxDisCorpUserJoinDate != null">`qy_nx_dis_corp_user_join_date` = #{qyNxDisCorpUserJoinDate}, </if>
+			<if test="qyNxDisCorpQyCorpId != null">`qy_nx_dis_corp_qy_corp_id` = #{qyNxDisCorpQyCorpId}</if>
+		</set>
+		where qy_nx_dis_corp_user_id = #{qyNxDisCorpUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_nx_dis_corp_user where qy_nx_dis_corp_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_nx_dis_corp_user where qy_nx_dis_corp_user_id in
+		<foreach item="qyNxDisCorpUserId" collection="array" open="(" separator="," close=")">
+			#{qyNxDisCorpUserId}
+		</foreach>
+	</delete>
+
+</mapper>

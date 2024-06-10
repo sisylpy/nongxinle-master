@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.SysOrganizationDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.SysOrganizationEntity">
+		select * from sys_organization where id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.SysOrganizationEntity">
+		select * from sys_organization 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from sys_organization 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.SysOrganizationEntity" useGeneratedKeys="true" keyProperty="id">
+		insert into sys_organization
+		(
+			`name`, 
+			`address`, 
+			`code`, 
+			`icon`, 
+			`pid`, 
+			`seq`, 
+			`create_time`
+		)
+		values
+		(
+			#{name}, 
+			#{address}, 
+			#{code}, 
+			#{icon}, 
+			#{pid}, 
+			#{seq}, 
+			#{createTime}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.SysOrganizationEntity">
+		update sys_organization 
+		<set>
+			<if test="name != null">`name` = #{name}, </if>
+			<if test="address != null">`address` = #{address}, </if>
+			<if test="code != null">`code` = #{code}, </if>
+			<if test="icon != null">`icon` = #{icon}, </if>
+			<if test="pid != null">`pid` = #{pid}, </if>
+			<if test="seq != null">`seq` = #{seq}, </if>
+			<if test="createTime != null">`create_time` = #{createTime}</if>
+		</set>
+		where id = #{id}
+	</update>
+	
+	<delete id="delete">
+		delete from sys_organization where id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from sys_organization where id in 
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+</mapper>

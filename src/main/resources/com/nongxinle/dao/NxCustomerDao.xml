@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCustomerEntity">
+		select * from nx_customer where nx_customer_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCustomerEntity">
+		select * from nx_customer 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_customer 
+	</select>
+
+	<resultMap id="customerUser" type="NxCustomerUserEntity">
+		<id property="nxCuUserId" column="nx_cu_user_id"/>
+		<result property="nxCuWxNickName" column="nx_cu_wx_nick_name"/>
+		<result property="nxCuWxAvatarUrl" column="nx_cu_wx_avatar_url"/>
+		<result property="nxCuWxGender" column="nx_cu_wx_gender"/>
+		<result property="nxCuJoinDate" column="nx_cu_join_date"/>
+		<result property="nxCuOrderAmount" column="nx_cu_order_amount"/>
+		<result property="nxCuOrderTimes" column="nx_cu_order_times"/>
+	</resultMap>
+
+	<resultMap id="customers" type="NxCustomerEntity">
+		<id property="nxCustomerId" column="nx_cusotmer_id"/>
+		<result property="nxCustomerName" column="nx_customer_name"/>
+		<result property="nxCustomerAddress" column="nx_customer_address"/>
+		<result property="nxCustomerPhone" column="nx_customer_phone"/>
+		<collection property="nxCustomerUserEntities" resultMap="customerUser"/>
+	</resultMap>
+
+
+    <select id="queryCommunityCustomers" resultMap="customers">
+		select * from nx_customer  as c
+			left join nx_customer_user as cu on cu.nx_CU_customer_id = c.nx_customer_id
+		where nx_customer_community_id = #{nxCommunityId}
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	<select id="queryCustomerOfCommunityTotal" resultType="java.lang.Integer">
+		select count(*) from nx_customer where nx_customer_community_id = #{nxCommunityId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCustomerEntity"
+			useGeneratedKeys="true"  keyProperty="nxCustomerId">
+		insert into nx_customer
+		(
+			`nx_customer_id`,
+			`nx_customer_name`,
+			`nx_customer_print_label`,
+			`nx_customer_out_label`,
+			`nx_customer_type`,
+			`nx_customer_address`,
+			`nx_customer_phone`,
+			`nx_customer_lat`,
+			`nx_customer_lng`,
+			`nx_customer_call`,
+		 	`nx_customer_dis_id`,
+		 	`nx_customer_community_id`,
+		 	`nx_customer_join_date`,
+		 	`nx_customer_order_amount`,
+		 	`nx_customer_order_times`,
+		 	`nx_customer_detail_address`,
+		 	`nx_customer_card_waste_date`
+
+		)
+		values
+		(
+			#{nxCustomerId},
+			#{nxCustomerName},
+			#{nxCustomerPrintLabel},
+			#{nxCustomerOutLabel},
+			#{nxCustomerType},
+			#{nxCustomerAddress},
+			#{nxCustomerPhone},
+			#{nxCustomerLat},
+			#{nxCustomerLng},
+		 	#{nxCustomerCall},
+		 	#{nxCustomerDisId},
+		 	#{nxCustomerCommunityId},
+		 	#{nxCustomerJoinDate},
+		 	#{nxCustomerOrderAmount},
+		 	#{nxCustomerOrderTimes},
+		 	#{nxCustomerDetailAddress},
+		 	#{nxCustomerCardWasteDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCustomerEntity">
+		update nx_customer 
+		<set>
+			<if test="nxCustomerName != null">`nx_customer_name` = #{nxCustomerName}, </if>
+			<if test="nxCustomerPrintLabel != null">`nx_customer_print_label` = #{nxCustomerPrintLabel}, </if>
+			<if test="nxCustomerOutLabel != null">`nx_customer_print_label` = #{nxCustomerOutLabel}, </if>
+			<if test="nxCustomerType != null">`nx_customer_type` = #{nxCustomerType}, </if>
+			<if test="nxCustomerAddress != null">`nx_customer_address` = #{nxCustomerAddress}, </if>
+			<if test="nxCustomerPhone != null">`nx_customer_phone` = #{nxCustomerPhone}, </if>
+			<if test="nxCustomerCall != null">`nx_customer_call` = #{nxCustomerCall}, </if>
+			<if test="nxCustomerLat != null">`nx_customer_lat` = #{nxCustomerLat}, </if>
+			<if test="nxCustomerLng != null">`nx_customer_lng` = #{nxCustomerLng}, </if>
+			<if test="nxCustomerCommunityId != null">`nx_customer_community_id` = #{nxCustomerCommunityId}, </if>
+			<if test="nxCustomerJoinDate != null">`nx_customer_join_date` = #{nxCustomerJoinDate}, </if>
+			<if test="nxCustomerOrderAmount != null">`nx_customer_order_amount` = #{nxCustomerOrderAmount}, </if>
+			<if test="nxCustomerOrderTimes != null">`nx_customer_order_times` = #{nxCustomerOrderTimes}, </if>
+			<if test="nxCustomerDetailAddress != null">`nx_customer_detail_address` = #{nxCustomerDetailAddress}, </if>
+			<if test="nxCustomerCardWasteDate != null">`nx_customer_card_waste_date` = #{nxCustomerCardWasteDate}, </if>
+			<if test="nxCustomerDisId != null">`nx_customer_dis_id` = #{nxCustomerDisId}</if>
+		</set>
+		where nx_customer_id = #{nxCustomerId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_customer where nx_customer_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_customer where nx_customer_id in
+		<foreach item="customerId" collection="array" open="(" separator="," close=")">
+			#{nxCustomerId}
+		</foreach>
+	</delete>
+
+</mapper>

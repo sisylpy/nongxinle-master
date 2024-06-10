@@ -1,0 +1,4 @@
+[ERROR][2020-03-11 15:48:20] com.nongxinle.service.WeChatService.pushOneUser(WeChatService.java:143) 小程序推送结果={"errcode":47001,"errmsg":"data format error hint: [tZ45.a07262277]"} 
+[ERROR][2020-03-11 15:50:21] com.nongxinle.service.WeChatService.pushOneUser(WeChatService.java:146) 小程序推送结果={"errcode":47001,"errmsg":"data format error hint: [5lc1xa0846shb1]"} 
+[ERROR][2020-03-11 15:58:08] com.nongxinle.service.WeChatService.pushOneUser(WeChatService.java:147) 小程序推送结果={"errcode":47001,"errmsg":"data format error hint: [Fa0gMa03134127]"} 
+[ERROR][2020-03-11 16:06:21] com.nongxinle.service.WeChatService.pushOneUser(WeChatService.java:138) 小程序推送结果={"errcode":47001,"errmsg":"data format error hint: [O0807st20]"} 

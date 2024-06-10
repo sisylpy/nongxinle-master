@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityPurchaseBatchDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityPurchaseBatchEntity">
+		select * from nx_community_purchase_batch where nx_community_purchase_batch_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityPurchaseBatchEntity">
+		select * from nx_community_purchase_batch 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_purchase_batch 
+	</select>
+
+
+
+	<resultMap id="restraunt" type="NxRestrauntEntity">
+		<id property="nxRestrauntId" column="nx_restraunt_id"/>
+		<result property="nxRestrauntName" column="nx_restraunt_name"/>
+		<result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+		<result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+		<result property="nxRestrauntComId" column="nx_restraunt_com_id"/>
+		<result property="nxRestrauntType" column="nx_restraunt_type"/>
+		<result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+		<result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+		<result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+	</resultMap>
+
+	<resultMap id="applys" type="NxRestrauntOrdersEntity">
+		<id property="nxRestrauntOrdersId" column="nx_restraunt_orders_id"/>
+		<result property="nxRoNxGoodsId" column="nx_RO_nx_goods_id"/>
+		<result property="nxRoOrderUserId" column="nx_RO_order_user_id"/>
+		<result property="nxRoApplyDate" column="nx_RO_apply_date"/>
+		<result property="nxRoReceiveFullTime" column="nx_RO_receive_full_time"/>
+		<result property="nxRoApplyFullTime" column="nx_RO_apply_full_time"/>
+		<result property="nxRoArriveDate" column="nx_RO_arrive_date"/>
+		<result property="nxRoArriveWhatDay" column="nx_RO_arrive_what_day"/>
+		<result property="nxRoQuantity" column="nx_RO_quantity"/>
+		<result property="nxRoStandard" column="nx_RO_standard"/>
+		<result property="nxRoRemark" column="nx_RO_remark"/>
+		<result property="nxRoStatus" column="nx_RO_status"/>
+		<result property="nxRoWeight" column="nx_RO_weight"/>
+		<result property="nxRoPrice" column="nx_RO_price"/>
+		<result property="nxRoSubtotal" column="nx_RO_subtotal"/>
+		<result property="nxRoBuyStatus" column="nx_RO_buy_status"/>
+		<result property="nxRoNxGoodsFatherId" column="nx_RO_nx_goods_father_id"/>
+		<result property="nxRoRestrauntFatherId" column="nx_RO_restraunt_father_id"/>
+		<result property="nxRoComGoodsId" column="nx_RO_com_goods_id"/>
+		<result property="nxRoResComGoodsId" column="nx_RO_res_com_goods_id"/>
+		<result property="nxRoResComGoodsPrice" column="nx_RO_res_com_goods_price"/>
+		<result property="nxRoRestrauntId" column="nx_RO_department_id"/>
+		<result property="nxRoCommunityId" column="nx_RO_community_id"/>
+		<result property="nxRoBuyStatus" column="nx_RO_buy_status"/>
+		<result property="nxRoOperationTime" column="nx_RO_operation_time"/>
+		<result property="nxRoIsAgent" column="nx_RO_is_agent"/>
+		<result property="nxRoPurchaseGoodsId" column="nx_RO_purchase_goods_id"/>
+		<result property="nxRoScale" column="nx_RO_scale"/>
+		<result property="nxRoExpectPrice" column="nx_RO_expect_price"/>
+		<result property="nxRoCostPrice" column="nx_RO_cost_price"/>
+		<result property="nxRoPurchaseUserId" column="nx_RO_purchase_user_id"/>
+		<result property="nxRoProfit" column="nx_RO_profit"/>
+		<result property="nxRoDeliveryDate" column="nx_RO_delivery_date"/>
+		<result property="nxRoComGoodsStandardType" column="nx_RO_com_goods_standard_type"/>
+		<result property="nxRoComStandardId" column="nx_RO_com_standard_id"/>
+		<result property="nxRoComStandardName" column="nx_RO_com_standard_name"/>
+		<result property="nxRoComStandardScale" column="nx_RO_com_standard_scale"/>
+		<result property="nxRoComStandardQuantity" column="nx_RO_com_standard_quantity"/>
+		<result property="nxRoCostSubtotal" column="nx_RO_cost_subtotal"/>
+		<result property="nxRoComDistributerId" column="nx_RO_com_distributer_id"/>
+		<result property="nxRoComDistributerGoodsId" column="nx_RO_com_distributer_goods_id"/>
+		<result property="nxRoComDistributerOrderId" column="nx_RO_com_distributer_order_id"/>
+		<result property="nxRoCostPercent" column="nx_RO_cost_percent"/>
+		<result property="nxRoArriveMinTime" column="nx_RO_arrive_min_time"/>
+		<result property="nxRoArriveMaxTime" column="nx_RO_arrive_max_time"/>
+		<association property="nxRestrauntEntity" resultMap="restraunt"/>
+	</resultMap>
+
+	<resultMap id="comGoodsWithOrders" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+		<collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+	</resultMap>
+	<resultMap id="purchaseGoods" type="NxCommunityPurchaseGoodsEntity">
+		<id property="nxCommunityPurchaseGoodsId" column="nx_community_purchase_goods_id"/>
+		<result property="nxCpgQuantity" column="nx_cpg_quantity"/>
+		<result property="nxCpgStandard" column="nx_cpg_standard"/>
+		<result property="nxCpgBuyPrice" column="nx_cpg_buy_price"/>
+		<result property="nxCpgBuyQuantity" column="nx_cpg_buy_quantity"/>
+		<result property="nxCpgBuySubtotal" column="nx_cpg_buy_subtotal"/>
+		<result property="nxCpgComGoodsId" column="nx_cpg_com_goods_id"/>
+		<result property="nxCpgBatchId" column="nx_cpg_batch_id"/>
+		<association property="nxCommunityGoodsEntity" resultMap="comGoodsWithOrders"/>
+	</resultMap>
+
+	<resultMap id="comPurchaseBatchWithOrders" type="NxCommunityPurchaseBatchEntity">
+		<id property="nxCommunityPurchaseBatchId" column="nx_community_purchase_batch_id"/>
+		<result property="nxCpbPurchaseType" column="nx_cpb_purchase_type"/>
+		<result property="nxCpbDate" column="nx_cpb_date"/>
+		<result property="nxCpbHour" column="nx_cpb_hour"/>
+		<result property="nxCpbMinute" column="nx_cpb_minute"/>
+		<result property="nxCpbSubtotal" column="nx_cpb_subtotal"/>
+		<result property="nxCpbStatus" column="nx_cpb_status"/>
+		<result property="nxCpbTime" column="nx_cpb_time"/>
+
+		<collection property="nxCommunityPurchaseGoodsEntities" resultMap="purchaseGoods"/>
+	</resultMap>
+
+	<select id="queryComPurchaseBatchByParams"
+			resultMap="comPurchaseBatchWithOrders">
+		select * from nx_community_purchase_batch as cpb
+		left join nx_community_purchase_goods as cpg on cpg.nx_cpg_batch_id = cpb.nx_community_purchase_batch_id
+		left join nx_restraunt_orders as nro on cpg.nx_community_purchase_goods_id = nro.nx_RO_purchase_goods_id
+		left join nx_community_goods as cg on cg.nx_community_goods_id = cpg.nx_cpg_com_goods_id
+		left join nx_restraunt as r on r.nx_restraunt_id = nro.nx_RO_restraunt_father_id
+		<where>
+			<if test="type != null">
+				and cpb.nx_cpb_purchase_type = #{type}
+			</if>
+			<if test="supplierId != null">
+				and cpb.nx_cpb_com_supplier_id = #{supplierId}
+			</if>
+			<if test="disId != null">
+				and cpb.nx_cpb_distributer_id = #{disId}
+			</if>
+			<if test="comId != null">
+				and cpb.nx_cpb_community_id = #{comId}
+			</if>
+
+			<if test="status != null">
+				and cpb.nx_cpb_status &lt; #{status}
+			</if>
+
+			<if test="equalBatchStatus != null">
+				and cpb.nx_cpb_status = #{equalBatchStatus}
+			</if>
+		</where>
+		order by cpb.nx_community_purchase_batch_id
+	</select>
+	<resultMap id="batchDetail" type="NxCommunityPurchaseBatchEntity">
+		<id property="nxCommunityPurchaseBatchId" column="nx_community_purchase_batch_id"/>
+		<result property="nxCpbPurchaseType" column="nx_cpb_purchase_type"/>
+		<result property="nxCpbDate" column="nx_cpb_date"/>
+		<result property="nxCpbHour" column="nx_cpb_hour"/>
+		<result property="nxCpbMinute" column="nx_cpb_minute"/>
+		<result property="nxCpbSubtotal" column="nx_cpb_subtotal"/>
+		<result property="nxCpbStatus" column="nx_cpb_status"/>
+		<result property="nxCpbTime" column="nx_cpb_time"/>
+		<collection property="nxCommunityPurchaseGoodsEntities" resultMap="purchaseGoods"/>
+ 	</resultMap>
+
+	<select id="queryBatchDetail" resultMap="batchDetail">
+		select * from nx_community_purchase_batch as cpb
+		left join nx_community_purchase_goods as cpg on cpg.nx_cpg_batch_id = cpb.nx_community_purchase_batch_id
+        left join nx_community_goods as cg on cg.nx_community_goods_id = cpg.nx_cpg_com_goods_id
+        left join nx_restraunt_orders as ro on ro.nx_RO_purchase_goods_id = cpg.nx_community_purchase_goods_id
+        left join nx_restraunt as r on r.nx_restraunt_id = ro.nx_RO_restraunt_father_id
+         <where>
+			 <if test="batchId != null">
+				 nx_community_purchase_batch_id = #{batchId}
+			 </if>
+		 </where>
+
+	</select>
+	<select id="queryCommPurchaseBatchCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_community_purchase_batch
+
+	</select>
+	<select id="queryCommSupplierUnSettleSubtotal" resultType="java.lang.Double">
+		select SUM(nx_cpb_subtotal) from nx_community_purchase_batch
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityPurchaseBatchEntity"
+	useGeneratedKeys="true" keyProperty="nxCommunityPurchaseBatchId">
+		insert into nx_community_purchase_batch
+		(
+			`nx_community_purchase_batch_id`, 
+			`nx_cpb_status`, 
+			`nx_cpb_purchase_type`, 
+			`nx_cpb_time`, 
+			`nx_cpb_pur_user_id`, 
+			`nx_cpb_community_id`, 
+			`nx_cpb_date`, 
+			`nx_cpb_hour`, 
+			`nx_cpb_minute`,
+		 	`nx_cpb_distributer_id`,
+		 	`nx_cpb_subtotal`,
+		    `nx_cpb_buy_user_id`,
+		 	`nx_cpb_sell_user_id`,
+		 	`nx_cpb_com_supplier_id`
+		)
+		values
+		(
+			#{nxCommunityPurchaseBatchId}, 
+			#{nxCpbStatus}, 
+			#{nxCpbPurchaseType}, 
+			#{nxCpbTime}, 
+			#{nxCpbPurUserId}, 
+			#{nxCpbCommunityId}, 
+			#{nxCpbDate}, 
+			#{nxCpbHour}, 
+			#{nxCpbMinute},
+		 	#{nxCpbDistributerId},
+		 	#{nxCpbSubtotal},
+		 	#{nxCpbBuyUserId},
+		 	#{nxCpbSellUserId},
+		 	#{nxCpbComSupplierId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityPurchaseBatchEntity">
+		update nx_community_purchase_batch 
+		<set>
+			<if test="nxCpbStatus != null">`nx_cpb_status` = #{nxCpbStatus}, </if>
+			<if test="nxCpbPurchaseType != null">`nx_cpb_purchase_type` = #{nxCpbPurchaseType}, </if>
+			<if test="nxCpbTime != null">`nx_cpb_time` = #{nxCpbTime}, </if>
+			<if test="nxCpbPurUserId != null">`nx_cpb_pur_user_id` = #{nxCpbPurUserId}, </if>
+			<if test="nxCpbCommunityId != null">`nx_cpb_community_id` = #{nxCpbCommunityId}, </if>
+			<if test="nxCpbDate != null">`nx_cpb_date` = #{nxCpbDate}, </if>
+			<if test="nxCpbHour != null">`nx_cpb_hour` = #{nxCpbHour}, </if>
+			<if test="nxCpbDistributerId != null">`nx_cpb_distributer_id` = #{nxCpbDistributerId}, </if>
+			<if test="nxCpbSubtotal != null">`nx_cpb_subtotal` = #{nxCpbSubtotal}, </if>
+			<if test="nxCpbBuyUserId != null">`nx_cpb_buy_user_id` = #{nxCpbBuyUserId}, </if>
+			<if test="nxCpbSellUserId != null">`nx_cpb_sell_user_id` = #{nxCpbSellUserId}, </if>
+			<if test="nxCpbComSupplierId != null">`nx_cpb_com_supplier_id` = #{nxCpbComSupplierId}, </if>
+			<if test="nxCpbMinute != null">`nx_cpb_minute` = #{nxCpbMinute}</if>
+		</set>
+		where nx_community_purchase_batch_id = #{nxCommunityPurchaseBatchId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_purchase_batch where nx_community_purchase_batch_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_purchase_batch where nx_community_purchase_batch_id in 
+		<foreach item="nxCommunityPurchaseBatchId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityPurchaseBatchId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,1473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRestrauntOrdersDao">
+
+    <resultMap id="fatherRestruant" type="NxRestrauntEntity">
+
+        <id property="nxRestrauntId" column="dd_nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="dd_nx_restraunt_name"/>
+        <result property="nxRestrauntType" column="dd_nx_restraunt_type"/>
+        <result property="nxRestrauntSettleType" column="dd_nx_restraunt_settle_type"/>
+        <result property="nxRestrauntFilePath" column="dd_nx_restraunt_file_path"/>
+        <result property="nxRestrauntFatherId" column="dd_nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="dd_nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntAttrName" column="dd_nx_restraunt_attr_name"/>
+        <result property="nxRestrauntAddress" column="dd_nx_restraunt_address"/>
+        <result property="nxRestrauntNavigationAddress" column="dd_nx_restraunt_navigation_addaress"/>
+        <result property="nxRestrauntLat" column="dd_nx_restraunt_lat"/>
+        <result property="nxRestrauntLng" column="dd_nx_restraunt_lng"/>
+        <result property="nxRestrauntNumber" column="dd_nx_restraunt_number"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+
+    </resultMap>
+
+    <resultMap id="orderRestruant" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntType" column="nx_restraunt_type"/>
+        <result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+        <result property="nxRestrauntFilePath" column="nx_restraunt_file_path"/>
+        <result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntAddress" column="nx_restraunt_address"/>
+        <result property="nxRestrauntNavigationAddress" column="nx_restraunt_navigation_addaress"/>
+        <result property="nxRestrauntLat" column="nx_restraunt_lat"/>
+        <result property="nxRestrauntLng" column="nx_restraunt_lng"/>
+        <result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+    </resultMap>
+
+    <resultMap id="orders" type="NxRestrauntOrdersEntity">
+        <id property="nxRestrauntOrdersId" column="nx_restraunt_orders_id"/>
+        <result property="nxRoNxGoodsId" column="nx_RO_nx_goods_id"/>
+        <result property="nxRoOrderUserId" column="nx_RO_order_user_id"/>
+        <result property="nxRoApplyDate" column="nx_RO_apply_date"/>
+        <result property="nxRoReceiveFullTime" column="nx_RO_receive_full_time"/>
+        <result property="nxRoApplyFullTime" column="nx_RO_apply_full_time"/>
+        <result property="nxRoArriveDate" column="nx_RO_arrive_date"/>
+        <result property="nxRoArriveWhatDay" column="nx_RO_arrive_what_day"/>
+        <result property="nxRoQuantity" column="nx_RO_quantity"/>
+        <result property="nxRoStandard" column="nx_RO_standard"/>
+        <result property="nxRoRemark" column="nx_RO_remark"/>
+        <result property="nxRoStatus" column="nx_RO_status"/>
+        <result property="nxRoWeight" column="nx_RO_weight"/>
+        <result property="nxRoPrice" column="nx_RO_price"/>
+        <result property="nxRoSubtotal" column="nx_RO_subtotal"/>
+        <result property="nxRoBuyStatus" column="nx_RO_buy_status"/>
+        <result property="nxRoNxGoodsFatherId" column="nx_RO_nx_goods_father_id"/>
+        <result property="nxRoRestrauntFatherId" column="nx_RO_restraunt_father_id"/>
+        <result property="nxRoComGoodsId" column="nx_RO_com_goods_id"/>
+        <result property="nxRoResComGoodsId" column="nx_RO_res_com_goods_id"/>
+        <result property="nxRoResComGoodsPrice" column="nx_RO_res_com_goods_price"/>
+        <result property="nxRoRestrauntId" column="nx_RO_department_id"/>
+        <result property="nxRoCommunityId" column="nx_RO_community_id"/>
+        <result property="nxRoBuyStatus" column="nx_RO_buy_status"/>
+        <result property="nxRoOperationTime" column="nx_RO_operation_time"/>
+        <result property="nxRoIsAgent" column="nx_RO_is_agent"/>
+        <result property="nxRoPurchaseGoodsId" column="nx_RO_purchase_goods_id"/>
+        <result property="nxRoScale" column="nx_RO_scale"/>
+        <result property="nxRoExpectPrice" column="nx_RO_expect_price"/>
+        <result property="nxRoCostPrice" column="nx_RO_cost_price"/>
+        <result property="nxRoPurchaseUserId" column="nx_RO_purchase_user_id"/>
+        <result property="nxRoProfit" column="nx_RO_profit"/>
+        <result property="nxRoDeliveryDate" column="nx_RO_delivery_date"/>
+        <result property="nxRoComGoodsStandardType" column="nx_RO_com_goods_standard_type"/>
+        <result property="nxRoComStandardId" column="nx_RO_com_standard_id"/>
+        <result property="nxRoComStandardName" column="nx_RO_com_standard_name"/>
+        <result property="nxRoComStandardScale" column="nx_RO_com_standard_scale"/>
+        <result property="nxRoComStandardQuantity" column="nx_RO_com_standard_quantity"/>
+        <result property="nxRoCostSubtotal" column="nx_RO_cost_subtotal"/>
+        <result property="nxRoComDistributerId" column="nx_RO_com_distributer_id"/>
+        <result property="nxRoComDistributerGoodsId" column="nx_RO_com_distributer_goods_id"/>
+        <result property="nxRoComDistributerOrderId" column="nx_RO_com_distributer_order_id"/>
+        <result property="nxRoCostPercent" column="nx_RO_cost_percent"/>
+        <result property="nxRoArriveMinTime" column="nx_RO_arrive_min_time"/>
+        <result property="nxRoArriveMaxTime" column="nx_RO_arrive_max_time"/>
+        <collection property="nxRestrauntEntity" resultMap="orderRestruant"/>
+    </resultMap>
+
+
+    <resultMap id="cgGoodsWithOrders" type="NxCommunityGoodsEntity">
+        <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+        <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+        <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+        <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+        <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+        <result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+        <result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+        <result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+        <result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+        <result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+        <result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+        <result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+        <result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+        <result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+        <result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+        <result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+        <result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+        <result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+        <result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+        <result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+        <result property="nxCgPullOff" column="nx_cg_pull_off"/>
+        <result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+        <result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+        <result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+        <result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+        <result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+        <result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+        <result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+        <result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+        <result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+        <result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+        <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+        <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+        <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+        <collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+    </resultMap>
+
+
+    <resultMap id="unPlanPurchaseOrdersDisFatherGoods" type="NxCommunityFatherGoodsEntity">
+        <id property="nxCommunityFatherGoodsId" column="nx_community_father_goods_id"/>
+        <result property="nxCfgFatherGoodsName" column="nx_CFG_father_goods_name"/>
+        <collection property="nxCommunityGoodsEntities" resultMap="cgGoodsWithOrders"/>
+    </resultMap>
+
+    <select id="comGetUnPlanPurchaseApplys" resultMap="unPlanPurchaseOrdersDisFatherGoods">
+        select dor.nx_restraunt_orders_id,
+               dor.nx_RO_nx_goods_id,
+               dor.nx_RO_order_user_id,
+               dor.nx_RO_apply_date,
+               dor.nx_RO_receive_full_time,
+               dor.nx_RO_quantity,
+               dor.nx_RO_standard,
+               dor.nx_RO_remark,
+               dor.nx_RO_status,
+               dor.nx_RO_buy_status,
+               dor.nx_RO_weight,
+               dor.nx_RO_price,
+               dor.nx_RO_subtotal,
+               dor.nx_RO_apply_full_time,
+               dor.nx_RO_nx_goods_father_id,
+               dor.nx_RO_com_goods_id,
+               dor.nx_RO_res_com_goods_price,
+               dor.nx_RO_restraunt_id,
+               dor.nx_RO_community_id,
+               dor.nx_RO_is_agent,
+               dor.nx_RO_purchase_goods_id,
+               dor.nx_RO_res_com_goods_id,
+               dfg.nx_community_father_goods_id,
+               dfg.nx_cfg_father_goods_name,
+               dg.nx_community_goods_id,
+               dg.nx_cg_goods_name,
+               dg.nx_cg_goods_brand,
+               dg.nx_cg_goods_detail,
+               dg.nx_cg_goods_place,
+               dg.nx_cg_goods_standardname,
+               dg.nx_cg_goods_standard_weight,
+               dg.nx_cg_pull_off,
+               ds.nx_restraunt_id           'nx_restraunt_id',
+               ds.nx_restraunt_name         'nx_restraunt_name',
+               ds.nx_restraunt_type         'nx_restraunt_type',
+               ds.nx_restraunt_father_id    'nx_restraunt_father_id',
+               ds.nx_restraunt_is_group_dep 'nx_restraunt_is_group_dep',
+
+               df.nx_restraunt_id           'dd_nx_restraunt_id',
+               df.nx_restraunt_name         'dd_nx_restraunt_name',
+               df.nx_restraunt_address      'dd_nx_restraunt_address',
+               df.nx_restraunt_lat          'dd_nx_restraunt_lat',
+               df.nx_restraunt_lng          'dd_nx_restraunt_lng',
+               df.nx_restraunt_number       'dd_nx_restraunt_number'
+        from nx_restraunt_orders as dor
+                 left join nx_community_goods as dg on dg.nx_community_goods_id = dor.nx_RO_com_goods_id
+                 left join nx_community_father_goods as dfg
+                           on dfg.nx_community_father_goods_id = dg.nx_cg_cfg_goods_father_id
+                 left join nx_restraunt as ds on ds.nx_restraunt_id = dor.nx_RO_restraunt_id
+                 left join nx_restraunt as df on df.nx_restraunt_id = ds.nx_restraunt_father_id
+        where dor.nx_RO_community_id = #{comId}
+          and nx_RO_buy_status = 0
+          and dor.nx_RO_arrive_date = #{arriveDate}
+          and dg.nx_cg_goods_type = #{comGoodsType}
+        order by dfg.nx_community_father_goods_id, dg.nx_cg_goods_pinyin
+    </select>
+
+
+    <select id="queryResOrderTotalByParams" resultType="java.lang.Integer">
+        select count(*) from nx_restraunt_orders
+        <where>
+            <if test="comId != null">
+                and nx_RO_community_id = #{comId}
+            </if>
+            <if test="resFatherId != null">
+                and nx_RO_restraunt_father_id = #{resFatherId}
+            </if>
+            <if test="resId != null">
+                and nx_RO_restraunt_id = #{resId}
+            </if>
+
+            <if test="status != null">
+                and nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and nx_RO_status = #{equalStatus}
+            </if>
+
+
+            <if test="applyDate != null">
+                and nx_RO_apply_date &gt; #{applyDate}
+            </if>
+            <if test="arriveDate != null">
+                and nx_RO_arrive_date = #{arriveDate}
+            </if>
+            <if test="priceOrder != null and priceOrder == 1">
+                and nx_RO_price is not null and nx_RO_price > 0
+            </if>
+            <if test="weightOrder != null and weightOrder == 1">
+                and nx_RO_weight is not null and nx_RO_weight > 0
+            </if>
+
+        </where>
+    </select>
+
+    <select id="queryResOrdersTotalByParams" resultType="java.lang.Integer">
+        select count(*) from nx_restraunt_orders
+        <where>
+            <if test="comId != null">
+                and nx_RO_community_id = #{comId}
+            </if>
+            <if test="resFatherId != null">
+                and nx_RO_restraunt_father_id = #{resFatherId}
+            </if>
+            <if test="resId != null">
+                and nx_RO_restraunt_id = #{resId}
+            </if>
+
+            <if test="status != null">
+                and nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and nx_RO_status = #{equalStatus}
+            </if>
+
+
+            <if test="applyDate != null">
+                and nx_RO_apply_date &gt; #{applyDate}
+            </if>
+            <if test="arriveDate != null">
+                and nx_RO_arrive_date = #{arriveDate}
+            </if>
+            <if test="priceOrder != null and priceOrder == 1">
+                and nx_RO_price is not null and nx_RO_price > 0
+            </if>
+            <if test="weightOrder != null and weightOrder == 1">
+                and nx_RO_weight is not null and nx_RO_weight > 0
+            </if>
+
+        </where>
+    </select>
+
+    <resultMap id="comStandard" type="NxCommunityStandardEntity">
+        <id property="nxCommunityStandardId" column="nx_community_standard_id"/>
+        <result property="nxCsStandardName" column="nx_CS_standard_name"/>
+        <result property="nxCsStandardScale" column="nx_CS_standard_scale"/>
+        <result property="nxCsStandardError" column="nx_CS_standard_error"/>
+    </resultMap>
+
+    <resultMap id="orderUser" type="NxRestrauntUserEntity">
+        <id property="nxRestrauntUserId" column="nx_restraunt_user_id"/>
+        <result property="nxRuWxAvartraUrl" column="nx_RU_wx_avartra_url"/>
+        <result property="nxRuWxNickName" column="nx_RU_wx_nick_name"/>
+        <result property="nxRuUrlChange" column="nx_RU_url_change"/>
+    </resultMap>
+    <resultMap id="comAlias" type="NxCommunityAliasEntity">
+        <id property="nxCommunityAliasId" column="nx_community_alias_id"/>
+        <result property="nxCaAliasName" column="nx_ca_alias_name"/>
+    </resultMap>
+    <resultMap id="comGoods" type="NxCommunityGoodsEntity">
+        <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+        <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+        <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+        <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+        <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+        <result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+        <result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+        <result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+        <result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+        <result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+        <result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+        <result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+        <result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+        <result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+        <result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+        <result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+        <result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+        <result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+        <result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+        <result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+        <result property="nxCgPullOff" column="nx_cg_pull_off"/>
+        <result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+        <result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+        <result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+        <result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+        <result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+        <result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+        <result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+        <result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+        <result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+        <result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+        <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+        <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+        <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+        <collection property="nxCommunityStandardEntities" resultMap="comStandard"/>
+<!--        <collection property="nxAliasEntities" resultMap="comAlias"/>-->
+        <collection property="nxCommunityAliasEntities" resultMap="comAlias"/>
+
+    </resultMap>
+
+    <resultMap id="resComGoods" type="NxRestrauntComGoodsEntity">
+        <id property="nxRestrauntComGoodsId" column="nx_restraunt_com_goods_id"/>
+        <result property="nxRcgOrderPrice" column="nx_RCG_order_price"/>
+        <result property="nxRcgOrderDate" column="nx_RCG_order_date"/>
+    </resultMap>
+
+    <resultMap id="historyOrders" type="NxRestrauntOrdersHistoryEntity">
+        <id property="nxRestrauntOrdersHistoryId" column="nx_restraunt_orders_history_id"/>
+        <result property="nxRohQuantity" column="nx_ROH_quantity"/>
+        <result property="nxRohStandard" column="nx_ROH_standard"/>
+        <result property="nxRohApplyDate" column="nx_ROH_apply_date"/>
+        <result property="nxRohRemark" column="nx_ROH_remark"/>
+        <result property="nxRohOrderUserId" column="nx_ROH_order_user_id"/>
+    </resultMap>
+    <resultMap id="resComGoodsWithApplys" type="NxRestrauntComGoodsEntity">
+        <id property="nxRestrauntComGoodsId" column="nx_restraunt_com_goods_id"/>
+        <result property="nxRcgComGoodsId" column="nx_RCG_com_goods_id"/>
+        <result property="nxRcgComGoodsFatherId" column="nx_RCG_com_goods_father_id"/>
+        <result property="nxRcgComGoodsName" column="nx_RCG_com_goods_name"/>
+        <result property="nxRcgComGoodsStandardname" column="nx_RCG_com_goods_standardname"/>
+        <result property="nxRcgOrderPrice" column="nx_RCG_order_price"/>
+        <result property="nxRcgOrderDate" column="nx_RCG_order_date"/>
+        <result property="nxRcgOrderQuantity" column="nx_RCG_order_quantity"/>
+        <result property="nxRcgOrderStandard" column="nx_RCG_order_standard"/>
+        <result property="nxRcgOrderRemark" column="nx_RCG_order_remark"/>
+        <result property="nxRcgResKnowDate" column="nx_RCG_res_know_date"/>
+        <association property="nxCommunityGoodsEntity" resultMap="comGoods"/>
+        <collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+        <collection property="nxResOrdersHistoryEntities" resultMap="historyOrders"/>
+    </resultMap>
+
+    <resultMap id="applys" type="NxRestrauntOrdersEntity">
+        <id property="nxRestrauntOrdersId" column="nx_restraunt_orders_id"/>
+        <result property="nxRoNxGoodsId" column="nx_RO_nx_goods_id"/>
+        <result property="nxRoOrderUserId" column="nx_RO_order_user_id"/>
+        <result property="nxRoApplyDate" column="nx_RO_apply_date"/>
+        <result property="nxRoReceiveFullTime" column="nx_RO_receive_full_time"/>
+        <result property="nxRoApplyFullTime" column="nx_RO_apply_full_time"/>
+        <result property="nxRoArriveDate" column="nx_RO_arrive_date"/>
+        <result property="nxRoArriveWhatDay" column="nx_RO_arrive_what_day"/>
+        <result property="nxRoArriveWeeksYear" column="nx_RO_arrive_weeks_year"/>
+        <result property="nxRoQuantity" column="nx_RO_quantity"/>
+        <result property="nxRoStandard" column="nx_RO_standard"/>
+        <result property="nxRoRemark" column="nx_RO_remark"/>
+        <result property="nxRoStatus" column="nx_RO_status"/>
+        <result property="nxRoWeight" column="nx_RO_weight"/>
+        <result property="nxRoPrice" column="nx_RO_price"/>
+        <result property="nxRoSubtotal" column="nx_RO_subtotal"/>
+        <result property="nxRoBuyStatus" column="nx_RO_buy_status"/>
+        <result property="nxRoNxGoodsFatherId" column="nx_RO_nx_goods_father_id"/>
+        <result property="nxRoRestrauntFatherId" column="nx_RO_restraunt_father_id"/>
+        <result property="nxRoComGoodsId" column="nx_RO_com_goods_id"/>
+        <result property="nxRoResComGoodsId" column="nx_RO_res_com_goods_id"/>
+        <result property="nxRoResComGoodsPrice" column="nx_RO_res_com_goods_price"/>
+        <result property="nxRoRestrauntId" column="nx_RO_restraunt_id"/>
+        <result property="nxRoCommunityId" column="nx_RO_community_id"/>
+        <result property="nxRoBuyStatus" column="nx_RO_buy_status"/>
+        <result property="nxRoOperationTime" column="nx_RO_operation_time"/>
+        <result property="nxRoIsAgent" column="nx_RO_is_agent"/>
+        <result property="nxRoPurchaseGoodsId" column="nx_RO_purchase_goods_id"/>
+        <result property="nxRoScale" column="nx_RO_scale"/>
+        <result property="nxRoExpectPrice" column="nx_RO_expect_price"/>
+        <result property="nxRoCostPrice" column="nx_RO_cost_price"/>
+        <result property="nxRoCostSubtotal" column="nx_RO_cost_subtotal"/>
+        <result property="nxRoPurchaseUserId" column="nx_RO_purchase_user_id"/>
+        <result property="nxRoProfit" column="nx_RO_profit"/>
+        <result property="nxRoDeliveryDate" column="nx_RO_delivery_date"/>
+        <result property="nxRoComGoodsStandardType" column="nx_RO_com_goods_standard_type"/>
+        <result property="nxRoComStandardId" column="nx_RO_com_standard_id"/>
+        <result property="nxRoComStandardName" column="nx_RO_com_standard_name"/>
+        <result property="nxRoComStandardScale" column="nx_RO_com_standard_scale"/>
+        <result property="nxRoComStandardQuantity" column="nx_RO_com_standard_quantity"/>
+        <result property="nxRoOrderPrice" column="nx_RO_order_price"/>
+        <result property="nxRoCostPrice" column="nx_RO_cost_price"/>
+        <result property="nxRoCostSubtotal" column="nx_RO_cost_subtotal"/>
+        <result property="nxRoBillId" column="nx_RO_bill_id"/>
+        <result property="nxRoComDistributerId" column="nx_RO_com_distributer_id"/>
+        <result property="nxRoComDistributerGoodsId" column="nx_RO_com_distributer_goods_id"/>
+        <result property="nxRoComDistributerOrderId" column="nx_RO_com_distributer_order_id"/>
+        <result property="nxRoCostPercent" column="nx_RO_cost_percent"/>
+        <result property="nxRoArriveMinTime" column="nx_RO_arrive_min_time"/>
+        <result property="nxRoArriveMaxTime" column="nx_RO_arrive_max_time"/>
+        <association property="nxRestrauntUserEntity" resultMap="orderUser"/>
+        <association property="nxCommunityGoodsEntity" resultMap="comGoods"/>
+        <association property="nxRestrauntComGoodsEntity" resultMap="resComGoods"/>
+        <association property="nxRestrauntEntity" resultMap="restaruant"/>
+    </resultMap>
+
+
+    <select id="queryResOrdersByParams" resultMap="applys">
+        select * from nx_restraunt_orders as ror
+        left join nx_restraunt_com_goods as ddg on ddg.nx_restraunt_com_goods_id = ror.nx_RO_res_com_goods_id
+        left join nx_restraunt as r on r.nx_restraunt_id = ror.nx_RO_restraunt_father_id
+        left join nx_community_goods as cg on cg.nx_community_goods_id = ror.nx_RO_com_goods_id
+        left join nx_restraunt_user as du on du.nx_restraunt_user_id = ror.nx_RO_order_user_id
+        left join nx_community_standard as ds on ds.nx_CS_comm_goods_id = cg.nx_community_goods_id
+        left join nx_community_alias as ca on ca.nx_CA_com_goods_id = cg.nx_community_goods_id
+        <where>
+
+            <if test="comId != null">
+                and ror.nx_RO_community_id = #{comId}
+            </if>
+            <if test="resFatherId != null">
+                and nx_RO_restraunt_father_id = #{resFatherId}
+            </if>
+            <if test="dayuApplyDate != null">
+                and nx_RO_apply_date &gt; #{dayuApplyDate}
+            </if>
+            <if test="resId != null">
+                and nx_RO_restraunt_id = #{resId}
+            </if>
+            <if test="equalStatus != null">
+                and ror.nx_RO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and ror.nx_RO_status &gt; #{dayuStatus}
+            </if>
+            <if test="status != null">
+                and ror.nx_RO_status &lt; #{status}
+            </if>
+
+            <if test="printTimes != null">
+                and ror.nx_RO_print_times = #{printTimes}
+            </if>
+
+
+            <if test="applyDate != null">
+                and ror.nx_RO_apply_date &gt; #{applyDate}
+            </if>
+            <if test="arriveDateDayu != null">
+                and ror.nx_RO_apply_date &gt; #{arriveDateDayu}
+            </if>
+
+            <if test="arriveDate != null">
+                and ror.nx_RO_arrive_date = #{arriveDate}
+            </if>
+            <if test="userId != null">
+                and ror.nx_RO_order_user_id = #{userId}
+            </if>
+            <if test="comGoodsId != null">
+                and ror.nx_RO_com_goods_id = #{comGoodsId}
+            </if>
+            <if test="resComGoodsId != null">
+                and ror.nx_RO_res_com_goods_id = #{resComGoodsId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and ror.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="comGoodsType != null">
+                and cg.nx_cg_goods_type = #{comGoodsType}
+            </if>
+            <if test="billId != null">
+                and ror.nx_RO_bill_id = #{billId}
+            </if>
+            <if test="rank != null">
+                and ror.nx_RO_order_rank = #{rank}
+            </if>
+            <if test="printTimes != null">
+                and ror.nx_RO_print_times = #{printTimes}
+            </if>
+            <if test="profit != null and profit == 0">
+                and ror.nx_RO_profit  is null
+            </if>
+            <if test="profit != null and profit == 1">
+                and ror.nx_RO_profit  is not null
+            </if>
+            <if test="deliveryDate != null">
+                and ror.nx_RO_delivery_date  = #{deliveryDate}
+            </if>
+
+
+        </where>
+        <if test="orderBy != null and orderBy == 'time'">
+            order by ror.nx_restraunt_orders_id DESC
+        </if>
+
+
+        <if test="orderBy == null">
+            order by cg.nx_cg_cfg_goods_father_id, cg.nx_cg_goods_py
+        </if>
+
+
+    </select>
+
+
+    <resultMap id="driver" type="NxCommunityUserEntity">
+        <id property="nxCommunityUserId" column="nx_community_user_id"/>
+        <result property="nxCouWxAvartraUrl" column="nx_COU_wx_avartra_url"/>
+        <result property="nxCouWxNickName" column="nx_COU_wx_nick_name"/>
+        <result property="nxCouWxPhone" column="nx_COU_wx_phone"/>
+    </resultMap>
+
+    <resultMap id="subRestruantsWithOrders" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntType" column="nx_restraunt_type"/>
+        <result property="nxRestrauntSubAmount" column="nx_restraunt_sub_amount"/>
+        <result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+        <result property="nxRestrauntFilePath" column="nx_restraunt_file_path"/>
+        <result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntAddress" column="nx_restraunt_address"/>
+        <result property="nxRestrauntNavigationAddress" column="nx_restraunt_navigation_addaress"/>
+        <result property="nxRestrauntLat" column="nx_restraunt_lat"/>
+        <result property="nxRestrauntLng" column="nx_restraunt_lng"/>
+        <result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+        <result property="nxRestrauntWorkingStatus" column="nx_restraunt_working_status"/>
+        <result property="nxRestrauntOweBoxNumber" column="nx_restraunt_owe_box_number"/>
+        <result property="nxRestrauntDeliveryBoxNumber" column="nx_restraunt_delivery_box_number"/>
+        <result property="nxRestrauntUnPayTotal" column="nx_restraunt_unPay_total"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+        <association property="nxCommunityUserEntity" resultMap="driver"/>
+        <collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+    </resultMap>
+
+
+    <select id="queryCommunityTodayRestruants" resultMap="subRestruantsWithOrders">
+        select
+               *
+        from nx_restraunt_orders as ror
+        left join nx_community_goods as cg on cg.nx_community_goods_id = ror.nx_RO_com_goods_id
+        left join nx_restraunt_user as ru on ru.nx_restraunt_user_id = ror.nx_RO_order_user_id
+        left join nx_restraunt as rs on rs.nx_restraunt_id = ror.nx_RO_restraunt_father_id
+        left join nx_community_user as cu on cu.nx_community_user_id = rs.nx_restraunt_driver_id
+        <where>
+            <if test="comId != null">
+                and nx_RO_community_id = #{comId}
+            </if>
+            <if test="status != null">
+                and nx_RO_status &lt; #{status}
+            </if>
+             <if test="dayuStatus != null">
+                 and nx_RO_status &gt; #{dayuStatus}
+             </if>
+            <if test="equalStatus != null">
+                and nx_RO_status = #{equalStatus}
+            </if>
+            <if test="settleType != null">
+                and rs.nx_restraunt_settle_type = #{settleType}
+            </if>
+            <if test="printTimes != null">
+                and nx_RO_print_times = #{printTimes}
+            </if>
+
+        </where>
+        order by rs.nx_restraunt_min_time, ror.nx_RO_status ASC, cg.nx_cg_nx_father_id, cg.nx_cg_goods_py
+    </select>
+
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        select *
+        from nx_restraunt_orders
+
+        where nx_restraunt_orders_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        select * from nx_restraunt_orders
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_restraunt_orders
+    </select>
+
+
+    <resultMap id="restaruant" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntType" column="nx_restraunt_type"/>
+        <result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+        <result property="nxRestrauntFilePath" column="nx_restraunt_file_path"/>
+        <result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntAddress" column="nx_restraunt_address"/>
+        <result property="nxRestrauntNavigationAddress" column="nx_restraunt_navigation_addaress"/>
+        <result property="nxRestrauntLat" column="nx_restraunt_lat"/>
+        <result property="nxRestrauntLng" column="nx_restraunt_lng"/>
+        <result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+        <result property="nxRestrauntDeliveryBoxNumber" column="nx_restraunt_delivery_box_number"/>
+        <result property="nxRestrauntOweBoxNumber" column="nx_restraunt_owe_box_number"/>
+        <result property="nxRestrauntWorkingStatus" column="nx_restraunt_working_status"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+        <association property="nxCommunityUserEntity" resultMap="driver"/>
+
+    </resultMap>
+<!--    <resultMap id="resApply" type="NxRestrauntOrdersEntity">-->
+<!--        <id property="nxRestrauntOrdersId" column="nx_restraunt_orders_id"/>-->
+<!--        <result property="nxRoQuantity" column="nx_RO_quantity"/>-->
+<!--        <result property="nxRoRemark" column="nx_RO_remark"/>-->
+<!--        <result property="nxRoStandard" column="nx_RO_standard"/>-->
+<!--        <result property="nxRoApplyDate" column="nx_RO_apply_date"/>-->
+<!--        <result property="nxRoArriveOnlyDate" column="nx_RO_arrive_only_date"/>-->
+<!--        <result property="nxRoArriveWeeksYear" column="nx_RO_arrive_weeks_year"/>-->
+<!--        <result property="nxRoArriveWhatDay" column="nx_RO_arrive_what_day"/>-->
+<!--        -->
+<!--        <association property="nxRestrauntEntity" resultMap="restaruant"/>-->
+<!--        <association property="nxCommunityGoodsEntity" resultMap="comGoods"/>-->
+<!--    </resultMap>-->
+    <select id="queryResOrdersForComGoods" resultMap="applys">
+        select *
+        from nx_restraunt_orders as dor
+                 left join nx_community_goods as dg on dg.nx_community_goods_id = dor.nx_RO_com_goods_id
+                 left join nx_restraunt as dep on dep.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        where dor.nx_RO_com_goods_id = #{comGoodsId}
+        order by dor.nx_RO_arrive_weeks_year DESC, dor.nx_RO_arrive_date DESC
+    </select>
+
+    <resultMap id="comGoodsWithOrders" type="NxCommunityGoodsEntity">
+        <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+        <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+        <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+        <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+        <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+        <result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+        <result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+        <result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+        <result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+        <result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+        <result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+        <result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+        <result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+        <result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+        <result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+        <result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+        <result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+        <result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+        <result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+        <result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+        <result property="nxCgPullOff" column="nx_cg_pull_off"/>
+        <result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+        <result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+        <result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+        <result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+        <result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+        <result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+        <result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+        <result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+        <result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+        <result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+        <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+        <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+        <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+        <collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+    </resultMap>
+    <resultMap id="comFatherGoods" type="NxCommunityFatherGoodsEntity">
+        <id property="nxCommunityFatherGoodsId" column="nx_community_father_goods_id"/>
+        <result property="nxCfgFatherGoodsName" column="nx_cfg_father_goods_name"/>
+        <collection property="nxCommunityGoodsEntities" resultMap="comGoodsWithOrders"/>
+    </resultMap>
+
+    <select id="queryResOrdersByComStockGoodsType" resultMap="comFatherGoods">
+        select * from nx_restraunt_orders as dor
+        left join nx_community_goods as cg on cg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        left join nx_community_father_goods as dfg on dfg.nx_community_father_goods_id = cg.nx_cg_cfg_goods_father_id
+        left join nx_restraunt as dep on dep.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        left join nx_restraunt_user as ru on ru.nx_restraunt_user_id = dor.nx_RO_order_user_id
+        <where>
+            <if test="resFatherId != null">
+                and dor.nx_RO_restraunt_father_id= #{resFatherId}
+            </if>
+            <if test="comId != null">
+                and cg.nx_cg_community_id= #{comId}
+            </if>
+            <if test="type != null">
+                and cg.nx_cg_goods_type = #{type}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and dor.nx_RO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.nx_RO_status &gt; #{dayuStatus}
+            </if>
+            <if test="arriveDate != null">
+                and dor.nx_RO_arrive_date = #{arriveDate}
+            </if>
+            <if test="applyDate != null">
+                and dor.nx_RO_apply_date = #{applyDate}
+            </if>
+            <if test="deliveryDate != null">
+                and dor.nx_RO_delivery_date = #{deliveryDate}
+            </if>
+            <if test="cost != null and cost == 0">
+                and (dor.nx_RO_cost_price is null or dor.nx_RO_cost_price = '-1')
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="buyStatus != null and buyStatus == 0">
+                and dor.nx_RO_buy_status  is null
+            </if>
+            <if test="profit != null and profit == 0">
+                and dor.nx_RO_profit is null
+            </if>
+
+        </where>
+        order by dfg.nx_community_father_goods_id , cg.nx_community_goods_id
+    </select>
+
+    <resultMap id="Distributers" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_Distributer_id"/>
+        <result property="nxDistributerName" column="nx_Distributer_name"/>
+        <collection property="nxCommunityGoodsEntities" resultMap="comGoodsWithOrders"/>
+    </resultMap>
+
+    <select id="queryResOrdersByComDistributerGoodsType" resultMap="Distributers">
+        select * from nx_restraunt_orders as dor
+        left join nx_community_goods as dg on dg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        left join nx_restraunt as dep on dep.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        left join nx_distributer as sup on sup.nx_distributer_id = dg.nx_cg_distributer_id
+        <where>
+            <if test="comId != null">
+                and dor.nx_RO_community_id = #{comId}
+            </if>
+            <if test="type != null">
+                and dg.nx_cg_goods_type = #{type}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="buyStatus != null">
+                and dor.nx_RO_buy_status &lt; #{buyStatus}
+            </if>
+        </where>
+        order by dg.nx_community_goods_id
+    </select>
+
+
+    <select id="queryTodayComGoodsType" resultMap="comFatherGoods">
+        select * from nx_community_goods as dg
+        left join nx_restraunt_orders as dor on dg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        left join nx_community_father_goods as cfg on cfg.nx_community_father_goods_id = nx_cg_cfg_goods_father_id
+        left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        left join nx_community_user as cu on cu.nx_community_user_id = nr.nx_restraunt_driver_id
+        <where>
+            <if test="comId != null">
+                and dor.nx_RO_community_id = #{comId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+            <if test="type != null">
+                and dg.nx_cg_goods_type = #{type}
+            </if>
+        </where>
+        <if test="order !=null and order == 'goods'">
+            order by cfg.nx_cfg_nx_goods_id, dg.nx_cg_goods_pinyin
+        </if>
+
+    </select>
+
+    <select id="queryOrderGoodsByFatherId" resultMap="comGoodsWithOrders">
+        select * from nx_community_goods as dg
+        left join nx_restraunt_orders as dor on dg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        left join nx_restraunt as r on r.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        <where>
+            <if test="type != null">
+                and dg.nx_cg_goods_type = #{type}
+            </if>
+            <if test="fatherId != null">
+                and dor.nx_RO_com_goods_father_id = #{fatherId}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+
+        </where>
+    </select>
+
+    <select id="queryComDeliveryResOrdersByParams" resultMap="applys">
+        select * from nx_restraunt_orders as ror
+        left join nx_community_goods as dg on dg.nx_community_goods_id = ror.nx_RO_com_goods_id
+
+        <where>
+
+            <if test="resFatherId != null">
+                and nx_RO_restraunt_father_id = #{resFatherId}
+            </if>
+
+            <if test="equalStatus != null">
+                and ror.nx_RO_status = #{equalStatus}
+            </if>
+            <if test="status != null">
+                and ror.nx_RO_status &lt; #{status}
+            </if>
+
+
+        </where>
+        <if test="orderBy != null and orderBy == 'time'">
+            order by ror.nx_restraunt_orders_id DESC
+        </if>
+
+        <if test="orderByGoods == null and orderByGoods == 1">
+            order by dg.nx_cg_cfg_goods_father_id, dg.nx_cg_goods_py
+        </if>
+    </select>
+
+    <select id="queryDeliveryResByParams" resultMap="restaruant">
+        select * from nx_restraunt as nr
+        left join nx_restraunt_orders as ror on nr.nx_restraunt_id = ror.nx_RO_restraunt_father_id
+        left join nx_community_user as cu on cu.nx_community_user_id = nr.nx_restraunt_driver_id
+        <where>
+            <if test="comId != null">
+                and ror.nx_RO_community_id = #{comId}
+            </if>
+            <if test="equalStatus != null">
+                and ror.nx_RO_status = #{equalStatus}
+            </if>
+
+        </where>
+
+    </select>
+    <select id="queryOrderComGoodsTodayTotal" resultType="java.lang.Integer">
+        select count(*) from nx_restraunt_orders as ro
+        left join nx_community_goods as cg on cg.nx_community_goods_id = ro.nx_RO_com_goods_id
+        <where>
+            <if test="comId != null">
+                and nx_RO_community_id = #{comId}
+            </if>
+            <if test="equalStatus != null">
+                and nx_RO_status = #{equalStatus}
+            </if>
+            <if test="status != null">
+                and nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalBuyStatus != null">
+                and nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="type != null">
+                and cg.nx_cg_goods_type = #{type}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryUnCostDate" resultType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        select dor.nx_RO_apply_date from nx_restraunt_orders as dor
+        left join nx_community_goods as cg on cg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        <where>
+            <if test="comId != null">
+                and dor.nx_RO_community_id= #{comId}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.nx_RO_status &gt; #{dayuStatus}
+            </if>
+            <if test="equalStatus != null">
+                and dor.nx_RO_status = #{equalStatus}
+            </if>
+
+            <if test="profit != null and profit == 0">
+                and dor.nx_RO_profit is null
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="type != null">
+                and cg.nx_cg_goods_type = #{type}
+            </if>
+            <if test="cost != null and cost == 0">
+                and dor.nx_RO_cost_price = '-1'
+            </if>
+        </where>
+
+    </select>
+
+    <resultMap id="purchaseGoods" type="NxCommunityPurchaseGoodsEntity">
+        <id property="nxCommunityPurchaseGoodsId" column="nx_community_purchase_goods_id"/>
+        <result property="nxCpgQuantity" column="nx_cpg_quantity"/>
+        <result property="nxCpgStandard" column="nx_cpg_standard"/>
+        <association property="nxCommunityGoodsEntity" resultMap="comGoodsWithOrders"/>
+    </resultMap>
+
+    <resultMap id="purchaseBatch" type="NxCommunityPurchaseBatchEntity">
+        <id property="nxCommunityPurchaseBatchId" column="nx_community_purchase_batch_id"/>
+        <result property="nxCpbPurchaseType" column="nx_cpb_purchase_type"/>
+        <result property="nxCpbDate" column="nx_cpb_date"/>
+        <result property="nxCpbHour" column="nx_cpb_hour"/>
+        <result property="nxCpbMinute" column="nx_cpb_minute"/>
+        <result property="nxCpbSubtotal" column="nx_cpb_subtotal"/>
+        <collection property="nxCommunityPurchaseGoodsEntities" resultMap="purchaseGoods"/>
+
+    </resultMap>
+
+<!--    <select id="queryBuyingBatchGoods" resultMap="purchaseBatch">-->
+<!--        select * from nx_restraunt_orders as nro-->
+<!--        left join nx_community_purchase_goods as cpg on cpg.nx_community_purchase_goods_id = nro.nx_RO_purchase_goods_id-->
+<!--        left join nx_community_goods as cg on cg.nx_community_goods_id = cpg.nx_cpg_com_goods_id-->
+<!--        left join nx_community_purchase_batch as cpb on cpb.nx_community_purchase_batch_id = cpg.nx_cpg_batch_id-->
+<!--        left join nx_restraunt as r on r.nx_restraunt_id = nro.nx_RO_restraunt_father_id-->
+<!--        <where>-->
+<!--            <if test="comId != null">-->
+<!--                and nx_RO_community_id = #{comId}-->
+<!--            </if>-->
+<!--            <if test="status != null">-->
+<!--                and nx_RO_status &lt; #{status}-->
+<!--            </if>-->
+<!--            <if test="type != null">-->
+<!--                and cpb.nx_cpb_com_sell_type  = #{type}-->
+<!--            </if>-->
+<!--            and nx_RO_buy_status = 1-->
+<!--        </where>-->
+<!--    </select>-->
+    <select id="queryTodayComRestrauant" resultType="com.nongxinle.entity.NxRestrauntEntity">
+        select * from nx_restraunt as nr
+        left join nx_restraunt_orders as dor on nr.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        <where>
+            <if test="comId != null">
+                and dor.nx_RO_community_id = #{comId}
+            </if>
+<!--            <if test="equalBuyStatus != null">-->
+<!--                and dor.nx_RO_buy_status = #{equalBuyStatus}-->
+<!--            </if>-->
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+
+        </where>
+    </select>
+
+    <resultMap id="disGoodswithOrders" type="NxDistributerGoodsEntity">
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
+        <result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
+        <result property="nxDgPriceThirdDay" column="nx_dg_price_third_day"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgPullOff" column="nx_dg_pull_off"/>
+        <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+        <result property="nxDgNxFatherId" column="nx_dg_nx_father_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgGoodsPinyin" column="nx_dg_goods_pinyin"/>
+        <result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+        <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+       <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+        <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <association property="nxCommunityGoodsEntity" resultMap="comGoods"/>
+        <collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+
+    </resultMap>
+    <select id="queryDistributerGoodsWithResOrdersByParams"
+            resultMap="disGoodswithOrders">
+        select * from nx_restraunt_orders as ro
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ro.nx_RO_com_distributer_goods_id
+         left join nx_restraunt as r on r.nx_restraunt_id = ro.nx_RO_restraunt_father_id
+         left join nx_community_goods as cg on cg.nx_community_goods_id = ro.nx_RO_com_goods_id
+        <where>
+            <if test="disId !=null">
+               and  ro.nx_RO_com_distributer_id = #{disId}
+            </if>
+            <if test="weight != null and weight != -1">
+                and ro.nx_RO_weight  != -1
+            </if>
+            <if test="equalBuyStatus != null">
+                and ro.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+        </where>
+    </select>
+    <select id="queryDistributerTodayCommunity" resultType="com.nongxinle.entity.NxCommunityEntity">
+        select * from nx_restraunt_orders as ro
+        left join nx_community as c on c.nx_community_id = ro.nx_RO_community_id
+        <where>
+            <if test="disId != null">
+                ro.nx_RO_com_distributer_id = #{disId}
+            </if>
+                and ro.nx_RO_buy_status = 0
+        </where>
+    </select>
+
+
+    <resultMap id="chainApplys" type="NxCommunityGoodsEntity">
+        <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+        <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+        <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+        <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+        <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+        <result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+        <result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+        <result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+        <result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+        <result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+        <result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+        <result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+        <result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+        <result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+        <result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+        <result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+        <result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+        <result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+        <result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+        <result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+        <result property="nxCgPullOff" column="nx_cg_pull_off"/>
+        <result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+        <result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+        <result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+        <result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+        <result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+        <result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+        <result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+        <result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+        <result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+        <result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+        <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+        <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+        <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+        <collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+    </resultMap>
+
+
+    <resultMap id="restraunt" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntComId" column="nx_restraunt_com_id"/>
+        <result property="nxRestrauntType" column="nx_restraunt_type"/>
+        <result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+        <result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+    </resultMap>
+
+    <resultMap id="chainResFatherGoods" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntComId" column="nx_restraunt_com_id"/>
+        <result property="nxRestrauntType" column="nx_restraunt_type"/>
+        <result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+        <result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+        <collection property="nxCommunityFatherGoodsEntities" resultMap="comFatherGoods"/>
+
+    </resultMap>
+
+    <select id="queryResChainOrdersByParams" resultMap="chainResFatherGoods">
+        select * from nx_restraunt_orders as dor
+        left join nx_community_goods as cg on cg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        left join nx_community_father_goods as dfg on dfg.nx_community_father_goods_id = cg.nx_cg_cfg_goods_father_id
+        left join nx_restraunt as dep on dep.nx_restraunt_id = dor.nx_RO_restraunt_father_id
+        left join nx_restraunt_user as ru on ru.nx_restraunt_user_id = dor.nx_RO_order_user_id
+        <where>
+            <if test="resIds != null">
+                and nx_RO_restraunt_father_id in
+                <foreach item="id" collection="resIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="resFatherId != null">
+                and dor.nx_RO_restraunt_father_id= #{resFatherId}
+            </if>
+            <if test="comId != null">
+                and cg.nx_cg_community_id= #{comId}
+            </if>
+            <if test="type != null">
+                and cg.nx_cg_goods_type = #{type}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and dor.nx_RO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.nx_RO_status &gt; #{dayuStatus}
+            </if>
+            <if test="arriveDate != null">
+                and dor.nx_RO_arrive_date = #{arriveDate}
+            </if>
+            <if test="applyDate != null">
+                and dor.nx_RO_apply_date = #{applyDate}
+            </if>
+            <if test="deliveryDate != null">
+                and dor.nx_RO_delivery_date = #{deliveryDate}
+            </if>
+            <if test="cost != null and cost == 0">
+                and dor.nx_RO_cost_price is null
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+
+        </where>
+        order by dfg.nx_community_father_goods_id DESC, cg.nx_community_goods_id DESC
+<!--        <foreach item="id" collection="resIds" open="(" separator="," close=")">-->
+<!--            #{id}-->
+<!--        </foreach>-->
+    </select>
+
+    <select id="queryResWithSubDepsOrder" resultMap="comFatherGoods">
+
+        select * from nx_restraunt_orders as dor
+        left join nx_community_goods as cg on cg.nx_community_goods_id = dor.nx_RO_com_goods_id
+        left join nx_community_father_goods as dfg on dfg.nx_community_father_goods_id = cg.nx_cg_cfg_goods_father_id
+        left join nx_restraunt as dep on dep.nx_restraunt_id = dor.nx_RO_restraunt_id
+        left join nx_restraunt_user as ru on ru.nx_restraunt_user_id = dor.nx_RO_order_user_id
+        <where>
+            <if test="resFatherId != null">
+                and dor.nx_RO_restraunt_father_id= #{resFatherId}
+            </if>
+            <if test="comId != null">
+                and cg.nx_cg_community_id= #{comId}
+            </if>
+            <if test="type != null">
+                and cg.nx_cg_goods_type = #{type}
+            </if>
+            <if test="status != null">
+                and dor.nx_RO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and dor.nx_RO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.nx_RO_status &gt; #{dayuStatus}
+            </if>
+            <if test="arriveDate != null">
+                and dor.nx_RO_arrive_date = #{arriveDate}
+            </if>
+            <if test="applyDate != null">
+                and dor.nx_RO_apply_date = #{applyDate}
+            </if>
+            <if test="deliveryDate != null">
+                and dor.nx_RO_delivery_date = #{deliveryDate}
+            </if>
+            <if test="cost != null and cost == 0">
+                and dor.nx_RO_cost_price is null
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.nx_RO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="printTimes != null">
+                and dor.nx_RO_print_times = #{printTimes}
+            </if>
+
+        </where>
+        order by dfg.nx_community_father_goods_id DESC, cg.nx_community_goods_id DESC
+    </select>
+    <select id="queryPurchaseResOrders" resultType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        select * from nx_restraunt_orders
+        <where>
+            <if test="buyStatus != null">
+               and nx_RO_buy_status = #{buyStatus}
+            </if>
+            <if test="purGoodsId != null">
+               and nx_RO_purchase_goods_id = #{purGoodsId}
+            </if>
+        </where>
+    </select>
+    <select id="queryPurchaseGoodsOrders" resultType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        select * from nx_restraunt_orders where nx_RO_purchase_goods_id = #{nxCommunityPurchaseGoodsId}
+    </select>
+
+    <select id="queryDateOrderResId" resultMap="restraunt">
+        select * from nx_restraunt_orders as nro
+         left join nx_restraunt as r on r.nx_restraunt_id = nro.nx_RO_restraunt_father_id
+        <where>
+            <if test="deliveryDate != null">
+                and nx_RO_delivery_date = #{deliveryDate}
+            </if>
+
+        </where>
+
+    </select>
+    <select id="queryResOrdersIdByBillId" resultType="java.lang.Integer">
+        select nx_restraunt_orders_id from nx_restraunt_orders where nx_RO_bill_id = #{nxRestrauntBillId}
+    </select>
+
+    <select id="queryTry" resultMap="resComGoodsWithApplys">
+        select  * from nx_restraunt_com_goods  as rcg
+        left join nx_restraunt_orders as ro on ro.nx_RO_res_com_goods_id = rcg.nx_restraunt_com_goods_id
+        left join nx_community_goods as cg on cg.nx_community_goods_id = rcg.nx_RCG_com_goods_id
+        left join  nx_restraunt_orders_history as noh on noh.nx_ROH_res_com_goods_id = rcg.nx_restraunt_com_goods_id
+        <where>
+            <if test="userId != null">
+                and  nx_RO_order_user_id = #{userId}
+            </if>
+            <if test="resId != null">
+                and  nx_RO_restraunt_id = #{resId}
+            </if>
+            <if test="applyDate != null">
+                and  nx_RO_apply_date &gt; #{applyDate}
+            </if>
+            <if test="todayTime != null">
+                and  rcg.nx_RCG_order_date &lt; #{todayTime}
+            </if>
+        </where>
+           order by rcg.nx_RCG_com_goods_father_id, rcg.nx_RCG_com_goods_pinyin, noh.nx_ROH_apply_date
+    </select>
+
+    <select id="queryNxRestrauntOrderByNxOrderId" resultType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        select * from nx_restraunt_orders where nx_RO_com_distributer_order_id = #{nxDepartmentOrdersId} ;
+    </select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxRestrauntOrdersEntity" useGeneratedKeys="true"
+            keyProperty="nxRestrauntOrdersId">
+        insert into nx_restraunt_orders
+        (`nx_restraunt_orders_id`,
+         `nx_RO_nx_goods_id`,
+         `nx_RO_nx_goods_father_id`,
+         `nx_RO_com_goods_id`,
+         `nx_RO_com_goods_father_id`,
+         `nx_RO_res_com_goods_id`,
+         `nx_RO_res_com_goods_price`,
+         `nx_RO_quantity`,
+         `nx_RO_standard`,
+         `nx_RO_remark`,
+         `nx_RO_weight`,
+         `nx_RO_price`,
+         `nx_RO_subtotal`,
+         `nx_RO_restraunt_id`,
+         `nx_RO_restraunt_father_id`,
+         `nx_RO_community_id`,
+         `nx_RO_purchase_user_id`,
+         `nx_RO_bill_id`,
+         `nx_RO_status`,
+         `nx_RO_order_user_id`,
+         `nx_RO_pick_user_id`,
+         `nx_RO_account_user_id`,
+         `nx_RO_buy_status`,
+         `nx_RO_apply_date`,
+         `nx_RO_arrive_date`,
+         `nx_RO_purchase_goods_id`,
+         `nx_RO_apply_full_time`,
+         `nx_RO_operation_time`,
+         `nx_RO_arrive_what_day`,
+         `nx_RO_is_agent`,
+         `nx_RO_arrive_weeks_year`,
+         `nx_RO_receive_full_time`,
+         `nx_RO_sell_type`,
+         `nx_RO_cost_price`,
+         `nx_RO_expect_price`,
+         `nx_RO_scale`,
+         `nx_RO_profit`,
+         `nx_RO_delivery_date`,
+         `nx_RO_order_rank`,
+         `nx_RO_com_goods_standard_type`,
+         `nx_RO_com_standard_id`,
+         `nx_RO_com_standard_name`,
+         `nx_RO_com_standard_scale`,
+         `nx_RO_com_standard_quantity`,
+         `nx_RO_print_times`,
+         `nx_RO_com_distributer_id`,
+         `nx_RO_com_distributer_goods_id`,
+         `nx_RO_cost_subtotal`,
+         `nx_RO_order_price`,
+         `nx_RO_cost_percent`,
+         `nx_RO_arrive_min_time`,
+         `nx_RO_arrive_max_time`,
+         `nx_RO_com_distributer_order_id`
+
+         )
+        values (#{nxRestrauntOrdersId},
+                #{nxRoNxGoodsId},
+                #{nxRoNxGoodsFatherId},
+                #{nxRoComGoodsId},
+                #{nxRoComGoodsFatherId},
+                #{nxRoResComGoodsId},
+                #{nxRoResComGoodsPrice},
+                #{nxRoQuantity},
+                #{nxRoStandard},
+                #{nxRoRemark},
+                #{nxRoWeight},
+                #{nxRoPrice},
+                #{nxRoSubtotal},
+                #{nxRoRestrauntId},
+                #{nxRoRestrauntFatherId},
+                #{nxRoCommunityId},
+                #{nxRoPurchaseUserId},
+                #{nxRoBillId},
+                #{nxRoStatus},
+                #{nxRoOrderUserId},
+                #{nxRoPickUserId},
+                #{nxRoAccountUserId},
+                #{nxRoBuyStatus},
+                #{nxRoApplyDate},
+                #{nxRoArriveDate},
+                #{nxRoPurchaseGoodsId},
+                #{nxRoApplyFullTime},
+                #{nxRoOperationTime},
+                #{nxRoArriveWhatDay},
+                #{nxRoIsAgent},
+                #{nxRoArriveWeeksYear},
+                #{nxRoReceiveFullTime},
+                #{nxRoSellType},
+                #{nxRoCostPrice},
+                #{nxRoExpectPrice},
+                #{nxRoScale},
+                #{nxRoProfit},
+                #{nxRoDeliveryDate},
+                #{nxRoOrderRank},
+                #{nxRoComGoodsStandardType},
+                #{nxRoComStandardId},
+                #{nxRoComStandardName},
+                #{nxRoComStandardScale},
+                #{nxRoComStandardQuantity},
+                #{nxRoPrintTimes},
+                #{nxRoComDistributerId},
+                #{nxRoComDistributerGoodsId},
+                #{nxRoCostSubtotal},
+                #{nxRoOrderPrice},
+                #{nxRoCostPercent},
+                #{nxRoArriveMinTime},
+                #{nxRoArriveMaxTime},
+                #{nxRoComDistributerOrderId}
+                )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxRestrauntOrdersEntity">
+        update nx_restraunt_orders
+        <set>
+            <if test="nxRoNxGoodsId != null">`nx_RO_nx_goods_id` = #{nxRoNxGoodsId},</if>
+            <if test="nxRoNxGoodsFatherId != null">`nx_RO_nx_goods_father_id` = #{nxRoNxGoodsFatherId},</if>
+            <if test="nxRoComGoodsId != null">`nx_RO_com_goods_id` = #{nxRoComGoodsId},</if>
+            <if test="nxRoComGoodsFatherId != null">`nx_RO_com_goods_father_id` = #{nxRoComGoodsFatherId},</if>
+            <if test="nxRoResComGoodsId != null">`nx_RO_res_com_goods_id` = #{nxRoResComGoodsId},</if>
+            <if test="nxRoResComGoodsPrice != null">`nx_RO_res_com_goods_price` = #{nxRoResComGoodsPrice},</if>
+            <if test="nxRoQuantity != null">`nx_RO_quantity` = #{nxRoQuantity},</if>
+            <if test="nxRoStandard != null">`nx_RO_standard` = #{nxRoStandard},</if>
+            <if test="nxRoRemark != null">`nx_RO_remark` = #{nxRoRemark},</if>
+            <if test="nxRoWeight != null">`nx_RO_weight` = #{nxRoWeight},</if>
+            <if test="nxRoPrice != null">`nx_RO_price` = #{nxRoPrice},</if>
+            <if test="nxRoSubtotal != null">`nx_RO_subtotal` = #{nxRoSubtotal},</if>
+            <if test="nxRoRestrauntId != null">`nx_RO_restraunt_id` = #{nxRoRestrauntId},</if>
+            <if test="nxRoRestrauntFatherId != null">`nx_RO_restraunt_father_id` = #{nxRoRestrauntFatherId},</if>
+            <if test="nxRoCommunityId != null">`nx_RO_community_id` = #{nxRoCommunityId},</if>
+            <if test="nxRoPurchaseUserId != null">`nx_RO_purchase_user_id` = #{nxRoPurchaseUserId},</if>
+            <if test="nxRoBillId != null">`nx_RO_bill_id` = #{nxRoBillId},</if>
+            <if test="nxRoStatus != null">`nx_RO_status` = #{nxRoStatus},</if>
+            <if test="nxRoOrderUserId != null">`nx_RO_order_user_id` = #{nxRoOrderUserId},</if>
+            <if test="nxRoPickUserId != null">`nx_RO_pick_user_id` = #{nxRoPickUserId},</if>
+            <if test="nxRoAccountUserId != null">`nx_RO_account_user_id` = #{nxRoAccountUserId},</if>
+            <if test="nxRoBuyStatus != null">`nx_RO_buy_status` = #{nxRoBuyStatus},</if>
+            <if test="nxRoApplyDate != null">`nx_RO_apply_date` = #{nxRoApplyDate},</if>
+            <if test="nxRoArriveDate != null">`nx_RO_arrive_date` = #{nxRoArriveDate},</if>
+            <if test="nxRoPurchaseGoodsId != null">`nx_RO_purchase_goods_id` = #{nxRoPurchaseGoodsId},</if>
+            <if test="nxRoApplyFullTime != null">`nx_RO_apply_full_time` = #{nxRoApplyFullTime},</if>
+            <if test="nxRoOperationTime != null">`nx_RO_operation_time` = #{nxRoOperationTime},</if>
+            <if test="nxRoArriveWhatDay != null">`nx_RO_arrive_what_day` = #{nxRoArriveWhatDay},</if>
+            <if test="nxRoIsAgent != null">`nx_RO_is_agent` = #{nxRoIsAgent},</if>
+            <if test="nxRoArriveWeeksYear != null">`nx_RO_arrive_weeks_year` = #{nxRoArriveWeeksYear},</if>
+            <if test="nxRoSellType != null">`nx_RO_sell_type` = #{nxRoSellType},</if>
+            <if test="nxRoCostPrice != null">`nx_RO_cost_price` = #{nxRoCostPrice},</if>
+            <if test="nxRoExpectPrice != null">`nx_RO_expect_price` = #{nxRoExpectPrice},</if>
+            <if test="nxRoScale != null">`nx_RO_scale` = #{nxRoScale},</if>
+            <if test="nxRoProfit != null">`nx_RO_profit` = #{nxRoProfit},</if>
+            <if test="nxRoDeliveryDate != null">`nx_RO_delivery_date` = #{nxRoDeliveryDate},</if>
+            <if test="nxRoOrderRank != null">`nx_RO_order_rank` = #{nxRoOrderRank},</if>
+            <if test="nxRoComGoodsStandardType != null">`nx_RO_com_goods_standard_type` = #{nxRoComGoodsStandardType},</if>
+            <if test="nxRoComStandardId != null">`nx_RO_com_standard_id` = #{nxRoComStandardId},</if>
+            <if test="nxRoComStandardName != null">`nx_RO_com_standard_name` = #{nxRoComStandardName},</if>
+            <if test="nxRoComStandardScale != null">`nx_RO_com_standard_scale` = #{nxRoComStandardScale},</if>
+            <if test="nxRoComStandardQuantity != null">`nx_RO_com_standard_quantity` = #{nxRoComStandardQuantity},</if>
+            <if test="nxRoPrintTimes != null">`nx_RO_print_times` = #{nxRoPrintTimes},</if>
+            <if test="nxRoComDistributerId != null">`nx_RO_com_distributer_id` = #{nxRoComDistributerId},</if>
+            <if test="nxRoComDistributerGoodsId != null">`nx_RO_com_distributer_goods_id` = #{nxRoComDistributerGoodsId},</if>
+            <if test="nxRoCostSubtotal != null">`nx_RO_cost_subtotal` = #{nxRoCostSubtotal},</if>
+            <if test="nxRoCostPercent != null">`nx_RO_cost_percent` = #{nxRoCostPercent},</if>
+            <if test="nxRoOrderPrice != null">`nx_RO_order_price` = #{nxRoOrderPrice},</if>
+            <if test="nxRoArriveMinTime != null">`nx_RO_arrive_min_time` = #{nxRoArriveMinTime},</if>
+            <if test="nxRoArriveMaxTime != null">`nx_RO_arrive_max_time` = #{nxRoArriveMaxTime},</if>
+            <if test="nxRoComDistributerOrderId != null">`nx_RO_com_distributer_order_id` = #{nxRoComDistributerOrderId},</if>
+            <if test="nxRoReceiveFullTime != null">`nx_RO_receive_full_time` = #{nxRoReceiveFullTime}</if>
+        </set>
+        where nx_restraunt_orders_id = #{nxRestrauntOrdersId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_restraunt_orders
+        where nx_restraunt_orders_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_restraunt_orders where nx_restraunt_orders_id in
+        <foreach item="nxRestrauntOrdersId" collection="array" open="(" separator="," close=")">
+            #{nxRestrauntOrdersId}
+        </foreach>
+    </delete>
+
+</mapper>

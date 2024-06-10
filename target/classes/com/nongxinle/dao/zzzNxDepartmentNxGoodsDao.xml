@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentNxGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentNxGoodsEntity">
+		select * from nx_department_nx_goods where nx_department_nx_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDepartmentNxGoodsEntity">
+		select * from nx_department_nx_goods 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_nx_goods 
+	</select>
+	<select id="queryAddDepartmentNxGoods" resultType="com.nongxinle.entity.NxDepartmentNxGoodsEntity">
+		select * from nx_department_nx_goods where nx_DNG_department_father_id = #{depFatherId} and
+		nx_DNG_department_id = #{depId} and nx_DNG_nx_goods_id = #{goodsId}
+	</select>
+	<select id="queryDepartmentNxGoods" resultType="com.nongxinle.entity.NxDepartmentNxGoodsEntity">
+		select * from nx_department_nx_goods where nx_DNG_department_id = #{depId}
+	</select>
+    <select id="querySearchStr" resultType="com.nongxinle.entity.NxDepartmentNxGoodsEntity">
+		select * from nx_department_nx_goods where nx_DNG_department_id = #{depId}
+		and (nx_DNG_nx_goods_name like concat('%', #{searchStr}, '%')
+			 or nx_DNG_nx_goods_pinyin like concat('%', #{searchStr}, '%')
+			 or nx_DNG_nx_goods_py like concat('%', #{searchStr}, '%')
+			 )
+			 order by nx_DNG_nx_goods_id
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentNxGoodsEntity" useGeneratedKeys="true"
+	keyProperty="nxDepartmentNxGoodsId">
+		insert into nx_department_nx_goods
+		(
+			`nx_department_nx_goods_id`, 
+			`nx_DNG_department_father_id`, 
+			`nx_DNG_department_id`, 
+			`nx_DNG_nx_goods_id`, 
+			`nx_DNG_nx_goods_name`, 
+			`nx_DNG_nx_goods_pinyin`, 
+			`nx_DNG_nx_goods_py`, 
+			`nx_DNG_nx_goods_sort`, 
+			`nx_DNG_nx_goods_standardname`, 
+			`nx_DNG_nx_goods_detail`, 
+			`nx_DNG_alarm_rate`
+		)
+		values
+		(
+			#{nxDepartmentNxGoodsId}, 
+			#{nxDngDepartmentFatherId}, 
+			#{nxDngDepartmentId}, 
+			#{nxDngNxGoodsId}, 
+			#{nxDngNxGoodsName}, 
+			#{nxDngNxGoodsPinyin}, 
+			#{nxDngNxGoodsPy}, 
+			#{nxDngNxGoodsSort}, 
+			#{nxDngNxGoodsStandardname}, 
+			#{nxDngNxGoodsDetail}, 
+			#{nxDngAlarmRate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentNxGoodsEntity">
+		update nx_department_nx_goods 
+		<set>
+			<if test="nxDngDepartmentFatherId != null">`nx_DNG_department_father_id` = #{nxDngDepartmentFatherId}, </if>
+			<if test="nxDngDepartmentId != null">`nx_DNG_department_id` = #{nxDngDepartmentId}, </if>
+			<if test="nxDngNxGoodsId != null">`nx_DNG_nx_goods_id` = #{nxDngNxGoodsId}, </if>
+			<if test="nxDngNxGoodsName != null">`nx_DNG_nx_goods_name` = #{nxDngNxGoodsName}, </if>
+			<if test="nxDngNxGoodsPinyin != null">`nx_DNG_nx_goods_pinyin` = #{nxDngNxGoodsPinyin}, </if>
+			<if test="nxDngNxGoodsPy != null">`nx_DNG_nx_goods_py` = #{nxDngNxGoodsPy}, </if>
+			<if test="nxDngNxGoodsSort != null">`nx_DNG_nx_goods_sort` = #{nxDngNxGoodsSort}, </if>
+			<if test="nxDngNxGoodsStandardname != null">`nx_DNG_nx_goods_standardname` = #{nxDngNxGoodsStandardname}, </if>
+			<if test="nxDngNxGoodsDetail != null">`nx_DNG_nx_goods_detail` = #{nxDngNxGoodsDetail}, </if>
+			<if test="nxDngAlarmRate != null">`nx_DNG_alarm_rate` = #{nxDngAlarmRate}</if>
+		</set>
+		where nx_department_nx_goods_id = #{nxDepartmentNxGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_nx_goods where nx_department_nx_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_nx_goods where nx_department_nx_goods_id in 
+		<foreach item="nxDepartmentNxGoodsId" collection="array" open="(" separator="," close=")">
+			#{nxDepartmentNxGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

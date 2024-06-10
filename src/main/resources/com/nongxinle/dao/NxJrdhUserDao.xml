@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxJrdhUserDao">
+
+    <select id="queryObject" resultMap="jrdhUser">
+        select *
+        from nx_jrdh_user as nju
+                 left join nx_distributer as nd on nd.nx_distributer_id = nju.nx_jrdh_nx_distributer_id
+                 left join gb_distributer as gd on gd.gb_distributer_id = nju.nx_jrdh_nx_community_id
+                 left join nx_distributer_user as ndu on ndu.nx_distributer_user_id = nju.nx_jrdh_nx_purchaser_user_id
+                 left join gb_distributer_user as gdu on gdu.gb_distributer_user_id = nju.nx_jrdh_nx_comm_purchaser_user_id
+                 left join nx_distributer_supplier as nds on nds.nx_DS_jrdh_user_id = nju.nx_jrdh_user_id
+        where nx_jrdh_user_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxJrdhUserEntity">
+        select * from nx_jrdh_user
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_jrdh_user
+    </select>
+    <resultMap id="gbDisUser" type="GbDistributerUserEntity">
+        <id property="gbDistributerUserId" column="subu_gb_distributer_user_id"/>
+        <result property="gbDiuWxNickName" column="subu_gb_DIU_wx_nick_name"/>
+        <result property="gbDiuPrintDeviceId" column="subu_gb_DIU_print_device_id"/>
+        <result property="gbDiuAdmin" column="subu_gb_DIU_admin"/>
+    </resultMap>
+    <resultMap id="gbDis" type="GbDistributerEntity">
+        <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+        <result property="gbDistributerName" column="gb_distributer_name"/>
+        <result property="gbDistributerManager" column="gb_distributer_manager"/>
+        <result property="gbDistributerAddress" column="gb_distributer_address"/>
+        <result property="gbDistributerPhone" column="gb_distributer_phone"/>
+        <result property="gbDistributerImg" column="gb_distributer_img"/>
+        <result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+        <result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+        <result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+        <result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+        <result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+        <result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+        <result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+    </resultMap>
+    <resultMap id="nxDisUser" type="NxDistributerUserEntity">
+         <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+        <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+        <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuAdmin" column="nx_DIU_admin"/>
+        <result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+        <result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+        <result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+
+    </resultMap>
+    <resultMap id="nxDis" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+    </resultMap>
+
+<!--    <resultMap id="disSupplier" type="NxDistributerSupplierEntity">-->
+<!--        <id property="nxDistributerSupplierId" column="nx_distributer_supplier_id"/>-->
+<!--        <id property="nxDistributerSupplierId" column="nx_distributer_supplier_id"/>-->
+<!--        <result property="nxDsNxDistributerId" column="nx_DS_nx_distributer_id"/>-->
+<!--        <result property="nxDsJrdhNxDisUserId" column="nx_DS_jrdh_nx_dis_user_id"/>-->
+<!--        <result property="nxDsJrdhUserId" column="nx_DS_jrdh_user_id"/>-->
+<!--        <result property="nxDistributerSupplierName" column="nx_distributer_supplier_name"/>-->
+<!--        <result property="nxDistributerSupplierAddress" column="nx_distributer_supplier_address"/>-->
+<!--    </resultMap>-->
+    <resultMap id="judhSupplier" type="NxJrdhSupplierEntity">
+        <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+        <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
+        <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
+        <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
+        <result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
+        <result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+    </resultMap>
+
+    <resultMap id="jrdhUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+
+        <result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhCommPurchaserUserId" column="nx_jrdh_nx_comm_purchaser_user_id"/>
+        <result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+        <result property="nxJrdhGbDistributerId" column="nx_jrdh_gb_distributer_id"/>
+        <result property="nxJrdhGbDepartmentId" column="nx_jrdh_gb_department_id"/>
+        <result property="nxJrdhGbDepartmentUserId" column="nx_jrdh_gb_department_user_id"/>
+        <result property="nxJrdhWxOpenId" column="nx_jrdh_wx_open_id"/>
+        <result property="nxJrdhAdmin" column="nx_jrdh_admin"/>
+        <result property="nxJrdhDeviceId" column="nx_jrdh_device_id"/>
+        <result property="nxJrdhDevicePrintId" column="nx_jrdh_device_print_id"/>
+        <association property="gbDepartmentUserEntity" resultMap="gbDisUser"/>
+        <association property="nxDistributerUserEntity" resultMap="nxDisUser"/>
+        <collection property="nxDistributerEntities" resultMap="nxDis"/>
+        <collection property="gbDistributerEntities" resultMap="gbDis"/>
+        <collection property="nxJrdhSupplierEntities" resultMap="judhSupplier"/>
+    </resultMap>
+
+    <select id="queryWhichUserByOpenId" resultMap="jrdhUser">
+        select *
+        from nx_jrdh_user as nju
+            left join nx_jrdh_supplier as njs on njs.nx_jrdhs_user_id = nju.nx_jrdh_user_id
+            left join nx_distributer as nd on nd.nx_distributer_id = nju.nx_jrdh_nx_distributer_id
+            left join gb_distributer as gd on gd.gb_distributer_id = nju.nx_jrdh_gb_distributer_id
+         left join gb_department as gdd on gdd.gb_department_id = nju.nx_jrdh_gb_department_id
+
+        where nx_jrdh_wx_open_id = #{openid}
+    </select>
+    <select id="queryJrdhUserByParams" resultType="com.nongxinle.entity.NxJrdhUserEntity">
+        select * from nx_jrdh_user
+        <where>
+
+
+            <if test="openId != null">
+                and nx_jrdh_wx_open_id = #{openId}
+            </if>
+            <if test="gbDisId != null">
+                and nx_jrdh_gb_distributer_id = #{gbDisId}
+            </if>
+            <if test="nxDisId != null">
+                and nx_jrdh_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="commId != null">
+                and nx_jrdh_nx_community_id = #{commId}
+            </if>
+        </where>
+    </select>
+    <select id="queryJrdhUserById" resultType="com.nongxinle.entity.NxJrdhUserEntity">
+        select * from nx_jrdh_user
+        <where>
+            <if test="openId != null">
+                and nx_jrdh_wx_open_id = #{openId}
+            </if>
+            <if test="admin != null">
+                and nx_jrdh_admin = #{admin}
+            </if>
+            <if test="gbDisId != null">
+                and nx_jrdh_gb_distributer_id = #{gbDisId}
+            </if>
+            <if test="nxDisId != null">
+                and nx_jrdh_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="commId != null">
+                and nx_jrdh_nx_community_id = #{commId}
+            </if>
+
+        </where>
+    </select>
+    <select id="queryDisUserByOpenId" resultType="com.nongxinle.entity.NxJrdhUserEntity">
+        select * from nx_jrdh_user
+        where   nx_jrdh_wx_open_id = #{openId}     and nx_jrdh_admin = 1
+    </select>
+    <select id="querySelluserByOpenId" resultType="com.nongxinle.entity.NxJrdhUserEntity">
+        select * from nx_jrdh_user
+        where   nx_jrdh_wx_open_id = #{openId}     and nx_jrdh_admin = 3
+    </select>
+    <select id="queryJrdhUserByAdmin" resultType="com.nongxinle.entity.NxJrdhUserEntity">
+        select * from nx_jrdh_user
+        <where>
+            <if test="openId != null">
+               and  nx_jrdh_wx_open_id = #{openId}
+            </if>
+            <if test="admin != null">
+                and  nx_jrdh_admin = #{admin}
+            </if>
+            <if test="nxDisId != null">
+                and  nx_jrdh_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="gbDisId != null">
+                and  nx_jrdh_gb_distributer_id = #{gbDisId}
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxJrdhUserEntity" useGeneratedKeys="true"
+            keyProperty="nxJrdhUserId">
+        insert into nx_jrdh_user
+        (`nx_jrdh_user_id`,
+         `nx_jrdh_wx_avartra_url`,
+         `nx_jrdh_wx_nick_name`,
+         `nx_jrdh_wx_open_id`,
+         `nx_jrdh_wx_phone`,
+         `nx_jrdh_join_date`,
+         `nx_jrdh_nx_distributer_id`,
+         `nx_jrdh_nx_purchaser_user_id`,
+         `nx_jrdh_nx_community_id`,
+         `nx_jrdh_nx_comm_purchaser_user_id`,
+         `nx_jrdh_url_change`,
+         `nx_jrdh_admin`,
+         `nx_jrdh_gb_distributer_id`,
+         `nx_jrdh_gb_department_id`,
+         `nx_jrdh_gb_department_user_id`,
+         `nx_jrdh_device_id`,
+         `nx_jrdh_device_print_id`
+
+         )
+        values (#{nxJrdhUserId},
+                #{nxJrdhWxAvartraUrl},
+                #{nxJrdhWxNickName},
+                #{nxJrdhWxOpenId},
+                #{nxJrdhWxPhone},
+                #{nxJrdhJoinDate},
+                #{nxJrdhNxDistributerId},
+                #{nxJrdhNxPurchaserUserId},
+                #{nxJrdhNxCommunityId},
+                #{nxJrdhCommPurchaserUserId},
+                #{nxJrdhUrlChange},
+                #{nxJrdhAdmin},
+                #{nxJrdhGbDistributerId},
+                #{nxJrdhGbDepartmentId},
+                #{nxJrdhGbDepartmentUserId},
+                #{nxJrdhDeviceId},
+                #{nxJrdhDevicePrintId}
+                )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxJrdhUserEntity">
+        update nx_jrdh_user
+        <set>
+            <if test="nxJrdhWxAvartraUrl != null">`nx_jrdh_wx_avartra_url` = #{nxJrdhWxAvartraUrl},</if>
+            <if test="nxJrdhWxNickName != null">`nx_jrdh_wx_nick_name` = #{nxJrdhWxNickName},</if>
+            <if test="nxJrdhWxOpenId != null">`nx_jrdh_wx_open_id` = #{nxJrdhWxOpenId},</if>
+            <if test="nxJrdhWxPhone != null">`nx_jrdh_wx_phone` = #{nxJrdhWxPhone},</if>
+            <if test="nxJrdhJoinDate != null">`nx_jrdh_join_date` = #{nxJrdhJoinDate},</if>
+            <if test="nxJrdhNxDistributerId != null">`nx_jrdh_nx_distributer_id` = #{nxJrdhNxDistributerId},</if>
+            <if test="nxJrdhNxPurchaserUserId != null">`nx_jrdh_nx_purchaser_user_id` = #{nxJrdhNxPurchaserUserId},</if>
+            <if test="nxJrdhNxCommunityId != null">`nx_jrdh_nx_community_id` = #{nxJrdhNxCommunityId},</if>
+            <if test="nxJrdhUrlChange != null">`nx_jrdh_url_change` = #{nxJrdhUrlChange},</if>
+            <if test="nxJrdhAdmin != null">`nx_jrdh_admin` = #{nxJrdhAdmin},</if>
+            <if test="nxJrdhGbDistributerId != null">`nx_jrdh_gb_distributer_id` = #{nxJrdhGbDistributerId},</if>
+            <if test="nxJrdhGbDepartmentId != null">`nx_jrdh_gb_department_id` = #{nxJrdhGbDepartmentId},</if>
+            <if test="nxJrdhGbDepartmentUserId != null">`nx_jrdh_gb_department_user_id` = #{nxJrdhGbDepartmentUserId},</if>
+            <if test="nxJrdhDeviceId != null">`nx_jrdh_device_id` = #{nxJrdhDeviceId},</if>
+            <if test="nxJrdhDevicePrintId != null">`nx_jrdh_device_print_id` = #{nxJrdhDevicePrintId},</if>
+            <if test="nxJrdhCommPurchaserUserId != null">`nx_jrdh_nx_comm_purchaser_user_id` = #{nxJrdhCommPurchaserUserId}</if>
+        </set>
+        where nx_jrdh_user_id = #{nxJrdhUserId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_jrdh_user
+        where nx_jrdh_user_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_jrdh_user where nx_jrdh_user_id in
+        <foreach item="nxJrdhUserId" collection="array" open="(" separator="," close=")">
+            #{nxJrdhUserId}
+        </foreach>
+    </delete>
+
+</mapper>

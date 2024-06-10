@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+#parse("/header.html")
+</head>
+<body>
+
+<div class="panel panel-default" id="rrapp" v-cloak>
+	<div class="panel-heading">{{title}}</div>
+	<form class="form-horizontal">
+		<div class="form-group">
+		   	<div class="col-sm-2 control-label">商品名称</div>
+		   	<div class="col-sm-10">
+		      <input type="text" class="form-control" v-model="ckGoods.goodsName" placeholder="商品名称"/>
+			</div>
+		</div>
+
+		<div class="form-group">
+		   	<div class="col-sm-2 control-label">规格</div>
+		   	<div class="col-sm-10">
+		      <input type="text" class="form-control" v-model="ckGoods.standardName" placeholder="规格"/>
+		    </div>
+		</div>
+		<div class="form-group">
+		   	<div class="col-sm-2 control-label">申请规格</div>
+		   	<div class="col-sm-10">
+		      <input type="text" class="form-control" v-model="ckGoods.applyStandardName" placeholder="申请规格"/>
+		    </div>
+		</div>
+
+		<div class="form-group">
+		   	<div class="col-sm-2 control-label">是否称重</div>
+		   	<div class="col-sm-10">
+				<select class="form-control" id="ckGoods.isWeight" v-model="ckGoods.isWeight">
+					<option value="1">称重</option>
+					<option value="2">不称重</option>
+				</select>
+		    </div>
+		</div>
+		<div class="form-group">
+		   	<div class="col-sm-2 control-label">产品状态</div>
+		   	<div class="col-sm-10">
+				<select class="form-control" id="goodsStatus" v-model="ckGoods.status">
+					<option value="1">售卖中</option>
+					<option value="2">断货</option>
+					<option value="3">停止销售</option>
+				</select>
+			</div>
+		</div>
+		<div class="form-group" >
+			<div class="col-sm-2 control-label">产品状态</div>
+			<div class="col-sm-10">
+				<input  class="form-control" v-model="ckGoods.type" />
+			</div>
+		</div>
+
+		<div class="form-group">
+			<div class="col-sm-2 control-label"></div> 
+			<input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定" />
+			&nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" value="返回"/>
+		</div>
+	</form>
+</div>
+
+<script src="${rc.contextPath}/js/ckgoods/ckgoods_add.js?_${date.systemTime}"></script>
+</body>
+</html>

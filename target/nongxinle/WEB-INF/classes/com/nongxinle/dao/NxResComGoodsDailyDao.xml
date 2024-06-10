@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxResComGoodsDailyDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxResComGoodsDailyEntity">
+		select * from nx_res_com_goods_daily where nx_res_com_goods_daily_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxResComGoodsDailyEntity">
+		select * from nx_res_com_goods_daily 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_res_com_goods_daily 
+	</select>
+
+
+
+    <select id="queryDailyGoodsByParams" resultType="com.nongxinle.entity.NxResComGoodsDailyEntity">
+		select * from nx_res_com_goods_daily
+        <where>
+			<if test="resFatherId != null">
+				and nx_RCGD_restraunt_father_id = #{resFatherId}
+			</if>
+			<if test="resId != null">
+				and nx_RCGD_restraunt_id = #{resId}
+			</if>
+			<if test="date != null">
+				and nx_RCGD_date = #{date}
+			</if>
+
+		</where>
+	</select>
+
+	<resultMap id="daily" type="NxResComGoodsDailyEntity">
+		<id property="nxResComGoodsDailyId" column="nx_res_com_goods_daily_id"/>
+		<result property="nxRcgdWeight" column="nx_RCGD_weight"/>
+		<result property="nxRcgdSubtotal" column="nx_RCGD_subtotal"/>
+
+	</resultMap>
+
+	<resultMap id="resComGoods" type="NxRestrauntComGoodsEntity">
+		<id property="nxRestrauntComGoodsId" column="nx_restraunt_com_goods_id"/>
+		<result property="nxRcgComGoodsId" column="nx_RCG_com_goods_id"/>
+		<result property="nxRcgComGoodsFatherId" column="nx_RCG_com_goods_father_id"/>
+		<result property="nxRcgComGoodsName" column="nx_RCG_com_goods_name"/>
+		<result property="nxRcgComGoodsStandardname" column="nx_RCG_com_goods_standardname"/>
+		<result property="nxRcgOrderPrice" column="nx_RCG_order_price"/>
+		<result property="nxRcgOrderDate" column="nx_RCG_order_date"/>
+		<result property="nxRcgOrderQuantity" column="nx_RCG_order_quantity"/>
+		<result property="nxRcgOrderStandard" column="nx_RCG_order_standard"/>
+		<result property="nxRcgOrderRemark" column="nx_RCG_order_remark"/>
+		<result property="nxRcgResKnowDate" column="nx_RCG_res_know_date"/>
+<!--		<association property="nxCommunityGoodsEntity" resultMap="comGoods"/>-->
+	</resultMap>
+	<resultMap id="cgGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+		<association property="nxResComGoodsDailyEntity" resultMap="daily"/>
+	</resultMap>
+	<select id="queryResDailyStatistics" resultMap="cgGoods">
+		select * from nx_res_com_goods_daily as rcgd
+		left join nx_community_goods as cg on  cg.nx_community_goods_id = rcgd.nx_RCGD_com_goods_id
+		<where>
+			<if test="resFatherId != null">
+				and nx_RCGD_restraunt_father_id = #{resFatherId}
+			</if>
+			<if test="resId != null">
+				and nx_RCGD_restraunt_id = #{resId}
+			</if>
+			<if test="date != null">
+				and nx_RCGD_date = #{date}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxResComGoodsDailyEntity">
+		insert into nx_res_com_goods_daily
+		(
+			`nx_res_com_goods_daily_id`, 
+			`nx_RCGD_restraunt_father_id`, 
+			`nx_RCGD_restraunt_id`, 
+			`nx_RCGD_com_goods_id`,
+			`nx_RCGD_date`, 
+			`nx_RCGD_weight`, 
+			`nx_RCGD_subtotal`
+		)
+		values
+		(
+			#{nxResComGoodsDailyId}, 
+			#{nxRcgdRestrauntFatherId}, 
+			#{nxRcgdRestrauntId}, 
+			#{nxRcgdComGoodsId},
+			#{nxRcgdDate}, 
+			#{nxRcgdWeight}, 
+			#{nxRcgdSubtotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxResComGoodsDailyEntity">
+		update nx_res_com_goods_daily 
+		<set>
+			<if test="nxRcgdRestrauntFatherId != null">`nx_RCGD_restraunt_father_id` = #{nxRcgdRestrauntFatherId}, </if>
+			<if test="nxRcgdRestrauntId != null">`nx_RCGD_restraunt_id` = #{nxRcgdRestrauntId}, </if>
+			<if test="nxRcgdComGoodsId != null">`nx_RCGD_com_goods_id` = #{nxRcgdComGoodsId}, </if>
+			<if test="nxRcgdDate != null">`nx_RCGD_date` = #{nxRcgdDate}, </if>
+			<if test="nxRcgdWeight != null">`nx_RCGD_weight` = #{nxRcgdWeight}, </if>
+			<if test="nxRcgdSubtotal != null">`nx_RCGD_subtotal` = #{nxRcgdSubtotal}</if>
+		</set>
+		where nx_res_com_goods_daily_id = #{nxResComGoodsDailyId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_res_com_goods_daily where nx_res_com_goods_daily_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_res_com_goods_daily where nx_res_com_goods_daily_id in 
+		<foreach item="nxResComGoodsDailyId" collection="array" open="(" separator="," close=")">
+			#{nxResComGoodsDailyId}
+		</foreach>
+	</delete>
+
+</mapper>

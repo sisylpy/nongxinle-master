@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepInventoryGoodsWeekTotalDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepInventoryGoodsWeekTotalEntity">
+		select * from gb_dep_inventory_goods_week_total where gb_inventory_goods_week_total_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepInventoryGoodsWeekTotalEntity">
+		select * from gb_dep_inventory_goods_week_total 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_inventory_goods_week_total 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepInventoryGoodsWeekTotalEntity">
+		insert into gb_dep_inventory_goods_week_total
+		(
+			`gb_inventory_goods_week_total_id`, 
+			`gb_igwt_department_father_id`, 
+			`gb_igwt_department_id`, 
+			`gb_igwt_distributer_id`, 
+			`gb_igwt_dis_goods_id`, 
+			`gb_igwt_dis_goods_father_id`, 
+			`gb_igwt_week`, 
+			`gb_igwt_weight`, 
+			`gb_igwt_subtotal`, 
+			`gb_igwt_year`, 
+			`gb_igwt_full_time`, 
+			`gb_igwt_waste_weight`, 
+			`gb_igwt_waste_subtotal`, 
+			`gb_igwt_status`, 
+			`gb_igwt_loss_weight`, 
+			`gb_igwt_loss_subtotal`, 
+			`gb_igwt_return_weight`, 
+			`gb_igwt_return_subtotal`, 
+			`gb_igwt_dep_dis_goods_id`, 
+			`gb_igwt_produce_weight`, 
+			`gb_igwt_produce_subtotal`, 
+			`gb_igwt_profit_price`, 
+			`gb_igwt_profit_weight`, 
+			`gb_igwt_profit_subtotal`
+		)
+		values
+		(
+			#{gbInventoryGoodsWeekTotalId}, 
+			#{gbIgwtDepartmentFatherId}, 
+			#{gbIgwtDepartmentId}, 
+			#{gbIgwtDistributerId}, 
+			#{gbIgwtDisGoodsId}, 
+			#{gbIgwtDisGoodsFatherId}, 
+			#{gbIgwtWeek}, 
+			#{gbIgwtWeight}, 
+			#{gbIgwtSubtotal}, 
+			#{gbIgwtYear}, 
+			#{gbIgwtFullTime}, 
+			#{gbIgwtWasteWeight}, 
+			#{gbIgwtWasteSubtotal}, 
+			#{gbIgwtStatus}, 
+			#{gbIgwtLossWeight}, 
+			#{gbIgwtLossSubtotal}, 
+			#{gbIgwtReturnWeight}, 
+			#{gbIgwtReturnSubtotal}, 
+			#{gbIgwtDepDisGoodsId}, 
+			#{gbIgwtProduceWeight}, 
+			#{gbIgwtProduceSubtotal}, 
+			#{gbIgwtProfitPrice}, 
+			#{gbIgwtProfitWeight}, 
+			#{gbIgwtProfitSubtotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepInventoryGoodsWeekTotalEntity">
+		update gb_dep_inventory_goods_week_total 
+		<set>
+			<if test="gbIgwtDepartmentFatherId != null">`gb_igwt_department_father_id` = #{gbIgwtDepartmentFatherId}, </if>
+			<if test="gbIgwtDepartmentId != null">`gb_igwt_department_id` = #{gbIgwtDepartmentId}, </if>
+			<if test="gbIgwtDistributerId != null">`gb_igwt_distributer_id` = #{gbIgwtDistributerId}, </if>
+			<if test="gbIgwtDisGoodsId != null">`gb_igwt_dis_goods_id` = #{gbIgwtDisGoodsId}, </if>
+			<if test="gbIgwtDisGoodsFatherId != null">`gb_igwt_dis_goods_father_id` = #{gbIgwtDisGoodsFatherId}, </if>
+			<if test="gbIgwtWeek != null">`gb_igwt_week` = #{gbIgwtWeek}, </if>
+			<if test="gbIgwtWeight != null">`gb_igwt_weight` = #{gbIgwtWeight}, </if>
+			<if test="gbIgwtSubtotal != null">`gb_igwt_subtotal` = #{gbIgwtSubtotal}, </if>
+			<if test="gbIgwtYear != null">`gb_igwt_year` = #{gbIgwtYear}, </if>
+			<if test="gbIgwtFullTime != null">`gb_igwt_full_time` = #{gbIgwtFullTime}, </if>
+			<if test="gbIgwtWasteWeight != null">`gb_igwt_waste_weight` = #{gbIgwtWasteWeight}, </if>
+			<if test="gbIgwtWasteSubtotal != null">`gb_igwt_waste_subtotal` = #{gbIgwtWasteSubtotal}, </if>
+			<if test="gbIgwtStatus != null">`gb_igwt_status` = #{gbIgwtStatus}, </if>
+			<if test="gbIgwtLossWeight != null">`gb_igwt_loss_weight` = #{gbIgwtLossWeight}, </if>
+			<if test="gbIgwtLossSubtotal != null">`gb_igwt_loss_subtotal` = #{gbIgwtLossSubtotal}, </if>
+			<if test="gbIgwtReturnWeight != null">`gb_igwt_return_weight` = #{gbIgwtReturnWeight}, </if>
+			<if test="gbIgwtReturnSubtotal != null">`gb_igwt_return_subtotal` = #{gbIgwtReturnSubtotal}, </if>
+			<if test="gbIgwtDepDisGoodsId != null">`gb_igwt_dep_dis_goods_id` = #{gbIgwtDepDisGoodsId}, </if>
+			<if test="gbIgwtProduceWeight != null">`gb_igwt_produce_weight` = #{gbIgwtProduceWeight}, </if>
+			<if test="gbIgwtProduceSubtotal != null">`gb_igwt_produce_subtotal` = #{gbIgwtProduceSubtotal}, </if>
+			<if test="gbIgwtProfitPrice != null">`gb_igwt_profit_price` = #{gbIgwtProfitPrice}, </if>
+			<if test="gbIgwtProfitWeight != null">`gb_igwt_profit_weight` = #{gbIgwtProfitWeight}, </if>
+			<if test="gbIgwtProfitSubtotal != null">`gb_igwt_profit_subtotal` = #{gbIgwtProfitSubtotal}</if>
+		</set>
+		where gb_inventory_goods_week_total_id = #{gbInventoryGoodsWeekTotalId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_inventory_goods_week_total where gb_inventory_goods_week_total_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_inventory_goods_week_total where gb_inventory_goods_week_total_id in 
+		<foreach item="gbInventoryGoodsWeekTotalId" collection="array" open="(" separator="," close=")">
+			#{gbInventoryGoodsWeekTotalId}
+		</foreach>
+	</delete>
+
+</mapper>

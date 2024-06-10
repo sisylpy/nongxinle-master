@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerServiceCityDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerServiceCityEntity">
+		select * from nx_distributer_service_city where nx_distributer_service_city_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerServiceCityEntity">
+		select * from nx_distributer_service_city 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_service_city 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerServiceCityEntity">
+		insert into nx_distributer_service_city
+		(
+			`nx_distributer_service_city_id`,
+			`nx_ds_city_id`, 
+			`nx_ds_dis_id`,
+		 	`nx_ds_city_name`
+		)
+		values
+		(
+			#{nxDistributerServiceCityId},
+			#{nxDsCityId}, 
+			#{nxDsDisId},
+		 	#{nxDsCityName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerServiceCityEntity">
+		update nx_distributer_service_city 
+		<set>
+			<if test="nxDsCityId != null">`nx_ds_city_id` = #{nxDsCityId}, </if>
+			<if test="nxDsCityName != null">`nx_ds_city_name` = #{nxDsCityName}, </if>
+			<if test="nxDsDisId != null">`nx_ds_dis_id` = #{nxDsDisId}</if>
+		</set>
+		where nx_distributer_service_city_id = #{nxDistributerServiceCityId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_service_city where nx_distributer_service_city_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_service_city where nx_distributer_service_city_id in
+		<foreach item="nxDistributerServiceCity" collection="array" open="(" separator="," close=")">
+			#{nxDistributerServiceCityId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerUserGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCustomerUserGoodsEntity">
+		select * from nx_customer_user_goods where nx_CUG_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCustomerUserGoodsEntity">
+		select * from nx_customer_user_goods 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_customer_user_goods 
+	</select>
+	<select id="queryByCommunityGoodsId" resultType="com.nongxinle.entity.NxCustomerUserGoodsEntity">
+		select * from nx_customer_user_goods where nx_CUG_user_id = #{nxCugUserId} and nx_CUG_community_goods_id = #{nxOsCommunityGoodsId}
+	</select>
+
+	<resultMap id="nxGoods" type="NxGoodsEntity">
+		<id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+		<result property="nxGoodsName" column="nx_goods_name"/>
+		<result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+		<result property="nxGoodsBrand" column="nx_goods_brand"/>
+		<result property="nxGoodsPlace" column="nx_goods_place"/>
+		<result property="nxGoodsPy" column="nx_goods_py"/>
+		<result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+		<result property="nxGoodsDetail" column="nx_goods_detail"/>
+	</resultMap>
+
+	<resultMap id="disGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+		<association property="nxGoodsEntity" resultMap="nxGoods"/>
+	</resultMap>
+
+	<resultMap id="customerGoods" type="NxCustomerUserGoodsEntity">
+		<id property="nxCugGoodsId" column="nx_CUG_goods_id"/>
+		<result property="nxCugOrderAmount" column="nx_CUG_order_amount"/>
+		<result property="nxCugLastOrderQuantity" column="nx_CUG_last_order_quantity"/>
+		<result property="nxCugLastOrderStandard" column="nx_CUG_last_order_standard"/>
+		<result property="nxCugOrderQuantity" column="nx_CUG_order_quantity"/>
+		<result property="nxCugOrderStandard" column="nx_CUG_order_standard"/>
+		<result property="nxCugGoodsColor" column="nx_CUG_goods_color"/>
+		<association property="nxCommunityGoodsEntity" resultMap="disGoods"/>
+	</resultMap>
+
+	<select id="queryUserGoods" resultMap="customerGoods">
+		select * from nx_customer_user_goods as cug
+			left join nx_community_goods as dg on dg.nx_community_goods_id = cug.nx_CUG_community_goods_id
+			left join nx_goods as g on dg.nx_cg_goods_id = g.nx_goods_id
+		where nx_CUG_user_id = #{nxCugUserId} and nx_CUG_join_my_template = #{nxCugJoinMyTemplate}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserGoodsEntity">
+		insert into nx_customer_user_goods
+		(
+			`nx_CUG_goods_id`, 
+			`nx_CUG_user_id`, 
+			`nx_CUG_community_goods_id`,
+			`nx_CUG_first_order_time`, 
+			`nx_CUG_last_order_time`, 
+			`nx_CUG_order_amount`, 
+			`nx_CUG_order_times`, 
+			`nx_CUG_is_love`,
+		 	`nx_CUG_order_rate`,
+		 	`nx_CUG_last_order_quantity`,
+		 	`nx_CUG_last_order_standard`,
+		 	`nx_CUG_join_my_template`,
+			`nx_CUG_order_quantity`,
+			`nx_CUG_order_standard`,
+		 	`nx_CUG_goods_color`
+		)
+		values
+		(
+			#{nxCugGoodsId}, 
+			#{nxCugUserId}, 
+			#{nxCugCommunityGoodsId},
+			#{nxCugFirstOrderTime}, 
+			#{nxCugLastOrderTime}, 
+			#{nxCugOrderAmount}, 
+			#{nxCugOrderTimes}, 
+			#{nxCugIsLove},
+		 	#{nxCugOrderRate},
+		 	#{nxCugLastOrderQuantity},
+		 	#{nxCugLastOrderStandard},
+		 	#{nxCugJoinMyTemplate},
+		 	#{nxCugOrderQuantity},
+		 	#{nxCugOrderStandard},
+		 	#{nxCugGoodsColor}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCustomerUserGoodsEntity">
+		update nx_customer_user_goods 
+		<set>
+			<if test="nxCugUserId != null">`nx_CUG_user_id` = #{nxCugUserId}, </if>
+			<if test="nxCugCommunityGoodsId != null">`nx_CUG_community_goods_id` = #{nxCugCommunityGoodsId}, </if>
+			<if test="nxCugFirstOrderTime != null">`nx_CUG_first_order_time` = #{nxCugFirstOrderTime}, </if>
+			<if test="nxCugLastOrderTime != null">`nx_CUG_last_order_time` = #{nxCugLastOrderTime}, </if>
+			<if test="nxCugOrderAmount != null">`nx_CUG_order_amount` = #{nxCugOrderAmount}, </if>
+			<if test="nxCugOrderTimes != null">`nx_CUG_order_times` = #{nxCugOrderTimes}, </if>
+			<if test="nxCugOrderRate != null">`nx_CUG_order_rate` = #{nxCugOrderRate}, </if>
+			<if test="nxCugLastOrderQuantity != null">`nx_CUG_last_order_quantity` = #{nxCugLastOrderQuantity}, </if>
+			<if test="nxCugLastOrderStandard != null">`nx_CUG_last_order_standard` = #{nxCugLastOrderStandard}, </if>
+			<if test="nxCugOrderQuantity != null">`nx_CUG_order_quantity` = #{nxCugOrderQuantity}, </if>
+			<if test="nxCugOrderStandard != null">`nx_CUG_order_standard` = #{nxCugOrderStandard}, </if>
+			<if test="nxCugJoinMyTemplate != null">`nx_CUG_join_my_template` = #{nxCugJoinMyTemplate}, </if>
+			<if test="nxCugGoodsColor != null">`nx_CUG_goods_color` = #{nxCugGoodsColor}, </if>
+			<if test="nxCugIsLove != null">`nx_CUG_is_love` = #{nxCugIsLove}</if>
+		</set>
+		where nx_CUG_goods_id = #{nxCugGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_customer_user_goods where nx_CUG_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_customer_user_goods where nx_CUG_goods_id in 
+		<foreach item="nxCugGoodsId" collection="array" open="(" separator="," close=")">
+			#{nxCugGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

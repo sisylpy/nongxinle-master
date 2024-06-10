@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.SysCityDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.SysCityEntity">
+		select * from sys_city where sys_city_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.SysCityEntity">
+		select * from sys_city 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from sys_city 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.SysCityEntity">
+		insert into sys_city
+		(
+			`sys_city_id`, 
+			`sys_city_type`, 
+			`sys_city_name`, 
+			`sys_city_father_id`, 
+			`sys_city_py`, 
+			`sys_city_pinyin`
+		)
+		values
+		(
+			#{sysCityId}, 
+			#{sysCityType}, 
+			#{sysCityName}, 
+			#{sysCityFatherId}, 
+			#{sysCityPy}, 
+			#{sysCityPinyin}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.SysCityEntity">
+		update sys_city 
+		<set>
+			<if test="sysCityType != null">`sys_city_type` = #{sysCityType}, </if>
+			<if test="sysCityName != null">`sys_city_name` = #{sysCityName}, </if>
+			<if test="sysCityFatherId != null">`sys_city_father_id` = #{sysCityFatherId}, </if>
+			<if test="sysCityPy != null">`sys_city_py` = #{sysCityPy}, </if>
+			<if test="sysCityPinyin != null">`sys_city_pinyin` = #{sysCityPinyin}</if>
+		</set>
+		where sys_city_id = #{sysCityId}
+	</update>
+	
+	<delete id="delete">
+		delete from sys_city where sys_city_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from sys_city where sys_city_id in 
+		<foreach item="sysCityId" collection="array" open="(" separator="," close=")">
+			#{sysCityId}
+		</foreach>
+	</delete>
+
+</mapper>

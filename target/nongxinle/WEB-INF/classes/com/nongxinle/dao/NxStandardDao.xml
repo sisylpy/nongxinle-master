@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxStandardDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxStandardEntity">
+		select * from nx_standard where nx_standard_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxStandardEntity">
+		select * from nx_standard where nx_s_goods_id = #{nxGoodsId}
+
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_standard 
+	</select>
+
+
+    <select id="queryGoodsStandardListByGoodsId" resultType="com.nongxinle.entity.NxStandardEntity">
+		select * from nx_standard where nx_s_goods_id = #{nxGoodsId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxStandardEntity"
+			useGeneratedKeys="true" keyProperty="nxStandardId">
+		insert into nx_standard
+		(
+			`nx_standard_id`, 
+			`nx_standard_name`, 
+			`nx_s_goods_id`,
+		 	`nx_standard_file_path`,
+		 	`nx_standard_scale`,
+		 	`nx_standard_error`,
+		 	`nx_standard_sort`,
+		 	`nx_standard_weight`
+		)
+		values
+		(
+			#{nxStandardId}, 
+			#{nxStandardName}, 
+			#{nxSGoodsId},
+		 	#{nxStandardFilePath},
+		 	#{nxStandardScale},
+		 	#{nxStandardError},
+		 	#{nxStandardSort},
+		 	#{nxStandardWeight}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxStandardEntity">
+		update nx_standard 
+		<set>
+			<if test="nxStandardName != null">`nx_standard_name` = #{nxStandardName}, </if>
+			<if test="nxStandardFilePath != null">`nx_standard_file_path` = #{nxStandardFilePath}, </if>
+			<if test="nxStandardScale != null">`nx_standard_scale` = #{nxStandardScale}, </if>
+			<if test="nxStandardError != null">`nx_standard_error` = #{nxStandardError}, </if>
+			<if test="nxStandardSort != null">`nx_standard_sort` = #{nxStandardSort}, </if>
+			<if test="nxStandardWeight != null">`nx_standard_weight` = #{nxStandardWeight}, </if>
+			<if test="nxSGoodsId != null">`nx_s_goods_id` = #{nxSGoodsId}</if>
+		</set>
+		where nx_standard_id = #{nxStandardId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_standard where nx_standard_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_standard where nx_standard_id in 
+		<foreach item="nxStandardId" collection="array" open="(" separator="," close=")">
+			#{nxStandardId}
+		</foreach>
+	</delete>
+
+</mapper>

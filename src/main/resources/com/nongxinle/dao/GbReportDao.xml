@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbReportDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbReportEntity">
+		select * from gb_report where gb_report_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbReportEntity">
+		select * from gb_report 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_report 
+	</select>
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+	</resultMap>
+	<resultMap id="report" type="GbReportEntity">
+		<id property="gbReportId" column="gb_report_id"/>
+		<result property="gbRepDisUserId" column="gb_rep_dis_user_id"/>
+		<result property="gbRepIds" column="gb_rep_ids"/>
+		<result property="gbRepType" column="gb_rep_type"/>
+		<result property="gbRepStartDate" column="gb_rep_start_date"/>
+		<result property="gbRepStopDate" column="gb_rep_stop_date"/>
+		<association property="gbDepartmentEntity" resultMap="dep"/>
+
+	</resultMap>
+	<select id="queryReportList" resultMap="report">
+		select * from gb_report as rep
+		left join gb_department as gd on gd.gb_department_id = rep.gb_rep_ids
+		<where>
+			<if test="userId != null">
+				and gb_rep_dis_user_id = #{userId}
+			</if>
+		</where>
+          order by gb_report_id DESC
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbReportEntity">
+		insert into gb_report
+		(
+			`gb_report_id`, 
+			`gb_rep_ids`, 
+			`gb_rep_type`, 
+			`gb_rep_dis_user_id`,
+			`gb_rep_start_date`,
+			`gb_rep_stop_date`
+
+		)
+		values
+		(
+			#{gbReportId}, 
+			#{gbRepIds}, 
+			#{gbRepType}, 
+			#{gbRepDisUserId},
+			#{gbRepStartDate},
+			#{gbRepStopDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbReportEntity">
+		update gb_report 
+		<set>
+			<if test="gbRepIds != null">`gb_rep_ids` = #{gbRepIds}, </if>
+			<if test="gbRepType != null">`gb_rep_type` = #{gbRepType}, </if>
+			<if test="gbRepStartDate != null">`gb_rep_start_date` = #{gbRepStartDate}, </if>
+			<if test="gbRepStopDate != null">`gb_rep_stop_date` = #{gbRepStopDate}, </if>
+			<if test="gbRepDisUserId != null">`gb_rep_dis_user_id` = #{gbRepDisUserId}</if>
+		</set>
+		where gb_report_id = #{gbReportId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_report where gb_report_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_report where gb_report_id in 
+		<foreach item="gbReportId" collection="array" open="(" separator="," close=")">
+			#{gbReportId}
+		</foreach>
+	</delete>
+
+</mapper>

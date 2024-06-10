@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerSupplierDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerSupplierEntity">
+		select * from gb_distributer_supplier where gb_distributer_supplier_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerSupplierEntity">
+		select * from gb_distributer_supplier 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_supplier 
+	</select>
+
+    <select id="querySupplierByParams" resultMap="appointSupplier">
+		select * from gb_distributer_supplier as gds
+		left join gb_distributer_supplier_user as gdsu on gdsu.gb_DSU_supplier_id = gds.gb_distributer_supplier_id
+		<where>
+			<if test="depId != null">
+				and gb_DS_gb_department_id = #{depId}
+			</if>
+			<if test="fatherId != null">
+				and gb_distributer_supplier_father_id = #{fatherId}
+			</if>
+			<if test="disId != null">
+				and gb_DS_gb_distributer_id = #{disId}
+			</if>
+			<if test="isGroup != null">
+				and gb_DS_suppplier_is_group = #{isGroup}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="sup" type="GbDistributerSupplierEntity">
+		<id property="gbDistributerSupplierId" column="gb_distributer_supplier_id"/>
+		<result property="gbDsGbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerSupplierName" column="gb_distributer_supplier_name"/>
+		<result property="gbDistributerSupplierFatherId" column="gb_distributer_supplier_father_id"/>
+		<result property="gbDsSupplierIsGroup" column="gb_DS_supplier_is_group"/>
+		<result property="gbDsGbDepartmentId" column="gb_DS_gb_department_id"/>
+		<result property="gbDsOrderType" column="gb_DS_order_type"/>
+		<result property="gbDsSupplierUserId" column="gb_DS_supplier_user_id"/>
+		<result property="gbDsPurUserId" column="gb_DS_pur_user_id"/>
+	</resultMap>
+
+
+
+    <select id="queryDepartmentSupplier" resultMap="appointSupplier">
+		select *  from gb_distributer_supplier as sup
+		    left join gb_department as dep on dep.gb_department_id = sup.gb_DS_gb_department_id
+			left join gb_distributer_supplier as supCata on  sup.gb_distributer_supplier_father_id = supCata.gb_distributer_supplier_id
+			left join gb_distributer_supplier_user as gdsu on gdsu.gb_DSU_supplier_id = sup.gb_distributer_supplier_id
+			 left join gb_department_user as gdu  on gdu.gb_department_user_id = sup.gb_DS_pur_user_id
+			left join gb_distributer_goods as gdg on gdg.gb_dg_gb_supplier_id = sup.gb_distributer_supplier_id                                           
+			  <where>
+				<if test="depId != null">
+					and sup.gb_DS_gb_department_id = #{depId}
+				</if>
+				<if test="isGroup != null">
+					and sup.gb_DS_suppplier_is_group = #{isGroup}
+				</if>
+			</where>
+	</select>
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+		<result property="gbDepartmentType" column="gb_department_type" />
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<collection property="gbDistributerSupplierEntities" resultMap="sup"/>
+	</resultMap>
+	<select id="querySupplierDepartmentGroup" resultMap="dep">
+		select * from gb_distributer_supplier as sup
+         left join gb_department as dep on sup.gb_DS_gb_department_id = dep.gb_department_id
+         <where>
+			 <if test="fatherId != null ">
+				 gb_distributer_supplier_father_id = #{fatherId}
+			 </if>
+			 <if test="depId != null ">
+				 gb_DS_gb_department_id = #{depId}
+			 </if>
+		 </where>
+
+	</select>
+	<resultMap id="appointSupplierUser" type="GbDistributerSupplierUserEntity">
+		<id property="gbDistributerSupplierUserId" column="gb_distributer_supplier_user_id"/>
+		<result property="gbDsuDepartmentId" column="gb_DSU_department_id"/>
+		<result property="gbDsuDepartmentFatherId" column="gb_DSU_department_father_id"/>
+		<result property="gbDsuDistributerId" column="gb_DSU_distributer_id"/>
+		<result property="gbDsuWxAvartraUrl" column="gb_DSU_wx_avartra_url"/>
+		<result property="gbDsuWxNickName" column="gb_DSU_wx_nick_name"/>
+		<result property="gbDsuJoinDate" column="gb_DSU_join_date"/>
+		<result property="gbDsuAdmin" column="gb_DSU_admin"/>
+		<result property="gbDsuSupplierId" column="gb_DSU_supplier_id"/>
+	</resultMap>
+	<resultMap id="purUser" type="GbDepartmentUserEntity">
+		<id property="gbDepartmentUserId" column="gb_department_user_id"/>
+		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+		<result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+		<result property="gbDuDepartmentId" column="gb_DU_department_id"/>
+		<result property="gbDuDepartmentFatherId" column="gb_DU_department_father_id"/>
+		<result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
+		<result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
+		<result property="gbDuUrlChange" column="gb_DU_url_change"/>
+		<result property="gbDuWxOpenId" column="gb_DU_wx_open_id"/>
+		<result property="gbDuDistributerId" column="gb_DU_distributer_id"/>
+		<result property="gbDuAdmin" column="gb_DU_admin"/>
+		<result property="gbDuJoinDate" column="gb_DU_join_date"/>
+	</resultMap>
+
+	<resultMap id="gbGoods" type="GbDistributerGoodsEntity">
+		<id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgGoodsName" column="gb_dg_goods_name"/>
+		<result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
+		<result property="gbDgGoodsStandardWeight" column="gb_dg_goods_standard_weight"/>
+		<result property="gbDgGoodsBrand" column="gb_dg_goods_brand"/>
+		<result property="gbDgGoodsDetail" column="gb_dg_goods_detail"/>
+		<result property="gbDgGoodsPlace" column="gb_dg_goods_place"/>
+		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
+		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
+		<result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
+		<result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
+		<result property="gbDgControlPrice" column="gb_dg_control_price"/>
+		<result property="gbDgControlFresh" column="gb_dg_control_fresh"/>
+		<result property="gbDgFreshWarnHour" column="gb_dg_fresh_warn_hour"/>
+		<result property="gbDgFreshWasteHour" column="gb_dg_fresh_waste_hour"/>
+		<result property="gbDgGoodsInventoryType" column="gb_dg_goods_inventory_type"/>
+		<result property="gbDgGbSupplierId" column="gb_dg_gb_suppplier_id"/>
+		<result property="gbDgIsFranchisePrice" column="gb_dg_is_franchise_price"/>
+		<result property="gbDgFranchisePriceOne" column="gb_dg_franchise_price_one"/>
+		<result property="gbDgFranchisePriceOneUpdate" column="gb_dg_franchise_price_one_update"/>
+		<result property="gbDgFranchisePriceTwo" column="gb_dg_franchise_price_two"/>
+		<result property="gbDgFranchisePriceTwoUpdate" column="gb_dg_franchise_price_two_update"/>
+		<result property="gbDgFranchisePriceThree" column="gb_dg_franchise_price_three"/>
+		<result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
+		<result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
+		<result property="gbDgSelfPrice" column="gb_dg_self_price"/>
+	</resultMap>
+
+	<resultMap id="appointSupplier" type="GbDistributerSupplierEntity">
+		<id property="gbDistributerSupplierId" column="gb_distributer_supplier_id"/>
+		<result property="gbDsGbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerSupplierName" column="gb_distributer_supplier_name"/>
+		<result property="gbDistributerSupplierFatherId" column="gb_distributer_supplier_father_id"/>
+		<result property="gbDsSupplierIsGroup" column="gb_DS_supplier_is_group"/>
+		<result property="gbDsGbDepartmentId" column="gb_DS_gb_department_id"/>
+		<result property="gbDsSupplierUserId" column="gb_DS_supplier_user_id"/>
+		<result property="gbDsPurUserId" column="gb_DS_pur_user_id"/>
+		<association property="gbDisApplintSupplierUserEntity" resultMap="appointSupplierUser"/>
+		<association property="purUserEntity" resultMap="purUser"/>
+		<collection property="gbDistributerGoodsEntities" resultMap="gbGoods"/>
+	</resultMap>
+
+	<select id="queryDepartmentAppointSupplier" resultMap="appointSupplier">
+		select * from gb_distributer_supplier as sup
+		 left join gb_distributer_supplier_user as gdsu  on gdsu.gb_DSU_supplier_id =  sup.gb_distributer_supplier_id
+		  left join gb_department_user as gdu on gdu.gb_department_user_id = sup.gb_DS_pur_user_id
+		<where>
+			<if test="depId != null">
+				and sup.gb_DS_gb_department_id = #{depId}
+			</if>
+			<if test="isGroup != null">
+				and sup.gb_DS_suppplier_is_group = #{isGroup}
+			</if>
+			<if test="admin != null">
+				and gdsu.gb_DSU_admin = #{admin}
+			</if>
+		</where>
+	</select>
+
+	<select id="queryAppointSupplierBySupplierId" resultMap="appointSupplier">
+		select * from gb_distributer_supplier as gds
+		left join gb_distributer_supplier_user as gdsu on gdsu.gb_distributer_supplier_user_id = gds.gb_DS_supplier_user_id
+		left join gb_department_user as gdu on gdu.gb_department_user_id = gds.gb_DS_pur_user_id
+		<where>
+			<if test="supplierId != null">
+				and gb_distributer_supplier_id = #{supplierId}
+			</if>
+			<if test="admin != null">
+				and gdsu.gb_DSU_admin = #{admin}
+			</if>
+		</where>
+
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerSupplierEntity">
+		insert into gb_distributer_supplier
+		(
+			`gb_distributer_supplier_id`, 
+			`gb_distributer_supplier_name`, 
+			`gb_DS_gb_distributer_id`,
+		 	`gb_DS_gb_department_id`,
+		 	`gb_distributer_supplier_father_id`,
+		 	`gb_DS_suppplier_is_group`,
+		 	`gb_DS_order_type`,
+		 	`gb_DS_supplier_user_id`,
+		 	`gb_DS_pur_user_id`
+
+		)
+		values
+		(
+			#{gbDistributerSupplierId}, 
+			#{gbDistributerSupplierName}, 
+			#{gbDsGbDistributerId},
+		 	#{gbDsGbDepartmentId},
+		 	#{gbDistributerSupplierFatherId},
+		 	#{gbDsSupplierIsGroup},
+		 	#{gbDsOrderType},
+		 	#{gbDsSupplierUserId},
+		 	#{gbDsPurUserId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerSupplierEntity">
+		update gb_distributer_supplier 
+		<set>
+			<if test="gbDistributerSupplierName != null">`gb_distributer_supplier_name` = #{gbDistributerSupplierName}, </if>
+			<if test="gbDsGbDepartmentId != null">`gb_DS_gb_department_id` = #{gbDsGbDepartmentId}, </if>
+			<if test="gbDistributerSupplierFatherId != null">`gb_distributer_supplier_father_id` = #{gbDistributerSupplierFatherId}, </if>
+			<if test="gbDsSupplierIsGroup != null">`gb_DS_suppplier_is_group` = #{gbDsSupplierIsGroup}, </if>
+			<if test="gbDsOrderType != null">`gb_DS_order_type` = #{gbDsOrderType}, </if>
+			<if test="gbDsSupplierUserId != null">`gb_DS_supplier_user_id` = #{gbDsSupplierUserId}, </if>
+			<if test="gbDsPurUserId != null">`gb_DS_pur_user_id` = #{gbDsPurUserId}, </if>
+			<if test="gbDsGbDistributerId != null">`gb_DS_gb_distributer_id` = #{gbDsGbDistributerId}</if>
+		</set>
+		where gb_distributer_supplier_id = #{gbDistributerSupplierId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_supplier where gb_distributer_supplier_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_supplier where gb_distributer_supplier_id in 
+		<foreach item="gbDistributerSupplierId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerSupplierId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerModuleDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerModuleEntity">
+		select * from gb_distributer_module where gb_distributer_module_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerModuleEntity">
+		select * from gb_distributer_module 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_module 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerModuleEntity">
+		insert into gb_distributer_module
+		(
+			`gb_distributer_module_id`, 
+			`gb_dm_fixed_supplier_number`,
+			`gb_dm_purchase_number`, 
+			`gb_dm_stock_number`, 
+			`gb_dm_app_supplier_number`,
+			`gb_dm_central_kitchen_number`, 
+			`gb_dm_direct_sales_number`,
+			`gb_dm_franchisee_number`,
+			`gb_dm_distributer_id`
+		)
+		values
+		(
+			#{gbDistributerModuleId}, 
+			#{gbDmFixedSupplierNumber},
+			#{gbDmPurchaseNumber}, 
+			#{gbDmStockNumber}, 
+			#{gbDmAppSupplierNumber},
+			#{gbDmCentralKitchenNumber}, 
+			#{gbDmDirectSalesNumber},
+			#{gbDmFranchiseeNumber},
+			#{gbDmDistributerId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerModuleEntity">
+		update gb_distributer_module 
+		<set>
+			<if test="gbDmFixedSupplierNumber != null">`gb_dm_fixed_supplier_number` = #{gbDmFixedSupplierNumber}, </if>
+			<if test="gbDmPurchaseNumber != null">`gb_dm_purchase_number` = #{gbDmPurchaseNumber}, </if>
+			<if test="gbDmStockNumber != null">`gb_dm_stock_number` = #{gbDmStockNumber}, </if>
+			<if test="gbDmAppSupplierNumber != null">`gb_dm_app_supplier_number` = #{gbDmAppSupplierNumber}, </if>
+			<if test="gbDmCentralKitchenNumber != null">`gb_dm_central_kitchen_number` = #{gbDmCentralKitchenNumber}, </if>
+			<if test="gbDmDirectSalesNumber != null">`gb_dm_direct_sales_number` = #{gbDmDirectSalesNumber}, </if>
+			<if test="gbDmFranchiseeNumber != null">`gb_dm_franchisee_number` = #{gbDmFranchiseeNumber}, </if>
+			<if test="gbDmDistributerId != null">`gb_dm_distributer_id` = #{gbDmDistributerId}</if>
+		</set>
+		where gb_distributer_module_id = #{gbDistributerModuleId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_module where gb_distributer_module_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_module where gb_distributer_module_id in 
+		<foreach item="gbDistributerModuleId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerModuleId}
+		</foreach>
+	</delete>
+
+</mapper>

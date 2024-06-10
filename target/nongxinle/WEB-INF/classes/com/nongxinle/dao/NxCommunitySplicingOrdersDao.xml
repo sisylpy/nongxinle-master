@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunitySplicingOrdersDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunitySplicingOrdersEntity">
+		select * from nx_community_splicing_orders where nx_community_splicing_orders_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunitySplicingOrdersEntity">
+		select * from nx_community_splicing_orders 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_splicing_orders 
+	</select>
+
+	<select id="queryNewPindan" resultMap="splicingOrderDetail">
+		select * from nx_community_splicing_orders as ncso
+		left join nx_community_orders_sub as ncos on ncos.nx_COS_orders_id = ncso.nx_community_splicing_orders_id
+		    and  ncos.nx_COS_order_user_id = #{orderUserId}
+		left join nx_community_goods as ncg on ncg.nx_community_goods_id = ncos.nx_COS_community_goods_id
+		<where>
+			<if test="id != null">
+				and ncso.nx_cso_co_order_id = #{id}
+			</if>
+			<if test="orderUserId != null">
+				and ncso.nx_cso_user_id = #{orderUserId}
+			</if>
+
+			<if test="status != null">
+				and ncso.nx_cso_status = #{status}
+			</if>
+		</where>
+	</select>
+
+	<select id="querySplicingListByParams" resultMap="splicingOrderDetail">
+		select * from nx_community_splicing_orders
+		<where>
+			<if test="id != null">
+				and nx_cso_co_order_id = #{id}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="customer" type="NxCustomerEntity">
+		<id property="nxCustomerId" column="nx_customer_id"/>
+		<result property="nxCustomerCardWasteDate" column="nx_customer_card_waste_date"/>
+	</resultMap>
+	<resultMap id="shareUser" type="NxCustomerUserEntity">
+		<id property="nxCuUserId" column="share_nx_CU_user_id"/>
+		<result property="nxCuWxAvatarUrl" column="share_nx_CU_wx_avatra_url"/>
+		<result property="nxCuCustomerId" column="share_nx_CU_customer_id"/>
+		<association property="nxCustomerEntity" resultMap="customer"/>
+	</resultMap>
+	<resultMap id="deliveryUser" type="NxCustomerUserEntity">
+		<id property="nxCuUserId" column="nx_CU_user_id"/>
+		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatra_url"/>
+		<result property="nxCuCustomerId" column="nx_CU_customer_id"/>
+	</resultMap>
+	<resultMap id="commGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+
+	</resultMap>
+	<!-- subOrders -->
+	<resultMap id="subOrders" type="NxCommunityOrdersSubEntity">
+		<id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosGoodsIndex" column="nx_COS_goods_index"/>
+		<result property="nxCosHuaxianDifferentPrice" column="nx_COS_huaxian_different_price"/>
+		<result property="nxCosHuaxianPrice" column="nx_COS_huaxian_price"/>
+		<result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
+		<result property="nxCosQuantity" column="nx_COS_quantity"/>
+		<result property="nxCosStandard" column="nx_COS_standard"/>
+		<result property="nxCosPrice" column="nx_COS_price"/>
+		<result property="nxCosWeight" column="nx_COS_weight"/>
+		<result property="nxCosOrdersId" column="nx_COS_orders_id"/>
+		<result property="nxCosSubtotal" column="nx_COS_subtotal"/>
+		<result property="nxCosSubWeight" column="nx_COS_sub_weight"/>
+		<association property="nxCommunityGoodsEntity" resultMap="commGoods"/>
+	</resultMap>
+
+	<resultMap id="splicingOrderDetail" type="NxCommunitySplicingOrdersEntity">
+		<id property="nxCommunitySplicingOrdersId" column="nx_community_splicing_orders_id"/>
+		<result property="nxCsoDeliveryUserId" column="nx_cso_delivery_user_id"/>
+		<result property="nxCsoAmount" column="nx_cso_amount"/>
+		<result property="nxCsoCommunityId" column="nx_cso_community_id"/>
+		<result property="nxCsoDate" column="nx_cso_date"/>
+		<result property="nxCsoService" column="nx_cso_service"/>
+		<result property="nxCsoServiceDate" column="nx_cso_service_date"/>
+		<result property="nxCsoServiceTime" column="nx_cso_service_time"/>
+		<result property="nxCsoStatus" column="nx_cso_status"/>
+		<result property="nxCsoCoOrderId" column="nx_cso_co_order_id"/>
+		<result property="nxCsoUserId" column="nx_cso_user_id"/>
+		<result property="nxCsoServiceTime" column="nx_cso_service_time"/>
+		<result property="nxCsoServiceDate" column="nx_cso_service_date"/>
+		<result property="nxCsoTotal" column="nx_cso_total"/>
+		<result property="nxCsoYouhuiTotal" column="nx_cso_youhui_total"/>
+		<collection property="nxCommunityOrdersSubEntities" resultMap="subOrders"/>
+	</resultMap>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunitySplicingOrdersEntity">
+		insert into nx_community_splicing_orders
+		(
+			`nx_community_splicing_orders_id`, 
+			`nx_cso_co_order_id`,
+			`nx_cso_community_id`, 
+			`nx_cso_customer_id`, 
+			`nx_cso_user_id`, 
+			`nx_cso_date`, 
+			`nx_cso_status`, 
+			`nx_cso_service`, 
+			`nx_cso_amount`, 
+			`nx_cso_service_date`, 
+			`nx_cso_service_time`, 
+			`nx_cso_weigh_user_id`, 
+			`nx_cso_delivery_user_id`, 
+			`nx_cso_sub_amount`, 
+			`nx_cso_sub_finished`, 
+			`nx_cso_weigh_number`, 
+			`nx_cso_payment_status`, 
+			`nx_cso_payment_send_time`, 
+			`nx_cso_payment_time`, 
+			`nx_cso_type`, 
+			`nx_cso_wx_out_trade_no`, 
+			`nx_cso_total`,
+			`nx_cso_youhui_total`
+		)
+		values
+		(
+			#{nxCommunitySplicingOrdersId}, 
+			#{nxCsoCoOrderId},
+			#{nxCsoCommunityId}, 
+			#{nxCsoCustomerId}, 
+			#{nxCsoUserId}, 
+			#{nxCsoDate}, 
+			#{nxCsoStatus}, 
+			#{nxCsoService}, 
+			#{nxCsoAmount}, 
+			#{nxCsoServiceDate}, 
+			#{nxCsoServiceTime}, 
+			#{nxCsoWeighUserId}, 
+			#{nxCsoDeliveryUserId}, 
+			#{nxCsoSubAmount}, 
+			#{nxCsoSubFinished}, 
+			#{nxCsoWeighNumber}, 
+			#{nxCsoPaymentStatus}, 
+			#{nxCsoPaymentSendTime}, 
+			#{nxCsoPaymentTime}, 
+			#{nxCsoType}, 
+			#{nxCsoWxOutTradeNo}, 
+			#{nxCsoTotal},
+			#{nxCsoYouhuiTotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunitySplicingOrdersEntity">
+		update nx_community_splicing_orders 
+		<set>
+			<if test="nxCsoCoOrderId != null">`nx_cso_co_order_id` = #{nxCsoCoOrderId}, </if>
+			<if test="nxCsoCommunityId != null">`nx_cso_community_id` = #{nxCsoCommunityId}, </if>
+			<if test="nxCsoCustomerId != null">`nx_cso_customer_id` = #{nxCsoCustomerId}, </if>
+			<if test="nxCsoUserId != null">`nx_cso_user_id` = #{nxCsoUserId}, </if>
+			<if test="nxCsoDate != null">`nx_cso_date` = #{nxCsoDate}, </if>
+			<if test="nxCsoStatus != null">`nx_cso_status` = #{nxCsoStatus}, </if>
+			<if test="nxCsoService != null">`nx_cso_service` = #{nxCsoService}, </if>
+			<if test="nxCsoAmount != null">`nx_cso_amount` = #{nxCsoAmount}, </if>
+			<if test="nxCsoServiceDate != null">`nx_cso_service_date` = #{nxCsoServiceDate}, </if>
+			<if test="nxCsoServiceTime != null">`nx_cso_service_time` = #{nxCsoServiceTime}, </if>
+			<if test="nxCsoWeighUserId != null">`nx_cso_weigh_user_id` = #{nxCsoWeighUserId}, </if>
+			<if test="nxCsoDeliveryUserId != null">`nx_cso_delivery_user_id` = #{nxCsoDeliveryUserId}, </if>
+			<if test="nxCsoSubAmount != null">`nx_cso_sub_amount` = #{nxCsoSubAmount}, </if>
+			<if test="nxCsoSubFinished != null">`nx_cso_sub_finished` = #{nxCsoSubFinished}, </if>
+			<if test="nxCsoWeighNumber != null">`nx_cso_weigh_number` = #{nxCsoWeighNumber}, </if>
+			<if test="nxCsoPaymentStatus != null">`nx_cso_payment_status` = #{nxCsoPaymentStatus}, </if>
+			<if test="nxCsoPaymentSendTime != null">`nx_cso_payment_send_time` = #{nxCsoPaymentSendTime}, </if>
+			<if test="nxCsoPaymentTime != null">`nx_cso_payment_time` = #{nxCsoPaymentTime}, </if>
+			<if test="nxCsoType != null">`nx_cso_type` = #{nxCsoType}, </if>
+			<if test="nxCsoWxOutTradeNo != null">`nx_cso_wx_out_trade_no` = #{nxCsoWxOutTradeNo}, </if>
+			<if test="nxCsoYouhuiTotal != null">`nx_cso_youhui_total` = #{nxCsoYouhuiTotal}, </if>
+			<if test="nxCsoTotal != null">`nx_cso_total` = #{nxCsoTotal}</if>
+		</set>
+		where nx_community_splicing_orders_id = #{nxCommunitySplicingOrdersId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_splicing_orders where nx_community_splicing_orders_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_splicing_orders where nx_community_splicing_orders_id in 
+		<foreach item="nxCommunitySplicingOrdersId" collection="array" open="(" separator="," close=")">
+			#{nxCommunitySplicingOrdersId}
+		</foreach>
+	</delete>
+
+</mapper>

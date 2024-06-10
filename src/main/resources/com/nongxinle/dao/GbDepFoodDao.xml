@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepFoodDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepFoodEntity">
+		select * from gb_dep_food where gb_dep_food_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepFoodEntity">
+		select * from gb_dep_food 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_food 
+	</select>
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<result property="gbDepartmentPrintName" column="gb_department_print_name"/>
+	</resultMap>
+
+
+	<resultMap id="disGoods" type="GbDistributerGoodsEntity">
+		<id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgGoodsName" column="gb_dg_goods_name"/>
+		<result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
+		<result property="gbDgGoodsDetail" column="gb_dg_goods_detail"/>
+		<result property="gbDgGoodsPlace" column="gb_dg_goods_place"/>
+		<result property="gbDgGoodsBrand" column="gb_dg_goods_brand"/>
+		<result property="gbDgPullOff" column="gb_dg_pull_off"/>
+		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
+		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
+		<result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
+		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+		<result property="gbDgGbSupplierId" column="gb_dg_gb_supplier_id"/>
+		<result property="gbDgGoodsStandardWeight" column="gb_dg_goods_standard_weight"/>
+		<result property="gbDgGoodsStatus" column="gb_dg_goods_status"/>
+		<result property="gbDgGoodsType" column="gb_dg_goods_type"/>
+		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+		<result property="gbDgGbSupplierId" column="gb_dg_gb_supplier_id"/>
+		<result property="gbDgNxDistributerId" column="gb_dg_nx_distributer_id"/>
+		<result property="gbDgNxDistributerGoodsId" column="gb_dg_nx_distributer_goods_id"/>
+		<result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
+		<result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
+		<result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
+		<result property="gbDgControlPrice" column="gb_dg_control_price"/>
+		<result property="gbDgControlFresh" column="gb_dg_control_fresh"/>
+		<result property="gbDgFreshWarnHour" column="gb_dg_fresh_warn_hour"/>
+		<result property="gbDgFreshWasteHour" column="gb_dg_fresh_waste_hour"/>
+		<result property="gbDgGoodsInventoryType" column="gb_dg_goods_inventory_type"/>
+		<result property="gbDgGoodsType" column="gb_dg_goods_type"/>
+		<result property="gbDgGbSupplierId" column="gb_dg_gb_supplier_id"/>
+		<result property="gbDgIsFranchisePrice" column="gb_dg_is_franchise_price"/>
+		<result property="gbDgFranchisePriceOne" column="gb_dg_franchise_price_one"/>
+		<result property="gbDgFranchisePriceOneUpdate" column="gb_dg_franchise_price_one_update"/>
+		<result property="gbDgFranchisePriceTwo" column="gb_dg_franchise_price_two"/>
+		<result property="gbDgFranchisePriceTwoUpdate" column="gb_dg_franchise_price_two_update"/>
+		<result property="gbDgFranchisePriceThree" column="gb_dg_franchise_price_three"/>
+		<result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
+		<result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
+		<result property="gbDgSelfPrice" column="gb_dg_self_price"/>
+	</resultMap>
+
+	<resultMap id="foodGoods" type="GbDistributerFoodGoodsEntity">
+		<id property="gbDistributerFoodGoodsId" column="gb_distributer_food_goods_id"/>
+		<result property="gbDfoodgDisGoodsId" column="gb_DFoodG_dis_goods_id"/>
+		<result property="gbDfoodgFoodId" column="gb_DFoodG_food_id"/>
+		<result property="gbDfoodgGoodsAmount" column="gb_DFoodG_goods_amount"/>
+		<result property="gbDfoodgGbDistributerId" column="gb_DFoodG_gb_distributer_id"/>
+		<result property="gbDfoodgGoodsName" column="gb_DFoodG_dg_goods_name"/>
+		<result property="gbDfoodgGoodsStandardname" column="gb_DFoodG_dg_goods_standardname"/>
+		<result property="gbDfoodgStatus" column="gb_DFoodG_dg_status"/>
+		<association property="distributerGoodsEntity" resultMap="disGoods"/>
+	</resultMap>
+	<resultMap id="food" type="GbDistributerFoodEntity">
+		<id property="gbDistributerFoodId" column="gb_distributer_food_id"/>
+		<result property="gbDistributerFoodName" column="gb_distributer_food_name"/>
+		<result property="gbDfGbDistributerId" column="gb_DF_gb_distributer_id"/>
+		<result property="gbDistributerFoodFatherId" column="gb_distribtuer_food_father_id"/>
+		<result property="gbDistributerFoodPrice" column="gb_distributer_food_price"/>
+		<result property="gbDistributerFoodImg" column="gb_distributer_food_img"/>
+		<result property="gbDistributerFoodMethod" column="gb_distributer_food_method"/>
+	</resultMap>
+	<resultMap id="subFoods" type="GbDistributerFoodEntity">
+		<id property="gbDistributerFoodId" column="gb_distributer_food_id"/>
+		<result property="gbDistributerFoodName" column="gb_distributer_food_name"/>
+		<result property="gbDfGbDistributerId" column="gb_DF_gb_distributer_id"/>
+		<result property="gbDistributerFoodFatherId" column="gb_distribtuer_food_father_id"/>
+		<result property="gbDistributerFoodPrice" column="gb_distributer_food_price"/>
+		<result property="gbDistributerFoodImg" column="gb_distributer_food_img"/>
+		<result property="gbDistributerFoodMethod" column="gb_distributer_food_method"/>
+		<association property="gbDepFoodEntity" resultMap="depFood"/>
+		<collection property="gbdisFoodGoodsEntities" resultMap="foodGoods"/>
+	</resultMap>
+	<resultMap id="fatherFoods" type="GbDistributerFoodEntity">
+		<id property="gbDistributerFoodId" column="f_gb_distributer_food_id"/>
+		<result property="gbDistributerFoodName" column="f_gb_distributer_food_name"/>
+		<result property="gbDfGbDistributerId" column="f_gb_DF_gb_distributer_id"/>
+		<result property="gbDistributerFoodFatherId" column="f_gb_distribtuer_food_father_id"/>
+		<collection property="foodEntityList" resultMap="subFoods"/>
+	</resultMap>
+
+	<resultMap id="depFood" type="GbDepFoodEntity">
+		<id property="gbDepFoodId" column="gb_dep_food_id"/>
+		<result property="gbDfFoodId" column="gb_DF_food_id"/>
+		<result property="gbDfFoodPrice" column="gb_DF_food_price"/>
+		<result property="gbDfDepId" column="gb_DF_dep_id"/>
+		<result property="gbDfDepFatherId" column="gb_DF_dep_father_id"/>
+		<association property="gbDistributerFoodEntity" resultMap="food"/>
+ 		<association property="gbDepartmentEntity" resultMap="dep"/>
+	</resultMap>
+
+    <select id="queryDepFoodByParams" resultMap="fatherFoods">
+		 select
+		depFood.gb_dep_food_id,
+		depFood.gb_DF_food_id,
+		depFood.gb_DF_dep_father_id,
+		depFood.gb_DF_dep_id,
+		depFood.gb_DF_food_price,
+		depFood.gb_DF_status,
+		fatherFood.gb_distributer_food_id 'f_gb_distributer_food_id',
+		fatherFood.gb_distributer_food_name 'f_gb_distributer_food_name',
+		fatherFood.gb_DF_gb_distributer_id 'f_gb_DF_gb_distributer_id',
+		fatherFood.gb_distributer_food_father_id 'f_gb_distribtuer_food_father_id',
+		food.gb_distributer_food_id 'gb_distributer_food_id',
+		food.gb_distributer_food_name 'gb_distributer_food_name',
+		food.gb_DF_gb_distributer_id 'gb_DF_gb_distributer_id',
+		food.gb_distributer_food_father_id 'gb_distribtuer_food_father_id',
+		food.gb_distributer_food_price 'gb_distributer_food_price',
+		food.gb_distributer_food_img 'gb_distributer_food_img',
+		food.gb_distributer_food_method 'gb_distributer_food_method',
+		dep.gb_department_id,
+		dep.gb_department_name,
+		dep.gb_department_father_id,
+		foodGoods.gb_distributer_food_goods_id,
+		foodGoods.gb_DFoodG_dis_goods_id,
+		foodGoods.gb_DFoodG_food_id,
+		foodGoods.gb_DFoodG_goods_amount,
+		disGoods.gb_distributer_goods_id,
+		disGoods.gb_dg_goods_name,
+		disGoods.gb_dg_goods_standardname
+		from gb_dep_food as depFood
+		left join gb_distributer_food as food on depFood.gb_DF_food_id = food.gb_distributer_food_id
+		left join gb_distributer_food as fatherFood on fatherFood.gb_distributer_food_id = food.gb_distributer_food_father_id
+		left join gb_department as dep on dep.gb_department_id = depFood.gb_DF_dep_id
+		left join gb_distributer_food_goods as foodGoods on foodGoods.gb_DFoodG_food_id =
+		food.gb_distributer_food_id
+		left join gb_distributer_goods as disGoods on disGoods.gb_distributer_goods_id =
+		foodGoods.gb_DFoodG_dis_goods_id
+		 <where>
+			<if test="depFatherId != null">
+				and gb_DF_dep_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null ">
+				and gb_DF_dep_id = #{depId}
+			</if>
+			<if test="foodId != null ">
+				and gb_DF_food_id = #{foodId}
+			</if>
+
+		</where>
+	</select>
+	<select id="queryDepFoodByParamsWithoutFather" resultMap="depFood">
+		select  * from gb_dep_food as depFood
+		left join gb_distributer_food as food on depFood.gb_DF_food_id = food.gb_distributer_food_id
+		left join gb_department as dep on dep.gb_department_id = depFood.gb_DF_dep_id
+		<where>
+			<if test="depFatherId != null">
+				and gb_DF_dep_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null ">
+				and gb_DF_dep_id = #{depId}
+			</if>
+			<if test="foodId != null ">
+				and gb_DF_food_id = #{foodId}
+			</if>
+
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepFoodEntity">
+		insert into gb_dep_food
+		(
+			`gb_dep_food_id`, 
+			`gb_DF_dep_id`, 
+			`gb_DF_food_id`, 
+			`gb_DF_dep_father_id`, 
+			`gb_DF_status`, 
+			`gb_DF_food_price`
+		)
+		values
+		(
+			#{gbDepFoodId}, 
+			#{gbDfDepId}, 
+			#{gbDfFoodId}, 
+			#{gbDfDepFatherId}, 
+			#{gbDfStatus}, 
+			#{gbDfFoodPrice}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepFoodEntity">
+		update gb_dep_food 
+		<set>
+			<if test="gbDfDepId != null">`gb_DF_dep_id` = #{gbDfDepId}, </if>
+			<if test="gbDfFoodId != null">`gb_DF_food_id` = #{gbDfFoodId}, </if>
+			<if test="gbDfDepFatherId != null">`gb_DF_dep_father_id` = #{gbDfDepFatherId}, </if>
+			<if test="gbDfStatus != null">`gb_DF_status` = #{gbDfStatus}, </if>
+			<if test="gbDfFoodPrice != null">`gb_DF_food_price` = #{gbDfFoodPrice}</if>
+		</set>
+		where gb_dep_food_id = #{gbDepFoodId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_food where gb_dep_food_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_food where gb_dep_food_id in 
+		<foreach item="gbDepFoodId" collection="array" open="(" separator="," close=")">
+			#{gbDepFoodId}
+		</foreach>
+	</delete>
+
+</mapper>

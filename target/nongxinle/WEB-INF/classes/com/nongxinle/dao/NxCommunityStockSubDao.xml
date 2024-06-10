@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityStockSubDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityStockSubEntity">
+		select * from nx_community_stock_sub where nx_community_sub_stock_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityStockSubEntity">
+		select * from nx_community_stock_sub 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_stock_sub 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityStockSubEntity">
+		insert into nx_community_stock_sub
+		(
+			`nx_community_sub_stock_id`, 
+			`nx_cs_id`, 
+			`nx_css_cg_id`, 
+			`nx_css_entry_amount`, 
+			`nx_css_entry_standard`, 
+			`nx_css_entry_price`, 
+			`nx_css_entry_sub_total`, 
+			`nx_css_entry_date`, 
+			`nx_css_stock_amount`
+		)
+		values
+		(
+			#{nxCommunitySubStockId}, 
+			#{nxCsId}, 
+			#{nxCssCgId}, 
+			#{nxCssEntryAmount}, 
+			#{nxCssEntryStandard}, 
+			#{nxCssEntryPrice}, 
+			#{nxCssEntrySubTotal}, 
+			#{nxCssEntryDate}, 
+			#{nxCssStockAmount}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityStockSubEntity">
+		update nx_community_stock_sub 
+		<set>
+			<if test="nxCsId != null">`nx_cs_id` = #{nxCsId}, </if>
+			<if test="nxCssCgId != null">`nx_css_cg_id` = #{nxCssCgId}, </if>
+			<if test="nxCssEntryAmount != null">`nx_css_entry_amount` = #{nxCssEntryAmount}, </if>
+			<if test="nxCssEntryStandard != null">`nx_css_entry_standard` = #{nxCssEntryStandard}, </if>
+			<if test="nxCssEntryPrice != null">`nx_css_entry_price` = #{nxCssEntryPrice}, </if>
+			<if test="nxCssEntrySubTotal != null">`nx_css_entry_sub_total` = #{nxCssEntrySubTotal}, </if>
+			<if test="nxCssEntryDate != null">`nx_css_entry_date` = #{nxCssEntryDate}, </if>
+			<if test="nxCssStockAmount != null">`nx_css_stock_amount` = #{nxCssStockAmount}</if>
+		</set>
+		where nx_community_sub_stock_id = #{nxCommunitySubStockId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_stock_sub where nx_community_sub_stock_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_stock_sub where nx_community_sub_stock_id in 
+		<foreach item="nxCommunitySubStockId" collection="array" open="(" separator="," close=")">
+			#{nxCommunitySubStockId}
+		</foreach>
+	</delete>
+
+</mapper>

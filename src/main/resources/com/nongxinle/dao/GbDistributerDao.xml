@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerEntity">
+		select * from gb_distributer where gb_distributer_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerEntity">
+		select * from gb_distributer 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer 
+	</select>
+
+	<resultMap id="directDeps" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="direct_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="direct_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="direct_gb_department_type"/>
+		<result property="gbDepartmentName" column="direct_gb_department_name"/>
+	</resultMap>
+	<resultMap id="franchiseeDeps" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="franchisee_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="franchisee_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="franchisee_gb_department_type"/>
+		<result property="gbDepartmentName" column="franchisee_gb_department_name"/>
+	</resultMap>
+	<resultMap id="purDeps" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="pur_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="pur_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="pur_gb_department_type"/>
+		<result property="gbDepartmentName" column="pur_gb_department_name"/>
+	</resultMap>
+	<resultMap id="nxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+	</resultMap>
+	<resultMap id="nxDisGbDis" type="NxDistributerGbDistributerEntity">
+		<id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+		<result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
+		<result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
+		<result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
+		<result property="nxDgdGbPayMethod" column="nx_DGD_gb_pay_method"/>
+		<result property="nxDgdGbPayPeriodWeek" column="nx_DGD_gb_pay_period_week"/>
+		<result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
+		<result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
+		<result property="nxDgdStatus" column="nx_DGD_status"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
+	</resultMap>
+	<resultMap id="appSupplierDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="appSupplierDep_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="appSupplierDep_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="appSupplierDep_gb_department_type"/>
+		<result property="gbDepartmentName" column="appSupplierDep_gb_department_name"/>
+		<result property="gbDepartmentPrintName" column="appSupplierDep_gb_department_print_name"/>
+		<collection property="appSupplierList" resultMap="nxDisGbDis"/>
+	</resultMap>
+	<resultMap id="stockDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="stockDep_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="stockDep_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="stockDep_gb_department_type"/>
+		<result property="gbDepartmentName" column="stockDep_gb_department_name"/>
+		<result property="gbDepartmentPrintName" column="stockDep_gb_department_print_name"/>
+		<result property="gbDepartmentFatherId" column="stockDep_gb_department_father_id"/>
+	</resultMap>
+	<resultMap id="mdDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="md_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="md_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="md_gb_department_type"/>
+		<result property="gbDepartmentName" column="md_gb_department_name"/>
+		<result property="gbDepartmentPrintName" column="md_gb_department_print_name"/>
+		<result property="gbDepartmentFatherId" column="md_gb_department_father_id"/>
+	</resultMap>
+	<resultMap id="kitchenDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="kitchenDep_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="kitchenDep_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="kitchenDep_gb_department_type"/>
+		<result property="gbDepartmentName" column="kitchenDep_gb_department_name"/>
+		<result property="gbDepartmentPrintName" column="kitchenDep_gb_department_print_name"/>
+		<result property="gbDepartmentFatherId" column="kitchenDep_gb_department_father_id"/>
+	</resultMap>
+
+	<resultMap id="disModule" type="GbDistributerModuleEntity">
+		<id property="gbDistributerModuleId" column="gb_distributer_module_id"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmPurchaseNumber" column="gb_dm_purchase_number"/>
+		<result property="gbDmStockNumber" column="gb_dm_stock_number"/>
+        <result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmCentralKitchenNumber" column="gb_dm_central_kitchen_number"/>
+		<result property="gbDmDirectSalesNumber" column="gb_dm_direct_sales_number"/>
+		<result property="gbDmFranchiseeNumber" column="gb_dm_franchisee_number"/>
+		<result property="gbDmDistributerId" column="gb_dm_distributer_id"/>
+	</resultMap>
+	<resultMap id="sysBusiness" type="SysBusinessTypeEntity">
+		<id property="sysBusinessTypeId" column="sys_business_type_id"/>
+		<result property="sysBusinessTypeName" column="sys_business_type_name"/>
+		<result property="sysByDisType" column="sys_by_dis_type"/>
+	</resultMap>
+	<resultMap id="disInfo" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerImg" column="gb_distributer_img"/>
+		<result property="gbDistributerAddress" column="gb_distributer_address"/>
+		<result property="gbDistributerManager" column="gb_distributer_manager"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+		<association property="appSupplierDepartment" resultMap="appSupplierDep"/>
+ 		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
+		<association property="sysBusinessTypeEntity" resultMap="sysBusiness"/>
+		<collection property="franchiseeDepartmentList" resultMap="franchiseeDeps"/>
+ 		<collection property="purDepartmentList" resultMap="purDeps"/>
+		<collection property="stockDepartmentList" resultMap="stockDep"/>
+		<collection property="mendianDepartmentList" resultMap="mdDep"/>
+		<collection property="kitchenDepartmentList" resultMap="kitchenDep"/>
+	</resultMap>
+
+    <select id="queryDisInfo" resultMap="disInfo">
+		select *,
+			   directDep.gb_department_id 'md_gb_department_id',
+			   directDep.gb_department_dis_id 'md_gb_department_dis_id',
+			   directDep.gb_department_name 'md_gb_department_name',
+			   directDep.gb_department_print_name 'md_gb_department_print_name',
+			   franchDep.gb_department_id 'franchisee_gb_department_id',
+			   franchDep.gb_department_dis_id 'franchisee_gb_department_dis_id',
+			   franchDep.gb_department_name 'franchisee_gb_department_name',
+			   franchDep.gb_department_print_name 'franchisee_gb_department_print_name',
+
+			   purDep.gb_department_id 'pur_gb_department_id',
+			   purDep.gb_department_dis_id 'pur_gb_department_dis_id',
+			   purDep.gb_department_name 'pur_gb_department_name',
+			   purDep.gb_department_print_name 'pur_gb_department_print_name',
+
+			   appSupplierDep.gb_department_id 'appSupplierDep_gb_department_id',
+			   appSupplierDep.gb_department_dis_id 'appSupplierDep_gb_department_dis_id',
+			   appSupplierDep.gb_department_name 'appSupplierDep_gb_department_name',
+			   appSupplierDep.gb_department_print_name 'appSupplierDep_gb_department_print_name',
+			   stockDep.gb_department_id 'stockDep_gb_department_id',
+			   stockDep.gb_department_dis_id 'stockDep_gb_department_dis_id',
+			   stockDep.gb_department_name 'stockDep_gb_department_name',
+			   stockDep.gb_department_print_name 'stockDep_gb_department_print_name',
+
+			   kitchenDep.gb_department_id 'kitchenDep_gb_department_id',
+			   kitchenDep.gb_department_dis_id 'kitchenDep_gb_department_dis_id',
+			   kitchenDep.gb_department_print_name 'kitchenDep_gb_department_print_name',
+			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name'
+		       from gb_distributer  as dis
+		  left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id
+		  left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id
+				   and directDep.gb_department_type = 1
+		  left join gb_department as franchDep on directDep.gb_department_dis_id = dis.gb_distributer_id
+				   and franchDep.gb_department_type = 11
+		left join gb_department as purDep on purDep.gb_department_dis_id = dis.gb_distributer_id
+		 and purDep.gb_department_type = 2
+		left join gb_department as stockDep on stockDep.gb_department_dis_id = dis.gb_distributer_id
+		and stockDep.gb_department_type = 3
+		 left join sys_business_type as sbt on sbt.sys_business_type_id = dis.gb_distributer_business_type
+		
+		  left join gb_department as kitchenDep on kitchenDep.gb_department_dis_id = dis.gb_distributer_id
+		 and kitchenDep.gb_department_type = 4
+		  left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
+				   and appSupplierDep.gb_department_type = 5
+		  left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id
+		left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id
+		where gb_distributer_id = #{diuDistributerId}
+        order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id
+
+	</select>
+    <select id="queryGbUser" resultType="com.nongxinle.entity.GbDistributerUserEntity">
+		select * from gb_distributer_user as du
+		 left join gb_distributer as d on d.gb_distributer_id = du.gb_DIU_distributer_id
+		<where>
+			<if test="disId != null">
+				and gb_DIU_distributer_id= #{disId}
+			</if>
+
+		</where>
+
+	</select>
+    <select id="queryListAll" resultType="com.nongxinle.entity.GbDistributerEntity">
+		select * from gb_distributer
+	</select>
+	<resultMap id="jrdhUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="buy_user_nx_jrdh_user_id"/>
+		<result property="nxJrdhWxAvartraUrl" column="buy_user_nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="buy_user_nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="buy_user_nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="buy_user_nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="buy_user_nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="buy_user_nx_jrdh_nx_comm_user_id"/>
+		<result property="nxJrdhUrlChange" column="buy_user_nx_jrdh_url_change"/>
+		<result property="nxJrdhAdmin" column="buy_user_nx_jrdh_admin"/>
+	</resultMap>
+	<resultMap id="jrdhSupplier" type="NxJrdhSupplierEntity">
+		<id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
+		<result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
+		<result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
+		<result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
+		<result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+		<result property="nxJrdhsNxJrdhBuyUserId" column="nx_jrdhs_nx_jrdh_buy_user_id"/>
+		<association property="buyerUserEntity" resultMap="jrdhUser"/>
+	</resultMap>
+	<resultMap id="jrdhSellUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
+		<result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhGbDistributerId" column="sell_user_nx_jrdh_gb_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
+		<result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
+		<result property="nxJrdhAdmin" column="sell_user_nx_jrdh_admin"/>
+	</resultMap>
+
+	<resultMap id="gbDistributer" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerImg" column="gb_distributer_img"/>
+		<result property="gbDistributerAddress" column="gb_distributer_address"/>
+		<result property="gbDistributerManager" column="gb_distributer_manager"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+
+		<association property="sellerUser" resultMap="jrdhSellUser"/>
+	</resultMap>
+
+    <select id="queryGbDisCustomerBySellerOpenId" resultMap="gbDistributer">
+		select *,
+			   sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+			   sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+			   sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+			   sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change',
+			   sell_user.nx_jrdh_admin 'sell_user_nx_jrdh_admin',
+			   sell_user.nx_jrdh_gb_distributer_id 'sell_user_nx_jrdh_gb_distributer_id'
+		from gb_distributer  as gd
+		 left join  nx_jrdh_user as sell_user on  sell_user.nx_jrdh_gb_distributer_id = gd.gb_distributer_id
+		where sell_user.nx_jrdh_wx_open_id = #{openId}
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDistributerEntity"
+	useGeneratedKeys="true" keyProperty="gbDistributerId">
+		insert into gb_distributer
+		(
+			`gb_distributer_id`, 
+			`gb_distributer_name`, 
+			`gb_distributer_lan`, 
+			`gb_distributer_lun`, 
+			`gb_distributer_business_type`, 
+			`gb_distributer_manager`, 
+			`gb_distributer_phone`, 
+			`gb_distributer_address`, 
+			`gb_distributer_img`,
+		 	`gb_distributer_settle_date`,
+		 	`gb_distributer_settle_full_time`,
+		 	`gb_distributer_settle_month`,
+		 	`gb_distributer_settle_week`,
+		 	`gb_distributer_settle_year`,
+		 	`gb_distributer_settle_times`,
+		 	`gb_distributer_time_quantum`
+		)
+		values
+		(
+			#{gbDistributerId}, 
+			#{gbDistributerName}, 
+			#{gbDistributerLan}, 
+			#{gbDistributerLun}, 
+			#{gbDistributerBusinessType}, 
+			#{gbDistributerManager}, 
+			#{gbDistributerPhone}, 
+			#{gbDistributerAddress}, 
+			#{gbDistributerImg},
+		 	#{gbDistributerSettleDate},
+		 	#{gbDistributerSettleFullTime},
+		 	#{gbDistributerSettleMonth},
+		 	#{gbDistributerSettleWeek},
+		 	#{gbDistributerSettleYear},
+		 	#{gbDistributerSettleTimes},
+		 	#{gbDistributerTimeQuantum}
+		)
+	</insert>
+
+
+    <update id="update" parameterType="com.nongxinle.entity.GbDistributerEntity">
+		update gb_distributer 
+		<set>
+			<if test="gbDistributerName != null">`gb_distributer_name` = #{gbDistributerName}, </if>
+			<if test="gbDistributerLan != null">`gb_distributer_lan` = #{gbDistributerLan}, </if>
+			<if test="gbDistributerLun != null">`gb_distributer_lun` = #{gbDistributerLun}, </if>
+			<if test="gbDistributerBusinessType != null">`gb_distributer_business_type` = #{gbDistributerBusinessType}, </if>
+			<if test="gbDistributerManager != null">`gb_distributer_manager` = #{gbDistributerManager}, </if>
+			<if test="gbDistributerPhone != null">`gb_distributer_phone` = #{gbDistributerPhone}, </if>
+			<if test="gbDistributerAddress != null">`gb_distributer_address` = #{gbDistributerAddress}, </if>
+			<if test="gbDistributerSettleDate != null">`gb_distributer_settle_date` = #{gbDistributerSettleDate}, </if>
+			<if test="gbDistributerSettleFullTime != null">`gb_distributer_settle_full_time` = #{gbDistributerSettleFullTime}, </if>
+			<if test="gbDistributerSettleMonth != null">`gb_distributer_settle_month` = #{gbDistributerSettleMonth}, </if>
+			<if test="gbDistributerSettleWeek != null">`gb_distributer_settle_week` = #{gbDistributerSettleWeek}, </if>
+			<if test="gbDistributerSettleYear != null">`gb_distributer_settle_year` = #{gbDistributerSettleYear}, </if>
+			<if test="gbDistributerSettleTimes != null">`gb_distributer_settle_times` = #{gbDistributerSettleTimes}, </if>
+			<if test="gbDistributerTimeQuantum != null">`gb_distributer_time_quantum` = #{gbDistributerTimeQuantum}, </if>
+			<if test="gbDistributerImg != null">`gb_distributer_img` = #{gbDistributerImg}</if>
+		</set>
+		where gb_distributer_id = #{gbDistributerId}
+	</update>
+	<update id="kaitongGbDis">
+		update 	gb_distributer set gb_distributer_business_type = 1 where
+          gb_distributer_id = #{id}
+
+	</update>
+
+	<delete id="delete">
+		delete from gb_distributer where gb_distributer_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer where gb_distributer_id in 
+		<foreach item="gbDistributerId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerId}
+		</foreach>
+	</delete>
+
+</mapper>

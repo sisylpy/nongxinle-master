@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRetailerPurchaseGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxRetailerPurchaseGoodsEntity">
+		select * from nx_retailer_purchase_goods where nx_retailer_purchase_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxRetailerPurchaseGoodsEntity">
+		select * from nx_retailer_purchase_goods 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_retailer_purchase_goods 
+	</select>
+
+	<resultMap id="retShelfGoods" type="NxRetailerGoodsShelfGoodsEntity">
+		<id property="nxRetailerGoodsShelfGoodsId" column="nx_retailer_goods_shelf_goods_id"/>
+		<result property="nxRgsgGoodsName" column="nx_RGSG_goods_name"/>
+		<result property="nxRgsgShelfId" column="nx_RGSG_shelf_id"/>
+		<result property="nxRgsgSort" column="nx_RGSG_sort"/>
+		<association property="nxRetailerPurchaseGoodsEntity" resultMap="retPurGoods"/>
+	</resultMap>
+
+	<resultMap id="retPurGoods" type="NxRetailerPurchaseGoodsEntity">
+		<id  property="nxRetailerPurchaseGoodsId" column="nx_retailer_purchase_goods_id"/>
+		<result property="nxRpgGoodsName" column="nx_RPG_goods_name"/>
+		<result property="nxRpgQuantity" column="nx_RPG_quantity"/>
+		<result property="nxRpgStatus" column="nx_RPG_status"/>
+		<result property="nxRpgBuyUserId" column="nx_RPG_user_id"/>
+		<result property="nxRpgInputType" column="nx_RPG_input_type"/>
+		<result property="nxRpgTime" column="nx_RPG_time"/>
+		<result property="nxRpgPurchaseDate" column="nx_RPG_purchase_date"/>
+		<result property="nxRpgBatchId" column="nx_RPG_batch_id"/>
+		<result property="nxRpgBuyQuantity" column="nx_RPG_buy_quantity"/>
+		<result property="nxRpgBuyPrice" column="nx_RPG_buy_price"/>
+		<result property="nxRpgBuySubtotal" column="nx_RPG_buy_subtotal"/>
+		<result property="nxRpgApplyDate" column="nx_RPG_apply_date"/>
+		<result property="nxRpgPurchaseDate" column="nx_RPG_purchase_date"/>
+		<result property="nxRpgShelfGoodsId" column="nx_RPG_shelf_goods_id"/>
+		<result property="nxRpgRetailerId" column="nx_RPG_retailer_id"/>
+		<association property="nxRetailerGoodsShelfGoodsEntity" resultMap="retShelfGoods"/>
+	</resultMap>
+
+    <select id="queryRetShelfPurGoodsByParame" resultMap="retPurGoods">
+	select * from nx_retailer_purchase_goods as rpg
+	left join nx_retailer_goods_shelf_goods as rgsg on rgsg.nx_retailer_goods_shelf_goods_id = rpg.nx_RPG_shelf_goods_id
+	 <where>
+		<if test="retId != null">
+			and rpg.nx_RPG_retailer_id = #{retId}
+		</if>
+		<if test="status != null">
+			and rpg.nx_RPG_status &lt; #{status}
+		</if>
+		<if test="equalStatus != null">
+			and rpg.nx_RPG_status = #{equalStatus}
+		</if>
+		<if test="batchId != null">
+			and rpg.nx_RPG_batch_id = #{batchId}
+		</if>
+		<if test="finishDate != null">
+			and rpg.nx_RPG_purchase_date = #{finishDate}
+		</if>
+		 order by rpg.nx_RPG_time DESC
+	</where>
+
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxRetailerPurchaseGoodsEntity"
+		useGeneratedKeys="true" keyProperty="nxRetailerPurchaseGoodsId">
+		insert into nx_retailer_purchase_goods
+		(
+			`nx_retailer_purchase_goods_id`, 
+			`nx_RPG_shelf_goods_id`, 
+			`nx_RPG_shelf_id`, 
+			`nx_RPG_quantity`, 
+			`nx_RPG_standard`, 
+			`nx_RPG_status`, 
+			`nx_RPG_retailer_id`, 
+			`nx_RPG_purchase_type`, 
+			`nx_RPG_time`, 
+			`nx_RPG_batch_id`, 
+			`nx_RPG_buy_user_id`, 
+			`nx_RPG_buy_price`, 
+			`nx_RPG_buy_quantity`, 
+			`nx_RPG_type_add_user_id`, 
+			`nx_RPG_apply_date`, 
+			`nx_RPG_purchase_date`, 
+			`nx_RPG_input_type`, 
+			`nx_RPG_buy_subtotal`,
+		 	`nx_RPG_goods_name`
+		)
+		values
+		(
+			#{nxRetailerPurchaseGoodsId}, 
+			#{nxRpgShelfGoodsId}, 
+			#{nxRpgShelfId}, 
+			#{nxRpgQuantity}, 
+			#{nxRpgStandard}, 
+			#{nxRpgStatus}, 
+			#{nxRpgRetailerId}, 
+			#{nxRpgPurchaseType}, 
+			#{nxRpgTime}, 
+			#{nxRpgBatchId}, 
+			#{nxRpgBuyUserId}, 
+			#{nxRpgBuyPrice}, 
+			#{nxRpgBuyQuantity}, 
+			#{nxRpgTypeAddUserId}, 
+			#{nxRpgApplyDate}, 
+			#{nxRpgPurchaseDate}, 
+			#{nxRpgInputType}, 
+			#{nxRpgBuySubtotal},
+		 	#{nxRpgGoodsName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxRetailerPurchaseGoodsEntity">
+		update nx_retailer_purchase_goods 
+		<set>
+			<if test="nxRpgShelfGoodsId != null">`nx_RPG_shelf_goods_id` = #{nxRpgShelfGoodsId}, </if>
+			<if test="nxRpgShelfId != null">`nx_RPG_shelf_id` = #{nxRpgShelfId}, </if>
+			<if test="nxRpgQuantity != null">`nx_RPG_quantity` = #{nxRpgQuantity}, </if>
+			<if test="nxRpgStandard != null">`nx_RPG_standard` = #{nxRpgStandard}, </if>
+			<if test="nxRpgStatus != null">`nx_RPG_status` = #{nxRpgStatus}, </if>
+			<if test="nxRpgRetailerId != null">`nx_RPG_retailer_id` = #{nxRpgRetailerId}, </if>
+			<if test="nxRpgPurchaseType != null">`nx_RPG_purchase_type` = #{nxRpgPurchaseType}, </if>
+			<if test="nxRpgTime != null">`nx_RPG_time` = #{nxRpgTime}, </if>
+			<if test="nxRpgBuyUserId != null">`nx_RPG_buy_user_id` = #{nxRpgBuyUserId}, </if>
+			<if test="nxRpgBuyPrice != null">`nx_RPG_buy_price` = #{nxRpgBuyPrice}, </if>
+			<if test="nxRpgBuyQuantity != null">`nx_RPG_buy_quantity` = #{nxRpgBuyQuantity}, </if>
+			<if test="nxRpgTypeAddUserId != null">`nx_RPG_type_add_user_id` = #{nxRpgTypeAddUserId}, </if>
+			<if test="nxRpgApplyDate != null">`nx_RPG_apply_date` = #{nxRpgApplyDate}, </if>
+			<if test="nxRpgPurchaseDate != null">`nx_RPG_purchase_date` = #{nxRpgPurchaseDate}, </if>
+			<if test="nxRpgInputType != null">`nx_RPG_input_type` = #{nxRpgInputType}, </if>
+			<if test="nxRpgGoodsName != null">`nx_RPG_goods_name` = #{nxRpgGoodsName}, </if>
+			<if test="nxRpgBuySubtotal != null">`nx_RPG_buy_subtotal` = #{nxRpgBuySubtotal},</if>
+			nx_RPG_batch_id = #{nxRpgBatchId}
+		</set>
+		where nx_retailer_purchase_goods_id = #{nxRetailerPurchaseGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_retailer_purchase_goods where nx_retailer_purchase_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_retailer_purchase_goods where nx_retailer_purchase_goods_id in 
+		<foreach item="nxRetailerPurchaseGoodsId" collection="array" open="(" separator="," close=")">
+			#{nxRetailerPurchaseGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

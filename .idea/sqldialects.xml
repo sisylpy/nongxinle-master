@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityAdsenseDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityFatherGoodsDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityGoodsDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityOrdersDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityOrdersSubDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityPromoteDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityStandardDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityStockDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCommunityStockSubDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCustomerDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCustomerUserDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxCustomerUserGoodsDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxDepartmentDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxDepartmentUserDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxDistributerDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxDistributerDepartmentDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxDistributerUserDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxGoodsDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxLabelDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxLabelTypeDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxOrderTemplateDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxOrderTemplateItemDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/NxStandardDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysConfigDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysGeneratorDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysMenuDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysOrganizationDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysRoleDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysRoleMenuDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysUserDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/SysUserRoleDao.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/nongxinle/dao/zzzNxDepartmentGoodsDao.xml" dialect="MySQL" />
+    <file url="PROJECT" dialect="MySQL" />
+  </component>
+</project>

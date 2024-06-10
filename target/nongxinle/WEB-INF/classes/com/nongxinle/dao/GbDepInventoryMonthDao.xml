@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepInventoryMonthDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepInventoryMonthEntity">
+		select * from gb_dep_inventory_month where gb_inventory_month_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepInventoryMonthEntity">
+		select * from gb_dep_inventory_month 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_inventory_month 
+	</select>
+
+	<resultMap id="fatherDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="depf_gb_department_id"/>
+		<result property="gbDepartmentName" column="depf_gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="depf_gb_department_attr_name"/>
+	</resultMap>
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<result property="gbDepartmentPrintName" column="gb_department_print_name"/>
+		<association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
+	</resultMap>
+
+	<resultMap id="month" type="GbDepInventoryMonthEntity">
+		<id property="gbInventoryMonthId" column="gb_inventory_month_id"/>
+		<result property="gbImMonth" column="gb_im_month"/>
+		<result property="gbImDepartmentId" column="gb_im_department_id"/>
+		<result property="gbImDepartmentFatherId" column="gb_im_department_father_id"/>
+		<result property="gbImDistributerId" column="gb_im_distributer_id"/>
+		<result property="gbImSubtotal" column="gb_im_subtotal"/>
+		<result property="gbImYear" column="gb_im_year"/>
+		<result property="gbImStatus" column="gb_im_status"/>
+		<result property="gbImLossTotal" column="gb_im_loss_total"/>
+		<result property="gbImDepSettleId" column="gb_im_dep_settle_id"/>
+		<result property="gbImReturnTotal" column="gb_im_return_total"/>
+		<result property="gbImWasteTotal" column="gb_im_waste_total"/>
+		<result property="gbImProduceTotal" column="gb_im_produce_total"/>
+		<association property="departmentEntity" resultMap="dep"/>
+	</resultMap>
+	<select id="queryInventoryMonth" resultMap="month">
+		select *,
+		dep.gb_department_id,
+		dep.gb_department_father_id,
+		dep.gb_department_attr_name,
+		dep.gb_department_name,
+		dep.gb_department_dis_id,
+		depf.gb_department_id 'depf_gb_department_id',
+		depf.gb_department_name 'depf_gb_department_name',
+		depf.gb_department_attr_name 'depf_gb_department_attr_name',
+		depf.gb_department_sub_amount 'depf_gb_department_sub_amount'
+		from gb_dep_inventory_month as gdim
+		left join gb_department as dep on dep.gb_department_id = gdim.gb_im_department_id
+		left join gb_department as depf on depf.gb_department_id = gdim.gb_im_department_father_id
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and gdim.gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null">
+				and gdim.gb_im_department_id = #{depId}
+			</if>
+			<if test="month != null">
+				and  gdim.gb_im_month = #{month}
+			</if>
+			<if test="depSettleId != null and depSettleId == -1">
+				and  gb_im_dep_settle_id is   null
+			</if>
+		</where>
+	</select>
+    <select id="queryDepMonthList" resultType="com.nongxinle.entity.GbDepInventoryMonthEntity">
+		select * from gb_dep_inventory_month
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+			and	gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+			and	gb_im_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_im_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+    <select id="queryInventoryMonthTotal" resultType="java.lang.Double">
+		select sum(gb_im_subtotal) from gb_dep_inventory_month
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_im_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_im_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+	<select id="queryInventoryMonthWasteTotal" resultType="java.lang.Double">
+		select sum(gb_im_waste_total) from gb_dep_inventory_month
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+
+			<if test="depFatherId != null">
+				and	gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_im_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_im_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+	<select id="queryInventoryMonthLossTotal" resultType="java.lang.Double">
+		select sum(gb_im_loss_total) from gb_dep_inventory_month
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_im_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_im_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+    <select id="queryInventoryWeekListByParams" resultType="com.nongxinle.entity.GbDepInventoryMonthEntity">
+		select * from gb_dep_inventory_month
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null">
+				and	gb_im_department_id = #{depId}
+			</if>
+			<if test="status != null">
+				and	gb_im_status  &lt; #{status}
+			</if>
+		</where>
+	</select>
+	<select id="queryInventoryMonthReturnTotal" resultType="java.lang.Double">
+		select sum(gb_im_return_total) from gb_dep_inventory_month
+		<where>
+			<if test="disId != null">
+				and	gb_im_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_im_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_im_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_im_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepInventoryMonthEntity">
+		insert into gb_dep_inventory_month
+		(
+			`gb_inventory_month_id`, 
+			`gb_im_department_father_id`, 
+			`gb_im_department_id`, 
+			`gb_im_month`, 
+			`gb_im_subtotal`, 
+			`gb_im_distributer_id`,
+		 	`gb_im_waste_total`,
+		 	`gb_im_year`,
+		 	`gb_im_status`,
+		 	`gb_im_loss_total`,
+		 	`gb_im_return_total`,
+		 	`gb_im_produce_total`,
+		 	`gb_im_dep_settle_id`
+		)
+		values
+		(
+			#{gbInventoryMonthId}, 
+			#{gbImDepartmentFatherId}, 
+			#{gbImDepartmentId}, 
+			#{gbImMonth}, 
+			#{gbImSubtotal}, 
+			#{gbImDistributerId},
+		 	#{gbImWasteTotal},
+		 	#{gbImYear},
+		 	#{gbImStatus},
+		 	#{gbImLossTotal},
+		 	#{gbImReturnTotal},
+		 	#{gbImProduceTotal},
+		 	#{gbImDepSettleId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepInventoryMonthEntity">
+		update gb_dep_inventory_month 
+		<set>
+			<if test="gbImDepartmentFatherId != null">`gb_im_department_father_id` = #{gbImDepartmentFatherId}, </if>
+			<if test="gbImDepartmentId != null">`gb_im_department_id` = #{gbImDepartmentId}, </if>
+			<if test="gbImMonth != null">`gb_im_month` = #{gbImMonth}, </if>
+			<if test="gbImSubtotal != null">`gb_im_subtotal` = #{gbImSubtotal}, </if>
+			<if test="gbImWasteTotal != null">`gb_im_waste_total` = #{gbImWasteTotal}, </if>
+			<if test="gbImYear != null">`gb_im_year` = #{gbImYear}, </if>
+			<if test="gbImStatus != null">`gb_im_status` = #{gbImStatus}, </if>
+			<if test="gbImLossTotal != null">`gb_im_loss_total` = #{gbImLossTotal}, </if>
+			<if test="gbImReturnTotal != null">`gb_im_return_total` = #{gbImReturnTotal}, </if>
+			<if test="gbImProduceTotal != null">`gb_im_produce_total` = #{gbImProduceTotal}, </if>
+			<if test="gbImDepSettleId != null">`gb_im_dep_settle_id` = #{gbImDepSettleId}, </if>
+			<if test="gbImDistributerId != null">`gb_im_distributer_id` = #{gbImDistributerId}</if>
+		</set>
+		where gb_inventory_month_id = #{gbInventoryMonthId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_inventory_month where gb_inventory_month_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_inventory_month where gb_inventory_month_id in 
+		<foreach item="gbInventoryMonthId" collection="array" open="(" separator="," close=")">
+			#{gbInventoryMonthId}
+		</foreach>
+	</delete>
+
+</mapper>

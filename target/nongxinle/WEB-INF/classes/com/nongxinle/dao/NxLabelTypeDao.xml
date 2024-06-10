@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxLabelTypeDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxLabelTypeEntity">
+		select * from nx_label_type where nx_label_type_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxLabelTypeEntity">
+		select * from nx_label_type 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_label_type 
+	</select>
+
+	<resultMap id="labels" type="NxLabelTypeEntity">
+		<id property="nxLabelTypeId" column="nx_label_type_id"/>
+		<result property="nxLabelTypeName" column="nx_label_type_name"/>
+		<result property="nxLabelAmount" column="nx_label_type_amount"/>
+		<result property="nxLabelTypeSort" column="nx_label_type_sort"/>
+		<collection property="nxLabelEntities" ofType="NxLabelEntity">
+			<id property="nxLabelId" column="nx_label_id"/>
+			<result property="nxLabelName" column="nx_label_name"/>
+			<result property="nxLabelHot" column="nx_label_hot"/>
+		</collection>
+	</resultMap>
+    <select id="queryAllLabel" resultMap="labels">
+		select * from nx_label_type as t
+		left join nx_label as l on l.nx_label_type_id = t.nx_label_type_id
+         order by nx_label_type_sort, nx_label_hot
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxLabelTypeEntity">
+		insert into nx_label_type
+		(
+			`nx_label_type_id`, 
+			`nx_label_type_name`, 
+			`nx_label_amount`, 
+			`nx_label_type_sort`
+		)
+		values
+		(
+			#{nxLabelTypeId}, 
+			#{nxLabelTypeName}, 
+			#{nxLabelAmount}, 
+			#{nxLabelTypeSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxLabelTypeEntity">
+		update nx_label_type 
+		<set>
+			<if test="nxLabelTypeName != null">`nx_label_type_name` = #{nxLabelTypeName}, </if>
+			<if test="nxLabelAmount != null">`nx_label_amount` = #{nxLabelAmount}, </if>
+			<if test="nxLabelTypeSort != null">`nx_label_type_sort` = #{nxLabelTypeSort}</if>
+		</set>
+		where nx_label_type_id = #{nxLabelTypeId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_label_type where nx_label_type_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_label_type where nx_label_type_id in 
+		<foreach item="nxLabelTypeId" collection="array" open="(" separator="," close=")">
+			#{nxLabelTypeId}
+		</foreach>
+	</delete>
+
+</mapper>

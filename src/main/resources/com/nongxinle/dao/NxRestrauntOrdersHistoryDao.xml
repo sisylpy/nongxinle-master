@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRestrauntOrdersHistoryDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxRestrauntOrdersHistoryEntity">
+		select * from nx_restraunt_orders_history where nx_restraunt_orders_history_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxRestrauntOrdersHistoryEntity">
+		select * from nx_restraunt_orders_history 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_restraunt_orders_history 
+	</select>
+    <select id="queryHistoryOrdersByParams" resultType="com.nongxinle.entity.NxRestrauntOrdersHistoryEntity">
+		select * from nx_restraunt_orders_history
+		<where>
+			<if test="resComGoodsId != null">
+				and nx_ROH_res_com_goods_id = #{resComGoodsId}
+			</if>
+            <if test="resId != null">
+				and nx_ROH_restraunt_id = #{resId}
+			</if>
+		</where>
+		 order by nx_ROH_apply_date
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxRestrauntOrdersHistoryEntity">
+		insert into nx_restraunt_orders_history
+		(
+			`nx_restraunt_orders_history_id`, 
+			`nx_ROH_res_com_goods_id`, 
+			`nx_ROH_quantity`, 
+			`nx_ROH_standard`, 
+			`nx_ROH_remark`, 
+			`nx_ROH_restraunt_id`, 
+			`nx_ROH_restraunt_father_id`, 
+			`nx_ROH_order_user_id`, 
+			`nx_ROH_apply_date`, 
+			`nx_ROH_sell_type`
+		)
+		values
+		(
+			#{nxRestrauntOrdersHistoryId}, 
+			#{nxRohResComGoodsId}, 
+			#{nxRohQuantity}, 
+			#{nxRohStandard}, 
+			#{nxRohRemark}, 
+			#{nxRohRestrauntId}, 
+			#{nxRohRestrauntFatherId}, 
+			#{nxRohOrderUserId}, 
+			#{nxRohApplyDate}, 
+			#{nxRohSellType}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxRestrauntOrdersHistoryEntity">
+		update nx_restraunt_orders_history 
+		<set>
+			<if test="nxRohResComGoodsId != null">`nx_ROH_res_com_goods_id` = #{nxRohResComGoodsId}, </if>
+			<if test="nxRohQuantity != null">`nx_ROH_quantity` = #{nxRohQuantity}, </if>
+			<if test="nxRohStandard != null">`nx_ROH_standard` = #{nxRohStandard}, </if>
+			<if test="nxRohRemark != null">`nx_ROH_remark` = #{nxRohRemark}, </if>
+			<if test="nxRohRestrauntId != null">`nx_ROH_restraunt_id` = #{nxRohRestrauntId}, </if>
+			<if test="nxRohRestrauntFatherId != null">`nx_ROH_restraunt_father_id` = #{nxRohRestrauntFatherId}, </if>
+			<if test="nxRohOrderUserId != null">`nx_ROH_order_user_id` = #{nxRohOrderUserId}, </if>
+			<if test="nxRohApplyDate != null">`nx_ROH_apply_date` = #{nxRohApplyDate}, </if>
+			<if test="nxRohSellType != null">`nx_ROH_sell_type` = #{nxRohSellType}</if>
+		</set>
+		where nx_restraunt_orders_history_id = #{nxRestrauntOrdersHistoryId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_restraunt_orders_history where nx_restraunt_orders_history_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_restraunt_orders_history where nx_restraunt_orders_history_id in 
+		<foreach item="nxRestrauntOrdersHistoryId" collection="array" open="(" separator="," close=")">
+			#{nxRestrauntOrdersHistoryId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxPrinterUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxPrinterUserEntity">
+		select * from nx_printer_user where nx_printer_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxPrinterUserEntity">
+		select * from nx_printer_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_printer_user 
+	</select>
+
+	<resultMap id="nxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+	</resultMap>
+
+	<resultMap id="gbDis" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+	</resultMap>
+
+	<resultMap id="nxCom" type="NxCommunityEntity">
+		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityName" column="nx_community_name"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+	</resultMap>
+	<resultMap id="userWithDis" type="NxPrinterUserEntity">
+		<id property="nxPrinterUserId" column="nx_printer_user_id"/>
+		<result property="nxPrinterAdmin" column="nx_printer_admin"/>
+		<result property="nxPrinterDeviceBillId" column="nx_printer_device_bill_id"/>
+		<result property="nxPrinterDeviceId" column="nx_printer_device_id"/>
+		<result property="nxPrinterGbDistributerId" column="nx_printer_gb_distributer_id"/>
+		<result property="nxPrinterNxDistributerId" column="nx_printer_nx_distributer_id"/>
+		<result property="nxPrinterNxCommunityId" column="nx_printer_nx_community_id"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
+		<association property="gbDistributerEntity" resultMap="gbDis"/>
+		<association property="nxCommunityEntity" resultMap="nxCom"/>
+
+	</resultMap>
+	<select id="queryPrinterUserByOpenId" resultMap="userWithDis">
+
+    	select * from nx_printer_user as npu
+        left join nx_distributer as nd on nd.nx_distributer_id = npu.nx_printer_nx_distributer_id
+    	left join gb_distributer as gd on gd.gb_distributer_id = npu.nx_printer_gb_distributer_id
+		where nx_printer_wx_open_id = #{openId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxPrinterUserEntity">
+		insert into nx_printer_user
+		(
+			`nx_printer_user_id`, 
+			`nx_printer_wx_avartra_url`, 
+			`nx_printer_wx_nick_name`, 
+			`nx_printer_wx_open_id`, 
+			`nx_printer_wx_phone`, 
+			`nx_printer_join_date`, 
+			`nx_printer_nx_distributer_id`, 
+			`nx_printer_nx_purchaser_user_id`, 
+			`nx_printer_nx_community_id`, 
+			`nx_printer_nx_comm_purchaser_user_id`, 
+			`nx_printer_url_change`, 
+			`nx_printer_admin`, 
+			`nx_printer_gb_distributer_id`, 
+			`nx_printer_gb_department_id`, 
+			`nx_printer_gb_department_user_id`,
+			`nx_printer_device_id`,
+			`nx_printer_device_bill_id`
+
+		)
+		values
+		(
+			#{nxPrinterUserId}, 
+			#{nxPrinterWxAvartraUrl}, 
+			#{nxPrinterWxNickName}, 
+			#{nxPrinterWxOpenId}, 
+			#{nxPrinterWxPhone}, 
+			#{nxPrinterJoinDate}, 
+			#{nxPrinterNxDistributerId}, 
+			#{nxPrinterNxPurchaserUserId}, 
+			#{nxPrinterNxCommunityId}, 
+			#{nxPrinterNxCommPurchaserUserId}, 
+			#{nxPrinterUrlChange}, 
+			#{nxPrinterAdmin}, 
+			#{nxPrinterGbDistributerId}, 
+			#{nxPrinterGbDepartmentId}, 
+			#{nxPrinterGbDepartmentUserId},
+			#{nxPrinterDeviceId},
+			#{nxPrinterDeviceBillId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxPrinterUserEntity">
+		update nx_printer_user 
+		<set>
+			<if test="nxPrinterWxAvartraUrl != null">`nx_printer_wx_avartra_url` = #{nxPrinterWxAvartraUrl}, </if>
+			<if test="nxPrinterWxNickName != null">`nx_printer_wx_nick_name` = #{nxPrinterWxNickName}, </if>
+			<if test="nxPrinterWxOpenId != null">`nx_printer_wx_open_id` = #{nxPrinterWxOpenId}, </if>
+			<if test="nxPrinterWxPhone != null">`nx_printer_wx_phone` = #{nxPrinterWxPhone}, </if>
+			<if test="nxPrinterJoinDate != null">`nx_printer_join_date` = #{nxPrinterJoinDate}, </if>
+			<if test="nxPrinterNxDistributerId != null">`nx_printer_nx_distributer_id` = #{nxPrinterNxDistributerId}, </if>
+			<if test="nxPrinterNxPurchaserUserId != null">`nx_printer_nx_purchaser_user_id` = #{nxPrinterNxPurchaserUserId}, </if>
+			<if test="nxPrinterNxCommunityId != null">`nx_printer_nx_community_id` = #{nxPrinterNxCommunityId}, </if>
+			<if test="nxPrinterNxCommPurchaserUserId != null">`nx_printer_nx_comm_purchaser_user_id` = #{nxPrinterNxCommPurchaserUserId}, </if>
+			<if test="nxPrinterUrlChange != null">`nx_printer_url_change` = #{nxPrinterUrlChange}, </if>
+			<if test="nxPrinterAdmin != null">`nx_printer_admin` = #{nxPrinterAdmin}, </if>
+			<if test="nxPrinterGbDistributerId != null">`nx_printer_gb_distributer_id` = #{nxPrinterGbDistributerId}, </if>
+			<if test="nxPrinterGbDepartmentId != null">`nx_printer_gb_department_id` = #{nxPrinterGbDepartmentId}, </if>
+			<if test="nxPrinterDeviceId != null">`nx_printer_device_id` = #{nxPrinterDeviceId}, </if>
+			<if test="nxPrinterDeviceBillId != null">`nx_printer_device_bill_id` = #{nxPrinterDeviceBillId}, </if>
+			<if test="nxPrinterGbDepartmentUserId != null">`nx_printer_gb_department_user_id` = #{nxPrinterGbDepartmentUserId}</if>
+		</set>
+		where nx_printer_user_id = #{nxPrinterUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_printer_user where nx_printer_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_printer_user where nx_printer_user_id in 
+		<foreach item="nxPrinterUserId" collection="array" open="(" separator="," close=")">
+			#{nxPrinterUserId}
+		</foreach>
+	</delete>
+
+</mapper>

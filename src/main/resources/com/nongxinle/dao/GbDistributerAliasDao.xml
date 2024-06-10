@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerAliasDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerAliasEntity">
+		select * from gb_distributer_alias where gb_distributer_alias_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerAliasEntity">
+		select * from gb_distributer_alias 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_alias 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerAliasEntity"
+		useGeneratedKeys="true" keyProperty="gbDistributerAliasId">
+		insert into gb_distributer_alias
+		(
+			`gb_distributer_alias_id`, 
+			`gb_DA_dis_goods_id`, 
+			`gb_DA_alias_name`
+		)
+		values
+		(
+			#{gbDistributerAliasId}, 
+			#{gbDaDisGoodsId}, 
+			#{gbDaAliasName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerAliasEntity">
+		update gb_distributer_alias 
+		<set>
+			<if test="gbDaDisGoodsId != null">`gb_DA_dis_goods_id` = #{gbDaDisGoodsId}, </if>
+			<if test="gbDaAliasName != null">`gb_DA_alias_name` = #{gbDaAliasName}</if>
+		</set>
+		where gb_distributer_alias_id = #{gbDistributerAliasId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_alias where gb_distributer_alias_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_alias where gb_distributer_alias_id in 
+		<foreach item="gbDistributerAliasId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerAliasId}
+		</foreach>
+	</delete>
+
+</mapper>

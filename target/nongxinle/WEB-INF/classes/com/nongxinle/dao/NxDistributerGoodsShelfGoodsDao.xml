@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerGoodsShelfGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+		select * from nx_distributer_goods_shelf_goods where nx_distributer_goods_shelf_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+		select * from nx_distributer_goods_shelf_goods 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_goods_shelf_goods 
+	</select>
+    <select id="queryShelfGoodsByParams" resultType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+		select * from nx_distributer_goods_shelf_goods
+			<where>
+				<if test="shelfId !=null">
+					and nx_DGSG_shelf_id = #{shelfId}
+				</if>
+				<if test="dayuSort !=null">
+					and nx_DGSG_sort &gt; #{dayuSort}
+				</if>
+			</where>
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+		insert into nx_distributer_goods_shelf_goods
+		(
+			`nx_distributer_goods_shelf_goods_id`, 
+			`nx_DGSG_dis_goods_id`, 
+			`nx_DGSG_shelf_id`,
+			`nx_DGSG_sort`
+		)
+		values
+		(
+			#{nxDistributerGoodsShelfGoodsId}, 
+			#{nxDgsgDisGoodsId}, 
+			#{nxDgsgShelfId},
+		 	#{nxDgsgSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+		update nx_distributer_goods_shelf_goods 
+		<set>
+			<if test="nxDgsgDisGoodsId != null">`nx_DGSG_dis_goods_id` = #{nxDgsgDisGoodsId}, </if>
+			<if test="nxDgsgShelfId != null">`nx_DGSG_shelf_id` = #{nxDgsgShelfId}, </if>
+			<if test="nxDgsgSort != null">`nx_DGSG_sort` = #{nxDgsgSort}</if>
+		</set>
+		where nx_distributer_goods_shelf_goods_id = #{nxDistributerGoodsShelfGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_goods_shelf_goods where nx_distributer_goods_shelf_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_goods_shelf_goods where nx_distributer_goods_shelf_goods_id in 
+		<foreach item="nxDistributerGoodsShelfGoodsId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerGoodsShelfGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

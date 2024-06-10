@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerCommunityDao">
+
+
+
+    <select id="comQueryDistributer" resultType="com.nongxinle.entity.NxDistributerEntity">
+		select * from nx_distributer_community as dc
+		left join nx_distributer as d on d.nx_distributer_id = dc.nx_DC_distributer_id
+		where nx_DC_community_id = #{comId}
+	</select>
+    <select id="queryAllNxCommunity" resultType="com.nongxinle.entity.NxCommunityEntity">
+		select * from nx_distributer_community as ndc
+		left join nx_community as nc on nc.nx_community_id = ndc.nx_DC_community_id
+		where nx_DC_distributer_id = #{disId}
+
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerCommunityEntity">
+		insert into nx_distributer_community
+		(
+			`nx_DC_id`, 
+			`nx_DC_community_id`, 
+			`nx_DC_distributer_id`
+		)
+		values
+		(
+			#{nxDcId}, 
+			#{nxDcCommunityId}, 
+			#{nxDcDistributerId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerCommunityEntity">
+		update nx_distributer_community 
+		<set>
+			<if test="nxDcCommunityId != null">`nx_DC_community_id` = #{nxDcCommunityId}, </if>
+			<if test="nxDcDistributerId != null">`nx_DC_distributer_id` = #{nxDcDistributerId}</if>
+		</set>
+		where nx_DC_id = #{nxDcId}
+	</update>
+	
+
+
+</mapper>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxAliasDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxAliasEntity">
+		select * from nx_alias where nx_alias_id = #{value}
+	</select>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxAliasEntity"
+			useGeneratedKeys="true" keyProperty="nxAliasId">
+		insert into nx_alias
+		(
+			`nx_alias_id`, 
+			`nx_alias_name`, 
+			`nx_als_goods_id`, 
+			`nx_als_sort`
+		)
+		values
+		(
+			#{nxAliasId}, 
+			#{nxAliasName}, 
+			#{nxAlsGoodsId}, 
+			#{nxAlsSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxAliasEntity">
+		update nx_alias 
+		<set>
+			<if test="nxAliasName != null">`nx_alias_name` = #{nxAliasName}, </if>
+			<if test="nxAlsGoodsId != null">`nx_als_goods_id` = #{nxAlsGoodsId}, </if>
+			<if test="nxAlsSort != null">`nx_als_sort` = #{nxAlsSort}</if>
+		</set>
+		where nx_alias_id = #{nxAliasId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_alias where nx_alias_id = #{value}
+	</delete>
+	
+
+
+</mapper>

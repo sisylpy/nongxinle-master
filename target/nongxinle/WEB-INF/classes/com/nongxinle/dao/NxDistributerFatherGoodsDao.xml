@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerFatherGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select * from nx_distributer_father_goods where nx_distributer_father_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select * from nx_distributer_father_goods 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_father_goods 
+	</select>
+
+	<resultMap id="fatherDisGoods" type="NxDistributerFatherGoodsEntity">
+		<id property="nxDistributerFatherGoodsId" column="father_nx_distributer_father_goods_id"/>
+		<result property="nxDfgFathersFatherId" column="father_nx_dfg_fathers_father_id"/>
+		<result property="nxDfgFatherGoodsName" column="father_nx_dfg_father_goods_name"/>
+		<result property="nxDfgGoodsAmount" column="father_nx_dfg_goods_amount"/>
+		<result property="nxDfgFatherGoodsImg" column="father_nx_dfg_father_goods_img"/>
+		<result property="nxDfgFatherGoodsImgLarge" column="father_nx_dfg_father_goods_img_large"/>
+		<result property="nxDfgFatherGoodsColor" column="father_nx_dfg_father_goods_color"/>
+		<result property="nxDfgNxGoodsId" column="father_nx_dfg_nx_goods_id"/>
+		<result property="nxDfgFatherGoodsSort" column="father_nx_dfg_father_goods_sort"/>
+	</resultMap>
+
+
+
+	<resultMap id="grandDisGoods" type="NxDistributerFatherGoodsEntity">
+		<id property="nxDistributerFatherGoodsId" column="grand_nx_distributer_father_goods_id"/>
+		<result property="nxDfgFathersFatherId" column="grand_nx_dfg_fathers_father_id"/>
+		<result property="nxDfgFatherGoodsName" column="grand_nx_dfg_father_goods_name"/>
+		<result property="nxDfgFatherGoodsImg" column="grand_nx_dfg_father_goods_img"/>
+		<result property="nxDfgNxGoodsId" column="grand_nx_dfg_nx_goods_id"/>
+		<result property="nxDfgFatherGoodsSort" column="grand_nx_dfg_father_goods_sort"/>
+		<collection property="fatherGoodsEntities" resultMap="fatherDisGoods"/>
+	</resultMap>
+
+	<resultMap id="disGoodsCata0" type="NxDistributerFatherGoodsEntity">
+		<id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
+		<result property="nxDfgFathersFatherId" column="nx_dfg_fathers_father_id"/>
+		<result property="nxDfgFatherGoodsName" column="nx_dfg_father_goods_name"/>
+		<result property="nxDfgFatherGoodsColor" column="nx_dfg_father_goods_color"/>
+		<result property="nxDfgNxGoodsId" column="nx_dfg_nx_goods_id"/>
+		<result property="nxDfgFatherGoodsSort" column="nx_dfg_father_goods_sort"/>
+		<result property="nxDfgDistributerId" column="nx_dfg_distributer_id"/>
+		<result property="nxDfgFatherGoodsImg" column="nx_dfg_father_goods_img"/>
+	</resultMap>
+	<resultMap id="disGoodsCata" type="NxDistributerFatherGoodsEntity">
+		<id property="nxDistributerFatherGoodsId" column="greatGrand_nx_distributer_father_goods_id"/>
+		<result property="nxDfgFathersFatherId" column="greatGrand_nx_dfg_fathers_father_id"/>
+		<result property="nxDfgFatherGoodsName" column="greatGrand_nx_dfg_father_goods_name"/>
+		<result property="nxDfgFatherGoodsColor" column="greatGrand_nx_dfg_father_goods_color"/>
+		<result property="nxDfgNxGoodsId" column="greatGrand_nx_dfg_nx_goods_id"/>
+		<result property="nxDfgFatherGoodsSort" column="greatGrand_nx_dfg_father_goods_sort"/>
+		<result property="nxDfgDistributerId" column="greatGrand_nx_dfg_distributer_id"/>
+		<result property="nxDfgFatherGoodsImg" column="greatGrand_nx_dfg_father_goods_img"/>
+		<collection property="fatherGoodsEntities" resultMap="fatherDisGoods"/>
+	</resultMap>
+
+
+	<!--  ************************************************** -->
+
+	<select id="queryHasDisFathersFather" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select * from nx_distributer_father_goods where nx_dfg_distributer_id = #{disId}
+		and nx_dfg_father_goods_name like  #{fathersFatherName}
+	</select>
+
+
+    <select id="queryDisAll" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select *
+		from nx_distributer_father_goods
+		where nx_dfg_distributer_id = #{disId}
+	</select>
+	<select id="queryDisGoodsCataWithGoods" resultMap="disGoodsCata">
+		select father.nx_distributer_father_goods_id 'father_nx_distributer_father_goods_id',
+		father.nx_dfg_fathers_father_id 'father_nx_dfg_fathers_father_id',
+		father.nx_dfg_father_goods_name 'father_nx_dfg_father_goods_name',
+		father.nx_dfg_goods_amount 'father_nx_dfg_goods_amount',
+		father.nx_dfg_father_goods_color 'father_nx_dfg_father_goods_color',
+		father.nx_dfg_nx_goods_id 'father_nx_dfg_nx_goods_id',
+		father.nx_dfg_father_goods_img 'father_nx_dfg_father_goods_img',
+		father.nx_dfg_father_goods_img_large 'father_nx_dfg_father_goods_img_large',
+		father.nx_dfg_father_goods_sort 'father_nx_dfg_father_goods_sort',
+		grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+		grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+		grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
+		grand.nx_dfg_nx_goods_id 'grand_nx_dfg_nx_goods_id',
+		grand.nx_dfg_father_goods_img 'grand_nx_dfg_father_goods_img',
+		grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
+		greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_distributer_father_goods_id',
+		greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+		greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+		greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+		greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color',
+		greatGrand.nx_dfg_father_goods_sort 'greatGrand_nx_dfg_father_goods_sort'
+		from nx_distributer_father_goods as father
+		left join nx_distributer_father_goods as grand
+		on grand.nx_distributer_father_goods_id = father.nx_dfg_fathers_father_id
+		left join nx_distributer_father_goods as greatGrand
+		on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+		left join nx_distributer_goods as gdg on gdg.nx_dg_dfg_goods_father_id = father.nx_distributer_father_goods_id
+		<where>
+			<if test="disId != null">
+				and greatGrand.nx_dfg_distributer_id = #{disId} and father.nx_dfg_goods_amount > 0
+			</if>
+
+			<if test="nxDisId != null">
+				and gdg.nx_dg_distributer_id = #{nxDisId} and father.nx_dfg_goods_amount > 0
+			</if>
+
+		</where>
+		order by greatGrand.nx_dfg_father_goods_sort , grand.nx_dfg_father_goods_sort , father.nx_dfg_father_goods_sort
+		asc
+	</select>
+
+	<select id="queryDisGreatGrandList" resultMap="disGoodsCata">
+		select *,
+			   father.nx_distributer_father_goods_id 'father_nx_distributer_father_goods_id',
+			   father.nx_dfg_fathers_father_id 'father_nx_dfg_fathers_father_id',
+			   father.nx_dfg_father_goods_name 'father_nx_dfg_father_goods_name',
+			   father.nx_dfg_goods_amount 'father_nx_dfg_goods_amount',
+			   father.nx_dfg_father_goods_color 'father_nx_dfg_father_goods_color',
+			   father.nx_dfg_nx_goods_id 'father_nx_dfg_nx_goods_id',
+			   father.nx_dfg_father_goods_img 'father_nx_dfg_father_goods_img',
+			   father.nx_dfg_father_goods_img_large 'father_nx_dfg_father_goods_img_large',
+			   father.nx_dfg_father_goods_sort 'father_nx_dfg_father_goods_sort',
+			   greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_distributer_father_goods_id',
+			   greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+			   greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+			   greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color',
+			   greatGrand.nx_dfg_father_goods_img 'greatGrand_nx_dfg_father_goods_img',
+			   greatGrand.nx_dfg_father_goods_sort 'greatGrand_nx_dfg_father_goods_sort'
+		from nx_distributer_father_goods as greatGrand
+		left join nx_distributer_father_goods as father on father.nx_dfg_fathers_father_id = greatGrand.nx_distributer_father_goods_id
+		where greatGrand.nx_dfg_distributer_id = #{disId} and greatGrand.nx_dfg_father_goods_level = 0
+		and greatGrand.nx_dfg_nx_goods_id is not null
+         order by  greatGrand.nx_dfg_father_goods_sort, father.nx_dfg_father_goods_sort ;
+	</select>
+	<select id="queryDisFathersGoodsByNxGoodsId"
+			resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select * from nx_distributer_father_goods where nx_dfg_nx_goods_id = #{nxGoodsId} order by  nx_dfg_father_goods_sort;
+	</select>
+    <select id="queryMaxIdForNow" resultType="java.lang.Integer">
+		select MAX(nx_distributer_father_goods_id) from nongxinle.nx_distributer_father_goods
+	</select>
+
+    <select id="queryLevelOneByNxGoodsId" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select * from nx_distributer_father_goods
+       <where>
+		   <if test="disId != null">
+			   and nx_dfg_distributer_id = #{disId}
+		   </if>
+		   <if test="nxGoodsId != null">
+			   and nx_dfg_nx_goods_id = #{nxGoodsId}
+		   </if>
+			and nx_dfg_father_goods_level = 1
+	   </where>
+	</select>
+
+
+	<select id="queryDisGoodsCataLinshi" resultMap="disGoodsCata">
+		select
+			grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+			grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+			grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
+			grand.nx_dfg_nx_goods_id 'grand_nx_dfg_nx_goods_id',
+			grand.nx_dfg_father_goods_img 'grand_nx_dfg_father_goods_img',
+			grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
+			greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_distributer_father_goods_id',
+			greatGrand.nx_dfg_distributer_id 'greatGrand_nx_dfg_distributer_id',
+			greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+			greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+			greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+			greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color'
+
+		from nx_distributer_father_goods as greatGrand
+				 left join nx_distributer_father_goods as grand
+						   on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+				 left join nx_distributer_father_goods as father
+						   on grand.nx_distributer_father_goods_id = father.nx_dfg_fathers_father_id
+
+		where greatGrand.nx_dfg_distributer_id = #{disId}
+		  and greatGrand.nx_dfg_father_goods_level = 0
+		order by greatGrand.nx_dfg_father_goods_sort , grand.nx_dfg_father_goods_sort
+
+	</select>
+
+
+
+	<select id="queryDisFathersGoodsByParams" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		select * from nx_distributer_father_goods
+		<where>
+			<if test="disId != null">
+				nx_dfg_distributer_id  = #{disId}
+			</if>
+			<if test="fathersFatherId != null">
+				and nx_dfg_fathers_father_id  = #{fathersFatherId}
+			</if>
+
+			<if test="goodsLevel != null">
+				and nx_dfg_father_goods_level = #{goodsLevel}
+			</if>
+			<if test="nx != null and nx == -1 ">
+				and nx_dfg_nx_goods_id is null
+			</if>
+			order by nx_dfg_father_goods_sort
+			<if test="offset != null and limit != null">
+				limit #{offset}, #{limit}
+			</if>
+		</where>
+
+	</select>
+
+	<select id="queryDisGoodsCata" resultMap="disGoodsCata">
+		select
+			grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+			grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+			grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
+			grand.nx_dfg_nx_goods_id 'grand_nx_dfg_nx_goods_id',
+			grand.nx_dfg_father_goods_img 'grand_nx_dfg_father_goods_img',
+			grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
+			greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_distributer_father_goods_id',
+			greatGrand.nx_dfg_distributer_id 'greatGrand_nx_dfg_distributer_id',
+			greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+			greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+			greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+			greatGrand.nx_dfg_father_goods_img 'greatGrand_nx_dfg_father_goods_img',
+			greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color'
+
+		from nx_distributer_father_goods as greatGrand
+				 left join nx_distributer_father_goods as grand
+						   on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+				 left join nx_distributer_father_goods as father
+						   on grand.nx_distributer_father_goods_id = father.nx_dfg_fathers_father_id
+		where greatGrand.nx_dfg_distributer_id = #{disId}
+		  and greatGrand.nx_dfg_father_goods_level = 0 and greatGrand.nx_dfg_nx_goods_id is not null
+		order by greatGrand.nx_dfg_father_goods_sort , grand.nx_dfg_father_goods_sort
+
+	</select>
+
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerFatherGoodsEntity" useGeneratedKeys="true"
+	keyProperty="nxDistributerFatherGoodsId">
+		insert into nx_distributer_father_goods
+		(
+			`nx_distributer_father_goods_id`, 
+			`nx_dfg_father_goods_name`,
+			`nx_dfg_father_goods_img`,
+			`nx_dfg_father_goods_img_large`,
+			`nx_dfg_father_goods_sort`,
+			`nx_dfg_father_goods_color`,
+			`nx_dfg_fathers_father_id`,
+			`nx_dfg_father_goods_level`,
+			`nx_dfg_distributer_id`,
+			`nx_dfg_goods_amount`,
+		 	`nx_dfg_nx_goods_id`
+		)
+		values
+		(
+			#{nxDistributerFatherGoodsId}, 
+			#{nxDfgFatherGoodsName},
+			#{nxDfgFatherGoodsImg},
+			#{nxDfgFatherGoodsImgLarge},
+			#{nxDfgFatherGoodsSort},
+			#{nxDfgFatherGoodsColor},
+			#{nxDfgFathersFatherId},
+			#{nxDfgFatherGoodsLevel},
+			#{nxDfgDistributerId},
+			#{nxDfgGoodsAmount},
+		 	#{nxDfgNxGoodsId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
+		update nx_distributer_father_goods 
+		<set>
+			<if test="nxDfgFatherGoodsName != null">`nx_dfg_father_goods_name` = #{nxDfgFatherGoodsName}, </if>
+			<if test="nxDfgFatherGoodsImg != null">`nx_dfg_father_goods_img` = #{nxDfgFatherGoodsImg}, </if>
+			<if test="nxDfgFatherGoodsImgLarge != null">`nx_dfg_father_goods_img_large` = #{nxDfgFatherGoodsImgLarge}, </if>
+			<if test="nxDfgFatherGoodsSort != null">`nx_dfg_father_goods_sort` = #{nxDfgFatherGoodsSort}, </if>
+			<if test="nxDfgFatherGoodsColor != null">`nx_dfg_father_goods_color` = #{nxDfgFatherGoodsColor}, </if>
+			<if test="nxDfgFathersFatherId != null">`nx_dfg_fathers_father_id` = #{nxDfgFathersFatherId}, </if>
+			<if test="nxDfgFatherGoodsLevel != null">`nx_dfg_father_goods_level` = #{nxDfgFatherGoodsLevel}, </if>
+			<if test="nxDfgDistributerId != null">`nx_dfg_distributer_id` = #{nxDfgDistributerId}, </if>
+			<if test="nxDfgNxGoodsId != null">`nx_dfg_nx_goods_id` = #{nxDfgNxGoodsId}, </if>
+			<if test="nxDfgGoodsAmount != null">`nx_dfg_goods_amount` = #{nxDfgGoodsAmount}</if>
+		</set>
+		where nx_distributer_father_goods_id = #{nxDistributerFatherGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_father_goods where nx_distributer_father_goods_id = #{value}
+	</delete>
+
+
+</mapper>
+
+<!--
+			grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+			   grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+			   grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
+			   grand.nx_dfg_nx_goods_id 'grand_nx_dfg_nx_goods_id',
+			   grand.nx_dfg_father_goods_img 'grand_nx_dfg_father_goods_img',
+			   grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
+			   greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_distributer_father_goods_id',
+			   greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+			   greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+			   greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color',
+			   greatGrand.nx_dfg_father_goods_img 'greatGrand_nx_dfg_father_goods_img',
+			   greatGrand.nx_dfg_father_goods_sort 'greatGrand_nx_dfg_father_goods_sort'-->

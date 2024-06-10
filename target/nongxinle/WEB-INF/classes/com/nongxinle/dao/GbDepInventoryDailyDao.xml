@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepInventoryDailyDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.GbDepInventoryDailyEntity">
+        select *
+        from gb_dep_inventory_daily
+        where gb_inventory_daily_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.GbDepInventoryDailyEntity">
+        select * from gb_dep_inventory_daily
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from gb_dep_inventory_daily
+    </select>
+    <resultMap id="fatherDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="depf_gb_department_id"/>
+        <result property="gbDepartmentName" column="depf_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="depf_gb_department_attr_name"/>
+    </resultMap>
+
+    <resultMap id="dep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentName" column="gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+        <result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+        <result property="gbDepartmentLevel" column="gb_department_level"/>
+        <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
+        <association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
+    </resultMap>
+    <resultMap id="daily" type="GbDepInventoryDailyEntity">
+        <id property="gbInventoryDailyId" column="gb_inventory_daily_id"/>
+        <result property="gbIdDate" column="gb_id_date"/>
+        <result property="gbIdDepartmentId" column="gb_id_department_id"/>
+        <result property="gbIdDepartmentFatherId" column="gb_id_department_father_id"/>
+        <result property="gbIdDistributerId" column="gb_id_distributer_id"/>
+        <result property="gbIdTotal" column="gb_id_total"/>
+        <result property="gbIdWasteTotal" column="gb_id_waste_total"/>
+        <result property="gbIdLossTotal" column="gb_id_loss_total"/>
+        <result property="gbIdReturnTotal" column="gb_id_return_total"/>
+        <result property="gbIdProduceTotal" column="gb_id_produce_total"/>
+        <association property="departmentEntity" resultMap="dep"/>
+
+    </resultMap>
+
+
+    <select id="queryInventoryDaily" resultMap="daily">
+        select *,
+        dep.gb_department_id,
+        dep.gb_department_father_id,
+        dep.gb_department_attr_name,
+        dep.gb_department_name,
+        dep.gb_department_dis_id,
+        depf.gb_department_id 'depf_gb_department_id',
+        depf.gb_department_name 'depf_gb_department_name',
+        depf.gb_department_attr_name 'depf_gb_department_attr_name',
+        depf.gb_department_sub_amount 'depf_gb_department_sub_amount'
+        from gb_dep_inventory_daily as gdid
+        left join gb_department as dep on dep.gb_department_id = gdid.gb_id_department_id
+        left join gb_department as depf on depf.gb_department_id = gdid.gb_id_department_father_id
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gdid.gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and gdid.gb_id_department_id = #{depId}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+
+        </where>
+    </select>
+
+    <select id="queryDepDailyList" resultType="com.nongxinle.entity.GbDepInventoryDailyEntity">
+        select * from gb_dep_inventory_daily
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+               and gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+               and gb_id_status  &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and gb_id_status  = #{equalStatus}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+        </where>
+    </select>
+    <select id="queryInventoryDailyTotal" resultType="java.lang.Double">
+        select sum(gb_id_total) from gb_dep_inventory_daily
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+                and gb_id_status  &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and gb_id_status  =  #{equalStatus}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+        </where>
+    </select>
+    <select id="queryInventoryDailyWasteTotal" resultType="java.lang.Double">
+        select sum(gb_id_waste_total) from gb_dep_inventory_daily
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+                and gb_id_status  &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and gb_id_status  = #{equalStatus}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+        </where>
+    </select>
+    <select id="queryInventoryDailyLossTotal" resultType="java.lang.Double">
+        select sum(gb_id_loss_total) from gb_dep_inventory_daily
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+                and gb_id_status  &lt; #{status}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+        </where>
+    </select>
+    <select id="queryInventoryDailyListByParams" resultType="com.nongxinle.entity.GbDepInventoryDailyEntity">
+        select * from gb_dep_inventory_daily
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+                and gb_id_status  &lt; #{status}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+        </where>
+    </select>
+    <select id="queryInventoryDailyReturnTotal" resultType="java.lang.Double">
+        select sum(gb_id_return_total) from gb_dep_inventory_daily
+        <where>
+            <if test="disId != null">
+                and gb_id_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_id_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+                and gb_id_status  &lt; #{status}
+            </if>
+            <if test="date != null">
+                and gb_id_date = #{date}
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDepInventoryDailyEntity">
+        insert into gb_dep_inventory_daily
+        (`gb_inventory_daily_id`,
+         `gb_id_department_father_id`,
+         `gb_id_department_id`,
+         `gb_id_date`,
+         `gb_id_total`,
+         `gb_id_distributer_id`,
+         `gb_id_waste_total`,
+         `gb_id_week`,
+         `gb_id_year`,
+         `gb_id_status`,
+         `gb_id_loss_total`,
+        `gb_id_dep_settle_id`,
+         `gb_id_return_total`,
+         `gb_id_produce_total`
+         )
+        values (#{gbInventoryDailyId},
+                #{gbIdDepartmentFatherId},
+                #{gbIdDepartmentId},
+                #{gbIdDate},
+                #{gbIdTotal},
+                #{gbIdDistributerId},
+                #{gbIdWasteTotal},
+                #{gbIdWeek},
+                #{gbIdYear},
+                #{gbIdStatus},
+                #{gbIdLossTotal},
+                #{gbIdDepSettleId},
+                #{gbIdReturnTotal},
+                #{gbIdProduceTotal}
+
+                )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.GbDepInventoryDailyEntity">
+        update gb_dep_inventory_daily
+        <set>
+            <if test="gbIdDepartmentFatherId != null">`gb_id_department_father_id` = #{gbIdDepartmentFatherId},</if>
+            <if test="gbIdDepartmentId != null">`gb_id_department_id` = #{gbIdDepartmentId},</if>
+            <if test="gbIdDate != null">`gb_id_date` = #{gbIdDate},</if>
+            <if test="gbIdTotal != null">`gb_id_total` = #{gbIdTotal},</if>
+            <if test="gbIdWasteTotal != null">`gb_id_waste_total` = #{gbIdWasteTotal},</if>
+            <if test="gbIdWeek != null">`gb_id_week` = #{gbIdWeek},</if>
+            <if test="gbIdYear != null">`gb_id_year` = #{gbIdYear},</if>
+            <if test="gbIdStatus != null">`gb_id_status` = #{gbIdStatus},</if>
+            <if test="gbIdLossTotal != null">`gb_id_loss_total` = #{gbIdLossTotal},</if>
+            <if test="gbIdReturnTotal != null">`gb_id_return_total` = #{gbIdReturnTotal},</if>
+            <if test="gbIdDepSettleId != null">`gb_id_dep_settle_id` = #{gbIdDepSettleId},</if>
+            <if test="gbIdProduceTotal != null">`gb_id_produce_total` = #{gbIdProduceTotal},</if>
+            <if test="gbIdDistributerId != null">`gb_id_distributer_id` = #{gbIdDistributerId}</if>
+        </set>
+        where gb_inventory_daily_id = #{gbInventoryDailyId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from gb_dep_inventory_daily
+        where gb_inventory_daily_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from gb_dep_inventory_daily where gb_inventory_daily_id in
+        <foreach item="gbInventoryDailyId" collection="array" open="(" separator="," close=")">
+            #{gbInventoryDailyId}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerSupplierPaymentDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerSupplierPaymentEntity">
+		select * from gb_distributer_supplier_payment where gb_distributer_supplier_payment_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerSupplierPaymentEntity">
+		select * from gb_distributer_supplier_payment 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_supplier_payment 
+	</select>
+
+	<resultMap id="supplier" type="GbDistributerSupplierEntity">
+		<id property="gbDistributerSupplierId" column="gb_distributer_supplier_id"/>
+		<result property="gbDistributerSupplierName" column="gb_distributer_supplier_name"/>
+		<result property="gbDsGbDistributerId" column="gb_DS_gb_distributer_id"/>
+		<result property="gbDsSupplierUserId" column="gb_DS_supplier_user_id"/>
+		<result property="gbDsPurUserId" column="gb_DS_pur_user_id"/>
+	</resultMap>
+
+	<resultMap id="nxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+	</resultMap>
+
+
+	<resultMap id="payment" type="GbDistributerSupplierPaymentEntity">
+		<id property="gbDistributerSupplierPaymentId" column="gb_distributer_supplier_payment_id"/>
+		<result property="gbDspDate" column="gb_dsp_date"/>
+		<result property="gbDspPayTotal" column="gb_dsp_pay_total"/>
+		<result property="gbDspSupplierId" column="gb_dsp_supplier_id"/>
+		<result property="gbDspNxDistributerId" column="gb_dsp_nx_distributer_id"/>
+		<result property="gbDspDistributerId" column="gb_dsp_distributer_id"/>
+		<result property="gbDspWxOutTradeNo" column="gb_dsp_wx_out_trade_no"/>
+		<result property="gbDspStatus" column="gb_dsp_status"/>
+		<association property="gbDistributerSupplierEntity" resultMap="supplier"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
+	</resultMap>
+
+
+    <select id="queryPaymentListByParams" resultMap="payment">
+      select * from gb_distributer_supplier_payment as gdsp
+      left join gb_distributer_supplier as sup on sup.gb_distributer_supplier_id = gdsp.gb_dsp_distributer_id
+      left join nx_distributer as nd  on nd.nx_distributer_id = gdsp.gb_dsp_nx_distributer_id
+       <where>
+		   <if test="disId != null">
+			   and gb_dsp_distributer_id = #{disId}
+		   </if>
+
+	   </where>
+	</select>
+	<select id="queryPaymentByWxTradeNo" resultType="com.nongxinle.entity.GbDistributerSupplierPaymentEntity">
+		select * from gb_distributer_supplier_payment gdsp
+			where gdsp.gb_dsp_wx_out_trade_no = #{ordersSn}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerSupplierPaymentEntity"
+	useGeneratedKeys="true" keyProperty="gbDistributerSupplierPaymentId">
+		insert into gb_distributer_supplier_payment
+		(
+			`gb_distributer_supplier_payment_id`, 
+			`gb_dsp_date`, 
+			`gb_dsp_supplier_id`, 
+			`gb_dsp_pay_user_id`, 
+			`gb_dsp_pay_total`,
+		 	`gb_dsp_distributer_id`,
+		 	`gb_dsp_nx_distributer_id`,
+		 	`gb_dsp_wx_out_trade_no`,
+		 	`gb_dsp_status`
+		)
+		values
+		(
+			#{gbDistributerSupplierPaymentId}, 
+			#{gbDspDate}, 
+			#{gbDspSupplierId}, 
+			#{gbDspPayUserId}, 
+			#{gbDspPayTotal},
+			#{gbDspDistributerId},
+			#{gbDspNxDistributerId},
+			#{gbDspWxOutTradeNo},
+			#{gbDspStatus}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerSupplierPaymentEntity">
+		update gb_distributer_supplier_payment 
+		<set>
+			<if test="gbDspDate != null">`gb_dsp_date` = #{gbDspDate}, </if>
+			<if test="gbDspSupplierId != null">`gb_dsp_supplier_id` = #{gbDspSupplierId}, </if>
+			<if test="gbDspPayUserId != null">`gb_dsp_pay_user_id` = #{gbDspPayUserId}, </if>
+			<if test="gbDspDistributerId != null">`gb_dsp_distributer_id` = #{gbDspDistributerId}, </if>
+			<if test="gbDspNxDistributerId != null">`gb_dsp_nx_distributer_id` = #{gbDspNxDistributerId}, </if>
+			<if test="gbDspWxOutTradeNo != null">`gb_dsp_wx_out_trade_no` = #{gbDspWxOutTradeNo}, </if>
+			<if test="gbDspStatus != null">`gb_dsp_status` = #{gbDspStatus}, </if>
+			<if test="gbDspPayTotal != null">`gb_dsp_pay_total` = #{gbDspPayTotal}</if>
+		</set>
+		where gb_distributer_supplier_payment_id = #{gbDistributerSupplierPaymentId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_supplier_payment where gb_distributer_supplier_payment_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_supplier_payment where gb_distributer_supplier_payment_id in 
+		<foreach item="gbDistributerSupplierPaymentId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerSupplierPaymentId}
+		</foreach>
+	</delete>
+
+</mapper>

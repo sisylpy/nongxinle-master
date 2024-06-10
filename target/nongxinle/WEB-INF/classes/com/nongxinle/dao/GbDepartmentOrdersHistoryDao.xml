@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepartmentOrdersHistoryDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		select * from gb_department_orders_history where gb_department_orders_history_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		select * from gb_department_orders_history 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_department_orders_history 
+	</select>
+    <select id="queryGbDepHistoryOrdersByParams"
+            resultType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		select * from gb_department_orders_history
+		<where>
+			<if test="depDisGoodsId != null">
+				and gb_DOH_dep_dis_goods_id = #{depDisGoodsId}
+			</if>
+			<if test="depId != null">
+				and gb_DOH_department_id = #{depId}
+			</if>
+		</where>
+		order by gb_department_orders_history_id
+	</select>
+    <select id="queryDepHistoryOrdersByParamsGb"
+            resultType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		select * from gb_department_orders_history
+		<where>
+			<if test="depDisGoodsId != null">
+				and gb_DOH_dep_dis_goods_id = #{depDisGoodsId}
+			</if>
+			<if test="depId != null">
+				and gb_DOH_department_id = #{depId}
+			</if>
+		</where>
+		order by gb_department_orders_history_id
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		insert into gb_department_orders_history
+		(
+			`gb_department_orders_history_id`, 
+			`gb_DOH_dep_dis_goods_id`, 
+			`gb_DOH_quantity`, 
+			`gb_DOH_standard`, 
+			`gb_DOH_remark`, 
+			`gb_DOH_department_id`, 
+			`gb_DOH_department_father_id`, 
+			`gb_DOH_order_user_id`, 
+			`gb_DOH_apply_date`, 
+			`gb_DOH_sell_type`,
+		 	`gb_DOH_standard_id`,
+		 	`gb_DOH_standard_scale`
+		)
+		values
+		(
+			#{gbDepartmentOrdersHistoryId}, 
+			#{gbDohDepDisGoodsId}, 
+			#{gbDohQuantity}, 
+			#{gbDohStandard}, 
+			#{gbDohRemark}, 
+			#{gbDohDepartmentId}, 
+			#{gbDohDepartmentFatherId}, 
+			#{gbDohOrderUserId}, 
+			#{gbDohApplyDate}, 
+			#{gbDohSellType},
+		 	#{gbDohStandardId},
+		 	#{gbDohStandardScale}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		update gb_department_orders_history 
+		<set>
+			<if test="gbDohDepDisGoodsId != null">`gb_DOH_dep_dis_goods_id` = #{gbDohDepDisGoodsId}, </if>
+			<if test="gbDohQuantity != null">`gb_DOH_quantity` = #{gbDohQuantity}, </if>
+			<if test="gbDohStandard != null">`gb_DOH_standard` = #{gbDohStandard}, </if>
+			<if test="gbDohRemark != null">`gb_DOH_remark` = #{gbDohRemark}, </if>
+			<if test="gbDohDepartmentId != null">`gb_DOH_department_id` = #{gbDohDepartmentId}, </if>
+			<if test="gbDohDepartmentFatherId != null">`gb_DOH_department_father_id` = #{gbDohDepartmentFatherId}, </if>
+			<if test="gbDohOrderUserId != null">`gb_DOH_order_user_id` = #{gbDohOrderUserId}, </if>
+			<if test="gbDohApplyDate != null">`gb_DOH_apply_date` = #{gbDohApplyDate}, </if>
+			<if test="gbDohStandardId != null">`gb_DOH_standard_id` = #{gbDohStandardId}, </if>
+			<if test="gbDohStandardScale != null">`gb_DOH_standard_scale` = #{gbDohStandardScale}, </if>
+			<if test="gbDohSellType != null">`gb_DOH_sell_type` = #{gbDohSellType}</if>
+		</set>
+		where gb_department_orders_history_id = #{gbDepartmentOrdersHistoryId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_department_orders_history where gb_department_orders_history_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_department_orders_history where gb_department_orders_history_id in 
+		<foreach item="gbDepartmentOrdersHistoryId" collection="array" open="(" separator="," close=")">
+			#{gbDepartmentOrdersHistoryId}
+		</foreach>
+	</delete>
+
+</mapper>

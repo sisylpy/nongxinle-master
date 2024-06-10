@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepFoodSalesDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepFoodSalesEntity">
+		select * from gb_dep_food_sales where gb_dep_food_sales_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepFoodSalesEntity">
+		select * from gb_dep_food_sales 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_food_sales 
+	</select>
+    <select id="queryDepFoodSalesByParams" resultType="com.nongxinle.entity.GbDepFoodSalesEntity">
+		select * from gb_dep_food_sales
+		<where>
+			<if test="depFatherId != null">
+				and gb_DFS_dep_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_DFS_dep_id = #{depId}
+			</if>
+			<if test="settleId != null">
+				and gb_DFS_settle_id = #{settleId}
+			</if>
+		</where>
+	</select>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepFoodSalesEntity"
+	 useGeneratedKeys="true" keyProperty="gbDepFoodSalesId">
+		insert into gb_dep_food_sales
+		(
+			`gb_dep_food_sales_id`, 
+			`gb_DFS_dep_id`, 
+			`gb_DFS_food_id`, 
+			`gb_DFS_dep_father_id`, 
+			`gb_DFS_amount`, 
+			`gb_DFS_subtotal`,
+			`gb_DFS_settle_id`,
+			`gb_DFS_month`, 
+			`gb_DFS_year`,
+			`gb_DFS_full_Date`,
+			`gb_DFS_user_id`
+		)
+		values
+		(
+			#{gbDepFoodSalesId}, 
+			#{gbDfsDepId}, 
+			#{gbDfsFoodId}, 
+			#{gbDfsDepFatherId}, 
+			#{gbDfsAmount}, 
+			#{gbDfsSubtotal},
+			#{gbDfsSettleId},
+			#{gbDfsMonth}, 
+			#{gbDfsYear},
+			#{gbDfsFullDate},
+			#{gbDfsUserId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepFoodSalesEntity">
+		update gb_dep_food_sales 
+		<set>
+			<if test="gbDfsDepId != null">`gb_DFS_dep_id` = #{gbDfsDepId}, </if>
+			<if test="gbDfsFoodId != null">`gb_DFS_food_id` = #{gbDfsFoodId}, </if>
+			<if test="gbDfsDepFatherId != null">`gb_DFS_dep_father_id` = #{gbDfsDepFatherId}, </if>
+			<if test="gbDfsAmount != null">`gb_DFS_amount` = #{gbDfsAmount}, </if>
+			<if test="gbDfsSubtotal != null">`gb_DFS_subtotal` = #{gbDfsSubtotal}, </if>
+			<if test="gbDfsSettleId != null">`gb_DFS_settle_id` = #{gbDfsSettleId}, </if>
+			<if test="gbDfsMonth != null">`gb_DFS_month` = #{gbDfsMonth}, </if>
+			<if test="gbDfsYear != null">`gb_DFS_year` = #{gbDfsYear}, </if>
+			<if test="gbDfsFullDate != null">`gb_DFS_full_Date` = #{gbDfsFullDate}, </if>
+			<if test="gbDfsUserId != null">`gb_DFS_user_id` = #{gbDfsUserId}</if>
+		</set>
+		where gb_dep_food_sales_id = #{gbDepFoodSalesId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_food_sales where gb_dep_food_sales_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_food_sales where gb_dep_food_sales_id in 
+		<foreach item="gbDepFoodSalesId" collection="array" open="(" separator="," close=")">
+			#{gbDepFoodSalesId}
+		</foreach>
+	</delete>
+
+</mapper>

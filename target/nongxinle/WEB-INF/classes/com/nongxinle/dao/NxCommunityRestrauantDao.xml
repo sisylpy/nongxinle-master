@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityRestrauantDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityRestrauantEntity">
+		select * from nx_community_restrauant where nx_community_restaruant_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityRestrauantEntity">
+		select * from nx_community_restrauant 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_restrauant 
+	</select>
+	
+	<resultMap id="restraunts" type="NxRestrauntEntity">
+		<id property="nxRestrauntId" column="nx_restraunt_id"/>
+		<result property="nxRestrauntName" column="nx_restraunt_name"/>
+		<result property="nxRestrauntType" column="nx_restraunt_type"/>
+		<result property="nxRestrauntSettleType" column="ds_nx_restraunt_settle_type"/>
+		<result property="nxRestrauntFilePath" column="nx_restraunt_file_path"/>
+		<result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+		<result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+		<result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+		<result property="nxRestrauntAddress" column="nx_restraunt_address"/>
+		<result property="nxRestrauntNavigationAddress" column="nx_restraunt_navigation_addaress"/>
+		<result property="nxRestrauntLat" column="nx_restraunt_lat"/>
+		<result property="nxRestrauntLng" column="nx_restraunt_lng"/>
+		<result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+	</resultMap>
+    <select id="queryRestrauntsByComId" resultMap="restraunts">
+		select * from nx_community_restrauant as cr 
+		left join nx_restraunt as r on r.nx_restraunt_id = cr.nx_CR_restaruant_id
+		where nx_CR_community_id = #{comId}
+	</select>
+    <select id="queryCommunityByResId" resultType="com.nongxinle.entity.NxCommunityEntity">
+		select * from nx_community_restrauant as cr
+		left join nx_community as c on c.nx_community_id = cr.nx_CR_community_id
+		where nx_community_restaruant_id = #{resId}
+	</select>
+
+    <select id="queryRestrauntsByParams" resultType="com.nongxinle.entity.NxRestrauntEntity">
+		select * from nx_community_restrauant as cr
+		left join nx_restraunt as r on r.nx_restraunt_id = cr.nx_CR_restaruant_id
+		where cr.nx_CR_community_id = #{comId}	 and r.nx_restraunt_settle_type = #{settleType}
+		and r.nx_restraunt_is_group_dep = 1
+		</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityRestrauantEntity" useGeneratedKeys="true"
+	 keyProperty="nxCommunityRestaruantId">
+		insert into nx_community_restrauant
+		(
+			`nx_community_restaruant_id`, 
+			`nx_CR_community_id`, 
+			`nx_CR_restaruant_id`
+		)
+		values
+		(
+			#{nxCommunityRestaruantId}, 
+			#{nxCrCommunityId}, 
+			#{nxCrRestaruantId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityRestrauantEntity">
+		update nx_community_restrauant 
+		<set>
+			<if test="nxCrCommunityId != null">`nx_CR_community_id` = #{nxCrCommunityId}, </if>
+			<if test="nxCrRestaruantId != null">`nx_CR_restaruant_id` = #{nxCrRestaruantId}</if>
+		</set>
+		where nx_community_restaruant_id = #{nxCommunityRestaruantId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_restrauant where nx_community_restaruant_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_restrauant where nx_community_restaruant_id in 
+		<foreach item="nxCommunityRestaruantId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityRestaruantId}
+		</foreach>
+	</delete>
+
+</mapper>

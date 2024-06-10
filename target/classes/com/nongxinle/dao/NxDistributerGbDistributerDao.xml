@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerGbDistributerDao">
+
+
+	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
+		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+		<result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+		<result property="nxDgPullOff" column="nx_dg_pull_off"/>
+		<result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+		<result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+		<result property="nxDgNxFatherId" column="nx_dg_nx_father_id"/>
+		<result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+		<result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+		<result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+		<result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+		<result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+		<result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+		<result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+		<result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+		<result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+		<result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+		<result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+		<result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+		<result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+		<result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+		<result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+		<result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+	</resultMap>
+	<resultMap id="nxDistributerWithGoods" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+		<association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+	</resultMap>
+	<resultMap id="disModule" type="GbDistributerModuleEntity">
+		<id property="gbDistributerModuleId" column="gb_distributer_module_id"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmPurchaseNumber" column="gb_dm_purchase_number"/>
+		<result property="gbDmStockNumber" column="gb_dm_stock_number"/>
+<result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmCentralKitchenNumber" column="gb_dm_central_kitchen_number"/>
+		<result property="gbDmDirectSalesNumber" column="gb_dm_direct_sales_number"/>
+		<result property="gbDmFranchiseeNumber" column="gb_dm_franchisee_number"/>
+		<result property="gbDmDistributerId" column="gb_dm_distributer_id"/>
+	</resultMap>
+	<resultMap id="sysBusiness" type="SysBusinessTypeEntity">
+		<id property="sysBusinessTypeId" column="sys_business_type_id"/>
+		<result property="sysBusinessTypeName" column="sys_business_type_name"/>
+		<result property="sysByDisType" column="sys_by_dis_type"/>
+	</resultMap>
+	<resultMap id="gbDistributer" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerManager" column="gb_distributer_manager"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerAddress" column="gb_distributer_address"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerImg" column="gb_distributer_img"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
+		<association property="sysBusinessTypeEntity" resultMap="sysBusiness"/>
+	</resultMap>
+
+
+	<resultMap id="gbDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+	</resultMap>
+	<resultMap id="nxDistributer" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+	</resultMap>
+
+	<resultMap id="depUser" type="GbDepartmentUserEntity">
+		<id property="gbDepartmentUserId" column="gb_department_user_id"/>
+		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+		<result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+		<result property="gbDuDepartmentId" column="gb_DU_department_id"/>
+		<result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
+		<result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
+		<result property="gbDuUrlChange" column="gb_DU_url_change"/>
+		<result property="gbDuPrintDeviceId" column="gb_DU_print_device_id"/>
+		<result property="gbDuPrintBillDeviceId" column="gb_DU_print_bill_device_id"/>
+	</resultMap>
+	<resultMap id="nxDisGbDis" type="NxDistributerGbDistributerEntity">
+		<id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+		<result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
+		<result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
+		<result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
+		<result property="nxDgdGbPayMethod" column="nx_DGD_gb_pay_method"/>
+		<result property="nxDgdGbPayPeriodWeek" column="nx_DGD_gb_pay_period_week"/>
+		<result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
+		<result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
+		<result property="nxDgdStatus" column="nx_DGD_status"/>
+		<association property="nxDistributerEntity" resultMap="nxDistributer"/>
+		<association property="gbDistributerEntity" resultMap="gbDistributer"/>
+		<association property="gbDepartmentEntity" resultMap="gbDep"/>
+		<association property="gbDepartmentUserEntity"  resultMap="depUser"/>
+	</resultMap>
+
+	<select id="queryAllGbDistribtuer" resultMap="nxDisGbDis">
+		select * from nx_distributer_gb_distributer as dgd
+		left join gb_distributer as gbDis on gbDis.gb_distributer_id = dgd.nx_DGD_gb_distributer_id
+		left join gb_department as gd on gd.gb_department_id = dgd.nx_DGD_gb_dep_id
+		left join gb_department_user as gdu on gdu.gb_department_user_id = dgd.nx_DGD_gb_dep_user_id
+		left join sys_business_type as sbt on sbt.sys_business_type_id = gbDis.gb_distributer_business_type
+		where nx_DGD_nx_distributer_id = #{disId}
+	</select>
+
+	<select id="queryAllNxDistribtuer" resultMap="nxDisGbDis">
+		select * from nx_distributer_gb_distributer as dgd
+		left join nx_distributer as nxDis on nxDis.nx_distributer_id = dgd.nx_DGD_nx_distributer_id
+		left join gb_department as gd on gd.gb_department_id = dgd.nx_DGD_gb_dep_id
+		left join gb_department_user as gdu on gdu.gb_department_user_id = dgd.nx_DGD_gb_dep_user_id
+		where nx_DGD_gb_distributer_id = #{gbDisId}
+	</select>
+	<select id="queryObjectByParams" resultType="com.nongxinle.entity.NxDistributerGbDistributerEntity">
+		select * from nx_distributer_gb_distributer
+			<where>
+				<if test="nxDisId != null">
+					and nx_DGD_nx_distributer_id  = #{nxDisId}
+				</if>
+				<if test="gbDisId != null">
+					and nx_DGD_gb_distributer_id  = #{gbDisId}
+				</if>
+				<if test="depId != null">
+					and nx_DGD_gb_dep_id  = #{depId}
+				</if>
+			</where>
+	</select>
+
+	<select id="queryGbDistributerNxDistribtuer" resultType="com.nongxinle.entity.NxDistributerEntity">
+		select * from nx_distributer_gb_distributer as dgd
+						  left join nx_distributer as nxDis on nxDis.nx_distributer_id = dgd.nx_DGD_nx_distributer_id
+						  left join gb_department as gd on gd.gb_department_id = dgd.nx_DGD_gb_dep_id
+						  left join gb_department_user as gdu on gdu.gb_department_user_id = dgd.nx_DGD_gb_dep_user_id
+		where dgd.nx_DGD_gb_dep_id = #{gbDepId} and dgd.nx_DGD_status > -1
+	</select>
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerGbDistributerEntity">
+		select * from nx_distributer_gb_distributer where nx_distributer_gb_distributer_id = #{nxDistributerGbDistributerId}
+	</select>
+
+	<select id="queryGbDistributerNxDistribtuerGoods" resultMap="nxDistributerWithGoods">
+		select * from nx_distributer_gb_distributer as dgd
+		 left join nx_distributer as nxDis on nxDis.nx_distributer_id = dgd.nx_DGD_nx_distributer_id
+		left join nx_distributer_goods as ndg on ndg.nx_dg_distributer_id = nxDis.nx_distributer_id
+		where dgd.nx_DGD_gb_dep_id = #{depId} and dgd.nx_DGD_status > -1 and ndg.nx_dg_nx_goods_id = #{nxGoodsId}
+	</select>
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerGbDistributerEntity">
+		insert into nx_distributer_gb_distributer
+		(
+			`nx_distributer_gb_distributer_id`,
+			`nx_DGD_nx_distributer_id`,
+			`nx_DGD_gb_distributer_id`,
+		 	`nx_DGD_gb_dep_id`,
+		 	`nx_DGD_gb_dep_user_id`,
+		 	`nx_DGD_gb_pay_method`,
+		 	`nx_DGD_gb_goods_price`,
+		 	`nx_DGD_status`,
+		 	`nx_DGD_gb_pay_period_week`
+
+		)
+		values
+		(
+			#{nxDistributerGbDistributerId},
+			#{nxDgdNxDistributerId},
+			#{nxDgdGbDistributerId},
+			#{nxDgdGbDepId},
+			#{nxDgdGbDepUserId},
+			#{nxDgdGbPayMethod},
+			#{nxDgdGbGoodsPrice},
+		 	#{nxDgdStatus},
+		 	#{nxDgdGbPayPeriodWeek}
+		)
+	</insert>
+
+	<delete id="delete">
+		delete from nx_distributer_gb_distributer where nx_distributer_gb_distributer_id = #{value}
+	</delete>
+    <update id="update" parameterType="com.nongxinle.entity.NxDistributerGbDistributerEntity">
+		update nx_distributer_gb_distributer
+		<set>
+			<if test="nxDgdNxDistributerId != null">`nx_DGD_nx_distributer_id` = #{nxDgdNxDistributerId}, </if>
+			<if test="nxDgdGbDistributerId != null">`nx_DGD_gb_distributer_id` = #{nxDgdGbDistributerId},</if>
+			<if test="nxDgdGbDepUserId != null">`nx_DGD_gb_dep_user_id` = #{nxDgdGbDepUserId},</if>
+			<if test="nxDgdGbPayMethod != null">`nx_DGD_gb_pay_method` = #{nxDgdGbPayMethod},</if>
+			<if test="nxDgdGbGoodsPrice != null">`nx_DGD_gb_goods_price` = #{nxDgdGbGoodsPrice},</if>
+			<if test="nxDgdStatus != null">`nx_DGD_status` = #{nxDgdStatus},</if>
+			<if test="nxDgdGbPayPeriodWeek != null">`nx_DGD_gb_pay_period_week` = #{nxDgdGbPayPeriodWeek},</if>
+			<if test="nxDgdGbDepId != null">`nx_DGD_gb_dep_id` = #{nxDgdGbDepId}</if>
+		</set>
+		where nx_distributer_gb_distributer_id = #{nxDistributerGbDistributerId}
+	</update>
+</mapper>

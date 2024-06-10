@@ -1,0 +1,1410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerPurchaseGoodsDao">
+
+
+    <select id="queryDisPurchaseGoods" resultMap="disFatherGoods">
+        select * ,
+        dfg.nx_distributer_father_goods_id,
+        dfg.nx_dfg_father_goods_name,
+        dfg.nx_dfg_fathers_father_id,
+        dg.nx_distributer_goods_id,
+        dg.nx_dg_goods_name,
+        dg.nx_dg_goods_brand,
+        dg.nx_dg_goods_detail,
+        dg.nx_dg_goods_place,
+        dg.nx_dg_goods_standardname,
+        dg.nx_dg_goods_standard_weight,
+        dg.nx_dg_goods_py,
+        dg.nx_dg_buying_price_is_grade,
+        dor.nx_department_orders_id,
+        dor.nx_DO_nx_goods_id,
+        dor.nx_DO_nx_goods_father_id,
+        dor.nx_DO_quantity,
+        dor.nx_DO_standard,
+        dor.nx_DO_remark,
+        dor.nx_DO_weight,
+        dor.nx_DO_price,
+        dor.nx_DO_subtotal,
+        dor.nx_DO_department_id,
+        dor.nx_DO_distributer_id,
+        dor.nx_DO_status,
+        dor.nx_DO_account_user_id,
+        dor.nx_DO_purchase_user_id,
+        dor.nx_DO_purchase_status,
+        dor.nx_DO_purchase_goods_id,
+        ds.nx_department_id 'nx_department_id',
+        ds.nx_department_name 'nx_department_name',
+        ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_type 'nx_department_type',
+        ds.nx_department_father_id 'nx_department_father_id',
+        ds.nx_department_is_group_dep 'nx_department_is_group_dep',
+        df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_name 'dd_nx_department_name',
+        df.nx_department_attr_name 'dd_nx_department_attr_name',
+        nr.nx_restraunt_id,
+        nr.nx_restraunt_attr_name,
+        nr.nx_restraunt_name,
+
+
+
+
+        gds.gb_department_id 'gb_department_id',
+        gds.gb_department_name 'gb_department_name',
+        gds.gb_department_attr_name 'gb_department_attr_name',
+        gds.gb_department_type 'gb_department_type',
+        gds.gb_department_father_id 'gb_department_father_id',
+        gds.gb_department_is_group_dep 'gb_department_is_group_dep',
+        gdf.gb_department_id 'dd_gb_department_id',
+        gdf.gb_department_name 'dd_gb_department_name',
+        gdf.gb_department_attr_name 'dd_gb_department_attr_name',
+
+
+
+
+        purGbDs.gb_department_id 'purGbDs_gb_department_id',
+        purGbDs.gb_department_name 'purGbDs_gb_department_name',
+        purGbDf.gb_department_id 'purGbDf_gb_department_id',
+        purGbDf.gb_department_name 'purGbDf_gb_department_name',
+        purGbDf.gb_department_attr_name 'purGbDf_gb_department_attr_name',
+        purNr.nx_restraunt_id 'purNr_nx_restraunt_id',
+        purNr.nx_restraunt_name 'purNr_nx_restraunt_name',
+        purNr.nx_restraunt_attr_name 'purNr_nx_restraunt_attr_name'
+
+        from nx_distributer_purchase_goods as ndpg
+        left join nx_department_orders as dor on dor.nx_DO_purchase_goods_id = ndpg.nx_distributer_purchase_goods_id
+            and dor.nx_DO_purchase_goods_id &gt; 0 and dor.nx_DO_status &lt; 3
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+        left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
+        left join gb_department as gds on gds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as gdf on gdf.gb_department_id = gds.gb_department_father_id
+        left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_father_id
+        left join nx_distributer_father_goods as dfg on dfg.nx_distributer_father_goods_id =
+        ndpg.nx_DPG_dis_goods_grand_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
+        dfg.nx_dfg_fathers_father_id
+        left join gb_department as purGbDs on purGbDs.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as purGbDf on purGbDf.gb_department_id = purGbDs.gb_department_father_id
+        left join nx_restraunt as purNr on purNr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_father_id
+
+        <where>
+            <if test="disId != null">
+                and ndpg.nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="grandId != null">
+                and ndpg.nx_DPG_dis_goods_grand_id = #{grandId}
+            </if>
+            <if test="fatherId != null">
+                and  dfg.nx_dfg_fathers_father_id = #{fatherId}
+            </if>
+            <if test="status != null">
+                and ndpg.nx_DPG_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and ndpg.nx_DPG_status = #{equalStatus}
+            </if>
+
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == -1">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id &gt; 0
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+
+        </where>
+        order by great.nx_dfg_father_goods_sort ,dfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort,
+                 df.nx_department_id,ds.nx_department_id,purGbDf.gb_department_id,purGbDs.gb_department_id,
+        purNr.nx_restraunt_id
+    </select>
+
+
+<!--
+#         left join nx_department_orders as needNotDor on needNotDor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+#         and needNotDor.nx_DO_purchase_goods_id = -1 and needNotDor.nx_DO_status = 0
+#         left join nx_department as nds on nds.nx_department_id = needNotDor.nx_DO_department_id
+#         left join nx_department as ndf on ndf.nx_department_id = nds.nx_department_father_id
+#         left join gb_department as ngds on ngds.gb_department_id = needNotDor.nx_DO_gb_department_id
+#         left join gb_department as ngdf on ngdf.gb_department_id = ngds.gb_department_father_id
+#         left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = needNotDor.nx_DO_nx_comm_restraunt_father_id
+-->
+
+<!--      needNotDor.nx_department_orders_id 'needNotDor_nx_department_orders_id',
+        needNotDor.nx_DO_remark 'needNotDor_nx_DO_remark',
+        needNotDor.nx_DO_status 'needNotDor_nx_DO_status',
+        needNotDor.nx_department_orders_id 'needNotDor_nx_department_id',
+        needNotDor.nx_DO_purchase_goods_id 'needNotDor_nx_Do_purchase_goods_id',
+        needNotDor.nx_DO_department_id 'needNotDor_nx_DO_department_id',
+        needNotDor.nx_DO_department_father_id 'needNotDor_nx_DO_department_father_id',
+        needNotDor.nx_DO_quantity 'needNotDor_nx_DO_quantity',
+        needNotDor.nx_DO_standard 'needNotDor_nx_DO_standard',
+        nds.nx_department_id 'nds_nx_department_id',
+        nds.nx_department_name 'nds_nx_department_name',
+        nds.nx_department_type 'nds_nx_department_type',
+        nds.nx_department_father_id 'nds_nx_department_father_id',
+        nds.nx_department_is_group_dep 'nds_nx_department_is_group_dep',
+        ndf.nx_department_id 'ndf_dd_nx_department_id',
+        ndf.nx_department_name 'ndf_dd_nx_department_name',
+        ndf.nx_department_attr_name 'ndf_dd_nx_department_attr_name',
+
+
+        ngds.gb_department_id 'ngds_gb_department_id',
+        ngds.gb_department_name 'ngds_gb_department_name',
+        ngds.gb_department_attr_name 'ngds_gb_department_attr_name',
+        ngds.gb_department_type 'ngds_gb_department_type',
+        ngds.gb_department_father_id 'ngds_gb_department_father_id',
+        ngds.gb_department_is_group_dep 'ngds_gb_department_is_group_dep',
+        ngdf.gb_department_id 'ngdf_dd_gb_department_id',
+        ngdf.gb_department_name 'ngdf_dd_gb_department_name',
+        ngdf.gb_department_attr_name 'ngdf_dd_gb_department_attr_name',
+        ndnr.nx_restraunt_id 'ndnr_nx_restraunt_id',
+        ndnr.nx_restraunt_attr_name 'ndnr_nx_restraunt_attr_name',-->
+
+
+    <resultMap id="disFatherGoods" type="NxDistributerFatherGoodsEntity">
+        <id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="nx_dfg_father_goods_name"/>
+        <result property="nxDfgFathersFatherId" column="nx_dfg_fathers_father_id"/>
+        <collection property="nxDistributerPurchaseGoodsEntities" resultMap="purchaseGoods"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity">
+        select *
+        from nx_distributer_purchase_goods
+        where nx_distributer_purchase_goods_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity">
+        select * from nx_distributer_purchase_goods
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_distributer_purchase_goods
+    </select>
+
+    <resultMap id="fatherDepartment" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="dd_nx_department_id"/>
+        <result property="nxDepartmentName" column="dd_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="dd_nx_department_attr_name"/>
+    </resultMap>
+
+    <resultMap id="orderDepartments" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+        <result property="nxDepartmentType" column="nx_department_type"/>
+        <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
+        <result property="nxDepartmentName" column="nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <association property="fatherDepartmentEntity" resultMap="fatherDepartment"/>
+    </resultMap>
+
+    <resultMap id="orders" type="NxDepartmentOrdersEntity">
+         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+        <association property="nxDepartmentEntity" resultMap="orderDepartments"/>
+    </resultMap>
+
+    <resultMap id="neednNotBuyDeps" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="nds_nx_department_id"/>
+        <result property="nxDepartmentName" column="nds_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="nds_nx_department_attr_name"/>
+        <result property="nxDepartmentFatherId" column="nds_nx_department_father_id"/>
+        <association property="fatherDepartmentEntity" resultMap="ndsFatherDep"/>
+    </resultMap>
+    <resultMap id="ndsFatherDep" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="ndf_dd_nx_department_id"/>
+        <result property="nxDepartmentName" column="ndf_dd_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="ndf_dd_nx_department_attr_name"/>
+        <result property="nxDepartmentAttrName" column="ndf_dd_nx_department_attr_name"/>
+    </resultMap>
+    <resultMap id="ngdsFatherDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="ngdf_dd_gb_department_id"/>
+        <result property="gbDepartmentName" column="ngdf_dd_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="ngdf_dd_gb_department_attr_name"/>
+    </resultMap>
+
+    <resultMap id="needNotBuyGbDeps" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="nds_gb_department_id"/>
+        <result property="gbDepartmentName" column="nds_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="nds_gb_department_attr_name"/>
+        <result property="gbDepartmentFatherId" column="nds_gb_department_father_id"/>
+        <association property="fatherGbDepartmentEntity" resultMap="ngdsFatherDep"/>
+    </resultMap>
+
+    <resultMap id="needNotBuyOrders" type="NxDepartmentOrdersEntity">
+        <id property="nxDepartmentOrdersId" column="needNotDor_nx_department_orders_id"/>
+        <result property="nxDoDepartmentId" column="needNotDor_nx_DO_department_id"/>
+        <result property="nxDoDepartmentFatherId" column="needNotDor_nx_DO_department_father_id"/>
+        <result property="nxDoPurchaseGoodsId" column="needNotDor_nx_DO_purchase_goods_id"/>
+        <result property="nxDoQuantity" column="needNotDor_nx_DO_quantity"/>
+        <result property="nxDoStandard" column="needNotDor_nx_DO_standard"/>
+        <result property="nxDoCostPrice" column="needNotDor_nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="needNotDor_nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="needNotDor_nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="needNotDor_nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="needNotDor_nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="needNotDor_nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="needNotDor_nx_DO_nx_restraunt_order_id"/>
+        <association property="nxDepartmentEntity" resultMap="neednNotBuyDeps"/>
+        <association property="gbDepartmentEntity" resultMap="needNotBuyGbDeps"/>
+    </resultMap>
+    <resultMap id="disGoods" type="NxDistributerGoodsEntity">
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
+        <result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
+        <result property="nxDgPriceThirdDay" column="nx_dg_price_third_day"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgPullOff" column="nx_dg_pull_off"/>
+        <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+        <result property="nxDgNxFatherId" column="nx_dg_nx_father_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+        <result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+        <result property="nxDgGoodsPinyin" column="nx_dg_goods_pin_yin"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+        <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+        <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <collection property="neetNotPurOrders" resultMap="needNotBuyOrders"/>
+    </resultMap>
+
+    <resultMap id="depOrders" type="NxDepartmentOrdersEntity">
+         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoOrderUserId" column="nx_DO_order_user_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+        <result property="nxDoDisGoodsFatherId" column="nx_DO_dis_goods_father_id"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoProfitScale" column="nx_DO_profit_scale"/>
+        <result property="nxDoProfitSubtotal" column="nx_DO_profit_subtotal"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+        <!--		<association property="nxDepartmentDisGoodsEntity" resultMap="depDisGoods"/>-->
+        <association property="nxDepartmentEntity" resultMap="orderDepartments"/>
+    </resultMap>
+    <resultMap id="fatherDepartmentGb" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="dd_gb_department_id"/>
+        <result property="gbDepartmentName" column="dd_gb_department_name"/>
+        <result property="gbDepartmentType" column="dd_gb_department_type"/>
+        <result property="gbDepartmentSettleType" column="dd_gb_department_settle_type"/>
+        <result property="gbDepartmentFilePath" column="dd_gb_department_file_path"/>
+        <result property="gbDepartmentFatherId" column="dd_gb_department_father_id"/>
+        <result property="gbDepartmentIsGroupDep" column="dd_gb_department_is_group_dep"/>
+    </resultMap>
+
+    <resultMap id="orderGbDepartment" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentName" column="gb_department_name"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+        <result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+        <result property="gbDepartmentFilePath" column="gb_department_file_path"/>
+        <result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+        <result property="gbDepartmentLevel" column="gb_department_level"/>
+        <association property="fatherGbDepartmentEntity" resultMap="fatherDepartmentGb"/>
+    </resultMap>
+    <resultMap id="needNotBuyRes" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="ndnr_nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="ndnr_nx_restraunt_name"/>
+        <result property="nxRestrauntAttrName" column="ndnr_restraunt_attr_name"/>
+    </resultMap>
+    <resultMap id="purRestraunt" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="purNr_nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="purNr_nx_restraunt_name"/>
+        <result property="nxRestrauntAttrName" column="purNr_restraunt_attr_name"/>
+    </resultMap>
+    <resultMap id="orderRestraunt" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+    </resultMap>
+    <resultMap id="depsOrders" type="NxDepartmentOrdersEntity">
+         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoOrderUserId" column="nx_DO_order_user_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+<result property="nxDoDisGoodsFatherId" column="nx_DO_dis_goods_father_id"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+
+        <association property="nxDepartmentEntity" resultMap="orderDepartments"/>
+        <association property="gbDepartmentEntity" resultMap="orderGbDepartment"/>
+        <association property="nxRestrauntEntity" resultMap="orderRestraunt"/>
+    </resultMap>
+
+    <resultMap id="depDisGoods" type="NxDepartmentDisGoodsEntity">
+        <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgDisGoodsGrandId" column="nx_DDG_dis_goods_grand_id"/>
+        <result property="nxDdgDepGoodsName" column="nx_DDG_dep_goods_name"/>
+        <result property="nxDdgDepGoodsStandardname" column="nx_DDG_dep_goods_standardname"/>
+        <result property="nxDdgDepGoodsBrand" column="nx_DDG_dep_goods_brand"/>
+        <result property="nxDdgDepGoodsDetail" column="nx_DDG_dep_goods_detail"/>
+        <result property="nxDdgDepGoodsPlace" column="nx_DDG_dep_goods_place"/>
+        <result property="nxDdgDisGoodsId" column="nx_DDG_dis_goods_id"/>
+        <result property="nxDdgOrderPrice" column="nx_DDG_order_price"/>
+        <result property="nxDdgOrderDate" column="nx_DDG_order_date"/>
+        <result property="nxDdgOrderQuantity" column="nx_DDG_order_quantity"/>
+        <result property="nxDdgOrderStandard" column="nx_DDG_order_standard"/>
+        <result property="nxDdgOrderCostPrice" column="nx_DDG_order_cost_price"/>
+    </resultMap>
+
+    <resultMap id="orderFatherDepartment" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="nx_department_id"/>
+
+        <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+        <result property="nxDepartmentType" column="nx_department_type"/>
+        <result property="nxDepartmentName" column="nx_department_name"/>
+    </resultMap>
+
+    <resultMap id="purchaseGoods" type="NxDistributerPurchaseGoodsEntity">
+        <id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
+        <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
+        <result property="nxDpgDisGoodsId" column="nx_DPG_dis_goods_id"/>
+         <result property="nxDpgDisGoodsFatherId" column="nx_DPG_dis_goods_father_id"/>
+		<result property="nxDpgDisGoodsGrandId" column="nx_DPG_dis_goods_grand_id"/>
+        <result property="nxDpgNxWeightId" column="nx_DPG_nx_weight_id"/>
+        <result property="nxDpgQuantity" column="nx_DPG_quantity"/>
+        <result property="nxDpgStandard" column="nx_DPG_standard"/>
+        <result property="nxDpgStatus" column="nx_DPG_status"/>
+        <result property="nxDpgBuyPrice" column="nx_DPG_buy_price"/>
+        <result property="nxDpgPurchaseType" column="nx_DPG_purchase_type"/>
+        <result property="nxDpgOrdersAmount" column="nx_DPG_orders_amount"/>
+        <result property="nxDpgTypeAddUserId" column="nx_DPG_type_add_user_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgTime" column="nx_DPG_time"/>
+        <result property="nxDpgDistributerId" column="nx_DPG_distributer_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgBuyUserId" column="nx_DPG_buy_user_id"/>
+        <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
+        <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
+        <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
+        <result property="nxDpgExpectPrice" column="nx_DPG_expect_price"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxDepartmentOrdersEntity" resultMap="depOrders"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
+    </resultMap>
+    <resultMap id="disUser" type="NxDistributerUserEntity">
+         <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+        <result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
+        <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+        <result property="nxDiuWxOpenId" column="nx_DIU_wx_open_id"/>
+        <result property="nxDiuWxPhone" column="nx_DIU_wx_phone"/>
+        <result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+        <result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+        <result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+        <result property="nxDiuAdmin" column="nx_DIU_admin"/>
+    </resultMap>
+
+    <resultMap id="purchaseGoodsDetail" type="NxDistributerPurchaseGoodsEntity">
+        <id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
+        <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
+        <result property="nxDpgDisGoodsId" column="nx_DPG_dis_goods_id"/>
+         <result property="nxDpgDisGoodsFatherId" column="nx_DPG_dis_goods_father_id"/>
+		<result property="nxDpgDisGoodsGrandId" column="nx_DPG_dis_goods_grand_id"/>
+        <result property="nxDpgNxWeightId" column="nx_DPG_nx_weight_id"/>
+        <result property="nxDpgQuantity" column="nx_DPG_quantity"/>
+        <result property="nxDpgStandard" column="nx_DPG_standard"/>
+        <result property="nxDpgBuyUserId" column="nx_DPG_buy_user_id"/>
+        <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
+        <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
+        <result property="nxDpgStatus" column="nx_DPG_status"/>
+        <result property="nxDpgPurchaseType" column="nx_DPG_purchase_type"/>
+        <result property="nxDpgOrdersAmount" column="nx_DPG_orders_amount"/>
+        <result property="nxDpgTypeAddUserId" column="nx_DPG_type_add_user_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgTime" column="nx_DPG_time"/>
+        <result property="nxDpgDistributerId" column="nx_DPG_distributer_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgBuyPrice" column="nx_DPG_buy_price"/>
+        <result property="nxDpgBuyQuantity" column="nx_DPG_buy_quantity"/>
+        <result property="nxDpgBuySubtotal" column="nx_DPG_buy_subtotal"/>
+        <result property="nxDpgApplyDate" column="nx_DPG_apply_date"/>
+        <result property="nxDpgPurchaseDate" column="nx_DPG_purchase_date"/>
+        <result property="nxDpgBuySubtotal" column="nx_DPG_buy_subtotal"/>
+        <result property="nxDpgDistributerId" column="nx_DPG_distributer_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgBuyUserId" column="nx_DPG_buy_user_id"/>
+        <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
+        <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
+        <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxPurchaserEntity" resultMap="disUser"/>
+        <association property="sellerUserEntity" resultMap="jrdhSellUser"/>
+<!--        <association property="nxDistributerPurchaseBatchEntity" resultMap="purBatch"/>-->
+        <collection property="nxDepartmentOrdersEntities" resultMap="depOrders"/>
+    </resultMap>
+
+
+    <resultMap id="jrdhSellUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
+        <result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
+        <result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
+    </resultMap>
+    <resultMap id="jrdhBuyUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+
+        <result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_comm_user_id"/>
+        <result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+        <result property="nxJrdhGbDistributerId" column="nx_jrdh_gb_distributer_id"/>
+        <result property="nxJrdhGbDepartmentId" column="nx_jrdh_gb_department_id"/>
+        <result property="nxJrdhAdmin" column="nx_jrdh_admin"/>
+        <result property="nxJrdhDeviceId" column="nx_jrdh_device_id"/>
+        <result property="nxJrdhDevicePrintId" column="nx_jrdh_device_print_id"/>
+    </resultMap>
+    <resultMap id="purBatch" type="NxDistributerPurchaseBatchEntity">
+        <id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
+        <result property="nxDpbNeedDate" column="nx_DPB_need_date"/>
+		<result property="nxDpbSupplierId" column="nx_DPB_supplier_id"/>
+        <result property="nxDpbDistributerId" column="nx_DPB_distributer_id"/>
+        <result property="nxDpbPayType" column="nx_DPB_pay_type"/>
+        <result property="nxDpbTime" column="nx_DPB_time"/>
+        <result property="nxDpbDate" column="nx_DPB_date"/>
+        <result property="nxDpbYear" column="nx_DPB_year"/>
+        <result property="nxDpbMonth" column="nx_DPB_month"/>
+        <result property="nxDpbStatus" column="nx_DPB_status"/>
+        <result property="nxDpbSellSubtotal" column="nx_DPB_sell_subtotal"/>
+        <result property="nxDpbPurUserId" column="nx_DPB_pur_user_id"/>
+        <result property="nxDpbBuyUserId" column="nx_DPB_buy_user_id"/>
+        <result property="nxDpbSellUserId" column="nx_DPB_sell_user_id"/>
+        <result property="nxDpbPurchaseType" column="nx_DPB_purchase_type"/>
+        <result property="nxDpbPayFullTime" column="nx_DPB_pay_full_time"/>
+        <result property="nxDpbOrderIsNotice" column="nx_DPB_order_is_notice"/>
+        <association property="nxJrdhSellerEntity" resultMap="jrdhSellUser"/>
+        <association property="nxJrdhBuyerEntity" resultMap="jrdhBuyUser"/>
+    </resultMap>
+    <resultMap id="purUser" type="NxDistributerUserEntity">
+         <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+        <result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
+        <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+        <result property="nxDiuWxOpenId" column="nx_DIU_wx_open_id"/>
+        <result property="nxDiuWxPhone" column="nx_DIU_wx_phone"/>
+        <result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+        <result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+        <result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+        <result property="nxDiuAdmin" column="nx_DIU_admin"/>
+    </resultMap>
+    <resultMap id="purchaseGoodsWithBatch" type="NxDistributerPurchaseGoodsEntity">
+        <id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
+        <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
+        <result property="nxDpgDisGoodsId" column="nx_DPG_dis_goods_id"/>
+         <result property="nxDpgDisGoodsFatherId" column="nx_DPG_dis_goods_father_id"/>
+		<result property="nxDpgDisGoodsGrandId" column="nx_DPG_dis_goods_grand_id"/>
+        <result property="nxDpgNxWeightId" column="nx_DPG_nx_weight_id"/>
+        <result property="nxDpgQuantity" column="nx_DPG_quantity"/>
+        <result property="nxDpgStandard" column="nx_DPG_standard"/>
+        <result property="nxDpgStatus" column="nx_DPG_status"/>
+        <result property="nxDpgPurchaseType" column="nx_DPG_purchase_type"/>
+        <result property="nxDpgOrdersAmount" column="nx_DPG_orders_amount"/>
+        <result property="nxDpgTypeAddUserId" column="nx_DPG_type_add_user_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgTime" column="nx_DPG_time"/>
+        <result property="nxDpgDistributerId" column="nx_DPG_distributer_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgApplyDate" column="nx_DPG_apply_date"/>
+        <result property="nxDpgTime" column="nx_DPG_time"/>
+        <result property="nxDpgBuyQuantity" column="nx_DPG_buy_quantity"/>
+        <result property="nxDpgBuyPrice" column="nx_DPG_buy_price"/>
+        <result property="nxDpgBuySubtotal" column="nx_DPG_buy_subutotal"/>
+        <result property="nxDpgPurchaseDate" column="nx_DPG_purchase_date"/>
+        <result property="nxDpgBuyUserId" column="nx_DPG_buy_user_id"/>
+        <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
+        <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
+        <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxDepartmentOrdersEntity" resultMap="depOrders"/>
+        <association property="nxPurchaserEntity" resultMap="purUser"/>
+        <association property="nxDistributerPurchaseBatchEntity" resultMap="purBatch"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
+    </resultMap>
+
+
+    <select id="queryPurchaseGoodsByGoodsId" resultMap="purchaseGoods">
+        select ndpg.nx_distributer_purchase_goods_id,
+               ndpg.nx_DPG_dis_goods_id,
+               ndpg.nx_DPG_dis_goods_father_id,
+               ndpg.nx_DPG_quantity,
+               ndpg.nx_DPG_standard,
+               ndpg.nx_DPG_status,
+               ndpg.nx_DPG_distributer_id,
+               ndpg.nx_DPG_purchase_type,
+               ndpg.nx_DPG_time,
+               ndpg.nx_DPG_status,
+               dg.nx_distributer_goods_id,
+               dg.nx_dg_goods_name,
+               dg.nx_dg_goods_standardname,
+               dg.nx_dg_goods_detail,
+               dg.nx_dg_goods_brand,
+               dg.nx_dg_goods_place,
+               dg.nx_dg_goods_py,
+               dg.nx_dg_goods_pinyin,
+               dg.nx_dg_nx_father_id,
+               dg.nx_dg_goods_standard_weight,
+               ndo.nx_department_orders_id,
+               ndo.nx_DO_nx_goods_id,
+               ndo.nx_DO_nx_goods_father_id,
+               ndo.nx_DO_quantity,
+               ndo.nx_DO_standard,
+               ndo.nx_DO_remark,
+               ndo.nx_DO_weight,
+               ndo.nx_DO_price,
+               ndo.nx_DO_subtotal,
+               ndo.nx_DO_department_id,
+               ndo.nx_DO_distributer_id,
+               ndo.nx_DO_status,
+               ndo.nx_DO_account_user_id,
+               ndo.nx_DO_purchase_user_id,
+               ndo.nx_DO_purchase_status,
+               ndo.nx_DO_purchase_goods_id,
+               needNotDor.nx_department_orders_id    'needNotDor_nx_department_orders_id',
+               needNotDor.nx_DO_remark               'needNotDor_nx_DO_remark',
+               needNotDor.nx_DO_status               'needNotDor_nx_DO_status',
+               needNotDor.nx_department_orders_id    'needNotDor_nx_department_id',
+               needNotDor.nx_DO_purchase_goods_id    'needNotDor_nx_Do_purchase_goods_id',
+               needNotDor.nx_DO_department_id        'needNotDor_nx_DO_department_id',
+               needNotDor.nx_DO_department_father_id 'needNotDor_nx_DO_department_father_id',
+               needNotDor.nx_DO_quantity             'needNotDor_nx_DO_quantity',
+               needNotDor.nx_DO_standard             'needNotDor_nx_DO_standard',
+               d.nx_department_id                    'nx_department_id',
+               d.nx_department_name                  'nx_department_name',
+               d.nx_department_father_id             'nx_department_father_id',
+               d.nx_department_attr_name             'nx_department_attr_name',
+               d.nx_department_type                  'nx_department_type',
+               d.nx_department_sub_amount            'nx_department_sub_amount',
+               dd.nx_department_id                   'dd_nx_department_id',
+               dd.nx_department_name                 'dd_nx_department_name',
+               dd.nx_department_settle_type          'dd_nx_department_settle_type',
+               dd.nx_department_father_id            'dd_nx_department_father_id',
+               dd.nx_department_attr_name            'dd_nx_department_attr_name',
+               dd.nx_department_type                 'dd_nx_department_type',
+               dd.nx_department_sub_amount           'dd_nx_department_sub_amount'
+
+        from nx_distributer_purchase_goods as ndpg
+                 left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+                 left join nx_department_orders as ndo
+                           on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
+                 left join nx_department_orders as needNotDor
+                           on needNotDor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+                               and needNotDor.nx_DO_purchase_goods_id = -1 and needNotDor.nx_DO_status = 0
+                 left join nx_department as d on d.nx_department_id = ndo.nx_DO_department_id
+                 left join nx_department as dd on d.nx_department_father_id = dd.nx_department_id
+        where nx_DPG_distributer_id = #{disId}
+          and nx_DPG_dis_goods_id = #{goodsId}
+    </select>
+    <select id="queryPurUserPurchaseGoods" resultMap="purchaseGoods">
+        select *
+        from nx_distributer_purchase_goods as ndpg
+                 left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+        where nx_DPG_buy_user_id = #{purUserId}
+          and nx_DPG_status &lt; 3
+        order by nx_DPG_dis_goods_id
+    </select>
+    <select id="queryPurchaseGoodsByBatchId"
+            resultType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity">
+        select *
+        from nx_distributer_purchase_goods
+        where nx_DPG_batch_id = #{purchaseBatchId}
+    </select>
+
+    <select id="queryForDisGoods" resultMap="purchaseGoodsDetail">
+        select * ,
+        sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+        sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+        sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+        from nx_distributer_purchase_goods as ndpg
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+        left join nx_distributer_user as ndu on ndu.nx_distributer_user_id = ndpg.nx_DPG_pur_user_id
+        left join nx_department_orders as ndo on ndo.nx_DO_purchase_goods_id = ndpg.nx_distributer_purchase_goods_id
+        LEFT JOIN nx_department as nd on nd.nx_department_id = ndo.nx_DO_department_id
+         left join nx_restraunt as   nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
+        left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id =   ndpg.nx_DPG_sell_user_id
+
+        <where>
+            <if test="disId != null">
+                and nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="disGoodsId != null">
+                and nx_DPG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="status != null">
+                and nx_DPG_status &lt; #{status}
+            </if>
+            <if test="dayuStatus != null">
+                and nx_DPG_status &gt; #{dayuStatus}
+            </if>
+            <if test="purUserId != null">
+                and ndpg.nx_DPG_pur_user_id =  #{purUserId}
+            </if>
+            <if test="date != null">
+                and ndpg.nx_DPG_purchase_date =  #{date}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type =  #{purchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == -1">
+                and nx_DPG_batch_id is null
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id  &gt; 0
+            </if>
+
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+        </where>
+        order by nx_DPG_apply_date DESC, nx_DPG_time DESC
+    </select>
+    <select id="queryPurchaseGoodsByParams" resultType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity">
+        select * from nx_distributer_purchase_goods  as ndpg
+        <where>
+            <if test="disGoodsId != null">
+                and nx_DPG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="status != null">
+                and nx_DPG_status &lt; #{status}
+            </if>
+            <if test="finishDate != null">
+                and nx_DPG_purchase_date = #{finishDate}
+            </if>
+            <if test="purUserId != null">
+                and nx_DPG_pur_user_id = #{purUserId}
+            </if>
+            <if test="weightId != null">
+                and nx_DPG_nx_weight_id = #{weightId}
+            </if>
+            <if test="date != null">
+                and nx_DPG_purchase_date = #{date}
+            </if>
+            <if test="startDate != null">
+                and nx_DPG_purchase_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and nx_DPG_purchase_date &lt;= #{stopDate}
+            </if>
+           
+            <if test="payType != null">
+                and nx_DPG_pay_type = #{payType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == -1">
+                and nx_DPG_batch_id is null
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id  &gt; 0
+            </if>
+            <if test="batchId != null">
+                and ndpg.nx_DPG_batch_id  = #{batchId}
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+        </where>
+        order by nx_DPG_apply_date Desc
+    </select>
+    <select id="queryPurchaseGoodsCount" resultType="java.lang.Integer">
+        select count(*) from nx_distributer_purchase_goods  as ndpg
+        <where>
+            <if test="disId != null">
+                and nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and nx_DPG_status &lt; #{status}
+            </if>
+            <if test="type != null">
+                and nx_DPG_purchase_type =  #{type}
+            </if>
+            
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+        </where>
+
+    </select>
+
+    <select id="queryPurchaseGoodsWithDetailByParams" resultMap="purchaseGoodsWithBatch">
+        select *,
+        ndpg.nx_distributer_purchase_goods_id, ndpg.nx_DPG_dis_goods_id, ndpg.nx_DPG_dis_goods_father_id, ndpg.nx_DPG_quantity,
+        ndpg.nx_DPG_input_type,
+        ndpg.nx_DPG_standard, ndpg.nx_DPG_status, ndpg.nx_DPG_distributer_id, ndpg.nx_DPG_purchase_type, ndpg.nx_DPG_time,
+        ndpg.nx_DPG_status,
+        dg.nx_distributer_goods_id, dg.nx_dg_goods_name, dg.nx_dg_goods_standardname, dg.nx_dg_goods_detail,
+        dg.nx_dg_goods_brand, dg.nx_dg_goods_place, dg.nx_dg_goods_py, dg.nx_dg_goods_pinyin,
+        dg.nx_dg_nx_father_id, dg.nx_dg_goods_standard_weight,
+        ndo.nx_department_orders_id, ndo.nx_DO_nx_goods_id, ndo.nx_DO_nx_goods_father_id,
+        ndo.nx_DO_quantity, ndo.nx_DO_standard, ndo.nx_DO_remark, ndo.nx_DO_weight,
+        ndo.nx_DO_price, ndo.nx_DO_subtotal, ndo.nx_DO_department_id, ndo.nx_DO_distributer_id,
+        ndo.nx_DO_status, ndo.nx_DO_account_user_id, ndo.nx_DO_purchase_user_id, ndo.nx_DO_purchase_status,
+        ndo.nx_DO_purchase_goods_id,
+        ds.nx_department_id 'nx_department_id',
+        ds.nx_department_name 'nx_department_name',
+        ds.nx_department_father_id 'nx_department_father_id',
+        ds.nx_department_type 'nx_department_type',
+        ds.nx_department_sub_amount 'nx_department_sub_amount',
+        ds.nx_department_attr_name 'nx_department_attr_name',
+        df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_name 'dd_nx_department_name',
+        df.nx_department_settle_type 'dd_nx_department_settle_type',
+        df.nx_department_father_id 'dd_nx_department_father_id',
+        df.nx_department_type 'dd_nx_department_type',
+        df.nx_department_attr_name 'dd_nx_department_attr_name',
+        df.nx_department_sub_amount 'dd_nx_department_sub_amount',
+        sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+        sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+        sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+        from nx_distributer_purchase_goods as ndpg
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+        left join nx_department_orders as ndo on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
+        left join nx_department as ds on ds.nx_department_id = ndo.nx_DO_department_id
+        left join nx_department as df on ds.nx_department_father_id = df.nx_department_id
+        left join nx_distributer_user as ndu on ndu.nx_distributer_user_id = ndpg.nx_DPG_pur_user_id
+        left join nx_distributer_purchase_batch as ndpb on ndpb.nx_distributer_purchase_batch_id = ndpg.nx_DPG_batch_id
+        left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = ndpb.nx_DPB_buy_user_id
+        left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = ndpb.nx_DPB_sell_user_id
+
+
+        <where>
+            <if test="disId != null">
+                and nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="goodsId != null">
+                and nx_DPG_dis_goods_id = #{goodsId}
+            </if>
+            <if test="equalStatus != null">
+                and nx_DPG_status = #{equalStatus}
+            </if>
+            <if test="status != null">
+                and nx_DPG_status &lt; #{status}
+            </if>
+            <if test="finishDate != null">
+                and nx_DPG_purchase_date = #{finishDate}
+            </if>
+            <if test="payType != null">
+                and ndpg.nx_DPG_pay_type = #{payType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+        </where>
+        order by nx_DPG_apply_date Desc
+    </select>
+    <select id="queryDisAutoPurchaseGoods" resultMap="disFatherGoods">
+        select * ,
+        ds.nx_department_id 'nx_department_id',
+        ds.nx_department_name 'nx_department_name',
+        ds.nx_department_type 'nx_department_type',
+        ds.nx_department_father_id 'nx_department_father_id',
+        ds.nx_department_is_group_dep 'nx_department_is_group_dep',
+        ds.nx_department_attr_name 'nx_department_attr_name',
+        df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_name 'dd_nx_department_name',
+        df.nx_department_attr_name 'dd_nx_department_attr_name'
+        from nx_distributer_purchase_goods as ndpg
+        left join nx_department_orders as dor on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+        left join nx_distributer_father_goods as dgf on dgf.nx_distributer_father_goods_id =
+        dg.nx_dg_dfg_goods_father_id
+        left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
+        <where>
+            <if test="disId != null">
+                and ndpg.nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and ndpg.nx_DPG_status &lt; #{status}
+            </if>
+            <if test="orderStatus != null">
+                and dor.nx_DO_status &lt; #{orderStatus}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="payType != null">
+                and ndpg.nx_DPG_pay_type = #{payType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+        </where>
+
+    </select>
+    <select id="queryPurchaseGoodsSubTotal" resultType="java.lang.Double">
+        select SUM(ndpg.nx_DPG_buy_subtotal) from nx_distributer_purchase_goods as ndpg
+        <where>
+            <if test="disId != null">
+                and ndpg.nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and ndpg.nx_DPG_status &lt; #{status}
+            </if>
+            <if test="orderStatus != null">
+                and dor.nx_DO_status &lt; #{orderStatus}
+            </if>
+           
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="payType != null">
+                and ndpg.nx_DPG_pay_type = #{payType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+        </where>
+    </select>
+    <select id="queryPurOrderCount" resultType="java.lang.Integer">
+        select COUNT(*) from nx_department_orders as ndo
+         left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
+         left join nx_distributer_weight as ndw on ndw.nx_distributer_weight_id = ndo.nx_DO_weight_id
+         <where>
+             <if test="weightStatusEqual != null">
+                 and ndw.nx_dw_status = #{weightStatusEqual}
+             </if>
+            <if test="grandId != null">
+                and ndpg.nx_DPG_dis_goods_grand_id = #{grandId}
+            </if>
+            <if test="disId != null">
+                and ndpg.nx_DPG_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and ndpg.nx_DPG_status &lt; #{status}
+            </if>
+
+             <if test="dayuStatus != null">
+                 and ndpg.nx_DPG_status &gt; #{dayuStatus}
+             </if>
+
+            <if test="equalStatus != null">
+                and ndpg.nx_DPG_status  = #{equalStatus}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="orderStatus != null">
+                and ndo.nx_DO_status &lt; #{orderStatus}
+            </if>
+             <if test="orderStatusEqual != null">
+                 and ndo.nx_DO_status  =  #{orderStatusEqual}
+             </if>
+             <if test="equalBuyStatus != null">
+                 and ndo.nx_DO_purchase_status = #{equalBuyStatus}
+             </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+             <if test="equalInputType != null">
+                 and ndpg.nx_DPG_input_type = #{equalInputType}
+             </if>
+             <if test="inputType != null and inputType == -1">
+                 and ndpg.nx_DPG_input_type is null
+             </if>
+
+        </where>
+    </select>
+
+    <resultMap id="great" type="NxDistributerFatherGoodsEntity">
+        <id property="nxDistributerFatherGoodsId" column="great_nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="great_nx_dfg_father_goods_name"/>
+        <result property="nxDfgFathersFatherId" column="great_nx_dfg_fathers_father_id"/>
+        <result property="nxDfgFatherGoodsSort" column="great_nx_dfg_fathers_goods_sort"/>
+        <collection property="fatherGoodsEntities" resultMap="disFatherGoods"/>
+    </resultMap>
+    <select id="queryDisPurchaseGoodsGreat" resultMap="great">
+        select *,
+               great.nx_distributer_father_goods_id 'great_nx_distributer_father_goods_id',
+               great.nx_dfg_father_goods_name 'great_nx_dfg_father_goods_name',
+               great.nx_dfg_father_goods_sort 'great_nx_dfg_father_goods_sort'
+
+               from nx_distributer_purchase_goods as ndpg
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndpg.nx_DPG_dis_goods_grand_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+
+        <where>
+            <if test="disId != null">
+                and ndpg.nx_DPG_distributer_id = #{disId}
+            </if>
+
+            <if test="status != null">
+                and ndpg.nx_DPG_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and ndpg.nx_DPG_status = #{equalStatus}
+            </if>
+
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="batchId != null and batchId == -1">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
+
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and ndpg.nx_DPG_nx_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == -1">
+                and ndpg.nx_DPG_nx_weight_id is null
+            </if>
+            <if test="equalInputType != null">
+                and ndpg.nx_DPG_input_type = #{equalInputType}
+            </if>
+            <if test="inputType != null and inputType == -1">
+                and ndpg.nx_DPG_input_type is null
+            </if>
+
+        </where>
+        order by ndfg.nx_dfg_father_goods_sort
+
+    </select>
+    <select id="queryIfHavePurGoods" resultType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity">
+        select *
+        from nx_distributer_purchase_goods as ndpg
+        <where>
+        <if test="disId != null">
+            and ndpg.nx_DPG_distributer_id = #{disId}
+        </if>
+            <if test="disGoodsId != null">
+                and nx_DPG_dis_goods_id = #{disGoodsId}
+            </if>
+        <if test="status != null">
+            and ndpg.nx_DPG_status &lt; #{status}
+        </if>
+        <if test="equalStatus != null">
+            and ndpg.nx_DPG_status = #{equalStatus}
+        </if>
+
+        <if test="purchaseType != null">
+            and ndpg.nx_DPG_purchase_type = #{purchaseType}
+        </if>
+        <if test="weightId != null and weightId == -1">
+            and ndpg.nx_DPG_nx_weight_id is null
+        </if>
+        <if test="batchId != null and batchId == -1">
+            and ndpg.nx_DPG_batch_id is null
+        </if>
+
+        <if test="purchaseType != null">
+            and ndpg.nx_DPG_purchase_type = #{purchaseType}
+        </if>
+        <if test="batchId != null and batchId == 0">
+            and ndpg.nx_DPG_batch_id is  null or ndpg.nx_DPG_batch_id = -1
+        </if>
+        <if test="batchId != null and batchId == 1">
+            and ndpg.nx_DPG_batch_id is not null
+        </if>
+        <if test="weightId != null and weightId == 1">
+            and ndpg.nx_DPG_nx_weight_id is not null
+        </if>
+        <if test="weightId != null and weightId == -1">
+            and ndpg.nx_DPG_nx_weight_id is null
+        </if>
+        <if test="equalInputType != null">
+            and ndpg.nx_DPG_input_type = #{equalInputType}
+        </if>
+        <if test="inputType != null and inputType == -1">
+            and ndpg.nx_DPG_input_type is null
+        </if>
+        </where>
+    </select>
+
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity"
+            useGeneratedKeys="true" keyProperty="nxDistributerPurchaseGoodsId">
+        insert into nx_distributer_purchase_goods
+        (`nx_distributer_purchase_goods_id`,
+         `nx_DPG_dis_goods_id`,
+         `nx_DPG_dis_goods_father_id`,
+         `nx_DPG_dis_goods_grand_id`,
+         `nx_DPG_quantity`,
+         `nx_DPG_standard`,
+         `nx_DPG_status`,
+         `nx_DPG_distributer_id`,
+         `nx_DPG_purchase_type`,
+         `nx_DPG_time`,
+         `nx_DPG_batch_id`,
+         `nx_DPG_buy_user_id`,
+         `nx_DPG_buy_price`,
+         `nx_DPG_buy_quantity`,
+         `nx_DPG_orders_amount`,
+         `nx_DPG_type_add_user_id`,
+         `nx_DPG_apply_date`,
+         `nx_DPG_input_type`,
+         `nx_DPG_purchase_date`,
+         `nx_DPG_buy_subtotal`,
+         `nx_DPG_pur_user_id`,
+         `nx_DPG_sell_user_id`,
+         `nx_DPG_expect_price`,
+         `nx_DPG_expect_subtotal`,
+         `nx_DPG_pay_type`,
+         `nx_DPG_nx_weight_id`,
+         `nx_DPG_cost_level`,
+         `nx_DPG_finish_amount`
+
+         )
+        values (#{nxDistributerPurchaseGoodsId},
+                #{nxDpgDisGoodsId},
+                #{nxDpgDisGoodsFatherId},
+                #{nxDpgDisGoodsGrandId},
+                #{nxDpgQuantity},
+                #{nxDpgStandard},
+                #{nxDpgStatus},
+                #{nxDpgDistributerId},
+                #{nxDpgPurchaseType},
+                #{nxDpgTime},
+                #{nxDpgBatchId},
+                #{nxDpgBuyUserId},
+                #{nxDpgBuyPrice},
+                #{nxDpgBuyQuantity},
+                #{nxDpgOrdersAmount},
+                #{nxDpgTypeAddUserId},
+                #{nxDpgApplyDate},
+                #{nxDpgInputType},
+                #{nxDpgPurchaseDate},
+                #{nxDpgBuySubtotal},
+                #{nxDpgPurUserId},
+                #{nxDpgSellUserId},
+                #{nxDpgExpectPrice},
+                #{nxDpgExpectSubtotal},
+                #{nxDpgPayType},
+                #{nxDpgNxWeightId},
+                #{nxDpgCostLevel},
+                #{nxDpgFinishAmount}
+                )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDistributerPurchaseGoodsEntity">
+        update nx_distributer_purchase_goods
+        <set>
+            <if test="nxDpgDisGoodsId != null">`nx_DPG_dis_goods_id` = #{nxDpgDisGoodsId},</if>
+            <if test="nxDpgDisGoodsFatherId != null">`nx_DPG_dis_goods_father_id` = #{nxDpgDisGoodsFatherId},</if>
+            <if test="nxDpgDisGoodsGrandId != null">`nx_DPG_dis_goods_grand_id` = #{nxDpgDisGoodsGrandId},</if>
+            <if test="nxDpgQuantity != null">`nx_DPG_quantity` = #{nxDpgQuantity},</if>
+            <if test="nxDpgStandard != null">`nx_DPG_standard` = #{nxDpgStandard},</if>
+            <if test="nxDpgStatus != null">`nx_DPG_status` = #{nxDpgStatus},</if>
+            <if test="nxDpgDistributerId != null">`nx_DPG_distributer_id` = #{nxDpgDistributerId},</if>
+            <if test="nxDpgPurchaseType != null">`nx_DPG_purchase_type` = #{nxDpgPurchaseType},</if>
+            <if test="nxDpgBuyUserId != null">`nx_DPG_buy_user_id` = #{nxDpgBuyUserId},</if>
+            <if test="nxDpgBuyPrice != '-99'">`nx_DPG_buy_price` = #{nxDpgBuyPrice},</if>
+            <if test="nxDpgBuyQuantity != '-99'">`nx_DPG_buy_quantity` = #{nxDpgBuyQuantity},</if>
+            <if test="nxDpgOrdersAmount != null">`nx_DPG_orders_amount` = #{nxDpgOrdersAmount},</if>
+            <if test="nxDpgTypeAddUserId != null">`nx_DPG_type_add_user_id` = #{nxDpgTypeAddUserId},</if>
+            <if test="nxDpgApplyDate != null">`nx_DPG_apply_date` = #{nxDpgApplyDate},</if>
+            <if test="nxDpgInputType != '-99'">`nx_DPG_input_type` = #{nxDpgInputType},</if>
+            <if test="nxDpgPurchaseDate != null">`nx_DPG_purchase_date` = #{nxDpgPurchaseDate},</if>
+            <if test="nxDpgBuySubtotal != '-99'">`nx_DPG_buy_subtotal` = #{nxDpgBuySubtotal},</if>
+            <if test="nxDpgBatchId != '-99'">`nx_DPG_batch_id` = #{nxDpgBatchId},</if>
+            <if test="nxDpgPurUserId != '-99'">`nx_DPG_pur_user_id` = #{nxDpgPurUserId},</if>
+            <if test="nxDpgSellUserId != '-99'">`nx_DPG_sell_user_id` = #{nxDpgSellUserId},</if>
+            <if test="nxDpgExpectPrice != '-99'">`nx_DPG_expect_price` = #{nxDpgExpectPrice},</if>
+            <if test="nxDpgExpectSubtotal != null">`nx_DPG_expect_subtotal` = #{nxDpgExpectSubtotal},</if>
+            <if test="nxDpgPayType != null">`nx_DPG_pay_type` = #{nxDpgPayType},</if>
+            <if test="nxDpgNxWeightId != '-99'">`nx_DPG_nx_weight_id` = #{nxDpgNxWeightId},</if>
+            <if test="nxDpgCostLevel != '-99'">`nx_DPG_cost_level` = #{nxDpgCostLevel},</if>
+            <if test="nxDpgFinishAmount != '-99'">`nx_DPG_finish_amount` = #{nxDpgFinishAmount},</if>
+            <if test="nxDpgTime != '-99'">`nx_DPG_time` = #{nxDpgTime}</if>
+        </set>
+        where nx_distributer_purchase_goods_id = #{nxDistributerPurchaseGoodsId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_distributer_purchase_goods
+        where nx_distributer_purchase_goods_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_distributer_purchase_goods where nx_distributer_purchase_goods_id in
+        <foreach item="nxDistributerPurchaseGoods" collection="array" open="(" separator="," close=")">
+            #{nxDistributerPurchaseGoods}
+        </foreach>
+    </delete>
+
+</mapper>

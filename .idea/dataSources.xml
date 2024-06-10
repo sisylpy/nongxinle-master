@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="nongxinle" uuid="639321d0-d110-427a-ab49-10e3582a480e">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://140.143.186.94:3306/nongxinle</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="@localhost" uuid="79cbab1d-5253-4021-8d83-f764ccbd1feb">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="mac" uuid="c1526551-3a8c-4f12-abdf-0c843b18ecdd">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/nongxinle</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="2" uuid="ab4e2928-603e-4277-8f78-d54236943e77">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://101.42.222.149:3306/nongxinle</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="nongxinletest@101.42.222.149" uuid="c072ee1f-ff6f-4447-bdfd-07bc5d6b0a83">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://101.42.222.149:3306/nongxinletest</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="test" uuid="8c9a4975-94bb-4ca5-ae2b-08651ffe8ed0">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="@localhost [2]" uuid="f872ec29-d7c9-45ab-9e4c-291d2c8c04c4">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306</jdbc-url>
+    </data-source>
+  </component>
+</project>

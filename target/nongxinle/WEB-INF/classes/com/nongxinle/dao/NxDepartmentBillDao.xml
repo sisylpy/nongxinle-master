@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentBillDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
+        select *
+        from nx_department_bill
+        where nx_department_bill_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
+        select * from nx_department_bill
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+
+
+    <select id="queryBillsByParams" resultMap="billWithApplys">
+        select * from nx_department_bill as db
+        left join nx_department_orders as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        <where>
+            <if test="depId != null">
+                nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="disId != null">
+                and nx_DB_dis_id = #{disId}
+            </if>
+            <if test="status != null">
+                and nx_DB_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null ">
+                and nx_DB_status = #{equalStatus}
+            </if>
+            <if test="month != null ">
+                and nx_DB_month = #{month}
+            </if>
+            <if test="gbDisId != null ">
+                and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null ">
+                and nx_DB_nx_community_id = #{nxCommId}
+            </if>
+
+        </where>
+        order by nx_DB_time DESC, dor.nx_DO_apply_full_time
+    </select>
+
+
+    <resultMap id="disGoods" type="NxDistributerGoodsEntity">
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
+        <result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
+        <result property="nxDgPriceThirdDay" column="nx_dg_price_third_day"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+        <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+        <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+        <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+       <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+        <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+    </resultMap>
+
+    <resultMap id="applys" type="NxDepartmentOrdersEntity">
+         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoNxGoodsId" column="nx_DO_nx_goods_id"/>
+        <result property="nxDoOrderUserId" column="nx_DO_order_user_id"/>
+        <result property="nxDoApplyDate" column="nx_DO_apply_date"/>
+        <result property="nxDoApplyOnlyTime" column="nx_DO_apply_only_time"/>
+        <result property="nxDoApplyFullTime" column="nx_DO_apply_full_time"/>
+        <result property="nxDoArriveOnlyDate" column="nx_DO_arrive_only_date"/>
+        <result property="nxDoArriveDate" column="nx_DO_arrive_date"/>
+        <result property="nxDoArriveWhatDay" column="nx_DO_arrive_what_day"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+        <result property="nxDoDisGoodsFatherId" column="nx_DO_dis_goods_father_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoDepDisGoodsPrice" column="nx_DO_dep_dis_goods_price"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoOperationTime" column="nx_DO_operation_time"/>
+        <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoPurchaseUserId" column="nx_DO_purchase_user_id"/>
+        <result property="nxDoReturnWeight" column="nx_DO_return_weight"/>
+        <result property="nxDoReturnBillId" column="nx_DO_return_bill_id"/>
+        <result property="nxDoReturnStatus" column="nx_DO_return_status"/>
+        <result property="nxDoReturnSubtotal" column="nx_DO_return_subtotal"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+        <result property="nxDoReturnBillId" column="nx_DO_return_bill_id"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+    </resultMap>
+
+
+    <resultMap id="billWithApplys" type="NxDepartmentBillEntity">
+        <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
+        <result property="nxDbDepFatherId" column="nx_DB_dep_father_id"/>
+        <result property="nxDbDepId" column="nx_DB_dep_id"/>
+        <result property="nxDbDisId" column="nx_DB_dis_id"/>
+        <result property="nxDbCostTotal" column="nx_DB_cost_total"/>
+        <result property="nxDbTotal" column="nx_DB_total"/>
+        <result property="nxDbTime" column="nx_DB_time"/>
+        <result property="nxDbDate" column="nx_DB_date"/>
+        <result property="nxDbMonth" column="nx_DB_month"/>
+        <result property="nxDbTradeNo" column="nx_DB_trade_no"/>
+        <result property="nxDbPrintTimes" column="nx_DB_print_times"/>
+        <result property="nxDbWeek" column="nx_DB_week"/>
+        <result property="nxDbDay" column="nx_DB_day"/>
+        <result property="nxDbGbDepId" column="nx_DB_gb_dep_id"/>
+        <result property="nxDbGbDisId" column="nx_DB_gb_dis_id"/>
+        <result property="nxDbProfitTotal" column="nx_DB_profit_total"/>
+        <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
+        <result property="nxDbNxCommunityId" column="nx_DB_nx_community_id"/>
+        <result property="nxDbNxRestrauntId" column="nx_DB_nx_restraunt_id"/>
+        <association property="nxDepartmentEntity" resultMap="nxDep"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="applys"/>
+    </resultMap>
+
+    <select id="querySalesBillApplys" resultMap="billWithApplys">
+        select *
+        from nx_department_bill as b
+                 left join nx_department_orders as dor on dor.nx_DO_bill_id = b.nx_department_bill_id
+                 left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        where nx_department_bill_id = #{billId}
+    </select>
+    <select id="queryTotalByParams" resultType="java.lang.Integer">
+        select count(*) from nx_department_bill
+        <where>
+            <if test="depId != null ">
+                and nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="disId != null ">
+                and nx_DB_dis_id = #{disId}
+            </if>
+            <if test="gbDisId != null ">
+                and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="month != null ">
+                and nx_DB_month = #{month}
+            </if>
+            <if test="equalStatus != null ">
+                and nx_DB_status = #{equalStatus}
+            </if>
+            <if test="nxCommId != null ">
+                and nx_DB_nx_community_id = #{nxCommId}
+            </if>
+
+        </where>
+    </select>
+    <select id="queryReturnNumberByBillId" resultType="java.lang.Integer">
+        select count(*) from nx_department_bill as ndb
+        left join nx_department_orders as dor on dor.nx_DO_bill_id = ndb.nx_department_bill_id
+        where nx_department_bill_id = #{billId} and dor.nx_DO_return_status = 0
+    </select>
+    <select id="queryReturnBillOrdersByBillId" resultMap="billWithApplys">
+        select * from nx_department_bill as db
+        left join nx_department_orders as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_department as nd on nd.nx_department_id = db.nx_DB_dep_id
+        where nx_department_bill_id = #{billId}
+    </select>
+    <resultMap id="gbdep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentName" column="gb_department_name"/>
+        <result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentDepSettleId" column="gb_department_dep_settle_id"/>
+        <result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+        <result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentSettleFullTime" column="gb_department_settle_full_time"/>
+        <result property="gbDepartmentSettleDate" column="gb_department_settle_date"/>
+        <result property="gbDepartmentSettleWeek" column="gb_department_settle_week"/>
+        <result property="gbDepartmentSettleMonth" column="gb_department_settle_month"/>
+        <result property="gbDepartmentLevel" column="gb_department_level"/>
+    </resultMap>
+
+    <resultMap id="nxRes" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+    </resultMap>
+    <resultMap id="billWithGbDepAndApplys" type="NxDepartmentBillEntity">
+        <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
+        <result property="nxDbDepFatherId" column="nx_DB_dep_father_id"/>
+        <result property="nxDbDisId" column="nx_DB_dis_id"/>
+        <result property="nxDbCostTotal" column="nx_DB_cost_total"/>
+        <result property="nxDbTotal" column="nx_DB_total"/>
+        <result property="nxDbTime" column="nx_DB_time"/>
+        <result property="nxDbDate" column="nx_DB_date"/>
+        <result property="nxDbMonth" column="nx_DB_month"/>
+        <result property="nxDbTradeNo" column="nx_DB_trade_no"/>
+        <result property="nxDbPrintTimes" column="nx_DB_print_times"/>
+        <result property="nxDbWeek" column="nx_DB_week"/>
+        <result property="nxDbDay" column="nx_DB_day"/>
+        <result property="nxDbGbDepId" column="nx_DB_gb_dep_id"/>
+        <result property="nxDbGbDisId" column="nx_DB_gb_dis_id"/>
+        <result property="nxDbProfitTotal" column="nx_DB_profit_total"/>
+        <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
+        <result property="nxDbNxCommunityId" column="nx_DB_nx_community_id"/>
+        <result property="nxDbNxRestrauntId" column="nx_DB_nx_restraunt_id"/>
+        <association property="gbDepartmentEntity" resultMap="gbdep"/>
+        <association property="nxRestrauntEntity" resultMap="nxRes"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="applys"/>
+    </resultMap>
+
+    <select id="queryGbDepBillsByParams" resultMap="billWithGbDepAndApplys">
+        select * from nx_department_bill as db
+        left join nx_department_orders as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join gb_department as gd on gd.gb_department_id = db.nx_DB_gb_dep_id
+        left join nx_restraunt as nr on nr.nx_restraunt_id = db.nx_DB_nx_restraunt_id
+        <where>
+            <if test="depId != null">
+                nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="disId != null">
+                and nx_DB_dis_id = #{disId}
+            </if>
+            <if test="status != null">
+                and nx_DB_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null ">
+                and nx_DB_status = #{equalStatus}
+            </if>
+            <if test="month != null ">
+                and nx_DB_month = #{month}
+            </if>
+            <if test="gbDisId != null ">
+                and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null ">
+                and nx_DB_nx_community_id = #{nxCommId}
+            </if>
+
+        </where>
+        order by nx_DB_time DESC
+    </select>
+    <select id="queryBillSubtotalByParams" resultType="java.lang.Double">
+        select SUM(nx_DB_total) from nx_department_bill
+        <where>
+            <if test="depId != null">
+                nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="disId != null">
+                and nx_DB_dis_id = #{disId}
+            </if>
+            <if test="status != null">
+                and nx_DB_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null ">
+                and nx_DB_status = #{equalStatus}
+            </if>
+            <if test="month != null ">
+                and nx_DB_month = #{month}
+            </if>
+            <if test="gbDisId != null ">
+                and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null ">
+                and nx_DB_nx_community_id = #{nxCommId}
+            </if>
+
+        </where>
+    </select>
+    <select id="queryBillCostSubtotalByParams" resultType="java.lang.Double">
+#         select SUM(nx_DB_cost_total) from nx_department_bill
+        select SUM(nx_DB_total) from nx_department_bill
+        <where>
+            <if test="depId != null">
+                nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="disId != null">
+                and nx_DB_dis_id = #{disId}
+            </if>
+            <if test="status != null">
+                and nx_DB_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null ">
+                and nx_DB_status = #{equalStatus}
+            </if>
+            <if test="month != null ">
+                and nx_DB_month = #{month}
+            </if>
+            <if test="gbDisId != null ">
+                and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null ">
+                and nx_DB_nx_community_id = #{nxCommId}
+            </if>
+
+        </where>
+    </select>
+
+    <resultMap id="nxDep" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentName" column="nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
+    </resultMap>
+    <resultMap id="billWithDep" type="NxDepartmentBillEntity">
+        <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
+        <result property="nxDbDepFatherId" column="nx_DB_dep_father_id"/>
+        <result property="nxDbDepId" column="nx_DB_dep_id"/>
+        <result property="nxDbDisId" column="nx_DB_dis_id"/>
+        <result property="nxDbCostTotal" column="nx_DB_cost_total"/>
+        <result property="nxDbTotal" column="nx_DB_total"/>
+        <result property="nxDbTime" column="nx_DB_time"/>
+        <result property="nxDbDate" column="nx_DB_date"/>
+        <result property="nxDbMonth" column="nx_DB_month"/>
+        <result property="nxDbTradeNo" column="nx_DB_trade_no"/>
+        <result property="nxDbPrintTimes" column="nx_DB_print_times"/>
+        <result property="nxDbWeek" column="nx_DB_week"/>
+        <result property="nxDbDay" column="nx_DB_day"/>
+        <result property="nxDbGbDepId" column="nx_DB_gb_dep_id"/>
+        <result property="nxDbGbDisId" column="nx_DB_gb_dis_id"/>
+        <result property="nxDbProfitTotal" column="nx_DB_profit_total"/>
+        <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
+        <result property="nxDbNxCommunityId" column="nx_DB_nx_community_id"/>
+        <result property="nxDbNxRestrauntId" column="nx_DB_nx_restraunt_id"/>
+        <association property="nxDepartmentEntity" resultMap="nxDep"/>
+    </resultMap>
+
+    <select id="queryBillsListByParams" resultMap="billWithDep">
+        select * from nx_department_bill as db
+        left join nx_department as nd on db.nx_DB_dep_id = nd.nx_department_id
+
+        <where>
+            <if test="depId != null">
+                nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="disId != null">
+                and nx_DB_dis_id = #{disId}
+            </if>
+            <if test="status != null">
+                and nx_DB_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null ">
+                and nx_DB_status = #{equalStatus}
+            </if>
+            <if test="month != null ">
+                and nx_DB_month = #{month}
+            </if>
+            <if test="gbDisId != null ">
+                and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null ">
+                and nx_DB_nx_community_id = #{nxCommId}
+            </if>
+
+        </where>
+        order by nx_DB_time DESC
+    </select>
+    <select id="queryDepartBillByTradeNo" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
+        select * from nx_department_bill where nx_DB_wx_out_trade_no = #{ordersSn}
+    </select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentBillEntity" useGeneratedKeys="true"
+            keyProperty="nxDepartmentBillId">
+        insert into nx_department_bill
+        (`nx_department_bill_id`,
+         `nx_DB_dis_id`,
+         `nx_DB_dep_id`,
+         `nx_DB_dep_father_id`,
+         `nx_DB_total`,
+         `nx_DB_status`,
+         `nx_DB_time`,
+         `nx_DB_issue_user_id`,
+         `nx_DB_date`,
+         `nx_DB_month`,
+         `nx_DB_week`,
+         `nx_DB_trade_no`,
+         `nx_DB_print_times`,
+         `nx_DB_day`,
+         `nx_DB_gb_dis_id`,
+         `nx_DB_gb_dep_id`,
+         `nx_DB_profit_total`,
+         `nx_DB_cost_total`,
+         `nx_DB_profit_scale`,
+         `nx_DB_nx_community_id`,
+         `nx_DB_nx_restraunt_id`,
+         `nx_DB_wx_out_trade_no`
+         )
+        values (#{nxDepartmentBillId},
+                #{nxDbDisId},
+                #{nxDbDepId},
+                #{nxDbDepFatherId},
+                #{nxDbTotal},
+                #{nxDbStatus},
+                #{nxDbTime},
+                #{nxDbIssueUserId},
+                #{nxDbDate},
+                #{nxDbMonth},
+                #{nxDbWeek},
+                #{nxDbTradeNo},
+                #{nxDbPrintTimes},
+                #{nxDbDay},
+                #{nxDbGbDisId},
+                #{nxDbGbDepId},
+                #{nxDbProfitTotal},
+                #{nxDbCostTotal},
+                #{nxDbProfitScale},
+                #{nxDbNxCommunityId},
+                #{nxDbNxRestrauntId},
+                #{nxDbWxOutTradeNo}
+                )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDepartmentBillEntity">
+        update nx_department_bill
+        <set>
+            <if test="nxDbDisId != null">`nx_DB_dis_id` = #{nxDbDisId},</if>
+            <if test="nxDbDepId != null">`nx_DB_dep_id` = #{nxDbDepId},</if>
+            <if test="nxDbDepFatherId != null">`nx_DB_dep_father_id` = #{nxDbDepFatherId},</if>
+            <if test="nxDbTotal != null">`nx_DB_total` = #{nxDbTotal},</if>
+            <if test="nxDbStatus != null">`nx_DB_status` = #{nxDbStatus},</if>
+            <if test="nxDbTime != null">`nx_DB_time` = #{nxDbTime},</if>
+            <if test="nxDbDate != null">`nx_DB_date` = #{nxDbDate},</if>
+            <if test="nxDbMonth != null">`nx_DB_month` = #{nxDbMonth},</if>
+            <if test="nxDbWeek != null">`nx_DB_week` = #{nxDbWeek},</if>
+            <if test="nxDbTradeNo != null">`nx_DB_trade_no` = #{nxDbTradeNo},</if>
+            <if test="nxDbPrintTimes != null">`nx_DB_print_times` = #{nxDbPrintTimes},</if>
+            <if test="nxDbDay != null">`nx_DB_day` = #{nxDbDay},</if>
+            <if test="nxDbGbDisId != null">`nx_DB_gb_dis_id` = #{nxDbGbDisId},</if>
+            <if test="nxDbGbDepId != null">`nx_DB_gb_dep_id` = #{nxDbGbDepId},</if>
+            <if test="nxDbProfitTotal != null">`nx_DB_profit_total` = #{nxDbProfitTotal},</if>
+            <if test="nxDbCostTotal != null">`nx_DB_cost_total` = #{nxDbCostTotal},</if>
+            <if test="nxDbProfitScale != null">`nx_DB_profit_scale` = #{nxDbProfitScale},</if>
+            <if test="nxDbNxCommunityId != null">`nx_DB_nx_community_id` = #{nxDbNxCommunityId},</if>
+            <if test="nxDbNxRestrauntId != null">`nx_DB_nx_restraunt_id` = #{nxDbNxRestrauntId},</if>
+            <if test="nxDbWxOutTradeNo != null">`nx_DB_wx_out_trade_no` = #{nxDbWxOutTradeNo},</if>
+            <if test="nxDbIssueUserId != null">`nx_DB_issue_user_id` = #{nxDbIssueUserId}</if>
+        </set>
+        where nx_department_bill_id = #{nxDepartmentBillId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_department_bill
+        where nx_department_bill_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_department_bill where nx_department_bill_id in
+        <foreach item="nxDepartmentBillId" collection="array" open="(" separator="," close=")">
+            #{nxDepartmentBillId}
+        </foreach>
+    </delete>
+
+</mapper>

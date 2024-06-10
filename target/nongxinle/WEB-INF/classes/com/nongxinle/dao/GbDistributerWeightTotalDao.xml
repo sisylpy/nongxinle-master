@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerWeightTotalDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerWeightTotalEntity">
+		select * from gb_distributer_weight_total where gb_distributer_weight_total_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerWeightTotalEntity">
+		select * from gb_distributer_weight_total 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_weight_total 
+	</select>
+    <select id="queryDepWeightListByParams" resultType="com.nongxinle.entity.GbDistributerWeightTotalEntity">
+		select * from gb_distributer_weight_total
+        <where>
+			<if test="depId != null">
+				and  gb_gwt_dep_father_id = #{depId}
+			</if>
+			<if test="userId != null">
+				and  gb_gwt_user_id = #{userId}
+			</if>
+			<if test="status != null">
+				and  gb_gwt_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and  gb_gwt_status  = #{equalStatus}
+			</if>
+			<if test="type != null">
+				and  gb_gwt_type  =  #{type}
+			</if>
+			<if test="isSelf != null">
+				and  gb_gwt_is_self  =  #{isSelf}
+			</if>
+			<if test="startDate != null">
+				and  gb_gwt_date   &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and  gb_gwt_date   &lt;=  #{stopDate}
+			</if>
+
+		</where>
+          order by gb_gwt_date DESC, gb_gwt_print_time DESC
+	</select>
+	<select id="queryDepWeightCountByParams" resultType="java.lang.Integer">
+		select COUNT(*) from gb_distributer_weight_total as gdwt
+		<where>
+			<if test="depId != null">
+				and  gb_gwt_dep_father_id = #{depId}
+			</if>
+			<if test="status != null">
+				and  gb_gwt_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and  gb_gwt_status  =  #{equalStatus}
+			</if>
+			<if test="date != null">
+				and  gb_gwt_date  =  #{date}
+			</if>
+			<if test="type != null">
+				and  gb_gwt_type  =  #{type}
+			</if>
+			<if test="isSelf != null">
+				and  gb_gwt_is_self  =  #{isSelf}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerWeightTotalEntity"
+			useGeneratedKeys="true" keyProperty="gbDistributerWeightTotalId">
+		insert into gb_distributer_weight_total
+		(
+			`gb_distributer_weight_total_id`, 
+			`gb_gwt_user_id`, 
+			`gb_gwt_dis_id`, 
+			`gb_gwt_weight_total`, 
+			`gb_gwt_date`, 
+			`gb_gwt_subtotal`, 
+			`gb_gwt_status`, 
+			`gb_gwt_order_names`, 
+			`gb_gwt_dep_father_id`, 
+			`gb_gwt_trade_no`, 
+			`gb_gwt_type`,
+			`gb_gwt_is_self`,
+			`gb_gwt_order_count`,
+			`gb_gwt_order_finish_count`,
+			`gb_gwt_print_time`
+		)
+		values
+		(
+			#{gbDistributerWeightTotalId}, 
+			#{gbGwtUserId}, 
+			#{gbGwtDisId}, 
+			#{gbGwtWeightTotal}, 
+			#{gbGwtDate}, 
+			#{gbGwtSubtotal}, 
+			#{gbGwtStatus}, 
+			#{gbGwtOrderNames}, 
+			#{gbGwtDepFatherId}, 
+			#{gbGwtTradeNo}, 
+			#{gbGwtType},
+			#{gbGwtIsSelf},
+			#{gbGwtOrderCount},
+			#{gbGwtOrderFinishCount},
+			#{gbGwtPrintTime}
+
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerWeightTotalEntity">
+		update gb_distributer_weight_total 
+		<set>
+			<if test="gbGwtUserId != null">`gb_gwt_user_id` = #{gbGwtUserId}, </if>
+			<if test="gbGwtDisId != null">`gb_gwt_dis_id` = #{gbGwtDisId}, </if>
+			<if test="gbGwtWeightTotal != null">`gb_gwt_weight_total` = #{gbGwtWeightTotal}, </if>
+			<if test="gbGwtDate != null">`gb_gwt_date` = #{gbGwtDate}, </if>
+			<if test="gbGwtSubtotal != null">`gb_gwt_subtotal` = #{gbGwtSubtotal}, </if>
+			<if test="gbGwtStatus != null">`gb_gwt_status` = #{gbGwtStatus}, </if>
+			<if test="gbGwtOrderNames != null">`gb_gwt_order_names` = #{gbGwtOrderNames}, </if>
+			<if test="gbGwtDepFatherId != null">`gb_gwt_dep_father_id` = #{gbGwtDepFatherId}, </if>
+			<if test="gbGwtTradeNo != null">`gb_gwt_trade_no` = #{gbGwtTradeNo}, </if>
+			<if test="gbGwtIsSelf != null">`gb_gwt_is_self` = #{gbGwtIsSelf}, </if>
+			<if test="gbGwtOrderCount != null">`gb_gwt_order_count` = #{gbGwtOrderCount}, </if>
+			<if test="gbGwtOrderFinishCount != null">`gb_gwt_order_finish_count` = #{gbGwtOrderFinishCount}, </if>
+			<if test="gbGwtPrintTime != null">`gb_gwt_print_time` = #{gbGwtPrintTime}, </if>
+			<if test="gbGwtType != null">`gb_gwt_type` = #{gbGwtType}</if>
+		</set>
+		where gb_distributer_weight_total_id = #{gbDistributerWeightTotalId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_weight_total where gb_distributer_weight_total_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_weight_total where gb_distributer_weight_total_id in 
+		<foreach item="gbDistributerWeightTotalId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerWeightTotalId}
+		</foreach>
+	</delete>
+
+</mapper>

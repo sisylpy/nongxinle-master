@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepartmentGoodsStockReduceAttachmentDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepartmentGoodsStockReduceAttachmentEntity">
+		select * from gb_department_goods_stock_reduce_attachment where gb_department_goods_stock_reduce_attach_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepartmentGoodsStockReduceAttachmentEntity">
+		select * from gb_department_goods_stock_reduce_attachment 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_department_goods_stock_reduce_attachment 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepartmentGoodsStockReduceAttachmentEntity">
+		insert into gb_department_goods_stock_reduce_attachment
+		(
+			`gb_department_goods_stock_reduce_attach_id`, 
+			`gb_dgsra_gb_dgsr_id`, 
+			`gb_dgsra_content`, 
+			`gb_dgsra_file_path`, 
+			`gb_dgsra_status`
+		)
+		values
+		(
+			#{gbDepartmentGoodsStockReduceAttachId}, 
+			#{gbDgsraGbDgsrId}, 
+			#{gbDgsraContent}, 
+			#{gbDgsraFilePath}, 
+			#{gbDgsraStatus}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepartmentGoodsStockReduceAttachmentEntity">
+		update gb_department_goods_stock_reduce_attachment 
+		<set>
+			<if test="gbDgsraGbDgsrId != null">`gb_dgsra_gb_dgsr_id` = #{gbDgsraGbDgsrId}, </if>
+			<if test="gbDgsraContent != null">`gb_dgsra_content` = #{gbDgsraContent}, </if>
+			<if test="gbDgsraFilePath != null">`gb_dgsra_file_path` = #{gbDgsraFilePath}, </if>
+			<if test="gbDgsraStatus != null">`gb_dgsra_status` = #{gbDgsraStatus}</if>
+		</set>
+		where gb_department_goods_stock_reduce_attach_id = #{gbDepartmentGoodsStockReduceAttachId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_department_goods_stock_reduce_attachment where gb_department_goods_stock_reduce_attach_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_department_goods_stock_reduce_attachment where gb_department_goods_stock_reduce_attach_id in 
+		<foreach item="gbDepartmentGoodsStockReduceAttachId" collection="array" open="(" separator="," close=")">
+			#{gbDepartmentGoodsStockReduceAttachId}
+		</foreach>
+	</delete>
+
+</mapper>

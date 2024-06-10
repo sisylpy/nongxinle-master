@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxECommerceDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxECommerceEntity">
+		select * from nx_e_commerce where nx_e_commerce_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxECommerceEntity">
+		select * from nx_e_commerce 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_e_commerce 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxECommerceEntity" useGeneratedKeys="true"
+	 keyProperty="nxECommerceId">
+		insert into nx_e_commerce
+		(
+			`nx_e_commerce_id`, 
+			`nx_e_commerce_name`, 
+			`nx_e_commerce_img`
+		)
+		values
+		(
+			#{nxECommerceId}, 
+			#{nxECommerceName}, 
+			#{nxECommerceImg}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxECommerceEntity">
+		update nx_e_commerce 
+		<set>
+			<if test="nxECommerceName != null">`nx_e_commerce_name` = #{nxECommerceName}, </if>
+			<if test="nxECommerceImg != null">`nx_e_commerce_img` = #{nxECommerceImg}</if>
+		</set>
+		where nx_e_commerce_id = #{nxECommerceId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_e_commerce where nx_e_commerce_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_e_commerce where nx_e_commerce_id in 
+		<foreach item="nxECommerceId" collection="array" open="(" separator="," close=")">
+			#{nxECommerceId}
+		</foreach>
+	</delete>
+
+</mapper>

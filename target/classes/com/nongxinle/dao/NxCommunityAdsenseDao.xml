@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityAdsenseDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityAdsenseEntity">
+		select * from nx_community_adsense where nx_community_adsense_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityAdsenseEntity">
+		select * from nx_community_adsense 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_adsense 
+	</select>
+	<select id="getListByCommunityId" resultType="com.nongxinle.entity.NxCommunityAdsenseEntity">
+		select * from nx_community_adsense where nx_CA_community_id = #{communityId}
+	</select>
+	<select id="queryAdsenseByNxCommunityId" resultType="com.nongxinle.entity.NxCommunityAdsenseEntity">
+		select * from nx_community_adsense where nx_CA_community_id = #{communityId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityAdsenseEntity" useGeneratedKeys="true"
+	keyProperty="nxCommunityAdsenseId">
+		insert into nx_community_adsense
+		(
+			`nx_community_adsense_id`, 
+			`nx_CA_file_path`,
+			`nx_CA_click`,
+			`nx_CA_community_id`,
+			`nx_CA_sort`
+		)
+		values
+		(
+			#{nxCommunityAdsenseId},
+			#{nxCaFilePath},
+			#{nxCaClick},
+			#{nxCaCommunityId},
+			#{nxCaSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityAdsenseEntity">
+		update nx_community_adsense 
+		<set>
+			<if test="nxCaFilePath != null">`nx_CA_file_path` = #{nxCaFilePath}, </if>
+			<if test="nxCaClick != null">`nx_CA_click` = #{nxCaClick}, </if>
+			<if test="nxCaId != null">`nx_CA_community_id` = #{nxCaId}, </if>
+			<if test="nxCaSort != null">`nx_CA_sort` = #{nxCaSort}</if>
+		</set>
+		where nx_community_adsense_id = #{nxAdsenseId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_adsense where nx_community_adsense_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_adsense where nx_community_adsense_id in 
+		<foreach item="nxCommunityAdsenseId" collection="array" open="(" separator="," close=")">
+			#{nxAdsenseId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityStandardDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityStandardEntity">
+		select * from nx_community_standard where nx_community_standard_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityStandardEntity">
+		select * from nx_community_standard
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_standard
+	</select>
+    <select id="queryComGoodsStandards" resultType="com.nongxinle.entity.NxCommunityStandardEntity">
+		select * from nx_community_standard where  nx_CS_comm_goods_id = #{comGoodsId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityStandardEntity" useGeneratedKeys="true"
+	keyProperty="nxCommunityStandardId">
+		insert into nx_community_standard
+		(
+			`nx_community_standard_id`,
+			`nx_CS_comm_goods_id`,
+			`nx_CS_standard_name`,
+			`nx_CS_standard_file_path`,
+			`nx_CS_standard_scale`,
+			`nx_CS_standard_error`,
+			`nx_CS_standard_sort`
+		)
+		values
+		(
+			#{nxCommunityStandardId},
+			#{nxCsCommGoodsId},
+			#{nxCsStandardName},
+			#{nxCsStandardFilePath},
+			#{nxCsStandardScale},
+			#{nxCsStandardError},
+			#{nxCsStandardSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityStandardEntity">
+		update nx_community_standard
+		<set>
+			<if test="nxCsCommGoodsId != null">`nx_CS_comm_goods_id` = #{nxCsCommGoodsId}, </if>
+			<if test="nxCsStandardName != null">`nx_CS_standard_name` = #{nxCsStandardName}, </if>
+			<if test="nxCsStandardFilePath != null">`nx_CS_standard_file_path` = #{nxCsStandardFilePath}, </if>
+			<if test="nxCsStandardScale != null">`nx_CS_standard_scale` = #{nxCsStandardScale}, </if>
+			<if test="nxCsStandardError != null">`nx_CS_standard_error` = #{nxCsStandardError}, </if>
+			<if test="nxCsStandardSort != null">`nx_CS_standard_sort` = #{nxCsStandardSort}</if>
+		</set>
+		where nx_community_standard_id = #{nxCommunityStandardId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_standard where nx_community_standard_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_standard where nx_community_standard_id in
+		<foreach item="nxCommunityStandardId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityStandardId}
+		</foreach>
+	</delete>
+
+</mapper>

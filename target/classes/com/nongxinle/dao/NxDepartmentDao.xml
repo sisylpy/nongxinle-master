@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentDao">
+
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentEntity">
+        select *
+        from nx_department
+        where nx_department_id = #{value}
+    </select>
+
+    <resultMap id="subDepUsers" type="NxDistributerUserEntity">
+        <id property="nxDistributerUserId" column="subu_nx_distributer_user_id"/>
+        <result property="nxDiuWxNickName" column="subu_nx_DIU_wx_nick_name"/>
+        <result property="nxDiuPrintDeviceId" column="subu_nx_DIU_print_device_id"/>
+        <result property="nxDiuPrintBillDeviceId" column="subu_nx_DIU_print_bill_device_id"/>
+    </resultMap>
+
+    <resultMap id="deps" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="subs_nx_department_id"/>
+        <result property="nxDepartmentPromotionGoodsId" column="subs_nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentPrintName" column="subs_nx_department_print_name"/>
+        <result property="nxDepartmentType" column="subs_nx_department_type"/>
+        <result property="nxDepartmentName" column="subs_nx_department_name"/>
+        <result property="nxDepartmentSubAmount" column="subs_nx_department_sub_amount"/>
+        <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
+        <result property="nxDepartmentShowWeeks" column="subs_nx_department_show_weeks"/>
+        <result property="nxDepartmentIsGroupDep" column="subs_nx_department_is_group_dep"/>
+        <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
+        <result property="nxDepartmentDisId" column="subs_nx_department_dis_id"/>
+    </resultMap>
+
+    <resultMap id="subDepsWithGrandSubs" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="subs_nx_department_id"/>
+        <result property="nxDepartmentPromotionGoodsId" column="subs_nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentPrintName" column="subs_nx_department_print_name"/>
+        <result property="nxDepartmentType" column="subs_nx_department_type"/>
+        <result property="nxDepartmentName" column="subs_nx_department_name"/>
+        <result property="nxDepartmentSubAmount" column="subs_nx_department_sub_amount"/>
+        <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
+        <result property="nxDepartmentShowWeeks" column="subs_nx_department_show_weeks"/>
+        <result property="nxDepartmentIsGroupDep" column="subs_nx_department_is_group_dep"/>
+        <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
+        <result property="nxDepartmentDisId" column="subs_nx_department_dis_id"/>
+        <collection property="nxSubDepartments" resultMap="deps"/>
+    </resultMap>
+    <resultMap id="subDeps" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="subs_nx_department_id"/>
+        <result property="nxDepartmentPrintName" column="subs_nx_department_print_name"/>
+        <result property="nxDepartmentPromotionGoodsId" column="subs_nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentType" column="subs_nx_department_type"/>
+        <result property="nxDepartmentName" column="subs_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="subs_nx_department_attr_name"/>
+        <result property="nxDepartmentSubAmount" column="subs_nx_department_sub_amount"/>
+        <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
+        <result property="nxDepartmentShowWeeks" column="subs_nx_department_show_weeks"/>
+        <result property="nxDepartmentIsGroupDep" column="subs_nx_department_is_group_dep"/>
+        <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
+        <result property="nxDepartmentDisId" column="subs_nx_department_dis_id"/>
+        <result property="nxDepartmentFilePath" column="subs_nx_department_file_path"/>
+        <association property="nxDistributerEntity" resultMap="distributer"/>
+        <collection property="nxDepartmentUserEntities" resultMap="subDepUsers"/>
+    </resultMap>
+
+    <resultMap id="disUser" type="NxDistributerUserEntity">
+        <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+        <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+        <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuAdmin" column="nx_DIU_admin"/>
+        <result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+        <result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+        <result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+        <result property="nxDiuQyCorpUserId" column="nx_DIU_qy_corp_user_id"/>
+
+    </resultMap>
+    <resultMap id="distributer" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <collection property="nxDistributerUserEntities" resultMap="disUser"/>
+    </resultMap>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDepartmentEntity">
+        select * from nx_department
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_department
+    </select>
+
+    <resultMap id="depUsers" type="NxDepartmentUserEntity">
+        <id property="nxDepartmentUserId" column="fu_nx_department_user_id"/>
+        <result property="nxDuWxNickName" column="fu_nx_DU_wx_nick_name"/>
+        <result property="nxDuWxAvartraUrl" column="fu_nx_DU_wx_avartra_url"/>
+        <result property="nxDuWxPhone" column="fu_nx_DU_wx_phone"/>
+    </resultMap>
+
+    <resultMap id="departmentsWithUsers" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentName" column="nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="nxDepartmentType" column="nx_department_type"/>
+        <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+        <result property="nxDepartmentSettleType" column="nx_department_settle_type"/>
+        <result property="nxDepartmentSubAmount" column="nx_department_sub_amount"/>
+        <result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
+        <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
+        <result property="nxDepartmentWorkingStatus" column="nx_department_working_status"/>
+        <result property="nxDepartmentFilePath" column="nx_department_file_path"/>
+        <collection property="nxDepartmentUserEntities" resultMap="depUsers"/>
+        <collection property="nxDepartmentEntities" resultMap="subDeps"/>
+    </resultMap>
+
+    <select id="queryDisDepartments" resultMap="departmentsWithUsers">
+        select * from nx_department as d
+        left join nx_department_user as u on u.nx_DU_department_id = d.nx_department_id
+        where d.nx_department_dis_id = #{disId} and u.nx_DU_admin = 1 and
+        <choose>
+            <when test="type == 'unFixed'">
+                d.nx_department_type = 1
+            </when>
+            <when test="type == 'fixed'">
+                d.nx_department_type = 2
+            </when>
+        </choose>
+    </select>
+
+    <resultMap id="fatherDep" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="f_nx_department_id"/>
+        <result property="nxDepartmentPromotionGoodsId" column="f_nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentName" column="f_nx_department_name"/>
+        <result property="nxDepartmentPrintName" column="f_nx_department_print_name"/>
+        <result property="nxDepartmentType" column="f_nx_department_type"/>
+        <result property="nxDepartmentDisId" column="f_nx_department_dis_id"/>
+        <result property="nxDepartmentSubAmount" column="f_nx_department_sub_amount"/>
+        <result property="nxDepartmentIsGroupDep" column="f_nx_department_is_group_dep"/>
+        <result property="nxDepartmentSubAmount" column="f_nx_department_sub_amount"/>
+        <result property="nxDepartmentFatherId" column="f_nx_department_father_id"/>
+        <result property="nxDepartmentSettleType" column="f_nx_department_settle_type"/>
+        <result property="nxDepartmentFilePath" column="f_nx_department_file_path"/>
+    </resultMap>
+
+    <resultMap id="depInfo" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="d_nx_department_id"/>
+        <result property="nxDepartmentPromotionGoodsId" column="d_nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentPrintName" column="d_nx_department_print_name"/>
+        <result property="nxDepartmentType" column="d_nx_department_type"/>
+        <result property="nxDepartmentName" column="d_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="d_nx_department_attr_name"/>
+        <result property="nxDepartmentFatherId" column="d_nx_department_father_id"/>
+        <result property="nxDepartmentIsGroupDep" column="d_nx_department_is_group_dep"/>
+        <result property="nxDepartmentSubAmount" column="d_nx_department_sub_amount"/>
+        <result property="nxDepartmentDisId" column="d_nx_department_dis_id"/>
+        <result property="nxDepartmentShowWeeks" column="d_nx_department_show_weeks"/>
+        <result property="nxDepartmentDisId" column="d_nx_department_dis_id"/>
+        <result property="nxDepartmentPrintName" column="d_nx_department_print_name"/>
+        <result property="nxDepartmentSettleType" column="d_nx_department_settle_type"/>
+        <result property="nxDepartmentFilePath" column="d_nx_department_file_path"/>
+        <association property="fatherDepartmentEntity" resultMap="fatherDep"/>
+        <association property="nxDistributerEntity" resultMap="distributer"/>
+        <collection property="nxDepartmentEntities" resultMap="subDeps"/>
+    </resultMap>
+
+    <resultMap id="groupInfo" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="d_nx_department_id"/>
+        <result property="nxDepartmentPrintName" column="d_nx_department_print_name"/>
+        <result property="nxDepartmentType" column="d_nx_department_type"/>
+        <result property="nxDepartmentName" column="d_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="d_nx_department_attr_name"/>
+        <result property="nxDepartmentFatherId" column="d_nx_department_father_id"/>
+        <result property="nxDepartmentIsGroupDep" column="d_nx_department_is_group_dep"/>
+        <result property="nxDepartmentSubAmount" column="d_nx_department_sub_amount"/>
+        <result property="nxDepartmentDisId" column="d_nx_department_dis_id"/>
+        <result property="nxDepartmentShowWeeks" column="d_nx_department_show_weeks"/>
+        <result property="nxDepartmentDisId" column="d_nx_department_dis_id"/>
+        <result property="nxDepartmentType" column="d_nx_department_type"/>
+        <collection property="nxDepartmentEntities" resultMap="subDepsWithGrandSubs"/>
+    </resultMap>
+
+
+    <select id="queryGroupInfo" resultMap="groupInfo">
+        select d.nx_department_id                'd_nx_department_id',
+               d.nx_department_name              'd_nx_department_name',
+               d.nx_department_father_id         'd_nx_department_father_id',
+               d.nx_department_is_group_dep      'd_nx_department_is_group_dep',
+               d.nx_department_dis_id            'd_nx_department_dis_id',
+               d.nx_department_show_weeks        'd_nx_department_show_weeks',
+               d.nx_department_sub_amount        'd_nx_department_sub_amount',
+               d.nx_department_type              'd_nx_department_type',
+               d.nx_department_attr_name         'd_nx_department_attr_name',
+               d.nx_department_type              'd_nx_department_type',
+               d.nx_department_print_name        'd_nx_department_print_name',
+               grandSub.nx_department_id         'grandSub_nx_department_id',
+               grandSub.nx_department_name       'grandSub_nx_department_name',
+               grandSub.nx_department_dis_id     'grandSub_nx_department_dis_id',
+               grandSub.nx_department_show_weeks 'grandSub_nx_department_show_weeks',
+               grandSub.nx_department_dis_id     'grandSub_nx_department_dis_id',
+               grandSub.nx_department_sub_amount 'grandSub_nx_department_sub_amount',
+               grandSub.nx_department_type       'grandSub_nx_department_type',
+               grandSub.nx_department_print_name 'grandSub_nx_department_print_name',
+               subsd.nx_department_id            'subs_nx_department_id',
+               subsd.nx_department_name          'subs_nx_department_name',
+               subsd.nx_department_type          'subs_nx_department_type',
+               subsd.nx_department_print_name    'subs_nx_department_print_name',
+               subsd.nx_department_show_weeks    'subs_nx_department_show_weeks',
+               subsd.nx_department_father_id     'subs_nx_department_father_id',
+               subsd.nx_department_is_group_dep  'subs_nx_department_is_group_dep',
+               subsd.nx_department_dis_id        'subs_nx_department_dis_id',
+               subsd.nx_department_sub_amount    'subs_nx_department_sub_amount',
+               dis.nx_distributer_name,
+               dis.nx_distributer_id,
+               dis.nx_distributer_address,
+               dis.nx_distributer_manager,
+               dis.nx_distributer_phone,
+               dis.nx_distributer_img,
+               dis.nx_distributer_img,
+               diu.nx_distributer_user_id,
+               diu.nx_DIU_wx_nick_name,
+               diu.nx_DIU_wx_avartra_url,
+               diu.nx_DIU_distributer_id,
+               diu.nx_DIU_admin
+        from nx_department as d
+                 left join nx_department as subsd on subsd.nx_department_father_id = d.nx_department_id
+                 left join nx_department as grandSub on grandSub.nx_department_father_id = subsd.nx_department_id
+                 left join nx_distributer as dis on dis.nx_distributer_id = d.nx_department_dis_id
+                 left join nx_distributer_user as diu on diu.nx_DIU_distributer_id = dis.nx_distributer_id
+        where d.nx_department_id = #{nxDuDepartmentId}
+          and d.nx_department_is_group_dep = 1
+          and diu.nx_DIU_admin = 1
+    </select>
+
+
+    <select id="queryDepInfo" resultMap="depInfo">
+        select d.nx_department_id               'd_nx_department_id',
+               d.nx_department_promotion_goods_id             'd_nx_department_promotion_goods_id',
+               d.nx_department_name             'd_nx_department_name',
+               d.nx_department_father_id        'd_nx_department_father_id',
+               d.nx_department_is_group_dep     'd_nx_department_is_group_dep',
+               d.nx_department_dis_id           'd_nx_department_dis_id',
+               d.nx_department_show_weeks       'd_nx_department_show_weeks',
+               d.nx_department_sub_amount       'd_nx_department_sub_amount',
+               d.nx_department_type             'd_nx_department_type',
+               d.nx_department_print_name       'd_nx_department_print_name',
+               d.nx_department_settle_type      'd_nx_department_settle_type',
+               d.nx_department_attr_name        'd_nx_department_attr_name',
+               d.nx_department_file_path        'd_nx_department_file_path',
+
+               f.nx_department_id               'f_nx_department_id',
+               f.nx_department_promotion_goods_id    'f_nx_department_promotion_goods_id',
+               f.nx_department_name             'f_nx_department_name',
+               f.nx_department_dis_id           'f_nx_department_dis_id',
+               f.nx_department_show_weeks       'f_nx_department_show_weeks',
+               f.nx_department_dis_id           'f_nx_department_dis_id',
+               f.nx_department_sub_amount       'f_nx_department_sub_amount',
+               f.nx_department_type             'f_nx_department_type',
+               f.nx_department_print_name       'f_nx_department_print_name',
+               f.nx_department_settle_type      'f_nx_department_settle_type',
+               f.nx_department_attr_name        'f_nx_department_attr_name',
+               f.nx_department_file_path        'f_nx_department_file_path',
+               subsd.nx_department_id           'subs_nx_department_id',
+               subsd.nx_department_promotion_goods_id           'subs_nx_department_promotion_goods_id',
+               subsd.nx_department_name         'subs_nx_department_name',
+               subsd.nx_department_show_weeks   'subs_nx_department_show_weeks',
+               subsd.nx_department_father_id    'subs_nx_department_father_id',
+               subsd.nx_department_is_group_dep 'subs_nx_department_is_group_dep',
+               subsd.nx_department_dis_id       'subs_nx_department_dis_id',
+               subsd.nx_department_type         'subs_nx_department_type',
+               subsd.nx_department_print_name   'subs_nx_department_print_name',
+               subsd.nx_department_sub_amount   'subs_nx_department_sub_amount',
+               subsd.nx_department_file_path    'subsd_nx_department_file_path',
+               dis.nx_distributer_name,
+               dis.nx_distributer_id,
+               dis.nx_distributer_address,
+               dis.nx_distributer_manager,
+               dis.nx_distributer_phone,
+               dis.nx_distributer_img
+        from nx_department as d
+                 left join nx_department as f on d.nx_department_father_id = f.nx_department_id
+                 left join nx_department as subsd on subsd.nx_department_father_id = d.nx_department_id
+                 left join nx_distributer as dis on dis.nx_distributer_id = f.nx_department_dis_id
+        where d.nx_department_id = #{nxDuDepartmentId}
+    </select>
+
+
+    <select id="querySubDepartments" resultType="com.nongxinle.entity.NxDepartmentEntity">
+        select *
+        from nx_department
+        where nx_department_father_id = #{depId}
+          and nx_department_is_group_dep = 0
+    </select>
+
+    <select id="queryFatherDep" resultType="com.nongxinle.entity.NxDepartmentEntity">
+        select fd.nx_department_id, fd.nx_department_name
+        from nx_department as d
+                 left join nx_department as fd on d.nx_department_father_id = fd.nx_department_id
+        where d.nx_department_id = #{depId}
+    </select>
+    <select id="queryDeliveryDepsByParams" resultType="com.nongxinle.entity.NxDepartmentEntity">
+        select *
+        from nx_department as dep
+        where dep.nx_department_driver_id = #{userId}
+    </select>
+    <select id="queryDepartmentBySettleType" resultMap="departmentsWithUsers">
+        select *,
+		subsd.nx_department_id            'subs_nx_department_id',
+		subsd.nx_department_name          'subs_nx_department_name',
+		subsd.nx_department_attr_name          'subs_nx_department_attr_name',
+		subsd.nx_department_type          'subs_nx_department_type',
+		subsd.nx_department_print_name    'subs_nx_department_print_name',
+		subsd.nx_department_show_weeks    'subs_nx_department_show_weeks',
+		subsd.nx_department_father_id     'subs_nx_department_father_id',
+		subsd.nx_department_is_group_dep  'subs_nx_department_is_group_dep',
+		subsd.nx_department_dis_id        'subs_nx_department_dis_id',
+		subsd.nx_department_working_status       'subs_nx_department_working_status',
+		subsd.nx_department_file_path      'subs_nx_department_file_path',
+		subsd.nx_department_sub_amount    'subs_nx_department_sub_amount'
+               from nx_department as d
+               left join nx_department as subsd on subsd.nx_department_father_id = d.nx_department_id
+
+        <where>
+            <if test="disId != null">
+                and d.nx_department_dis_id = #{disId}
+            </if>
+            <if test="type != null">
+                and d.nx_department_settle_type = #{type}
+            </if>
+            <if test="isGroup != null">
+                and d.nx_department_is_group_dep = #{isGroup}
+            </if>
+            <if test="subAmount != null">
+                and d.nx_department_sub_amount = #{subAmount}
+            </if>
+
+            and d.nx_department_is_group_dep = 1
+        </where>
+    </select>
+    <select id="queryDepartmentCount" resultType="int">
+        select count(*) from nx_department as d
+        <where>
+        <if test="disId != null">
+            and d.nx_department_dis_id = #{disId}
+        </if>
+        <if test="type != null">
+            and d.nx_department_settle_type = #{type}
+        </if>
+        <if test="isGroup != null">
+            and d.nx_department_is_group_dep = #{isGroup}
+        </if>
+        <if test="subAmount != null">
+            and d.nx_department_sub_amount = #{subAmount}
+        </if>
+    </where>
+    </select>
+    <select id="queryDepartmentListByParams" resultType="com.nongxinle.entity.NxDepartmentEntity">
+        select * from nx_department
+        <where>
+            <if test="disId != null">
+                and d.nx_department_dis_id = #{disId}
+            </if>
+            <if test="type != null">
+                and d.nx_department_settle_type = #{type}
+            </if>
+            <if test="isGroup != null">
+                and d.nx_department_is_group_dep = #{isGroup}
+            </if>
+            <if test="subAmount != null">
+                and d.nx_department_sub_amount = #{subAmount}
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentEntity"
+            useGeneratedKeys="true" keyProperty="nxDepartmentId">
+        insert into nx_department
+        (`nx_department_id`,
+         `nx_department_name`,
+         `nx_department_father_id`,
+         `nx_department_type`,
+         `nx_department_sub_amount`,
+         `nx_department_dis_id`,
+         `nx_department_file_path`,
+         `nx_department_is_group_dep`,
+         `nx_department_print_name`,
+         `nx_department_show_weeks`,
+         `nx_department_settle_type`,
+         `nx_department_attr_name`,
+         `nx_department_driver_id`,
+         `nx_department_owe_box_number`,
+         `nx_department_delivery_box_number`,
+         `nx_department_working_status`,
+         `nx_department_unPay_total`,
+         `nx_department_add_count`,
+         `nx_department_pay_total`,
+         `nx_department_profit_total`,
+         `nx_department_promotion_goods_id`
+         )
+        values (#{nxDepartmentId},
+                #{nxDepartmentName},
+                #{nxDepartmentFatherId},
+                #{nxDepartmentType},
+                #{nxDepartmentSubAmount},
+                #{nxDepartmentDisId},
+                #{nxDepartmentFilePath},
+                #{nxDepartmentIsGroupDep},
+                #{nxDepartmentPrintName},
+                #{nxDepartmentShowWeeks},
+                #{nxDepartmentSettleType},
+                #{nxDepartmentAttrName},
+                #{nxDepartmentDriverId},
+                #{nxDepartmentOweBoxNumber},
+                #{nxDepartmentDeliveryBoxNumber},
+                #{nxDepartmentWorkingStatus},
+                #{nxDepartmentUnPayTotal},
+                #{nxDepartmentAddCount},
+                #{nxDepartmentPayTotal},
+                #{nxDepartmentProfitTotal},
+                #{nxDepartmentPromotionGoodsId}
+                )
+    </insert>
+
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDepartmentEntity">
+        update nx_department
+        <set>
+            <if test="nxDepartmentName != null">`nx_department_name` = #{nxDepartmentName},</if>
+            <if test="nxDepartmentFatherId != null">`nx_department_father_id` = #{nxDepartmentFatherId},</if>
+            <if test="nxDepartmentType != null">`nx_department_type` = #{nxDepartmentType},</if>
+            <if test="nxDepartmentDisId != null">`nx_department_dis_id` = #{nxDepartmentDisId},</if>
+            <if test="nxDepartmentFilePath != null">`nx_department_file_path` = #{nxDepartmentFilePath},</if>
+            <if test="nxDepartmentIsGroupDep != null">`nx_department_is_group_dep` = #{nxDepartmentIsGroupDep},</if>
+            <if test="nxDepartmentPrintName != null">`nx_department_print_name` = #{nxDepartmentPrintName},</if>
+            <if test="nxDepartmentShowWeeks != null">`nx_department_show_weeks` = #{nxDepartmentShowWeeks},</if>
+            <if test="nxDepartmentSettleType != null">`nx_department_settle_type` = #{nxDepartmentSettleType},</if>
+            <if test="nxDepartmentAttrName != null">`nx_department_attr_name` = #{nxDepartmentAttrName},</if>
+            <if test="nxDepartmentDriverId != null">`nx_department_driver_id` = #{nxDepartmentDriverId},</if>
+            <if test="nxDepartmentOweBoxNumber != null">`nx_department_owe_box_number` = #{nxDepartmentOweBoxNumber},
+            </if>
+            <if test="nxDepartmentDeliveryBoxNumber != null">`nx_department_delivery_box_number` =
+                #{nxDepartmentDeliveryBoxNumber},
+            </if>
+            <if test="nxDepartmentWorkingStatus != null">`nx_department_working_status` =
+                #{nxDepartmentWorkingStatus},
+            </if>
+            <if test="nxDepartmentUnPayTotal != null">`nx_department_unPay_total` = #{nxDepartmentUnPayTotal},</if>
+            <if test="nxDepartmentAddCount != null">`nx_department_add_count` = #{nxDepartmentAddCount},</if>
+            <if test="nxDepartmentPayTotal != null">`nx_department_pay_total` = #{nxDepartmentPayTotal},</if>
+            <if test="nxDepartmentProfitTotal != null">`nx_department_profit_total` = #{nxDepartmentProfitTotal},</if>
+            <if test="nxDepartmentPromotionGoodsId != null">`nx_department_promotion_goods_id` = #{nxDepartmentPromotionGoodsId},</if>
+            <if test="nxDepartmentSubAmount != null">`nx_department_sub_amount` = #{nxDepartmentSubAmount}</if>
+        </set>
+        where nx_department_id = #{nxDepartmentId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_department
+        where nx_department_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_department where nx_department_id in
+        <foreach item="nxDepartmentId" collection="array" open="(" separator="," close=")">
+            #{nxDepartmentId}
+        </foreach>
+    </delete>
+
+</mapper>

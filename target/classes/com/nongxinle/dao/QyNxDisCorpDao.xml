@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyNxDisCorpDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyNxDisCorpEntity">
+		select * from qy_nx_dis_corp where qy_nx_dis_corp_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyNxDisCorpEntity">
+		select * from qy_nx_dis_corp 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_nx_dis_corp 
+	</select>
+	<select id="queryQyCropByCropId" resultType="com.nongxinle.entity.QyNxDisCorpEntity">
+		select * from qy_nx_dis_corp where qy_nx_dis_qy_corp_id = #{corpId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.QyNxDisCorpEntity" useGeneratedKeys="true"
+	keyProperty="qyNxDisCorpId">
+		insert into qy_nx_dis_corp
+		(
+			`qy_nx_dis_corp_id`, 
+			`qy_nx_dis_corp_name`, 
+			`qy_nx_dis_corp_round_logo_url`, 
+			`qy_nx_dis_corp_permanent_code`,
+			`qy_nx_dis_corp_access_token`,
+			`qy_nx_dis_qy_corp_id`,
+			`qy_nx_dis_corp_join_date`
+		)
+		values
+		(
+			#{qyNxDisCorpId}, 
+			#{qyNxDisCorpName}, 
+			#{qyNxDisCorpRoundLogoUrl},
+			#{qyNxDisCorpPermanentCode},
+			#{qyNxDisCorpAccessToken},
+			#{qyNxDisQyCorpId},
+			#{qyNxDisCorpJoinDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyNxDisCorpEntity">
+		update qy_nx_dis_corp 
+		<set>
+			<if test="qyNxDisCorpName != null">`qy_nx_dis_corp_name` = #{qyNxDisCorpName}, </if>
+			<if test="qyNxDisCorpRoundLogoUrl != null">`qy_nx_dis_corp_round_logo_url` = #{qyNxDisCorpRoundLogoUrl}, </if>
+			<if test="qyNxDisCorpPermanentCode != null">`qy_nx_dis_corp_permanent_code` = #{qyNxDisCorpPermanentCode}, </if>
+			<if test="qyNxDisCorpAccessToken != null">`qy_nx_dis_corp_access_token` = #{qyNxDisCorpAccessToken}, </if>
+			<if test="qyNxDisCorpJoinDate != null">`qy_nx_dis_corp_join_date` = #{qyNxDisCorpJoinDate}, </if>
+			<if test="qyNxDisQyCorpId != null">`qy_nx_dis_qy_corp_id` = #{qyNxDisQyCorpId}</if>
+		</set>
+		where qy_nx_dis_corp_id = #{qyNxDisCorpId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_nx_dis_corp where qy_nx_dis_corp_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_nx_dis_corp where qy_nx_dis_corp_id in 
+		<foreach item="qyNxDisCorpId" collection="array" open="(" separator="," close=")">
+			#{qyNxDisCorpId}
+		</foreach>
+	</delete>
+	<delete id="deleteCrop">
+		delete qy_nx_dis_corp from qy_nx_dis_corp where qy_nx_dis_qy_corp_id = #{corpid}
+	</delete>
+
+</mapper>

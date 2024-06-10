@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbRouteDepDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbRouteDepEntity">
+		select * from gb_route_dep where gb_route_dep_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbRouteDepEntity">
+		select * from gb_route_dep 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_route_dep 
+	</select>
+	<select id="queryHaveLineDepsByDisId" resultType="com.nongxinle.entity.GbDepartmentEntity">
+		select * from gb_route_dep where gb_RD_dis_id = #{disId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbRouteDepEntity" useGeneratedKeys="true"
+	keyProperty="gbRouteDepId">
+		insert into gb_route_dep
+		(
+			`gb_route_dep_id`, 
+			`gb_RD_route_id`, 
+			`gb_RD_dep_id`,
+		 	`gb_RD_dis_id`
+
+		)
+		values
+		(
+			#{gbRouteDepId}, 
+			#{gbRdRouteId}, 
+			#{gbRdDepId},
+		 	#{gbRdDisId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbRouteDepEntity">
+		update gb_route_dep 
+		<set>
+			<if test="gbRdRouteId != null">`gb_RD_route_id` = #{gbRdRouteId}, </if>
+			<if test="gbRdDepId != null">`gb_RD_dep_id` = #{gbRdDepId}</if>
+			<if test="gbRdDisId != null">`gb_RD_dis_id` = #{gbRdDisId}</if>
+		</set>
+		where gb_route_dep_id = #{gbRouteDepId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_route_dep where gb_route_dep_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_route_dep where gb_route_dep_id in 
+		<foreach item="gbRouteDepId" collection="array" open="(" separator="," close=")">
+			#{gbRouteDepId}
+		</foreach>
+	</delete>
+
+</mapper>

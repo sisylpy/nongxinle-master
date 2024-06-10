@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.SysBusinessTypeDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.SysBusinessTypeEntity">
+        select *
+        from sys_business_type
+        where sys_business_type_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.SysBusinessTypeEntity">
+        select * from sys_business_type
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from sys_business_type
+    </select>
+
+
+    <resultMap id="gbDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentName" column="gb_department_name"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+        <result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentLevel" column="gb_department_level"/>
+    </resultMap>
+    <resultMap id="nxDisGbDis" type="NxDistributerGbDistributerEntity">
+        <id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+        <result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
+        <result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
+        <result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
+        <result property="nxDgdGbPayMethod" column="nx_DGD_gb_pay_method"/>
+        <result property="nxDgdGbPayPeriodWeek" column="nx_DGD_gb_pay_period_week"/>
+        <result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
+        <result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
+        <result property="nxDgdStatus" column="nx_DGD_status"/>
+        <association property="gbDepartmentEntity" resultMap="gbDep"/>
+    </resultMap>
+
+    <resultMap id="dis" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
+        <association property="nxDistributerGbDistributerEntity" resultMap="nxDisGbDis"/>
+    </resultMap>
+
+    <resultMap id="typeDis" type="SysBusinessTypeEntity">
+        <id property="sysBusinessTypeId" column="sys_business_type_id"/>
+        <result property="sysBusinessTypeName" column="sys_business_type_name"/>
+        <collection property="nxDistributerEntities" resultMap="dis"/>
+    </resultMap>
+
+    <select id="queryTypeNxDistribterWithPeisong" resultMap="typeDis">
+        select *
+        from sys_business_type as sbt
+                 left join nx_distributer as nd on nd.nx_distributer_business_type_id = sbt.sys_business_type_id
+                 left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = #{depId}
+               and ndgd.nx_DGD_nx_distributer_id  = nd.nx_distributer_id
+        where
+              sbt.sys_by_dis_type = 1
+        order by sbt.sys_business_type_id
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.SysBusinessTypeEntity">
+        insert into sys_business_type
+        (`sys_business_type_id`,
+         `sys_business_type_name`,
+         `sys_by_dis_type`)
+        values (#{sysBusinessTypeId},
+                #{sysBusinessTypeName},
+                #{sysByDisType})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.SysBusinessTypeEntity">
+        update sys_business_type
+        <set>
+            <if test="sysBusinessTypeName != null">`sys_business_type_name` = #{sysBusinessTypeName}</if>,
+            <if test="sysByDisType != null">`sys_by_dis_type` = #{sysByDisType}</if>
+        </set>
+        where sys_business_type_id = #{sysBusinessTypeId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from sys_business_type
+        where sys_business_type_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from sys_business_type where sys_business_type_id in
+        <foreach item="sysBusinessTypeId" collection="array" open="(" separator="," close=")">
+            #{sysBusinessTypeId}
+        </foreach>
+    </delete>
+
+</mapper>

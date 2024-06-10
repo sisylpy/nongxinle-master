@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityEntity">
+		select * from nx_community where nx_community_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityEntity">
+		select * from nx_community 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community 
+	</select>
+
+	<select id="queryDistributerCommunityList" resultType="com.nongxinle.entity.NxCommunityEntity">
+		select * from nx_community where nx_community_dis_id = #{disId}
+	</select>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityEntity" useGeneratedKeys="true"
+	 keyProperty="nxCommunityId">
+		insert into nx_community
+		(
+			`nx_community_id`, 
+			`nx_community_name`, 
+			`nx_community_lat`,
+			`nx_community_lng`,
+		 	`nx_community_route_id`,
+		 	`nx_community_commerce_id`,
+		 	`nx_community_polygon`,
+		 	`nx_community_region`,
+		 	`nx_community_delivery_address`
+		)
+		values
+		(
+			#{nxCommunityId}, 
+			#{nxCommunityName}, 
+			#{nxCommunityLat},
+			#{nxCommunityLng},
+		 	#{nxCommunityRouteId},
+		 	#{nxCommunityCommerceId},
+		 	#{nxCommunityPolygon},
+		 	#{nxCommunityRegion},
+		 	#{nxCommunityDeliveryAddress}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityEntity">
+		update nx_community 
+		<set>
+			<if test="nxCommunityName != null">`nx_community_name` = #{nxCommunityName}, </if>
+			<if test="nxCommunityLat != null">`nx_community_lat` = #{nxCommunityLat}, </if>
+			<if test="nxCommunityRouteId != null">`nx_community_route_id` = #{nxCommunityRouteId}, </if>
+			<if test="nxCommunityCommerceId != null">`nx_community_commerce_id` = #{nxCommunityCommerceId}, </if>
+			<if test="nxCommunityPolygon != null">`nx_community_polygon` = #{nxCommunityPolygon}, </if>
+			<if test="nxCommunityRegion != null">`nx_community_region` = #{nxCommunityRegion}, </if>
+			<if test="nxCommunityDeliveryAddress != null">`nx_community_delivery_address` = #{nxCommunityDeliveryAddress}, </if>
+			<if test="nxCommunityLng != null">`nx_community_lng` = #{nxCommunityLng}</if>
+		</set>
+		where nx_community_id = #{nxCommunityId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community where nx_community_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community where nx_community_id in 
+		<foreach item="nxCommunityId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityId}
+		</foreach>
+	</delete>
+
+</mapper>

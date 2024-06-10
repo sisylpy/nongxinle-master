@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxECommerceCommunityDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxECommerceCommunityEntity">
+		select * from nx_e_commerce_community where nx_ECC_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxECommerceCommunityEntity">
+		select * from nx_e_commerce_community 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_e_commerce_community 
+	</select>
+
+	<resultMap id="community" type="NxCommunityEntity">
+		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityName" column="nx_community_name"/>
+	</resultMap>
+
+    <select id="queryCommunityByCommerceId" resultMap="community">
+		select * from nx_e_commerce_community as cc
+		left join nx_community as com on cc.nx_ECC_community_id = com.nx_community_id
+
+		where nx_ECC_e_id = #{commerceId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxECommerceCommunityEntity" useGeneratedKeys="true"
+	 keyProperty="nxEccId">
+		insert into nx_e_commerce_community
+		(
+			`nx_ECC_id`, 
+			`nx_ECC_e_id`, 
+			`nx_ECC_community_id`
+		)
+		values
+		(
+			#{nxEccId}, 
+			#{nxEccEId}, 
+			#{nxEccCommunityId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxECommerceCommunityEntity">
+		update nx_e_commerce_community 
+		<set>
+			<if test="nxEccEId != null">`nx_ECC_e_id` = #{nxEccEId}, </if>
+			<if test="nxEccCommunityId != null">`nx_ECC_community_id` = #{nxEccCommunityId}</if>
+		</set>
+		where nx_ECC_id = #{nxEccId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_e_commerce_community where nx_ECC_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_e_commerce_community where nx_ECC_id in 
+		<foreach item="nxEccId" collection="array" open="(" separator="," close=")">
+			#{nxEccId}
+		</foreach>
+	</delete>
+
+</mapper>

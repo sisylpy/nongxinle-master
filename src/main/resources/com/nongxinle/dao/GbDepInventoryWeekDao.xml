@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepInventoryWeekDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepInventoryWeekEntity">
+		select * from gb_dep_inventory_week where gb_inventory_week_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepInventoryWeekEntity">
+		select * from gb_dep_inventory_week 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_inventory_week 
+	</select>
+
+
+	<resultMap id="fatherDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="depf_gb_department_id"/>
+		<result property="gbDepartmentName" column="depf_gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="depf_gb_department_attr_name"/>
+	</resultMap>
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<result property="gbDepartmentPrintName" column="gb_department_print_name"/>
+		<association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
+	</resultMap>
+
+	<resultMap id="week" type="GbDepInventoryWeekEntity">
+		<id property="gbInventoryWeekId" column="gb_inventory_week_id"/>
+		<result property="gbDiwWeek" column="gb_diw_week"/>
+		<result property="gbDiwDepartmentId" column="gb_diw_department_id"/>
+		<result property="gbDiwDepartmentFatherId" column="gb_diw_department_father_id"/>
+		<result property="gbDiwDistributerId" column="gb_diw_distributer_id"/>
+		<result property="gbDiwSubtotal" column="gb_diw_subtotal"/>
+		<result property="gbDiwWasteTotal" column="gb_diw_waste_total"/>
+		<result property="gbDiwYear" column="gb_diw_year"/>
+		<result property="gbDiwStatus" column="gb_diw_status"/>
+		<result property="gbDiwLossTotal" column="gb_diw_loss_total"/>
+		<result property="gbDiwReturnTotal" column="gb_diw_return_total"/>
+		<result property="gbDiwWasteTotal" column="gb_diw_waste_total"/>
+		<result property="gbDiwProduceTotal" column="gb_diw_produce_total"/>
+		<association property="departmentEntity" resultMap="dep"/>
+
+	</resultMap>
+
+	<select id="queryInventoryWeek" resultMap="week">
+		select *,
+		dep.gb_department_id,
+		dep.gb_department_father_id,
+		dep.gb_department_attr_name,
+		dep.gb_department_name,
+		dep.gb_department_dis_id,
+		depf.gb_department_id 'depf_gb_department_id',
+		depf.gb_department_name 'depf_gb_department_name',
+		depf.gb_department_attr_name 'depf_gb_department_attr_name',
+		depf.gb_department_sub_amount 'depf_gb_department_sub_amount'
+		from gb_dep_inventory_week as gdiw
+		left join gb_department as dep on dep.gb_department_id = gdiw.gb_diw_department_id
+		left join gb_department as depf on depf.gb_department_id = gdiw.gb_diw_department_father_id
+		<where>
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and gdiw.gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null">
+				and gdiw.gb_diw_department_id = #{depId}
+			</if>
+			<if test="week != null">
+				and  gdiw.gb_diw_week = #{week}
+			</if>
+
+		</where>
+	</select>
+    <select id="queryDepWeekList" resultType="com.nongxinle.entity.GbDepInventoryWeekEntity">
+		select * from gb_dep_inventory_week
+		<where>
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+			 and	gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+			 and	gb_diw_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_diw_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+    <select id="queryInventoryWeekTotal" resultType="java.lang.Double">
+		select sum(gb_diw_subtotal) from gb_dep_inventory_week
+		<where>
+
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_diw_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_diw_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+	<select id="queryInventoryWeekWasteTotal" resultType="java.lang.Double">
+		select sum(gb_diw_waste_total) from gb_dep_inventory_week
+		<where>
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_diw_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_diw_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+	<select id="queryInventoryWeekLossTotal" resultType="java.lang.Double">
+		select sum(gb_diw_loss_total) from gb_dep_inventory_week
+		<where>
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_diw_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_diw_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+    <select id="queryInventoryWeekListByParams" resultType="com.nongxinle.entity.GbDepInventoryWeekEntity">
+		select *  from gb_dep_inventory_week
+		<where>
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_diw_status  &lt; #{status}
+			</if>
+		</where>
+	</select>
+	<select id="queryInventoryWeekReturnTotal" resultType="java.lang.Double">
+		select sum(gb_diw_return_total) from gb_dep_inventory_week
+		<where>
+			<if test="disId != null">
+				and	gb_diw_distributer_id = #{disId}
+			</if>
+			<if test="depFatherId != null">
+				and	gb_diw_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and	gb_diw_status  &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and	gb_diw_status  = #{equalStatus}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepInventoryWeekEntity">
+		insert into gb_dep_inventory_week
+		(
+			`gb_inventory_week_id`, 
+			`gb_diw_department_father_id`, 
+			`gb_diw_department_id`, 
+			`gb_diw_week`, 
+			`gb_diw_subtotal`, 
+			`gb_diw_distributer_id`,
+		 	`gb_diw_waste_total`,
+		 	`gb_diw_year`,
+		 	`gb_diw_status`,
+		 	`gb_diw_loss_total`,
+		 	`gb_diw_return_total`,
+		 	`gb_diw_dep_settle_id`,
+			`gb_diw_produce_total`
+		)
+		values
+		(
+			#{gbInventoryWeekId}, 
+			#{gbDiwDepartmentFatherId}, 
+			#{gbDiwDepartmentId}, 
+			#{gbDiwWeek}, 
+			#{gbDiwSubtotal}, 
+			#{gbDiwDistributerId},
+		 	#{gbDiwWasteTotal},
+		 	#{gbDiwYear},
+		 	#{gbDiwStatus},
+		 	#{gbDiwLossTotal},
+		 	#{gbDiwReturnTotal},
+		 	#{gbDiwDepSettleId},
+		 	#{gbDiwProduceTotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepInventoryWeekEntity">
+		update gb_dep_inventory_week 
+		<set>
+			<if test="gbDiwDepartmentFatherId != null">`gb_diw_department_father_id` = #{gbDiwDepartmentFatherId}, </if>
+			<if test="gbDiwDepartmentId != null">`gb_diw_department_id` = #{gbDiwDepartmentId}, </if>
+			<if test="gbDiwWeek != null">`gb_diw_week` = #{gbDiwWeek}, </if>
+			<if test="gbDiwSubtotal != null">`gb_diw_subtotal` = #{gbDiwSubtotal}, </if>
+			<if test="gbDiwYear != null">`gb_diw_year` = #{gbDiwYear}, </if>
+			<if test="gbDiwWasteTotal != null">`gb_diw_waste_total` = #{gbDiwWasteTotal}, </if>
+			<if test="gbDiwStatus != null">`gb_diw_status` = #{gbDiwStatus}, </if>
+			<if test="gbDiwLossTotal != null">`gb_diw_loss_total` = #{gbDiwLossTotal}, </if>
+			<if test="gbDiwReturnTotal != null">`gb_diw_return_total` = #{gbDiwReturnTotal}, </if>
+			<if test="gbDiwProduceTotal != null">`gb_diw_produce_total` = #{gbDiwProduceTotal}, </if>
+			<if test="gbDiwDepSettleId != null">`gb_diw_dep_settle_id` = #{gbDiwDepSettleId}, </if>
+			<if test="gbDiwDistributerId != null">`gb_diw_distributer_id` = #{gbDiwDistributerId}</if>
+		</set>
+		where gb_inventory_week_id = #{gbInventoryWeekId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_inventory_week where gb_inventory_week_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_inventory_week where gb_inventory_week_id in 
+		<foreach item="gbInventoryWeekId" collection="array" open="(" separator="," close=")">
+			#{gbInventoryWeekId}
+		</foreach>
+	</delete>
+
+</mapper>

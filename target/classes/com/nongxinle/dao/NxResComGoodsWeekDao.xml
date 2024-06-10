@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxResComGoodsWeekDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxResComGoodsWeekEntity">
+		select * from nx_res_com_goods_week where nx_res_com_goods_week_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxResComGoodsWeekEntity">
+		select * from nx_res_com_goods_week 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_res_com_goods_week 
+	</select>
+	<select id="queryWeekGoodsByParams" resultType="com.nongxinle.entity.NxResComGoodsWeekEntity">
+		select * from nx_res_com_goods_week
+		<where>
+			<if test="resFatherId != null">
+				and nx_RCGW_restraunt_father_id = #{resFatherId}
+			</if>
+			<if test="resId != null">
+				and nx_RCGW_restraunt_id = #{resId}
+			</if>
+			<if test="week != null">
+				and nx_RCGW_week = #{week}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxResComGoodsWeekEntity">
+		insert into nx_res_com_goods_week
+		(
+			`nx_res_com_goods_week_id`, 
+			`nx_RCGW_restraunt_father_id`, 
+			`nx_RCGW_restraunt_id`, 
+			`nx_RCGW_com_goods_id`,
+			`nx_RCGW_week`, 
+			`nx_RCGW_weight`, 
+			`nx_RCGW_subtotal`
+		)
+		values
+		(
+			#{nxResComGoodsWeekId}, 
+			#{nxRcgwRestrauntFatherId},
+			#{nxRcgwRestrauntId},
+			#{nxRcgwComGoodsId},
+			#{nxRcgwWeek},
+			#{nxRcgwWeight},
+			#{nxRcgwSubtotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxResComGoodsWeekEntity">
+		update nx_res_com_goods_week 
+		<set>
+			<if test="nxRcgwRestrauntFatherId != null">`nx_RCGW_restraunt_father_id` = #{nxRcgwRestrauntFatherId}, </if>
+			<if test="nxRcgwRestrauntId != null">`nx_RCGW_restraunt_id` = #{nxRcgwRestrauntId}, </if>
+			<if test="nxRcgwComGoodsId != null">`nx_RCGW_com_goods_id` = #{nxRcgwComGoodsId}, </if>
+			<if test="nxRcgwWeek != null">`nx_RCGW_week` = #{nxRcgwWeek}, </if>
+			<if test="nxRcgwWeight != null">`nx_RCGW_weight` = #{nxRcgwWeight}, </if>
+			<if test="nxRcgwSubtotal != null">`nx_RCGW_subtotal` = #{nxRcgwSubtotal}</if>
+		</set>
+		where nx_res_com_goods_week_id = #{nxResComGoodsWeekId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_res_com_goods_week where nx_res_com_goods_week_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_res_com_goods_week where nx_res_com_goods_week_id in 
+		<foreach item="nxResComGoodsWeekId" collection="array" open="(" separator="," close=")">
+			#{nxResComGoodsWeekId}
+		</foreach>
+	</delete>
+
+</mapper>

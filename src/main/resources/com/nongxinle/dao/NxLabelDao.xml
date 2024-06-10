@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxLabelDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxLabelEntity">
+		select * from nx_label where nx_label_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxLabelEntity">
+		select * from nx_label 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_label 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxLabelEntity">
+		insert into nx_label
+		(
+			`nx_label_id`, 
+			`nx_label_name`, 
+			`nx_label_hot`, 
+			`nx_label_type_id`
+		)
+		values
+		(
+			#{nxLabelId}, 
+			#{nxLabelName}, 
+			#{nxLabelHot}, 
+			#{nxLabelTypeId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxLabelEntity">
+		update nx_label 
+		<set>
+			<if test="nxLabelName != null">`nx_label_name` = #{nxLabelName}, </if>
+			<if test="nxLabelHot != null">`nx_label_hot` = #{nxLabelHot}, </if>
+			<if test="nxLabelTypeId != null">`nx_label_type_id` = #{nxLabelTypeId}</if>
+		</set>
+		where nx_label_id = #{nxLabelId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_label where nx_label_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_label where nx_label_id in 
+		<foreach item="nxLabelId" collection="array" open="(" separator="," close=")">
+			#{nxLabelId}
+		</foreach>
+	</delete>
+
+</mapper>

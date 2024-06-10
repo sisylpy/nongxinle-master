@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCustomerUserEntity">
+		select * from nx_customer_user where nx_CU_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCustomerUserEntity">
+		select * from nx_customer_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_customer_user 
+	</select>
+	<select id="queryOpenId" resultType="java.lang.String">
+
+	</select>
+    <select id="queryUserByOpenId" resultType="com.nongxinle.entity.NxCustomerUserEntity">
+		select * from nx_customer_user where nx_CU_wx_open_id = #{openid}
+	</select>
+
+	<resultMap id="customer" type="NxCustomerEntity">
+		<id property="nxCustomerId" column="nx_customer_id"/>
+		<result property="nxCustomerCardWasteDate" column="nx_customer_card_waste_date"/>
+	</resultMap>
+	<resultMap id="userWithCustomer" type="NxCustomerUserEntity">
+		<id property="nxCuUserId" column="nx_CU_user_id"/>
+		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatra_url"/>
+		<result property="nxCuCustomerId" column="nx_CU_customer_id"/>
+		<association property="nxCustomerEntity" resultMap="customer"/>
+	</resultMap>
+	<select id="queryCustomerUserInfo" resultMap="userWithCustomer">
+		select * from nx_customer_user as ncu
+		left join nx_customer as nc on nc.nx_customer_id = ncu.nx_CU_customer_id
+        <where>
+			<if test="userId != null">
+				and ncu.nx_CU_user_id = #{userId}
+			</if>
+			<if test="openId != null">
+				and ncu.nx_CU_wx_open_id = #{openId}
+			</if>
+		</where>
+	</select>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserEntity" useGeneratedKeys="true" keyProperty="nxCuUserId">
+		insert into nx_customer_user
+		(
+			`nx_CU_user_id`, 
+			`nx_CU_wx_nick_name`, 
+			`nx_CU_wx_avatar_url`, 
+			`nx_CU_wx_gender`, 
+			`nx_CU_customer_id`, 
+			`nx_CU_wx_open_id`, 
+			`nx_CU_wx_phone_number`,
+		 	`nx_CU_join_date`,
+		 	`nx_CU_order_amount`,
+		 	`nx_CU_order_times`
+		 	)
+		values
+		(
+			#{nxCuUserId}, 
+			#{nxCuWxNickName}, 
+			#{nxCuWxAvatarUrl}, 
+			#{nxCuWxGender}, 
+			#{nxCuCustomerId}, 
+			#{nxCuWxOpenId}, 
+			#{nxCuWxPhoneNumber},
+		 	#{nxCuJoinDate},
+		 	#{nxCuOrderAmount},
+		 	#{nxCuOrderTimes}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCustomerUserEntity">
+		update nx_customer_user 
+		<set>
+			<if test="nxCuWxNickName != null">`nx_CU_wx_nick_name` = #{nxCuWxNickName}, </if>
+			<if test="nxCuWxAvatarUrl != null">`nx_CU_wx_avatar_url` = #{nxCuWxAvatarUrl}, </if>
+			<if test="nxCuWxGender != null">`nx_CU_wx_gender` = #{nxCuWxGender}, </if>
+			<if test="nxCuCustomerId != null">`nx_CU_customer_id` = #{nxCuCustomerId}, </if>
+			<if test="nxCuWxOpenId != null">`nx_CU_wx_open_id` = #{nxCuWxOpenId}, </if>
+			<if test="nxCuJoinDate != null">`nx_CU_join_date` = #{nxCuJoinDate}, </if>
+			<if test="nxCuOrderAmount != null">`nx_CU_order_amount` = #{nxCuOrderAmount}, </if>
+			<if test="nxCuOrderTimes != null">`nx_CU_order_times` = #{nxCuOrderTimes}, </if>
+			<if test="nxCuWxPhoneNumber != null">`nx_CU_wx_phone_number` = #{nxCuWxPhoneNumber}</if>
+		</set>
+		where nx_CU_user_id = #{nxCuUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_customer_user where nx_CU_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_customer_user where nx_CU_user_id in 
+		<foreach item="nxCuUserId" collection="array" open="(" separator="," close=")">
+			#{nxCuUserId}
+		</foreach>
+	</delete>
+
+</mapper>

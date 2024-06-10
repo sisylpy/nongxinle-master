@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityPromoteDao">
+
+	<select id="queryObject" resultMap="promote">
+		select * from nx_community_promote  as p
+			left join nx_community_goods as cg on cg.nx_community_goods_id = p.nx_promote_cg_id
+		where nx_promote_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityPromoteEntity">
+		select * from nx_community_promote
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_promote
+	</select>
+
+	<resultMap id="commGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+	</resultMap>
+
+	<resultMap id="promote" type="NxCommunityPromoteEntity">
+		<id property="nxPromoteId" column="nx_promote_id"/>
+		<result property="nxOrignalPrice" column="nx_orignal_price"/>
+		<result property="nxPromotePrice" column="nx_promote_price"/>
+		<result property="nxPromoteStandard" column="nx_promote_standard"/>
+		<result property="nxPromoteStorage" column="nx_poromote_storage"/>
+		<result property="nxPromoteExpired" column="nx_promote_expired"/>
+		<result property="nxPromoteWeight" column="nx_promote_weight"/>
+		<result property="nxPromoteWords" column="nx_promote_words"/>
+		<result property="nxPromoteFilePath" column="nx_promote_file_path"/>
+		<result property="nxPromoteRecommandGoods" column="nx_promote_recommand_goods"/>
+		<association property="nxCommunityGoodsEntity" resultMap="commGoods"/>
+	</resultMap>
+
+	<select id="getListByCommunityId" resultMap="promote">
+		select * from nx_community_promote  as p
+			left join nx_community_goods as cg on cg.nx_community_goods_id = p.nx_promote_cg_id
+# 		left join nx_goods as g on cg.nx_cg_nx_goods_id = g.nx_goods_id
+		where nx_promote_community_id = #{communityId};
+	</select>
+	<select id="queryPromoteByFatherId" resultType="com.nongxinle.entity.NxCommunityPromoteEntity">
+		select * from nx_community_promote where nx_promote_cg_father_id = #{nxCommunityFatherGoodsId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityPromoteEntity">
+		insert into nx_community_promote
+		(
+			`nx_promote_id`, 
+			`nx_promote_cg_id`, 
+			`nx_orignal_price`, 
+			`nx_promote_price`, 
+			`nx_promote_standard`, 
+			`nx_promote_weight`, 
+			`nx_promote_expired`, 
+			`nx_promote_storage`, 
+			`nx_promote_words`, 
+			`nx_promote_recommand_goods`,
+			`nx_promote_file_path`,
+		 	`nx_promote_community_id`,
+		 	`nx_promote_cg_father_id`
+		)
+		values
+		(
+			#{nxPromoteId}, 
+			#{nxPromoteCgId}, 
+			#{nxOrignalPrice}, 
+			#{nxPromotePrice}, 
+			#{nxPromoteStandard}, 
+			#{nxPromoteWeight}, 
+			#{nxPromoteExpired}, 
+			#{nxPromoteStorage}, 
+			#{nxPromoteWords}, 
+			#{nxPromoteRecommandGoods},
+			#{nxPromoteFilePath},
+		 	#{nxPromoteCommunityId},
+		 	#{nxPromoteCgFatherId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityPromoteEntity">
+		update nx_community_promote
+		<set>
+			<if test="nxPromoteCgId != null">`nx_promote_cg_id` = #{nxPromoteCgId}, </if>
+			<if test="nxOrignalPrice != null">`nx_orignal_price` = #{nxOrignalPrice}, </if>
+			<if test="nxPromotePrice != null">`nx_promote_price` = #{nxPromotePrice}, </if>
+			<if test="nxPromoteStandard != null">`nx_promote_standard` = #{nxPromoteStandard}, </if>
+			<if test="nxPromoteWeight != null">`nx_promote_weight` = #{nxPromoteWeight}, </if>
+			<if test="nxPromoteExpired != null">`nx_promote_expired` = #{nxPromoteExpired}, </if>
+			<if test="nxPromoteStorage != null">`nx_promote_storage` = #{nxPromoteStorage}, </if>
+			<if test="nxPromoteWords != null">`nx_promote_words` = #{nxPromoteWords}, </if>
+			<if test="nxPromoteFilePath != null">`nx_promote_file_path` = #{nxPromoteFilePath}, </if>
+			<if test="nxPromoteCommunityId != null">`nx_promote_community_id` = #{nxPromoteCommunityId}, </if>
+			<if test="nxPromoteCgFatherId != null">`nx_promote_cg_father_id` = #{nxPromoteCgFatherId}, </if>
+			<if test="nxPromoteRecommandGoods != null">`nx_promote_recommand_goods` = #{nxPromoteRecommandGoods}</if>
+		</set>
+		where nx_promote_id = #{nxPromoteId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_promote where nx_promote_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_promote where nx_promote_id in
+		<foreach item="nxPromoteId" collection="array" open="(" separator="," close=")">
+			#{nxPromoteId}
+		</foreach>
+	</delete>
+
+</mapper>

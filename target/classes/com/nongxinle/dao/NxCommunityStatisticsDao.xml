@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityStatisticsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityStatisticsEntity">
+		select * from nx_community_statistics where nx_community_statistics_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityStatisticsEntity">
+		select * from nx_community_statistics 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_statistics 
+	</select>
+
+	<select id="queryStatisticsGoods" resultType="com.nongxinle.entity.NxCommunityStatisticsEntity">
+		select * from nx_community_statistics
+		<where>
+			<if test="comGoodsId != null">
+				and nx_cs_com_goods_id = #{comGoodsId}
+			</if>
+			<if test="deliveryDate != null">
+				and nx_cs_order_date = #{deliveryDate}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="comGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+
+	</resultMap>
+
+	<resultMap id="st" type="NxCommunityStatisticsEntity">
+		<id property="nxCommunityStatisticsId" column="nx_community_statistics_id"/>
+		<result property="nxCsComGoodsWeight" column="nx_cs_com_goods_weight"/>
+		<result property="nxCsPurchasePrice" column="nx_cs_purchase_price"/>
+		<result property="nxCsComGoodsProfit" column="nx_cs_com_goods_profit"/>
+		<result property="nxCsOrderQuantity" column="nx_cs_order_quantity"/>
+		<result property="nxCsOrderDate" column="nx_cs_order_date"/>
+		<association property="nxCommunityGoodsEntity" resultMap="comGoods"/>
+
+	</resultMap>
+
+	<select id="querySt"  resultMap="st">
+		select * from nx_community_statistics as cs
+		left join nx_community_goods as cg on cg.nx_community_goods_id = cs.nx_cs_com_goods_id
+		<where>
+			<if test="comGoodsId != null">
+				 and nx_cs_com_goods_id = #{comGoodsId}
+			</if>
+			<if test="date != null">
+				and	nx_cs_order_date = #{date}
+			</if>
+		</where>
+	</select>
+
+
+	<select id="queryStWeekProfitSum" resultType="java.lang.Float">
+		select sum(nx_cs_com_goods_profit) as 'profit' from nx_community_statistics
+		<where>
+			<if test="comId != null">
+				and nx_cs_com_id = #{comId}
+			</if>
+			<if test="date != null">
+				and nx_cs_order_date = #{date}
+			</if>
+		</where>
+	</select>
+
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityStatisticsEntity">
+		insert into nx_community_statistics
+		(
+			`nx_community_statistics_id`, 
+			`nx_cs_com_goods_id`, 
+			`nx_cs_com_f_goods_id`, 
+			`nx_cs_com_gf_goods_id`, 
+			`nx_cs_com_ggf_goods_id`,
+		 	`nx_cs_order_date`,
+		 	`nx_cs_com_goods_profit`,
+		 	`nx_cs_com_goods_weight`,
+		 	`nx_cs_purchase_price`,
+		 	`nx_cs_order_quantity`,
+		 	`nx_cs_com_id`
+		)
+		values
+		(
+			#{nxCommunityStatisticsId}, 
+			#{nxCsComGoodsId}, 
+			#{nxCsComFGoodsId}, 
+			#{nxCsComGfGoodsId}, 
+			#{nxCsComGgfGoodsId},
+		 	#{nxCsOrderDate},
+		 	#{nxCsComGoodsProfit},
+		 	#{nxCsComGoodsWeight},
+		 	#{nxCsPurchasePrice},
+		 	#{nxCsOrderQuantity},
+		 	#{nxCsComId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityStatisticsEntity">
+		update nx_community_statistics 
+		<set>
+			<if test="nxCsComGoodsId != null">`nx_cs_com_goods_id` = #{nxCsComGoodsId}, </if>
+			<if test="nxCsComFGoodsId != null">`nx_cs_com_f_goods_id` = #{nxCsComFGoodsId}, </if>
+			<if test="nxCsComGfGoodsId != null">`nx_cs_com_gf_goods_id` = #{nxCsComGfGoodsId}, </if>
+			<if test="nxCsComGgfGoodsId != null">`nx_cs_com_ggf_goods_id` = #{nxCsComGgfGoodsId}, </if>
+			<if test="nxCsOrderDate != null">`nx_cs_order_date` = #{nxCsOrderDate}, </if>
+			<if test="nxCsComGoodsProfit != null">`nx_cs_com_goods_profit` = #{nxCsComGoodsProfit}, </if>
+			<if test="nxCsComGoodsWeight != null">`nx_cs_com_goods_weight` = #{nxCsComGoodsWeight}, </if>
+			<if test="nxCsPurchasePrice != null">`nx_cs_purchase_price` = #{nxCsPurchasePrice}, </if>
+			<if test="nxCsComId != null">`nx_cs_com_id` = #{nxCsComId}, </if>
+			<if test="nxCsOrderQuantity != null">`nx_cs_order_quantity` = #{nxCsOrderQuantity}, </if>
+
+		</set>
+		where nx_community_statistics_id = #{nxCommunityStatisticsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_statistics where nx_community_statistics_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_statistics where nx_community_statistics_id in 
+		<foreach item="nxCommunityStatisticsId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityStatisticsId}
+		</foreach>
+	</delete>
+
+</mapper>

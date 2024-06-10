@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunitySupplierDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunitySupplierEntity">
+		select * from nx_community_supplier where nx_community_supplier_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunitySupplierEntity">
+		select * from nx_community_supplier 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_supplier 
+	</select>
+
+	<resultMap id="comGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+	</resultMap>
+
+	<resultMap id="supplierUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
+		<result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
+		<result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
+
+	</resultMap>
+
+	<resultMap id="resSupplierWithGoods" type="NxCommunitySupplierEntity">
+		<id property="nxCommunitySupplierId" column="nx_community_supplier_id"/>
+		<result property="nxCommunitySupplierName" column="nx_community_supplier_name"/>
+		<result property="nxCsNxCommunityId" column="nx_CS_nx_community_id"/>
+		<result property="nxCsJrdhPurUserId" column="nx_CS_jrdh_pur_user_id"/>
+		<result property="nxCsJrdhSupplierUserId" column="nx_CS_jrdh_supplier_id"/>
+		<association property="supplierUserEntity" resultMap="supplierUser"/>
+		<collection property="nxCommunityGoodsEntityList" resultMap="comGoods"/>
+	</resultMap>
+
+    <select id="queryCommunitySupplierByParams" resultMap="resSupplierWithGoods">
+		select * , sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+		sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+		sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+		sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+		from nx_community_supplier as ncs
+		left join nx_community_goods as ncg on ncg.nx_cg_community_supplier_id = ncs.nx_community_supplier_id
+		left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = ncs.nx_CS_jrdh_supplier_user_id
+		left join nx_community_user as ncu on ncu.nx_community_user_id =  ncs.nx_CS_nx_community_user_id
+        <where>
+			<if test="comId != null">
+				and nx_CS_nx_community_id = #{comId}
+			</if>
+		</where>
+
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunitySupplierEntity">
+		insert into nx_community_supplier
+		(
+			`nx_community_supplier_id`,
+			`nx_community_supplier_name`,
+			`nx_CS_nx_community_id`, 
+			`nx_CS_order_type`, 
+			`nx_CS_jrdh_supplier_user_id`, 
+			`nx_CS_jrdh_pur_user_id`, 
+			`nx_CS_nx_community_user_id`
+		)
+		values
+		(
+			#{nxCommunitySupplierId},
+			#{nxCommunitySupplierName},
+			#{nxCsNxCommunityId}, 
+			#{nxCsOrderType}, 
+			#{nxCsJrdhSupplierUserId}, 
+			#{nxCsJrdhPurUserId}, 
+			#{nxCsNxCommunityUserId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunitySupplierEntity">
+		update nx_community_supplier 
+		<set>
+			<if test="nxCommunitySupplierName != null">`nx_community_supplier_name` = #{nxCommunitySupplierName}, </if>
+			<if test="nxCsNxCommunityId != null">`nx_CS_nx_community_id` = #{nxCsNxCommunityId}, </if>
+			<if test="nxCsOrderType != null">`nx_CS_order_type` = #{nxCsOrderType}, </if>
+			<if test="nxCsJrdhSupplierUserId != null">`nx_CS_jrdh_supplier_user_id` = #{nxCsJrdhSupplierUserId}, </if>
+			<if test="nxCsJrdhPurUserId != null">`nx_CS_jrdh_pur_user_id` = #{nxCsJrdhPurUserId}, </if>
+			<if test="nxCsNxCommunityUserId != null">`nx_CS_nx_community_user_id` = #{nxCsNxCommunityUserId}</if>
+		</set>
+		where nx_community_supplier_id = #{nxCommunitySupplierId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_supplier where nx_community_supplier_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_supplier where nx_community_supplier_id in
+		<foreach item="nxCommunitySupplierId" collection="array" open="(" separator="," close=")">
+			#{nxCommunitySupplierId}
+		</foreach>
+	</delete>
+
+</mapper>

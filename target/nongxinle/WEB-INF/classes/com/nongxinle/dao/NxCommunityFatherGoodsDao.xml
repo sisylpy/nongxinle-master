@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityFatherGoodsDao">
+
+
+	<resultMap id="fatherDisGoods" type="NxCommunityFatherGoodsEntity">
+		<id property="nxCommunityFatherGoodsId" column="father_nx_community_father_goods_id"/>
+		<result property="nxCfgFathersFatherId" column="father_nx_cfg_fathers_father_id"/>
+		<result property="nxCfgFatherGoodsName" column="father_nx_cfg_father_goods_name"/>
+		<result property="nxCfgGoodsAmount" column="father_nx_cfg_goods_amount"/>
+		<result property="nxCfgFatherGoodsColor" column="father_nx_cfg_father_goods_color"/>
+		<result property="nxCfgPriceAmount" column="father_nx_cfg_price_amount"/>
+		<result property="nxCfgPriceTwoAmount" column="father_nx_cfg_price_two_amount"/>
+		<result property="nxCfgPriceThreeAmount" column="father_nx_cfg_price_three_amount"/>
+		<result property="nxCfgFatherGoodsImg" column="father_nx_cfg_father_goods_img"/>
+		<result property="nxCfgFatherGoodsColor" column="father_nx_cfg_father_goods_color"/>
+	</resultMap>
+
+	<resultMap id="grandComGoods" type="NxCommunityFatherGoodsEntity">
+		<id property="nxCommunityFatherGoodsId" column="grand_nx_community_father_goods_id"/>
+		<result property="nxCfgFathersFatherId" column="grand_nx_cfg_fathers_father_id"/>
+		<result property="nxCfgFatherGoodsName" column="grand_nx_cfg_father_goods_name"/>
+		<result property="nxCfgOrderRank" column="grand_nx_cfg_order_rank"/>
+		<result property="nxCfgFatherGoodsColor" column="grand_nx_cfg_father_goods_color"/>
+		<collection property="fatherGoodsEntities" resultMap="fatherDisGoods"/>
+	</resultMap>
+
+	<resultMap id="comGoodsCata" type="NxCommunityFatherGoodsEntity">
+		<id property="nxCommunityFatherGoodsId" column="greatGrand_nx_community_father_goods_id"/>
+		<result property="nxCfgFathersFatherId" column="greatGrand_nx_cfg_fathers_father_id"/>
+		<result property="nxCfgFatherGoodsName" column="greatGrand_nx_cfg_father_goods_name"/>
+		<result property="nxCfgFatherGoodsColor" column="greatGrand_nx_cfg_father_goods_color"/>
+		<result property="nxCfgCommunityId" column="greatGrand_nx_cfg_community_id"/>
+		<collection property="fatherGoodsEntities" resultMap="grandComGoods"/>
+	</resultMap>
+
+	<select id="queryComGoodsCata" resultMap="comGoodsCata">
+		select father.nx_community_father_goods_id 'father_nx_community_father_goods_id',
+			   father.nx_cfg_fathers_father_id 'father_nx_cfg_fathers_father_id',
+			   father.nx_cfg_father_goods_name 'father_nx_cfg_father_goods_name',
+			   father.nx_cfg_goods_amount 'father_nx_cfg_goods_amount',
+			   father.nx_cfg_father_goods_color 'father_nx_cfg_father_goods_color',
+			   father.nx_cfg_nx_goods_id 'father_nx_cfg_nx_goods_id',
+		       father.nx_cfg_price_amount 'father_nx_cfg_price_amount',
+		       father.nx_cfg_price_two_amount 'father_nx_cfg_price_two_amount',
+		       father.nx_cfg_price_three_amount 'father_nx_cfg_price_three_amount',
+		       father.nx_cfg_father_goods_img 'father_nx_cfg_father_goods_img',
+		       father.nx_cfg_father_goods_color 'father_nx_cfg_father_goods_color',
+			   grand.nx_community_father_goods_id 'grand_nx_community_father_goods_id',
+			   grand.nx_cfg_fathers_father_id 'grand_nx_cfg_fathers_father_id',
+			   grand.nx_cfg_father_goods_name 'grand_nx_cfg_father_goods_name',
+			   grand.nx_cfg_nx_goods_id 'grand_nx_cfg_nx_goods_id',
+		       grand.nx_cfg_order_rank 'grand_nx_cfg_order_rank',
+			   grand.nx_cfg_father_goods_color 'grand_nx_cfg_father_goods_color',
+			   greatGrand.nx_community_father_goods_id 'greatGrand_nx_community_father_goods_id',
+			   greatGrand.nx_cfg_fathers_father_id 'greatGrand_nx_cfg_fathers_father_id',
+			   greatGrand.nx_cfg_father_goods_name 'greatGrand_nx_cfg_father_goods_name',
+			   greatGrand.nx_cfg_nx_goods_id 'greatGrand_nx_cfg_nx_goods_id',
+		       greatGrand.nx_cfg_community_id 'greatGrand_nx_cfg_community_id',
+				greatGrand.nx_cfg_father_goods_color 'greatGrand_nx_cfg_father_goods_color'
+		from nx_community_father_goods as greatGrand
+				 left join nx_community_father_goods as grand on  greatGrand.nx_community_father_goods_id = grand.nx_cfg_fathers_father_id
+				 left join nx_community_father_goods as father on grand.nx_community_father_goods_id = father.nx_cfg_fathers_father_id
+
+		<where>
+			<if test="comId != null">
+				and greatGrand.nx_cfg_community_id = #{comId}
+			</if>
+			<if test="fathersFatherId != null">
+				and greatGrand.nx_cfg_fathers_father_id = #{fathersFatherId}
+			</if>
+
+		   <if test="level != null and level == 1">
+			   and father.nx_cfg_price_amount > 0
+		   </if>
+			<if test="level != null and level == 2">
+				and father.nx_cfg_price_two_amount > 0
+			</if>
+			<if test="level != null and level == 3">
+				and father.nx_cfg_price_three_amount > 0
+			</if>
+
+		</where>
+		and greatGrand.nx_cfg_father_goods_level = 0
+		order by greatGrand.nx_cfg_nx_goods_id, grand.nx_cfg_nx_goods_id, father.nx_cfg_nx_goods_id
+	</select>
+
+	<select id="queryHasComFathersFather" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select * from nx_community_father_goods where nx_cfg_community_id = #{comId}
+													and nx_cfg_father_goods_name like  #{fathersFatherName}
+	</select>
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select * from nx_community_father_goods where nx_community_father_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select * from nx_community_father_goods
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_father_goods
+	</select>
+    <select id="queryFatherGoods" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select * from nx_community_father_goods where nx_cfg_fathers_father_id = #{dgGoodsFatherId}
+	</select>
+	<select id="queryCataListByCommunityId" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select  * from nx_community_father_goods where nx_CFG_community_id = #{communityId} and nx_cfg_father_goods_level = 2 order by nx_cfg_father_goods_sort
+	</select>
+	<select id="queryRankFatherGoods" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select * from nx_community_father_goods where nx_cfg_community_id = #{comId}
+			and nx_cfg_father_goods_level = 1
+	</select>
+	<select id="queryComFathersGoodsByParams" resultType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		select * from nx_community_father_goods
+		<where>
+
+			<if test="fathersFatherId != null">
+				and nx_cfg_fathers_father_id  = #{fathersFatherId}
+			</if>
+
+		<if test="level != null and level == 1">
+			and nx_cfg_price_amount > 0
+		</if>
+		<if test="level != null and level == 2">
+			and nx_cfg_price_two_amount > 0
+		</if>
+		<if test="level != null and level == 3">
+			and nx_cfg_price_three_amount > 0
+		</if>
+		</where>
+	</select>
+
+	<resultMap id="goodsItem" type="NxCommunityGoodsSetItemEntity">
+		<id property="nxCommunityGoodsSetItemId" column="nx_community_goods_set_item_id"/>
+		<result property="nxCgsiCgPropertyId" column="nx_cgsi_cg_property_id"/>
+		<result property="nxCgsiItemCgGoodsId" column="nx_cgsi_item_cg_goods_id"/>
+		<result property="nxCgsiItemName" column="nx_cgsi_item_name"/>
+		<result property="nxCgsiItemFilePath" column="nx_cgsi_item_file_path"/>
+		<result property="nxCgsiItemPrice" column="nx_cgsi_item_price"/>
+		<result property="nxCgsiItemType" column="nx_cgsi_item_type"/>
+		<result property="nxCgsiItemQuantity" column="nx_cgsi_item_quantity"/>
+	</resultMap>
+
+	<resultMap id="cgGoodProperty" type="NxCommunityGoodsSetPropertyEntity">
+		<id property="nxCommunityGoodsSetPropertyId" column="nx_community_goods_set_property_id"/>
+		<result property="nxCgspName" column="nx_cgsp_name"/>
+		<result property="nxCgspSort" column="nx_cgsp_sort"/>
+		<result property="nxCgspCgGoodsId" column="nx_cgsp_cg_goods_id"/>
+		<collection property="nxCommunityGoodsSetItemEntities" resultMap="goodsItem"/>
+	</resultMap>
+
+
+	<resultMap id="subOrder" type="NxCommunityOrdersSubEntity">
+		<id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+        <result property="nxCosGoodsIndex" column="nx_COS_goods_index"/>
+		<result property="nxCosType" column="nx_COS_type"/>
+		<result property="nxCosStatus" column="nx_COS_status"/>
+		<result property="nxCosOrderUserId" column="nx_COS_order_user_id"/>
+        <result property="nxCosHuaxianDifferentPrice" column="nx_COS_huaxian_different_price"/>
+        <result property="nxCosHuaxianPrice" column="nx_COS_huaxian_price"/>
+		<result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
+		<result property="nxCosQuantity" column="nx_COS_quantity"/>
+		<result property="nxCosStandard" column="nx_COS_standard"/>
+		<result property="nxCosPrice" column="nx_COS_price"/>
+		<result property="nxCosWeight" column="nx_COS_weight"/>
+		<result property="nxCosOrdersId" column="nx_COS_orders_id"/>
+		<result property="nxCosSubtotal" column="nx_COS_subtotal"/>
+		<result property="nxCosSubWeight" column="nx_COS_sub_weight"/>
+		<result property="nxCosRemark" column="nx_COS_remark"/>
+	</resultMap>
+
+
+	<resultMap id="remakMemberSubOrder" type="NxCommunityOrdersSubEntity">
+		<id property="nxCommunityOrdersSubId" column="memberCosRemark_nx_community_orders_sub_id"/>
+		<result property="nxCosType" column="memberCosRemark_nx_COS_type"/>
+		<result property="nxCosGoodsIndex" column="memberCosRemark_nx_COS_goods_index"/>
+		<result property="nxCosStatus" column="memberCosRemark_nx_COS_status"/>
+		<result property="nxCosOrderUserId" column="memberCosRemark_nx_COS_order_user_id"/>
+		<result property="nxCosHuaxianDifferentPrice" column="memberCosRemark_nx_COS_huaxian_different_price"/>
+		<result property="nxCosHuaxianPrice" column="memberCosRemark_nx_COS_huaxian_price"/>
+		<result property="nxCosCommunityGoodsId" column="memberCosRemark_nx_COS_community_goods_id"/>
+		<result property="nxCosQuantity" column="memberCosRemark_nx_COS_quantity"/>
+		<result property="nxCosStandard" column="memberCosRemark_nx_COS_standard"/>
+		<result property="nxCosPrice" column="memberCosRemark_nx_COS_price"/>
+		<result property="nxCosWeight" column="memberCosRemark_nx_COS_weight"/>
+		<result property="nxCosOrdersId" column="memberCosRemark_nx_COS_orders_id"/>
+		<result property="nxCosSubtotal" column="memberCosRemark_nx_COS_subtotal"/>
+		<result property="nxCosSubWeight" column="memberCosRemark_nx_COS_sub_weight"/>
+		<result property="nxCosRemark" column="memberCosRemark_nx_COS_remark"/>
+	</resultMap>
+
+	<resultMap id="remarkSubOrder" type="NxCommunityOrdersSubEntity">
+		<id property="nxCommunityOrdersSubId" column="ncosRemark_nx_community_orders_sub_id"/>
+		<result property="nxCosType" column="ncosRemark_nx_COS_type"/>
+		<result property="nxCosGoodsIndex" column="ncosRemark_nx_COS_goods_index"/>
+		<result property="nxCosStatus" column="ncosRemark_nx_COS_status"/>
+		<result property="nxCosOrderUserId" column="ncosRemark_nx_COS_order_user_id"/>
+		<result property="nxCosHuaxianDifferentPrice" column="ncosRemark_nx_COS_huaxian_different_price"/>
+		<result property="nxCosHuaxianPrice" column="ncosRemark_nx_COS_huaxian_price"/>
+		<result property="nxCosCommunityGoodsId" column="ncosRemark_nx_COS_community_goods_id"/>
+		<result property="nxCosQuantity" column="ncosRemark_nx_COS_quantity"/>
+		<result property="nxCosStandard" column="ncosRemark_nx_COS_standard"/>
+		<result property="nxCosPrice" column="ncosRemark_nx_COS_price"/>
+		<result property="nxCosWeight" column="ncosRemark_nx_COS_weight"/>
+		<result property="nxCosOrdersId" column="ncosRemark_nx_COS_orders_id"/>
+		<result property="nxCosSubtotal" column="ncosRemark_nx_COS_subtotal"/>
+		<result property="nxCosSubWeight" column="ncosRemark_nx_COS_sub_weight"/>
+		<result property="nxCosRemark" column="ncosRemark_nx_COS_remark"/>
+	</resultMap>
+
+	<resultMap id="memberSubOrder" type="NxCommunityOrdersSubEntity">
+		<id property="nxCommunityOrdersSubId" column="memberCos_nx_community_orders_sub_id"/>
+		<result property="nxCosType" column="memberCos_nx_COS_type"/>
+		<result property="nxCosGoodsIndex" column="memberCos_nx_COS_goods_index"/>
+		<result property="nxCosStatus" column="memberCos_nx_COS_status"/>
+		<result property="nxCosOrderUserId" column="memberCos_nx_COS_order_user_id"/>
+		<result property="nxCosHuaxianDifferentPrice" column="memberCos_nx_COS_huaxian_different_price"/>
+		<result property="nxCosHuaxianPrice" column="memberCos_nx_COS_huaxian_price"/>
+		<result property="nxCosCommunityGoodsId" column="memberCos_nx_COS_community_goods_id"/>
+		<result property="nxCosQuantity" column="memberCos_nx_COS_quantity"/>
+		<result property="nxCosStandard" column="memberCos_nx_COS_standard"/>
+		<result property="nxCosPrice" column="memberCos_nx_COS_price"/>
+		<result property="nxCosWeight" column="memberCos_nx_COS_weight"/>
+		<result property="nxCosOrdersId" column="memberCos_nx_COS_orders_id"/>
+		<result property="nxCosSubtotal" column="memberCos_nx_COS_subtotal"/>
+		<result property="nxCosSubWeight" column="memberCos_nx_COS_sub_weight"/>
+		<result property="nxCosRemark" column="memberCos_nx_COS_remark"/>
+	</resultMap>
+	<resultMap id="goodsItemGoods" type="NxCommunityGoodsSetItemEntity">
+		<id property="nxCommunityGoodsSetItemId" column="goods_nx_community_goods_set_item_id"/>
+		<result property="nxCgsiCgPropertyId" column="goods_nx_cgsi_cg_property_id"/>
+		<result property="nxCgsiItemCgGoodsId" column="goods_nx_cgsi_item_cg_goods_id"/>
+		<result property="nxCgsiItemName" column="goods_nx_cgsi_item_name"/>
+		<result property="nxCgsiItemFilePath" column="goods_nx_cgsi_item_file_path"/>
+		<result property="nxCgsiItemPrice" column="goods_nx_cgsi_item_price"/>
+		<result property="nxCgsiItemType" column="goods_nx_cgsi_item_type"/>
+		<result property="nxCgsiItemQuantity" column="goods_nx_cgsi_item_quantity"/>
+	</resultMap>
+
+	<resultMap id="comGoodsWithAllOrders" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+		<result property="nxCgSellType" column="nx_cg_sell_type"/>
+		<result property="nxCgIsSetMenu" column="nx_cg_is_set_menu"/>
+		<result property="nxCgGoodsHuaxianPrice" column="nx_cg_goods_huaxian_price"/>
+		<result property="nxCgGoodsHuaxianPriceDifferent" column="nx_cg_goods_huaxian_price_different"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<association property="ordersSubEntity" resultMap="subOrder"/>
+		<association property="memberOrdersSubEntity" resultMap="memberSubOrder"/>
+		<collection property="nxCommunityGoodsSetItemEntities" resultMap="goodsItemGoods"/>
+ 		<collection property="nxCommunityGoodsSetPropertyEntities" resultMap="cgGoodProperty"/>
+		<collection property="remarkOrdersSubEntities" resultMap="remarkSubOrder"/>
+		<collection property="remarkMemberOrdersSubEntities" resultMap="remakMemberSubOrder"/>
+	</resultMap>
+	<resultMap id="fatherWithGoods" type="NxCommunityFatherGoodsEntity">
+		<id property="nxCommunityFatherGoodsId" column="nx_community_father_goods_id"/>
+		<result property="nxCfgFatherGoodsName" column="nx_cfg_father_goods_name"/>
+		<result property="nxCfgFatherGoodsImg" column="nx_cfg_father_goods_img"/>
+		<result property="nxCfgFatherGoodsColor" column="nx_cfg_father_goods_color"/>
+		<result property="nxCfgCommunityId" column="nx_cfg_community_id"/>
+		<collection property="nxCommunityGoodsEntities" resultMap="comGoodsWithAllOrders"/>
+
+	</resultMap>
+
+	<select id="queryFatherWithGoods" resultMap="fatherWithGoods">
+		select *,
+		ncgsiGoods.nx_community_goods_set_item_id 'goods_nx_community_goods_set_item_id',
+		ncgsiGoods.nx_cgsi_item_name 'goods_nx_cgsi_item_name',
+		ncgsiGoods.nx_cgsi_item_cg_goods_id 'goods_nx_cgsi_item_cg_goods_id',
+		ncgsiGoods.nx_cgsi_item_type 'goods_nx_cgsi_item_type',
+		ncgsiGoods.nx_cgsi_item_file_path 'goods_nx_cgsi_item_file_path',
+		ncgsiGoods.nx_cgsi_item_price 'goods_nx_cgsi_item_price',
+		ncgsiGoods.nx_cgsi_item_quantity 'goods_nx_cgsi_item_quantity',
+
+		memberCos.nx_community_orders_sub_id 'memberCos_nx_community_orders_sub_id',
+		memberCos.nx_COS_goods_index 'memberCos_nx_COS_goods_index',
+		memberCos.nx_COS_community_goods_id 'memberCos_nx_COS_community_goods_id',
+		memberCos.nx_COS_order_user_id 'memberCos_nx_COS_order_user_id',
+		memberCos.nx_COS_status 'memberCos_nx_COS_status',
+		memberCos.nx_COS_type 'memberCos_nx_COS_type',
+		memberCos.nx_COS_orders_id 'memberCos_nx_COS_orders_id',
+		memberCos.nx_COS_huaxian_different_price 'memberCos_nx_COS_huaxian_different_price',
+		memberCos.nx_COS_huaxian_price 'memberCos_nx_COS_huaxian_price',
+		memberCos.nx_COS_price 'memberCos_nx_COS_price',
+		memberCos.nx_COS_quantity 'memberCos_nx_COS_quantity',
+		memberCos.nx_COS_subtotal 'memberCos_nx_COS_subtotal',
+		memberCos.nx_COS_remark 'memberCos_nx_COS_remark',
+
+		ncosRemark.nx_community_orders_sub_id 'ncosRemark_nx_community_orders_sub_id',
+		ncosRemark.nx_COS_goods_index 'ncosRemark_nx_COS_goods_index',
+		ncosRemark.nx_COS_community_goods_id 'ncosRemark_nx_COS_community_goods_id',
+		ncosRemark.nx_COS_order_user_id 'ncosRemark_nx_COS_order_user_id',
+		ncosRemark.nx_COS_status 'ncosRemark_nx_COS_status',
+		ncosRemark.nx_COS_type 'ncosRemark_nx_COS_type',
+		ncosRemark.nx_COS_orders_id 'ncosRemark_nx_COS_orders_id',
+		ncosRemark.nx_COS_huaxian_different_price 'ncosRemark_nx_COS_huaxian_different_price',
+		ncosRemark.nx_COS_huaxian_price 'ncosRemark_nx_COS_huaxian_price',
+		ncosRemark.nx_COS_price 'ncosRemark_nx_COS_price',
+		ncosRemark.nx_COS_quantity 'ncosRemark_nx_COS_quantity',
+		ncosRemark.nx_COS_subtotal 'ncosRemark_nx_COS_subtotal',
+		ncosRemark.nx_COS_remark 'ncosRemark_nx_COS_remark',
+
+		memberCosRemark.nx_community_orders_sub_id 'memberCosRemark_nx_community_orders_sub_id',
+		memberCosRemark.nx_COS_goods_index 'memberCosRemark_nx_COS_goods_index',
+		memberCosRemark.nx_COS_community_goods_id 'memberCosRemark_nx_COS_community_goods_id',
+		memberCosRemark.nx_COS_order_user_id 'memberCosRemark_nx_COS_order_user_id',
+		memberCosRemark.nx_COS_status 'memberCosRemark_nx_COS_status',
+		memberCosRemark.nx_COS_type 'memberCosRemark_nx_COS_type',
+		memberCosRemark.nx_COS_orders_id 'memberCosRemark_nx_COS_orders_id',
+		memberCosRemark.nx_COS_huaxian_different_price 'memberCosRemark_nx_COS_huaxian_different_price',
+		memberCosRemark.nx_COS_huaxian_price 'memberCosRemark_nx_COS_huaxian_price',
+		memberCosRemark.nx_COS_price 'memberCosRemark_nx_COS_price',
+		memberCosRemark.nx_COS_quantity 'memberCosRemark_nx_COS_quantity',
+		memberCosRemark.nx_COS_subtotal 'memberCosRemark_nxv_COS_subtotal',
+		memberCosRemark.nx_COS_remark 'memberCosRemark_nx_COS_remark'
+
+		       from nx_community_father_goods  as ncfg
+         left join nx_community_goods as ncg on ncg.nx_cg_cfg_goods_father_id = ncfg.nx_community_father_goods_id
+		left join nx_community_goods_set_item as ncgsiGoods on ncgsiGoods.nx_cgsi_item_cg_goods_id =
+		ncg.nx_community_goods_id
+       left join nx_community_goods_set_property as ncgsp on ncgsp.nx_cgsp_cg_goods_id = ncg.nx_community_goods_id
+		left join nx_community_goods_set_item as ncgsi on ncgsi.nx_cgsi_cg_property_id = ncgsp.nx_community_goods_set_property_id
+		 left join nx_community_orders_sub as ncos  on ncos.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		  and   ncos.nx_COS_order_user_id = #{orderUserId} and ncos.nx_COS_status = 0 and ncos.nx_COS_type &lt; #{xiaoyuType}
+		and ncos.nx_COS_huaxian_different_price = 0
+		left join nx_community_orders_sub as memberCos  on memberCos.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   memberCos.nx_COS_order_user_id = #{orderUserId} and memberCos.nx_COS_status = 0 and memberCos.nx_COS_type &lt; #{xiaoyuType}
+		                                                       and memberCos.nx_COS_huaxian_different_price &gt; 0
+
+		left join nx_community_orders_sub as ncosRemark  on ncosRemark.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   ncosRemark.nx_COS_order_user_id = #{orderUserId} and ncosRemark.nx_COS_status = 0 and ncosRemark.nx_COS_type &lt; #{xiaoyuType}
+		and ncosRemark.nx_COS_huaxian_different_price = 0
+		left join nx_community_orders_sub as memberCosRemark  on memberCosRemark.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   memberCosRemark.nx_COS_order_user_id = #{orderUserId} and memberCosRemark.nx_COS_status = 0 and memberCosRemark.nx_COS_type &lt; #{xiaoyuType}
+		and memberCosRemark.nx_COS_huaxian_different_price &gt; 0
+		<where>
+			 <if test="commId != null">
+				 and nx_cfg_community_id = #{commId}
+			 </if>
+
+			 and ncfg.nx_cfg_father_goods_level = 2
+		 </where>
+	</select>
+	<select id="queryFatherWithGoodsPindan" resultMap="fatherWithGoods">
+		select *,
+		ncgsiGoods.nx_community_goods_set_item_id 'goods_nx_community_goods_set_item_id',
+		ncgsiGoods.nx_cgsi_item_name 'goods_nx_cgsi_item_name',
+		ncgsiGoods.nx_cgsi_item_cg_goods_id 'goods_nx_cgsi_item_cg_goods_id',
+		ncgsiGoods.nx_cgsi_item_type 'goods_nx_cgsi_item_type',
+		ncgsiGoods.nx_cgsi_item_file_path 'goods_nx_cgsi_item_file_path',
+		ncgsiGoods.nx_cgsi_item_price 'goods_nx_cgsi_item_price',
+		ncgsiGoods.nx_cgsi_item_quantity 'goods_nx_cgsi_item_quantity',
+
+		memberCos.nx_community_orders_sub_id 'memberCos_nx_community_orders_sub_id',
+		memberCos.nx_COS_goods_index 'memberCos_nx_COS_goods_index',
+		memberCos.nx_COS_community_goods_id 'memberCos_nx_COS_community_goods_id',
+		memberCos.nx_COS_order_user_id 'memberCos_nx_COS_order_user_id',
+		memberCos.nx_COS_status 'memberCos_nx_COS_status',
+		memberCos.nx_COS_type 'memberCos_nx_COS_type',
+		memberCos.nx_COS_orders_id 'memberCos_nx_COS_orders_id',
+		memberCos.nx_COS_huaxian_different_price 'memberCos_nx_COS_huaxian_different_price',
+		memberCos.nx_COS_huaxian_price 'memberCos_nx_COS_huaxian_price',
+		memberCos.nx_COS_price 'memberCos_nx_COS_price',
+		memberCos.nx_COS_quantity 'memberCos_nx_COS_quantity',
+		memberCos.nx_COS_subtotal 'memberCos_nx_COS_subtotal',
+		memberCos.nx_COS_remark 'memberCos_nx_COS_remark',
+
+		ncosRemark.nx_community_orders_sub_id 'ncosRemark_nx_community_orders_sub_id',
+		ncosRemark.nx_COS_goods_index 'ncosRemark_nx_COS_goods_index',
+		ncosRemark.nx_COS_community_goods_id 'ncosRemark_nx_COS_community_goods_id',
+		ncosRemark.nx_COS_order_user_id 'ncosRemark_nx_COS_order_user_id',
+		ncosRemark.nx_COS_status 'ncosRemark_nx_COS_status',
+		ncosRemark.nx_COS_type 'ncosRemark_nx_COS_type',
+		ncosRemark.nx_COS_orders_id 'ncosRemark_nx_COS_orders_id',
+		ncosRemark.nx_COS_huaxian_different_price 'ncosRemark_nx_COS_huaxian_different_price',
+		ncosRemark.nx_COS_huaxian_price 'ncosRemark_nx_COS_huaxian_price',
+		ncosRemark.nx_COS_price 'ncosRemark_nx_COS_price',
+		ncosRemark.nx_COS_quantity 'ncosRemark_nx_COS_quantity',
+		ncosRemark.nx_COS_subtotal 'ncosRemark_nx_COS_subtotal',
+		ncosRemark.nx_COS_remark 'ncosRemark_nx_COS_remark',
+
+		memberCosRemark.nx_community_orders_sub_id 'memberCosRemark_nx_community_orders_sub_id',
+		memberCosRemark.nx_COS_goods_index 'memberCosRemark_nx_COS_goods_index',
+		memberCosRemark.nx_COS_community_goods_id 'memberCosRemark_nx_COS_community_goods_id',
+		memberCosRemark.nx_COS_order_user_id 'memberCosRemark_nx_COS_order_user_id',
+		memberCosRemark.nx_COS_status 'memberCosRemark_nx_COS_status',
+		memberCosRemark.nx_COS_type 'memberCosRemark_nx_COS_type',
+		memberCosRemark.nx_COS_orders_id 'memberCosRemark_nx_COS_orders_id',
+		memberCosRemark.nx_COS_huaxian_different_price 'memberCosRemark_nx_COS_huaxian_different_price',
+		memberCosRemark.nx_COS_huaxian_price 'memberCosRemark_nx_COS_huaxian_price',
+		memberCosRemark.nx_COS_price 'memberCosRemark_nx_COS_price',
+		memberCosRemark.nx_COS_quantity 'memberCosRemark_nx_COS_quantity',
+		memberCosRemark.nx_COS_subtotal 'memberCosRemark_nxv_COS_subtotal',
+		memberCosRemark.nx_COS_remark 'memberCosRemark_nx_COS_remark'
+
+		from nx_community_father_goods  as ncfg
+		left join nx_community_goods as ncg on ncg.nx_cg_cfg_goods_father_id = ncfg.nx_community_father_goods_id
+		left join nx_community_goods_set_item as ncgsiGoods on ncgsiGoods.nx_cgsi_item_cg_goods_id =
+		ncg.nx_community_goods_id
+		left join nx_community_goods_set_property as ncgsp on ncgsp.nx_cgsp_cg_goods_id = ncg.nx_community_goods_id
+		left join nx_community_goods_set_item as ncgsi on ncgsi.nx_cgsi_cg_property_id = ncgsp.nx_community_goods_set_property_id
+		left join nx_community_orders_sub as ncos  on ncos.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   ncos.nx_COS_order_user_id = #{orderUserId} and ncos.nx_COS_status = 0 and ncos.nx_COS_type &gt; #{dayuType}
+		and ncos.nx_COS_huaxian_different_price = 0
+		left join nx_community_orders_sub as memberCos  on memberCos.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   memberCos.nx_COS_order_user_id = #{orderUserId} and memberCos.nx_COS_status = 0 and memberCos.nx_COS_type &gt; #{dayuType}
+		and memberCos.nx_COS_huaxian_different_price &gt; 0
+
+		left join nx_community_orders_sub as ncosRemark  on ncosRemark.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   ncosRemark.nx_COS_order_user_id = #{orderUserId} and ncosRemark.nx_COS_status = 0 and ncosRemark.nx_COS_type &gt; #{dayuType}
+		and ncosRemark.nx_COS_huaxian_different_price = 0
+		left join nx_community_orders_sub as memberCosRemark  on memberCosRemark.nx_COS_community_goods_id   = ncg.nx_community_goods_id
+		and   memberCosRemark.nx_COS_order_user_id = #{orderUserId} and memberCosRemark.nx_COS_status = 0 and memberCosRemark.nx_COS_type &gt; #{dayuType}
+		and memberCosRemark.nx_COS_huaxian_different_price &gt; 0
+		<where>
+			<if test="commId != null">
+				and nx_cfg_community_id = #{commId}
+			</if>
+
+			and ncfg.nx_cfg_father_goods_level = 2
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityFatherGoodsEntity"
+			useGeneratedKeys="true" keyProperty="nxCommunityFatherGoodsId">
+		insert into nx_community_father_goods
+		(
+			`nx_community_father_goods_id`,
+			`nx_cfg_father_goods_name`,
+			`nx_cfg_father_goods_img`,
+			`nx_cfg_father_goods_sort`,
+			`nx_cfg_father_goods_color`,
+		 	`nx_cfg_fathers_father_id`,
+		 	`nx_cfg_father_goods_level`,
+		 	`nx_cfg_community_id`,
+		 	`nx_cfg_goods_amount`,
+		 	`nx_cfg_nx_goods_id`,
+		 	`nx_cfg_price_amount`,
+		 	`nx_cfg_price_two_amount`,
+		 	`nx_cfg_price_three_amount`,
+		 	`nx_cfg_order_rank`
+		)
+		values
+		(
+			#{nxCommunityFatherGoodsId},
+			#{nxCfgFatherGoodsName},
+			#{nxCfgFatherGoodsImg},
+			#{nxCfgFatherGoodsSort},
+			#{nxCfgFatherGoodsColor},
+		 	#{nxCfgFathersFatherId},
+		 	#{nxCfgFatherGoodsLevel},
+		 	#{nxCfgCommunityId},
+		 	#{nxCfgGoodsAmount},
+		 	#{nxCfgNxGoodsId},
+			#{nxCfgPriceAmount},
+		 	#{nxCfgPriceTwoAmount},
+		 	#{nxCfgPriceThreeAmount},
+		 	#{nxCfgOrderRank}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityFatherGoodsEntity">
+		update nx_community_father_goods
+		<set>
+			<if test="nxCfgFatherGoodsName != null">`nx_cfg_father_goods_name` = #{nxCfgFatherGoodsName}, </if>
+			<if test="nxCfgFatherGoodsImg != null">`nx_cfg_father_goods_img` = #{nxCfgFatherGoodsImg}, </if>
+			<if test="nxCfgFatherGoodsSort != null">`nx_cfg_father_goods_sort` = #{nxCfgFatherGoodsSort}, </if>
+			<if test="nxCfgFatherGoodsColor != null">`nx_cfg_father_goods_color` = #{nxCfgFatherGoodsColor}, </if>
+			<if test="nxCfgFathersFatherId != null">`nx_cfg_fathers_father_id` = #{nxCfgFathersFatherId}, </if>
+			<if test="nxCfgFatherGoodsLevel != null">`nx_cfg_father_goods_level` = #{nxCfgFatherGoodsLevel}, </if>
+			<if test="nxCfgCommunityId != null">`nx_cfg_community_id` = #{nxCfgCommunityId}, </if>
+			<if test="nxCfgNxGoodsId != null">`nx_cfg_nx_goods_id` = #{nxCfgNxGoodsId}, </if>
+			<if test="nxCfgPriceAmount != null">`nx_cfg_price_amount` = #{nxCfgPriceAmount}, </if>
+			<if test="nxCfgPriceTwoAmount != null">`nx_cfg_price_two_amount` = #{nxCfgPriceTwoAmount}, </if>
+			<if test="nxCfgPriceThreeAmount != null">`nx_cfg_price_three_amount` = #{nxCfgPriceThreeAmount}, </if>
+			<if test="nxCfgOrderRank != null">`nx_cfg_order_rank` = #{nxCfgOrderRank}, </if>
+			<if test="nxCfgGoodsAmount != null">`nx_cfg_goods_amount` = #{nxCfgGoodsAmount}</if>
+		</set>
+		where nx_community_father_goods_id = #{nxCommunityFatherGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_father_goods where nx_community_father_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_father_goods where nx_community_father_goods_id in
+		<foreach item="nxDfgId" collection="array" open="(" separator="," close=")">
+			#{nxDfgId}
+		</foreach>
+	</delete>
+
+</mapper>

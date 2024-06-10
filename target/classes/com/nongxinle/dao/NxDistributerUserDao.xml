@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerUserDao">
+
+    <select id="queryObject" resultMap="disUser">
+        select *
+        from nx_distributer_user as du
+                 left join nx_distributer as d on d.nx_distributer_id = du.nx_DIU_distributer_id
+        where nx_distributer_user_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDistributerUserEntity">
+        select * from nx_distributer_user
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_distributer_user
+    </select>
+
+    <resultMap id="userRoles" type="NxDistributerUserRoleEntity">
+        <id property="nxDistributerUserRoleId" column="nx_distributer_usr_role_id"/>
+        <result property="nxDurRoleId" column="nx_DUR_role_id"/>
+        <result property="nxDurUserId" column="nx_DUR_user_id"/>
+    </resultMap>
+
+    <resultMap id="sysCity" type="SysCityEntity">
+        <id property="sysCityId" column="sys_city_id"/>
+        <result property="sysCityName" column="sys_city_name"/>
+        <result property="sysCityFatherId" column="sys_city_father_id"/>
+        <result property="sysCityPy" column="sys_city_py"/>
+        <result property="sysCityPinyin" column="sys_city_pinyin"/>
+        <result property="sysCityType" column="sys_city_type"/>
+    </resultMap>
+    <resultMap id="serviceCity" type="NxDistributerServiceCityEntity">
+        <id property="nxDistributerServiceCityId" column="nx_distributer_service_city_id"/>
+        <result property="nxDsCityId" column="nx_ds_city_id"/>
+        <result property="nxDsDisId" column="nx_ds_dis_id"/>
+		<result property="nxDsCityName" column="nx_ds_city_name"/>
+        <association property="sysCityEntity" resultMap="sysCity"/>
+    </resultMap>
+
+	<resultMap id="sysBusinessType" type="SysBusinessTypeEntity">
+		<id property="sysBusinessTypeId" column="sys_business_type_id"/>
+		<result property="sysBusinessTypeName" column="sys_business_type_name"/>
+	</resultMap>
+
+    <resultMap id="jrdhUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="buy_user_nx_jrdh_user_id"/>
+        <result property="nxJrdhWxAvartraUrl" column="buy_user_nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="buy_user_nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="buy_user_nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="buy_user_nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="buy_user_nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="buy_user_nx_jrdh_nx_comm_user_id"/>
+        <result property="nxJrdhUrlChange" column="buy_user_nx_jrdh_url_change"/>
+        <result property="nxJrdhAdmin" column="buy_user_nx_jrdh_admin"/>
+    </resultMap>
+    <resultMap id="distributer" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
+		<association property="sysBusinessTypeEntity" resultMap="sysBusinessType"/>
+        <association property="nxDisBuyerUser" resultMap="jrdhUser"/>
+        <collection property="nxDistributerServiceCityEntities" resultMap="serviceCity"/>
+    </resultMap>
+
+    <resultMap id="qyCorpUser" type="QyNxDisCorpUserEntity">
+        <id property="qyNxDisCorpUserId" column="qy_nx_dis_corp_user_id"/>
+        <result property="qyNxDisCorpOpenUserId" column="qy_nx_dis_corp_open_user_id"/>
+        <result property="qyNxDisCorpQyCorpId" column="qy_nx_dis_corp_qy_corp_id"/>
+        <result property="qyNxDisCorpSessionKey" column="qy_nx_dis_corp_session_key"/>
+        <result property="qyNxDisCorpUserName" column="qy_nx_dis_corp_user_name"/>
+        <result property="qyNxDisCorpUserJoinDate" column="qy_nx_dis_corp_user_join_date"/>
+        <result property="qyNxDistributerId" column="qy_nx_distributer_id"/>
+    </resultMap>
+
+    <resultMap id="disUser" type="NxDistributerUserEntity">
+         <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+        <result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
+        <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+        <result property="nxDiuWxOpenId" column="nx_DIU_wx_open_id"/>
+        <result property="nxDiuWxPhone" column="nx_DIU_wx_phone"/>
+        <result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+        <result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+        <result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+        <result property="nxDiuAdmin" column="nx_DIU_admin"/>
+        <result property="nxDiuQyCorpUserId" column="nx_DIU_qy_corp_user_id"/>
+        <association property="qyNxDisCorpUserEntity" resultMap="qyCorpUser"/>
+        <association property="nxDistributerEntity" resultMap="distributer"/>
+        <collection property="roleEntities" resultMap="userRoles"/>
+    </resultMap>
+
+    <select id="queryUser" resultMap="disUser">
+        select *
+        from nx_distributer_user as du
+#                  left join nx_distributer_user_role as r on du.nx_distributer_user_id = r.nx_DUR_user_id
+                 left join nx_distributer as nd on nd.nx_distributer_id = du.nx_DIU_distributer_id
+                 left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
+                 left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
+                 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
+        where nx_DIU_distributer_id = #{disId}
+    </select>
+
+
+    <select id="queryUserInfo" resultMap="disUser">
+        select *
+        from nx_distributer_user as u
+                 left join nx_distributer as nd on u.nx_DIU_distributer_id = nd.nx_distributer_id
+                 left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
+                 left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
+				 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
+                 left join qy_nx_dis_corp_user as qndcu on qndcu.qy_nx_dis_corp_user_id = u.nx_DIU_qy_corp_user_id
+		where nx_distributer_user_id = #{nxDistributerUserId}
+    </select>
+
+    <select id="queryUserByOpenId" resultMap="disUser">
+        select *
+        from nx_distributer_user as du
+                 left join nx_distributer as nd on nd.nx_distributer_id = du.nx_DIU_distributer_id
+                 left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
+                 left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
+				 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
+		where nx_DIU_wx_open_id = #{openid}
+    </select>
+    <select id="queryAllUsersByDisId" resultType="com.nongxinle.entity.NxDistributerUserEntity">
+        select *
+        from nx_distributer_user
+        where nx_DIU_distributer_id = #{disId}
+    </select>
+    <select id="queryNxDisInfo" resultMap="distributer">
+        select *
+        from nx_distributer as nd
+                 left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
+                 left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
+				 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
+        left join nx_jrdh_user as nju on nju.nx_jrdh_nx_distributer_id = nd.nx_distributer_id
+		where nx_distributer_id = #{diuDistributerId}
+
+    </select>
+    <select id="getAllDisUsers" resultType="com.nongxinle.entity.NxDistributerUserEntity">
+        select * from nongxinle.nx_distributer_user;
+    </select>
+    <select id="queryRoleNxDisRoleUserList" resultType="com.nongxinle.entity.NxDistributerUserEntity">
+        select * from nongxinle.nx_distributer_user as ndu
+#         left join nx_distributer_user_role as ndur on ndur.nx_DUR_user_id = ndu.nx_distributer_user_id
+        <where>
+            <if test="disId != null">
+                and nx_DIU_distributer_id = #{disId}
+            </if>
+            <if test="roleId != null">
+                and ndur.nx_DUR_role_id = #{roleId}
+            </if>
+        </where>
+
+    </select>
+    <select id="queryDisUserByRoleAndOpen" resultType="com.nongxinle.entity.NxDistributerUserEntity">
+        select * from nx_distributer_user as ndu
+         <where>
+             <if test="roleId != null">
+                 and ndu.nx_DIU_admin = #{roleId}
+             </if>
+             <if test="openId != null">
+                 and ndu.nx_DIU_wx_open_id = #{openId}
+             </if>
+         </where>
+    </select>
+    <select id="getAdminUserByParams" resultType="com.nongxinle.entity.NxDistributerUserEntity">
+        select * from nx_distributer_user
+        <where>
+            <if test="disId != null">
+                and nx_DIU_distributer_id = #{disId}
+            </if>
+            <if test="admin != null">
+                and nx_DIU_admin = #{admin}
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerUserEntity"
+            useGeneratedKeys="true" keyProperty="nxDistributerUserId">
+        insert into nx_distributer_user
+        (`nx_distributer_user_id`,
+         `nx_DIU_wx_avartra_url`,
+         `nx_DIU_wx_nick_name`,
+         `nx_DIU_wx_open_id`,
+         `nx_DIU_wx_phone`,
+         `nx_DIU_distributer_id`,
+         `nx_DIU_admin`,
+         `nx_DIU_print_device_id`,
+         `nx_DIU_print_bill_device_id`,
+         `nx_DIU_url_change`,
+         `nx_DIU_qy_corp_user_id`,
+         `nx_DIU_login_times`
+        )
+        values (#{nxDistributerUserId},
+                #{nxDiuWxAvartraUrl},
+                #{nxDiuWxNickName},
+                #{nxDiuWxOpenId},
+                #{nxDiuWxPhone},
+                #{nxDiuDistributerId},
+                #{nxDiuAdmin},
+                #{nxDiuPrintDeviceId},
+                #{nxDiuPrintBillDeviceId},
+                #{nxDiuUrlChange},
+                #{nxDiuQyCorpUserId},
+                #{nxDiuLoginTimes}
+                )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDistributerUserEntity">
+        update nx_distributer_user
+        <set>
+            <if test="nxDiuWxAvartraUrl != null">`nx_DIU_wx_avartra_url` = #{nxDiuWxAvartraUrl},</if>
+            <if test="nxDiuWxNickName != null">`nx_DIU_wx_nick_name` = #{nxDiuWxNickName},</if>
+            <if test="nxDiuWxPhone != null">`nx_DIU_wx_phone` = #{nxDiuWxPhone},</if>
+            <if test="nxDiuWxOpenId != null">`nx_DIU_wx_open_id` = #{nxDiuWxOpenId},</if>
+            <if test="nxDiuAdmin != null">`nx_DIU_admin` = #{nxDiuAdmin},</if>
+            <if test="nxDiuPrintDeviceId != null">`nx_DIU_print_device_id` = #{nxDiuPrintDeviceId},</if>
+            <if test="nxDiuPrintBillDeviceId != null">`nx_DIU_print_bill_device_id` = #{nxDiuPrintBillDeviceId},</if>
+            <if test="nxDiuUrlChange != null">`nx_DIU_url_change` = #{nxDiuUrlChange},</if>
+            <if test="nxDiuQyCorpUserId != null">`nx_DIU_qy_corp_user_id` = #{nxDiuQyCorpUserId},</if>
+            <if test="nxDiuLoginTimes != null">`nx_DIU_login_times` = #{nxDiuLoginTimes},</if>
+            <if test="nxDiuDistributerId != null">`nx_DIU_distributer_id` = #{nxDiuDistributerId}</if>
+        </set>
+        where nx_distributer_user_id = #{nxDistributerUserId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_distributer_user
+        where nx_distributer_user_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_distributer_user where nx_distributer_user_id in
+        <foreach item="nxDistributerUserId" collection="array" open="(" separator="," close=")">
+            #{nxDistributerUserId}
+        </foreach>
+    </delete>
+
+</mapper>

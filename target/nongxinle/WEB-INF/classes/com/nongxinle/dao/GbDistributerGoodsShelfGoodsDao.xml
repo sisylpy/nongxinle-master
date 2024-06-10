@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerGoodsShelfGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerGoodsShelfGoodsEntity">
+		select * from gb_distributer_goods_shelf_goods where gb_distributer_goods_shelf_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerGoodsShelfGoodsEntity">
+		select * from gb_distributer_goods_shelf_goods 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_goods_shelf_goods 
+	</select>
+    <select id="queryShelfGoodsByParams" resultType="com.nongxinle.entity.GbDistributerGoodsShelfGoodsEntity">
+		select * from gb_distributer_goods_shelf_goods
+		<where>
+			<if test="shelfId !=null">
+				and gb_DGSG_shelf_id = #{shelfId}
+			</if>
+			<if test="dayuSort !=null">
+				and gb_DGSG_sort &gt; #{dayuSort}
+			</if>
+			<if test="stockDepId !=null">
+				and gb_DGSG_dep_id = #{stockDepId}
+			</if>
+			<if test="disGoodsId !=null">
+				and gb_DGSG_dis_goods_id = #{disGoodsId}
+			</if>
+		</where>
+           order by gb_DGSG_sort
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDistributerGoodsShelfGoodsEntity"
+	useGeneratedKeys="true" keyProperty="gbDistributerGoodsShelfGoodsId">
+		insert into gb_distributer_goods_shelf_goods
+		(
+			`gb_distributer_goods_shelf_goods_id`, 
+			`gb_DGSG_dis_goods_id`, 
+			`gb_DGSG_shelf_id`, 
+			`gb_DGSG_sort`,
+		 	`gb_DGSG_dep_father_id`,
+		 	`gb_DGSG_dep_id`,
+		 	`gb_DGSG_dep_dis_goods_id`
+		)
+		values
+		(
+			#{gbDistributerGoodsShelfGoodsId}, 
+			#{gbDgsgDisGoodsId}, 
+			#{gbDgsgShelfId}, 
+			#{gbDgsgSort},
+			#{gbDgsgDepFatherId},
+			#{gbDgsgDepId},
+			#{gbDgsgDepDisGoodsId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerGoodsShelfGoodsEntity">
+		update gb_distributer_goods_shelf_goods 
+		<set>
+			<if test="gbDgsgDisGoodsId != null">`gb_DGSG_dis_goods_id` = #{gbDgsgDisGoodsId}, </if>
+			<if test="gbDgsgShelfId != null">`gb_DGSG_shelf_id` = #{gbDgsgShelfId}, </if>
+			<if test="gbDgsgDepFatherId != null">`gb_DGSG_dep_father_id` = #{gbDgsgDepFatherId}, </if>
+			<if test="gbDgsgDepId != null">`gb_DGSG_dep_id` = #{gbDgsgDepId}, </if>
+			<if test="gbDgsgDepDisGoodsId != null">`gb_DGSG_dep_dis_goods_id` = #{gbDgsgDepDisGoodsId}, </if>
+			<if test="gbDgsgSort != null">`gb_DGSG_sort` = #{gbDgsgSort}</if>
+		</set>
+		where gb_distributer_goods_shelf_goods_id = #{gbDistributerGoodsShelfGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_goods_shelf_goods where gb_distributer_goods_shelf_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_goods_shelf_goods where gb_distributer_goods_shelf_goods_id in 
+		<foreach item="gbDistributerGoodsShelfGoodsId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerGoodsShelfGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

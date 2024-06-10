@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyGbDisCorpUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyGbDisCorpUserEntity">
+		select * from qy_gb_dis_corp_user where qy_gb_dis_corp_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyGbDisCorpUserEntity">
+		select * from qy_gb_dis_corp_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_gb_dis_corp_user 
+	</select>
+    <select id="queryCorpUserListByCorpId" resultType="com.nongxinle.entity.QyGbDisCorpUserEntity">
+		select * from qy_gb_dis_corp_user where qy_gb_dis_corp_qy_corp_id = #{qyNxDisCorpId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.QyGbDisCorpUserEntity" useGeneratedKeys="true"
+	keyProperty="qyGbDisCorpUserId">
+		insert into qy_gb_dis_corp_user
+		(
+			`qy_gb_dis_corp_user_id`, 
+			`qy_gb_dis_corp_user_name`, 
+			`qy_gb_dis_corp_user_url`, 
+			`qy_gb_dis_corp_open_user_id`, 
+			`qy_gb_dis_corp_qy_corp_id`, 
+			`qy_gb_distributer_id`,
+			`qy_gb_dis_corp_session_key`,
+			`qy_gb_dis_corp_user_join_date`
+		)
+		values
+		(
+			#{qyGbDisCorpUserId}, 
+			#{qyGbDisCorpUserName}, 
+			#{qyGbDisCorpUserUrl}, 
+			#{qyGbDisCorpOpenUserId}, 
+			#{qyGbDisCorpQyCorpId}, 
+			#{qyGbDistributerId},
+			#{qyGbDisCorpSessionKey},
+			#{qyGbDisCorpUserJoinDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyGbDisCorpUserEntity">
+		update qy_gb_dis_corp_user 
+		<set>
+			<if test="qyGbDisCorpUserName != null">`qy_gb_dis_corp_user_name` = #{qyGbDisCorpUserName}, </if>
+			<if test="qyGbDisCorpUserUrl != null">`qy_gb_dis_corp_user_url` = #{qyGbDisCorpUserUrl}, </if>
+			<if test="qyGbDisCorpOpenUserId != null">`qy_gb_dis_corp_open_user_id` = #{qyGbDisCorpOpenUserId}, </if>
+			<if test="qyGbDisCorpQyCorpId != null">`qy_gb_dis_corp_qy_corp_id` = #{qyGbDisCorpQyCorpId}, </if>
+			<if test="qyGbDisCorpSessionKey != null">`qy_gb_dis_corp_session_key` = #{qyGbDisCorpSessionKey}, </if>
+			<if test="qyGbDisCorpUserJoinDate != null">`qy_gb_dis_corp_user_join_date` = #{qyGbDisCorpUserJoinDate}, </if>
+			<if test="qyGbDistributerId != null">`qy_gb_distributer_id` = #{qyGbDistributerId}</if>
+		</set>
+		where qy_gb_dis_corp_user_id = #{qyGbDisCorpUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_gb_dis_corp_user where qy_gb_dis_corp_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_gb_dis_corp_user where qy_gb_dis_corp_user_id in 
+		<foreach item="qyGbDisCorpUserId" collection="array" open="(" separator="," close=")">
+			#{qyGbDisCorpUserId}
+		</foreach>
+	</delete>
+
+</mapper>

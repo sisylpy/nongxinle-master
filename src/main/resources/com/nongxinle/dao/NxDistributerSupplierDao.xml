@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerSupplierDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerSupplierEntity">
+		select * from nx_distributer_supplier where nx_distributer_supplier_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerSupplierEntity">
+		select * from nx_distributer_supplier 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_supplier 
+	</select>
+
+	<resultMap id="disUser" type="NxDistributerUserEntity">
+		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+		<result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+		<result property="nxDiuAdmin" column="nx_DIU_admin"/>
+		<result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+		<result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+		<result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+	</resultMap>
+	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
+		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+		<result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+		<result property="nxDgPullOff" column="nx_dg_pull_off"/>
+		<result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+		<result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+		<result property="nxDgNxFatherId" column="nx_dg_nx_father_id"/>
+		<result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+		<result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+		<result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+		<result property="nxDgGoodsPinyin" column="nx_dg_goods_pinyin"/>
+		<result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+		<result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+		<result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+		<result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+		<result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+		<result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+		<result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+		<result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+		<result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+		<result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+		<result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+		<result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+		<result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+	</resultMap>
+
+	<resultMap id="supplierUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
+		<result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
+		<result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
+		<collection property="autoPurchaseDisGoodsList" resultMap="disGoods"/>
+	</resultMap>
+	<resultMap id="supplier" type="NxDistributerSupplierEntity">
+		<id property="nxDistributerSupplierId" column="nx_distributer_supplier_id"/>
+		<result property="nxDsNxDistributerId" column="nx_DS_nx_distributer_id"/>
+		<result property="nxDsJrdhNxDisUserId" column="nx_DS_jrdh_nx_dis_user_id"/>
+		<result property="nxDsJrdhUserId" column="nx_DS_jrdh_user_id"/>
+		<result property="nxDistributerSupplierName" column="nx_distributer_supplier_name"/>
+		<result property="nxDistributerSupplierAddress" column="nx_distributer_supplier_address"/>
+		<association property="supplierUserEntity" resultMap="supplierUser"/>
+		<association property="disPurchaserUserEntity" resultMap="disUser"/>
+ 	</resultMap>
+    <select id="queryDisSupplierByParams" resultMap="supplier">
+		select *, sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+		sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+		sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+		sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+		from nx_distributer_supplier as nds
+		left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = nds.nx_DS_jrdh_user_id
+		 left join nx_distributer_goods as ndg on ndg.nx_dg_supplier_id = nds.nx_distributer_supplier_id
+		 left join nx_distributer_user as ndu on ndu.nx_distributer_user_id =  nds.nx_DS_jrdh_nx_dis_user_id
+       <where>
+		   <if test="disId != null">
+			   and nds.nx_DS_nx_distributer_id = #{disId}
+		   </if>
+		   <if test="userId != null">
+			   and nds.nx_DS_jrdh_user_id = #{userId}
+		   </if>
+
+	   </where>
+	</select>
+
+	<resultMap id="nxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+		<association property="nxDistributerUserEntity" resultMap="disUser"/>
+	</resultMap>
+<!--	<resultMap id="buyUserWithNxDis" type="NxJrdhUserEntity">-->
+<!--		<id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+
+		<result property="nxJrdhJrdhsSupplierId" column="nx_jrdh_jrdhs_supplier_id"/>-->
+<!--		<result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>-->
+<!--		<result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>-->
+<!--		<result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>-->
+<!--		<result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>-->
+<!--		<result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>-->
+<!--		<result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>-->
+<!--		<association property="nxDistributerEntity" resultMap="nxDis"/>-->
+<!--	</resultMap>-->
+	<resultMap id="disUserWithNxDis" type="NxDistributerUserEntity">
+		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+		<result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
+		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+		<result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+		<result property="nxDiuWxOpenId" column="nx_DIU_wx_open_id"/>
+		<result property="nxDiuWxPhone" column="nx_DIU_wx_phone"/>
+		<result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+		<result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+		<result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+		<result property="nxDiuAdmin" column="nx_DIU_admin"/>
+	</resultMap>
+	<resultMap id="disSupplier" type="NxDistributerSupplierEntity">
+		<id property="nxDistributerSupplierId" column="nx_distributer_supplier_id"/>
+		<result property="nxDsNxDistributerId" column="nx_DS_nx_distributer_id"/>
+		<result property="nxDsJrdhNxDisUserId" column="nx_DS_jrdh_nx_dis_user_id"/>
+		<result property="nxDsJrdhUserId" column="nx_DS_jrdh_user_id"/>
+		<result property="nxDsNxDistributerId" column="nx_DS_nx_distributer_id"/>
+		<result property="nxDistributerSupplierName" column="nx_distributer_supplier_name"/>
+		<result property="nxDistributerSupplierAddress" column="nx_distributer_supplier_address"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
+	</resultMap>
+
+	<select id="querySellerDistributerByParams" resultMap="disSupplier">
+		select *
+		from nx_distributer_supplier as nds
+		left join nx_distributer as nd on nd.nx_distributer_id = nds.nx_DS_nx_distributer_id
+		left join nx_distributer_user as nbu on nbu.nx_distributer_user_id = nds.nx_DS_jrdh_nx_dis_user_id
+		<where>
+			<if test="sellerId != null">
+				and nds.nx_DS_jrdh_user_id = #{sellerId}
+			</if>
+			<if test="disId != null">
+				and nds.nx_DS_nx_distributer_id = #{disId}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerSupplierEntity" keyProperty="nxDistributerSupplierId" useGeneratedKeys="true">
+		insert into nx_distributer_supplier
+		(
+			`nx_distributer_supplier_id`, 
+			`nx_DS_nx_distributer_id`,
+			`nx_DS_jrdh_user_id`, 
+			`nx_DS_jrdh_nx_dis_user_id`,
+			`nx_distributer_supplier_name`,
+			`nx_distributer_supplier_address`
+		)
+		values
+		(
+			#{nxDistributerSupplierId}, 
+			#{nxDsNxDistributerId},
+			#{nxDsJrdhUserId}, 
+			#{nxDsJrdhNxDisUserId},
+			#{nxDistributerSupplierName},
+			#{nxDistributerSupplierAddress}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerSupplierEntity">
+		update nx_distributer_supplier 
+		<set>
+			<if test="nxDsNxDistributerId != null">`nx_DS_nx_distributer_id` = #{nxDsNxDistributerId}, </if>
+			<if test="nxDsJrdhUserId != null">`nx_DS_jrdh_user_id` = #{nxDsJrdhUserId}, </if>
+			<if test="nxDistributerSupplierName != null">`nx_distributer_supplier_name` = #{nxDistributerSupplierName}, </if>
+			<if test="nxDistributerSupplierAddress != null">`nx_distributer_supplier_address` = #{nxDistributerSupplierAddress}, </if>
+			<if test="nxDsJrdhNxDisUserId != null">`nx_DS_jrdh_nx_dis_user_id` = #{nxDsJrdhNxDisUserId}</if>
+		</set>
+		where nx_distributer_supplier_id = #{nxDistributerSupplierId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_supplier where nx_distributer_supplier_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_supplier where nx_distributer_supplier_id in 
+		<foreach item="nxDistributerSupplierId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerSupplierId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRetailerGoodsShelfDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxRetailerGoodsShelfEntity">
+		select * from nx_retailer_goods_shelf where nx_retailer_goods_shelf_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxRetailerGoodsShelfEntity">
+		select * from nx_retailer_goods_shelf 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_retailer_goods_shelf 
+	</select>
+
+	<resultMap id="retPurGoods" type="NxRetailerPurchaseGoodsEntity">
+		<id property="nxRetailerPurchaseGoodsId" column="nx_retailer_purchase_goods_id"/>
+		<result property="nxRpgQuantity" column="nx_RPG_quantity"/>
+		<result property="nxRpgBuyQuantity" column="nx_RPG_buy_quantity"/>
+		<result property="nxRpgStatus" column="nx_RPG_status"/>
+		<result property="nxRpgBuyPrice" column="nx_RPG_buy_price"/>
+		<result property="nxRpgBuySubtotal" column="nx_RPG_buy_subtotal"/>
+		<result property="nxRpgBatchId" column="nx_RPG_batch_id"/>
+		<result property="nxRpgGoodsName" column="nx_RPG_goods_name"/>
+		<result property="nxRpgInputType" column="nx_RPG_input_type"/>
+		<result property="nxRpgTime" column="nx_RPG_time"/>
+	</resultMap>
+
+	<resultMap id="shelfGoods" type="NxRetailerGoodsShelfGoodsEntity">
+		<id property="nxRetailerGoodsShelfGoodsId" column="nx_retailer_goods_shelf_goods_id"/>
+		<result property="nxRgsgGoodsName" column="nx_RGSG_goods_name"/>
+		<result property="nxRgsgShelfId" column="nx_RGSG_shelf_id"/>
+		<result property="nxRgsgSort" column="nx_RGSG_sort"/>
+		<association property="nxRetailerPurchaseGoodsEntity" resultMap="retPurGoods"/>
+	</resultMap>
+	<resultMap id="retShelfWithGoods" type="NxRetailerGoodsShelfEntity">
+		<id property="nxRetailerGoodsShelfId" column="nx_retailer_goods_shelf_id"/>
+		<result property="nxRetailerGoodsShelfName" column="nx_retailer_goods_shelf_name"/>
+		<result property="nxRetailerGoodsShelfRetailerId" column="nx_retailer_goods_shelf_retailer_id"/>
+		<result property="nxRetailerGoodsShelfSort" column="nx_retailer_goods_shelf_sort"/>
+		<collection property="nxRetGoodsShelfGoodsEntityList" resultMap="shelfGoods"/>
+	</resultMap>
+    <select id="queryRetShelfByParams" resultMap="retShelfWithGoods">
+		select * from nx_retailer_goods_shelf  as rgs
+		left join nx_retailer_goods_shelf_goods as rgsg on rgsg.nx_RGSG_shelf_id = rgs.nx_retailer_goods_shelf_id
+		where nx_retailer_goods_shelf_retailer_id = #{retId}
+        order by nx_retailer_goods_shelf_sort,nx_RGSG_sort
+	</select>
+	<select id="queryRetShelfWithPurGoodsByParams" resultMap="retShelfWithGoods">
+		select * from nx_retailer_goods_shelf  as rgs
+		left join nx_retailer_goods_shelf_goods as rgsg on rgsg.nx_RGSG_shelf_id = rgs.nx_retailer_goods_shelf_id
+		left join nx_retailer_purchase_goods as  rpg on rpg.nx_RPG_shelf_goods_id = rgsg.nx_retailer_goods_shelf_goods_id
+		and rpg.nx_RPG_status &lt; 3
+		where nx_retailer_goods_shelf_retailer_id = #{retId}
+		order by nx_retailer_goods_shelf_sort,nx_RGSG_sort
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxRetailerGoodsShelfEntity"
+	    useGeneratedKeys="true" keyProperty="nxRetailerGoodsShelfId">
+		insert into nx_retailer_goods_shelf
+		(
+			`nx_retailer_goods_shelf_id`, 
+			`nx_retailer_goods_shelf_name`, 
+			`nx_retailer_goods_shelf_sort`, 
+			`nx_retailer_goods_shelf_retailer_id`
+		)
+		values
+		(
+			#{nxRetailerGoodsShelfId}, 
+			#{nxRetailerGoodsShelfName}, 
+			#{nxRetailerGoodsShelfSort}, 
+			#{nxRetailerGoodsShelfRetailerId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxRetailerGoodsShelfEntity">
+		update nx_retailer_goods_shelf 
+		<set>
+			<if test="nxRetailerGoodsShelfName != null">`nx_retailer_goods_shelf_name` = #{nxRetailerGoodsShelfName}, </if>
+			<if test="nxRetailerGoodsShelfSort != null">`nx_retailer_goods_shelf_sort` = #{nxRetailerGoodsShelfSort}, </if>
+			<if test="nxRetailerGoodsShelfRetailerId != null">`nx_retailer_goods_shelf_retailer_id` = #{nxRetailerGoodsShelfRetailerId}</if>
+		</set>
+		where nx_retailer_goods_shelf_id = #{nxRetailerGoodsShelfId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_retailer_goods_shelf where nx_retailer_goods_shelf_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_retailer_goods_shelf where nx_retailer_goods_shelf_id in 
+		<foreach item="nxRetailerGoodsShelfId" collection="array" open="(" separator="," close=")">
+			#{nxRetailerGoodsShelfId}
+		</foreach>
+	</delete>
+
+</mapper>

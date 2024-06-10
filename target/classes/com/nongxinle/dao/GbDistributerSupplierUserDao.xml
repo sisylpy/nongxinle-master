@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerSupplierUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerSupplierUserEntity">
+		select * from gb_distributer_supplier_user where gb_distributer_supplier_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerSupplierUserEntity">
+		select * from gb_distributer_supplier_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_supplier_user 
+	</select>
+
+	<select id="querySupplierUserByParams" resultMap="userWithSupplierEntity">
+		select * from gb_distributer_supplier_user as gdsu
+		left join gb_distributer_supplier as gds on gds.gb_distributer_supplier_id = gdsu.gb_DSU_supplier_id
+
+		<where>
+			<if test="openId != null">
+				and gb_DSU_wx_open_id = #{openId}
+			</if>
+           <if test="admin != null">
+			   and gb_DSU_admin = #{admin}
+		   </if>
+<!--			<if test="supplierId != null and supplierId = 1">-->
+<!--				and gdsu.gb_DSU_supplier_id is not null-->
+<!--			</if>-->
+			</where>
+	</select>
+
+	<select id="querySupplierUserByOpenId" resultMap="userWithSupplierEntity">
+		select * from gb_distributer_supplier_user as gdsu
+		left join gb_distributer_supplier as gds on gds.gb_distributer_supplier_id = gdsu.gb_DSU_supplier_id
+		where gb_DSU_wx_open_id = #{openId}
+	</select>
+
+	<select id="querySupplierUsersBySupplierId"
+			resultType="com.nongxinle.entity.GbDistributerSupplierUserEntity">
+		select * from gb_distributer_supplier_user  as gdsu where  gdsu.gb_DSU_supplier_id = #{returnSupplierId}
+	</select>
+
+    <select id="queryAppointUserBySupplierId"
+            resultType="com.nongxinle.entity.GbDistributerSupplierUserEntity">
+		select  * from gb_distributer_supplier_user as gdsu
+        where  gdsu.gb_DSU_supplier_id = #{supplierId} and gb_DSU_admin = 0
+	</select>
+
+	<resultMap id="supplierEntity" type="GbDistributerSupplierEntity">
+		<id property="gbDistributerSupplierId" column="gb_distributer_supplier_id"/>
+		<result property="gbDsGbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerSupplierName" column="gb_distributer_supplier_name"/>
+		<result property="gbDistributerSupplierFatherId" column="gb_distributer_supplier_father_id"/>
+		<result property="gbDsSupplierIsGroup" column="gb_DS_supplier_is_group"/>
+		<result property="gbDsGbDepartmentId" column="gb_DS_gb_department_id"/>
+		<result property="gbDsSupplierUserId" column="gb_DS_supplier_user_id"/>
+		<result property="gbDsPurUserId" column="gb_DS_pur_user_id"/>
+	</resultMap>
+
+	<resultMap id="userWithSupplierEntity" type="GbDistributerSupplierUserEntity">
+		<id property="gbDistributerSupplierUserId" column="gb_distributer_supplier_user_id"/>
+		<result property="gbDsuSupplierId" column="gb_DSU_supplier_id"/>
+		<result property="gbDsuAdmin" column="gb_DSU_admin"/>
+		<result property="gbDsuWxNickName" column="gb_DSU_wx_nick_name"/>
+		<result property="gbDsuWxAvartraUrl" column="gb_DSU_wx_avartra_url"/>
+		<result property="gbDsuDistributerId" column="gb_DSU_distributer_id"/>
+		<result property="gbDsuDepartmentId" column="gb_DSU_department_id"/>
+		<result property="gbDsuUrlChange" column="gb_DSU_url_change"/>
+		<result property="gbDsuJoinDate" column="gb_DSU_join_date"/>
+		<result property="gbDsuWxOpenId" column="gb_DSU_wx_open_id"/>
+		<association property="gbDistributerSupplierEntity" resultMap="supplierEntity"/>
+ 	</resultMap>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerSupplierUserEntity"
+	useGeneratedKeys="true" keyProperty="gbDistributerSupplierUserId">
+		insert into gb_distributer_supplier_user
+		(
+			`gb_distributer_supplier_user_id`, 
+			`gb_DSU_department_id`, 
+			`gb_DSU_wx_avartra_url`, 
+			`gb_DSU_wx_nick_name`, 
+			`gb_DSU_wx_open_id`, 
+			`gb_DSU_wx_phone`, 
+			`gb_DSU_admin`, 
+			`gb_DSU_distributer_id`, 
+			`gb_DSU_url_change`, 
+			`gb_DSU_department_father_id`, 
+			`gb_DSU_join_date`, 
+			`gb_DSU_print_device_id`, 
+			`gb_DSU_print_bill_device_id`,
+		 	`gb_DSU_supplier_id`
+		)
+		values
+		(
+			#{gbDistributerSupplierUserId}, 
+			#{gbDsuDepartmentId}, 
+			#{gbDsuWxAvartraUrl}, 
+			#{gbDsuWxNickName}, 
+			#{gbDsuWxOpenId}, 
+			#{gbDsuWxPhone}, 
+			#{gbDsuAdmin}, 
+			#{gbDsuDistributerId}, 
+			#{gbDsuUrlChange}, 
+			#{gbDsuDepartmentFatherId}, 
+			#{gbDsuJoinDate}, 
+			#{gbDsuPrintDeviceId}, 
+			#{gbDsuPrintBillDeviceId},
+			#{gbDsuSupplierId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerSupplierUserEntity">
+		update gb_distributer_supplier_user 
+		<set>
+			<if test="gbDsuDepartmentId != null">`gb_DSU_department_id` = #{gbDsuDepartmentId}, </if>
+			<if test="gbDsuWxAvartraUrl != null">`gb_DSU_wx_avartra_url` = #{gbDsuWxAvartraUrl}, </if>
+			<if test="gbDsuWxNickName != null">`gb_DSU_wx_nick_name` = #{gbDsuWxNickName}, </if>
+			<if test="gbDsuWxOpenId != null">`gb_DSU_wx_open_id` = #{gbDsuWxOpenId}, </if>
+			<if test="gbDsuWxPhone != null">`gb_DSU_wx_phone` = #{gbDsuWxPhone}, </if>
+			<if test="gbDsuAdmin != null">`gb_DSU_admin` = #{gbDsuAdmin}, </if>
+			<if test="gbDsuDistributerId != null">`gb_DSU_distributer_id` = #{gbDsuDistributerId}, </if>
+			<if test="gbDsuUrlChange != null">`gb_DSU_url_change` = #{gbDsuUrlChange}, </if>
+			<if test="gbDsuDepartmentFatherId != null">`gb_DSU_department_father_id` = #{gbDsuDepartmentFatherId}, </if>
+			<if test="gbDsuJoinDate != null">`gb_DSU_join_date` = #{gbDsuJoinDate}, </if>
+			<if test="gbDsuPrintDeviceId != null">`gb_DSU_print_device_id` = #{gbDsuPrintDeviceId}, </if>
+			<if test="gbDsuSupplierId != null">`gb_DSU_supplier_id` = #{gbDsuSupplierId}, </if>
+			<if test="gbDsuPrintBillDeviceId != null">`gb_DSU_print_bill_device_id` = #{gbDsuPrintBillDeviceId}</if>
+		</set>
+		where gb_distributer_supplier_user_id = #{gbDistributerSupplierUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_supplier_user where gb_distributer_supplier_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_supplier_user where gb_distributer_supplier_user_id in 
+		<foreach item="gbDistributerSupplierUserId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerSupplierUserId}
+		</foreach>
+	</delete>
+
+</mapper>

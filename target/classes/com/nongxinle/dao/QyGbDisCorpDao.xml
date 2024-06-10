@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyGbDisCorpDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyGbDisCorpEntity">
+		select * from qy_gb_dis_corp where qy_gb_dis_corp_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyGbDisCorpEntity">
+		select * from qy_gb_dis_corp 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_gb_dis_corp 
+	</select>
+    <select id="queryQyCropByCropId" resultType="com.nongxinle.entity.QyGbDisCorpEntity">
+		select *
+		from qy_gb_dis_corp where  qy_gb_dis_qy_corp_id = #{corpid};
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.QyGbDisCorpEntity" useGeneratedKeys="true"
+			keyProperty="qyGbDisCorpId">
+		insert into qy_gb_dis_corp
+		(
+			`qy_gb_dis_corp_id`, 
+			`qy_gb_dis_corp_name`, 
+			`qy_gb_dis_corp_round_logo_url`, 
+			`qy_gb_dis_corp_permanent_code`, 
+			`qy_gb_dis_corp_access_token`, 
+			`qy_gb_dis_qy_corp_id`,
+			`qy_gb_dis_corp_join_date`
+		)
+		values
+		(
+			#{qyGbDisCorpId}, 
+			#{qyGbDisCorpName}, 
+			#{qyGbDisCorpRoundLogoUrl}, 
+			#{qyGbDisCorpPermanentCode}, 
+			#{qyGbDisCorpAccessToken}, 
+			#{qyGbDisQyCorpId},
+			#{qyGbDisCorpJoinDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyGbDisCorpEntity">
+		update qy_gb_dis_corp 
+		<set>
+			<if test="qyGbDisCorpName != null">`qy_gb_dis_corp_name` = #{qyGbDisCorpName}, </if>
+			<if test="qyGbDisCorpRoundLogoUrl != null">`qy_gb_dis_corp_round_logo_url` = #{qyGbDisCorpRoundLogoUrl}, </if>
+			<if test="qyGbDisCorpPermanentCode != null">`qy_gb_dis_corp_permanent_code` = #{qyGbDisCorpPermanentCode}, </if>
+			<if test="qyGbDisCorpAccessToken != null">`qy_gb_dis_corp_access_token` = #{qyGbDisCorpAccessToken}, </if>
+			<if test="qyGbDisCorpJoinDate != null">`qy_gb_dis_corp_join_date` = #{qyGbDisCorpJoinDate}, </if>
+			<if test="qyGbDisQyCorpId != null">`qy_gb_dis_qy_corp_id` = #{qyGbDisQyCorpId}</if>
+		</set>
+		where qy_gb_dis_corp_id = #{qyGbDisCorpId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_gb_dis_corp where qy_gb_dis_corp_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_gb_dis_corp where qy_gb_dis_corp_id in 
+		<foreach item="qyGbDisCorpId" collection="array" open="(" separator="," close=")">
+			#{qyGbDisCorpId}
+		</foreach>
+	</delete>
+
+	<delete id="deleteCropByCropId">
+		delete  from qy_gb_dis_corp where qy_gb_dis_qy_corp_id = #{corpid}
+	</delete>
+
+</mapper>

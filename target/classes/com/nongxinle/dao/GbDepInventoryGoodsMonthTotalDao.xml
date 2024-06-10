@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepInventoryGoodsMonthTotalDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepInventoryGoodsMonthTotalEntity">
+		select * from gb_dep_inventory_goods_month_total where gb_inventory_goods_month_total_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepInventoryGoodsMonthTotalEntity">
+		select * from gb_dep_inventory_goods_month_total 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_inventory_goods_month_total 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepInventoryGoodsMonthTotalEntity">
+		insert into gb_dep_inventory_goods_month_total
+		(
+			`gb_inventory_goods_month_total_id`, 
+			`gb_igmt_department_father_id`, 
+			`gb_igmt_department_id`, 
+			`gb_igmt_distributer_id`, 
+			`gb_igmt_dis_goods_id`, 
+			`gb_igmt_dis_goods_father_id`, 
+			`gb_igmt_month`, 
+			`gb_igmt_weight`, 
+			`gb_igmt_subtotal`, 
+			`gb_igmt_year`, 
+			`gb_igmt_full_time`, 
+			`gb_igmt_waste_weight`, 
+			`gb_igmt_waste_subtotal`, 
+			`gb_igmt_status`, 
+			`gb_igmt_loss_weight`, 
+			`gb_igmt_loss_subtotal`, 
+			`gb_igmt_return_weight`, 
+			`gb_igmt_return_subtotal`, 
+			`gb_igmt_dep_dis_goods_id`, 
+			`gb_igmt_produce_weight`, 
+			`gb_igmt_produce_subtotal`, 
+			`gb_igmt_profit_price`, 
+			`gb_igmt_profit_weight`, 
+			`gb_igmt_profit_subtotal`
+		)
+		values
+		(
+			#{gbInventoryGoodsMonthTotalId}, 
+			#{gbIgmtDepartmentFatherId}, 
+			#{gbIgmtDepartmentId}, 
+			#{gbIgmtDistributerId}, 
+			#{gbIgmtDisGoodsId}, 
+			#{gbIgmtDisGoodsFatherId}, 
+			#{gbIgmtMonth}, 
+			#{gbIgmtWeight}, 
+			#{gbIgmtSubtotal}, 
+			#{gbIgmtYear}, 
+			#{gbIgmtFullTime}, 
+			#{gbIgmtWasteWeight}, 
+			#{gbIgmtWasteSubtotal}, 
+			#{gbIgmtStatus}, 
+			#{gbIgmtLossWeight}, 
+			#{gbIgmtLossSubtotal}, 
+			#{gbIgmtReturnWeight}, 
+			#{gbIgmtReturnSubtotal}, 
+			#{gbIgmtDepDisGoodsId}, 
+			#{gbIgmtProduceWeight}, 
+			#{gbIgmtProduceSubtotal}, 
+			#{gbIgmtProfitPrice}, 
+			#{gbIgmtProfitWeight}, 
+			#{gbIgmtProfitSubtotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepInventoryGoodsMonthTotalEntity">
+		update gb_dep_inventory_goods_month_total 
+		<set>
+			<if test="gbIgmtDepartmentFatherId != null">`gb_igmt_department_father_id` = #{gbIgmtDepartmentFatherId}, </if>
+			<if test="gbIgmtDepartmentId != null">`gb_igmt_department_id` = #{gbIgmtDepartmentId}, </if>
+			<if test="gbIgmtDistributerId != null">`gb_igmt_distributer_id` = #{gbIgmtDistributerId}, </if>
+			<if test="gbIgmtDisGoodsId != null">`gb_igmt_dis_goods_id` = #{gbIgmtDisGoodsId}, </if>
+			<if test="gbIgmtDisGoodsFatherId != null">`gb_igmt_dis_goods_father_id` = #{gbIgmtDisGoodsFatherId}, </if>
+			<if test="gbIgmtMonth != null">`gb_igmt_month` = #{gbIgmtMonth}, </if>
+			<if test="gbIgmtWeight != null">`gb_igmt_weight` = #{gbIgmtWeight}, </if>
+			<if test="gbIgmtSubtotal != null">`gb_igmt_subtotal` = #{gbIgmtSubtotal}, </if>
+			<if test="gbIgmtYear != null">`gb_igmt_year` = #{gbIgmtYear}, </if>
+			<if test="gbIgmtFullTime != null">`gb_igmt_full_time` = #{gbIgmtFullTime}, </if>
+			<if test="gbIgmtWasteWeight != null">`gb_igmt_waste_weight` = #{gbIgmtWasteWeight}, </if>
+			<if test="gbIgmtWasteSubtotal != null">`gb_igmt_waste_subtotal` = #{gbIgmtWasteSubtotal}, </if>
+			<if test="gbIgmtStatus != null">`gb_igmt_status` = #{gbIgmtStatus}, </if>
+			<if test="gbIgmtLossWeight != null">`gb_igmt_loss_weight` = #{gbIgmtLossWeight}, </if>
+			<if test="gbIgmtLossSubtotal != null">`gb_igmt_loss_subtotal` = #{gbIgmtLossSubtotal}, </if>
+			<if test="gbIgmtReturnWeight != null">`gb_igmt_return_weight` = #{gbIgmtReturnWeight}, </if>
+			<if test="gbIgmtReturnSubtotal != null">`gb_igmt_return_subtotal` = #{gbIgmtReturnSubtotal}, </if>
+			<if test="gbIgmtDepDisGoodsId != null">`gb_igmt_dep_dis_goods_id` = #{gbIgmtDepDisGoodsId}, </if>
+			<if test="gbIgmtProduceWeight != null">`gb_igmt_produce_weight` = #{gbIgmtProduceWeight}, </if>
+			<if test="gbIgmtProduceSubtotal != null">`gb_igmt_produce_subtotal` = #{gbIgmtProduceSubtotal}, </if>
+			<if test="gbIgmtProfitPrice != null">`gb_igmt_profit_price` = #{gbIgmtProfitPrice}, </if>
+			<if test="gbIgmtProfitWeight != null">`gb_igmt_profit_weight` = #{gbIgmtProfitWeight}, </if>
+			<if test="gbIgmtProfitSubtotal != null">`gb_igmt_profit_subtotal` = #{gbIgmtProfitSubtotal}</if>
+		</set>
+		where gb_inventory_goods_month_total_id = #{gbInventoryGoodsMonthTotalId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_inventory_goods_month_total where gb_inventory_goods_month_total_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_inventory_goods_month_total where gb_inventory_goods_month_total_id in 
+		<foreach item="gbInventoryGoodsMonthTotalId" collection="array" open="(" separator="," close=")">
+			#{gbInventoryGoodsMonthTotalId}
+		</foreach>
+	</delete>
+
+</mapper>

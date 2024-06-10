@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user where nx_community_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_user 
+	</select>
+	<select id="queryComUserByOpenId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user where nx_COU_wx_open_id = #{openId} and nx_COU_role_id = #{roleId}
+	</select>
+
+	<resultMap id="community" type="NxCommunityEntity">
+		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityName" column="nx_community_name"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+		<result property="nxCommunityLat" column="nx_community_lat"/>
+		<result property="nxCommunityLng" column="nx_community_lng"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+	</resultMap>
+	<resultMap id="comUser" type="NxCommunityUserEntity">
+		<id property="nxCommunityUserId" column="nx_community_user_id"/>
+		<result property="nxCouCommunityId" column="nx_COU_community_id"/>
+		<result property="nxCouWxAvartraUrl" column="nx_COU_wx_avartra_url"/>
+		<result property="nxCouWxNickName" column="nx_COU_wx_nick_name"/>
+		<result property="nxCouWxOpenId" column="nx_COU_wx_open_id"/>
+		<result property="nxCouWxPhone" column="nx_COU_wx_phone"/>
+		<association property="nxCommunityEntity" resultMap="community"/>
+	</resultMap>
+	<select id="queryComUserInfo" resultMap="comUser">
+		select * from nx_community_user as u
+		left join nx_community as c on u.nx_COU_community_id = c.nx_community_id
+		<where>
+			<if test="userId != null">
+				and nx_community_user_id = #{userId}
+			</if>
+			<if test="roleId != null">
+				and u.nx_COU_role_id = #{roleId}
+			</if>
+		</where>
+	</select>
+	<select id="queryCommunityRoleUsers" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user
+		<where>
+			<if test="roleId != null">
+				and nx_COU_role_id = #{roleId}
+			</if>
+			<if test="comId != null">
+				and nx_COU_community_id = #{comId}
+				</if>
+			<if test="equalStatus != null">
+				and nx_COU_working_status = #{equalStatus}
+			</if>
+		</where>
+
+	</select>
+	
+	
+	<resultMap id="restraunts" type="NxRestrauntEntity">
+		<id property="nxRestrauntId" column="nx_restraunt_id"/>
+		<result property="nxRestrauntName" column="nx_restraunt_name"/>
+		<result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+		<result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+		<result property="nxRestrauntComId" column="nx_restraunt_com_id"/>
+		<result property="nxRestrauntType" column="nx_restraunt_type"/>
+		<result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+		<result property="nxRestrauntServiceLevel" column="nx_restraunt_service_level"/>
+		<result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+		<result property="nxRestrauntOweBoxNumber" column="nx_restraunt_owe_box_number"/>
+		<result property="nxRestrauntDeliveryBoxNumber" column="nx_restraunt_delivery_box_number"/>
+		<result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+		<result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+	</resultMap>
+	
+	<select id="queryDeliveryRestrauntsByDriverId" resultMap="restraunts">
+		select * from nx_community_user  as u
+			left join nx_restraunt as r on r.nx_restraunt_driver_id = u.nx_community_user_id
+		<where>
+			<if test="userId != null">
+				and  r.nx_restraunt_driver_id = #{userId}
+			</if>
+		  and r.nx_restraunt_working_status = 3
+		</where>
+
+	</select>
+
+    <select id="getAdmainUserByComId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user where nx_COU_community_id = #{comId} and nx_COU_admin = 1
+	</select>
+    <select id="queryUserByPhone" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user where nx_COU_wx_phone = #{nxCouWxPhone}
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityUserEntity" useGeneratedKeys="true"
+	 keyProperty="nxCommunityUserId">
+		insert into nx_community_user
+		(
+			`nx_community_user_id`, 
+			`nx_COU_wx_avartra_url`, 
+			`nx_COU_wx_nick_name`, 
+			`nx_COU_wx_open_id`, 
+			`nx_COU_wx_phone`, 
+			`nx_COU_community_id`,
+			`nx_COU_admin`,
+		 	`nx_COU_role_id`,
+		 	`nx_COU_working_status`
+		)
+		values
+		(
+			#{nxCommunityUserId}, 
+			#{nxCouWxAvartraUrl}, 
+			#{nxCouWxNickName}, 
+			#{nxCouWxOpenId}, 
+			#{nxCouWxPhone}, 
+			#{nxCouCommunityId},
+			#{nxCouAdmin},
+		 	#{nxCouRoleId},
+		 	#{nxCouWorkingStatus}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityUserEntity">
+		update nx_community_user 
+		<set>
+			<if test="nxCouWxAvartraUrl != null">`nx_COU_wx_avartra_url` = #{nxCouWxAvartraUrl}, </if>
+			<if test="nxCouWxNickName != null">`nx_COU_wx_nick_name` = #{nxCouWxNickName}, </if>
+			<if test="nxCouWxOpenId != null">`nx_COU_wx_open_id` = #{nxCouWxOpenId}, </if>
+			<if test="nxCouWxPhone != null">`nx_COU_wx_phone` = #{nxCouWxPhone}, </if>
+			<if test="nxCouCommunityId != null">`nx_COU_community_id` = #{nxCouCommunityId}, </if>
+			<if test="nxCouRoleId != null">`nx_COU_role_id` = #{nxCouRoleId}, </if>
+			<if test="nxCouWorkingStatus != null">`nx_COU_working_status` = #{nxCouWorkingStatus}, </if>
+			<if test="nxCouAdmin != null">`nx_COU_admin` = #{nxCouAdmin}</if>
+		</set>
+		where nx_community_user_id = #{nxCommunityUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_user where nx_community_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_user where nx_community_user_id in 
+		<foreach item="nxCommunityUserId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityUserId}
+		</foreach>
+	</delete>
+
+</mapper>

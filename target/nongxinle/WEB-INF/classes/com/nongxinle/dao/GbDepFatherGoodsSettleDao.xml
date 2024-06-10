@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepFatherGoodsSettleDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepFatherGoodsSettleEntity">
+		select * from gb_dep_father_goods_settle where gb_dep_father_goods_settle_statics_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepFatherGoodsSettleEntity">
+		select * from gb_dep_father_goods_settle
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_father_goods_settle
+	</select>
+	<select id="queryPankuFatherGoods" resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">
+		select * from gb_dep_father_goods_settle as gdfgs
+         left join gb_distributer_father_goods as gdfg on gdfgs.gb_dfgss_father_goods_id = gdfg.gb_distributer_father_goods_id
+
+      <where>
+		  <if test="disId != null">
+			  and gb_dfgss_distributer_id = #{disId}
+		  </if>
+		  <if test="month != null">
+			  and gb_dfgss_settle_month = #{month}
+		  </if>
+      and gdfgs.gb_dfgss_father_goods_level = 3
+	  </where>
+	</select>
+	<select id="queryDisFatherGoodsSettleTotalByParams"
+			resultType="com.nongxinle.entity.GbDepFatherGoodsSettleEntity">
+		select * from gb_dep_father_goods_settle as gdfgs
+		left join nongxinle.gb_distributer_father_goods as gdfg on gdfgs.gb_dfgss_father_goods_id = gdfg.gb_distributer_father_goods_id
+
+		<where>
+			<if test="disId != null">
+				and gb_dfgss_distributer_id = #{disId}
+			</if>
+			<if test="month != null">
+				and gb_dfgss_settle_month = #{month}
+			</if>
+			<if test="depId != null">
+				and gb_dfgss_department_father_id = #{depId}
+			</if>
+			<if test="type != null">
+				and gb_dfgss_out_stock_type = #{type}
+			</if>
+			<if test="disGoodsId != null">
+				and gb_dfgss_father_goods_id = #{disGoodsId}
+			</if>
+
+		</where>
+	</select>
+	<select id="queryPankuFatherGoodsTypeTotal" resultType="java.lang.Double">
+		select gb_dfgss_out_stock_subtotal from gb_dep_father_goods_settle
+		<where>
+			<if test="disId != null">
+				and gb_dfgss_distributer_id = #{disId}
+			</if>
+			<if test="month != null">
+				and gb_dfgss_settle_month = #{month}
+			</if>
+			<if test="depId != null">
+				and gb_dfgss_department_father_id = #{depId}
+			</if>
+			<if test="type != null">
+				and gb_dfgss_out_stock_type = #{type}
+			</if>
+			<if test="disGoodsId != null">
+				and gb_dfgss_father_goods_id = #{disGoodsId}
+			</if>
+
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepFatherGoodsSettleEntity">
+		insert into gb_dep_father_goods_settle
+		(
+			`gb_dep_father_goods_settle_statics_id`,
+			`gb_dfgss_father_goods_name`, 
+			`gb_dfgss_father_goods_id`,
+			`gb_dfgss_fathers_father_id`,
+			`gb_dfgss_father_goods_level`, 
+			`gb_dfgss_department_father_id`, 
+			`gb_dfgss_distributer_id`, 
+			`gb_dfgss_out_stock_subtotal`,
+			`gb_dfgss_settle_id`,
+			`gb_dfgss_settle_month`,
+			`gb_dfgss_settle_year`,
+		 	`gb_dfgss_out_stock_type`
+		)
+		values
+		(
+			#{gbDepFatherGoodsSettleStaticsId},
+			#{gbDfgssFatherGoodsName}, 
+			#{gbDfgssFatherGoodsId},
+			#{gbDfgssFathersFatherId},
+			#{gbDfgssFatherGoodsLevel}, 
+			#{gbDfgssDepartmentFatherId}, 
+			#{gbDfgssDistributerId}, 
+			#{gbDfgssOutStockSubtotal},
+			#{gbDfgssSettleId},
+			#{gbDfgssSettleMonth},
+			#{gbDfgssSettleYear},
+			#{gbDfgssOutStockType}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepFatherGoodsSettleEntity">
+		update gb_dep_father_goods_settle
+		<set>
+			<if test="gbDfgssFatherGoodsName != null">`gb_dfgss_father_goods_name` = #{gbDfgssFatherGoodsName}, </if>
+			<if test="gbDfgssFatherGoodsId != null">`gb_dfgss_father_goods_id` = #{gbDfgssFatherGoodsId}, </if>
+			<if test="gbDfgssFathersFatherId != null">`gb_dfgss_fathers_father_id` = #{gbDfgssFathersFatherId}, </if>
+			<if test="gbDfgssFatherGoodsLevel != null">`gb_dfgss_father_goods_level` = #{gbDfgssFatherGoodsLevel}, </if>
+			<if test="gbDfgssDepartmentFatherId != null">`gb_dfgss_department_father_id` = #{gbDfgssDepartmentFatherId}, </if>
+			<if test="gbDfgssDistributerId != null">`gb_dfgss_distributer_id` = #{gbDfgssDistributerId}, </if>
+			<if test="gbDfgssOutStockSubtotal != null">`gb_dfgss_out_stock_subtotal` = #{gbDfgssOutStockSubtotal}, </if>
+			<if test="gbDfgssOutStockType != null">`gb_dfgss_out_stock_type` = #{gbDfgssOutStockType}, </if>
+			<if test="gbDfgssSettleMonth != null">`gb_dfgss_settle_month` = #{gbDfgssSettleMonth},</if>
+			<if test="gbDfgssSettleYear != null">`gb_dfgss_settle_year` = #{gbDfgssSettleYear},</if>
+			<if test="gbDfgssSettleId != null">`gb_dfgss_settle_id` = #{gbDfgssSettleId}</if>
+		</set>
+		where gb_dep_father_goods_settle_statics_id = #{gbDepFatherGoodsSettleStaticsId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_father_goods_settle where gb_dep_father_goods_settle_statics_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_father_goods_settle where gb_dep_father_goods_settle_statics_id in
+		<foreach item="gbDepFatherGoodsSettleStaticsId" collection="array" open="(" separator="," close=")">
+			#{gbDepFatherGoodsSettleStaticsId}
+		</foreach>
+	</delete>
+
+</mapper>

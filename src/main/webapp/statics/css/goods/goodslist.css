@@ -1,0 +1,10 @@
+.listTable{
+    /*background: #ffffff;*/
+}
+.content_left{
+    padding: 0;
+}
+.ui-jqgrid .ui-jqgrid-view{
+    border-radius: 3px;
+    background: #ffffff;
+}

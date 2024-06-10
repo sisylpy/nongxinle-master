@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepartmentSettleDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepartmentSettleEntity">
+		select * from gb_department_settle where gb_department_settle_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepartmentSettleEntity">
+		select * from gb_department_settle 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_department_settle 
+	</select>
+
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+		<result property="gbDepartmentType" column="gb_department_type" />
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+	</resultMap>
+
+	<resultMap id="settle" type="GbDepartmentSettleEntity">
+		<id property="gbDepartmentSettleId" column="gb_department_settle_id"/>
+		<result property="gbDsDepId" column="gb_DS_dep_id"/>
+		<result property="gbDsDisId" column="gb_DS_dis_id"/>
+		<result property="gbDsCostArrTotal" column="gb_DS_cost_arr_total"/>
+		<result property="gbDsLossArrTotal" column="gb_DS_loss_arr_total"/>
+		<result property="gbDsWasteArrTotal" column="gb_DS_waste_arr_total"/>
+		<result property="gbDsRestTotal" column="gb_DS_rest_total"/>
+		<result property="gbDsLastTotal" column="gb_DS_last_total"/>
+		<result property="gbDsOutTotal" column="gb_DS_out_total"/>
+		<result property="gbDsStockTotal" column="gb_DS_stock_total"/>
+		<result property="gbDsDate" column="gb_DS_date"/>
+		<result property="gbDsMonth" column="gb_DS_month"/>
+		<result property="gbDsStatus" column="gb_DS_status"/>
+		<result property="gbDsDay" column="gb_DS_day"/>
+		<result property="gbDsRestTotal" column="gb_DS_rest_total"/>
+		<result property="gbDsStartDate" column="gb_DS_start_date"/>
+		<result property="gbDsStartTime" column="gb_DS_start_time"/>
+		<result property="gbDsStartDate" column="gb_DS_start_date"/>
+		<result property="gbDsStartTime" column="gb_DS_start_tiem"/>
+		<result property="gbDsStopDate" column="gb_DS_stop_date"/>
+		<result property="gbDsStopTime" column="gb_DS_stop_time"/>
+		<result property="gbDsWeek" column="gb_DS_week"/>
+		<result property="gbDsMonth" column="gb_DS_month"/>
+		<result property="gbDsYear" column="gb_DS_year"/>
+		<result property="gbDsSettleUserId" column="gb_DS_settle_usr_id"/>
+
+		<association property="gbDepartmentEntity" resultMap="dep"/>
+	</resultMap>
+
+    <select id="queryDepartmentSettlesByParams" resultMap="settle">
+		select * from gb_department_settle as ds
+		left join gb_department as dep on dep.gb_department_id = ds.gb_DS_dep_id
+         <where>
+			 <if test="disId != null">
+				 and gb_DS_dis_id = #{disId}
+			 </if>
+			 <if test="depId != null">
+				and gb_DS_dep_id = #{depId}
+			 </if>
+			 <if test="equalStatus != null">
+				 and  gb_DS_status = #{equalStatus}
+			 </if>
+			 <if test="xiaoyuDay != null">
+				 and gb_DS_date &lt; #{xiaoyuDay}
+			 </if>
+			 <if test="dayuDay != null">
+				 and gb_DS_date &gt; #{dayuDay}
+			 </if>
+		 </where>
+	</select>
+	<select id="queryTotalBySettleId" resultType="com.nongxinle.entity.GbDepartmentSettleEntity">
+		select * from nongxinle.gb_department_settle where gb_department_settle_id = #{settleId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepartmentSettleEntity"
+	useGeneratedKeys="true" keyProperty="gbDepartmentSettleId">
+		insert into gb_department_settle
+		(
+			`gb_department_settle_id`, 
+			`gb_DS_dis_id`, 
+			`gb_DS_dep_id`, 
+			`gb_DS_cost_arr_total`,
+			`gb_DS_status`, 
+			`gb_DS_time`, 
+			`gb_DS_settle_user_id`, 
+			`gb_DS_date`, 
+			`gb_DS_month`, 
+			`gb_DS_week`, 
+			`gb_DS_day`, 
+			`gb_DS_waste_arr_total`,
+			`gb_DS_loss_arr_total`,
+		 	`gb_DS_year`,
+		 	`gb_DS_return_arr_total`,
+		 	`gb_DS_rest_total`,
+		 	`gb_DS_start_date`,
+			`gb_DS_start_time`,
+		 	`gb_DS_stop_date`,
+		 	`gb_DS_stop_time`,
+		 	`gb_DS_last_total`,
+		 	`gb_DS_out_total`,
+		 	`gb_DS_stock_total`
+		)
+		values
+		(
+			#{gbDepartmentSettleId}, 
+			#{gbDsDisId}, 
+			#{gbDsDepId}, 
+			#{gbDsCostArrTotal},
+			#{gbDsStatus}, 
+			#{gbDsTime}, 
+			#{gbDsSettleUserId}, 
+			#{gbDsDate}, 
+			#{gbDsMonth}, 
+			#{gbDsWeek}, 
+			#{gbDsDay}, 
+			#{gbDsWasteArrTotal},
+			#{gbDsLossArrTotal},
+		 	#{gbDsYear},
+		 	#{gbDsReturnArrTotal},
+			#{gbDsRestTotal},
+			#{gbDsStartDate},
+			#{gbDsStartTime},
+			#{gbDsStopDate},
+		 	#{gbDsStopTime},
+		 	#{gbDsLastTotal},
+		 	#{gbDsOutTotal},
+		 	#{gbDsStockTotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepartmentSettleEntity">
+		update gb_department_settle 
+		<set>
+			<if test="gbDsDisId != null">`gb_DS_dis_id` = #{gbDsDisId}, </if>
+			<if test="gbDsDepId != null">`gb_DS_dep_id` = #{gbDsDepId}, </if>
+			<if test="gbDsCostArrTotal != null">`gb_DS_cost_arr_total` = #{gbDsCostArrTotal}, </if>
+			<if test="gbDsStatus != null">`gb_DS_status` = #{gbDsStatus}, </if>
+			<if test="gbDsTime != null">`gb_DS_time` = #{gbDsTime}, </if>
+			<if test="gbDsSettleUserId != null">`gb_DS_settle_user_id` = #{gbDsSettleUserId}, </if>
+			<if test="gbDsDate != null">`gb_DS_date` = #{gbDsDate}, </if>
+			<if test="gbDsMonth != null">`gb_DS_month` = #{gbDsMonth}, </if>
+			<if test="gbDsWeek != null">`gb_DS_week` = #{gbDsWeek}, </if>
+			<if test="gbDsDay != null">`gb_DS_day` = #{gbDsDay}, </if>
+			<if test="gbDsWasteArrTotal != null">`gb_DS_waste_arr_total` = #{gbDsWasteArrTotal}, </if>
+			<if test="gbDsYear != null">`gb_DS_year` = #{gbDsYear}, </if>
+			<if test="gbDsReturnArrTotal != null">`gb_DS_return_arr_total` = #{gbDsReturnArrTotal}, </if>
+			<if test="gbDsRestTotal != null">`gb_DS_rest_total` = #{gbDsRestTotal}, </if>
+			<if test="gbDsLastTotal != null">`gb_DS_last_total` = #{gbDsLastTotal}, </if>
+			<if test="gbDsOutTotal != null">`gb_DS_out_total` = #{gbDsOutTotal}, </if>
+			<if test="gbDsStockTotal != null">`gb_DS_stock_total` = #{gbDsStockTotal}, </if>
+			<if test="gbDsStartDate != null">`gb_DS_start_date` = #{gbDsStartDate}, </if>
+			<if test="gbDsStartTime != null">`gb_DS_start_time` = #{gbDsStartTime}, </if>
+			<if test="gbDsStopDate != null">`gb_DS_stop_date` = #{gbDsStopDate}, </if>
+			<if test="gbDsStopTime != null">`gb_DS_stop_time` = #{gbDsStopTime}, </if>
+			<if test="gbDsLossArrTotal != null">`gb_DS_loss_arr_total` = #{gbDsLossArrTotal}</if>
+		</set>
+		where gb_department_settle_id = #{gbDepartmentSettleId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_department_settle where gb_department_settle_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_department_settle where gb_department_settle_id in 
+		<foreach item="gbDepartmentSettleId" collection="array" open="(" separator="," close=")">
+			#{gbDepartmentSettleId}
+		</foreach>
+	</delete>
+
+</mapper>

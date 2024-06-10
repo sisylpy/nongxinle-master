@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepInventoryGoodsDailyTotalDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDepInventoryGoodsDailyTotalEntity">
+		select * from gb_dep_inventory_goods_daily_total where gb_inventory_goods_daily_total_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepInventoryGoodsDailyTotalEntity">
+		select * from gb_dep_inventory_goods_daily_total 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_dep_inventory_goods_daily_total 
+	</select>
+
+	<resultMap id="depGoods" type="GbDepartmentDisGoodsEntity">
+        <id property="gbDepartmentDisGoodsId" column="gb_department_dis_goods_id"/>
+        <result property="gbDdgGbDisId" column="gb_DDG_gb_dis_id"/>
+		<result property="gbDdgDepGoodsName" column="gb_DDG_dep_goods_name"/>
+		<result property="gbDdgDepGoodsStandardname" column="gb_DDG_dep_goods_standardname"/>
+		<result property="gbDdgDepGoodsBrand" column="gb_DDG_dep_goods_brand"/>
+		<result property="gbDdgDepGoodsDetail" column="gb_DDG_dep_goods_detail"/>
+		<result property="gbDdgDepGoodsPlace" column="gb_DDG_dep_goods_place"/>
+		<result property="gbDdgDisGoodsId" column="gb_DDG_dis_goods_id"/>
+		<result property="gbDdgGoodsType" column="gb_DDG_goods_type"/>
+		<result property="gbDdgNxDistributerId" column="gb_DDG_nx_distributer_id"/>
+		<result property="gbDdgNxDistributerGoodsId" column="gb_DDG_nx_distributer_goods_id"/>
+		<result property="gbDdgGbDepartmentId" column="gb_DDG_gb_department_id"/>
+		<result property="gbDdgGbSupplierId" column="gb_DDG_gb_supplier_id"/>
+		<result property="gbDdgStockTotalSubtotal" column="gb_DDG_stock_total_subtotal"/>
+		<result property="gbDdgStockTotalWeight" column="gb_DDG_stock_total_weight"/>
+		<result property="gbDdgPrepareTotalWeight" column="gb_DDG_prepare_total_weight"/>
+		<result property="gbDdgShowStandardId" column="gb_DDG_show_standard_id"/>
+		<result property="gbDdgShowStandardName" column="gb_DDG_show_standard_name"/>
+		<result property="gbDdgShowStandardWeight" column="gb_DDG_show_standard_weight"/>
+		<result property="gbDdgShowStandardScale" column="gb_DDG_show_standard_scale"/>
+		<result property="gbDdgSellingPrice" column="gb_DDG_selling_price"/>
+		<result property="gbDdgOrderDate" column="gb_DDG_order_date"/>
+		<result property="gbDdgOrderPrice" column="gb_DDG_order_price"/>
+		<result property="gbDdgOrderQuantity" column="gb_DDG_order_quantity"/>
+		<result property="gbDdgOrderRemark" column="gb_DDG_order_remark"/>
+		<result property="gbDdgOrderStandard" column="gb_DDG_order_standard"/>
+		<result property="gbDdgOrderWeight" column="gb_DDG_order_weight"/>
+	</resultMap>
+	<resultMap id="disGoods" type="GbDistributerGoodsEntity">
+		<id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
+		<result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
+		<result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
+		<result property="gbDgGoodsInventoryType" column="gb_dg_goods_inventory_type"/>
+		<result property="gbDgIsFranchisePrice" column="gb_dg_is_franchise_price"/>
+		<result property="gbDgFranchisePriceOne" column="gb_dg_franchise_price_one"/>
+		<result property="gbDgFranchisePriceOneUpdate" column="gb_dg_franchise_price_one_update"/>
+		<result property="gbDgFranchisePriceTwo" column="gb_dg_franchise_price_two"/>
+		<result property="gbDgFranchisePriceTwoUpdate" column="gb_dg_franchise_price_two_update"/>
+		<result property="gbDgFranchisePriceThree" column="gb_dg_franchise_price_three"/>
+		<result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
+		<result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
+		<result property="gbDgSelfPrice" column="gb_dg_self_price"/>
+	</resultMap>
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
+		<result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+		<result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+		<result property="gbDepartmentType" column="gb_department_type" />
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<result property="gbDepartmentPrintName" column="gb_department_print_name"/>
+		<association property="gbDepartmentDisGoodsEntity" resultMap="depGoods"/>
+	</resultMap>
+
+	<resultMap id="dailyTotal" type="GbDepInventoryGoodsDailyTotalEntity">
+		<id property="gbInventoryGoodsDailyTotalId" column="gb_inventory_goods_daily_total_id"/>
+		<result property="gbIgdtDate" column="gb_igdt_date"/>
+		<result property="gbIgdtDepartmentId" column="gb_igdt_department_id"/>
+		<result property="gbIgdtDepartmentFatherId" column="gb_igdt_department_father_id"/>
+		<result property="gbIgdtDisGoodsFatherId" column="gb_igdt_dis_goods_father_id"/>
+		<result property="gbIgdtDistributerId" column="gb_igdt_distributer_id"/>
+		<result property="gbIgdtLossWeight" column="gb_igdt_loss_weight"/>
+		<result property="gbIgdtLossSubtotal" column="gb_igdt_loss_subtotal"/>
+		<result property="gbIgdtProduceSubtotal" column="gb_igdt_produce_subtotal"/>
+		<result property="gbIgdtProduceWeight" column="gb_igdt_produce_weight"/>
+		<result property="gbIgdtProfitPrice" column="gb_igdt_profit_price"/>
+		<result property="gbIgdtProfitWeight" column="gb_igdt_profit_weight"/>
+		<result property="gbIgdtProfitSubtotal" column="gb_igdt_profit_subtotal"/>
+		<result property="gbIgdtFullTime" column="gb_igdt_full_time"/>
+		<result property="gbIgdtWasteSubtotal" column="gb_igdt_waste_subtotal"/>
+		<result property="gbIgdtWasteWeight" column="gb_igdt_waste_weight"/>
+		<result property="gbIgdtReturnSubtotal" column="gb_igdt_return_subtotal"/>
+		<result property="gbIgdtReturnWeight" column="gb_igdt_return_weight"/>
+		<result property="gbIgdtFullTime" column="gb_igdt_full_time"/>
+		<result property="gbIgdtStatus" column="gb_itdt_status"/>
+		<result property="gbIgdtDepDisGoodsId" column="gb_igdt_dep_dis_goods_id"/>
+		<result property="gbIgdtDisGoodsId" column="gb_igdt_dis_goods_id"/>
+		<result property="gbIgdtStatus" column="gb_igdt_status"/>
+		<result property="gbIgdtSubtotal" column="gb_igdt_subtotal"/>
+		<association property="departmentDisGoodsEntity" resultMap="depGoods"/>
+		<association property="distributerGoodsEntity" resultMap="disGoods"/>
+		<association property="departmentEntity" resultMap="dep"/>
+ 	</resultMap>
+	<resultMap id="dailyTotalOnly" type="GbDepInventoryGoodsDailyTotalEntity">
+		<id property="gbInventoryGoodsDailyTotalId" column="gb_inventory_goods_daily_total_id"/>
+		<result property="gbIgdtDate" column="gb_igdt_date"/>
+		<result property="gbIgdtDepartmentId" column="gb_igdt_department_id"/>
+		<result property="gbIgdtDepartmentFatherId" column="gb_igdt_department_father_id"/>
+		<result property="gbIgdtDisGoodsFatherId" column="gb_igdt_dis_goods_father_id"/>
+		<result property="gbIgdtDistributerId" column="gb_igdt_distributer_id"/>
+		<result property="gbIgdtLossWeight" column="gb_igdt_loss_weight"/>
+		<result property="gbIgdtLossSubtotal" column="gb_igdt_loss_subtotal"/>
+		<result property="gbIgdtProduceSubtotal" column="gb_igdt_produce_subtotal"/>
+		<result property="gbIgdtProduceWeight" column="gb_igdt_produce_weight"/>
+		<result property="gbIgdtProfitPrice" column="gb_igdt_profit_price"/>
+		<result property="gbIgdtProfitWeight" column="gb_igdt_profit_weight"/>
+		<result property="gbIgdtProfitSubtotal" column="gb_igdt_profit_subtotal"/>
+		<result property="gbIgdtFullTime" column="gb_igdt_full_time"/>
+		<result property="gbIgdtWasteSubtotal" column="gb_igdt_waste_subtotal"/>
+		<result property="gbIgdtWasteWeight" column="gb_igdt_waste_weight"/>
+		<result property="gbIgdtReturnSubtotal" column="gb_igdt_return_subtotal"/>
+		<result property="gbIgdtReturnWeight" column="gb_igdt_return_weight"/>
+		<result property="gbIgdtFullTime" column="gb_igdt_full_time"/>
+		<result property="gbIgdtStatus" column="gb_igdt_status"/>
+		<result property="gbIgdtDepDisGoodsId" column="gb_igdt_dep_dis_goods_id"/>
+		<result property="gbIgdtDisGoodsId" column="gb_igdt_dis_goods_id"/>
+		<result property="gbIgdtStatus" column="gb_igdt_status"/>
+		<result property="gbIgdtSubtotal" column="gb_igdt_subtotal"/>
+		<association property="departmentDisGoodsEntity" resultMap="depGoods"/>
+	</resultMap>
+	<select id="queryDailyTotalItemByParams" resultMap="dailyTotal">
+		select * from gb_dep_inventory_goods_daily_total as igdt
+		left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = igdt.gb_igdt_dis_goods_id
+
+		<where>
+			<if test="depGoodsId != null">
+				and gb_igdt_dep_dis_goods_id = #{depGoodsId}
+			</if>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and  gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and  gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date = #{date}
+			</if>
+
+			<if test="weight != null and weight == 1">
+				and gb_igdt_weight > 0
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalAccount" resultType="java.lang.Integer">
+		select count(*) from gb_dep_inventory_goods_daily_total as digdt
+		left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = digdt.gb_igdt_dis_goods_id
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+			<if test="inventoryType != null">
+				and dg.gb_dg_goods_inventory_type  =  #{inventoryType}
+			</if>
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalListByParams" resultMap="dailyTotal">
+		select * from gb_dep_inventory_goods_daily_total as igdt
+		left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = igdt.gb_igdt_dis_goods_id
+		left join gb_department_dis_goods as gddg on gddg.gb_department_dis_goods_id = igdt.gb_igdt_dep_dis_goods_id
+		left join gb_department as d  on d.gb_department_id = igdt.gb_igdt_department_id
+		<where>
+			<if test="depGoodsId != null">
+				and gb_igdt_dep_dis_goods_id = #{depGoodsId}
+			</if>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and  gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and  gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date = #{date}
+			</if>
+
+			<if test="weight != null and weight == 1">
+				and gb_igdt_weight > 0
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalProduceWeight" resultType="java.lang.Double">
+		select SUM(gb_igdt_produce_weight) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryWhichDepsProduceWeight" resultMap="dep">
+		select * from gb_dep_inventory_goods_daily_total as gdigdt
+		left join gb_department as gd on gd.gb_department_id = gdigdt.gb_igdt_department_id
+		left join gb_department_dis_goods as gddg  on gddg.gb_DDG_dis_goods_id = #{disGoodsId} and
+		gddg.gb_DDG_department_id = gd.gb_department_id
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+
+	</select>
+	<select id="queryDailyTotalProduceWeightTotal" resultType="java.lang.Double">
+		select SUM(gb_igdt_produce_weight) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalProfitTotal" resultType="java.lang.Double">
+		select SUM(gb_igdt_profit_subtotal) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalLossTotal" resultType="java.lang.Double">
+		select SUM(gb_igdt_loss_subtotal) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalWasteTotal" resultType="java.lang.Double">
+
+		select SUM(gb_igdt_waste_subtotal) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="queryDailyTotalLossWeight" resultType="java.lang.Double">
+		select SUM(gb_igdt_loss_weight) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+	<select id="queryDailyTotalWasteWeight" resultType="java.lang.Double">
+		select SUM(gb_igdt_waste_weight) from gb_dep_inventory_goods_daily_total as digdt
+		<where>
+			<if test="disGoodsId != null">
+				and gb_igdt_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and gb_igdt_distributer_id = #{disId}
+			</if>
+			<if test="goodsFatherId != null">
+				and gb_igdt_dis_goods_father_id = #{goodsFatherId}
+			</if>
+			<if test="depId != null">
+				and gb_igdt_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and gb_igdt_department_father_id = #{depFatherId}
+			</if>
+			<if test="status != null">
+				and gb_igdt_status  &lt;  #{status}
+			</if>
+
+			<if test="dayuTotal != null">
+				and  gb_igdt_subtotal > #{dayuTotal}
+			</if>
+			<if test="dayuLoss != null">
+				and  gb_igdt_loss_subtotal > #{dayuLoss}
+			</if>
+			<if test="dayuWaste != null">
+				and  gb_igdt_waste_subtotal > #{dayuWaste}
+			</if>
+			<if test="dayuReturn != null">
+				and  gb_igdt_return_subtotal > #{dayuReturn}
+			</if>
+			<if test="startDate != null">
+				and gb_igdt_date  &gt;=  #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and gb_igdt_date  &lt;=  #{stopDate}
+			</if>
+			<if test="date != null">
+				and gb_igdt_date  =  #{date}
+			</if>
+			<if test="notDayuStopDate != null">
+				and gb_igdt_date  &lt;=  #{notDayuStopDate}
+			</if>
+		</where>
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDepInventoryGoodsDailyTotalEntity">
+		insert into gb_dep_inventory_goods_daily_total
+		(
+			`gb_inventory_goods_daily_total_id`, 
+			`gb_igdt_department_father_id`, 
+			`gb_igdt_department_id`, 
+			`gb_igdt_distributer_id`, 
+			`gb_igdt_dis_goods_id`, 
+			`gb_igdt_dis_goods_father_id`, 
+			`gb_igdt_date`, 
+			`gb_igdt_status`, 
+			`gb_igdt_weight`, 
+			`gb_igdt_subtotal`, 
+			`gb_igdt_full_time`, 
+			`gb_igdt_waste_weight`, 
+			`gb_igdt_waste_subtotal`, 
+			`gb_igdt_loss_weight`, 
+			`gb_igdt_loss_subtotal`, 
+			`gb_igdt_return_weight`, 
+			`gb_igdt_return_subtotal`, 
+			`gb_igdt_dep_dis_goods_id`, 
+			`gb_igdt_produce_weight`, 
+			`gb_igdt_produce_subtotal`, 
+			`gb_igdt_profit_price`,
+			`gb_igdt_profit_subtotal`, 
+			`gb_igdt_profit_weight`
+		)
+		values
+		(
+			#{gbInventoryGoodsDailyTotalId}, 
+			#{gbIgdtDepartmentFatherId}, 
+			#{gbIgdtDepartmentId}, 
+			#{gbIgdtDistributerId}, 
+			#{gbIgdtDisGoodsId}, 
+			#{gbIgdtDisGoodsFatherId}, 
+			#{gbIgdtDate}, 
+			#{gbIgdtStatus}, 
+			#{gbIgdtWeight}, 
+			#{gbIgdtSubtotal}, 
+			#{gbIgdtFullTime}, 
+			#{gbIgdtWasteWeight}, 
+			#{gbIgdtWasteSubtotal}, 
+			#{gbIgdtLossWeight}, 
+			#{gbIgdtLossSubtotal}, 
+			#{gbIgdtReturnWeight}, 
+			#{gbIgdtReturnSubtotal}, 
+			#{gbIgdtDepDisGoodsId}, 
+			#{gbIgdtProduceWeight}, 
+			#{gbIgdtProduceSubtotal}, 
+			#{gbIgdtProfitPrice},
+			#{gbIgdtProfitSubtotal}, 
+			#{gbIgdtProfitWeight}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepInventoryGoodsDailyTotalEntity">
+		update gb_dep_inventory_goods_daily_total 
+		<set>
+			<if test="gbIgdtDepartmentFatherId != null">`gb_igdt_department_father_id` = #{gbIgdtDepartmentFatherId}, </if>
+			<if test="gbIgdtDepartmentId != null">`gb_igdt_department_id` = #{gbIgdtDepartmentId}, </if>
+			<if test="gbIgdtDistributerId != null">`gb_igdt_distributer_id` = #{gbIgdtDistributerId}, </if>
+			<if test="gbIgdtDisGoodsId != null">`gb_igdt_dis_goods_id` = #{gbIgdtDisGoodsId}, </if>
+			<if test="gbIgdtDisGoodsFatherId != null">`gb_igdt_dis_goods_father_id` = #{gbIgdtDisGoodsFatherId}, </if>
+			<if test="gbIgdtDate != null">`gb_igdt_date` = #{gbIgdtDate}, </if>
+			<if test="gbIgdtStatus != null">`gb_igdt_status` = #{gbIgdtStatus}, </if>
+			<if test="gbIgdtWeight != null">`gb_igdt_weight` = #{gbIgdtWeight}, </if>
+			<if test="gbIgdtSubtotal != null">`gb_igdt_subtotal` = #{gbIgdtSubtotal}, </if>
+			<if test="gbIgdtFullTime != null">`gb_igdt_full_time` = #{gbIgdtFullTime}, </if>
+			<if test="gbIgdtWasteWeight != null">`gb_igdt_waste_weight` = #{gbIgdtWasteWeight}, </if>
+			<if test="gbIgdtWasteSubtotal != null">`gb_igdt_waste_subtotal` = #{gbIgdtWasteSubtotal}, </if>
+			<if test="gbIgdtLossWeight != null">`gb_igdt_loss_weight` = #{gbIgdtLossWeight}, </if>
+			<if test="gbIgdtLossSubtotal != null">`gb_igdt_loss_subtotal` = #{gbIgdtLossSubtotal}, </if>
+			<if test="gbIgdtReturnWeight != null">`gb_igdt_return_weight` = #{gbIgdtReturnWeight}, </if>
+			<if test="gbIgdtReturnSubtotal != null">`gb_igdt_return_subtotal` = #{gbIgdtReturnSubtotal}, </if>
+			<if test="gbIgdtDepDisGoodsId != null">`gb_igdt_dep_dis_goods_id` = #{gbIgdtDepDisGoodsId}, </if>
+			<if test="gbIgdtProduceWeight != null">`gb_igdt_produce_weight` = #{gbIgdtProduceWeight}, </if>
+			<if test="gbIgdtProduceSubtotal != null">`gb_igdt_produce_subtotal` = #{gbIgdtProduceSubtotal}, </if>
+			<if test="gbIgdtProfitPrice != null">`gb_igdt_profit_price` = #{gbIgdtProfitPrice}, </if>
+			<if test="gbIgdtProfitSubtotal != null">`gb_igdt_profit_subtotal` = #{gbIgdtProfitSubtotal}, </if>
+			<if test="gbIgdtProfitWeight != null">`gb_igdt_profit_weight` = #{gbIgdtProfitWeight}</if>
+		</set>
+		where gb_inventory_goods_daily_total_id = #{gbInventoryGoodsDailyTotalId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_dep_inventory_goods_daily_total where gb_inventory_goods_daily_total_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_dep_inventory_goods_daily_total where gb_inventory_goods_daily_total_id in 
+		<foreach item="gbInventoryGoodsDailyTotalId" collection="array" open="(" separator="," close=")">
+			#{gbInventoryGoodsDailyTotalId}
+		</foreach>
+	</delete>
+
+</mapper>

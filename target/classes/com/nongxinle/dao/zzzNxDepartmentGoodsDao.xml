@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentGoodsEntity">
+		select * from nx_department_goods where nx_department_goods_id = #{value}
+	</select>
+
+	<resultMap id="standards" type="NxStandardEntity">
+		<id property="nxStandardId" column="nx_standard_id"/>
+		<result property="nxStandardName" column="nx_standard_name"/>
+		<result property="nxStandardScale" column="nx_standard_scale"/>
+	</resultMap>
+	<resultMap id="nxGoods" type="NxGoodsEntity">
+		        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+		<result property="nxGoodsName" column="nx_goods_name"/>
+		<result property="nxGoodsDetail" column="nx_goods_detail"/>
+		<result property="nxGoodsFile" column="nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="nx_goods_file_big"/>
+		<result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+		<result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+		<result property="nxGoodsStandardAmount" column="nx_goods_standard_amount"/>
+		<result property="nxGoodsDetail" column="nx_goods_detail"/>
+		<result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+		<result property="nxGoodsPy" column="nx_goods_py"/>
+		<collection property="nxGoodsStandardEntities" resultMap="standards"/>
+	</resultMap>
+
+	<resultMap id="depGoods" type="NxDepartmentGoodsEntity">
+		<id property="nxDepartmentGoodsId" column="nx_department_goods_id"/>
+		<result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+		<result property="nxDgNxGoodsFatherId" column="nx_dg_nx_goods_father_id"/>
+		<result property="nxDgOrderQuantity" column="nx_dg_order_quantity"/>
+		<result property="nxDgOrderStandard" column="nx_dg_order_standard"/>
+		<result property="nxDgOrderTime" column="nx_dg_order_time"/>
+		<result property="nxDgOrderOnlyDate" column="nx_dg_order_only_date"/>
+		<result property="nxDgOrderOnlyTime" column="nx_dg_order_only_time"/>
+		<association property="nxGoodsEntity" resultMap="nxGoods"/>
+	</resultMap>
+
+
+	<select id="queryList" resultMap="depGoods">
+		select * from nx_department_goods as dg
+		left join nx_goods as g on g.nx_goods_id = dg.nx_dg_nx_goods_id
+		<if test="depId != null">
+		 where 	nx_dg_department_id = #{depId}
+		</if>
+
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_goods 
+	</select>
+	<select id="queryDepartmentGoods" resultType="com.nongxinle.entity.NxDepartmentGoodsEntity">
+		select * from nx_department_goods where nx_dg_department_id = #{departmentId}
+		                                    and nx_dg_nx_goods_id = #{goodsId}
+	</select>
+
+	<select id="queryAllDepartmentGoods" resultMap="depGoods">
+		select * from nx_department_goods as dg
+		  left join nx_goods as g on g.nx_goods_id = dg.nx_dg_nx_goods_id
+		  left join nx_standard as s on g.nx_goods_id = s.nx_s_goods_id
+		where nx_dg_department_id = #{depId}
+		order by nx_dg_order_only_date , nx_dg_nx_goods_father_id, nx_dg_nx_goods_id
+	</select>
+
+
+	<select id="queryDepGoodsByFatherId" resultMap="depGoods">
+		select * from  nx_department_goods as dg
+			left join nx_goods as g on g.nx_goods_id = dg.nx_dg_nx_goods_id
+			left join nx_standard as s on g.nx_goods_id = s.nx_s_goods_id
+		where nx_dg_department_id = #{depId} and nx_dg_nx_goods_father_id = #{fatherGoodsId}
+	</select>
+    <select id="queryIfHasDepartmentGoods" resultType="com.nongxinle.entity.NxDepartmentGoodsEntity">
+		select * from nx_department_goods where nx_dg_nx_goods_id = #{nxGoodsId} and nx_dg_department_id = #{nxDepId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentGoodsEntity"
+			useGeneratedKeys="true" keyProperty="nxDepartmentGoodsId">
+		insert into nx_department_goods
+		(
+			`nx_department_goods_id`, 
+			`nx_dg_department_id`,
+		 	`nx_dg_department_father_id`,
+			`nx_dg_nx_goods_id`, 
+			`nx_dg_nx_goods_father_id`, 
+			`nx_dg_goods_is_weight`, 
+			`nx_dg_goods_status`, 
+			`nx_dg_goods_price`, 
+			`nx_dg_price_date`, 
+			`nx_dg_distribute_id`,
+		 	`nx_dg_order_quantity`,
+		 	`nx_dg_order_standard`,
+		 	`nx_dg_order_time`,
+		 	`nx_dg_order_only_date`,
+		 	`nx_dg_order_only_time`
+		)
+		values
+		(
+			#{nxDepartmentGoodsId}, 
+			#{nxDgDepartmentId},
+		 	#{nxDgDepartmentFatherId},
+			#{nxDgNxGoodsId}, 
+			#{nxDgNxGoodsFatherId}, 
+			#{nxDgGoodsIsWeight}, 
+			#{nxDgGoodsStatus}, 
+			#{nxDgGoodsPrice}, 
+			#{nxDgPriceDate}, 
+			#{nxDgDistributeId},
+		 	#{nxDgOrderQuantity},
+		 	#{nxDgOrderStandard},
+		 	#{nxDgOrderTime},
+			#{nxDgOrderOnlyDate},
+			#{nxDgOrderOnlyTime}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentGoodsEntity">
+		update nx_department_goods 
+		<set>
+			<if test="nxDgDepartmentId != null">`nx_dg_department_id` = #{nxDgDepartmentId}, </if>
+			<if test="nxDgDepartmentFatherId != null">`nx_dg_department_father_id` = #{nxDgDepartmentFatherId}, </if>
+			<if test="nxDgNxGoodsId != null">`nx_dg_nx_goods_id` = #{nxDgNxGoodsId}, </if>
+			<if test="nxDgNxGoodsFatherId != null">`nx_dg_nx_goods_father_id` = #{nxDgNxGoodsFatherId}, </if>
+			<if test="nxDgGoodsIsWeight != null">`nx_dg_goods_is_weight` = #{nxDgGoodsIsWeight}, </if>
+			<if test="nxDgGoodsStatus != null">`nx_dg_goods_status` = #{nxDgGoodsStatus}, </if>
+			<if test="nxDgGoodsPrice != null">`nx_dg_goods_price` = #{nxDgGoodsPrice}, </if>
+			<if test="nxDgPriceDate != null">`nx_dg_price_date` = #{nxDgPriceDate}, </if>
+			<if test="nxDgOrderQuantity != null">`nx_dg_order_quantity` = #{nxDgOrderQuantity}, </if>
+			<if test="nxDgOrderStandard != null">`nx_dg_order_standard` = #{nxDgOrderStandard}, </if>
+			<if test="nxDgOrderTime != null">`nx_dg_order_time` = #{nxDgOrderTime}, </if>
+			<if test="nxDgOrderOnlyDate != null">`nx_dg_order_only_date` = #{nxDgOrderOnlyDate}, </if>
+			<if test="nxDgOrderOnlyTime != null">`nx_dg_order_only_time` = #{nxDgOrderOnlyTime}, </if>
+			<if test="nxDgDistributeId != null">`nx_dg_distribute_id` = #{nxDgDistributeId}</if>
+		</set>
+		where nx_department_goods_id = #{nxDepartmentGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_goods where nx_department_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_goods where nx_department_goods_id in 
+		<foreach item="nxDepartmentGoodsId" collection="array" open="(" separator="," close=")">
+			#{nxDepartmentGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

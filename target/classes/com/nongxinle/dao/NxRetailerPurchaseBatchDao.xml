@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRetailerPurchaseBatchDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxRetailerPurchaseBatchEntity">
+		select * from nx_retailer_purchase_batch where nx_retailer_purchase_batch_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxRetailerPurchaseBatchEntity">
+		select * from nx_retailer_purchase_batch 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_retailer_purchase_batch 
+	</select>
+
+	<resultMap id="shelfGoods" type="NxRetailerGoodsShelfGoodsEntity">
+		<id property="nxRetailerGoodsShelfGoodsId" column="nx_retailer_goods_shelf_goods_id"/>
+		<result property="nxRgsgGoodsName" column="nx_RGSG_goods_name"/>
+		<result property="nxRgsgSort" column="nx_RGSG_sort"/>
+		<result property="nxRgsgShelfId" column="nx_RGSG_shelf_id"/>
+	</resultMap>
+
+	<resultMap id="retailer" type="NxRetailerEntity">
+		<id property="nxRetailerId" column="nx_retailer_id"/>
+		<result property="nxRetailerName" column="nx_retailer_name"/>
+		<result property="nxRetailerLng" column="nx_retailer_lng"/>
+		<result property="nxRetailerLat" column="nx_retailer_lat"/>
+		<result property="nxRetailerImg" column="nx_retailer_img"/>
+		<result property="nxRetailerDescribe" column="nx_retailer_describe"/>
+	</resultMap>
+	<resultMap id="retUser" type="NxRetailerUserEntity">
+		<id property="nxRetailerUserId" column="nx_retailer_user_id"/>
+		<result property="nxRetuWxAvartraUrl" column="nx_RETU_wx_avartra_url"/>
+		<result property="nxRetuWxNickName" column="nx_RETU_wx_nick_name"/>
+		<result property="nxRetuUrlChange" column="nx_RETU_url_change"/>
+		<result property="nxRetuJoinDate" column="nx_RETU_join_date"/>
+		<result property="nxRetuAdmin" column="nx_RETU_admin"/>
+		<result property="nxRetuWxPhone" column="nx_RETU_wx_phone"/>
+		<result property="nxRetuWxOpenId" column="nx_RETU_wx_open_id"/>
+		<result property="nxRetuRetailerId" column="nx_RETU_reatailer_id"/>
+		<association property="nxRetailerEntity" resultMap="retailer"/>
+	</resultMap>
+	<resultMap id="retPurchaseGoods" type="NxRetailerPurchaseGoodsEntity">
+		<id property="nxRetailerPurchaseGoodsId" column="nx_retailer_purchase_goods_id"/>
+		<result property="nxRpgQuantity" column="nx_RPG_quantity"/>
+		<result property="nxRpgBuyQuantity" column="nx_RPG_buy_quantity"/>
+		<result property="nxRpgStatus" column="nx_RPG_status"/>
+		<result property="nxRpgBuyPrice" column="nx_RPG_buy_price"/>
+		<result property="nxRpgBuySubtotal" column="nx_RPG_buy_subtotal"/>
+		<result property="nxRpgBatchId" column="nx_RPG_batch_id"/>
+		<result property="nxRpgGoodsName" column="nx_RPG_goods_name"/>
+		<result property="nxRpgInputType" column="nx_RPG_input_type"/>
+		<result property="nxRpgTime" column="nx_RPG_time"/>
+		<association property="nxRetailerGoodsShelfGoodsEntity" resultMap="shelfGoods"/>
+	</resultMap>
+
+	<resultMap id="jrdhSellUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
+		<result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
+		<result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
+	</resultMap>
+	<resultMap id="jrdhBuyUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+
+		<result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_comm_user_id"/>
+		<result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+	</resultMap>
+	<resultMap id="batchWithGoods" type="NxRetailerPurchaseBatchEntity">
+		<id property="nxRetailerPurchaseBatchId" column="nx_retailer_purchase_batch_id"/>
+		<result property="nxRpbDate" column="nx_RPB_date"/>
+		<result property="nxRpbHour" column="nx_RPB_hour"/>
+		<result property="nxRpbMinute" column="nx_RPB_minute"/>
+		<result property="nxRpbTime" column="nx_RPB_time"/>
+		<result property="nxRpbSellSubtotal" column="nx_RPB_sell_subtotal"/>
+		<result property="nxRpbStatus" column="nx_RPB_status"/>
+		<result property="nxRpbPurUserId" column="nx_RPB_pur_user_id"/>
+		<result property="nxRpbType" column="nx_RPB_type"/>
+		<result property="nxRpbStatus" column="nx_RPB_status"/>
+		<result property="nxRpbSellUserImg" column="nx_RPB_sell_user_img"/>
+		<result property="nxRpbBuyUserId" column="nx_RPB_buy_user_id"/>
+		<result property="nxRpbSellUserId" column="nx_RPB_sell_user_id"/>
+		<result property="nxRpbRetailerId" column="nx_RPB_retailer_id"/>
+		<association property="nxJrdhSellerEntity" resultMap="jrdhSellUser"/>
+		<association property="nxJrdhBuyerEntity" resultMap="jrdhBuyUser"/>
+<!--		<association property="nxBuyUserEntity" resultMap="buyUser"/>-->
+<!--		<association property="nxSellUserEntity" resultMap="sellUser"/>-->
+		<association property="nxRetailerUserEntity" resultMap="retUser"/>
+		<collection property="nxRetPurchaseGoodsEntityList" resultMap="retPurchaseGoods"/>
+	</resultMap>
+
+    <select id="queryRetPurBatchByParams" resultMap="batchWithGoods">
+		select *,
+
+		sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+		sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+		sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+		sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+		from nx_retailer_purchase_batch as rpb
+		left join nx_retailer_purchase_goods as rpg on rpg.nx_RPG_batch_id = rpb.nx_retailer_purchase_batch_id
+        left join nx_retailer_goods_shelf_goods as rgsg on rgsg.nx_retailer_goods_shelf_goods_id  = rpg.nx_RPG_shelf_goods_id
+        left join nx_retailer_user as ru on ru.nx_retailer_user_id = rpb.nx_RPB_pur_user_id
+        left join nx_retailer as r on r.nx_retailer_id = ru.nx_RETU_retailer_id
+		<where>
+			<if test="retId != null">
+				and nx_RPB_retailer_id = #{retId}
+			</if>
+			<if test="status != null">
+				and nx_RPB_status  &lt; #{status}
+			</if>
+			<if test="batchId != null">
+				and nx_retailer_purchase_batch_id = #{batchId}
+			</if>
+			<if test="equalStatus != null">
+				and nx_RPB_status = #{equalStatus}
+			</if>
+
+		</where>
+         order by  nx_retailer_purchase_batch_id DESC, rgsg.nx_RGSG_shelf_id, rgsg.nx_RGSG_sort
+	</select>
+	<select id="queryRetPurBatchSizeByParams" resultType="com.nongxinle.entity.NxRetailerPurchaseBatchEntity">
+		select * from nx_retailer_purchase_batch
+		<where>
+			<if test="retId != null">
+				and nx_RPB_retailer_id = #{retId}
+			</if>
+			<if test="status != null">
+				and nx_RPB_status  &lt; #{status}
+			</if>
+		</where>
+	</select>
+	<select id="queryRetPurBatchDetail" resultMap="batchWithGoods">
+		select * from nx_retailer_purchase_batch as rpb
+		left join nx_retailer_purchase_goods as rpg on rpg.nx_RPG_batch_id = rpb.nx_retailer_purchase_batch_id
+		left join nx_retailer_goods_shelf_goods as rgsg on rgsg.nx_retailer_goods_shelf_goods_id  = rpg.nx_RPG_shelf_goods_id
+		left join nx_retailer_user as ru on ru.nx_retailer_user_id = rpb.nx_RPB_pur_user_id
+		left join nx_retailer as r on r.nx_retailer_id = rpb.nx_RPB_retailer_id
+		left join nx_sell_user as nsu  on nsu.nx_sell_user_id = rpb.nx_RPB_sell_user_id
+		left join nx_buy_user as nbu  on nbu.nx_buy_user_id = rpb.nx_RPB_buy_user_id
+		<where>
+			<if test="retId != null">
+				and nx_RPB_retailer_id = #{retId}
+			</if>
+			<if test="status != null">
+				and nx_RPB_status  &lt; #{status}
+			</if>
+			<if test="batchId != null">
+				and nx_retailer_purchase_batch_id = #{batchId}
+			</if>
+		</where>
+       order by rgsg.nx_RGSG_shelf_id, rgsg.nx_RGSG_sort
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxRetailerPurchaseBatchEntity"
+		useGeneratedKeys="true" keyProperty="nxRetailerPurchaseBatchId">
+		insert into nx_retailer_purchase_batch
+		(
+			`nx_retailer_purchase_batch_id`, 
+			`nx_RPB_status`, 
+			`nx_RPB_type`, 
+			`nx_RPB_time`, 
+			`nx_RPB_pur_user_id`, 
+			`nx_RPB_retailer_id`, 
+			`nx_RPB_date`, 
+			`nx_RPB_hour`, 
+			`nx_RPB_minute`, 
+			`nx_RPB_sell_subtotal`,
+		 	`nx_RPB_sell_user_img`,
+		 	`nx_RPB_buy_user_id`,
+		 	`nx_RPB_sell_user_id`
+		)
+		values
+		(
+			#{nxRetailerPurchaseBatchId}, 
+			#{nxRpbStatus}, 
+			#{nxRpbType}, 
+			#{nxRpbTime}, 
+			#{nxRpbPurUserId}, 
+			#{nxRpbRetailerId}, 
+			#{nxRpbDate}, 
+			#{nxRpbHour}, 
+			#{nxRpbMinute}, 
+			#{nxRpbSellSubtotal},
+		 	#{nxRpbSellUserImg},
+		 	#{nxRpbBuyUserId},
+		 	#{nxRpbSellUserId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxRetailerPurchaseBatchEntity">
+		update nx_retailer_purchase_batch 
+		<set>
+			<if test="nxRpbStatus != null">`nx_RPB_status` = #{nxRpbStatus}, </if>
+			<if test="nxRpbType != null">`nx_RPB_type` = #{nxRpbType}, </if>
+			<if test="nxRpbTime != null">`nx_RPB_time` = #{nxRpbTime}, </if>
+			<if test="nxRpbPurUserId != null">`nx_RPB_pur_user_id` = #{nxRpbPurUserId}, </if>
+			<if test="nxRpbRetailerId != null">`nx_RPB_retailer_id` = #{nxRpbRetailerId}, </if>
+			<if test="nxRpbDate != null">`nx_RPB_date` = #{nxRpbDate}, </if>
+			<if test="nxRpbHour != null">`nx_RPB_hour` = #{nxRpbHour}, </if>
+			<if test="nxRpbMinute != null">`nx_RPB_minute` = #{nxRpbMinute}, </if>
+			<if test="nxRpbSellUserImg != null">`nx_RPB_sell_user_img` = #{nxRpbSellUserImg}, </if>
+			<if test="nxRpbBuyUserId != null">`nx_RPB_buy_user_id` = #{nxRpbBuyUserId}, </if>
+			<if test="nxRpbSellUserId != null">`nx_RPB_sell_user_Id` = #{nxRpbSellUserId}, </if>
+			<if test="nxRpbSellSubtotal != null">`nx_RPB_sell_subtotal` = #{nxRpbSellSubtotal}</if>
+		</set>
+		where nx_retailer_purchase_batch_id = #{nxRetailerPurchaseBatchId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_retailer_purchase_batch where nx_retailer_purchase_batch_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_retailer_purchase_batch where nx_retailer_purchase_batch_id in 
+		<foreach item="nxRetailerPurchaseBatchId" collection="array" open="(" separator="," close=")">
+			#{nxRetailerPurchaseBatchId}
+		</foreach>
+	</delete>
+
+</mapper>

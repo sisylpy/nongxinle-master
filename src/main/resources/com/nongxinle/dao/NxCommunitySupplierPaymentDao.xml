@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunitySupplierPaymentDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunitySupplierPaymentEntity">
+		select * from nx_community_supplier_payment where nx_communtiy_supplier_payment_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunitySupplierPaymentEntity">
+		select * from nx_community_supplier_payment 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_supplier_payment 
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunitySupplierPaymentEntity">
+		insert into nx_community_supplier_payment
+		(
+			`nx_communtiy_supplier_payment_id`, 
+			`nx_csp_date`, 
+			`nx_csp_supplier_id`, 
+			`nx_csp_pay_comm_user_id`, 
+			`nx_csp_pay_total`, 
+			`nx_csp_nx_community_id`
+		)
+		values
+		(
+			#{nxCommuntiySupplierPaymentId}, 
+			#{nxCspDate}, 
+			#{nxCspSupplierId}, 
+			#{nxCspPayCommUserId}, 
+			#{nxCspPayTotal}, 
+			#{nxCspNxCommunityId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunitySupplierPaymentEntity">
+		update nx_community_supplier_payment 
+		<set>
+			<if test="nxCspDate != null">`nx_csp_date` = #{nxCspDate}, </if>
+			<if test="nxCspSupplierId != null">`nx_csp_supplier_id` = #{nxCspSupplierId}, </if>
+			<if test="nxCspPayCommUserId != null">`nx_csp_pay_comm_user_id` = #{nxCspPayCommUserId}, </if>
+			<if test="nxCspPayTotal != null">`nx_csp_pay_total` = #{nxCspPayTotal}, </if>
+			<if test="nxCspNxCommunityId != null">`nx_csp_nx_community_id` = #{nxCspNxCommunityId}</if>
+		</set>
+		where nx_communtiy_supplier_payment_id = #{nxCommuntiySupplierPaymentId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_supplier_payment where nx_communtiy_supplier_payment_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_supplier_payment where nx_communtiy_supplier_payment_id in 
+		<foreach item="nxCommuntiySupplierPaymentId" collection="array" open="(" separator="," close=")">
+			#{nxCommuntiySupplierPaymentId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.SysUserDao">
+	<select id="queryObject" resultType="com.nongxinle.entity.SysUserEntity">
+		select * from sys_user where user_id = #{value}
+
+	</select>
+	
+	<select id="queryList" resultType="com.nongxinle.entity.SysUserEntity">
+		select * from sys_user order by user_id desc
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+	<select id="queryTotal" resultType="int">
+		select count(*) from sys_user
+	</select>
+	
+	<!-- 查询用户的所有权限 -->
+	<select id="queryAllPerms" resultType="String">
+		select m.perms from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			LEFT JOIN sys_menu m on rm.menu_id = m.menu_id 
+		where ur.user_id = #{userId}
+	</select>
+	
+	<!-- 查询用户的所有菜单ID --> 
+	<select id="queryAllMenuId" resultType="Long">
+		select m.menu_id from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			LEFT JOIN sys_menu m on rm.menu_id = m.menu_id 
+		where ur.user_id = #{userId}
+	</select>
+	
+	<select id="queryByUserName" resultType="com.nongxinle.entity.SysUserEntity">
+		select * from sys_user where username = #{username}
+	</select>
+
+	<resultMap id="nxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+	</resultMap>
+	<resultMap id="nxDisUser" type="NxDistributerUserEntity">
+		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
+		<result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
+		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+		<result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+		<result property="nxDiuWxOpenId" column="nx_DIU_wx_open_id"/>
+		<result property="nxDiuWxPhone" column="nx_DIU_wx_phone"/>
+		<result property="nxDiuPrintDeviceId" column="nx_DIU_print_device_id"/>
+		<result property="nxDiuPrintBillDeviceId" column="nx_DIU_print_bill_device_id"/>
+		<result property="nxDiuUrlChange" column="nx_DIU_url_change"/>
+		<result property="nxDiuAdmin" column="nx_DIU_admin"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
+	</resultMap>
+
+
+	<resultMap id="disModule" type="GbDistributerModuleEntity">
+		<id property="gbDistributerModuleId" column="gb_distributer_module_id"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmPurchaseNumber" column="gb_dm_purchase_number"/>
+		<result property="gbDmStockNumber" column="gb_dm_stock_number"/>
+<result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmCentralKitchenNumber" column="gb_dm_central_kitchen_number"/>
+		<result property="gbDmDirectSalesNumber" column="gb_dm_direct_sales_number"/>
+		<result property="gbDmFranchiseeNumber" column="gb_dm_franchisee_number"/>
+		<result property="gbDmDistributerId" column="gb_dm_distributer_id"/>
+	</resultMap>
+
+
+	<resultMap id="dis" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
+	</resultMap>
+
+	<resultMap id="qyCorpUser" type="QyGbDisCorpUserEntity">
+		<id property="qyGbDisCorpUserId" column="qy_gb_dis_corp_user_id"/>
+		<result property="qyGbDisCorpOpenUserId" column="qy_gb_dis_corp_open_user_id"/>
+		<result property="qyGbDisCorpQyCorpId" column="qy_gb_dis_corp_qy_corp_id"/>
+		<result property="qyGbDisCorpSessionKey" column="qy_gb_dis_corp_session_key"/>
+		<result property="qyGbDisCorpUserName" column="qy_gb_dis_corp_user_name"/>
+		<result property="qyGbDisCorpUserJoinDate" column="qy_gb_dis_corp_user_join_date"/>
+		<result property="qyGbDistributerId" column="qy_gb_distributer_id"/>
+	</resultMap>
+	<resultMap id="disUser" type="GbDistributerUserEntity">
+		 <id property="gbDistributerUserId" column="gb_distributer_user_id"/>
+        <result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
+		<result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
+        <result property="gbDiuQyCorpUserId" column="gb_DIU_qy_corp_user_id"/>
+		<result property="gbDiuWxNickName" column="gb_DIU_wx_nick_name"/>
+		<result property="gbDiuDistributerId" column="gb_DIU_distributer_id"/>
+		<association property="qyGbDisCorpUserEntity" resultMap="qyCorpUser"/>
+
+		<association property="gbDistributerEntity" resultMap="dis"/>
+	</resultMap>
+	<resultMap id="userWithDisInfo" type="SysUserEntity">
+		<id property="userId" column="user_id"/>
+		<result property="username" column="user_name"/>
+		<result property="userDisUserId" column="user_dis_user_id"/>
+		<association property="gbDistributerUserEntity" resultMap="disUser"/>
+	</resultMap>
+	<resultMap id="nxUserWithDisInfo" type="SysUserEntity">
+		<id property="userId" column="user_id"/>
+		<result property="username" column="user_name"/>
+		<result property="userDisUserId" column="user_dis_user_id"/>
+		<result property="userDisId" column="user_dis_id"/>
+		<association property="nxDistributerUserEntity" resultMap="nxDisUser"/>
+	</resultMap>
+
+    <select id="queryGbUserByUserName" resultMap="userWithDisInfo">
+		select * from sys_user as su
+		left join gb_distributer_user as gbdu on gbdu.gb_distributer_user_id = su.user_dis_user_id
+		left join gb_distributer as gbdis on gbdis.gb_distributer_id = gbdu.gb_DIU_distributer_id
+		<where>
+			<if test="username != null" >
+				and username = #{username}
+			</if>
+		</where>
+	</select>
+	<select id="queryAllMenuIdCode" resultType="java.lang.Long">
+		select m.menu_id from sys_user_role ur
+								  LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id
+								  LEFT JOIN sys_menu m on rm.menu_id = m.menu_id
+		where ur.user_id = #{userId} and pro_type = 0
+	</select>
+    <select id="queryNxUserByUserName" resultMap="nxUserWithDisInfo">
+		select * from sys_user as su
+		left join nx_distributer_user as nxdu on nxdu.nx_distributer_user_id = su.user_dis_user_id
+		left join nx_distributer as nxdis on nxdis.nx_distributer_id = su.user_dis_id
+		     where username = #{userName}
+
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.SysUserEntity" useGeneratedKeys="true" keyProperty="userId">
+		insert into sys_user
+		(
+			`user_id`, 
+			`username`, 
+			`password`, 
+			`email`, 
+			`mobile`, 
+			`status`, 
+			`create_time`,
+		 	`user_dis_id`,
+		 	`user_dis_user_id`
+		)
+		values
+		(
+			#{userId}, 
+			#{username}, 
+			#{password}, 
+			#{email}, 
+			#{mobile}, 
+			#{status}, 
+			#{createTime},
+		 	#{userDisId},
+		 	#{userDisUserId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.SysUserEntity">
+		update sys_user 
+		<set> 
+			<if test="username != null">`username` = #{username}, </if>
+			<if test="password != null">`password` = #{password}, </if>
+			<if test="email != null">`email` = #{email}, </if>
+			<if test="mobile != null">`mobile` = #{mobile}, </if>
+			<if test="userDisId != null">`user_dis_id` = #{userDisId}, </if>
+			<if test="userDisUserId != null">`user_dis_user_id` = #{userDisUserId}, </if>
+			<if test="status != null">`status` = #{status}, </if>
+		</set>
+		where user_id = #{userId}
+	</update>
+	
+	<update id="updatePassword" parameterType="map">
+		update sys_user set `password` = #{newPassword} 
+			where user_id = #{userId} and password = #{password}
+	</update>
+	
+	<delete id="deleteBatch">
+		delete from sys_user where user_id in 
+		<foreach item="userId" collection="array" open="(" separator="," close=")">
+			#{userId}
+		</foreach>
+		;
+		delete from sys_user_role where user_id in 
+		<foreach item="userId" collection="array" open="(" separator="," close=")">
+			#{userId}
+		</foreach>
+	</delete>
+
+</mapper>

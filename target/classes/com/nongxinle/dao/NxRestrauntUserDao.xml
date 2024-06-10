@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRestrauntUserDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxRestrauntUserEntity">
+        select *
+        from nx_restraunt_user
+        where nx_restraunt_user_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxRestrauntUserEntity">
+        select * from nx_restraunt_user
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_restraunt_user
+    </select>
+
+    <select id="queryResUserByOpenId" resultType="com.nongxinle.entity.NxRestrauntUserEntity">
+        select *
+        from nx_restraunt_user
+        where nx_RU_wx_open_id = #{openid}
+    </select>
+
+	<resultMap id="users" type="NxRestrauntUserEntity">
+		<id property="nxRestrauntUserId" column="nx_restraunt_user_id"/>
+		<result property="nxRuWxAvartraUrl" column="nx_RU_wx_avartra_url"/>
+		<result property="nxRuWxNickName" column="nx_RU_wx_nick_name"/>
+		<result property="nxRuUrlChange" column="nx_RU_url_change"/>
+		<result property="nxRuJoinDate" column="nx_RU_join_date"/>
+		<result property="nxRuAdmin" column="nx_RU_admin"/>
+		<result property="nxRuWxPhone" column="nx_RU_wx_phone"/>
+	</resultMap>
+    <resultMap id="fusers" type="NxRestrauntUserEntity">
+        <id property="nxRestrauntUserId" column="f_nx_restraunt_user_id"/>
+        <result property="nxRuWxAvartraUrl" column="f_nx_RU_wx_avartra_url"/>
+        <result property="nxRuWxNickName" column="f_nx_RU_wx_nick_name"/>
+        <result property="nxRuUrlChange" column="f_nx_RU_url_change"/>
+        <result property="nxRuJoinDate" column="f_nx_RU_join_date"/>
+        <result property="nxRuAdmin" column="f_nx_RU_admin"/>
+        <result property="nxRuWxPhone" column="f_nx_RU_wx_phone"/>
+        <result property="nxRuAdmin" column="f_nx_RU_admin"/>
+    </resultMap>
+	<resultMap id="dusers" type="NxRestrauntUserEntity">
+		<id property="nxRestrauntUserId" column="d_nx_restraunt_user_id"/>
+		<result property="nxRuWxAvartraUrl" column="d_nx_RU_wx_avartra_url"/>
+		<result property="nxRuWxNickName" column="d_nx_RU_wx_nick_name"/>
+		<result property="nxRuUrlChange" column="d_nx_RU_url_change"/>
+		<result property="nxRuJoinDate" column="d_nx_RU_join_date"/>
+		<result property="nxRuAdmin" column="d_nx_RU_admin"/>
+		<result property="nxRuWxPhone" column="d_nx_RU_wx_phone"/>
+	</resultMap>
+
+    <resultMap id="restraunts" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="d_nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="d_nx_restraunt_name"/>
+        <result property="nxRestrauntFatherId" column="d_nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="d_nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntComId" column="d_nx_restraunt_com_id"/>
+        <result property="nxRestrauntType" column="d_nx_restraunt_type"/>
+        <result property="nxRestrauntNumber" column="d_nx_restraunt_number"/>
+        <result property="nxRestrauntSettleType" column="d_nx_restraunt_settle_type"/>
+        <result property="nxRestrauntAttrName" column="d_nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="d_nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="d_nx_restraunt_max_time"/>
+		<collection property="nxRestrauntUserEntities" resultMap="dusers"/>
+    </resultMap>
+
+    <resultMap id="resAndDepUsers" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="f_nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="f_nx_restraunt_name"/>
+        <result property="nxRestrauntFatherId" column="f_nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="f_nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntComId" column="f_nx_restraunt_com_id"/>
+        <result property="nxRestrauntType" column="f_nx_restraunt_type"/>
+        <result property="nxRestrauntNumber" column="f_nx_restraunt_number"/>
+        <result property="nxRestrauntSettleType" column="f_nx_restraunt_settle_type"/>
+        <result property="nxRestrauntAttrName" column="f_nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="f_nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="f_nx_restraunt_max_time"/>
+        <collection property="nxSubRestraunts" resultMap="restraunts"/>
+        <collection property="nxRestrauntUserEntities" resultMap="fusers"/>
+    </resultMap>
+
+    <resultMap id="resUsers" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="nx_restraunt_name"/>
+        <result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntComId" column="nx_restraunt_com_id"/>
+        <result property="nxRestrauntType" column="nx_restraunt_type"/>
+        <result property="nxRestrauntNumber" column="nx_restraunt_number"/>
+        <result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
+        <collection property="nxRestrauntUserEntities" resultMap="users"/>
+    </resultMap>
+
+    <select id="queryAllResUsersByResId" resultMap="resUsers">
+        select *
+        from nx_restraunt as r
+                 left join nx_restraunt_user as ru on r.nx_restraunt_id = ru.nx_RU_restaurant_id
+        where r.nx_restraunt_id = #{resId} order by nx_RU_admin DESC
+    </select>
+
+    <select id="queryAllRestrauntAndDepUsersByResId" resultMap="resAndDepUsers">
+        select fr.nx_restraunt_id        'f_nx_restraunt_id',
+               fr.nx_restraunt_name      'f_nx_restraunt_name',
+               dr.nx_restraunt_id        'd_nx_restraunt_id',
+               dr.nx_restraunt_father_id 'd_nx_restraunt_father_id',
+               dr.nx_restraunt_name      'd_nx_restraunt_name',
+               fu.nx_restraunt_user_id 'f_nx_restraunt_user_id',
+               fu.nx_RU_url_change 'f_nx_RU_url_change',
+               fu.nx_RU_wx_avartra_url 'f_nx_RU_wx_avartra_url',
+               fu.nx_RU_join_date 'f_nx_RU_join_date',
+               fu.nx_RU_wx_nick_name 'f_nx_RU_wx_nick_name',
+               fu.nx_RU_wx_phone 'f_nx_RU_wx_phone',
+               fu.nx_RU_admin 'f_nx_RU_admin',
+			   du.nx_restraunt_user_id 'd_nx_restraunt_user_id',
+			   du.nx_RU_wx_avartra_url 'd_nx_RU_wx_avartra_url',
+			   du.nx_RU_url_change 'd_nx_RU_url_change',
+			   du.nx_RU_join_date 'd_nx_RU_join_date',
+			   du.nx_RU_wx_nick_name 'd_nx_RU_wx_nick_name',
+			   du.nx_RU_wx_phone 'd_nx_RU_wx_phone'
+        from nx_restraunt as fr
+                 left join nx_restraunt as dr on dr.nx_restraunt_father_id = fr.nx_restraunt_id
+                 left join nx_restraunt_user as fu on fu.nx_RU_restaurant_id = fr.nx_restraunt_id
+        		left join  nx_restraunt_user as du on du.nx_RU_restaurant_id = dr.nx_restraunt_id
+        where fr.nx_restraunt_id = #{resId} order by dr.nx_restraunt_id
+    </select>
+    <resultMap id="chusers" type="NxRestrauntUserEntity">
+        <id property="nxRestrauntUserId" column="ch_nx_restraunt_user_id"/>
+        <result property="nxRuWxAvartraUrl" column="ch_nx_RU_wx_avartra_url"/>
+        <result property="nxRuWxNickName" column="ch_nx_RU_wx_nick_name"/>
+        <result property="nxRuUrlChange" column="ch_nx_RU_url_change"/>
+        <result property="nxRuJoinDate" column="ch_nx_RU_join_date"/>
+        <result property="nxRuAdmin" column="ch_nx_RU_admin"/>
+        <result property="nxRuWxPhone" column="ch_nx_RU_wx_phone"/>
+    </resultMap>
+
+    <resultMap id="chainUser" type="NxRestrauntEntity">
+        <id property="nxRestrauntId" column="ch_nx_restraunt_id"/>
+        <result property="nxRestrauntName" column="ch_nx_restraunt_name"/>
+        <result property="nxRestrauntFatherId" column="ch_nx_restraunt_father_id"/>
+        <result property="nxRestrauntIsGroupDep" column="ch_nx_restraunt_is_group_dep"/>
+        <result property="nxRestrauntComId" column="ch_nx_restraunt_com_id"/>
+        <result property="nxRestrauntType" column="ch_nx_restraunt_type"/>
+        <result property="nxRestrauntNumber" column="ch_nx_restraunt_number"/>
+        <result property="nxRestrauntSettleType" column="ch_nx_restraunt_settle_type"/>
+        <result property="nxRestrauntAttrName" column="ch_nx_restraunt_attr_name"/>
+        <result property="nxRestrauntMinTime" column="ch_nx_restraunt_min_time"/>
+        <result property="nxRestrauntMaxTime" column="ch_nx_restraunt_max_time"/>
+        <collection property="nxRestrauntEntities" resultMap="resAndDepUsers"/>
+        <collection property="nxRestrauntUserEntities" resultMap="chusers"/>
+    </resultMap>
+
+    <select id="queryChainRestrauntAndDepUsersByResId" resultMap="chainUser">
+        select
+               ch.nx_restraunt_id        'ch_nx_restraunt_id',
+               ch.nx_restraunt_name      'ch_nx_restraunt_name',
+               fr.nx_restraunt_id        'f_nx_restraunt_id',
+               fr.nx_restraunt_name      'f_nx_restraunt_name',
+               dr.nx_restraunt_id        'd_nx_restraunt_id',
+               dr.nx_restraunt_father_id 'd_nx_restraunt_father_id',
+               dr.nx_restraunt_name      'd_nx_restraunt_name',
+               chu.nx_restraunt_user_id 'ch_nx_restraunt_user_id',
+               chu.nx_RU_url_change 'ch_nx_RU_url_change',
+               chu.nx_RU_wx_avartra_url 'ch_nx_RU_wx_avartra_url',
+               chu.nx_RU_join_date 'ch_nx_RU_join_date',
+               chu.nx_RU_wx_nick_name 'ch_nx_RU_wx_nick_name',
+               chu.nx_RU_wx_phone 'ch_nx_RU_wx_phone',
+               du.nx_restraunt_user_id 'd_nx_restraunt_user_id',
+               du.nx_RU_wx_avartra_url 'd_nx_RU_wx_avartra_url',
+               du.nx_RU_url_change 'd_nx_RU_url_change',
+               du.nx_RU_join_date 'd_nx_RU_join_date',
+               du.nx_RU_wx_nick_name 'd_nx_RU_wx_nick_name',
+               du.nx_RU_wx_phone 'd_nx_RU_wx_phone'
+        from nx_restraunt as ch
+                 left join nx_restraunt as fr on fr.nx_restraunt_father_id = ch.nx_restraunt_id
+                 left join nx_restraunt as dr on dr.nx_restraunt_father_id = fr.nx_restraunt_id
+                 left join nx_restraunt_user as chu on chu.nx_RU_restaurant_id = ch.nx_restraunt_id
+                 left join  nx_restraunt_user as du on du.nx_RU_restaurant_id = dr.nx_restraunt_id
+        where ch.nx_restraunt_id = #{resId}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxRestrauntUserEntity" useGeneratedKeys="true"
+            keyProperty="nxRestrauntUserId">
+        insert into nx_restraunt_user
+        (`nx_restraunt_user_id`,
+         `nx_RU_restaurant_id`,
+         `nx_RU_wx_avartra_url`,
+         `nx_RU_wx_nick_name`,
+         `nx_RU_wx_open_id`,
+         `nx_RU_wx_phone`,
+         `nx_RU_admin`,
+         `nx_RU_com_id`,
+         `nx_RU_url_change`,
+         `nx_RU_restaurant_father_id`,
+         `nx_RU_join_date`)
+        values (#{nxRestrauntUserId},
+                #{nxRuRestaurantId},
+                #{nxRuWxAvartraUrl},
+                #{nxRuWxNickName},
+                #{nxRuWxOpenId},
+                #{nxRuWxPhone},
+                #{nxRuAdmin},
+                #{nxRuComId},
+                #{nxRuUrlChange},
+                #{nxRuRestaurantFatherId},
+                #{nxRuJoinDate})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxRestrauntUserEntity">
+        update nx_restraunt_user
+        <set>
+            <if test="nxRuRestaurantId != null">`nx_RU_restaurant_id` = #{nxRuRestaurantId},</if>
+            <if test="nxRuWxAvartraUrl != null">`nx_RU_wx_avartra_url` = #{nxRuWxAvartraUrl},</if>
+            <if test="nxRuWxNickName != null">`nx_RU_wx_nick_name` = #{nxRuWxNickName},</if>
+            <if test="nxRuWxOpenId != null">`nx_RU_wx_open_id` = #{nxRuWxOpenId},</if>
+            <if test="nxRuWxPhone != null">`nx_RU_wx_phone` = #{nxRuWxPhone},</if>
+            <if test="nxRuAdmin != null">`nx_RU_admin` = #{nxRuAdmin},</if>
+            <if test="nxRuComId != null">`nx_RU_com_id` = #{nxRuComId},</if>
+            <if test="nxRuUrlChange != null">`nx_RU_url_change` = #{nxRuUrlChange},</if>
+            <if test="nxRuRestaurantFatherId != null">`nx_RU_restaurant_father_id` = #{nxRuRestaurantFatherId},</if>
+            <if test="nxRuJoinDate != null">`nx_RU_join_date` = #{nxRuJoinDate}</if>
+        </set>
+        where nx_restraunt_user_id = #{nxRestrauntUserId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_restraunt_user
+        where nx_restraunt_user_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_restraunt_user where nx_restraunt_user_id in
+        <foreach item="nxRestrauntUserId" collection="array" open="(" separator="," close=")">
+            #{nxRestrauntUserId}
+        </foreach>
+    </delete>
+
+</mapper>

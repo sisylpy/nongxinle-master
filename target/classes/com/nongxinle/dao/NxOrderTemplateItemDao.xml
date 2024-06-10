@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxOrderTemplateItemDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxOrderTemplateItemEntity">
+		select * from nx_order_template_item where nx_OT_item_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxOrderTemplateItemEntity">
+		select * from nx_order_template_item 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_order_template_item 
+	</select>
+
+	<select id="queryDisGoods" resultType="com.nongxinle.entity.NxOrderTemplateItemEntity">
+		select * from nx_order_template_item where nx_OT_dis_goods_id = #{nxOtDisGoodsId}
+		          and nx_OT_order_template_id = #{nxOtTemplateId}
+	</select>
+
+	<select id="queryUserItem" resultType="com.nongxinle.entity.NxOrderTemplateItemEntity">
+		select * from nx_order_template_item where  nx_OT_order_template_id = #{nxOtOrderTemplateId}
+	</select>
+
+
+	<resultMap id="disGoods" type="NxCommunityGoodsEntity">
+		<id property="disGoodsId" column="dis_goods_id"/>
+		<result property="dgGoodsPrice" column="dg_goods_price"/>
+		<result property="dgGoodsIsWeight" column="dg_goods_is_weight"/>
+		<result property="dgGoodsStatus" column="dg_goods_status"/>
+		<result property="dgGoodsPriceDecimal" column="dg_goods_price_decimal"/>
+		<result property="dgGoodsMinWeight" column="dg_goods_min_weight"/>
+		<result property="dgGoodsIsDiscount" column="dg_goods_is_discount"/>
+		<result property="dgGoodsDiscountPrice" column="dg_goods_discount_price"/>
+		<result property="dgGoodsTotalHits" column="dg_goods_total_hits"/>
+		<result property="dgGoodsSellType" column="dg_goods_sell_type"/>
+		<result property="dgGoodsSellStandardName" column="dg_goods_sell_standard_name"/>
+		<result property="dgGoodsSellStandardMinScale" column="dg_goods_sell_standard_min_scale"/>
+		<result property="dgGoodsSellStandardMaxScale" column="dg_goods_sell_standard_max_scale"/>
+		<result property="dgGoodsFilePath" column="dg_goods_file_path"/>
+		<result property="dgGoodsStandardFilePath" column="dg_goods_standard_file_path"/>
+		<association property="nxGoodsEntity" javaType="NxGoodsEntity">
+			        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+			<result property="nxGoodsName" column="nx_goods_name"/>
+			<result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+			<result property="nxGoodsBrand" column="nx_goods_brand"/>
+			<result property="nxGoodsPlace" column="nx_goods_place"/>
+			<result property="nxGoodsPy" column="nx_goods_py"/>
+			<result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+			<result property="nxGoodsDetail" column="nx_goods_detail"/>
+
+		</association>
+	</resultMap>
+
+	<resultMap id="items" type="NxOrderTemplateItemEntity">
+		<id property="nxOtItemId" column="nx_OT_item_id"/>
+		<result property="nxOtAmount" column="nx_OT_amount"/>
+		<result property="nxOtDisGoodsColor" column="nx_OT_dis_goods_color"/>
+
+		<association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+	</resultMap>
+
+	<select id="queryCustomerUserItems" resultMap="items">
+		select * from nx_order_template_item as i
+		left join nx_distributer_goods as dg on dg.dis_goods_id = i.nx_OT_dis_goods_id
+		left join nx_goods as g on g.nx_goods_id = dg.dg_goods_id
+
+		where nx_OT_customer_user_id = #{nxCustomerUserId};
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxOrderTemplateItemEntity">
+		insert into nx_order_template_item
+		(
+			`nx_OT_item_id`,
+			`nx_OT_dis_goods_id`,
+			`nx_OT_amount`, 
+			`nx_OT_order_template_id`,
+			`nx_OT_customer_user_id`,
+		 	`nx_OT_dis_goods_color`
+		)
+		values
+		(
+			#{nxOtItemId}, 
+			#{nxOtDisGoodsId},
+			#{nxOtAmount}, 
+			#{nxOtOrderTemplateId},
+		 	#{nxOtCustomerUserId},
+		 	#{nxOtDisGoodsColor}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxOrderTemplateItemEntity">
+		update nx_order_template_item 
+		<set>
+			<if test="nxOtDisGoodsId != null">`nx_OT_dis_goods_id` = #{nxOtDisGoodsId}, </if>
+			<if test="nxOtAmount != null">`nx_OT_amount` = #{nxOtAmount}, </if>
+			<if test="nxOtCustomerUserId != null">`nx_OT_customer_user_id` = #{nxOtCustomerUserId}, </if>
+			<if test="nxOtDisGoodsColor != null">`nx_OT_dis_goods_color` = #{nxOtDisGoodsColor}, </if>
+			<if test="nxOtOrderTemplateId != null">`nx_OT_order_template_id` = #{nxOtOrderTemplateId}</if>
+		</set>
+		where nx_OT_item_id = #{nxOtItemId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_order_template_item where nx_OT_item_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_order_template_item where nx_OT_item_id in 
+		<foreach item="nxOtItemId" collection="array" open="(" separator="," close=")">
+			#{nxOtItemId}
+		</foreach>
+	</delete>
+
+</mapper>

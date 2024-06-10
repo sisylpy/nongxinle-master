@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxWxOrdersDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxWxOrdersEntity">
+		select * from nx_wx_orders where nx_wx_orders_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxWxOrdersEntity">
+		select * from nx_wx_orders 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_wx_orders 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxWxOrdersEntity">
+		insert into nx_wx_orders
+		(
+			`nx_wx_orders_id`, 
+			`nx_wx_orders_out_trade_no`, 
+			`nx_wx_orders_body`, 
+			`nx_wx_orders_detail`, 
+			`nx_wx_orders_attach`, 
+			`nx_wx_orders_total_fee`, 
+			`nx_wx_orders_spbill_create_ip`
+		)
+		values
+		(
+			#{nxWxOrdersId}, 
+			#{nxWxOrdersOutTradeNo}, 
+			#{nxWxOrdersBody}, 
+			#{nxWxOrdersDetail}, 
+			#{nxWxOrdersAttach}, 
+			#{nxWxOrdersTotalFee}, 
+			#{nxWxOrdersSpbillCreateIp}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxWxOrdersEntity">
+		update nx_wx_orders 
+		<set>
+			<if test="nxWxOrdersOutTradeNo != null">`nx_wx_orders_out_trade_no` = #{nxWxOrdersOutTradeNo}, </if>
+			<if test="nxWxOrdersBody != null">`nx_wx_orders_body` = #{nxWxOrdersBody}, </if>
+			<if test="nxWxOrdersDetail != null">`nx_wx_orders_detail` = #{nxWxOrdersDetail}, </if>
+			<if test="nxWxOrdersAttach != null">`nx_wx_orders_attach` = #{nxWxOrdersAttach}, </if>
+			<if test="nxWxOrdersTotalFee != null">`nx_wx_orders_total_fee` = #{nxWxOrdersTotalFee}, </if>
+			<if test="nxWxOrdersSpbillCreateIp != null">`nx_wx_orders_spbill_create_ip` = #{nxWxOrdersSpbillCreateIp}</if>
+		</set>
+		where nx_wx_orders_id = #{nxWxOrdersId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_wx_orders where nx_wx_orders_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_wx_orders where nx_wx_orders_id in 
+		<foreach item="nxWxOrdersId" collection="array" open="(" separator="," close=")">
+			#{nxWxOrdersId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentIndependentOrderDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentIndependentOrderEntity">
+		select * from nx_department_independent_order where nx_dep_independent_order_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDepartmentIndependentOrderEntity">
+		select * from nx_department_independent_order 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_independent_order 
+	</select>
+
+	<resultMap id="nxGoods" type="NxGoodsEntity">
+		        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+		<result property="nxGoodsName" column="nx_goods_name"/>
+		<result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+	</resultMap>
+
+	<resultMap id="depUser" type="NxDepartmentUserEntity">
+		<id property="nxDepartmentUserId" column="nx_department_user_id"/>
+		<result property="nxDuWxNickName" column="nx_DU_wx_nick_name"/>
+		<result property="nxDuWxAvartraUrl" column="nx_DU_wx_avartra_url"/>
+	</resultMap>
+	<resultMap id="independentGoods" type="NxDepartmentIndependentGoodsEntity">
+		<id property="nxDepartmentIndependentGoodsId" column="nx_department_independent_goods_id"/>
+		<result property="nxDigGoodsName" column="nx_DIG_goods_name"/>
+		<result property="nxDigGoodsStandardname" column="nx_DIG_goods_standardname"/>
+	</resultMap>
+
+	<resultMap id="independentOrders" type="NxDepartmentIndependentOrderEntity">
+		<id property="nxDepIndependentOrderId" column="nx_dep_independent_order_id"/>
+		<result property="nxDioApplyDate" column="nx_DIO_apply_date"/>
+		<result property="nxDioApplyTime" column="nx_DIO_apply_time"/>
+		<result property="nxDioApplyQuantity" column="nx_DIO_apply_quantity"/>
+		<result property="nxDioApplyStandard" column="nx_DIO_apply_standard"/>
+		<result property="nxDioApplyRemark" column="nx_DIO_apply_remark"/>
+		<result property="nxDioApplyStatus" column="nx_DIO_apply_status"/>
+		<result property="nxDioOperationTime" column="nx_DIO_operation_time"/>
+		<association property="nxDepartmentUserEntity" resultMap="depUser"/>
+		<association property="nxDepIndependentGoodsEntity" resultMap="independentGoods"/>
+	</resultMap>
+
+	<select id="queryGroupTodayIndependentOrder" resultMap="independentOrders">
+		select * from nx_department_independent_order as dio
+		left join nx_department_independent_goods as ig on ig.nx_department_independent_goods_id = dio.nx_DIO_independent_goods_id
+		left join nx_department_user as du on du.nx_department_user_id = dio.nx_DIO_apply_user_id
+		where nx_DIO_department_father_id = #{nxDuDepartmentId}
+		and nx_DIO_apply_status &lt; 4
+		order by nx_DIO_apply_status,nx_DIO_apply_time, nx_DIO_operation_time;
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDepartmentIndependentOrderEntity" useGeneratedKeys="true"
+	keyProperty="nxDepIndependentOrderId">
+		insert into nx_department_independent_order
+		(
+			`nx_dep_independent_order_id`, 
+			`nx_DIO_department_id`, 
+			`nx_DIO_department_father_id`, 
+			`nx_DIO_apply_user_id`, 
+			`nx_DIO_apply_time`, 
+			`nx_DIO_apply_date`, 
+			`nx_DIO_apply_status`, 
+			`nx_DIO_apply_quantity`, 
+			`nx_DIO_apply_standard`, 
+			`nx_DIO_apply_remark`,
+		 	`nx_DIO_independent_goods_id`,
+		 	`nx_DIO_operation_time`
+		)
+		values
+		(
+			#{nxDepIndependentOrderId}, 
+			#{nxDioDepartmentId}, 
+			#{nxDioDepartmentFatherId}, 
+			#{nxDioApplyUserId}, 
+			#{nxDioApplyTime}, 
+			#{nxDioApplyDate}, 
+			#{nxDioApplyStatus}, 
+			#{nxDioApplyQuantity}, 
+			#{nxDioApplyStandard}, 
+			#{nxDioApplyRemark},
+		 	#{nxDioIndependentGoodsId},
+		 	#{nxDioOperationTime}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentIndependentOrderEntity">
+		update nx_department_independent_order 
+		<set>
+			<if test="nxDioDepartmentId != null">`nx_DIO_department_id` = #{nxDioDepartmentId}, </if>
+			<if test="nxDioDepartmentFatherId != null">`nx_DIO_department_father_id` = #{nxDioDepartmentFatherId}, </if>
+			<if test="nxDioApplyUserId != null">`nx_DIO_apply_user_id` = #{nxDioApplyUserId}, </if>
+			<if test="nxDioApplyTime != null">`nx_DIO_apply_time` = #{nxDioApplyTime}, </if>
+			<if test="nxDioApplyDate != null">`nx_DIO_apply_date` = #{nxDioApplyDate}, </if>
+			<if test="nxDioApplyStatus != null">`nx_DIO_apply_status` = #{nxDioApplyStatus}, </if>
+			<if test="nxDioApplyQuantity != null">`nx_DIO_apply_quantity` = #{nxDioApplyQuantity}, </if>
+			<if test="nxDioApplyStandard != null">`nx_DIO_apply_standard` = #{nxDioApplyStandard}, </if>
+			<if test="nxDioIndependentGoodsId != null">`nx_DIO_independent_goods_id` = #{nxDioIndependentGoodsId}, </if>
+			<if test="nxDioOperationTime != null">`nx_DIO_operation_time` = #{nxDioOperationTime}, </if>
+			<if test="nxDioApplyRemark != null">`nx_DIO_apply_remark` = #{nxDioApplyRemark}</if>
+		</set>
+		where nx_dep_independent_order_id = #{nxDepIndependentOrderId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_independent_order where nx_dep_independent_order_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_independent_order where nx_dep_independent_order_id in 
+		<foreach item="nxDepIndependentOrderId" collection="array" open="(" separator="," close=")">
+			#{nxDepIndependentOrderId}
+		</foreach>
+	</delete>
+
+</mapper>

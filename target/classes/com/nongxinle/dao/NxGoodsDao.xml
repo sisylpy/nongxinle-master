@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxGoodsDao">
+
+
+    <select id="queryQuickSearchNxCategoryGoods" resultMap="nxGoods">
+        select g.nx_goods_id              'nx_goods_id',
+               g.nx_goods_name            'nx_goods_name',
+               g.nx_goods_detail          'nx_goods_detail',
+               g.nx_goods_brand           'nx_goods_brand',
+               g.nx_goods_place           'nx_goods_place',
+               g.nx_goods_standardname    'nx_goods_standardname',
+               g.nx_goods_standard_weight 'nx_goods_standard_weight',
+               g.nx_goods_file            'nx_goods_file',
+               g.nx_goods_standard_amount 'nx_goods_standard_amount',
+               g.nx_goods_father_id       'nx_goods_father_id',
+               g.nx_goods_pinyin          'nx_goods_pinyin',
+               g.nx_goods_py              'nx_goods_py',
+               f.nx_goods_id              'f_nx_goods_id',
+               f.nx_goods_name            'f_nx_goods_name',
+               f.nx_goods_file            'f_nx_goods_file',
+               f.nx_goods_level           'f_nx_goods_level',
+               a.nx_als_goods_id,
+               a.nx_alias_name
+        from nx_goods as g
+                 left join nx_goods as f on f.nx_goods_id = g.nx_goods_father_id
+                 left join nx_alias as a on a.nx_als_goods_id = g.nx_goods_id
+        where g.nx_goods_father_id = #{fatherId}
+          and (g.nx_goods_py like concat('%', #{searchStr}, '%')
+            or g.nx_goods_pinyin like concat('%', #{searchStr}, '%')
+            or g.nx_goods_name like concat('%', #{searchStr}, '%')
+            or a.nx_alias_name like concat('%', #{searchStr}, '%')
+            )
+        order by g.nx_goods_sort, g.nx_goods_sons_sort
+    </select>
+
+    <resultMap id="searchGoods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+        <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+        <result property="nxGoodsBrand" column="nx_goods_brand"/>
+        <result property="nxGoodsPlace" column="nx_goods_place"/>
+        <result property="nxGoodsDetail" column="nx_goods_detail"/>
+        <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+        <result property="nxGoodsPy" column="nx_goods_py"/>
+        <result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+        <association property="fatherGoods" resultMap="father"/>
+        <collection property="nxAliasEntities" resultMap="aliasList"/>
+        <collection property="nxGoodsStandardEntities" resultMap="standardList"/>
+    </resultMap>
+
+    <select id="queryQuickSearchNxGoods" resultMap="searchGoods">
+
+        select father.nx_goods_id   'f_nx_goods_id',
+               father.nx_goods_name 'f_nx_goods_name',
+               father.nx_goods_file 'f_nx_goods_file',
+
+               g.nx_goods_id,
+               g.nx_goods_name,
+               g.nx_goods_detail,
+               g.nx_goods_brand,
+               g.nx_goods_place,
+               g.nx_goods_standardname,
+               g.nx_goods_standard_weight,
+               g.nx_goods_father_id,
+               g.nx_goods_py,
+               g.nx_goods_pinyin,
+               g.nx_goods_sort,
+               g.nx_goods_sons_sort,
+               a.nx_als_goods_id,
+               a.nx_alias_name,
+
+               ns.nx_standard_id,
+               ns.nx_standard_name,
+               ns.nx_standard_weight,
+               ns.nx_s_goods_id
+        from nx_goods as g
+                 left join nx_goods as father on father.nx_goods_id = g.nx_goods_father_id
+                 left join nx_alias as a on a.nx_als_goods_id = g.nx_goods_id
+                 left join nx_standard as ns on ns.nx_s_goods_id = g.nx_goods_id
+        where (g.nx_goods_py like concat('%', #{searchPinyin}, '%')
+            or g.nx_goods_pinyin like concat('%', #{searchPinyin}, '%')
+            or g.nx_goods_name like concat('%', #{searchStr}, '%')
+            or a.nx_alias_name like concat('%', #{searchStr}, '%')
+            )
+          and g.nx_goods_standardname is not null
+    </select>
+
+
+    <select id="queryNxGoodsByParams" resultMap="nxGoods">
+        select * from (select * from nx_goods
+        <where>
+            <if test="fatherId != null">
+                and nx_goods_father_id = #{fatherId}
+            </if>
+            <if test="disId != null">
+                and nx_goods_apply_nx_distributer_id = #{disId}
+            </if>
+            <if test="level != null">
+                and nx_goods_level = #{level}
+            </if>
+            <if test="isOldestSon != null">
+                and nx_goods_is_oldest_son = #{isOldestSon}
+            </if>
+        </where>
+        order by nx_goods_sort, nx_goods_sons_sort
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+        ) as g
+        left join nx_standard as st on st.nx_s_goods_id = g.nx_goods_id
+        left join nx_alias as na on na.nx_als_goods_id = g.nx_goods_id
+        order by g.nx_goods_sort, g.nx_goods_sons_sort
+    </select>
+
+    <resultMap id="standardList" type="NxStandardEntity">
+        <id property="nxStandardId" column="nx_standard_id"/>
+        <result property="nxStandardName" column="nx_standard_name"/>
+        <result property="nxStandardScale" column="nx_standard_scale"/>
+        <result property="nxStandardFilePath" column="nx_standard_file_path"/>
+    </resultMap>
+    <resultMap id="aliasList" type="NxAliasEntity">
+        <id property="nxAliasId" column="nx_alias_id"/>
+        <result property="nxAliasName" column="nx_alias_name"/>
+        <result property="nxAlsGoodsId" column="nx_als_goods_id"/>
+    </resultMap>
+    <resultMap id="father" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="f_nx_goods_id"/>
+        <result property="nxGoodsName" column="f_nx_goods_name"/>
+        <result property="nxGoodsFile" column="f_nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="f_nx_goods_file_big"/>
+        <result property="nxGoodsLevel" column="f_nx_goods_level"/>
+        <result property="nxGoodsFatherId" column="f_nx_goods_father_id"/>
+        <result property="nxGoodsSort" column="f_nx_goods_sort"/>
+        <result property="nxGoodsSonsSort" column="f_nx_goods_sons_sort"/>
+    </resultMap>
+    <resultMap id="grandGoods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="grand_nx_goods_id"/>
+        <result property="nxGoodsName" column="grand_nx_goods_name"/>
+        <result property="nxGoodsFile" column="grand_nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="grand_nx_goods_file_big"/>
+        <result property="nxGoodsFatherId" column="grand_nx_goods_father_id"/>
+        <result property="nxGoodsSort" column="grand_nx_goods_sort"/>
+        <result property="nxGoodsSonsSort" column="grand_nx_goods_sons_sort"/>
+    </resultMap>
+
+    <resultMap id="greatGrandGoods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="greatgrand_nx_goods_id"/>
+        <result property="nxGoodsName" column="greatgrand_nx_goods_name"/>
+        <result property="nxGoodsFile" column="greatgrand_nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="greatgrand_nx_goods_file_big"/>
+        <result property="nxGoodsSort" column="greatgrand_nx_goods_sort"/>
+        <result property="nxGoodsSonsSort" column="greatgrand_nx_goods_sons_sort"/>
+    </resultMap>
+
+    <resultMap id="nxGoods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsSort" column="nx_goods_sort"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsDetail" column="nx_goods_detail"/>
+        <result property="nxGoodsPlace" column="nx_goods_place"/>
+        <result property="nxGoodsBrand" column="nx_goods_brand"/>
+        <result property="nxGoodsFile" column="nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="nx_goods_file_big"/>
+        <result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+        <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+        <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+        <result property="nxGoodsStandardAmount" column="nx_goods_standard_amount"/>
+        <result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+        <result property="nxGoodsPy" column="nx_goods_py"/>
+        <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+        <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <association property="fatherGoods" resultMap="father"/>
+        <association property="grandGoods" resultMap="grandGoods"/>
+        <association property="greatGrandGoods" resultMap="greatGrandGoods"/>
+        <collection property="nxGoodsStandardEntities" resultMap="standardList"/>
+        <collection property="nxAliasEntities" resultMap="aliasList"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="nxGoods">
+        select g.nx_goods_id              'nx_goods_id',
+               g.nx_goods_name            'nx_goods_name',
+               g.nx_goods_detail          'nx_goods_detail',
+               g.nx_goods_brand           'nx_goods_brand',
+               g.nx_goods_place           'nx_goods_place',
+               g.nx_goods_standardname    'nx_goods_standardname',
+               g.nx_goods_standard_weight 'nx_goods_standard_weight',
+               g.nx_goods_file            'nx_goods_file',
+               g.nx_goods_file_big         'nx_goods_file_big',
+               g.nx_goods_standard_amount 'nx_goods_standard_amount',
+               g.nx_goods_father_id       'nx_goods_father_id',
+               g.nx_goods_pinyin          'nx_goods_pinyin',
+               g.nx_goods_py              'nx_goods_py',
+               g.nx_goods_father_id       'nx_goods_father_id',
+               g.nx_goods_is_oldest_son   'nx_goods_is_oldest_son',
+               g.nx_goods_sons_sort       'nx_goods_sons_sort',
+               g.nx_goods_grand_id        'nx_goods_grand_id',
+               g.nx_goods_level           'nx_goods_level',
+               g.nx_goods_sort            'nx_goods_sort',
+               g.nx_goods_is_hidden       'nx_goods_is_hidden',
+
+               f.nx_goods_id              'f_nx_goods_id',
+               f.nx_goods_name            'f_nx_goods_name',
+               f.nx_goods_file            'f_nx_goods_file',
+               f.nx_goods_file_big        'f_nx_goods_file_big',
+               f.nx_goods_father_id       'f_nx_goods_father_id',
+               f.nx_goods_grand_id        'f_nx_goods_grand_id',
+               f.nx_goods_sort            'f_nx_goods_sort',
+               f.nx_goods_sons_sort       'f_nx_goods_sons_sort',
+               f.nx_goods_is_hidden       'f_nx_goods_is_hidden',
+
+               grand.nx_goods_id          'grand_nx_goods_id',
+               grand.nx_goods_name        'grand_nx_goods_name',
+               grand.nx_goods_father_id   'grand_nx_goods_father_id',
+               grand.nx_goods_file        'grand_nx_goods_file',
+               grand.nx_goods_file_big     'grand_nx_goods_file_big',
+               grand.nx_goods_sort         'grand_nx_goods_sort',
+               grand.nx_goods_sons_sort     'grand_nx_goods_sons_sort',
+               greatgrand.nx_goods_id     'greatgrand_nx_goods_id',
+               greatgrand.nx_goods_name   'greatgrand_nx_goods_name',
+               greatgrand.nx_goods_sort   'greatgrand_nx_goods_sort',
+               greatgrand.nx_goods_sons_sort   'greatgrand_nx_goods_sons_sort',
+               greatgrand.nx_goods_file   'greatgrand_nx_goods_file',
+               greatgrand.nx_goods_file_big   'greatgrand_nx_goods_file_big',
+               s.nx_standard_name,
+               s.nx_standard_scale,
+               s.nx_standard_id,
+               s.nx_standard_file_path,
+               s.nx_standard_scale
+        from nx_goods as g
+                 left join nx_standard as s on s.nx_s_goods_id = g.nx_goods_id
+                 left join nx_alias as na on na.nx_als_goods_id = g.nx_goods_id
+                 left join nx_goods as f on g.nx_goods_father_id = f.nx_goods_id
+                 left join nx_goods as grand on grand.nx_goods_id = f.nx_goods_father_id
+                 left join nx_goods as greatgrand on greatgrand.nx_goods_id = grand.nx_goods_father_id
+        where g.nx_goods_id = #{value}
+    </select>
+
+
+    <resultMap id="nxCatalogue" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsFile" column="nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="nx_goods_file_big"/>
+        <collection property="nxGoodsEntityList" ofType="NxGoodsEntity">
+            <id property="nxGoodsId" column="sub_nx_goods_id"/>
+            <result property="nxGoodsName" column="sub_nx_goods_name"/>
+            <result property="nxGoodsFile" column="sub_nx_goods_file"/>
+            <collection property="nxGoodsEntityList" resultMap="goods"/>
+        </collection>
+    </resultMap>
+
+
+    <resultMap id="goods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+        <result property="nxGoodsStandardWeight" column="sub_nx_goods_standard_weight"/>
+        <result property="nxGoodsDetail" column="nx_goods_detail"/>
+        <result property="nxGoodsPlace" column="nx_goods_place"/>
+        <result property="nxGoodsBrand" column="nx_goods_brand"/>
+        <result property="nxGoodsSort" column="nx_goods_sort"/>
+    </resultMap>
+
+
+    <select id="queryList" resultMap="nxCatalogue">
+        select g.nx_goods_id             'nx_goods_id',
+               g.nx_goods_name           'nx_goods_name',
+               gg.nx_goods_id            'sub_nx_goods_id',
+               gg.nx_goods_name          'sub_nx_goods_name',
+               gg.nx_goods_file          'sub_nx_goods_file',
+               ggg.nx_goods_id           'goods_id',
+               ggg.nx_goods_name         'goods_name',
+               ggg.nx_goods_standardname 'goods_standardname',
+               ggg.nx_goods_detail       'goods_detail'
+        from nx_goods as g
+                 left join nx_goods as gg on g.nx_goods_id = gg.nx_goods_father_id
+                 left join nx_goods as ggg on gg.nx_goods_id = ggg.nx_goods_father_id
+        where g.nx_goods_father_id = 1
+        order by g.nx_goods_sort, g.nx_goods_sons_sort
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_goods
+    </select>
+
+
+    <resultMap id="nxGoodsCateList" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsFile" column="nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="nx_goods_file_big"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsSort" column="nx_goods_sort"/>
+        <collection property="nxGoodsEntityList" ofType="NxGoodsEntity">
+            <id property="nxGoodsId" column="sub_nx_goods_id"/>
+            <result property="nxGoodsName" column="sub_nx_goods_name"/>
+            <result property="nxGoodsFile" column="sub_nx_goods_file"/>
+            <result property="nxGoodsFatherId" column="sub_nx_goods_father_id"/>
+            <result property="nxGoodsStandardname" column="sub_nx_goods_standardname"/>
+            <result property="nxGoodsStandardWeight" column="sub_nx_goods_standard_weight"/>
+            <result property="nxGoodsDetail" column="sub_nx_goods_detail"/>
+            <result property="nxGoodsBrand" column="sub_nx_goods_brand"/>
+            <result property="nxGoodsPlace" column="sub_nx_goods_place"/>
+            <result property="nxGoodsSort" column="sub_nx_goods_sort"/>
+        </collection>
+    </resultMap>
+
+
+    <select id="getNxGoodsCateList" resultMap="nxGoodsCateList">
+        select *,
+               g.nx_goods_id         'nx_goods_id',
+               g.nx_goods_name       'nx_goods_name',
+               g.nx_goods_file       'nx_goods_file',
+               g.nx_goods_sort       'nx_goods_sort',
+               g.nx_goods_sons_sort  'nx_goods_sons_sort',
+               gg.nx_goods_id        'sub_nx_goods_id',
+               gg.nx_goods_name      'sub_nx_goods_name',
+               gg.nx_goods_detail    'sub_nx_goods_detail',
+               gg.nx_goods_file      'sub_nx_goods_file',
+               gg.nx_goods_father_id 'sub_nx_goods_father_id',
+               gg.nx_goods_sort      'sub_nx_goods_sort'
+
+        from nx_goods as g
+                 left join nx_goods as gg on g.nx_goods_id = gg.nx_goods_father_id
+        where g.nx_goods_father_id = 0
+        order by g.nx_goods_sort, g.nx_goods_sons_sort, gg.nx_goods_sort, gg.nx_goods_sons_sort
+    </select>
+
+    <select id="getNxFatherGoodsByFatherId" resultType="com.nongxinle.entity.NxGoodsEntity">
+        select *
+        from nx_goods
+        where nx_goods_father_id = #{fatherId}
+        order by nx_goods_sort, nx_goods_sons_sort
+    </select>
+
+
+    <select id="queryListWithFatherId" resultMap="nxGoods">
+        select * from
+        (select * from nx_goods
+        <if test="fatherId != null">
+            where nx_goods_father_id = #{fatherId}
+        </if>
+        order by nx_goods_sort, nx_goods_sons_sort
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>)as g
+        left join nx_standard as s on g.nx_goods_id = s.nx_s_goods_id
+        left join nx_alias as na on na.nx_als_goods_id = g.nx_goods_id
+        order by g.nx_goods_sort, g.nx_goods_sons_sort
+    </select>
+
+    <select id="queryTotalByFatherId" resultType="java.lang.Integer">
+        select count(*)
+        from nx_goods
+        where nx_goods_father_id = #{fatherId}
+    </select>
+    <select id="querySubNameByFatherId" resultType="com.nongxinle.entity.NxGoodsEntity">
+        select nx_goods_name, nx_goods_id, nx_goods_sort, nx_goods_sort
+        from nx_goods
+        where nx_goods_father_id = #{fatherId}
+        order by nx_goods_sort, nx_goods_sort
+    </select>
+    <select id="queryGoodsCataByType" resultType="com.nongxinle.entity.NxGoodsEntity">
+        select *
+        from nx_goods
+        where nx_goods_father_id = #{type}
+    </select>
+
+    <!--    <select id="queryDownloadGoods" resultType="com.nongxinle.entity.NxGoodsEntity">-->
+    <!--        select *-->
+    <!--        from nx_goods-->
+    <!--        where nx_goods_father_id = #{fatherId}-->
+    <!--    </select>-->
+
+    <select id="queryGoodsTree" resultType="com.nongxinle.entity.NxGoodsEntity">
+        select *
+        from nx_goods
+        where nx_goods_father_id &lt; 100
+    </select>
+
+    <select id="queryIfHasSameGoods" resultType="com.nongxinle.entity.NxGoodsEntity">
+        select * from nx_goods
+        <where>
+            <if test="goodsName != null">
+                and nx_goods_name = #{goodsName}
+            </if>
+            <if test="goodsPinyin != null">
+                and nx_goods_pinyin = #{goodsPinyin}
+            </if>
+
+            <if test="goodsBrand != '-1'">
+                and nx_goods_brand = #{goodsBrand}
+            </if>
+            <if test="goodsDetail != '-1'">
+                and nx_goods_detail = #{goodsDetail}
+            </if>
+            <if test="goodsStandard != '-1'">
+                and nx_goods_standardname = #{goodsStandard}
+            </if>
+            <if test="standardWeight != '-1'">
+                and nx_goods_standard_weight = #{standardWeight}
+            </if>
+            <if test="place != '-1'">
+                and nx_goods_place = #{place}
+            </if>
+            <if test="sort != null">
+                and nx_goods_sort = #{sort}
+            </if>
+            <if test="level != null">
+                and nx_goods_level = #{level}
+            </if>
+            <if test="fatherId != null">
+                and nx_goods_father_id = #{fatherId}
+            </if>
+            <if test="notEqualFatherId != null">
+                and nx_goods_father_id != #{notEqualFatherId}
+            </if>
+
+        </where>
+
+    </select>
+
+    <select id="queryNxGoodsOrderByGoodsId" resultType="com.nongxinle.entity.NxGoodsEntity">
+        select * from nx_goods
+        <if test="fatherId != null">
+            where nx_goods_father_id = #{fatherId}
+        </if>
+        order by nx_goods_sort, nx_goods_sons_sort
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+
+    </select>
+
+    <resultMap id="nxDisGoods" type="NxDistributerGoodsEntity">
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+        <result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
+        <result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
+        <result property="nxDgPriceThirdDay" column="nx_dg_price_third_day"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+       <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+        <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+    </resultMap>
+
+    <resultMap id="nxGoodsWithNxDis" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+        <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+        <result property="nxGoodsBrand" column="nx_goods_brand"/>
+        <result property="nxGoodsPlace" column="nx_goods_place"/>
+        <result property="nxGoodsDetail" column="nx_goods_detail"/>
+        <result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+        <result property="nxGoodsPy" column="nx_goods_py"/>
+        <result property="nxGoodsFile" column="nx_goods_file"/>
+        <result property="nxGoodsFileBig" column="nx_goods_file_big"/>
+        <result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+        <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+        <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+        <association property="fatherGoods" resultMap="father"/>
+        <collection property="nxGoodsStandardEntities" resultMap="standardList"/>
+        <collection property="nxAliasEntities" resultMap="aliasList"/>
+    </resultMap>
+
+    <select id="queryQuickSearchNxCategoryGoodsWithNxDis" resultMap="nxGoodsWithNxDis">
+        select g.nx_goods_id              'nx_goods_id',
+               g.nx_goods_name            'nx_goods_name',
+               g.nx_goods_detail          'nx_goods_detail',
+               g.nx_goods_brand           'nx_goods_brand',
+               g.nx_goods_place           'nx_goods_place',
+               g.nx_goods_standardname    'nx_goods_standardname',
+               g.nx_goods_standard_weight 'nx_goods_standard_weight',
+               g.nx_goods_file            'nx_goods_file',
+               g.nx_goods_standard_amount 'nx_goods_standard_amount',
+               g.nx_goods_father_id       'nx_goods_father_id',
+               g.nx_goods_pinyin          'nx_goods_pinyin',
+               g.nx_goods_py              'nx_goods_py',
+               g.nx_goods_sort            'nx_goods_sort',
+               g.nx_goods_sons_sort       'nx_goods_sons_sort',
+               g.nx_goods_is_hidden       'nx_goods_is_hidden',
+               f.nx_goods_id              'f_nx_goods_id',
+               f.nx_goods_name            'f_nx_goods_name',
+               f.nx_goods_file            'f_nx_goods_file',
+               f.nx_goods_level           'f_nx_goods_level',
+               a.nx_als_goods_id,
+               a.nx_alias_name,
+               ns.nx_standard_id,
+               ns.nx_standard_name,
+               ns.nx_s_goods_id
+        from nx_goods as g
+                 left join nx_goods as f on f.nx_goods_id = g.nx_goods_father_id
+                 left join nx_alias as a on a.nx_als_goods_id = g.nx_goods_id
+                 left join nx_standard as ns on ns.nx_s_goods_id = g.nx_goods_id
+
+        where g.nx_goods_father_id = #{fatherId}
+          and (g.nx_goods_py like concat('%', #{searchStr}, '%')
+            or g.nx_goods_pinyin like concat('%', #{searchStr}, '%')
+            or g.nx_goods_name like concat('%', #{searchStr}, '%')
+            or a.nx_alias_name like concat('%', #{searchStr}, '%')
+            )
+
+        order by g.nx_goods_sort, g.nx_goods_sons_sort
+    </select>
+
+    <resultMap id="ggGoods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="grand_nx_goods_id"/>
+        <result property="nxGoodsName" column="grand_nx_goods_name"/>
+        <result property="nxGoodsFatherId" column="grand_nx_goods_father_id"/>
+        <collection property="nxGoodsFatherEntityList" resultMap="father"/>
+    </resultMap>
+    <resultMap id="gggGoods" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="greatgrand_nx_goods_id"/>
+        <result property="nxGoodsName" column="greatgrand_nx_goods_name"/>
+        <result property="nxGoodsFatherId" column="greatgrand_nx_goods_father_id"/>
+        <collection property="nxGoodsGrandEntityList" resultMap="ggGoods"/>
+    </resultMap>
+    <select id="queryNxFatherGoods" resultMap="gggGoods">
+        select f.nx_goods_id         'f_nx_goods_id',
+               f.nx_goods_name       'f_nx_goods_name',
+               f.nx_goods_father_id  'f_nx_goods_father_id',
+               f.nx_goods_sort       'f_nx_goods_sort',
+               gg.nx_goods_id        'grand_nx_goods_id',
+               gg.nx_goods_name      'grand_nx_goods_name',
+               gg.nx_goods_father_id 'grand_nx_goods_father_id',
+               gg.nx_goods_sort      'grand_nx_goods_sort',
+               ggg.nx_goods_id       'greatgrand_nx_goods_id',
+               ggg.nx_goods_name     'greatgrand_nx_goods_name',
+               ggg.nx_goods_sort     'greatgrand_nx_goods_sort'
+
+
+        from nx_goods as ggg
+                 left join nx_goods as gg on ggg.nx_goods_id = gg.nx_goods_father_id
+                 left join nx_goods as f on gg.nx_goods_id = f.nx_goods_father_id
+        where ggg.nx_goods_father_id = 0
+        order by ggg.nx_goods_sort, gg.nx_goods_sort, f.nx_goods_sort, f.nx_goods_sons_sort
+    </select>
+    <select id="queryQuickSearchAllGoodsWithNxDis" resultMap="nxGoodsWithNxDis">
+        select g.nx_goods_id              'nx_goods_id',
+               g.nx_goods_name            'nx_goods_name',
+               g.nx_goods_detail          'nx_goods_detail',
+               g.nx_goods_brand           'nx_goods_brand',
+               g.nx_goods_place           'nx_goods_place',
+               g.nx_goods_standardname    'nx_goods_standardname',
+               g.nx_goods_standard_weight 'nx_goods_standard_weight',
+               g.nx_goods_file            'nx_goods_file',
+               g.nx_goods_standard_amount 'nx_goods_standard_amount',
+               g.nx_goods_father_id       'nx_goods_father_id',
+               g.nx_goods_pinyin          'nx_goods_pinyin',
+               g.nx_goods_py              'nx_goods_py',
+               g.nx_goods_level           'nx_goods_level',
+               f.nx_goods_id              'f_nx_goods_id',
+               f.nx_goods_name            'f_nx_goods_name',
+               f.nx_goods_file            'f_nx_goods_file',
+               f.nx_goods_level           'f_nx_goods_level',
+               a.nx_als_goods_id,
+               a.nx_alias_name,
+               ndg.nx_distributer_goods_id,
+               ndg.nx_dg_nx_goods_id,
+               ndg.nx_dg_distributer_id,
+               ndg.nx_dg_dfg_goods_father_id,
+               ns.nx_standard_id,
+               ns.nx_standard_name,
+               ns.nx_s_goods_id
+        from nx_goods as g
+                 left join nx_goods as f on f.nx_goods_id = g.nx_goods_father_id
+                 left join nx_alias as a on a.nx_als_goods_id = g.nx_goods_id
+                 left join nx_distributer_goods as ndg on ndg.nx_dg_nx_goods_id = g.nx_goods_id
+                 left join nx_standard as ns on ns.nx_s_goods_id = g.nx_goods_id
+            and ndg.nx_dg_distributer_id = #{disId}
+        where (g.nx_goods_py like concat('%', #{searchStr}, '%')
+            or g.nx_goods_pinyin like concat('%', #{searchStr}, '%')
+            or g.nx_goods_name like concat('%', #{searchStr}, '%')
+            or a.nx_alias_name like concat('%', #{searchStr}, '%')
+            )
+          and g.nx_goods_level = 2
+        order by g.nx_goods_sort, g.nx_goods_sons_sort
+
+    </select>
+
+    <resultMap id="nxgoodsWithGreat" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsSort" column="nx_goods_sort"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+        <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+        <result property="nxGoodsBrand" column="nx_goods_brand"/>
+        <result property="nxGoodsPlace" column="nx_goods_place"/>
+        <result property="nxGoodsDetail" column="nx_goods_detail"/>
+        <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+        <result property="nxGoodsPy" column="nx_goods_py"/>
+        <result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+        <association property="fatherGoods" resultMap="father"/>
+
+    </resultMap>
+
+    <select id="queryQuickSearchFatherGoods" resultMap="nxgoodsWithGreat">
+        select f.nx_goods_id            'nx_goods_id',
+               f.nx_goods_name          'nx_goods_name',
+               f.nx_goods_detail        'nx_goods_detail',
+               f.nx_goods_brand         'nx_goods_brand',
+               f.nx_goods_place         'nx_goods_place',
+               f.nx_goods_level         'nx_goods_level',
+               f.nx_goods_sort          'nx_goods_sort',
+               f.nx_goods_father_id     'nx_goods_father_id',
+               f.nx_goods_grand_id      'nx_goods_grand_id',
+               f.nx_goods_pinyin        'nx_goods_pinyin',
+               f.nx_goods_py            'nx_goods_py',
+               f.nx_goods_is_hidden     'nx_goods_is_hidden',
+               f.nx_goods_sons_sort     'nx_goods_sons_sort',
+               f.nx_goods_is_oldest_son 'nx_goods_is_oldest_son',
+
+               great.nx_goods_id        'f_nx_goods_id',
+               great.nx_goods_name      'f_nx_goods_name',
+               great.nx_goods_file      'f_nx_goods_file',
+               great.nx_goods_level     'f_nx_goods_level',
+               great.nx_goods_sort      'f_nx_goods_sort'
+
+        from nx_goods as f
+                 left join nx_goods as great on great.nx_goods_id = f.nx_goods_father_id
+
+        where (
+                f.nx_goods_pinyin like concat('%', #{searchPinyin}, '%')
+                or f.nx_goods_py like concat('%', #{searchPinyin}, '%')
+                or f.nx_goods_name like concat('%', #{searchStr}, '%')
+            )
+          and f.nx_goods_level = 2
+        order by f.nx_goods_sort, f.nx_goods_sons_sort
+    </select>
+    <select id="querySecondLevelMaxId" resultType="java.lang.Integer">
+        select Max(nx_goods_id)
+        from nx_goods
+        where nx_goods_id &lt; 100000
+    </select>
+
+    <resultMap id="gbDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentType" column="gb_department_type"/>
+        <result property="gbDepartmentName" column="gb_department_name"/>
+        <result property="gbDepartmentFatherId" column="gb_department_father_id"/>
+        <result property="gbDepartmentLevel" column="gb_department_level"/>
+        <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
+    </resultMap>
+    <resultMap id="fatherTwoLevel" type="NxDistributerFatherGoodsEntity">
+        <id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="nx_dfg_father_goods_name"/>
+        <result property="nxDfgFathersFatherId" column="nx_dfg_fathers_father_id"/>
+        <result property="nxDfgFatherGoodsLevel" column="nx_dfg_father_goods_level"/>
+    </resultMap>
+    <resultMap id="serviceCities" type="NxDistributerServiceCityEntity">
+        <id property="nxDistributerServiceCityId" column="nx_distributer_service_city_id"/>
+        <result property="nxDsCityName" column="nx_ds_city_name"/>
+        <result property="nxDsDisId" column="nx_ds_dis_id"/>
+    </resultMap>
+    <resultMap id="nxdisGbDis" type="NxDistributerGbDistributerEntity">
+        <id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+        <result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
+        <result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
+        <result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
+        <result property="nxDgdGbPayMethod" column="nx_DGD_gb_pay_method"/>
+        <result property="nxDgdGbPayPeriodWeek" column="nx_DGD_gb_pay_period_week"/>
+        <result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
+        <result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
+        <result property="nxDgdStatus" column="nx_DGD_status"/>
+    </resultMap>
+    <resultMap id="nxDisWithGbDep" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <association property="gbDepartmentEntity" resultMap="gbDep"/>
+        <association property="nxDistributerGbDistributerEntity" resultMap="nxdisGbDis"/>
+        <collection property="nxGoodsEntities" resultMap="fatherTwoLevel"/>
+        <collection property="nxDistributerServiceCityEntities" resultMap="serviceCities"/>
+    </resultMap>
+
+
+    <resultMap id="cataDistributer" type="NxGoodsEntity">
+        <id property="nxGoodsId" column="nx_goods_id"/>
+        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+        <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsName" column="nx_goods_name"/>
+        <result property="nxGoodsFatherId" column="nxGoodsFatherId"/>
+        <collection property="nxDistributerEntities" resultMap="nxDisWithGbDep"/>
+    </resultMap>
+
+    <!--    <select id="queryCataNxDistribterWithPeisong" resultMap="cataDistributer">-->
+    <!--        select * from-->
+    <!--        (select * from   nx_goods where nx_goods_father_id = 0 ) as ng-->
+    <!--                 left join nx_distributer as dis-->
+    <!--                           on ng.nx_goods_id = dis.nx_distributer_business_type_id-->
+    <!--                 left join nx_distributer_father_goods as ndfg on ndfg.nx_dfg_distributer_id = dis.nx_distributer_id and ndfg.nx_dfg_father_goods_level = 1-->
+    <!--                left join nx_distributer_service_city as ndsc  on ndsc.nx_ds_dis_id = dis.nx_distributer_id-->
+    <!--                 left join nx_distributer_gb_distributer as ndgd-->
+    <!--                           on ndgd.nx_DGD_nx_distributer_id = dis.nx_distributer_id and ndgd.nx_DGD_gb_dep_id = #{depId}-->
+    <!--                 left join gb_department as dep on dep.gb_department_id = ndgd.nx_DGD_gb_dep_id-->
+    <!--           order by  ndfg.nx_distributer_father_goods_id ASC-->
+
+    <!--    </select>-->
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxGoodsEntity"
+            useGeneratedKeys="true" keyProperty="nxGoodsId">
+        insert into nx_goods
+        (`nx_goods_id`,
+         `nx_goods_name`,
+         `nx_goods_standardname`,
+         `nx_goods_brand`,
+         `nx_goods_place`,
+         `nx_goods_pinyin`,
+         `nx_goods_py`,
+         `nx_goods_father_id`,
+         `nx_goods_sort`,
+         `nx_goods_detail`,
+         `nx_goods_file`,
+         `nx_goods_file_big`,
+         `nx_goods_standard_amount`,
+         `nx_goods_standard_weight`,
+         `nx_goods_apply_nx_distributer_id`,
+         `nx_goods_level`,
+         `nx_goods_grand_id`,
+         `nx_goods_is_oldest_son`,
+         `nx_goods_sons_sort`,
+         `nx_goods_is_hidden`)
+        values (#{nxGoodsId},
+                #{nxGoodsName},
+                #{nxGoodsStandardname},
+                #{nxGoodsBrand},
+                #{nxGoodsPlace},
+                #{nxGoodsPinyin},
+                #{nxGoodsPy},
+                #{nxGoodsFatherId},
+                #{nxGoodsSort},
+                #{nxGoodsDetail},
+                #{nxGoodsFile},
+                #{nxGoodsFileBig},
+                #{nxGoodsStandardAmount},
+                #{nxGoodsStandardWeight},
+                #{nxGoodsApplyNxDistributerId},
+                #{nxGoodsLevel},
+                #{nxGoodsGrandId},
+                #{nxGoodsIsOldestSon},
+                #{nxGoodsSonsSort},
+                #{nxGoodsIsHidden})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxGoodsEntity">
+        update nx_goods
+        <set>
+            <if test="nxGoodsName != null">`nx_goods_name` = #{nxGoodsName},</if>
+            <if test="nxGoodsStandardname != null">`nx_goods_standardname` = #{nxGoodsStandardname},</if>
+            <if test="nxGoodsBrand != null">`nx_goods_brand` = #{nxGoodsBrand},</if>
+            <if test="nxGoodsPlace != null">`nx_goods_place` = #{nxGoodsPlace},</if>
+            <if test="nxGoodsPinyin != null">`nx_goods_pinyin` = #{nxGoodsPinyin},</if>
+            <if test="nxGoodsPy != null">`nx_goods_py` = #{nxGoodsPy},</if>
+            <if test="nxGoodsFatherId != null">`nx_goods_father_id` = #{nxGoodsFatherId},</if>
+            <if test="nxGoodsDetail != null">`nx_goods_detail` = #{nxGoodsDetail},</if>
+            <if test="nxGoodsFile != null">`nx_goods_file` = #{nxGoodsFile},</if>
+            <if test="nxGoodsFileBig != null">`nx_goods_file_big` = #{nxGoodsFileBig},</if>
+            <if test="nxGoodsStandardAmount != null">`nx_goods_standard_amount` = #{nxGoodsStandardAmount},</if>
+            <if test="nxGoodsStandardWeight != null">`nx_goods_standard_weight` = #{nxGoodsStandardWeight},</if>
+            <if test="nxGoodsApplyNxDistributerId != null">`nx_goods_apply_nx_goods_id` =
+                #{nxGoodsApplyNxDistributerId},
+            </if>
+            <if test="nxGoodsLevel != null">`nx_goods_level` = #{nxGoodsLevel},</if>
+            <if test="nxGoodsGrandId != null">`nx_goods_grand_id` = #{nxGoodsGrandId},</if>
+            <if test="nxGoodsIsOldestSon != null">`nx_goods_is_oldest_son` = #{nxGoodsIsOldestSon},</if>
+            <if test="nxGoodsSonsSort != null">`nx_goods_sons_sort` = #{nxGoodsSonsSort},</if>
+            <if test="nxGoodsIsHidden != null">`nx_goods_is_hidden` = #{nxGoodsIsHidden},</if>
+            <if test="nxGoodsSort != null">`nx_goods_sort` = #{nxGoodsSort}</if>
+        </set>
+        where nx_goods_id = #{nxGoodsId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_goods
+        where nx_goods_id = #{value}
+    </delete>
+
+    <!--    <delete id="deleteBatch">-->
+    <!--        delete from nx_goods where nx_goods_id in-->
+    <!--        <foreach item="nxGoodsId" collection="array" open="(" separator="," close=")">-->
+    <!--            #{nxGoodsId}-->
+    <!--        </foreach>-->
+    <!--    </delete>-->
+
+</mapper>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerAliasDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerAliasEntity">
+		select * from nx_distributer_alias where nx_distributer_alias_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerAliasEntity">
+		select * from nx_distributer_alias 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_alias 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerAliasEntity"
+		useGeneratedKeys="true" keyProperty="nxDistributerAliasId">
+		insert into nx_distributer_alias
+		(
+			`nx_distributer_alias_id`, 
+			`nx_DA_dis_goods_id`, 
+			`nx_DA_alias_name`
+		)
+		values
+		(
+			#{nxDistributerAliasId}, 
+			#{nxDaDisGoodsId}, 
+			#{nxDaAliasName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerAliasEntity">
+		update nx_distributer_alias 
+		<set>
+			<if test="nxDaDisGoodsId != null">`nx_DA_dis_goods_id` = #{nxDaDisGoodsId}, </if>
+			<if test="nxDaAliasName != null">`nx_DA_alias_name` = #{nxDaAliasName}</if>
+		</set>
+		where nx_distributer_alias_id = #{nxDistributerAliasId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_alias where nx_distributer_alias_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_alias where nx_distributer_alias_id in 
+		<foreach item="nxDistributerAliasId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerAliasId}
+		</foreach>
+	</delete>
+
+</mapper>

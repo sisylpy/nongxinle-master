@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxResComGoodsMonthDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxResComGoodsMonthEntity">
+		select * from nx_res_com_goods_month where nx_res_com_goods_month_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxResComGoodsMonthEntity">
+		select * from nx_res_com_goods_month 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_res_com_goods_month 
+	</select>
+	<select id="queryMonthGoodsByParams" resultType="com.nongxinle.entity.NxResComGoodsMonthEntity">
+		select * from nx_res_com_goods_month
+		<where>
+			<if test="resFatherId != null">
+				and nx_RCGM_restraunt_father_id = #{resFatherId}
+			</if>
+			<if test="resId != null">
+				and nx_RCGM_restraunt_id = #{resId}
+			</if>
+			<if test="month != null">
+				and nx_RCGM_month = #{month}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxResComGoodsMonthEntity">
+		insert into nx_res_com_goods_month
+		(
+			`nx_res_com_goods_month_id`, 
+			`nx_RCGM_restraunt_father_id`, 
+			`nx_RCGM_restraunt_id`, 
+			`nx_RCGM_com_goods_id`,
+			`nx_RCGM_month`, 
+			`nx_RCGM_weight`, 
+			`nx_RCGM_subtotal`
+		)
+		values
+		(
+			#{nxResComGoodsMonthId}, 
+			#{nxRcgmRestrauntFatherId},
+			#{nxRcgmRestrauntId},
+			#{nxRcgmComGoodsId},
+			#{nxRcgmMonth},
+			#{nxRcgmWeight},
+			#{nxRcgmSubtotal}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxResComGoodsMonthEntity">
+		update nx_res_com_goods_month 
+		<set>
+			<if test="nxRcgmRestrauntFatherId != null">`nx_RCGM_restraunt_father_id` = #{nxRcgmRestrauntFatherId}, </if>
+			<if test="nxRcgmRestrauntId != null">`nx_RCGM_restraunt_id` = #{nxRcgmRestrauntId}, </if>
+			<if test="nxRcgmComGoodsId != null">`nx_RCGM_com_goods_id` = #{nxRcgmComGoodsId}, </if>
+			<if test="nxRcgmMonth != null">`nx_RCGM_month` = #{nxRcgmMonth}, </if>
+			<if test="nxRcgmWeight != null">`nx_RCGM_weight` = #{nxRcgmWeight}, </if>
+			<if test="nxRcgmSubtotal != null">`nx_RCGM_subtotal` = #{nxRcgmSubtotal}</if>
+		</set>
+		where nx_res_com_goods_month_id = #{nxResComGoodsMonthId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_res_com_goods_month where nx_res_com_goods_month_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_res_com_goods_month where nx_res_com_goods_month_id in 
+		<foreach item="nxResComGoodsMonthId" collection="array" open="(" separator="," close=")">
+			#{nxResComGoodsMonthId}
+		</foreach>
+	</delete>
+
+</mapper>

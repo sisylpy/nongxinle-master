@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityGoodsSetItemDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityGoodsSetItemEntity">
+		select * from nx_community_goods_set_item where nx_community_goods_set_item_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityGoodsSetItemEntity">
+		select * from nx_community_goods_set_item 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_goods_set_item 
+	</select>
+
+	<select id="queryCgGoodsSetListByParams" resultType="com.nongxinle.entity.NxCommunityGoodsSetItemEntity">
+		select * from nongxinle.nx_community_goods_set_item
+        <where>
+			<if test="goodsId != null">
+				and nx_cgsi_item_cg_goods_id = #{goodsId}
+			</if>
+			<if test="propertyId != null">
+				and nx_cgsi_cg_property_id = #{propertyId}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityGoodsSetItemEntity">
+		insert into nx_community_goods_set_item
+		(
+			`nx_community_goods_set_item_id`, 
+			`nx_cgsi_item_name`,
+			`nx_cgsi_item_cg_goods_id`, 
+			`nx_cgsi_cg_property_id`, 
+			`nx_cgsi_item_price`, 
+			`nx_cgsi_item_file_path`,
+			`nx_cgsi_item_type`,
+			`nx_cgsi_item_quantity`,
+			`nx_cgsi_item_sort`
+		)
+		values
+		(
+			#{nxCommunityGoodsSetItemId}, 
+			#{nxCgsiItemName},
+			#{nxCgsiItemCgGoodsId}, 
+			#{nxCgsiCgPropertyId}, 
+			#{nxCgsiItemPrice}, 
+			#{nxCgsiItemFilePath},
+			#{nxCgsiItemType},
+			#{nxCgsiItemQuantity},
+			#{nxCgsiItemSort}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityGoodsSetItemEntity">
+		update nx_community_goods_set_item 
+		<set>
+			<if test="nxCgsiItemName != null">`nx_cgsi_item_name` = #{nxCgsiItemName}, </if>
+			<if test="nxCgsiItemCgGoodsId != null">`nx_cgsi_item_cg_goods_id` = #{nxCgsiItemCgGoodsId}, </if>
+			<if test="nxCgsiCgPropertyId != null">`nx_cgsi_cg_property_id` = #{nxCgsiCgPropertyId}, </if>
+			<if test="nxCgsiItemPrice != null">`nx_cgsi_item_price` = #{nxCgsiItemPrice}, </if>
+			<if test="nxCgsiItemType != null">`nx_cgsi_item_type` = #{nxCgsiItemType}, </if>
+			<if test="nxCgsiItemQuantity != null">`nx_cgsi_item_quantity` = #{nxCgsiItemQuantity}, </if>
+			<if test="nxCgsiItemSort != null">`nx_cgsi_item_sort` = #{nxCgsiItemSort}, </if>
+			<if test="nxCgsiItemFilePath != null">`nx_cgsi_item_file_path` = #{nxCgsiItemFilePath}</if>
+		</set>
+		where nx_community_goods_set_item_id = #{nxCommunityGoodsSetItemId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_goods_set_item where nx_community_goods_set_item_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_goods_set_item where nx_community_goods_set_item_id in 
+		<foreach item="nxCommunityGoodsSetItemId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityGoodsSetItemId}
+		</foreach>
+	</delete>
+
+</mapper>

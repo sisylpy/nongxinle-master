@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentIndependentGoodsDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentIndependentGoodsEntity">
+		select * from nx_department_independent_goods where nx_department_independent_goods_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDepartmentIndependentGoodsEntity">
+		select * from nx_department_independent_goods
+		where nx_DIG_department_id = #{depId} 		order by nx_DIG_goods_py
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_independent_goods 
+	</select>
+	<select id="querySearchStr" resultType="com.nongxinle.entity.NxDepartmentIndependentGoodsEntity">
+		select * from nx_department_independent_goods where nx_DIG_department_id = #{depId}
+		and (nx_DIG_goods_name like concat('%', #{searchStr}, '%')
+	    or nx_DIG_goods_pinyin like concat('%', #{searchStr}, '%')
+		or nx_DIG_goods_py like concat('%', #{searchStr}, '%')
+		) order by nx_DIG_goods_py
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDepartmentIndependentGoodsEntity">
+		insert into nx_department_independent_goods
+		(
+			`nx_department_independent_goods_id`, 
+			`nx_DIG_goods_name`, 
+			`nx_DIG_goods_standardname`, 
+			`nx_DIG_department_father_id`, 
+			`nx_DIG_department_id`, 
+			`nx_DIG_alarm_rate`, 
+			`nx_DIG_goods_pinyin`, 
+			`nx_DIG_goods_py`
+		)
+		values
+		(
+			#{nxDepartmentIndependentGoodsId}, 
+			#{nxDigGoodsName}, 
+			#{nxDigGoodsStandardname}, 
+			#{nxDigDepartmentFatherId}, 
+			#{nxDigDepartmentId}, 
+			#{nxDigAlarmRate}, 
+			#{nxDigGoodsPinyin}, 
+			#{nxDigGoodsPy}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentIndependentGoodsEntity">
+		update nx_department_independent_goods 
+		<set>
+			<if test="nxDigGoodsName != null">`nx_DIG_goods_name` = #{nxDigGoodsName}, </if>
+			<if test="nxDigGoodsStandardname != null">`nx_DIG_goods_standardname` = #{nxDigGoodsStandardname}, </if>
+			<if test="nxDigDepartmentFatherId != null">`nx_DIG_department_father_id` = #{nxDigDepartmentFatherId}, </if>
+			<if test="nxDigDepartmentId != null">`nx_DIG_department_id` = #{nxDigDepartmentId}, </if>
+			<if test="nxDigAlarmRate != null">`nx_DIG_alarm_rate` = #{nxDigAlarmRate}, </if>
+			<if test="nxDigGoodsPinyin != null">`nx_DIG_goods_pinyin` = #{nxDigGoodsPinyin}, </if>
+			<if test="nxDigGoodsPy != null">`nx_DIG_goods_py` = #{nxDigGoodsPy}</if>
+		</set>
+		where nx_department_independent_goods_id = #{nxDepartmentIndependentGoodsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_independent_goods where nx_department_independent_goods_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_independent_goods where nx_department_independent_goods_id in 
+		<foreach item="nxDepartmentIndependentGoodsId" collection="array" open="(" separator="," close=")">
+			#{nxDepartmentIndependentGoodsId}
+		</foreach>
+	</delete>
+
+</mapper>

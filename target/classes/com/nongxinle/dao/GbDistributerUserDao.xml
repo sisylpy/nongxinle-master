@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerUserDao">
+
+	<select id="queryGbDisUserByParams" resultType="com.nongxinle.entity.GbDistributerUserEntity">
+		select * from gb_distributer_user
+		<where>
+			<if test="openId != null">
+				and gb_DIU_wx_open_id= #{openId}
+			</if>
+			<if test="admin != null">
+				and gb_DIU_admin= #{admin}
+			</if>
+
+		</where>
+	</select>
+
+	<select id="queryObject" resultMap="disUser">
+		select * from gb_distributer_user as du
+        left join gb_distributer as d on d.gb_distributer_id = du.gb_DIU_distributer_id
+				where gb_distributer_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerUserEntity">
+		select * from gb_distributer_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_user 
+	</select>
+    <select id="queryDisUserByOpenIdGb" resultType="com.nongxinle.entity.GbDistributerUserEntity">
+		select * from gb_distributer_user where gb_DIU_wx_open_id = #{openid}
+	</select>
+
+
+
+	<resultMap id="disModule" type="GbDistributerModuleEntity">
+		<id property="gbDistributerModuleId" column="gb_distributer_module_id"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmPurchaseNumber" column="gb_dm_purchase_number"/>
+		<result property="gbDmStockNumber" column="gb_dm_stock_number"/>
+ 		<result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmCentralKitchenNumber" column="gb_dm_central_kitchen_number"/>
+		<result property="gbDmDistributerId" column="gb_dm_distributer_id"/>
+	</resultMap>
+	<resultMap id="sysBusiness" type="SysBusinessTypeEntity">
+		<id property="sysBusinessTypeId" column="sys_business_type_id"/>
+		<result property="sysBusinessTypeName" column="sys_business_type_name"/>
+		<result property="sysByDisType" column="sys_by_dis_type"/>
+	</resultMap>
+
+	<resultMap id="gbDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentType" column="gb_department_type"/>
+		<result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+		<result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+	</resultMap>
+	<resultMap id="distributer" type="gbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerImg" column="gb_distributer_img"/>
+		<result property="gbDistributerAddress" column="gb_distributer_address"/>
+		<result property="gbDistributerManager" column="gb_distributer_manager"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
+		<association property="sysBusinessTypeEntity" resultMap="sysBusiness"/>
+		<association property="appSupplierDepartment" resultMap="gbDep"/>
+	</resultMap>
+
+	<resultMap id="qyCorpUser" type="QyGbDisCorpUserEntity">
+		<id property="qyGbDisCorpUserId" column="qy_gb_dis_corp_user_id"/>
+		<result property="qyGbDisCorpOpenUserId" column="qy_gb_dis_corp_open_user_id"/>
+		<result property="qyGbDisCorpQyCorpId" column="qy_gb_dis_corp_qy_corp_id"/>
+		<result property="qyGbDisCorpSessionKey" column="qy_gb_dis_corp_session_key"/>
+		<result property="qyGbDisCorpUserName" column="qy_gb_dis_corp_user_name"/>
+		<result property="qyGbDisCorpUserJoinDate" column="qy_gb_dis_corp_user_join_date"/>
+		<result property="qyGbDistributerId" column="qy_gb_distributer_id"/>
+	</resultMap>
+	
+	<resultMap id="disUser" type="gbDistributerUserEntity">
+		 <id property="gbDistributerUserId" column="gb_distributer_user_id"/>
+        <result property="gbDiuQyCorpUserId" column="gb_DIU_qy_corp_user_id"/>
+		<result property="gbDiuDistributerId" column="gb_DIU_distributer_id"/>
+		<result property="gbDiuWxAvartraUrl" column="gb_DIU_wx_avartra_url"/>
+		<result property="gbDiuWxNickName" column="gb_DIU_wx_nick_name"/>
+		<result property="gbDiuWxOpenId" column="gb_DIU_wx_open_id"/>
+		<result property="gbDiuWxPhone" column="gb_DIU_wx_phone"/>
+		<result property="gbDiuPrintDeviceId" column="gb_DIU_print_device_id"/>
+		<result property="gbDiuUrlChange" column="gb_DIU_url_change"/>
+		<result property="gbDiuAdmin" column="gb_DIU_admin"/>
+		<result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
+		<association property="qyGbDisCorpUserEntity" resultMap="qyCorpUser"/>
+ 		<association property="gbDistributerEntity" resultMap="distributer"/>
+	</resultMap>
+	<select id="queryUserInfo" resultMap="disUser">
+		select * from gb_distributer_user as u
+		left join gb_distributer as d on u.gb_DIU_distributer_id = d.gb_distributer_id
+		left join gb_department as gd on gd.gb_department_dis_id = d.gb_distributer_id and gd.gb_department_type = 5
+		left join sys_business_type as sbt on sbt.sys_business_type_id = d.gb_distributer_business_type
+		left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = d.gb_distributer_id
+		left join qy_gb_dis_corp_user as qgdcu on qgdcu.qy_gb_dis_corp_user_id = u.gb_DIU_qy_corp_user_id
+		where gb_distributer_user_id = #{gbDistributerUserId}
+	</select>
+	<select id="queryUserByOpenId" resultMap="disUser">
+		select * from gb_distributer_user as du
+		 left join gb_distributer as d on d.gb_distributer_id = du.gb_DIU_distributer_id
+		 left join sys_business_type as sbt on sbt.sys_business_type_id = d.gb_distributer_business_type
+		 left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = d.gb_distributer_id
+		where gb_DIU_wx_open_id = #{openid}
+	</select>
+	<select id="getAllUserByDisId" resultType="com.nongxinle.entity.GbDistributerUserEntity">
+		select * from gb_distributer_user where gb_DIU_distributer_id = #{disId}
+
+	</select>
+    <select id="queryAllGbUsers" resultType="com.nongxinle.entity.GbDistributerUserEntity">
+		select * from gb_distributer_user
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDistributerUserEntity" useGeneratedKeys="true"
+	keyProperty="gbDistributerUserId">
+		insert into gb_distributer_user
+		(
+			`gb_distributer_user_id`, 
+			`gb_DIU_wx_avartra_url`, 
+			`gb_DIU_wx_nick_name`, 
+			`gb_DIU_wx_open_id`, 
+			`gb_DIU_wx_phone`, 
+			`gb_DIU_distributer_id`, 
+			`gb_DIU_admin`, 
+			`gb_DIU_print_device_id`,
+		 	`gb_DIU_url_change`,
+		 	`gb_DIU_print_bill_device_id`,
+		     `gb_DIU_qy_corp_user_id`,
+		     `gb_DIU_login_times`
+
+		)
+		values
+		(
+			#{gbDistributerUserId}, 
+			#{gbDiuWxAvartraUrl}, 
+			#{gbDiuWxNickName}, 
+			#{gbDiuWxOpenId}, 
+			#{gbDiuWxPhone}, 
+			#{gbDiuDistributerId}, 
+			#{gbDiuAdmin}, 
+			#{gbDiuPrintDeviceId},
+		 	#{gbDiuUrlChange},
+		 	#{gbDiuPrintBillDeviceId},
+		 	#{gbDiuQyCorpUserId},
+		 	#{gbDiuLoginTimes}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerUserEntity">
+		update gb_distributer_user 
+		<set>
+			<if test="gbDiuWxAvartraUrl != null">`gb_DIU_wx_avartra_url` = #{gbDiuWxAvartraUrl}, </if>
+			<if test="gbDiuWxNickName != null">`gb_DIU_wx_nick_name` = #{gbDiuWxNickName}, </if>
+			<if test="gbDiuWxOpenId != null">`gb_DIU_wx_open_id` = #{gbDiuWxOpenId}, </if>
+			<if test="gbDiuWxPhone != null">`gb_DIU_wx_phone` = #{gbDiuWxPhone}, </if>
+			<if test="gbDiuDistributerId != null">`gb_DIU_distributer_id` = #{gbDiuDistributerId}, </if>
+			<if test="gbDiuAdmin != null">`gb_DIU_admin` = #{gbDiuAdmin}, </if>
+			<if test="gbDiuUrlChange != null">`gb_DIU_url_change` = #{gbDiuUrlChange}, </if>
+			<if test="gbDiuPrintBillDeviceId != null">`gb_DIU_print_bill_device_id` = #{gbDiuPrintBillDeviceId}, </if>
+			<if test="gbDiuQyCorpUserId != null">`gb_DIU_qy_corp_user_id` = #{gbDiuQyCorpUserId}, </if>
+			<if test="gbDiuLoginTimes != null">`gb_DIU_login_times` = #{gbDiuLoginTimes}, </if>
+			<if test="gbDiuPrintDeviceId != null">`gb_DIU_print_device_id` = #{gbDiuPrintDeviceId}</if>
+		</set>
+		where gb_distributer_user_id = #{gbDistributerUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_user where gb_distributer_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_user where gb_distributer_user_id in 
+		<foreach item="gbDistributerUserId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerUserId}
+		</foreach>
+	</delete>
+
+</mapper>

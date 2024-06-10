@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxSellUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select * from nx_sell_user where nx_sell_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select * from nx_sell_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_sell_user 
+	</select>
+	<select id="querySellerUserByOpenId" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select * from nx_sell_user where nx_SU_wx_open_id = #{openId}
+	</select>
+	<select id="querySupplierUserBySupplierId" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select * from nx_sell_user where nx_SU_gb_dis_supplier_id = #{supplierId}
+	</select>
+	<select id="queryDisSellerUserByParmas" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select * from nx_sell_user
+         <where>
+			 <if test="disId != null">
+				 and nx_SU_nx_dis_id = #{disId}
+			 </if>
+			 <if test="openId != null">
+				 and nx_SU_wx_open_id = #{openId}
+			 </if>
+		 </where>
+	</select>
+	<select id="queryDisSellerUsersByParams" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select * from nx_sell_user where nx_SU_nx_dis_id = #{disId}
+
+	</select>
+    <select id="queryAllSellUsers" resultType="com.nongxinle.entity.NxSellUserEntity">
+		select *
+		from nx_sell_user ;
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxSellUserEntity" useGeneratedKeys="true"
+	  keyProperty="nxSellUserId">
+		insert into nx_sell_user
+		(
+			`nx_sell_user_id`, 
+			`nx_SU_retailer_id`, 
+			`nx_SU_wx_avartra_url`, 
+			`nx_SU_wx_nick_name`, 
+			`nx_SU_wx_open_id`, 
+			`nx_SU_wx_phone`, 
+			`nx_SU_join_date`,
+		 	`nx_SU_gb_dis_supplier_id`,
+		 	`nx_SU_nx_dis_id`
+		)
+		values
+		(
+			#{nxSellUserId}, 
+			#{nxSuRetailerId}, 
+			#{nxSuWxAvartraUrl}, 
+			#{nxSuWxNickName}, 
+			#{nxSuWxOpenId}, 
+			#{nxSuWxPhone}, 
+			#{nxSuJoinDate},
+		 	#{nxSuGbDisSupplierId},
+		 	#{nxSuNxDisId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxSellUserEntity">
+		update nx_sell_user 
+		<set>
+			<if test="nxSuRetailerId != null">`nx_SU_retailer_id` = #{nxSuRetailerId}, </if>
+			<if test="nxSuWxAvartraUrl != null">`nx_SU_wx_avartra_url` = #{nxSuWxAvartraUrl}, </if>
+			<if test="nxSuWxNickName != null">`nx_SU_wx_nick_name` = #{nxSuWxNickName}, </if>
+			<if test="nxSuWxOpenId != null">`nx_SU_wx_open_id` = #{nxSuWxOpenId}, </if>
+			<if test="nxSuWxPhone != null">`nx_SU_wx_phone` = #{nxSuWxPhone}, </if>
+			<if test="nxSuGbDisSupplierId != null">`nx_SU_gb_dis_supplier_id` = #{nxSuGbDisSupplierId}, </if>
+			<if test="nxSuNxDisId != null">`nx_SU_nx_dis_id` = #{nxSuNxDisId}, </if>
+			<if test="nxSuJoinDate != null">`nx_SU_join_date` = #{nxSuJoinDate}</if>
+		</set>
+		where nx_sell_user_id = #{nxSellUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_sell_user where nx_sell_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_sell_user where nx_sell_user_id in 
+		<foreach item="nxSellUserId" collection="array" open="(" separator="," close=")">
+			#{nxSellUserId}
+		</foreach>
+	</delete>
+
+</mapper>

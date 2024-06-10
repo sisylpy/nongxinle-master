@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityAliasDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityAliasEntity">
+		select * from nx_community_alias where nx_community_alias_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityAliasEntity">
+		select * from nx_community_alias 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_alias 
+	</select>
+    <select id="queryComAliasByComGoodsId" resultType="com.nongxinle.entity.NxCommunityAliasEntity">
+		select * from nx_community_alias where nx_CA_com_goods_id = #{comGoodsId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityAliasEntity">
+		insert into nx_community_alias
+		(
+			`nx_community_alias_id`, 
+			`nx_CA_com_goods_id`, 
+			`nx_CA_alias_name`
+		)
+		values
+		(
+			#{nxCommunityAliasId}, 
+			#{nxCaComGoodsId}, 
+			#{nxCaAliasName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityAliasEntity">
+		update nx_community_alias 
+		<set>
+			<if test="nxCaComGoodsId != null">`nx_CA_com_goods_id` = #{nxCaComGoodsId}, </if>
+			<if test="nxCaAliasName != null">`nx_CA_alias_name` = #{nxCaAliasName}</if>
+		</set>
+		where nx_community_alias_id = #{nxCommunityAliasId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_alias where nx_community_alias_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_alias where nx_community_alias_id in 
+		<foreach item="nxCommunityAliasId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityAliasId}
+		</foreach>
+	</delete>
+
+</mapper>

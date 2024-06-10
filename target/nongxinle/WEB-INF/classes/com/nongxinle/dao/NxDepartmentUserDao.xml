@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentUserDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user where nx_department_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_user 
+	</select>
+	<select id="queryAllUsersByDepId" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user where nx_DU_department_id = #{depId}
+			order by  nx_DU_admin DESC
+	</select>
+	<select id="queryAllUsersByDepFatherId" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user where nx_DU_department_father_id = #{depId}
+		order by  nx_DU_admin DESC
+	</select>
+	<select id="queryDepUserByOpenId" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user where nx_DU_wx_open_id = #{openId}
+	</select>
+    <select id="queryGroupAdminUserAmount" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user where nx_DU_department_id = #{nxDuDepartmentId} and nx_DU_admin = 1
+	</select>
+
+	<resultMap id="depUser" type="NxDepartmentUserEntity">
+		<id property="nxDepartmentUserId" column="nx_department_user_id"/>
+		<result property="nxDuWxNickName" column="nx_DU_wx_nick_name"/>
+		<result property="nxDuWxAvartraUrl" column="nx_DU_wx_avartra_url"/>
+		<result property="nxDuUrlChange" column="nx_DU_url_change"/>
+		<result property="nxDuWxOpenId" column="nx_DU_wx_open_id"/>
+	</resultMap>
+	<resultMap id="distributer" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+	</resultMap>
+	<resultMap id="multiDepartment" type="NxDepartmentEntity">
+		<id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
+		<result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+		<result property="nxDepartmentType" column="nx_department_type"/>
+		<result property="nxDepartmentName" column="nx_department_name"/>
+		<result property="nxDepartmentDisId" column="nx_department_dis_id"/>
+		<result property="nxDepartmentType" column="nx_department_type"/>
+		<result property="nxDepartmentSettleType" column="nx_department_settle_type"/>
+		<result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
+		<result property="nxDepartmentSubAmount" column="nx_department_sub_amount"/>
+		<association property="nxDepartmentUserEntity" resultMap="depUser"/>
+		<association property="nxDistributerEntity" resultMap="distributer"/>
+	</resultMap>
+
+    <select id="queryMultiDepartmentByWxOpenId" resultMap="multiDepartment">
+		select  du.nx_DU_wx_open_id , d.nx_department_id, d.nx_department_name,d.nx_department_dis_id,
+		        d.nx_department_type, d.nx_department_settle_type, d.nx_department_is_group_dep, d.nx_department_sub_amount,
+		        ddu.nx_department_user_id, ddu.nx_DU_wx_nick_name , ddu.nx_DU_department_id,
+		        ddu.nx_DU_wx_open_id,
+		        ddu.nx_DU_url_change, ddu.nx_DU_join_date, ddu.nx_DU_wx_avartra_url,
+		       dis.nx_distributer_id, dis.nx_distributer_name, dis.nx_distributer_manager,
+		       dis.nx_distributer_phone, dis.nx_distributer_address, dis.nx_distributer_img
+		       from nx_department_user as du
+		left join nx_department as d on d.nx_department_id = du.nx_DU_department_id
+		left join nx_department_user as ddu on ddu.nx_DU_department_id = d.nx_department_id
+		left join nx_distributer as dis on dis.nx_distributer_id = d.nx_department_dis_id
+		where du.nx_DU_wx_open_id = #{openId}
+	</select>
+	<select id="queryDepUsersByDepId" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user where nx_DU_department_id = #{depId}
+		order by  nx_DU_admin DESC
+	</select>
+    <select id="queryAllDepUsers" resultType="com.nongxinle.entity.NxDepartmentUserEntity">
+		select * from nx_department_user;
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentUserEntity"
+			useGeneratedKeys="true" keyProperty="nxDepartmentUserId">
+		insert into nx_department_user
+		(
+			`nx_department_user_id`, 
+			`nx_DU_department_id`, 
+			`nx_DU_wx_avartra_url`, 
+			`nx_DU_wx_nick_name`, 
+			`nx_DU_wx_open_id`, 
+			`nx_DU_wx_phone`, 
+			`nx_DU_admin`,
+		 	`nx_DU_distributer_id`,
+		 	`nx_DU_url_change`,
+		 	`nx_DU_department_father_id`,
+			`nx_DU_join_date`,
+			`nx_DU_login_times`
+		)
+		values
+		(
+			#{nxDepartmentUserId}, 
+			#{nxDuDepartmentId}, 
+			#{nxDuWxAvartraUrl}, 
+			#{nxDuWxNickName}, 
+			#{nxDuWxOpenId}, 
+			#{nxDuWxPhone}, 
+			#{nxDuAdmin},
+		 	#{nxDuDistributerId},
+		 	#{nxDuUrlChange},
+		 	#{nxDuDepartmentFatherId},
+		 	#{nxDuJoinDate},
+		 	#{nxDuLoginTimes}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentUserEntity">
+		update nx_department_user 
+		<set>
+			<if test="nxDuDepartmentId != null">`nx_DU_department_id` = #{nxDuDepartmentId}, </if>
+			<if test="nxDuWxAvartraUrl != null">`nx_DU_wx_avartra_url` = #{nxDuWxAvartraUrl}, </if>
+			<if test="nxDuWxNickName != null">`nx_DU_wx_nick_name` = #{nxDuWxNickName}, </if>
+			<if test="nxDuWxOpenId != null">`nx_DU_wx_open_id` = #{nxDuWxOpenId}, </if>
+			<if test="nxDuWxPhone != null">`nx_DU_wx_phone` = #{nxDuWxPhone}, </if>
+			<if test="nxDuDistributerId != null">`nx_DU_distributer_id` = #{nxDuDistributerId}, </if>
+			<if test="nxDuUrlChange != null">`nx_DU_url_change` = #{nxDuUrlChange}, </if>
+			<if test="nxDuDepartmentFatherId != null">`nx_DU_department_father_id` = #{nxDuDepartmentFatherId}, </if>
+			<if test="nxDuJoinDate != null">`nx_DU_join_date` = #{nxDuJoinDate}, </if>
+			<if test="nxDuLoginTimes != null">`nx_DU_login_times` = #{nxDuLoginTimes}, </if>
+			<if test="nxDuAdmin != null">`nx_DU_admin` = #{nxDuAdmin}</if>
+		</set>
+		where nx_department_user_id = #{nxDepartmentUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_user where nx_department_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_user where nx_department_user_id in 
+		<foreach item="nxDepartmentUserId" collection="array" open="(" separator="," close=")">
+			#{nxDepartmentUserId}
+		</foreach>
+	</delete>
+
+</mapper>

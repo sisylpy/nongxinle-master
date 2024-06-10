@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxRetailerDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxRetailerEntity">
+		select * from nx_retailer where nx_retailer_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxRetailerEntity">
+		select * from nx_retailer 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_retailer 
+	</select>
+    <select id="queryRetailerInfo" resultType="com.nongxinle.entity.NxRetailerEntity">
+		select * from nx_retailer where nx_retailer_id = #{nxRetuRetailerId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxRetailerEntity"
+			useGeneratedKeys="true" keyProperty="nxRetailerId">
+		insert into nx_retailer
+		(
+			`nx_retailer_id`, 
+			`nx_retailer_name`, 
+			`nx_retailer_lat`, 
+			`nx_retailer_lng`, 
+			`nx_retailer_img`, 
+			`nx_retailer_goods_id`, 
+			`nx_retailer_describe`
+		)
+		values
+		(
+			#{nxRetailerId}, 
+			#{nxRetailerName}, 
+			#{nxRetailerLat}, 
+			#{nxRetailerLng}, 
+			#{nxRetailerImg}, 
+			#{nxRetailerGoodsId}, 
+			#{nxRetailerDescribe}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxRetailerEntity">
+		update nx_retailer 
+		<set>
+			<if test="nxRetailerName != null">`nx_retailer_name` = #{nxRetailerName}, </if>
+			<if test="nxRetailerLat != null">`nx_retailer_lat` = #{nxRetailerLat}, </if>
+			<if test="nxRetailerLng != null">`nx_retailer_lng` = #{nxRetailerLng}, </if>
+			<if test="nxRetailerImg != null">`nx_retailer_img` = #{nxRetailerImg}, </if>
+			<if test="nxRetailerGoodsId != null">`nx_retailer_goods_id` = #{nxRetailerGoodsId}, </if>
+			<if test="nxRetailerDescribe != null">`nx_retailer_describe` = #{nxRetailerDescribe}</if>
+		</set>
+		where nx_retailer_id = #{nxRetailerId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_retailer where nx_retailer_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_retailer where nx_retailer_id in 
+		<foreach item="nxRetailerId" collection="array" open="(" separator="," close=")">
+			#{nxRetailerId}
+		</foreach>
+	</delete>
+
+</mapper>

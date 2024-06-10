@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.SysCityMarketDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.SysCityMarketEntity">
+		select * from sys_city_market where sys_city_market_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.SysCityMarketEntity">
+		select * from sys_city_market 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from sys_city_market 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.SysCityMarketEntity">
+		insert into sys_city_market
+		(
+			`sys_city_market_id`, 
+			`sys_cm_city_id`, 
+			`sys_cm_market_name`
+		)
+		values
+		(
+			#{sysCityMarketId}, 
+			#{sysCmCityId}, 
+			#{sysCmMarketName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.SysCityMarketEntity">
+		update sys_city_market 
+		<set>
+			<if test="sysCmCityId != null">`sys_cm_city_id` = #{sysCmCityId}, </if>
+			<if test="sysCmMarketName != null">`sys_cm_market_name` = #{sysCmMarketName}</if>
+		</set>
+		where sys_city_market_id = #{sysCityMarketId}
+	</update>
+	
+	<delete id="delete">
+		delete from sys_city_market where sys_city_market_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from sys_city_market where sys_city_market_id in 
+		<foreach item="sysCityMarketId" collection="array" open="(" separator="," close=")">
+			#{sysCityMarketId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerDepartmentDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerDepartmentEntity">
+		select * from nx_distributer_department where nx_distributer_dep_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerDepartmentEntity">
+		select * from nx_distributer_department 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_department 
+	</select>
+
+	<select id="queryDisDepartmentsBySettleType" resultType="com.nongxinle.entity.NxDepartmentEntity">
+		select * from nx_distributer_department as dd
+		left join nx_department as d on d.nx_department_id = dd.nx_DD_department_id
+		<where>
+			<if test="disId != null">
+				and dd.nx_DD_distributer_id = #{disId}
+			</if>
+			<if test="type != null">
+			  and d.nx_department_settle_type = #{type}
+			</if>
+			<if test="isGroup != null">
+				and d.nx_department_is_group_dep = #{isGroup}
+			</if>
+			<if test="subAmount != null">
+				and d.nx_department_sub_amount = #{subAmount}
+			</if>
+
+         and d.nx_department_is_group_dep = 1
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerDepartmentEntity">
+		insert into nx_distributer_department
+		(
+			`nx_distributer_dep_id`, 
+			`nx_DD_distributer_id`, 
+			`nx_DD_department_id`
+		)
+		values
+		(
+			#{nxDistributerDepId}, 
+			#{nxDdDistributerId}, 
+			#{nxDdDepartmentId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerDepartmentEntity">
+		update nx_distributer_department 
+		<set>
+			<if test="nxDdDistributerId != null">`nx_DD_distributer_id` = #{nxDdDistributerId}, </if>
+			<if test="nxDdDepartmentId != null">`nx_DD_department_id` = #{nxDdDepartmentId}</if>
+		</set>
+		where nx_distributer_dep_id = #{nxDistributerDepId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_department where nx_distributer_dep_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_department where nx_distributer_dep_id in 
+		<foreach item="nxDistributerDepId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerDepId}
+		</foreach>
+	</delete>
+
+</mapper>

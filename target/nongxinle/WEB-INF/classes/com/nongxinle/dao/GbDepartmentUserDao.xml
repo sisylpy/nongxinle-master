@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepartmentUserDao">
+
+	<select id="queryObject" resultMap="depUser">
+		select * ,
+			   d.gb_department_id 'd_gb_department_id',  d.gb_department_name 'd_gb_department_name',
+			   d.gb_department_father_id 'd_gb_department_father_id',
+			   d.gb_department_is_group_dep 'd_gb_department_is_group_dep',
+			   d.gb_department_dis_id 'd_gb_department_dis_id',
+			   d.gb_department_show_weeks 'd_gb_department_show_weeks',
+			   d.gb_department_sub_amount 'd_gb_department_sub_amount',
+			   d.gb_department_type 'd_gb_department_type',
+		       d.gb_department_dep_settle_id 'd_gb_department_dep_settle_id',
+			   d.gb_department_settle_type 'd_gb_department_settle_type',
+			   d.gb_department_attr_name 'd_gb_department_attr_name',
+			   d.gb_department_dis_id 'd_gb_department_dis_id',
+		       d.gb_department_settle_full_time 'd_gb_department_settle_full_time',
+		       d.gb_department_settle_date 'd_gb_department_settle_date',
+		       d.gb_department_settle_week 'd_gb_department_settle_week',
+		       d.gb_department_settle_month 'd_gb_department_settle_month',
+			   f.gb_department_id 'f_gb_department_id',
+			   f.gb_department_name 'f_gb_department_name',
+			   f.gb_department_dis_id 'f_gb_department_dis_id',
+			   f.gb_department_show_weeks 'f_gb_department_show_weeks',
+			   f.gb_department_dis_id 'f_gb_department_dis_id',
+			   f.gb_department_sub_amount 'f_gb_department_sub_amount',
+			   f.gb_department_type 'f_gb_department_type',
+			   f.gb_department_settle_type 'f_gb_department_settle_type',
+			   f.gb_department_dep_settle_id 'f_gb_department_dep_settle_id',
+			   f.gb_department_attr_name 'f_gb_department_attr_name',
+			   f.gb_department_settle_full_time 'f_gb_department_settle_full_time',
+			   f.gb_department_settle_date 'f_gb_department_settle_date',
+			   f.gb_department_settle_week 'f_gb_department_settle_week',
+			   f.gb_department_settle_month 'f_gb_department_settle_month',
+			   subsd.gb_department_id 'subs_gb_department_id',
+			   subsd.gb_department_name 'subs_gb_department_name',
+			   subsd.gb_department_show_weeks 'subs_gb_department_show_weeks',
+			   subsd.gb_department_father_id 'subs_gb_department_father_id',
+			   subsd.gb_department_is_group_dep 'subs_gb_department_is_group_dep',
+			   subsd.gb_department_dis_id 'subs_gb_department_dis_id',
+			   subsd.gb_department_sub_amount 'subs_gb_department_sub_amount',
+			   subsd.gb_department_type 'subs_gb_department_type',
+			   subsd.gb_department_settle_type 'subs_gb_department_settle_type',
+			   subsd.gb_department_dep_settle_id 'subs_gb_department_dep_settle_id',
+			   subsd.gb_department_attr_name 'subs_gb_department_attr_name',
+			   subsd.gb_department_settle_full_time 'subs_gb_department_settle_full_time',
+			   subsd.gb_department_settle_date 'subs_gb_department_settle_date',
+			   subsd.gb_department_settle_week 'subs_gb_department_settle_week',
+			   subsd.gb_department_settle_month 'subs_gb_department_settle_month'
+		       from gb_department_user as depU
+		left join gb_department as d on d.gb_department_id = depU.gb_DU_department_id
+		left join gb_department as subsd on subsd.gb_department_father_id = d.gb_department_id
+		left join gb_department as f on f.gb_department_id = d.gb_department_father_id
+
+		left join gb_distributer as dis on dis.gb_distributer_id = depU.gb_DU_distributer_id
+		where gb_department_user_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_department_user 
+	</select>
+	<select id="queryAllUsersByDepId" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user where gb_DU_department_father_id = #{depId}
+			order by  gb_DU_admin DESC
+	</select>
+	<select id="queryDepUserByOpenId" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user where gb_DU_wx_open_id = #{openId}
+	</select>
+    <select id="queryGroupAdminUserAmount" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user where gb_DU_department_id = #{gbDuDepartmentId} and gb_DU_admin = 1
+	</select>
+
+
+
+	<resultMap id="dep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentPrintSet" column="gb_department_print_set"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="gb_department_type"/>
+		<result property="gbDepartmentDepSettleId" column="gb_department_dep_settle_id"/>
+		<result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+		<result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentSettleFullTime" column="gb_department_settle_full_time"/>
+		<result property="gbDepartmentSettleDate" column="gb_department_settle_date"/>
+		<result property="gbDepartmentSettleWeek" column="gb_department_settle_week"/>
+		<result property="gbDepartmentSettleMonth" column="gb_department_settle_month"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
+		<collection property="gbDepartmentEntityList" resultMap="subDeps"/>
+
+	</resultMap>
+	<resultMap id="subDeps" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="subs_gb_department_id"/>
+		<result property="gbDepartmentName" column="subs_gb_department_name"/>
+		<result property="gbDepartmentSubAmount" column="subs_gb_department_sub_amount"/>
+		<result property="gbDepartmentFatherId" column="subs_gb_department_father_id"/>
+		<result property="gbDepartmentShowWeeks" column="subs_gb_department_show_weeks"/>
+		<result property="gbDepartmentIsGroupDep" column="subs_gb_department_is_group_dep"/>
+		<result property="gbDepartmentDepSettleId" column="subs_gb_department_dep_settle_id"/>
+		<result property="gbDepartmentDisId" column="subs_gb_department_dis_id"/>
+		<result property="gbDepartmentSubAmount" column="subs_gb_department_sub_amount"/>
+		<result property="gbDepartmentIsGroupDep" column="subs_gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="subs_gb_department_sub_amount"/>
+		<result property="gbDepartmentFatherId" column="subs_gb_department_father_id"/>
+		<result property="gbDepartmentSettleType" column="subs_gb_department_settle_type"/>
+		<result property="gbDepartmentType" column="subs_gb_department_type" />
+		<result property="gbDepartmentSettleFullTime" column="subs_gb_department_settle_full_time"/>
+		<result property="gbDepartmentSettleDate" column="subs_gb_department_settle_date"/>
+		<result property="gbDepartmentSettleWeek" column="subs_gb_department_settle_week"/>
+		<result property="gbDepartmentSettleMonth" column="subs_gb_department_settle_month"/>
+ 	</resultMap>
+
+	<resultMap id="fatherDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="f_gb_department_id"/>
+		<result property="gbDepartmentName" column="f_gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="f_gb_department_attr_name"/>
+		<result property="gbDepartmentDisId" column="f_gb_department_dis_id"/>
+		<result property="gbDepartmentSubAmount" column="f_gb_department_sub_amount"/>
+		<result property="gbDepartmentIsGroupDep" column="f_gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="f_gb_department_sub_amount"/>
+		<result property="gbDepartmentFatherId" column="f_gb_department_father_id"/>
+		<result property="gbDepartmentSettleType" column="f_gb_department_settle_type"/>
+		<result property="gbDepartmentType" column="f_gb_department_type" />
+		<result property="gbDepartmentSettleFullTime" column="f_gb_department_settle_full_time"/>
+		<result property="gbDepartmentSettleDate" column="f_gb_department_settle_date"/>
+		<result property="gbDepartmentSettleWeek" column="f_gb_department_settle_week"/>
+		<result property="gbDepartmentSettleMonth" column="f_gb_department_settle_month"/>
+		<result property="gbDepartmentDepSettleId" column="f_gb_department_dep_settle_id"/>
+	</resultMap>
+	<resultMap id="depUser" type="GbDepartmentUserEntity">
+		<id property="gbDepartmentUserId" column="gb_department_user_id"/>
+		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+		<result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+		<result property="gbDuDepartmentId" column="gb_DU_department_id"/>
+		<result property="gbDuDepartmentFatherId" column="gb_DU_department_father_id"/>
+		<result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
+		<result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
+		<result property="gbDuUrlChange" column="gb_DU_url_change"/>
+		<result property="gbDuWxOpenId" column="gb_DU_wx_open_id"/>
+		<result property="gbDuDistributerId" column="gb_DU_distributer_id"/>
+		<result property="gbDuAdmin" column="gb_DU_admin"/>
+		<result property="gbDuJoinDate" column="gb_DU_join_date"/>
+		<result property="gbDuPrintDeviceId" column="gb_DU_print_device_id"/>
+		<result property="gbDuPrintBillDeviceId" column="gb_DU_print_bill_device_id"/>
+		<association property="gbDepartmentEntity" resultMap="dep"/>
+		<association property="gbDistributerEntity" resultMap="distributer"/>
+	</resultMap>
+
+
+	<resultMap id="disModule" type="GbDistributerModuleEntity">
+		<id property="gbDistributerModuleId" column="gb_distributer_module_id"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmPurchaseNumber" column="gb_dm_purchase_number"/>
+		<result property="gbDmStockNumber" column="gb_dm_stock_number"/>
+<result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
+		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
+		<result property="gbDmCentralKitchenNumber" column="gb_dm_central_kitchen_number"/>
+		<result property="gbDmDirectSalesNumber" column="gb_dm_direct_sales_number"/>
+		<result property="gbDmFranchiseeNumber" column="gb_dm_franchisee_number"/>
+		<result property="gbDmDistributerId" column="gb_dm_distributer_id"/>
+	</resultMap>
+
+	<resultMap id="businessType" type="SysBusinessTypeEntity">
+		<id property="sysBusinessTypeId" column="sys_business_type"/>
+		<result property="sysBusinessTypeName" column="sys_business_type_name"/>
+	</resultMap>
+
+	<resultMap id="appSupplierDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="appSupplierDep_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="appSupplierDep_gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="appSupplierDep_gb_department_type"/>
+		<result property="gbDepartmentName" column="appSupplierDep_gb_department_name"/>
+		<result property="gbDepartmentPrintName" column="appSupplierDep_gb_department_print_name"/>
+	</resultMap>
+
+	<resultMap id="distributer" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerManager" column="gb_distributer_manager"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerAddress" column="gb_distributer_address"/>
+		<result property="gbDistributerImg" column="gb_distributer_img"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
+		<association property="sysBusinessTypeEntity" resultMap="businessType"/>
+		<association property="appSupplierDepartment" resultMap="appSupplierDep"/>
+	</resultMap>
+	<resultMap id="multiDepartment" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="gb_department_id"/>
+		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+		<result property="gbDepartmentName" column="gb_department_name"/>
+		<result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+		<result property="gbDepartmentType" column="gb_department_type"/>
+		<result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
+		<result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
+		<result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+		<result property="gbDepartmentDepSettleId" column="gb_department_dep_settle_id"/>
+		<result property="gbDepartmentLevel" column="gb_department_level"/>
+		<association property="gbDepartmentUserEntity" resultMap="depUser"/>
+		<association property="gbDistributerEntity" resultMap="distributer"/>
+	</resultMap>
+
+    <select id="queryMultiDepartmentByWxOpenIdGb" resultMap="multiDepartment">
+		select  du.gb_DU_wx_open_id , d.gb_department_id, d.gb_department_name,d.gb_department_dis_id,
+		        d.gb_department_type, d.gb_department_settle_type, d.gb_department_is_group_dep, d.gb_department_sub_amount,
+		        ddu.gb_department_user_id, ddu.gb_DU_wx_nick_name , ddu.gb_DU_department_id,
+		        ddu.gb_DU_wx_open_id,
+		        ddu.gb_DU_url_change, ddu.gb_DU_join_date, ddu.gb_DU_wx_avartra_url,
+		       dis.gb_distributer_id, dis.gb_distributer_name, dis.gb_distributer_manager,
+		       dis.gb_distributer_phone, dis.gb_distributer_address, dis.gb_distributer_img,
+				gdm.gb_distributer_module_id,
+				gdm.gb_dm_distributer_id,
+				gdm.gb_dm_fixed_supplier_number,
+				gdm.gb_dm_purchase_number,
+				gdm.gb_dm_stock_number,
+				gdm.gb_dm_app_supplier_number,
+				gdm.gb_dm_central_kitchen_number
+		       from gb_department_user as du
+		left join gb_department as d on d.gb_department_id = du.gb_DU_department_id
+		left join gb_department_user as ddu on ddu.gb_DU_department_id = d.gb_department_id
+		left join gb_distributer as dis on dis.gb_distributer_id = d.gb_department_dis_id
+		left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id
+		left join sys_business_type as sbt on  sbt.sys_business_type_id = dis.gb_distributer_business_type
+		where du.gb_DU_wx_open_id = #{openId}
+	</select>
+	<select id="queryDepUsersByDepId" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user where gb_DU_department_id = #{depId}
+		order by  gb_DU_admin DESC
+	</select>
+    <select id="queryGroupDepartmentUserByParams" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select *  from gb_department_user as gdu
+		<where>
+			<if test="openId != null">
+			and	gdu.gb_DU_wx_open_id = #{openId}
+			</if>
+			<if test="admin != null">
+			and	gdu.gb_DU_admin = #{admin}
+			</if>
+		</where>
+	</select>
+	<select id="queryDepUsersByDepIdAndAdmin" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user
+		<where>
+			<if test="depId != null">
+				and	gb_DU_department_id = #{depId}
+			</if>
+			<if test="admin != null">
+				and	gb_DU_admin = #{admin}
+			</if>
+		</where>
+	</select>
+    <select id="queryDepUserInfoGb" resultMap="depUser">
+		select *,
+			   appSupplierDep.gb_department_id 'appSupplierDep_gb_department_id',
+			   appSupplierDep.gb_department_dis_id 'appSupplierDep_gb_department_dis_id',
+			   appSupplierDep.gb_department_name 'appSupplierDep_gb_department_name',
+			   appSupplierDep.gb_department_print_name 'appSupplierDep_gb_department_print_name'
+		       from gb_department_user as depu
+		 left join gb_department as dep on dep.gb_department_id = depu.gb_DU_department_father_id
+         left join gb_distributer as dis on depu.gb_DU_distributer_id = dis.gb_distributer_id
+		 left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
+				   and appSupplierDep.gb_department_type = 5
+		left join gb_distributer_module as mdu on mdu.gb_dm_distributer_id = dis.gb_distributer_id
+		left join sys_business_type as sbt on  sbt.sys_business_type_id = dis.gb_distributer_business_type
+		 where 	gb_department_user_id = #{userId}
+
+	</select>
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentUserEntity"
+			useGeneratedKeys="true" keyProperty="gbDepartmentUserId">
+		insert into gb_department_user
+		(
+			`gb_department_user_id`, 
+			`gb_DU_department_id`, 
+			`gb_DU_wx_avartra_url`, 
+			`gb_DU_wx_nick_name`, 
+			`gb_DU_wx_open_id`, 
+			`gb_DU_wx_phone`, 
+			`gb_DU_admin`,
+		 	`gb_DU_distributer_id`,
+		 	`gb_DU_url_change`,
+		 	`gb_DU_department_father_id`,
+			`gb_DU_join_date`,
+		 	`gb_DU_print_device_id`,
+		 	`gb_DU_print_bill_device_id`,
+		 	`gb_DU_customer_service`,
+		 	`gb_DU_login_times`
+		)
+		values
+		(
+			#{gbDepartmentUserId}, 
+			#{gbDuDepartmentId}, 
+			#{gbDuWxAvartraUrl}, 
+			#{gbDuWxNickName}, 
+			#{gbDuWxOpenId}, 
+			#{gbDuWxPhone}, 
+			#{gbDuAdmin},
+		 	#{gbDuDistributerId},
+		 	#{gbDuUrlChange},
+		 	#{gbDuDepartmentFatherId},
+		 	#{gbDuJoinDate},
+		 	#{gbDuPrintDeviceId},
+		 	#{gbDuPrintBillDeviceId},
+		 	#{gbDuCustomerService},
+		 	#{gbDuLoginTimes}
+
+
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDepartmentUserEntity">
+		update gb_department_user 
+		<set>
+			<if test="gbDuDepartmentId != '-99'">`gb_DU_department_id` = #{gbDuDepartmentId}, </if>
+			<if test="gbDuWxAvartraUrl != null">`gb_DU_wx_avartra_url` = #{gbDuWxAvartraUrl}, </if>
+			<if test="gbDuWxNickName != null">`gb_DU_wx_nick_name` = #{gbDuWxNickName}, </if>
+			<if test="gbDuWxOpenId != '-99'">`gb_DU_wx_open_id` = #{gbDuWxOpenId}, </if>
+			<if test="gbDuWxPhone != null">`gb_DU_wx_phone` = #{gbDuWxPhone}, </if>
+			<if test="gbDuDistributerId != '-99'">`gb_DU_distributer_id` = #{gbDuDistributerId}, </if>
+			<if test="gbDuUrlChange != null">`gb_DU_url_change` = #{gbDuUrlChange}, </if>
+			<if test="gbDuDepartmentFatherId != '-99'">`gb_DU_department_father_id` = #{gbDuDepartmentFatherId}, </if>
+			<if test="gbDuJoinDate != null">`gb_DU_join_date` = #{gbDuJoinDate}, </if>
+			<if test="gbDuPrintDeviceId != null">`gb_DU_print_device_id` = #{gbDuPrintDeviceId}, </if>
+			<if test="gbDuPrintBillDeviceId != null">`gb_DU_print_bill_device_id` = #{gbDuPrintBillDeviceId}, </if>
+			<if test="gbDuCustomerService != null">`gb_DU_customer_service` = #{gbDuCustomerService}, </if>
+			<if test="gbDuLoginTimes != null">`gb_DU_login_times` = #{gbDuLoginTimes}, </if>
+			<if test="gbDuAdmin != '-99'">`gb_DU_admin` = #{gbDuAdmin}</if>
+		</set>
+		where gb_department_user_id = #{gbDepartmentUserId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_department_user where gb_department_user_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_department_user where gb_department_user_id in 
+		<foreach item="gbDepartmentUserId" collection="array" open="(" separator="," close=")">
+			#{gbDepartmentUserId}
+		</foreach>
+	</delete>
+
+</mapper>

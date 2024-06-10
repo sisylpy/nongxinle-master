@@ -1,0 +1,15 @@
+package ${package}.dao;
+
+/**
+ * ${comments}
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+
+import ${package}.entity.${className}Entity;
+
+
+public interface ${className}Dao extends BaseDao<${className}Entity> {
+	
+}
