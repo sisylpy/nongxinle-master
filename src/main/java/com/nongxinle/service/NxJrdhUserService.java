@@ -40,4 +40,5 @@ public interface NxJrdhUserService {
 	NxJrdhUserEntity querySelluserByOpenId(String openId);
 
     NxJrdhUserEntity queryJrdhUserByAdmin(Map<String, Object> map);
+
 }

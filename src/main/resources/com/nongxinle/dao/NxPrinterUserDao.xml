@@ -20,7 +20,11 @@
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
 		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
 		<result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
 		<result property="nxDistributerManager" column="nx_distributer_manager"/>
 		<result property="nxDistributerAddress" column="nx_distributer_address"/>
 		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
@@ -29,7 +33,14 @@
 	</resultMap>
 
 	<resultMap id="gbDis" type="GbDistributerEntity">
-		<id property="gbDistributerId" column="gb_distributer_id"/>
+<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
 		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
 		<result property="gbDistributerName" column="gb_distributer_name"/>
 		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
@@ -43,6 +54,15 @@
 
 	<resultMap id="nxCom" type="NxCommunityEntity">
 		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
+		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
+		<result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
+		<result property="nxCommunityDeliveryPayMaxFee" column="nx_community_delivery_pay_max_fee"/>
+		<result property="nxCommunityDeliveryPayPercent" column="nx_community_delivery_pay_percent"/>
+		<result property="nxCommunitySysBusinessAreaId" column="nx_community_sys_business_area_id"/>
+		<result property="nxCommunitySysCityId" column="nx_community_sys_city_id"/>
+		<result property="nxCommunitySysDistrictId" column="nx_community_sys_district_id"/>
+		<result property="nxCommunitySysProvinceId" column="nx_community_sys_province_id"/>
 		<result property="nxCommunityName" column="nx_community_name"/>
 		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
 	</resultMap>

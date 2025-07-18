@@ -28,9 +28,17 @@ public interface NxCustomerUserService {
 	
 	void deleteBatch(Integer[] custUserIds);
 
-    String queryOpenId(Integer nxOrdersUserId);
-
 	NxCustomerUserEntity queryUserByOpenId(String openid);
 
 	Map<String, Object> queryCustomerUserInfo(Integer gbDepartmentUserId);
+
+    List<NxCustomerUserEntity> queryCustomerByParams(Map<String, Object> map);
+
+    Integer queryCustomerUserCount(Map<String, Object> map);
+
+    Integer queryCommerceCustomerUserCount(Map<String, Object> map);
+
+	NxCustomerUserEntity queryUserWithAddress(Integer orderUserId);
+
+    NxCustomerUserEntity queryUserByOpenIdAndCommerceId(Map<String, Object> mapU);
 }

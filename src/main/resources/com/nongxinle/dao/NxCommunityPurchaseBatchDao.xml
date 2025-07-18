@@ -169,6 +169,9 @@
 			<if test="status != null">
 				and cpb.nx_cpb_status &lt; #{status}
 			</if>
+			<if test="date != null">
+				and cpb.nx_cpb_date = #{date}
+			</if>
 
 			<if test="equalBatchStatus != null">
 				and cpb.nx_cpb_status = #{equalBatchStatus}

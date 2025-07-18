@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.nongxinle.entity.NxDepartmentOrdersHistoryEntity;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,10 +23,10 @@ import com.nongxinle.utils.R;
 
 
 @RestController
-@RequestMapping("gbdepartmentordershistory")
+@RequestMapping("api/gbdepartmentordershistory")
 public class GbDepartmentOrdersHistoryController {
 	@Autowired
 	private GbDepartmentOrdersHistoryService gbDepartmentOrdersHistoryService;
 
-	
+
 }

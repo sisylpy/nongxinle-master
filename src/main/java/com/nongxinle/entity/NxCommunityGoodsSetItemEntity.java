@@ -37,14 +37,20 @@ public class NxCommunityGoodsSetItemEntity implements Serializable {
 	 */
 	private Integer nxCgsiCgPropertyId;
 	private Integer nxCgsiItemSort;
+	private Integer nxCgsiItemStatus;
+	private Integer nxCgsiItemLimitCount;
+	private Integer nxCgsiCgGoodsId;
 	/**
 	 *  
 	 */
 	private String nxCgsiItemPrice;
+	private String nxCgsiItemHuaxianPrice;
 	/**
 	 *  
 	 */
 	private String nxCgsiItemFilePath;
 	private String nxCgsiItemQuantity;
+	
+	private NxCommunityGoodsEntity nxCommunityGoodsEntity;
 
 }

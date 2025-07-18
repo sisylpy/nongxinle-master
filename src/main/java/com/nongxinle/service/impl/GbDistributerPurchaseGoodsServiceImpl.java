@@ -1,15 +1,13 @@
 package com.nongxinle.service.impl;
 
-import com.nongxinle.entity.GbDepartmentEntity;
-import com.nongxinle.entity.GbDistributerFatherGoodsEntity;
-import com.nongxinle.entity.NxDistributerEntity;
+import com.nongxinle.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
-import com.nongxinle.entity.GbDistributerPurchaseGoodsEntity;
 import com.nongxinle.service.GbDistributerPurchaseGoodsService;
 
 
@@ -191,6 +189,49 @@ public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurch
 
 		return gbDistributerPurchaseGoodsDao.queryPurGoodsWithOrders(id);
     }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryGreatGrandPurGoodsDetail(Map<String, Object> map) {
+
+		return gbDistributerPurchaseGoodsDao.queryGreatGrandPurGoodsDetail(map);
+    }
+
+    @Override
+    public int queryGbPurchaseOrderAmount(Map<String, Object> map1) {
+
+		return gbDistributerPurchaseGoodsDao.queryGbPurchaseOrderAmount(map1);
+    }
+
+    @Override
+    public GbDistributerPurchaseGoodsEntity queryBuyingPurGoods(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryBuyingPurGoods(map);
+    }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryGreatGrandGoodsByDisGoods(Map<String, Object> map1) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGreatGrandGoodsByDisGoods(map1);
+    }
+
+    @Override
+    public TreeSet<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryDisTreeGoods(map);
+    }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryGrandPurchaseGoods(Map<String, Object> map4) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGrandPurchaseGoods(map4);
+    }
+
+    @Override
+    public String queryPurchaseGoodsWeight(Map<String, Object> mapDay) {
+
+	    return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsWeight(mapDay);
+    }
+
 
 
 }

@@ -93,6 +93,7 @@
 
     <resultMap id="cgGoodsWithOrders" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
 		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
 		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
@@ -290,6 +291,7 @@
     </resultMap>
     <resultMap id="comGoods" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
 		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
 		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
@@ -649,6 +651,7 @@
 
     <resultMap id="comGoodsWithOrders" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
 		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
 		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
@@ -744,8 +747,12 @@
     </select>
 
     <resultMap id="Distributers" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_Distributer_id"/>
-        <result property="nxDistributerName" column="nx_Distributer_name"/>
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <collection property="nxCommunityGoodsEntities" resultMap="comGoodsWithOrders"/>
     </resultMap>
 
@@ -973,6 +980,14 @@
 
     <resultMap id="disGoodswithOrders" type="NxDistributerGoodsEntity">
        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -985,6 +1000,7 @@
 		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+        <result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
 		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
         <result property="nxDgWillPrice" column="nx_dg_will_price"/>
         <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
@@ -1056,6 +1072,7 @@
 
     <resultMap id="chainApplys" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
 		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
 		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>

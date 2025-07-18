@@ -27,7 +27,15 @@ public interface NxCommunityFatherGoodsDao extends BaseDao<NxCommunityFatherGood
 
     List<NxCommunityFatherGoodsEntity> queryComFathersGoodsByParams(Map<String, Object> map);
 
-    List<NxCommunityFatherGoodsEntity> queryFatherWithGoods(Map<String, Object> map);
+//    List<NxCommunityFatherGoodsEntity> queryFatherWithGoods(Map<String, Object> map);
 
-    List<NxCommunityFatherGoodsEntity> queryFatherWithGoodsPindan(Map<String, Object> map);
+//    List<NxCommunityFatherGoodsEntity> queryFatherWithGoodsPindan(Map<String, Object> map);
+
+    List<NxCommunityFatherGoodsEntity> queryGrandGoodsWithOrders(Map<String, Object> map);
+
+//    List<NxCommunityFatherGoodsEntity> queryGrandGoodsWithOrdersPindan(Map<String, Object> map);
+
+    List<NxCommunityFatherGoodsEntity> queryGrandGoodsAdmin(Map<String, Object> map);
+
+    List<NxCommunityFatherGoodsEntity> queryGrandGoodsWithOrdersDesk(Map<String, Object> map);
 }

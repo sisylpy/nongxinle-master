@@ -9,7 +9,7 @@
 	<resultMap id="comFatherGoods" type="NxCommunityFatherGoodsEntity">
 		<id property="nxCommunityFatherGoodsId" column="nx_community_father_goods_id"/>
 		<result property="nxCfgFatherGoodsName" column="nx_cfg_father_goods_name"/>
-		<collection property="nxCommunityPurchaseGoodsEntities" resultMap="purchaseGoods"/>
+		<collection property="fatherGoodsEntities" resultMap="purchaseGoods"/>
 	</resultMap>
 
 
@@ -118,7 +118,7 @@
 		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
 		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
 		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
-		<collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
+<!--		<collection property="nxRestrauntOrdersEntities" resultMap="applys"/>-->
 	</resultMap>
 
 	<resultMap id="purchaseGoods" type="NxCommunityPurchaseGoodsEntity">

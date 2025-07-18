@@ -51,5 +51,10 @@ public class GbDistributerModuleServiceImpl implements GbDistributerModuleServic
 	public void deleteBatch(Integer[] gbDistributerModuleIds){
 		gbDistributerModuleDao.deleteBatch(gbDistributerModuleIds);
 	}
-	
+
+    @Override
+    public GbDistributerModuleEntity queryModelByDisId(Integer gbDistributerId) {
+		return gbDistributerModuleDao.queryModelByDisId(gbDistributerId);
+    }
+
 }

@@ -32,6 +32,7 @@ public class GbDepartmentBillEntity implements Serializable {
 	 *  
 	 */
 	private Integer gbDbDepId;
+	private Integer gbDbDepFatherId;
 	/**
 	 *  
 	 */
@@ -58,6 +59,7 @@ public class GbDepartmentBillEntity implements Serializable {
 	 *  
 	 */
 	private String gbDbMonth;
+	private String gbDbYear;
 	/**
 	 *  
 	 */
@@ -88,15 +90,25 @@ public class GbDepartmentBillEntity implements Serializable {
 	private String	gbDbSellingTotal;
 	private Integer gbDbDepSettleId;
 	private Integer gbDbIssueNxDisId;
+	private Integer gbDbSetAutoGoods;
+	private Integer gbDbUserCouponId;
+	private Integer gbDbReturnOrderId;
 	private  String gbUserOpenId;
 	private  String gbDbWxOutTradeNo;
+	private  String gbDbPayTotal;
+	private  String gbDbUserCouponTotal;
+	private  String gbDbReturnTotal;
+	private  String gbDbGreatCouponTotal;
+	private  String gbDbChaTotal;
+
 
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
 	private List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities;
-
+	private List<GbDepartmentEntity> orderDepartments;
 	private GbDepartmentEntity gbDepartmentEntity;
 	private GbDepartmentEntity issueDepartmentEntity;
 	private GbDepartmentUserEntity issueUserEntity;
+	private NxDistributerCouponEntity nxDistributerCouponEntity;
 
 
 

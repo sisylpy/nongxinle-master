@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerPayDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay where nx_distributer_pay_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_pay 
+	</select>
+	<select id="queryItemByTradeNo" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay where nx_ndp_trade_no = #{ordersSn}
+	</select>
+
+	<resultMap id="depUser" type="NxDepartmentUserEntity">
+		<id property="nxDepartmentUserId" column="nx_department_user_id"/>
+		<result property="nxDuLoginTimes" column="nx_DU_login_times"/>
+		<result property="nxDuWxNickName" column="nx_DU_wx_nick_name"/>
+		<result property="nxDuWxAvartraUrl" column="nx_DU_wx_avartra_url"/>
+		<result property="nxDuWxPhone" column="nx_DU_wx_phone"/>
+	</resultMap>
+	<resultMap id="dep" type="NxDepartmentEntity">
+		<id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentPickName" column="nx_department_pick_name"/>
+		<result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
+		<result property="nxDepartmentName" column="nx_department_name"/>
+		<result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+		<result property="nxDepartmentType" column="nx_department_type"/>
+		<result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+		<result property="nxDepartmentSettleType" column="nx_department_settle_type"/>
+		<result property="nxDepartmentSubAmount" column="nx_department_sub_amount"/>
+		<result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
+		<result property="nxDepartmentFatherId" column="nx_department_father_id"/>
+		<result property="nxDepartmentWorkingStatus" column="nx_department_working_status"/>
+		<result property="nxDepartmentFilePath" column="nx_department_file_path"/>
+		<result property="nxDepartmentJoinDate" column="nx_department_join_date"/>
+		<result property="nxDepartmentOrderTotal" column="nx_department_order_total"/>
+		<association property="nxDepartmentUserEntity" resultMap="depUser"/>
+	</resultMap>
+
+	<resultMap id="dis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+		<result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+	</resultMap>
+
+	<resultMap id="payWithDep" type="NxDistributerPayEntity">
+		<id property="nxDistributerPayId" column="nx_distributer_pay_id"/>
+		<result property="nxNdpStatus" column="nx_ndp_status"/>
+		<result property="nxNdpPaySubtotal" column="nx_ndp_pay_subtotal"/>
+		<result property="nxNdpPayTime" column="nx_ndp_pay_time"/>
+		<result property="nxNdpFromTime" column="nx_ndp_from_time"/>
+		<result property="nxNdpStopTime" column="nx_ndp_stop_time"/>
+		<result property="nxNdpPayTime" column="nx_ndp_pay_time"/>
+		<result property="nxNdpType" column="nx_ndp_type"/>
+		<result property="nxNdpNxNewDisId" column="nx_ndp_nx_new_dis_id"/>
+		<result property="nxNdpBuyQuantity" column="nx_ndp_buy_quantity"/>
+		<result property="nxNdpOrderQuantity" column="nx_ndp_order_quantity"/>
+		<result property="nxNdpSellDetail" column="nx_ndp_sell_detail"/>
+		<result property="nxNdpImgUrl" column="nx_ndp_img_url"/>
+		<association property="newDistributer" resultMap="dis"/>
+	</resultMap>
+	<select id="queryDisPayListByParams" resultMap="payWithDep">
+		select * from nx_distributer_pay as ndp
+		left join nx_distributer as nd on nd.nx_distributer_id = ndp.nx_ndp_nx_new_dis_id
+		<where>
+			<if test="disId != null">
+				and nx_ndp_nx_dis_id = #{disId}
+			</if>
+
+			<if test="type != null">
+				and nx_ndp_type = #{type}
+			</if>
+			<if test="today != null">
+				and nx_ndp_stop_time &gt; #{today}
+			</if>
+			<if test="depId != null">
+				and nx_ndp_nx_new_dis_id  = #{depId}
+			</if>
+			<if test="status != null">
+				and nx_ndp_status &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and nx_ndp_status = #{equalStatus}
+			</if>
+		</where>
+         order by nx_distributer_pay_id DESC
+	</select>
+	<select id="queryPayItemByPayId" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay where nx_distributer_pay_id = #{payId}
+	</select>
+    <select id="queryItemListByTradeNo" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay where nx_ndp_trade_no = #{ordersSn}
+	</select>
+	<select id="queryUnPayByParams" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay as ndp
+
+		<where>
+			<if test="disId != null">
+				and nx_ndp_nx_dis_id = #{disId}
+			</if>
+
+			<if test="type != null">
+				and nx_ndp_type = #{type}
+			</if>
+			<if test="today != null">
+				and nx_ndp_stop_time &gt; #{today}
+			</if>
+
+			<if test="status != null">
+				and nx_ndp_status &lt; #{status}
+			</if>
+			<if test="equalStatus != null">
+				and nx_ndp_status = #{equalStatus}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerPayEntity" useGeneratedKeys="true" keyProperty="nxDistributerPayId">
+		insert into nx_distributer_pay
+		(
+			`nx_distributer_pay_id`, 
+			`nx_ndp_nx_dis_id`, 
+			`nx_ndp_pay_subtotal`,
+			`nx_ndp_from_time`, 
+			`nx_ndp_stop_time`, 
+			`nx_ndp_pay_time`,
+			`nx_ndp_type`, 
+			`nx_ndp_status`,
+			`nx_ndp_trade_no`,
+			`nx_ndp_nx_new_dis_id`,
+			`nx_ndp_buy_quantity`,
+			`nx_ndp_order_quantity`,
+			`nx_ndp_img_url`,
+			`nx_ndp_sell_detail`
+
+		)
+		values
+		(
+			#{nxDistributerPayId}, 
+			#{nxNdpNxDisId}, 
+			#{nxNdpPaySubtotal},
+			#{nxNdpFromTime}, 
+			#{nxNdpStopTime}, 
+			#{nxNdpPayTime},
+			#{nxNdpType}, 
+			#{nxNdpStatus},
+			#{nxNdpTradeNo},
+			#{nxNdpNxNewDisId},
+			#{nxNdpBuyQuantity},
+			#{nxNdpOrderQuantity},
+			#{nxNdpImgUrl},
+			#{nxNdpSellDetail}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerPayEntity">
+		update nx_distributer_pay 
+		<set>
+			<if test="nxNdpNxDisId != null">`nx_ndp_nx_dis_id` = #{nxNdpNxDisId}, </if>
+			<if test="nxNdpPaySubtotal != null">`nx_ndp_pay_subtotal` = #{nxNdpPaySubtotal}, </if>
+			<if test="nxNdpFromTime != null">`nx_ndp_from_time` = #{nxNdpFromTime}, </if>
+			<if test="nxNdpStopTime != null">`nx_ndp_stop_time` = #{nxNdpStopTime}, </if>
+			<if test="nxNdpPayTime != null">`nx_ndp_pay_time` = #{nxNdpPayTime}, </if>
+			<if test="nxNdpType != null">`nx_ndp_type` = #{nxNdpType}, </if>
+			<if test="nxNdpTradeNo != null">`nx_ndp_trade_no` = #{nxNdpTradeNo}, </if>
+			<if test="nxNdpNxNewDisId != null">`nx_ndp_nx_new_dis_id` = #{nxNdpNxNewDisId}, </if>
+			<if test="nxNdpBuyQuantity != null">`nx_ndp_buy_quantity` = #{nxNdpBuyQuantity}, </if>
+			<if test="nxNdpImgUrl != null">`nx_ndp_img_url` = #{nxNdpImgUrl}, </if>
+			<if test="nxNdpSellDetail != null">`nx_ndp_sell_detail` = #{nxNdpSellDetail}, </if>
+			<if test="nxNdpStatus != null">`nx_ndp_status` = #{nxNdpStatus}</if>
+		</set>
+		where nx_distributer_pay_id = #{nxDistributerPayId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_pay where nx_distributer_pay_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_pay where nx_distributer_pay_id in 
+		<foreach item="nxDistributerPayId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerPayId}
+		</foreach>
+	</delete>
+
+</mapper>

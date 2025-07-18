@@ -94,7 +94,7 @@
 		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
 		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
 		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
-		<association property="nxResComGoodsDailyEntity" resultMap="daily"/>
+<!--		<association property="nxResComGoodsDailyEntity" resultMap="daily"/>-->
 	</resultMap>
 	<select id="queryResDailyStatistics" resultMap="cgGoods">
 		select * from nx_res_com_goods_daily as rcgd

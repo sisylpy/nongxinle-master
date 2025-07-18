@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxAiForecastLogDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxAiForecastLogEntity">
+		select * from nx_ai_forecast_log where nx_ai_forecast_log_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxAiForecastLogEntity">
+		select * from nx_ai_forecast_log 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_ai_forecast_log 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxAiForecastLogEntity">
+		insert into nx_ai_forecast_log
+		(
+			`nx_ai_forecast_log_id`, 
+			`nx_department_id`, 
+			`nx_dis_goods_id`, 
+			`nx_forecast_date`, 
+			`nx_predicted_quantity`, 
+			`nx_actual_quantity`, 
+			`nx_day_of_week`, 
+			`nx_lag1`, 
+			`nx_lag2`, 
+			`nx_lag3`, 
+			`nx_created_at`, 
+			`nx_current_dow`,
+			`nx_lag1_dow`,
+			`nx_lag2_dow`,
+			`nx_lag3_dow`, 
+			`nx_ai_apply_quantity`, 
+			`nx_ai_apply_standard`,
+			`nx_ai_error`,
+			`nx_ai_error_pct`
+		)
+		values
+		(
+			#{nxAiForecastLogId}, 
+			#{nxDepartmentId}, 
+			#{nxDisGoodsId}, 
+			#{nxForecastDate}, 
+			#{nxPredictedQuantity}, 
+			#{nxActualQuantity}, 
+			#{nxDayOfWeek}, 
+			#{nxLag1}, 
+			#{nxLag2}, 
+			#{nxLag3}, 
+			#{nxCreatedAt}, 
+			#{nxCurrentDow},
+			#{nxLag1Dow},
+			#{nxLag2Dow},
+			#{nxLag3Dow}, 
+			#{nxAiApplyQuantity}, 
+			#{nxAiApplyStandard},
+			#{nxAiError},
+			#{nxAiErrorPct}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxAiForecastLogEntity">
+		update nx_ai_forecast_log 
+		<set>
+			<if test="nxDepartmentId != null">`nx_department_id` = #{nxDepartmentId}, </if>
+			<if test="nxDisGoodsId != null">`nx_dis_goods_id` = #{nxDisGoodsId}, </if>
+			<if test="nxForecastDate != null">`nx_forecast_date` = #{nxForecastDate}, </if>
+			<if test="nxPredictedQuantity != null">`nx_predicted_quantity` = #{nxPredictedQuantity}, </if>
+			<if test="nxActualQuantity != null">`nx_actual_quantity` = #{nxActualQuantity}, </if>
+			<if test="nxDayOfWeek != null">`nx_day_of_week` = #{nxDayOfWeek}, </if>
+			<if test="nxLag1 != null">`nx_lag1` = #{nxLag1}, </if>
+			<if test="nxLag2 != null">`nx_lag2` = #{nxLag2}, </if>
+			<if test="nxLag3 != null">`nx_lag3` = #{nxLag3}, </if>
+			<if test="nxCreatedAt != null">`nx_created_at` = #{nxCreatedAt}, </if>
+			<if test="nxCurrentDow != null">`nx_current_dow` = #{nxCurrentDow}, </if>
+			<if test="nxLag1Dow != null">`nx_lag1_dow` = #{nxLag1Dow}, </if>
+			<if test="nxLag2Dow != null">`nx_lag2_dow` = #{nxLag2Dow}, </if>
+			<if test="nxLag3Dow != null">`nx_lag3_dow` = #{nxLag3Dow}, </if>
+			<if test="nxAiApplyQuantity != null">`nx_ai_apply_quantity` = #{nxAiApplyQuantity}, </if>
+			<if test="nxAiError != null">`nx_ai_error` = #{nxAiError}, </if>
+			<if test="nxAiErrorPct != null">`nx_ai_error_pct` = #{nxAiErrorPct}, </if>
+			<if test="nxAiApplyStandard != null">`nx_ai_apply_standard` = #{nxAiApplyStandard}</if>
+		</set>
+		where nx_ai_forecast_log_id = #{nxAiForecastLogId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_ai_forecast_log where nx_ai_forecast_log_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_ai_forecast_log where nx_ai_forecast_log_id in 
+		<foreach item="nxAiForecastLogId" collection="array" open="(" separator="," close=")">
+			#{nxAiForecastLogId}
+		</foreach>
+	</delete>
+
+</mapper>

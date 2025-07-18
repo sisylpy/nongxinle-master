@@ -1,7 +1,7 @@
 package com.nongxinle.dao;
 
 /**
- * 
+ *
  *
  * @author lpy
  * @date 06-21 21:51
@@ -57,12 +57,29 @@ public interface GbDepartmentOrdersDao extends BaseDao<GbDepartmentOrdersEntity>
 
     List<GbDistributerGoodsShelfEntity> disGetUnPlanPurchaseApplysStock(Map<String, Object> map);
 
-    List<GbDistributerFatherGoodsEntity> disGetPrintedPurGoodsApply(Map<String, Object> map);
-
     Integer queryOrdersDisGoodsAcount(Map<String, Object> map);
 
     List<GbDepartmentOrdersEntity> queryPeisongOrdersByParams(Map<String, Object> map);
 
     GbDepartmentOrdersEntity queryReturnOrderByReduceId(Integer gbDepartmentGoodsStockReduceId);
 
+    List<GbDistributerFatherGoodsEntity> queryGreatGrandForJrdh(Map<String, Object> mapDep);
+
+    List<NxJrdhSupplierEntity> querySupplierByOrdersParams(Map<String, Object> mapDep);
+
+    GbDepartmentOrdersEntity selectLastOrder(Map<String, Object> params);
+
+    List<Integer> selectFrequentGoods(Map<String, Object> freqParams);
+
+    List<DailyUsage> selectDailyUsage(Map<String, Object> map);
+
+    List<Integer> queryGoodsIds(Map<String, Object> mapOrder);
+
+    int selectFrequentGoodsCount(Map<String, Object> freqParams);
+
+    List<Integer> selectFrequentGoodsWithPage(Map<String, Object> freqParams);
+
+    List<GbDepartmentOrdersEntity> queryDisHistoryOrdersByParamsForAi(Map<String, Object> params);
+
+    List<GbDistributerFatherGoodsEntity> queryGrandGoodsOrder(Map<String, Object> map1);
 }

@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 
+import javax.swing.*;
+
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.*;
-import static com.nongxinle.utils.NxCommunityTypeUtils.*;
-import static com.nongxinle.utils.NxCommunityTypeUtils.getNxRestrauntOrderStatusHasFinished;
 import static com.nongxinle.utils.NxDistributerTypeUtils.*;
 import static com.nongxinle.utils.PinYin4jUtils.hanziToPinyin;
 
@@ -47,6 +47,8 @@ public class NxDistributerPurchaseGoodsController {
     @Autowired
     private NxDistributerGoodsService nxDgService;
     @Autowired
+    private NxDistributerFatherGoodsService nxDistributerFatherGoodsService;
+    @Autowired
     private NxRestrauntOrdersService nxRestrauntOrdersService;
     @Autowired
     private NxDistributerWeightService nxDistributerWeightService;
@@ -54,7 +56,69 @@ public class NxDistributerPurchaseGoodsController {
     private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
     @Autowired
     private NxCommunityGoodsService nxCommunityGoodsService;
+    @Autowired
+    private NxDistributerGoodsShelfStockService shelfStockService;
 
+
+
+    @RequestMapping(value = "/disReceiveStock", method = RequestMethod.POST)
+    @ResponseBody
+    public R disReceiveStock (Integer purGoodsId, Integer userId) {
+
+        NxDistributerGoodsShelfStockEntity stockEntity = new NxDistributerGoodsShelfStockEntity();
+        stockEntity.setNxDgssReceiveUserId(userId);
+
+        stockEntity.setNxDgssNxPurGoodsId(purGoodsId);
+
+        NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurcGoodsService.queryObject(purGoodsId);
+
+        stockEntity.setNxDgssNxDistributerId(purchaseGoodsEntity.getNxDpgDistributerId());
+        stockEntity.setNxDgssNxDisGoodsId(purchaseGoodsEntity.getNxDpgDisGoodsId());
+        stockEntity.setNxDgssPrice(purchaseGoodsEntity.getNxDpgBuyPrice());
+        stockEntity.setNxDgssWeight(purchaseGoodsEntity.getNxDpgBuyQuantity());
+        stockEntity.setNxDgssSubtotal(purchaseGoodsEntity.getNxDpgBuySubtotal());
+        stockEntity.setNxDgssRestWeight(purchaseGoodsEntity.getNxDpgBuyQuantity());
+        stockEntity.setNxDgssRestSubtotal(purchaseGoodsEntity.getNxDpgBuySubtotal());
+        stockEntity.setNxDgssStatus(0);
+        stockEntity.setNxDgssInventoryDate(formatWhatDate(0));
+        shelfStockService.save(stockEntity);
+
+
+        purchaseGoodsEntity.setNxDpgStatus(4);
+        nxDisPurcGoodsService.update(purchaseGoodsEntity);
+
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/purchaserGetHaveFinishedPurGoods")
+    @ResponseBody
+    public R purchaserGetHaveFinishedPurGoods(Integer userId,  Integer disId, Integer equalStatus) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("buyUserId", userId);
+        map.put("equalStatus", equalStatus);
+        map.put("batchId", 0);
+        System.out.println("mailelelee" + map);
+        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDisPurcGoodsService.queryDisPurchaseGoodsGreat(map);
+
+        return R.ok().put("data", fatherGoodsEntities);
+    }
+
+        @RequestMapping(value = "/markPurGoodsFinish", method = RequestMethod.POST)
+    @ResponseBody
+    public R markPurGoodsFinish(@RequestBody NxDistributerPurchaseGoodsEntity purgoods) {
+
+        purgoods.setNxDpgBatchId(-1);
+        purgoods.setNxDpgStatus(1);
+        purgoods.setNxDpgPayType(0);
+        purgoods.setNxDpgTime(formatWhatTime(0));
+        purgoods.setNxDpgPurchaseDate(formatWhatDay(0));
+        nxDisPurcGoodsService.update(purgoods);
+
+        return R.ok();
+    }
+    
+    
 
     @RequestMapping(value = "/deleteInputType/{id}")
     @ResponseBody
@@ -62,6 +126,23 @@ public class NxDistributerPurchaseGoodsController {
         NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurcGoodsService.queryObject(id);
         purchaseGoodsEntity.setNxDpgInputType(null);
         nxDisPurcGoodsService.update(purchaseGoodsEntity);
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/deletePurGoods/{id}")
+    @ResponseBody
+    public R deletePurGoods(@PathVariable Integer id) {
+        NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurcGoodsService.queryObject(id);
+        if(purchaseGoodsEntity.getNxDpgBatchId() != null){
+            Map<String, Object> map = new HashMap<>();
+            map.put("batchId", purchaseGoodsEntity.getNxDpgBatchId());
+            List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = nxDisPurcGoodsService.queryPurchaseGoodsByParams(map);
+            if(purchaseGoodsEntities.size() == 1){
+                nxDPBService.delete(purchaseGoodsEntity.getNxDpgBatchId());
+            }
+        }
+        nxDisPurcGoodsService.delete(id);
         return R.ok();
     }
 
@@ -79,74 +160,74 @@ public class NxDistributerPurchaseGoodsController {
         return R.ok();
     }
 
-
-    @RequestMapping(value = "/disGetToPrintPurGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R disGetToPrintPurGoods(Integer disId, Integer fatherId) {
-        Map<String, Object> map4 = new HashMap<>();
-        map4.put("fatherId", fatherId);
-        map4.put("status", 1);
-        map4.put("weightId", -1);
-        System.out.println("map44444" + map4);
-        List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoods(map4);
-
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("orderStatus", 3);
-        map.put("purchaseType", 1);
-        map.put("batchId", 0);
-        map.put("weightId", 1);
-        map.put("equalStatus", 1);
-        System.out.println("priririiriririiri" + map);
-        Integer printOrderCount = nxDisPurcGoodsService.queryPurOrderCount(map);
-
-        Map<String, Object> mapWN = new HashMap<>();
-        mapWN.put("disId", disId);
-        mapWN.put("date", formatWhatDay(0));
-        mapWN.put("type", 2);
-        int count = nxDistributerWeightService.queryWeightCountByParams(mapWN);
-        BigDecimal trade = new BigDecimal(count).add(new BigDecimal(1));
-        String s = formatDayNumber(0) + "CGD" + trade;
-
-        Map<String, Object> map1 = new HashMap<>();
-        map1.put("arr", purchaseToday);
-        map1.put("printOrderCount", printOrderCount);
-        map1.put("tradeNo", s);
-
-        return R.ok().put("data", map1);
-    }
-
-
-    @RequestMapping(value = "/cancleFinishPurGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R cancleFinishPurGoods(@RequestBody NxDistributerPurchaseGoodsEntity purgoods) {
-        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = purgoods.getNxDepartmentOrdersEntities();
-
-        for (NxDepartmentOrdersEntity orders : nxDepartmentOrdersEntities) {
-            orders.setNxDoStatus(getNxOrderStatusNew());
-            orders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-            orders.setNxDoPurchaseUserId(-1);
-            orders.setNxDoWeight(null);
-            orders.setNxDoSubtotal(null);
-            nxDepartmentOrdersService.update(orders);
-        }
-        purgoods.setNxDpgStatus(getGbPurchaseGoodsStatusNew());
-        purgoods.setNxDpgBuyPrice(null);
-        purgoods.setNxDpgBuyQuantity(null);
-        purgoods.setNxDpgBuySubtotal(null);
-        purgoods.setNxDpgStatus(0);
-        purgoods.setNxDpgTime(null);
-        purgoods.setNxDpgPurchaseDate(null);
-        purgoods.setNxDpgPurchaseType(null);
-        purgoods.setNxDpgPurUserId(null);
-        purgoods.setNxDpgPurchaseDate(null);
-        purgoods.setNxDpgTime(null);
-        purgoods.setNxDpgBuyUserId(null);
-        nxDisPurcGoodsService.update(purgoods);
-
-        return R.ok();
-    }
+//
+//    @RequestMapping(value = "/disGetToPrintPurGoods", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R disGetToPrintPurGoods(Integer disId, Integer fatherId) {
+//        Map<String, Object> map4 = new HashMap<>();
+//        map4.put("fatherId", fatherId);
+//        map4.put("status", 1);
+//        map4.put("weightId", -1);
+//        System.out.println("map44444" + map4);
+//        List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoods(map4);
+//
+//
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("disId", disId);
+//        map.put("orderStatus", 3);
+//        map.put("purchaseType", 1);
+//        map.put("batchId", 0);
+//        map.put("weightId", 1);
+//        map.put("equalStatus", 1);
+//        System.out.println("priririiriririiri" + map);
+//        Integer printOrderCount = nxDisPurcGoodsService.queryPurOrderCount(map);
+//
+//        Map<String, Object> mapWN = new HashMap<>();
+//        mapWN.put("disId", disId);
+//        mapWN.put("date", formatWhatDay(0));
+//        mapWN.put("type", 2);
+//        int count = nxDistributerWeightService.queryWeightCountByParams(mapWN);
+//        BigDecimal trade = new BigDecimal(count).add(new BigDecimal(1));
+//        String s = formatDayNumber(0) + "CGD" + trade;
+//
+//        Map<String, Object> map1 = new HashMap<>();
+//        map1.put("arr", purchaseToday);
+//        map1.put("printOrderCount", printOrderCount);
+//        map1.put("tradeNo", s);
+//
+//        return R.ok().put("data", map1);
+//    }
+//
+//
+//    @RequestMapping(value = "/cancleFinishPurGoods", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R cancleFinishPurGoods(@RequestBody NxDistributerPurchaseGoodsEntity purgoods) {
+//        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = purgoods.getNxDepartmentOrdersEntities();
+//
+//        for (NxDepartmentOrdersEntity orders : nxDepartmentOrdersEntities) {
+//            orders.setNxDoStatus(getNxOrderStatusNew());
+//            orders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+//            orders.setNxDoPurchaseUserId(-1);
+//            orders.setNxDoWeight(null);
+//            orders.setNxDoSubtotal(null);
+//            nxDepartmentOrdersService.update(orders);
+//        }
+//        purgoods.setNxDpgStatus(getGbPurchaseGoodsStatusNew());
+//        purgoods.setNxDpgBuyPrice(null);
+//        purgoods.setNxDpgBuyQuantity(null);
+//        purgoods.setNxDpgBuySubtotal(null);
+//        purgoods.setNxDpgStatus(0);
+//        purgoods.setNxDpgTime(null);
+//        purgoods.setNxDpgPurchaseDate(null);
+//        purgoods.setNxDpgPurchaseType(null);
+//        purgoods.setNxDpgPurUserId(null);
+//        purgoods.setNxDpgPurchaseDate(null);
+//        purgoods.setNxDpgTime(null);
+//        purgoods.setNxDpgBuyUserId(null);
+//        nxDisPurcGoodsService.update(purgoods);
+//
+//        return R.ok();
+//    }
 
     @RequestMapping(value = "/disUserUpdateSelfPurGoodsOrdersCost", method = RequestMethod.POST)
     @ResponseBody
@@ -345,9 +426,9 @@ public class NxDistributerPurchaseGoodsController {
 
         updateDisGoodsPriceThree(purgoods);
 
-        NxDistributerGoodsEntity nxDistributerGoodsEntity = purgoods.getNxDistributerGoodsEntity();
-        nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatFullTime(0));
-        nxDgService.update(nxDistributerGoodsEntity);
+//        NxDistributerGoodsEntity nxDistributerGoodsEntity = purgoods.getNxDistributerGoodsEntity();
+//        nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatFullTime(0));
+//        nxDgService.update(nxDistributerGoodsEntity);
 
         return R.ok();
     }
@@ -434,7 +515,7 @@ public class NxDistributerPurchaseGoodsController {
         map4.put("status", 1);
         map4.put("weightId", -1);
         map4.put("batchId", -1);
-        map4.put("inputType", -1);
+//        map4.put("inputType", -1);
         System.out.println("map444" + map4);
         List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoods(map4);
         int orderCount = 0;
@@ -455,119 +536,46 @@ public class NxDistributerPurchaseGoodsController {
     @RequestMapping(value = "/getDisInputPurGoodsTx", method = RequestMethod.POST)
     @ResponseBody
     public R getDisInputPurGoodsTx(Integer disId, Integer type) {
-        Map<String, Object> map4 = new HashMap<>();
-        map4.put("disId", disId);
-        map4.put("status", 1);
-        map4.put("batchId", -1);
-        map4.put("equalInputType", type);
-        List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoods(map4);
-        if (purchaseToday.size() > 0) {
-            for (NxDistributerFatherGoodsEntity fatherGoodsEntity : purchaseToday) {
-                Map<String, Object> mapF = new HashMap<>();
-                mapF.put("grandId", fatherGoodsEntity.getNxDistributerFatherGoodsId());
-                mapF.put("status", 3);
-                mapF.put("inputType", type);
-                mapF.put("equalPurStatus", 1);
-                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(mapF);
-                fatherGoodsEntity.setNewOrderCount(integer);
-            }
-        }
+        Map<String, Object> mapD = new HashMap<>();
+        mapD.put("disId", disId);
+        mapD.put("status", 1);
+        mapD.put("batchId", -1);
+//        map4.put("equalInputType", type);
+        List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoods(mapD);
+//        if (purchaseToday.size() > 0) {
+//            for (NxDistributerFatherGoodsEntity fatherGoodsEntity : purchaseToday) {
+//                Map<String, Object> mapF = new HashMap<>();
+//                mapF.put("grandId", fatherGoodsEntity.getNxDistributerFatherGoodsId());
+//                mapF.put("status", 3);
+//                mapF.put("purType", 1);
+//                mapF.put("equalPurStatus", 1);
+//                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(mapF);
+//                fatherGoodsEntity.setNewOrderCount(integer);
+//            }
+//        }
 
+//
         Map<String, Object> map1 = new HashMap<>();
         map1.put("disId", disId);
         map1.put("status", 3);
-        map1.put("buyStatus", 3);
-        map1.put("purType", -1);
-        //新订单
-        int newCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map1);
-        // 出库
-        map1.put("buyStatus", 5);
-        map1.put("purType", 0);
-        int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map1);
-
-        // 订货
         map1.put("purType", 1);
-        map1.put("inputType", 1);
-        int wxCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map1);
-        map1.put("inputType", 2);
-        int wxCountAuto = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map1);
-        // 打印
-        map1.put("inputType", 0);
-        int printCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map1);
-
-        //ok
-        Map<String, Object> mapOk = new HashMap<>();
-        mapOk.put("disId", disId);
-        mapOk.put("status", 3);
-        mapOk.put("purType", 0);
-        mapOk.put("weight", 1);
-        //出库完成
-        int stockCountOK = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-
-        //订货完成
-        mapOk.put("purType", 1);
-        mapOk.put("inputType", 1);
-        mapOk.put("weight", 1);
-        mapOk.put("batchId", 1);
-        int wxCountOk = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-        mapOk.put("inputType", 2);
-        int wxCountAutoOk = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-        //打印完成
-        mapOk.put("inputType", 0);
-        mapOk.put("batchId", -1);
-        mapOk.put("weightStatusEqual", 1);
-        int printCountOk = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-
-//************************************************************************************
-
-        // map4 未发送或未打印
-        map1.put("purType", 1);
-        map1.put("inputType", type);
         map1.put("equalPurStatus", 1);
-        System.out.println("map444undododo" + map1);
-        System.out.println("type========" + type);
-        Integer unDoCount = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
-
-        // map4 订货已发送
-        map4.put("status", 2); //NX_DIS_PURCHASE_GOODS_IS_PURCHASE == 2 huifu
-        map4.put("orderStatus", 3);
-        map4.put("batchId", 1);
-        Integer wxIsBatchCountUnReply = nxDisPurcGoodsService.queryPurOrderCount(map4);
-        map4.put("status", 4);
-        map4.put("dayuStatus", 1);
-        Integer wxIsBatchCountHaveReply = nxDisPurcGoodsService.queryPurOrderCount(map4);
-
-
-        //  map4 已打印
-        map4.put("batchId", -1);
-        map4.put("weightId", 1);
-        map4.put("weightStatusEqual", 0);
-        map4.put("orderStatus", 3);
-        map4.put("status", 4);
-        Integer isPrintCount = nxDisPurcGoodsService.queryPurOrderCount(map4);
-        System.out.println("isprint444444" + map4);
-        map4.put("weightStatusEqual", 1);
-        Integer isPrintHaveWeightCount = nxDisPurcGoodsService.queryPurOrderCount(map4);
-
+        // 未采购
+        int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map1);
 
         Map<String, Object> map111 = new HashMap<>();
 
         map111.put("arr", purchaseToday);
-        map111.put("newCount", newCount);
-        map111.put("stockCount", stockCount);
-        map111.put("stockCountOk", stockCountOK);
-        map111.put("wxCount", wxCount);
-        map111.put("wxCountAuto", wxCountAuto);
-        map111.put("printCount", printCount);
-        map111.put("wxCountOk", wxCountOk);
-        map111.put("wxCountAutoOk", wxCountAutoOk);
-        map111.put("printCountOk", printCountOk);
+        map1.put("equalPurStatus", null);
+        map1.put("purType", null);
+        map1.put("dayuPurStatus", 1);
+        map1.put("purStatus", 3);
 
-        map111.put("unDoCount", unDoCount);
-        map111.put("isBatchCountUnRepaly", wxIsBatchCountUnReply);
-        map111.put("isBatchCountHaveRepaly", wxIsBatchCountHaveReply);
-        map111.put("isPrintCount", isPrintCount);
-        map111.put("havePrintCount", isPrintHaveWeightCount);
+        System.out.println("wokakkkskks" + map1);
+
+        Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
+        map111.put("unPurCount", unPurCount);
+        map111.put("isBatchCountUnRepaly", integer);
 
         return R.ok().put("data", map111);
     }
@@ -591,6 +599,8 @@ public class NxDistributerPurchaseGoodsController {
         map4.put("status", 2); //NX_DIS_PURCHASE_GOODS_IS_PURCHASE == 2 huifu
         map4.put("orderStatus", 3);
         map4.put("batchId", 1);
+        map4.put("dayuPurStatus", 1);
+        map4.put("purStatus", 3);
         Integer wxIsBatchCountUnReply = nxDisPurcGoodsService.queryPurOrderCount(map4);
         map4.put("status", 4);
         map4.put("dayuStatus", 1);
@@ -661,17 +671,18 @@ public class NxDistributerPurchaseGoodsController {
      * @param disId
      * @return
      */
-    @RequestMapping(value = "/nxPurchaserGetPurchaseGoodsWithBatchCount/{disId}")
+    @RequestMapping(value = "/nxPurchaserGetPurchaseGoodsWithBatchCount",method = RequestMethod.POST)
     @ResponseBody
-    public R nxPurchaserGetPurchaseGoodsWithBatchCount(@PathVariable Integer disId) {
+    public R nxPurchaserGetPurchaseGoodsWithBatchCount(Integer disId, Integer status) {
 
         Map<String, Object> map4 = new HashMap<>();
         map4.put("disId", disId);
-        map4.put("status", 1);
+        map4.put("status", status);
+
         map4.put("weightId", -1);
         map4.put("batchId", -1);
-        map4.put("inputType", -1);
-        System.out.println("map444aaa" + map4);
+//        map4.put("inputType", -1);
+        System.out.println("map444aaabbbbbbbbbbb" + map4);
         List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoodsGreat(map4);
         int orderCount = 0;
         if (purchaseToday.size() > 0) {
@@ -767,9 +778,9 @@ public class NxDistributerPurchaseGoodsController {
     public R disGetPurchaseData(@PathVariable Integer disId) {
 
         Map<String, Object> map4 = new HashMap<>();
-        map4.put("fatherId", disId);
+        map4.put("disId", disId);
         map4.put("status", 1);
-        map4.put("weightId", -1);
+//        map4.put("weightId", -1);
         List<NxDistributerFatherGoodsEntity> purchaseToday = nxDisPurcGoodsService.queryDisPurchaseGoods(map4);
         int orderCount = 0;
         if (purchaseToday.size() > 0) {
@@ -843,7 +854,7 @@ public class NxDistributerPurchaseGoodsController {
 
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDgService.queryObject(disGoodsId);
         nxDistributerGoodsEntity.setNxDgBuyingPrice(nxDpgBuyPrice);
-        nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatDate(0));
+        nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatDay(0));
         nxDgService.update(nxDistributerGoodsEntity);
 
 //        //update PurGoods
@@ -903,7 +914,9 @@ public class NxDistributerPurchaseGoodsController {
         purgoods.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
         purgoods.setNxDpgPurchaseDate(formatWhatDay(0));
         purgoods.setNxDpgTime(formatWhatTime(0));
+        System.out.println("stuautus====" + purgoods.getNxDpgStatus());
         nxDisPurcGoodsService.update(purgoods);
+
         NxDistributerGoodsEntity nxDistributerGoodsEntity = purgoods.getNxDistributerGoodsEntity();
         nxDgService.update(nxDistributerGoodsEntity);
 
@@ -914,6 +927,39 @@ public class NxDistributerPurchaseGoodsController {
     @RequestMapping(value = "/savePlanPurchaseOrderBundle", method = RequestMethod.POST)
     @ResponseBody
     public R savePlanPurchaseOrderBundle(@RequestBody List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntityList) {
+
+        for (NxDistributerPurchaseGoodsEntity purchaseGoodsEntity : purchaseGoodsEntityList) {
+
+            purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
+            purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
+            purchaseGoodsEntity.setNxDpgOrdersAmount(purchaseGoodsEntity.getNxDepartmentOrdersEntities().size());
+            purchaseGoodsEntity.setNxDpgFinishAmount(0);
+            nxDisPurcGoodsService.save(purchaseGoodsEntity);
+
+            Integer nxDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxDistributerPurchaseGoodsId();
+
+            List<NxDepartmentOrdersEntity> ordersEntities = purchaseGoodsEntity.getNxDepartmentOrdersEntities();
+            if (ordersEntities.size() > 0) {
+                for (NxDepartmentOrdersEntity order : ordersEntities) {
+                    if(order.getPurSelected()){
+                        Integer nxDepartmentOrdersId = order.getNxDepartmentOrdersId();
+                        NxDepartmentOrdersEntity ordersEntity1 = nxDepartmentOrdersService.queryObjectNew(nxDepartmentOrdersId);
+                        ordersEntity1.setNxDoPurchaseGoodsId(nxDistributerPurchaseGoodsId);
+                        ordersEntity1.setNxDoGoodsType(purchaseGoodsEntity.getNxDpgInputType());
+                        ordersEntity1.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+                        nxDepartmentOrdersService.update(ordersEntity1);
+                    }
+                }
+            }
+        }
+
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/savePlanPurchaseOrderBundle0", method = RequestMethod.POST)
+    @ResponseBody
+    public R savePlanPurchaseOrderBundle0(@RequestBody List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntityList) {
 
         for (NxDistributerPurchaseGoodsEntity purchaseGoodsEntity : purchaseGoodsEntityList) {
 
@@ -977,22 +1023,35 @@ public class NxDistributerPurchaseGoodsController {
                 NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orders.getNxDepartmentOrdersId());
                 ordersEntity.setNxDoPurchaseGoodsId(-1);
                 ordersEntity.setNxDoGoodsType(-1);
+                ordersEntity.setNxDoPurchaseStatus(1);
                 nxDepartmentOrdersService.update(ordersEntity);
             }
         }
 
-//        if (purchaseGoodsEntity.getNxDpgStatus().equals(getNxDisPurchaseGoodsWithBatch())) {
-//            List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = nxDisPurcGoodsService.queryPurchaseGoodsByBatchId(purchaseGoodsEntity.getNxDpgBatchId());
-//            if (purchaseGoodsEntities.size() == 1) {
-//                nxDPBService.delete(purchaseGoodsEntity.getNxDpgBatchId());
-//            }
-//        }
+        nxDisPurcGoodsService.delete(purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
+
+        return R.ok();
+    }
+
+    @RequestMapping(value = "/deletePurchaserPlanPurchase", method = RequestMethod.POST)
+    @ResponseBody
+    public R deletePurchaserPlanPurchase(@RequestBody NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
+        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = purchaseGoodsEntity.getNxDepartmentOrdersEntities();
+        if (nxDepartmentOrdersEntities != null && nxDepartmentOrdersEntities.size() > 0) {
+            for (NxDepartmentOrdersEntity orders : nxDepartmentOrdersEntities) {
+                NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orders.getNxDepartmentOrdersId());
+                ordersEntity.setNxDoPurchaseGoodsId(-1);
+                ordersEntity.setNxDoGoodsType(-1);
+                ordersEntity.setNxDoPurchaseStatus(1);
+                nxDepartmentOrdersService.update(ordersEntity);
+            }
+        }
 
         nxDisPurcGoodsService.delete(purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
 
         Integer disGoodsId = purchaseGoodsEntity.getNxDpgDisGoodsId();
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDgService.queryObject(disGoodsId);
-        nxDistributerGoodsEntity.setNxDgPurchaseAuto(-1);
+        nxDistributerGoodsEntity.setNxDgPurchaseAuto(1);
         nxDgService.update(nxDistributerGoodsEntity);
 
         return R.ok();
@@ -1001,10 +1060,20 @@ public class NxDistributerPurchaseGoodsController {
     @RequestMapping(value = "/updatePurchaseGoods", method = RequestMethod.POST)
     @ResponseBody
     public R updatePurchaseGoods(@RequestBody NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
-
         nxDisPurcGoodsService.update(purchaseGoodsEntity);
         NxDistributerGoodsEntity nxDistributerGoodsEntity = purchaseGoodsEntity.getNxDistributerGoodsEntity();
         nxDgService.update(nxDistributerGoodsEntity);
+        return R.ok().put("data", purchaseGoodsEntity);
+
+    }
+    @RequestMapping(value = "/givePurGoodsQuantity", method = RequestMethod.POST)
+    @ResponseBody
+    public R givePurGoodsQuantity(Integer id, String quantity, String standard, Integer level) {
+        NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurcGoodsService.queryObject(id);
+        purchaseGoodsEntity.setNxDpgQuantity(quantity);
+        purchaseGoodsEntity.setNxDpgStandard(standard);
+        purchaseGoodsEntity.setNxDpgCostLevel(level);
+        nxDisPurcGoodsService.update(purchaseGoodsEntity);
         return R.ok().put("data", purchaseGoodsEntity);
 
     }
@@ -1015,24 +1084,26 @@ public class NxDistributerPurchaseGoodsController {
      * @param purchaseGoodsEntity 进货商品
      * @return 进货商品
      */
-//    @RequestMapping(value = "/updatePlanPurchase", method = RequestMethod.POST)
-//    @ResponseBody
-//    public R updatePlanPurchase(@RequestBody NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
-//
-//        Integer nxDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxDistributerPurchaseGoodsId();
-//        List<NxDepartmentOrdersEntity> ordersEntities = purchaseGoodsEntity.getNxDepartmentOrdersEntities();
-//        if (ordersEntities != null && ordersEntities.size() > 0) {
-//            for (NxDepartmentOrdersEntity order : ordersEntities) {
-//                order.setNxDoPurchaseGoodsId(nxDistributerPurchaseGoodsId);
-//                order.setNxDoPurchaseStatus(1);
-//                nxDepartmentOrdersService.update(order);
-//            }
-//            purchaseGoodsEntity.setNxDpgOrdersAmount(purchaseGoodsEntity.getNxDpgOrdersAmount() + ordersEntities.size());
-//        }
-//        nxDisPurcGoodsService.update(purchaseGoodsEntity);
-//        return R.ok().put("data", purchaseGoodsEntity);
-//
-//    }
+    @RequestMapping(value = "/updatePlanPurchase", method = RequestMethod.POST)
+    @ResponseBody
+    public R updatePlanPurchase(@RequestBody NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
+
+        Integer nxDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxDistributerPurchaseGoodsId();
+        List<NxDepartmentOrdersEntity> ordersEntities = purchaseGoodsEntity.getNxDepartmentOrdersEntities();
+        if (ordersEntities != null && ordersEntities.size() > 0) {
+            for (NxDepartmentOrdersEntity order : ordersEntities) {
+                order.setNxDoPurchaseGoodsId(nxDistributerPurchaseGoodsId);
+                order.setNxDoPurchaseStatus(1);
+                nxDepartmentOrdersService.update(order);
+            }
+            purchaseGoodsEntity.setNxDpgOrdersAmount(purchaseGoodsEntity.getNxDpgOrdersAmount() + ordersEntities.size());
+        }
+        nxDisPurcGoodsService.update(purchaseGoodsEntity);
+        return R.ok().put("data", purchaseGoodsEntity);
+
+    }
+
+
 
     @RequestMapping(value = "/savePlanPurchaseGoods", method = RequestMethod.POST)
     @ResponseBody
@@ -1053,10 +1124,31 @@ public class NxDistributerPurchaseGoodsController {
         purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
         purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
         purchaseGoodsEntity.setNxDpgFinishAmount(0);
+
+
+        Integer nxDpgDisGoodsFatherId = purchaseGoodsEntity.getNxDpgDisGoodsFatherId();
+        NxDistributerFatherGoodsEntity fatherGoodsEntity = nxDistributerFatherGoodsService.queryObject(nxDpgDisGoodsFatherId);
+        Integer nxDfgFathersFatherId = fatherGoodsEntity.getNxDfgFathersFatherId();
+        purchaseGoodsEntity.setNxDpgDisGoodsGrandId(nxDfgFathersFatherId);
         nxDisPurcGoodsService.save(purchaseGoodsEntity);
         return R.ok().put("data", purchaseGoodsEntity);
     }
 
+    @RequestMapping(value = "/savePlanPurchase", method = RequestMethod.POST)
+    @ResponseBody
+    public R savePlanPurchase(@RequestBody NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
+
+        purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
+        purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
+        purchaseGoodsEntity.setNxDpgFinishAmount(0);
+
+        Integer nxDpgDisGoodsFatherId = purchaseGoodsEntity.getNxDpgDisGoodsFatherId();
+        NxDistributerFatherGoodsEntity fatherGoodsEntity = nxDistributerFatherGoodsService.queryObject(nxDpgDisGoodsFatherId);
+        Integer nxDfgFathersFatherId = fatherGoodsEntity.getNxDfgFathersFatherId();
+        purchaseGoodsEntity.setNxDpgDisGoodsGrandId(nxDfgFathersFatherId);
+        nxDisPurcGoodsService.save(purchaseGoodsEntity);
+        return R.ok().put("data", purchaseGoodsEntity);
+    }
 
 
 
@@ -1111,16 +1203,21 @@ public class NxDistributerPurchaseGoodsController {
         Integer nxDpgDisGoodsId = purgoods.getNxDpgDisGoodsId();
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDgService.queryObject(nxDpgDisGoodsId);
         String nxDpgBuyPrice = purgoods.getNxDpgBuyPrice();
-        if (nxDistributerGoodsEntity.getNxDgBuyingPriceIsGrade() == 0) {
-            nxDistributerGoodsEntity.setNxDgBuyingPrice(nxDpgBuyPrice);
-            nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatDay(0));
-            nxDgService.update(nxDistributerGoodsEntity);
-        }
+        System.out.println("updateDisGoodsPriceThree" +  nxDistributerGoodsEntity.getNxDgBuyingPriceIsGrade());
+//        if (nxDistributerGoodsEntity.getNxDgBuyingPriceIsGrade() == 0) {
+//            nxDistributerGoodsEntity.setNxDgBuyingPrice(nxDpgBuyPrice);
+//            nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatDay(0));
+//            nxDgService.update(nxDistributerGoodsEntity);
+//        }
         if (nxDistributerGoodsEntity.getNxDgBuyingPriceIsGrade() == 1) {
             Integer level = purgoods.getNxDpgCostLevel();
             if (level == 1) {
+                System.out.println("levvddld=="+level);
+                System.out.println("nxDpgBuyPrice=="+nxDpgBuyPrice);
                 nxDistributerGoodsEntity.setNxDgBuyingPriceOne(nxDpgBuyPrice);
                 nxDistributerGoodsEntity.setNxDgBuyingPriceOneUpdate(formatWhatDayString(0));
+                System.out.println("buyooene"+ nxDistributerGoodsEntity.getNxDistributerGoodsId());
+                System.out.println("buyooene"+ nxDistributerGoodsEntity.getNxDgBuyingPriceOne());
                 nxDgService.update(nxDistributerGoodsEntity);
             }
             if (level == 2) {

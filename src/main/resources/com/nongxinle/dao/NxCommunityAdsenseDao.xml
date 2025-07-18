@@ -24,23 +24,145 @@
 		select * from nx_community_adsense where nx_CA_community_id = #{communityId}
 	</select>
 
+	<resultMap id="comGoods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
+		<result property="nxCgPromotionType" column="nx_cg_promotion_type"/>
+		<result property="nxCgPromotionAmount" column="nx_cg_promotion_amount"/>
+		<result property="nxCgPromotionPrice" column="nx_cg_promotion_price"/>
+		<result property="nxCgAdsenseStartTimeZone" column="nx_cg_adsense_start_time_zone"/>
+		<result property="nxCgAdsenseStopTimeZone" column="nx_cg_adsense_stop_time_zone"/>
+		<result property="nxCgAdsenseStartTime" column="nx_cg_adsense_start_time"/>
+		<result property="nxCgAdsenseStopTime" column="nx_cg_adsense_stop_time"/>
+		<result property="nxCgAdsenseStockQuantity" column="nx_cg_adsense_stock_quantity"/>
+		<result property="nxCgAdsenseRestQuantity" column="nx_cg_adsense_rest_quantity"/>
+		<result property="nxCgIsOpenAdsense" column="nx_cg_is_open_adsense"/>
+		<result property="nxCgSellType" column="nx_cg_sell_type"/>
+		<result property="nxCgCardId" column="nx_cg_card_id"/>
+		<result property="nxCgStartTime" column="nx_cg_start_time"/>
+		<result property="nxCgStartTimeZone" column="nx_cg_start_time_zone"/>
+		<result property="nxCgStopTime" column="nx_cg_stop_time"/>
+		<result property="nxCgStopTimeZone" column="nx_cg_stop_time_zone"/>
+		<result property="nxCgGoodsSort" column="nx_cg_goods_sort"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		<result property="nxCgCommunityId" column="nx_cg_community_id"/>
+		<result property="nxCgGoodsHuaxianPrice" column="nx_cg_goods_huaxian_price"/>
+		<result property="nxCgGoodsHuaxianPriceDifferent" column="nx_cg_goods_huaxian_price_different"/>
+		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
+		 <result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
+        <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
+		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
+		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
+		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
+		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
+		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
+		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
+		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
+		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
+		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
+		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
+		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
+		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
+		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
+		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
+		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
+		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
+		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
+		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
+		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
+		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
+		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
+		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
+		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
+		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
+		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
+		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
+		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
+		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
+		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
+		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
+		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
+		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+	</resultMap>
+	<resultMap id="goodsAdsense" type="NxCommunityAdsenseEntity">
+		<id property="nxCommunityAdsenseId" column="nx_community_adsense_id"/>
+		<result property="nxCaFilePath" column="nx_CA_file_path"/>
+		<result property="nxCaCgGoodsId" column="nx_CA_cg_goods_id"/>
+		<result property="nxCaClickTo" column="nx_CA_click_to"/>
+		<result property="nxCaSort" column="nx_CA_sort"/>
+		<result property="nxCommunityAdsenseName" column="nx_community_adsense_name"/>
+		<result property="nxCaCommunityId" column="nx_CA_community_id"/>
+		<result property="nxCaStartTime" column="nx_CA_start_time"/>
+		<result property="nxCaStartTimeZone" column="nx_CA_start_time_zone"/>
+		<result property="nxCaStopTime" column="nx_CA_stop_time"/>
+		<result property="nxCaStopTimeZone" column="nx_CA_time_zone"/>
+		<association property="nxCommunityGoodsEntity" resultMap="comGoods"/>
+	</resultMap>
+	<select id="queryAdsenseByParams" resultMap="goodsAdsense">
+		select * from nx_community_adsense as ncc
+		left join nx_community_goods as ncg on ncg.nx_community_goods_id = ncc.nx_CA_cg_goods_id
+		<where>
+			<if test="commId != null">
+				and nx_CA_community_id = #{commId}
+			</if>
+			<if test="status != null">
+				and nx_CA_status = #{status}
+			</if>
+			<if test="nowMinute != null">
+				and ncc.nx_CA_start_time_zone &lt; #{nowMinute} and ncc.nx_CA_stop_time_zone &gt; #{nowMinute}
+			</if>
+		</where>
+
+	</select>
+	<select id="queryGoodsAdsenseByParams" resultType="com.nongxinle.entity.NxCommunityAdsenseEntity">
+		select * from nx_community_adsense
+		<where>
+			<if test="goodsId != null">
+				and nx_CA_cg_goods_id = #{goodsId}
+			</if>
+			<if test="commId != null">
+				and nx_CA_community_id = #{commId}
+			</if>
+			<if test="status != null">
+				and nx_CA_status = #{status}
+			</if>
+		</where>
+	</select>
+
 	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityAdsenseEntity" useGeneratedKeys="true"
 	keyProperty="nxCommunityAdsenseId">
 		insert into nx_community_adsense
 		(
 			`nx_community_adsense_id`, 
 			`nx_CA_file_path`,
-			`nx_CA_click`,
+			`nx_CA_click_to`,
 			`nx_CA_community_id`,
-			`nx_CA_sort`
+			`nx_CA_sort`,
+			`nx_community_adsense_name`,
+			`nx_CA_status`,
+			`nx_CA_cg_goods_id`,
+			`nx_CA_start_time_zone`,
+			`nx_CA_start_time`,
+			`nx_CA_stop_time_zone`,
+			`nx_CA_stop_time`
 		)
 		values
 		(
 			#{nxCommunityAdsenseId},
 			#{nxCaFilePath},
-			#{nxCaClick},
+			#{nxCaClickTo},
 			#{nxCaCommunityId},
-			#{nxCaSort}
+			#{nxCaSort},
+			#{nxCommunityAdsenseName},
+			#{nxCaStatus},
+			#{nxCaCgGoodsId},
+			#{nxCaStartTimeZone},
+			#{nxCaStartTime},
+			#{nxCaStopTimeZone},
+			#{nxCaStopTime}
 		)
 	</insert>
 	 
@@ -48,11 +170,18 @@
 		update nx_community_adsense 
 		<set>
 			<if test="nxCaFilePath != null">`nx_CA_file_path` = #{nxCaFilePath}, </if>
-			<if test="nxCaClick != null">`nx_CA_click` = #{nxCaClick}, </if>
-			<if test="nxCaId != null">`nx_CA_community_id` = #{nxCaId}, </if>
+			<if test="nxCaClickTo != null">`nx_CA_click_to` = #{nxCaClickTo}, </if>
+			<if test="nxCaCommunityId != null">`nx_CA_community_id` = #{nxCaCommunityId}, </if>
+			<if test="nxCommunityAdsenseName != null">`nx_community_adsense_name` = #{nxCommunityAdsenseName}, </if>
+			<if test="nxCaStatus != null">`nx_CA_status` = #{nxCaStatus}, </if>
+			<if test="nxCaCgGoodsId != null">`nx_CA_cg_goods_id` = #{nxCaCgGoodsId}, </if>
+			<if test="nxCaStartTimeZone != null">`nx_CA_start_time_zone` = #{nxCaStartTimeZone}, </if>
+			<if test="nxCaStartTime != null">`nx_CA_start_time` = #{nxCaStartTime}, </if>
+			<if test="nxCaStopTimeZone != null">`nx_CA_stop_time_zone` = #{nxCaStopTimeZone}, </if>
+			<if test="nxCaStopTime != null">`nx_CA_stop_time` = #{nxCaStopTime}, </if>
 			<if test="nxCaSort != null">`nx_CA_sort` = #{nxCaSort}</if>
 		</set>
-		where nx_community_adsense_id = #{nxAdsenseId}
+		where nx_community_adsense_id = #{nxCommunityAdsenseId}
 	</update>
 	
 	<delete id="delete">
@@ -62,7 +191,7 @@
 	<delete id="deleteBatch">
 		delete from nx_community_adsense where nx_community_adsense_id in 
 		<foreach item="nxCommunityAdsenseId" collection="array" open="(" separator="," close=")">
-			#{nxAdsenseId}
+			#{nxCommunityAdsenseId}
 		</foreach>
 	</delete>
 

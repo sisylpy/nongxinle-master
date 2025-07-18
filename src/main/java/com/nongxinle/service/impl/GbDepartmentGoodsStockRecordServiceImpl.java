@@ -98,11 +98,11 @@ public class GbDepartmentGoodsStockRecordServiceImpl implements GbDepartmentGood
 		return gbDepartmentGoodsStockRecordDao.queryGoodsStockRecordWeightTotal(map1);
     }
 
-    @Override
-    public List<GbDepartmentGoodsStockRecordEntity> queryDepGoodsStockRecordDetailByParams(Map<String, Object> map) {
-
-		return gbDepartmentGoodsStockRecordDao.queryDepGoodsStockRecordDetailByParams(map);
-    }
+//    @Override
+//    public List<GbDepartmentGoodsStockRecordEntity> queryDepGoodsStockRecordDetailByParams(Map<String, Object> map) {
+//
+//		return gbDepartmentGoodsStockRecordDao.queryDepGoodsStockRecordDetailByParams(map);
+//    }
 
 
 }

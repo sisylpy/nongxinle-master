@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -61,6 +62,12 @@ public class GbDepartmentOrdersHistoryEntity implements Serializable {
 	private Integer gbDohSellType;
 
 	private  Integer gbDohStandardId;
+	private  Integer gbDohDisGoodsId;
+	private  Integer gbDohDistributerId;
 	private String gbDohStandardScale;
+
+	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
+
+	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
 
 }

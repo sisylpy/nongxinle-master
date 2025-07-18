@@ -42,7 +42,7 @@ public interface GbDepartmentService {
 
 	GbDepartmentEntity queryDepInfoGb(Integer depId);
 
-	void saveNewDepartmentGb(GbDepartmentEntity department);
+	GbDepartmentEntity  saveNewDepartmentGb(GbDepartmentEntity department);
 
     List<GbDepartmentEntity> queryApplyOutStockGoodsDeps(Map<String, Object> map);
 
@@ -55,4 +55,8 @@ public interface GbDepartmentService {
 	void saveNewDepartmentGbWithDepGoods(GbDepartmentEntity department, Integer cankaoDepId);
 
     List<GbDepartmentEntity> queryGroupDepsByDisIdWithUnPayBill(Map<String, Object> map);
+
+	GbDepartmentEntity queryDepInfoByDisId(Map<String, Object> map);
+
+    int queryDepHasOrdersCount(Map<String, Object> mapDis);
 }

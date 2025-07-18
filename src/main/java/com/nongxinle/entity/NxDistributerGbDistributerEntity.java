@@ -45,6 +45,13 @@ public class NxDistributerGbDistributerEntity implements Serializable {
 	private Integer nxDgdGbGoodsPrice;
 	private Integer nxDgdStatus;
 	private Integer nxDgdGbPayPeriodWeek;
+	private Integer nxDgdFromNxDepId;
+	private Integer nxDgdFromNxDisId;
+	private Integer nxDgdNxSupplierId;
+
+	private NxDepartmentEntity fromNxDepartment;
+
+	private NxJrdhSupplierEntity nxJrdhSupplierEntity;
 
 
 }

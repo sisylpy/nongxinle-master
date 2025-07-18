@@ -6,16 +6,24 @@
 
     <resultMap id="disGoods" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
-		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+		<result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+		<result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+		<result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+		<result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+        <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgPullOff" column="gb_dg_pull_off"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
         <result property="gbDgNxFatherId" column="gb_dg_nx_father_id"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
+        <result property="gbDgGoodsStandardWeight" column="gb_dg_goods_standard_weight"/>
         <result property="gbDgGoodsDetail" column="gb_dg_goods_detail"/>
         <result property="gbDgGoodsBrand" column="gb_dg_goods_brand"/>
         <result property="gbDgGoodsPlace" column="gb_dg_goods_place"/>
@@ -45,11 +53,13 @@
         <id property="gbDepartmentId" column="depf_gb_department_id"/>
         <result property="gbDepartmentName" column="depf_gb_department_name"/>
         <result property="gbDepartmentAttrName" column="depf_gb_department_attr_name"/>
+        <result property="gbDepartmentSubAmount" column="depf_gb_department_sub_amount"/>
     </resultMap>
 
     <resultMap id="dep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
-		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
@@ -58,8 +68,105 @@
         <association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
     </resultMap>
 
+    <resultMap id="nxOrder" type="NxDepartmentOrdersEntity">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoNxGoodsId" column="nx_DO_nx_goods_id"/>
+        <result property="nxDoOrderUserId" column="nx_DO_order_user_id"/>
+        <result property="nxDoApplyDate" column="nx_DO_apply_date"/>
+        <result property="nxDoApplyOnlyTime" column="nx_DO_apply_only_time"/>
+        <result property="nxDoApplyFullTime" column="nx_DO_apply_full_time"/>
+        <result property="nxDoArriveOnlyDate" column="nx_DO_arrive_only_date"/>
+        <result property="nxDoArriveDate" column="nx_DO_arrive_date"/>
+        <result property="nxDoArriveWhatDay" column="nx_DO_arrive_what_day"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoDepDisGoodsPrice" column="nx_DO_dep_dis_goods_price"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoOperationTime" column="nx_DO_operation_time"/>
+        <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+        <result property="nxDoProfitScale" column="nx_DO_profit_scale"/>
+        <result property="nxDoProfitSubtotal" column="nx_DO_profit_subtotal"/>
+    </resultMap>
+
+    <resultMap id="hiSuppleir" type="NxJrdhSupplierEntity">
+        <id property="nxJrdhSupplierId" column="hi_nx_jrdh_supplier_id"/>
+        <result property="nxJrdhsNxDistributerId" column="hi_nx_jrdhs_nx_distributer_id"/>
+        <result property="nxJrdhsGbDistributerId" column="hi_nx_jrdhs_gb_distributer_id"/>
+        <result property="nxJrdhsGbDepartmentId" column="hi_nx_jrdhs_gb_department_id"/>
+        <result property="nxJrdhsSupplierName" column="hi_nx_jrdhs_supplier_name"/>
+        <result property="nxJrdhsUserId" column="hi_nx_jrdhs_user_id"/>
+        <result property="nxJrdhsNxJrdhBuyUserId" column="hi_nx_jrdhs_nx_jrdh_buy_user_id"/>
+    </resultMap>
+    <resultMap id="loSupplier" type="NxJrdhSupplierEntity">
+        <id property="nxJrdhSupplierId" column="lo_nx_jrdh_supplier_id"/>
+        <result property="nxJrdhsNxDistributerId" column="lo_nx_jrdhs_nx_distributer_id"/>
+        <result property="nxJrdhsGbDistributerId" column="lo_nx_jrdhs_gb_distributer_id"/>
+        <result property="nxJrdhsGbDepartmentId" column="lo_nx_jrdhs_gb_department_id"/>
+        <result property="nxJrdhsSupplierName" column="lo_nx_jrdhs_supplier_name"/>
+        <result property="nxJrdhsUserId" column="lo_nx_jrdhs_user_id"/>
+        <result property="nxJrdhsNxJrdhBuyUserId" column="lo_nx_jrdhs_nx_jrdh_buy_user_id"/>
+    </resultMap>
+    <resultMap id="nxGoodsPrice" type="NxGoodsPriceEntity">
+        <id property="nxGoodsPriceId" column="nx_goods_price_id"/>
+        <result property="nxGpDate" column="nx_gp_date"/>
+        <result property="nxGpHighestJrdhSupplierId" column="nx_gp_highest_jrdh_supplier_id"/>
+        <result property="nxGpHighestNxDistributerId" column="nx_gp_highest_nx_distributer_id"/>
+        <result property="nxGpHighestPrice" column="nx_gp_highest_price"/>
+        <result property="nxGpHighestWeight" column="nx_gp_highest_weight"/>
+        <result property="nxGpLowestJrdhSupplierId" column="nx_gp_lowest_jrdh_supplier_id"/>
+        <result property="nxGpLowestNxDistributerId" column="nx_gp_lowest_nx_distributer_id"/>
+        <result property="nxGpLowestPrice" column="nx_gp_lowest_price"/>
+        <result property="nxGpLowestWeight" column="nx_gp_lowest_weight"/>
+        <result property="nxGpNxGoodsId" column="nx_gp_nx_goods_id"/>
+        <result property="nxGpSysCityId" column="nx_gp_sys_city_id"/>
+        <result property="nxGpSysMarketId" column="nx_gp_sys_market_id"/>
+        <association property="highestSupplier" resultMap="hiSuppleir"/>
+        <association property="lowestSupplier" resultMap="loSupplier"/>
+    </resultMap>
+
     <resultMap id="depOrders" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoNxDepartmentOrderId" column="gb_do_nx_department_order_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoNxGoodsId" column="gb_DO_gb_goods_id"/>
@@ -87,6 +194,7 @@
         <result property="gbDoNxGoodsFatherId" column="gb_DO_gb_goods_father_id"/>
         <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
         <result property="gbDoDisGoodsId" column="gb_DO_dis_goods_id"/>
+        <result property="gbDoDisGoodsFatherId" column="gb_DO_dis_goods_father_id"/>
         <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
         <result property="gbDoDepartmentId" column="gb_DO_department_id"/>
         <result property="gbDoDistributerId" column="gb_DO_distributer_id"/>
@@ -106,9 +214,15 @@
         <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
         <association property="gbDepartmentEntity" resultMap="dep"/>
+        <association property="nxDepartmentOrdersEntity" resultMap="nxOrder"/>
     </resultMap>
     <resultMap id="depsOrders" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
@@ -137,13 +251,14 @@
         <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
         <result property="gbDoDisGoodsId" column="gb_DO_dis_goods_id"/>
         <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
+        <result property="gbDoDisGoodsFatherId" column="gb_DO_dis_goods_father_id"/>
         <result property="gbDoDepartmentId" column="gb_DO_department_id"/>
         <result property="gbDoDistributerId" column="gb_DO_distributer_id"/>
         <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
 
         <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
 
-      <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
         <result property="gbDoOperationTime" column="gb_DO_operation_time"/>
         <result property="gbDoIsAgent" column="gb_DO_is_agent"/>
         <result property="gbDoPurchaseGoodsId" column="gb_DO_purchase_goods_id"/>
@@ -160,8 +275,10 @@
     </resultMap>
     <resultMap id="purchaseGoods" type="GbDistributerPurchaseGoodsEntity">
 
-		<id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
-		<result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
+        <id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
+		<result property="gbDpgPurchaseNxSupplierId" column="gb_DPG_purchase_nx_supplier_id"/>
+        <result property="gbDpgOrdersBillAmount" column="gb_DPG_orders_bill_amount"/>
+        <result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
         <result property="gbDpgOrdersFinishAmount" column="gb_DPG_orders_finish_amount"/>
         <result property="gbDpgDisGoodsId" column="gb_DPG_dis_goods_id"/>
         <result property="gbDpgDisGoodsFatherId" column="gb_DPG_dis_goods_father_id"/>
@@ -175,7 +292,7 @@
         <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
         <result property="gbDpgBuyQuantity" column="gb_DPG_buy_quantity"/>
         <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
-		<result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
         <result property="gbDpgOrdersAmount" column="gb_DPG_orders_amount"/>
         <result property="gbDpgTypeAddUserId" column="gb_DPG_type_add_user_id"/>
         <result property="gbDpgInputType" column="gb_DPG_input_type"/>
@@ -183,11 +300,11 @@
         <result property="gbDpgDistributerId" column="gb_DPG_distributer_id"/>
         <result property="gbDpgInputType" column="gb_DPG_input_type"/>
         <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
-		<result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
         <result property="gbDpgPurchaseFullTime" column="gb_DPG_purchase_full_time"/>
         <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
         <result property="gbDpgPurchaseMonth" column="gb_DPG_purchase_month"/>
-        <result property="gbDpgPurchaseDate"  column="gb_DPG_purchase_date"/>
+        <result property="gbDpgPurchaseDate" column="gb_DPG_purchase_date"/>
         <result property="gbDpgPurchaseYear" column="gb_DPG_purchase_year"/>
         <result property="gbDpgDisGoodsPriceId" column="gb_DPG_dis_goods_price_id"/>
         <result property="gbDpgPurUserId" column="gb_DPG_pur_user_id"/>
@@ -202,11 +319,14 @@
         <result property="gbDpgWarnFullTime" column="gb_DPG_warn_full_time"/>
         <result property="gbDpgWasteFullTime" column="gb_DPG_waste_full_time"/>
         <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxGoodsPriceEntity" resultMap="nxGoodsPrice"/>
         <collection property="gbDepartmentOrdersEntities" resultMap="depOrders"/>
     </resultMap>
 
     <resultMap id="pur" type="GbDistributerPurchaseBatchEntity">
         <id property="gbDistributerPurchaseBatchId" column="gb_distributer_purchase_batch_id"/>
+        <result property="gbDpbNxDistributerId" column="gb_DPB_nx_distributer_id"/>
+        <result property="gbDpbNxDistributerId" column="gb_DPB_nx_distributer_id"/>
         <result property="gbDpbSellUserId" column="gb_DPB_sell_user_id"/>
         <result property="gbDpbBuyUserId" column="gb_DPB_buy_user_id"/>
         <result property="gbDpbDistributerId" column="gb_DPB_distributer_id"/>
@@ -232,6 +352,13 @@
 
     <resultMap id="dis" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+        <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
         <result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
         <result property="gbDistributerName" column="gb_distributer_name"/>
         <result property="gbDistributerImg" column="gb_distributer_img"/>
@@ -254,7 +381,7 @@
         <result property="qyGbDistributerId" column="qy_gb_distributer_id"/>
     </resultMap>
     <resultMap id="disUser" type="GbDistributerUserEntity">
-         <id property="gbDistributerUserId" column="gb_distributer_user_id"/>
+        <id property="gbDistributerUserId" column="gb_distributer_user_id"/>
         <result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
         <result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
         <result property="gbDiuQyCorpUserId" column="gb_DIU_qy_corp_user_id"/>
@@ -268,14 +395,6 @@
 
         <association property="gbDistributerEntity" resultMap="dis"/>
 
-    </resultMap>
-
-    <resultMap id="gbSupplier" type="GbDistributerSupplierEntity">
-        <id property="gbDistributerSupplierId" column="gb_distributer_supplier_id"/>
-        <result property="gbDistributerSupplierName" column="gb_distributer_supplier_name"/>
-        <result property="gbDsGbDistributerId" column="gb_DS_gb_distributer_id"/>
-        <result property="gbDsSupplierUserId" column="gb_DS_supplier_user_id"/>
-        <result property="gbDsPurUserId" column="gb_DS_pur_user_id"/>
     </resultMap>
 
 
@@ -292,8 +411,8 @@
     </resultMap>
     <resultMap id="depUser" type="GbDepartmentUserEntity">
         <id property="gbDepartmentUserId" column="gb_department_user_id"/>
-		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
-		<result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+        <result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+        <result property="gbDuCustomerService" column="gb_DU_customer_service"/>
         <result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
         <result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
         <result property="gbDuUrlChange" column="gb_DU_url_change"/>
@@ -303,19 +422,9 @@
         <result property="gbDuPrintBillDeviceId" column="gb_DU_print_bill_device_id"/>
 
     </resultMap>
-    <resultMap id="jrdhSellUser" type="NxJrdhUserEntity">
-        <id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
-        <result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
-        <result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
-        <result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
-        <result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
-        <result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
-        <result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
-        <result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
-    </resultMap>
-    <resultMap id="jrdhBuyUser" type="NxJrdhUserEntity">
-        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
 
+    <resultMap id="jrdhSellUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
         <result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
         <result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
         <result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
@@ -323,18 +432,60 @@
         <result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
         <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_comm_user_id"/>
         <result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
-
     </resultMap>
+    <resultMap id="jrdhBuyUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+        <result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_comm_user_id"/>
+        <result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+    </resultMap>
+
     <resultMap id="jrdhSupplier" type="NxJrdhSupplierEntity">
         <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+		<result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
         <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
         <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
         <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
         <result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
         <result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+        <association property="jrdhUserEntity" resultMap="jrdhSellUser"/>
+        <association property="gbPurUserEntity" resultMap="depUser"/>
+        <collection property="batchEntities" resultMap="justPurchaseBatch"/>
     </resultMap>
-    <resultMap id="purchaseBatch" type="GbDistributerPurchaseBatchEntity">
+
+    <resultMap id="nxDis" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerType" column="nx_distributer_type"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+    </resultMap>
+    <resultMap id="jrdhSupplierOnly" type="NxJrdhSupplierEntity">
+        <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+		<result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
+        <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
+        <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
+        <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
+        <result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
+        <result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+        <association property="jrdhUserEntity" resultMap="jrdhSellUser"/>
+        <association property="nxDistributerEntity" resultMap="nxDis"/>
+<!--        <association property="buyerUserEntity" resultMap="jrdhBuyUser"/>-->
+        <association property="gbPurUserEntity" resultMap="depUser"/>
+    </resultMap>
+
+    <resultMap id="justPurchaseBatch" type="GbDistributerPurchaseBatchEntity">
         <id property="gbDistributerPurchaseBatchId" column="gb_distributer_purchase_batch_id"/>
+        <result property="gbDpbNxDistributerId" column="gb_DPB_nx_distributer_id"/>
         <result property="gbDpbSellUserId" column="gb_DPB_sell_user_id"/>
         <result property="gbDpbBuyUserId" column="gb_DPB_buy_user_id"/>
         <result property="gbDpbDistributerId" column="gb_DPB_distributer_id"/>
@@ -346,7 +497,6 @@
         <result property="gbDpbStatus" column="gb_DPB_status"/>
         <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
         <result property="gbDpbPurUserId" column="gb_DPB_pur_user_id"/>
-        <result property="gbDpbSupplierUserId" column="gb_DPB_supplier_user_id"/>
         <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
         <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
         <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
@@ -358,11 +508,77 @@
         <result property="gbDpbPurchaseFullTime" column="gb_DPB_purchase_full_time"/>
         <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
         <result property="gbDpbPurDepartmentId" column="gb_DPB_pur_department_id"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <association property="purDeparment" resultMap="dep"/>
+<!--        <association property="nxJrdhBuyerEntity" resultMap="jrdhBuyUser"/>-->
+    </resultMap>
+
+    <resultMap id="purchaseBatch" type="GbDistributerPurchaseBatchEntity">
+        <id property="gbDistributerPurchaseBatchId" column="gb_distributer_purchase_batch_id"/>
+        <result property="gbDpbNxDistributerId" column="gb_DPB_nx_distributer_id"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbSellUserId" column="gb_DPB_sell_user_id"/>
+        <result property="gbDpbPurchaseType" column="gb_DPB_purchase_type"/>
+        <result property="gbDpbBuyUserId" column="gb_DPB_buy_user_id"/>
+        <result property="gbDpbDistributerId" column="gb_DPB_distributer_id"/>
+        <result property="gbDpbUserAdminType" column="gb_DPB_user_admin_type"/>
+        <result property="gbDpbTime" column="gb_DPB_time"/>
+        <result property="gbDpbDate" column="gb_DPB_date"/>
+        <result property="gbDpbHour" column="gb_DPB_hour"/>
+        <result property="gbDpbMinute" column="gb_DPB_minute"/>
+        <result property="gbDpbStatus" column="gb_DPB_status"/>
+        <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
+        <result property="gbDpbPurUserId" column="gb_DPB_pur_user_id"/>
+        <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
+        <result property="gbDpbPurchaseMonth" column="gb_DPB_purchase_month"/>
+        <result property="gbDpbPurchaseWeek" column="gb_DPB_purchase_week"/>
+        <result property="gbDpbPurchaseYear" column="gb_DPB_purchase_year"/>
+        <result property="gbDpbPurchaseFullTime" column="gb_DPB_purchase_full_time"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbPurDepartmentId" column="gb_DPB_pur_department_id"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <association property="gbDistributerEntity" resultMap="gbDis"/>
         <association property="nxJrdhPurEntity" resultMap="depUser"/>
-        <association property="nxJrdhBuyerEntity" resultMap="jrdhBuyUser"/>
+        <association property="nxJrdhSellerEntity" resultMap="jrdhSellUser"/>
+        <association property="nxJrdhSupplierEntity" resultMap="jrdhSupplierOnly"/>
+        <collection property="gbDPGEntities" resultMap="purchaseGoods"/>
+    </resultMap>
+    <resultMap id="purchaseBatchInfo" type="GbDistributerPurchaseBatchEntity">
+        <id property="gbDistributerPurchaseBatchId" column="gb_distributer_purchase_batch_id"/>
+        <result property="gbDpbNxDistributerId" column="gb_DPB_nx_distributer_id"/>
+        <result property="gbDpbSellUserId" column="gb_DPB_sell_user_id"/>
+        <result property="gbDpbBuyUserId" column="gb_DPB_buy_user_id"/>
+        <result property="gbDpbDistributerId" column="gb_DPB_distributer_id"/>
+        <result property="gbDpbUserAdminType" column="gb_DPB_user_admin_type"/>
+        <result property="gbDpbPurchaseType" column="gb_DPB_purchase_type"/>
+        <result property="gbDpbTime" column="gb_DPB_time"/>
+        <result property="gbDpbDate" column="gb_DPB_date"/>
+        <result property="gbDpbHour" column="gb_DPB_hour"/>
+        <result property="gbDpbMinute" column="gb_DPB_minute"/>
+        <result property="gbDpbStatus" column="gb_DPB_status"/>
+        <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
+        <result property="gbDpbPurUserId" column="gb_DPB_pur_user_id"/>
+        <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
+        <result property="gbDpbPurchaseMonth" column="gb_DPB_purchase_month"/>
+        <result property="gbDpbPurchaseWeek" column="gb_DPB_purchase_week"/>
+        <result property="gbDpbPurchaseYear" column="gb_DPB_purchase_year"/>
+        <result property="gbDpbPurchaseFullTime" column="gb_DPB_purchase_full_time"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbPurDepartmentId" column="gb_DPB_pur_department_id"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <association property="nxJrdhPurEntity" resultMap="depUser"/>
+<!--        <association property="nxJrdhBuyerEntity" resultMap="jrdhBuyUser"/>-->
         <association property="nxJrdhSellerEntity" resultMap="jrdhSellUser"/>
         <association property="nxJrdhSupplierEntity" resultMap="jrdhSupplier"/>
-        <collection property="gbDPGEntities" resultMap="purchaseGoods"/>
+        <association property="purDeparment" resultMap="dep"/>
     </resultMap>
 
     <select id="queryBatchWithOrders" resultMap="purchaseBatch">
@@ -372,14 +588,10 @@
                dep.gb_department_attr_name,
                dep.gb_department_name,
                dep.gb_department_dis_id,
-               depf.gb_department_id         'depf_gb_department_id',
-               depf.gb_department_name       'depf_gb_department_name',
-               depf.gb_department_attr_name  'depf_gb_department_attr_name',
-               depf.gb_department_sub_amount 'depf_gb_department_sub_amount',
-               sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
-               sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
-               sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
-               sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+               depf.gb_department_id            'depf_gb_department_id',
+               depf.gb_department_name          'depf_gb_department_name',
+               depf.gb_department_attr_name     'depf_gb_department_attr_name',
+               depf.gb_department_sub_amount    'depf_gb_department_sub_amount'
         from gb_distributer_purchase_batch as pb
                  left join gb_distributer_purchase_goods as pg
                            on pb.gb_distributer_purchase_batch_id = pg.gb_DPG_batch_id
@@ -388,13 +600,13 @@
                  left join gb_distributer as dis on du.gb_DU_distributer_id = dis.gb_distributer_id
                  left join gb_department_orders as dor
                            on dor.gb_DO_purchase_goods_id = pg.gb_distributer_purchase_goods_id
+                 left join nx_department_orders as ndo on ndo.nx_department_orders_id = dor.gb_DO_nx_department_order_id
                  left join gb_department as dep on dep.gb_department_id = dor.gb_DO_department_id
                  left join gb_department as depf on depf.gb_department_id = dep.gb_department_father_id
-                 left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = pb.gb_DPB_buy_user_id
                  left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = pb.gb_DPB_sell_user_id
                  left join nx_jrdh_supplier as sup on sup.nx_jrdh_supplier_id = pb.gb_DPB_supplier_id
         where gb_distributer_purchase_batch_id = #{batchId}
-        order by  dg.gb_dg_goods_py,  dor.gb_DO_department_father_id, dor.gb_DO_department_id
+        order by dg.gb_dg_goods_py, dor.gb_DO_department_father_id, dor.gb_DO_department_id
     </select>
 
     <select id="queryList" resultType="com.nongxinle.entity.GbDistributerPurchaseBatchEntity">
@@ -425,32 +637,55 @@
 
     <select id="queryDisPurchaseBatch" resultMap="purchaseBatch">
         select *,
+               hiSupp.nx_jrdh_supplier_id 'hi_nx_jrdh_supplier_id',
+               hiSupp.nx_jrdhs_supplier_name 'hi_nx_jrdhs_supplier_name',
+               hiSupp.nx_jrdhs_sys_market_id 'hi_nx_jrdhs_sys_market_id',
+               hiSupp.nx_jrdhs_sys_city_id 'hi_nx_jrdhs_sys_city_id',
+
+        loSupp.nx_jrdh_supplier_id 'lo_nx_jrdh_supplier_id',
+        loSupp.nx_jrdhs_supplier_name 'lo_nx_jrdhs_supplier_name',
+        loSupp.nx_jrdhs_sys_market_id 'lo_nx_jrdhs_sys_market_id',
+        loSupp.nx_jrdhs_sys_city_id 'lo_nx_jrdhs_sys_city_id',
+
         depf.gb_department_id 'depf_gb_department_id',
         depf.gb_department_name 'depf_gb_department_name',
-        sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
-        sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
-        sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
-        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+        depf.gb_department_sub_amount 'depf_gb_department_sub_amount'
         from gb_distributer_purchase_batch as dpb
         left join gb_distributer_purchase_goods as dpg on dpg.gb_DPG_batch_id = dpb.gb_distributer_purchase_batch_id
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = dpg.gb_DPG_dis_goods_id
         left join gb_department_orders as dor on dor.gb_DO_purchase_goods_id = dpg.gb_distributer_purchase_goods_id
-        left join gb_department  as orderDep on orderDep.gb_department_id =  dor.gb_DO_department_id
+        left join gb_department as orderDep on orderDep.gb_department_id = dor.gb_DO_department_id
         left join gb_department as depf on depf.gb_department_id = orderDep.gb_department_father_id
         left join gb_department_user as gdu on gdu.gb_department_user_id = dpb.gb_DPB_pur_user_id
-        left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = dpb.gb_DPB_buy_user_id
         left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = dpb.gb_DPB_sell_user_id
         left join nx_jrdh_supplier as sup on sup.nx_jrdh_supplier_id = dpb.gb_DPB_supplier_id
+        left join gb_distributer as gd on gd.gb_distributer_id = dpb.gb_DPB_distributer_id
+        left join nx_distributer as nd on nd.nx_distributer_id = sup.nx_jrdhs_nx_distributer_id
+        left join nx_goods_price as ngp on ngp.nx_gp_nx_goods_id = dg.gb_dg_nx_goods_id
+                                               and ngp.nx_gp_sys_city_id = #{cityId} and ngp.nx_gp_date = #{priceDate}
+
+        left join nx_jrdh_supplier as hiSupp on hiSupp.nx_jrdh_supplier_id = ngp.nx_gp_highest_jrdh_supplier_id
+        left join nx_jrdh_supplier as loSupp on loSupp.nx_jrdh_supplier_id = ngp.nx_gp_lowest_jrdh_supplier_id
         <where>
+
+            <if test="nxDisId != null">
+                and gb_DPB_nx_distributer_id = #{nxDisId}
+            </if>
             <if test="payId != null">
                 and gb_DPB_gb_supplier_payment_id = #{payId}
             </if>
             <if test="disId != null">
                 and gb_DPB_distributer_id = #{disId}
             </if>
-
+            <if test="notEqualPurchaseType != null">
+                and gb_DPB_purchase_type != #{notEqualPurchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
             <if test="status != null">
-                and gb_DPB_status &lt; #{status}
+                and gb_DPB_status &lt; #{status, jdbcType=INTEGER}
+
             </if>
             <if test="payType != null">
                 and gb_DPB_pay_type = #{payType}
@@ -465,9 +700,9 @@
             <if test="month != null">
                 and gb_DPB_purchase_month = #{month}
             </if>
-			<if test="dayuStatus != null">
-				and gb_DPB_status &gt; #{dayuStatus}
-			</if>
+            <if test="dayuStatus != null">
+                and gb_DPB_status &gt; #{dayuStatus}
+            </if>
 
             <if test="sellerId != null">
                 and gb_DPB_sell_user_id = #{sellerId}
@@ -476,24 +711,29 @@
                 and gb_DPB_pur_department_id = #{purDepId}
             </if>
             <if test="startDate != null">
-                and gb_DPB_date &gt;=  #{startDate}
+                and gb_DPB_date &gt;= #{startDate}
             </if>
             <if test="stopDate != null">
-                and gb_DPB_date &lt;=  #{stopDate}
+                and gb_DPB_date &lt;= #{stopDate}
             </if>
             <if test="date != null">
                 and gb_DPB_date = #{date}
             </if>
-            <if test="date != null">
-                and gb_DPB_date = #{date}
-            </if>
+
             <if test="supplierId != null">
                 and gb_DPB_supplier_id = #{supplierId}
             </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
 
         </where>
         order by gb_distributer_purchase_batch_id DESC,
-        dg.gb_dg_goods_py,  dor.gb_DO_department_father_id, dor.gb_DO_department_id
+        dg.gb_dg_goods_py, dor.gb_DO_department_father_id, dor.gb_DO_department_id
     </select>
     <select id="queryDepartmentPurchaseBatch" resultMap="purchaseBatch">
         select * ,
@@ -518,38 +758,64 @@
             <if test="purDepId != null">
                 and gb_DPB_pur_department_id = #{purDepId}
             </if>
+            <if test="date != null">
+                and gb_DPB_date = #{date}
+            </if>
             <if test="status != null">
                 and gb_DPB_status &lt; #{status}
             </if>
             <if test="disId != null">
                 and gb_DPB_distributer_id = #{disId}
             </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
             <if test="payType != null">
                 and gb_DPB_pay_type = #{payType}
+            </if>
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
             </if>
 
         </where>
         order by gb_distributer_purchase_batch_id DESC,
-        dg.gb_dg_goods_py,  gdo.gb_DO_department_father_id, gdo.gb_DO_department_id
+        dg.gb_dg_goods_py, gdo.gb_DO_department_father_id, gdo.gb_DO_department_id
     </select>
     <select id="queryDisPurchaseBatchCount" resultType="java.lang.Integer">
-        select count(*)  from gb_distributer_purchase_batch as dpb
-         <where>
-             <if test="disId != null">
-                 and gb_DPB_distributer_id = #{disId}
-             </if>
+        select count(*) from gb_distributer_purchase_batch as dpb
+        <where>
+
+
+            <if test="disId != null">
+                and gb_DPB_distributer_id = #{disId}
+            </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
             <if test="supplierId != null">
                 and gb_DPB_supplier_id = #{supplierId}
             </if>
-             <if test="equalStatus != null">
-                 and gb_DPB_status = #{equalStatus}
-             </if>
-             <if test="dayuStatus != null">
-                 and gb_DPB_status &gt; #{dayuStatus}
-             </if>
-             <if test="month != null">
-             and gb_DPB_purchase_month = #{month}
-         </if>
+            <if test="equalStatus != null">
+                and gb_DPB_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and gb_DPB_status &gt; #{dayuStatus}
+            </if>
+            <if test="year != null">
+                and gb_DPB_purchase_year = #{year}
+            </if>
+            <if test="month != null">
+                and gb_DPB_purchase_month = #{month}
+            </if>
             <if test="status != null">
                 and gb_DPB_status &lt; #{status}
             </if>
@@ -557,19 +823,40 @@
             <if test="purUserId != null">
                 and gb_DPB_pur_user_id = #{purUserId}
             </if>
-             <if test="sellerId != null">
-                 and gb_DPB_sell_user_id = #{sellerId}
-             </if>
-             <if test="payType != null">
-                 and gb_DPB_pay_type = #{payType}
-             </if>
+            <if test="purDepId != null">
+                and gb_DPB_pur_department_id = #{purDepId}
+            </if>
+            <if test="sellerId != null">
+                and gb_DPB_sell_user_id = #{sellerId}
+            </if>
+            <if test="payType != null">
+                and gb_DPB_pay_type = #{payType}
+            </if>
+            <if test="date != null">
+                and gb_DPB_date = #{date}
+            </if>
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </select>
     <select id="querySupplierUnSettleSubtotal" resultType="java.lang.Double">
-        select sum(gb_DPB_subtotal)  from gb_distributer_purchase_batch
+        select sum(gb_DPB_subtotal) from gb_distributer_purchase_batch as dpb
         <where>
             <if test="disId != null">
                 and gb_DPB_distributer_id = #{disId}
+            </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
             </if>
             <if test="supplierId != null">
                 and gb_DPB_supplier_id = #{supplierId}
@@ -596,45 +883,99 @@
             <if test="payType != null">
                 and gb_DPB_pay_type = #{payType}
             </if>
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
 
         </where>
     </select>
 
 
     <select id="queryDistributerAccountingData" resultMap="dep">
-        select *   from gb_department as dep
+        select * from gb_department as dep
         left join gb_distributer_purchase_batch as dpb on dep.gb_department_id = dpb.gb_DPB_pur_department_id
         and dep.gb_department_is_group_dep = 1
         <where>
             <if test="disId != null">
                 and gb_DPB_distributer_id = #{disId}
             </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
+            <if test="sellerId != null">
+                and gb_DPB_sell_user_id = #{sellerId}
+            </if>
+            <if test="month != null">
+                and gb_DPB_purchase_month = #{month}
+            </if>
+            <if test="year != null">
+                and gb_DPB_purchase_year = #{year}
+            </if>
             <if test="equalStatus != null">
                 and gb_DPB_status = #{equalStatus}
             </if>
-
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
 
         </where>
 
     </select>
     <select id="queryPurchaserCashTotal" resultType="java.lang.Double">
-        select sum(gb_DPB_subtotal)  from gb_distributer_purchase_batch as dpb
+        select sum(gb_DPB_subtotal) from gb_distributer_purchase_batch as dpb
 
         <where>
             <if test="disId != null">
                 and gb_DPB_distributer_id = #{disId}
             </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
+            <if test="dayuStatus != null">
+                and gb_DPB_status &gt; #{dayuStatus}
+            </if>
+            <if test="status != null">
+                and gb_DPB_status &lt; #{status}
+            </if>
+            <if test="supplierId != null">
+                and gb_DPB_supplier_id = #{supplierId}
+            </if>
+
             <if test="payType != null">
                 and gb_DPB_pay_type = #{payType}
             </if>
-            <if test="payType != null">
-                and gb_DPB_pay_type = #{payType}
+            <if test="date != null">
+                and gb_DPB_date = #{date}
+            </if>
+            <if test="month != null">
+                and gb_DPB_purchase_month = #{month}
+            </if>
+            <if test="year != null">
+                and gb_DPB_purchase_year = #{year}
             </if>
             <if test="startDate != null">
-                and gb_DPB_date &gt;=  #{startDate}
+                and gb_DPB_date &gt;= #{startDate}
             </if>
             <if test="stopDate != null">
-                and gb_DPB_date &lt;=  #{stopDate}
+                and gb_DPB_date &lt;= #{stopDate}
             </if>
             <if test="purUserId != null">
                 and gb_DPB_pur_user_id = #{purUserId}
@@ -642,16 +983,31 @@
             <if test="purDepId != null">
                 and gb_DPB_pur_department_id = #{purDepId}
             </if>
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </select>
     <select id="queryReturnList" resultType="java.lang.Integer">
 
-        select count(gb_DPB_subtotal)  from gb_distributer_purchase_batch as dpb
+        select count(gb_DPB_subtotal) from gb_distributer_purchase_batch as dpb
 
         <where>
 
             <if test="disId != null">
                 and gb_DPB_distributer_id = #{disId}
+            </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
             </if>
             <if test="supplierId != null">
                 and gb_DPB_supplier_id = #{supplierId}
@@ -675,12 +1031,30 @@
             <if test="subDayu != null and subDayu == -1">
                 and gb_DPB_subtotal &lt; 0
             </if>
-
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </select>
 
     <resultMap id="gbDis" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+        <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
         <result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
         <result property="gbDistributerName" column="gb_distributer_name"/>
         <result property="gbDistributerManager" column="gb_distributer_manager"/>
@@ -694,17 +1068,17 @@
         <result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
         <result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
         <result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
-        <collection property="gbDisPurchaseBatchEntities" resultMap="purchaseBatch"/>
+<!--        <collection property="gbDisPurchaseBatchEntities" resultMap="purchaseBatch"/>-->
     </resultMap>
     <select id="queryGbDistributerBySellerId" resultMap="gbDis">
         select *
         from gb_distributer_purchase_batch as gdpb
-        left join gb_distributer as gd on gd.gb_distributer_id = gdpb.gb_DPB_distributer_id
+                 left join gb_distributer as gd on gd.gb_distributer_id = gdpb.gb_DPB_distributer_id
         where gdpb.gb_dpb_sell_user_id = #{sellId};
 
     </select>
     <select id="queryBatchItemByParams" resultType="com.nongxinle.entity.GbDistributerPurchaseBatchEntity">
-        select * from gb_distributer_purchase_batch
+        select * from gb_distributer_purchase_batch as dpb
         <where>
             <if test="batchId != null">
                 and gb_distributer_purchase_batch_id = #{batchId}
@@ -718,7 +1092,129 @@
             <if test="purchaseType != null">
                 and gb_DPB_purchase_type = #{purchaseType}
             </if>
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
+    </select>
+    <select id="querySupplierList" resultMap="jrdhSupplier">
+        select *
+        from gb_distributer_purchase_batch as dpb
+        left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = dpb.gb_DPB_supplier_id
+        left join gb_department as gd on gd.gb_department_id = dpb.gb_DPB_pur_department_id
+        left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = njs.nx_jrdhs_user_id
+        left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_gb_pur_user_id
+        <where>
+
+
+            <if test="disId != null">
+                and gb_DPB_distributer_id = #{disId}
+            </if>
+            <if test="dayuStatus != null">
+                and gb_DPB_status &gt; #{dayuStatus}
+            </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
+            <if test="payType != null">
+                and gb_DPB_pay_type = #{payType}
+            </if>
+
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="purDepId != null">
+                and dpb.gb_DPB_pur_department_id = #{purDepId}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+        </where>
+    </select>
+    <select id="queryDisPurchaseBatchInfo" resultMap="purchaseBatchInfo">
+        select *
+        from gb_distributer_purchase_batch as dpb
+        left join gb_department_user as gdu on gdu.gb_department_user_id = dpb.gb_DPB_pur_user_id
+        left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = dpb.gb_DPB_sell_user_id
+        left join nx_jrdh_supplier as sup on sup.nx_jrdh_supplier_id = dpb.gb_DPB_supplier_id
+        left join gb_department as purDep on purDep.gb_department_id = dpb.gb_DPB_pur_department_id
+
+        <where>
+            <if test="payId != null">
+                and gb_DPB_gb_supplier_payment_id = #{payId}
+            </if>
+            <if test="disId != null">
+                and gb_DPB_distributer_id = #{disId}
+            </if>
+            <if test="purchaseType != null">
+                and gb_DPB_purchase_type = #{purchaseType}
+            </if>
+            <if test="status != null">
+                and gb_DPB_status &lt; #{status}
+            </if>
+            <if test="payType != null">
+                and gb_DPB_pay_type = #{payType}
+            </if>
+            <if test="equalStatus != null">
+                and gb_DPB_status = #{equalStatus}
+            </if>
+            <if test="purUserId != null">
+                and gb_DPB_pur_user_id = #{purUserId}
+            </if>
+
+            <if test="month != null">
+                and gb_DPB_purchase_month = #{month}
+            </if>
+            <if test="dayuStatus != null">
+                and gb_DPB_status &gt; #{dayuStatus}
+            </if>
+
+            <if test="sellerId != null">
+                and gb_DPB_sell_user_id = #{sellerId}
+            </if>
+            <if test="purDepId != null">
+                and gb_DPB_pur_department_id = #{purDepId}
+            </if>
+            <if test="startDate != null">
+                and gb_DPB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gb_DPB_date &lt;= #{stopDate}
+            </if>
+            <if test="date != null">
+                and gb_DPB_date = #{date}
+            </if>
+
+            <if test="supplierId != null">
+                and gb_DPB_supplier_id = #{supplierId}
+            </if>
+            <if test="purDepIds != null">
+                and dpb.gb_DPB_pur_department_id in
+                <foreach item="id" collection="purDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+
+        </where>
+        order by gb_distributer_purchase_batch_id DESC
+
     </select>
 
 
@@ -735,7 +1231,6 @@
          `gb_DPB_hour`,
          `gb_DPB_minute`,
          `gb_DPB_subtotal`,
-         `gb_DPB_supplier_user_id`,
          `gb_DPB_pur_department_id`,
          `gb_DPB_pay_type`,
          `gb_DPB_pay_subtotal`,
@@ -751,7 +1246,9 @@
          `gb_DPB_buy_user_id`,
          `gb_DPB_buy_user_open_id`,
          `gb_DPB_sell_user_open_id`,
-         `gb_DPB_purchase_type`
+         `gb_DPB_purchase_type`,
+          `gb_DPB_nx_distributer_id`
+
          )
         values (#{gbDistributerPurchaseBatchId},
                 #{gbDpbStatus},
@@ -763,7 +1260,6 @@
                 #{gbDpbHour},
                 #{gbDpbMinute},
                 #{gbDpbSubtotal},
-                #{gbDpbSupplierUserId},
                 #{gbDpbPurDepartmentId},
                 #{gbDpbPayType},
                 #{gbDpbPaySubtotal},
@@ -779,9 +1275,8 @@
                 #{gbDpbBuyUserId},
                 #{gbDpbBuyUserOpenId},
                 #{gbDpbSellUserOpenId},
-                #{gbDpbPurchaseType}
-
-                )
+                #{gbDpbPurchaseType},
+                #{gbDpbNxDistributerId})
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.GbDistributerPurchaseBatchEntity">
@@ -795,18 +1290,19 @@
             <if test="gbDpbHour != null">`gb_DPB_hour` = #{gbDpbHour},</if>
             <if test="gbDpbMinute != null">`gb_DPB_minute` = #{gbDpbMinute},</if>
             <if test="gbDpbSubtotal != null">`gb_DPB_subtotal` = #{gbDpbSubtotal},</if>
-            <if test="gbDpbSupplierUserId != null">`gb_DPB_supplier_user_id` = #{gbDpbSupplierUserId},</if>
             <if test="gbDpbPurDepartmentId != null">`gb_DPB_pur_department_id` = #{gbDpbPurDepartmentId},</if>
             <if test="gbDpbPayType != null">`gb_DPB_pay_type` = #{gbDpbPayType},</if>
             <if test="gbDpbPaySubtotal != null">`gb_DPB_pay_subtotal` = #{gbDpbPaySubtotal},</if>
-            <if test="gbDpbGbSupplierPaymentId != null">`gb_DPB_gb_supplier_payment_id` = #{gbDpbGbSupplierPaymentId},</if>
+            <if test="gbDpbGbSupplierPaymentId != null">`gb_DPB_gb_supplier_payment_id` = #{gbDpbGbSupplierPaymentId},
+            </if>
             <if test="gbDpbSupplierId != null">`gb_DPB_supplier_id` =
                 #{gbDpbSupplierId},
             </if>
             <if test="gbDpbPurchaseMonth != null">`gb_DPB_purchase_month` = #{gbDpbPurchaseMonth},</if>
             <if test="gbDpbPurchaseYear != null">`gb_DPB_purchase_year` = #{gbDpbPurchaseYear},</if>
             <if test="gbDpbPurchaseFullTime != null">`gb_DPB_purchase_full_time` = #{gbDpbPurchaseFullTime},</if>
-            <if test="gbDpbSellerReplyFullTime != null">`gb_DPB_seller_reply_full_time` = #{gbDpbSellerReplyFullTime},</if>
+            <if test="gbDpbSellerReplyFullTime != null">`gb_DPB_seller_reply_full_time` = #{gbDpbSellerReplyFullTime},
+            </if>
             <if test="gbDpbFinishFullTime != null">`gb_DPB_finish_full_time` = #{gbDpbFinishFullTime},</if>
             <if test="gbDpbPurchaseWeek != null">`gb_DPB_purchase_week` = #{gbDpbPurchaseWeek},</if>
             <if test="gbDpbBuyUserId != null">`gb_DPB_buy_user_id` = #{gbDpbBuyUserId},</if>
@@ -814,6 +1310,7 @@
             <if test="gbDpbSellUserOpenId != null">`gb_DPB_sell_user_open_id` = #{gbDpbSellUserOpenId},</if>
             <if test="gbDpbBuyUserOpenId != null">`gb_DPB_buy_user_open_id` = #{gbDpbBuyUserOpenId},</if>
             <if test="gbDpbPurchaseType != null">`gb_DPB_purchase_type` = #{gbDpbPurchaseType},</if>
+            <if test="gbDpbNxDistributerId != null">`gb_DPB_nx_distributer_id` = #{gbDpbNxDistributerId},</if>
             <if test="gbDpbPurUserId != null">`gb_DPB_pur_user_id` = #{gbDpbPurUserId}</if>
         </set>
         where gb_distributer_purchase_batch_id = #{gbDistributerPurchaseBatchId}

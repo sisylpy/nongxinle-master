@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerGoodsShelfStockDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockEntity">
+		select * from nx_distributer_goods_shelf_stock where nx_distributer_goods_shelf_stock_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockEntity">
+		select * from nx_distributer_goods_shelf_stock 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_goods_shelf_stock 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfStockEntity">
+		insert into nx_distributer_goods_shelf_stock
+		(
+			`nx_distributer_goods_shelf_stock_id`, 
+			`nx_dgss_nx_distributer_id`, 
+			`nx_dgss_nx_dis_goods_id`, 
+			`nx_dgss_nx_dis_goods_father_id`, 
+			`nx_dgss_weight`, 
+			`nx_dgss_price`, 
+			`nx_dgss_selling_price`, 
+			`nx_dgss_subtotal`, 
+			`nx_dgss_rest_weight`, 
+			`nx_dgss_rest_weight_show_standard`, 
+			`nx_dgss_rest_subtotal`, 
+			`nx_dgss_date`, 
+			`nx_dgss_full_time`, 
+			`nx_dgss_out_date`, 
+			`nx_dgss_out_full_time`, 
+			`nx_dgss_out_hour`, 
+			`nx_dgss_receive_user_id`, 
+			`nx_dgss_status`, 
+			`nx_dgss_nx_pur_goods_id`, 
+			`nx_dgss_week`, 
+			`nx_dgss_month`, 
+			`nx_dgss_year`, 
+			`nx_dgss_time_stamp`, 
+			`nx_dgss_inventory_full_time`, 
+			`nx_dgss_inventory_date`, 
+			`nx_dgss_inventory_week`, 
+			`nx_dgss_inventory_month`, 
+			`nx_dgss_inventory_year`, 
+			`nx_dgss_return_weight`, 
+			`nx_dgss_return_subtotal`, 
+			`nx_dgss_produce_weight`, 
+			`nx_dgss_produce_subtotal`, 
+			`nx_dgss_loss_weight`, 
+			`nx_dgss_loss_subtotal`, 
+			`nx_dgss_waste_weight`, 
+			`nx_dgss_waste_subtotal`, 
+			`nx_dgss_profit_subtotal`, 
+			`nx_dgss_profit_weight`, 
+			`nx_dgss_selling_subtotal`, 
+			`nx_dgss_after_profit_subtotal`, 
+			`nx_dgss_cost_rate`, 
+			`nx_dgss_rest_weight_show_standard_name`, 
+			`nx_dgss_produce_selling_subtotal`,
+			`nx_dgss_nx_shelf_goods_id`
+		)
+		values
+		(
+			#{nxDistributerGoodsShelfStockId}, 
+			#{nxDgssNxDistributerId}, 
+			#{nxDgssNxDisGoodsId}, 
+			#{nxDgssNxDisGoodsFatherId}, 
+			#{nxDgssWeight}, 
+			#{nxDgssPrice}, 
+			#{nxDgssSellingPrice}, 
+			#{nxDgssSubtotal}, 
+			#{nxDgssRestWeight}, 
+			#{nxDgssRestWeightShowStandard}, 
+			#{nxDgssRestSubtotal}, 
+			#{nxDgssDate}, 
+			#{nxDgssFullTime}, 
+			#{nxDgssOutDate}, 
+			#{nxDgssOutFullTime}, 
+			#{nxDgssOutHour}, 
+			#{nxDgssReceiveUserId}, 
+			#{nxDgssStatus}, 
+			#{nxDgssNxPurGoodsId}, 
+			#{nxDgssWeek}, 
+			#{nxDgssMonth}, 
+			#{nxDgssYear}, 
+			#{nxDgssTimeStamp}, 
+			#{nxDgssInventoryFullTime}, 
+			#{nxDgssInventoryDate}, 
+			#{nxDgssInventoryWeek}, 
+			#{nxDgssInventoryMonth}, 
+			#{nxDgssInventoryYear}, 
+			#{nxDgssReturnWeight}, 
+			#{nxDgssReturnSubtotal}, 
+			#{nxDgssProduceWeight}, 
+			#{nxDgssProduceSubtotal}, 
+			#{nxDgssLossWeight}, 
+			#{nxDgssLossSubtotal}, 
+			#{nxDgssWasteWeight}, 
+			#{nxDgssWasteSubtotal}, 
+			#{nxDgssProfitSubtotal}, 
+			#{nxDgssProfitWeight}, 
+			#{nxDgssSellingSubtotal}, 
+			#{nxDgssAfterProfitSubtotal}, 
+			#{nxDgssCostRate}, 
+			#{nxDgssRestWeightShowStandardName}, 
+			#{nxDgssProduceSellingSubtotal},
+			#{nxDgssNxShelfGoodsId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfStockEntity">
+		update nx_distributer_goods_shelf_stock 
+		<set>
+			<if test="nxDgssNxDistributerId != null">`nx_dgss_nx_distributer_id` = #{nxDgssNxDistributerId}, </if>
+			<if test="nxDgssNxDisGoodsId != null">`nx_dgss_nx_dis_goods_id` = #{nxDgssNxDisGoodsId}, </if>
+			<if test="nxDgssNxDisGoodsFatherId != null">`nx_dgss_nx_dis_goods_father_id` = #{nxDgssNxDisGoodsFatherId}, </if>
+			<if test="nxDgssWeight != null">`nx_dgss_weight` = #{nxDgssWeight}, </if>
+			<if test="nxDgssPrice != null">`nx_dgss_price` = #{nxDgssPrice}, </if>
+			<if test="nxDgssSellingPrice != null">`nx_dgss_selling_price` = #{nxDgssSellingPrice}, </if>
+			<if test="nxDgssSubtotal != null">`nx_dgss_subtotal` = #{nxDgssSubtotal}, </if>
+			<if test="nxDgssRestWeight != null">`nx_dgss_rest_weight` = #{nxDgssRestWeight}, </if>
+			<if test="nxDgssRestWeightShowStandard != null">`nx_dgss_rest_weight_show_standard` = #{nxDgssRestWeightShowStandard}, </if>
+			<if test="nxDgssRestSubtotal != null">`nx_dgss_rest_subtotal` = #{nxDgssRestSubtotal}, </if>
+			<if test="nxDgssDate != null">`nx_dgss_date` = #{nxDgssDate}, </if>
+			<if test="nxDgssFullTime != null">`nx_dgss_full_time` = #{nxDgssFullTime}, </if>
+			<if test="nxDgssOutDate != null">`nx_dgss_out_date` = #{nxDgssOutDate}, </if>
+			<if test="nxDgssOutFullTime != null">`nx_dgss_out_full_time` = #{nxDgssOutFullTime}, </if>
+			<if test="nxDgssOutHour != null">`nx_dgss_out_hour` = #{nxDgssOutHour}, </if>
+			<if test="nxDgssReceiveUserId != null">`nx_dgss_receive_user_id` = #{nxDgssReceiveUserId}, </if>
+			<if test="nxDgssStatus != null">`nx_dgss_status` = #{nxDgssStatus}, </if>
+			<if test="nxDgssNxPurGoodsId != null">`nx_dgss_nx_pur_goods_id` = #{nxDgssNxPurGoodsId}, </if>
+			<if test="nxDgssWeek != null">`nx_dgss_week` = #{nxDgssWeek}, </if>
+			<if test="nxDgssMonth != null">`nx_dgss_month` = #{nxDgssMonth}, </if>
+			<if test="nxDgssYear != null">`nx_dgss_year` = #{nxDgssYear}, </if>
+			<if test="nxDgssTimeStamp != null">`nx_dgss_time_stamp` = #{nxDgssTimeStamp}, </if>
+			<if test="nxDgssInventoryFullTime != null">`nx_dgss_inventory_full_time` = #{nxDgssInventoryFullTime}, </if>
+			<if test="nxDgssInventoryDate != null">`nx_dgss_inventory_date` = #{nxDgssInventoryDate}, </if>
+			<if test="nxDgssInventoryWeek != null">`nx_dgss_inventory_week` = #{nxDgssInventoryWeek}, </if>
+			<if test="nxDgssInventoryMonth != null">`nx_dgss_inventory_month` = #{nxDgssInventoryMonth}, </if>
+			<if test="nxDgssInventoryYear != null">`nx_dgss_inventory_year` = #{nxDgssInventoryYear}, </if>
+			<if test="nxDgssReturnWeight != null">`nx_dgss_return_weight` = #{nxDgssReturnWeight}, </if>
+			<if test="nxDgssReturnSubtotal != null">`nx_dgss_return_subtotal` = #{nxDgssReturnSubtotal}, </if>
+			<if test="nxDgssProduceWeight != null">`nx_dgss_produce_weight` = #{nxDgssProduceWeight}, </if>
+			<if test="nxDgssProduceSubtotal != null">`nx_dgss_produce_subtotal` = #{nxDgssProduceSubtotal}, </if>
+			<if test="nxDgssLossWeight != null">`nx_dgss_loss_weight` = #{nxDgssLossWeight}, </if>
+			<if test="nxDgssLossSubtotal != null">`nx_dgss_loss_subtotal` = #{nxDgssLossSubtotal}, </if>
+			<if test="nxDgssWasteWeight != null">`nx_dgss_waste_weight` = #{nxDgssWasteWeight}, </if>
+			<if test="nxDgssWasteSubtotal != null">`nx_dgss_waste_subtotal` = #{nxDgssWasteSubtotal}, </if>
+			<if test="nxDgssProfitSubtotal != null">`nx_dgss_profit_subtotal` = #{nxDgssProfitSubtotal}, </if>
+			<if test="nxDgssProfitWeight != null">`nx_dgss_profit_weight` = #{nxDgssProfitWeight}, </if>
+			<if test="nxDgssSellingSubtotal != null">`nx_dgss_selling_subtotal` = #{nxDgssSellingSubtotal}, </if>
+			<if test="nxDgssAfterProfitSubtotal != null">`nx_dgss_after_profit_subtotal` = #{nxDgssAfterProfitSubtotal}, </if>
+			<if test="nxDgssCostRate != null">`nx_dgss_cost_rate` = #{nxDgssCostRate}, </if>
+			<if test="nxDgssRestWeightShowStandardName != null">`nx_dgss_rest_weight_show_standard_name` = #{nxDgssRestWeightShowStandardName}, </if>
+			<if test="nxDgssNxShelfGoodsId != null">`nx_dgss_nx_shelf_goods_id` = #{nxDgssNxShelfGoodsId}, </if>
+			<if test="nxDgssProduceSellingSubtotal != null">`nx_dgss_produce_selling_subtotal` = #{nxDgssProduceSellingSubtotal}</if>
+		</set>
+		where nx_distributer_goods_shelf_stock_id = #{nxDistributerGoodsShelfStockId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_goods_shelf_stock where nx_distributer_goods_shelf_stock_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_goods_shelf_stock where nx_distributer_goods_shelf_stock_id in 
+		<foreach item="nxDistributerGoodsShelfStockId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerGoodsShelfStockId}
+		</foreach>
+	</delete>
+
+</mapper>

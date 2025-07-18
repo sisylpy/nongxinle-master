@@ -63,4 +63,10 @@ public class NxCustomerServiceImpl implements NxCustomerService {
 		return nxCustomerDao.queryCustomerOfCommunityTotal(map);
 	}
 
+    @Override
+    public NxCustomerEntity querycustomerDetail(Integer nxCuCustomerId) {
+
+		return nxCustomerDao.querycustomerDetail(nxCuCustomerId);
+    }
+
 }

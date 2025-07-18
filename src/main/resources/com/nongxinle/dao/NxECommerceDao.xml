@@ -17,20 +17,25 @@
  	<select id="queryTotal" resultType="int">
 		select count(*) from nx_e_commerce 
 	</select>
-	 
+	<select id="queryGbByGbId" resultType="com.nongxinle.entity.NxECommerceEntity">
+		select * from nx_e_commerce where nx_e_commerce_gb_dis_id = #{id}
+	</select>
+
 	<insert id="save" parameterType="com.nongxinle.entity.NxECommerceEntity" useGeneratedKeys="true"
 	 keyProperty="nxECommerceId">
 		insert into nx_e_commerce
 		(
 			`nx_e_commerce_id`, 
 			`nx_e_commerce_name`, 
-			`nx_e_commerce_img`
+			`nx_e_commerce_img`,
+			`nx_e_commerce_gb_dis_id`
 		)
 		values
 		(
 			#{nxECommerceId}, 
 			#{nxECommerceName}, 
-			#{nxECommerceImg}
+			#{nxECommerceImg},
+			#{nxECommerceGbDisId}
 		)
 	</insert>
 	 
@@ -39,6 +44,7 @@
 		<set>
 			<if test="nxECommerceName != null">`nx_e_commerce_name` = #{nxECommerceName}, </if>
 			<if test="nxECommerceImg != null">`nx_e_commerce_img` = #{nxECommerceImg}</if>
+			<if test="nxECommerceGbDisId != null">`nx_e_commerce_gb_dis_id` = #{nxECommerceGbDisId}</if>
 		</set>
 		where nx_e_commerce_id = #{nxECommerceId}
 	</update>

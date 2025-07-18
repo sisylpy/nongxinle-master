@@ -88,6 +88,7 @@ public class NxCommunitySplicingOrdersEntity implements Serializable {
 	 *  订单支付状态
 	 */
 	private Integer nxCsoPaymentStatus;
+	private Integer nxCsoCommerceId;
 	/**
 	 *  订单支付发送时间
 	 */
@@ -100,12 +101,15 @@ public class NxCommunitySplicingOrdersEntity implements Serializable {
 	 *  订单类型 0先付款1后付款
 	 */
 	private Integer nxCsoType;
+	private Integer nxCsoServiceType;
+
 	/**
 	 *  订单支付时间
 	 */
 	private String nxCsoWxOutTradeNo;
 	private String nxCsoYouhuiTotal;
-	private int nxCoBuyMemberOrderTime;
+	private String nxCsoBuyMemberCardSubtotal;
+	private int nxCsoBuyMemberCardTime;
 
 	/**
 	 *  订单类型 0先付款1后付款
@@ -115,5 +119,6 @@ public class NxCommunitySplicingOrdersEntity implements Serializable {
 	private NxCustomerUserEntity otherUser;
 	private NxCustomerUserEntity orderUser;
 	private List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities;
+	private List<NxCustomerUserCardEntity> nxCustomerUserCardEntities;
 
 }

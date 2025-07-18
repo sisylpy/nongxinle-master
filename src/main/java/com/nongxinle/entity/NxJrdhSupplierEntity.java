@@ -40,14 +40,22 @@ public class NxJrdhSupplierEntity implements Serializable {
 	 *  接单元id
 	 */
 	private Integer nxJrdhsUserId;
+	private Integer nxJrdhsSysCityId;
+	private Integer nxJrdhsSysMarketId;
 	/**
 	 *  gbDisid
 	 */
 	private Integer nxJrdhsNxDistributerId;
+
+	private Boolean isSelected = false;
+	private String total;
+	private int billCount;
 	/**
 	 *  gbDisid
 	 */
 	private Integer nxJrdhsNxCommunityId;
+	private Integer nxJrdhsStatus;
+
 
 	private NxJrdhUserEntity jrdhUserEntity;
 	private NxDistributerUserEntity nxPurUserEntity;
@@ -63,7 +71,33 @@ public class NxJrdhSupplierEntity implements Serializable {
 	private NxJrdhUserEntity buyerUserEntity;
 	private NxDistributerEntity nxDistributerEntity;
 	private GbDistributerEntity gbDistributerEntity;
+	private List<GbDistributerPurchaseBatchEntity> batchEntities;
 
+	private Double purTimes = 0.0;
+	private String purTimesString;
+
+	private Double purGoodsTotal = 0.0;
+	private String purGoodsTotalString;
+
+	private Double stockGoodsTotal = 0.0;
+	private String stockGoodsTotalString;
+
+	private Double produceGoodsTotal = 0.0;
+	private String produceGoodsTotalString;
+	private Double wasteGoodsTotal = 0.0;
+	private String wasteGoodsTotalString;
+	private Double lossGoodsTotal = 0.0;
+	private String lossGoodsTotalString;
+	private Double returnGoodsTotal = 0.0;
+	private String returnGoodsTotalString;
+
+	private String freshStars;
+	private int starGreen;
+	private int starGray;
+	private int starHalf;
+
+	private String unPayTotal = "0.0";
+	private String havePayTotal = "0.0";
 
 
 }

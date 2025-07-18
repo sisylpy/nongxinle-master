@@ -10,9 +10,12 @@ package com.nongxinle.dao;
 import com.nongxinle.entity.GbDistributerStandardEntity;
 
 import java.util.List;
+import java.util.Map;
 
 
 public interface GbDistributerStandardDao extends BaseDao<GbDistributerStandardEntity> {
 
     List<GbDistributerStandardEntity> queryDisStandardByDisGoodsIdGb(Integer disGoodsId);
+
+    List<GbDistributerStandardEntity> queryDisStandardByParams(Map<String, Object> mapNx);
 }

@@ -219,7 +219,7 @@ public class GbDistributerSupplierUserController {
 
 			Integer supplierUserId = supplierUser.getGbDistributerSupplierUserId();
 			GbDistributerPurchaseBatchEntity gbDistributerPurchaseBatchEntity = gbDisPurchaseBatchService.queryObject(batchId);
-			gbDistributerPurchaseBatchEntity.setGbDpbSupplierUserId(supplierUserId);
+			gbDistributerPurchaseBatchEntity.setGbDpbSellUserId(supplierUserId);
 			gbDisPurchaseBatchService.update(gbDistributerPurchaseBatchEntity);
 //			GbDistributerPurchaseBatchEntity distributerPurchaseBatchEntity = gbDisPurchaseBatchService.queryBatchWithOrders(batchId);
 //			return R.ok().put("data", distributerPurchaseBatchEntity);
@@ -270,7 +270,7 @@ public class GbDistributerSupplierUserController {
 			Integer supplierUserId = supplierUser.getGbDistributerSupplierUserId();
 			Integer sellerSellBatchId = supplierUser.getUserRegisterBatchId();
 			GbDistributerPurchaseBatchEntity gbDistributerPurchaseBatchEntity = gbDisPurchaseBatchService.queryObject(sellerSellBatchId);
-			gbDistributerPurchaseBatchEntity.setGbDpbSupplierUserId(supplierUserId);
+			gbDistributerPurchaseBatchEntity.setGbDpbSellUserId(supplierUserId);
 			gbDisPurchaseBatchService.update(gbDistributerPurchaseBatchEntity);
 			GbDistributerPurchaseBatchEntity distributerPurchaseBatchEntity = gbDisPurchaseBatchService.queryBatchWithOrders(sellerSellBatchId);
 			return R.ok().put("data", distributerPurchaseBatchEntity);

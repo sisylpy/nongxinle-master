@@ -58,4 +58,10 @@ public class GbReportServiceImpl implements GbReportService {
 		return gbReportDao.queryReportList(map);
     }
 
+    @Override
+    public List<GbReportEntity> queryDepReportList(Map<String, Object> map1) {
+
+		return gbReportDao.queryDepReportList(map1);
+    }
+
 }

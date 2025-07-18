@@ -20,6 +20,7 @@
 
 	<resultMap id="dep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
 		<result property="gbDepartmentName" column="gb_department_name"/>
 		<result property="gbDepartmentLevel" column="gb_department_level"/>
@@ -45,7 +46,8 @@
           order by gb_report_id DESC
 	</select>
 
-	<insert id="save" parameterType="com.nongxinle.entity.GbReportEntity">
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbReportEntity">
 		insert into gb_report
 		(
 			`gb_report_id`, 

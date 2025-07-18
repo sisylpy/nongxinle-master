@@ -53,9 +53,21 @@ public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoo
 	}
 
     @Override
-    public List<NxDistributerGoodsShelfGoodsEntity> queryShelfGoodsByParams(Map<String, Object> map) {
+    public List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsByParams(Map<String, Object> map) {
 
-		return nxDistributerGoodsShelfGoodsDao.queryShelfGoodsByParams(map);
+		return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsByParams(map);
+    }
+
+    @Override
+    public int queryShelfGoodsCount(Map<String, Object> map) {
+
+		return nxDistributerGoodsShelfGoodsDao.queryShelfGoodsCount(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsWithOrders(Map<String, Object> pageParams) {
+
+		return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsWithOrders(pageParams);
     }
 
 }

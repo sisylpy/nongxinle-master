@@ -117,11 +117,6 @@ public class GbDepartmentGoodsStockReduceDailyServiceImpl implements GbDepartmen
 		return gbDepartmentGoodsStockReduceDailyDao.queryWhichDepsHaveDailyTotal(mapDep);
     }
 
-    @Override
-    public Double queryReduceFinishCount(Map<String, Object> map0) {
 
-		return gbDepartmentGoodsStockReduceDailyDao.queryReduceFinishCount(map0);
-
-    }
 
 }

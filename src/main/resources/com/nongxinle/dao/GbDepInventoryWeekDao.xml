@@ -27,6 +27,7 @@
 
 	<resultMap id="dep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
 		<result property="gbDepartmentName" column="gb_department_name"/>
 		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>

@@ -17,26 +17,82 @@
  	<select id="queryTotal" resultType="int">
 		select count(*) from nx_customer_user 
 	</select>
-	<select id="queryOpenId" resultType="java.lang.String">
 
-	</select>
-    <select id="queryUserByOpenId" resultType="com.nongxinle.entity.NxCustomerUserEntity">
-		select * from nx_customer_user where nx_CU_wx_open_id = #{openid}
+    <select id="queryUserByOpenId" resultMap="userInfo">
+		select * from nx_customer_user as ncu
+		left join nx_customer_user_card as ncuc on ncuc.nx_cuca_customer_user_id = ncu.nx_CU_user_id
+		left join nx_community_card as ncc on ncc.nx_community_card_id = ncuc.nx_cuca_card_id
+		where nx_CU_wx_open_id = #{openid}
 	</select>
 
+	<resultMap id="userCards" type="NxCustomerUserCardEntity">
+		<id property="nxCustomerUserCardId" column="nx_customer_user_card_id"/>
+		<result property="nxCucaIsSelected" column="nx_cuca_is_selected"/>
+		<result property="nxCucaCardId" column="nx_cuca_card_id"/>
+		<result property="nxCucaCustomerUserId" column="nx_cuca_customer_user_id"/>
+		<result property="nxCucaStartDate" column="nx_cuca_start_date"/>
+		<result property="nxCucaStopDate" column="nx_cuca_stop_date"/>
+		<result property="nxCucaStatus" column="nx_cuca_status"/>
+		<result property="nxCucaType" column="nx_cuca_type"/>
+		<result property="nxCucaCommunityId" column="nx_cuca_community_id"/>
+	</resultMap>
+
+	<resultMap id="userInfo" type="NxCustomerUserEntity">
+		<id property="nxCuUserId" column="nx_CU_user_id"/>
+		<result property="nxCuCommerceId" column="nx_CU_commerce_id"/>
+		<result property="nxCuOrderTimes" column="nx_CU_order_times"/>
+		<result property="nxCuWxGender" column="nx_CU_wx_gender"/>
+		<result property="nxCuWxPhoneNumber" column="nx_CU_wx_phone_number"/>
+		<result property="nxCuCommunityId" column="nx_CU_community_id"/>
+		<result property="nxCuWxOpenId" column="nx_CU_wx_open_id"/>
+		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatar_url"/>
+		<result property="nxCuCustomerId" column="nx_CU_customer_id"/>
+		<collection property="userCardEntityList" resultMap="userCards"/>
+	</resultMap>
+
+	<resultMap id="community" type="NxCommunityEntity">
+		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
+		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
+		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
+		<result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
+		<result property="nxCommunityDeliveryPayMaxFee" column="nx_community_delivery_pay_max_fee"/>
+		<result property="nxCommunityDeliveryPayPercent" column="nx_community_delivery_pay_percent"/>
+		<result property="nxCommunitySysBusinessAreaId" column="nx_community_sys_business_area_id"/>
+		<result property="nxCommunitySysCityId" column="nx_community_sys_city_id"/>
+		<result property="nxCommunitySysDistrictId" column="nx_community_sys_district_id"/>
+		<result property="nxCommunitySysProvinceId" column="nx_community_sys_province_id"/>
+		<result property="nxCommunityPrePrintTimes" column="nx_community_pre_print_times"/>
+		<result property="nxCommunityOpenTime" column="nx_community_open_time"/>
+		<result property="nxCommunityCloseTime" column="nx_community_close_time"/>
+		<result property="nxCommunityWxFile" column="nx_community_wx_file"/>
+		<result property="nxCommunityDoorFile" column="nx_community_door_file"/>
+		<result property="nxCommunityType" column="nx_community_type"/>
+		<result property="nxCommunityName" column="nx_community_name"/>
+	</resultMap>
 	<resultMap id="customer" type="NxCustomerEntity">
 		<id property="nxCustomerId" column="nx_customer_id"/>
+		<result property="nxCustomerCommerceId" column="nx_customer_commerce_id"/>
 		<result property="nxCustomerCardWasteDate" column="nx_customer_card_waste_date"/>
+		<association property="nxCommunityEntity" resultMap="community"/>
 	</resultMap>
-	<resultMap id="userWithCustomer" type="NxCustomerUserEntity">
+	<resultMap id="customerWithCommunity" type="NxCustomerUserEntity">
 		<id property="nxCuUserId" column="nx_CU_user_id"/>
-		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatra_url"/>
+		<result property="nxCuCommerceId" column="nx_CU_commerce_id"/>
+		<result property="nxCuOrderTimes" column="nx_CU_order_times"/>
+		<result property="nxCuWxGender" column="nx_CU_wx_gender"/>
+		<result property="nxCuWxPhoneNumber" column="nx_CU_wx_phone_number"/>
+		<result property="nxCuCommunityId" column="nx_CU_community_id"/>
+		<result property="nxCuWxOpenId" column="nx_CU_wx_open_id"/>
+		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatar_url"/>
 		<result property="nxCuCustomerId" column="nx_CU_customer_id"/>
 		<association property="nxCustomerEntity" resultMap="customer"/>
 	</resultMap>
-	<select id="queryCustomerUserInfo" resultMap="userWithCustomer">
+	<select id="queryCustomerUserInfo" resultMap="customerWithCommunity">
 		select * from nx_customer_user as ncu
 		left join nx_customer as nc on nc.nx_customer_id = ncu.nx_CU_customer_id
+		left join  nx_community as nm on nm.nx_community_id = ncu.nx_CU_community_id                                  
+
         <where>
 			<if test="userId != null">
 				and ncu.nx_CU_user_id = #{userId}
@@ -46,9 +102,104 @@
 			</if>
 		</where>
 	</select>
+	<select id="queryCustomerByParams" resultType="com.nongxinle.entity.NxCustomerUserEntity">
+
+		select * from nx_customer_user as ncu
+		<where>
+			<if test="commId != null">
+				and ncu.nx_CU_community_id = #{commId}
+			</if>
+			<if test="date != null">
+				and ncu.nx_CU_join_date = #{date}
+			</if>
+			<if test="phone != null">
+				and ncu.nx_CU_wx_phone_number like  concat('%', #{phone}, '%')
+			</if>
+		</where>
+	</select>
+    <select id="queryCustomerUserCount" resultType="java.lang.Integer">
+		select count(*)   from nx_customer_user as ncu
+		<where>
+			<if test="commId != null">
+				and ncu.nx_CU_community_id = #{commId}
+			</if>
+			<if test="date != null">
+				and ncu.nx_CU_join_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ncu.nx_CU_join_date &gt; #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ncu.nx_CU_join_date &lt; #{stopDate}
+			</if>
+		</where>
+
+	</select>
+    <select id="queryCommerceCustomerUserCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_customer_user
+		<where>
+			<if test="date != null">
+				and nx_CU_join_date = #{date}
+			</if>
+			<if test="commerceId != null">
+				and nx_CU_commerce_id = #{commerceId}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="address" type="NxCustomerUserAddressEntity">
+		<id property="nxCustomerUserAddressId" column="nx_customer_user_address_id"/>
+		<result property="nxCuaLng" column="nx_cua_lng"/>
+		<result property="nxCuaLat" column="nx_cua_lat"/>
+		<result property="nxCuaLocation" column="nx_cua_locaton"/>
+		<result property="nxCuaSysBusinessAreaId" column="nx_cua_sys_business_area_id"/>
+		<result property="nxCuaSysCityId" column="nx_cua_sys_city_id"/>
+		<result property="nxCuaSysDistrictId" column="nx_cua_sys_district_id"/>
+		<result property="nxCuaSysProvinceId" column="nx_cua_sys_province_id"/>
+		<result property="nxCuaCustomerUserId" column="nx_cua_customer_user_id"/>
+		<result property="nxCuaUserPhone" column="nx_cua_user_phone"/>
+		<result property="nxCuaAddressBuildingName" column="nx_cua_address_building_name"/>
+		<result property="nxCuaAddressDetail" column="nx_cua_address_detail"/>
+		<result property="nxCuaIsSelected" column="nx_cua_is_selected"/>
+		<result property="nxCuaCommunityId" column="nx_cua_community_id"/>
+		<result property="nxCuaStatus" column="nx_cua_status"/>
+		<result property="nxCuaUserName" column="nx_cua_user_name"/>
+	</resultMap>
+
+	<resultMap id="userWithAddress" type="NxCustomerUserEntity">
+		<id property="nxCuUserId" column="nx_CU_user_id"/>
+		<result property="nxCuCommerceId" column="nx_CU_commerce_id"/>
+		<result property="nxCuWxNickName" column="nx_CU_wx_nick_name"/>
+		<result property="nxCuOrderTimes" column="nx_CU_order_times"/>
+		<result property="nxCuOrderAmount" column="nx_CU_order_amount"/>
+		<result property="nxCuWxGender" column="nx_CU_wx_gender"/>
+		<result property="nxCuWxPhoneNumber" column="nx_CU_wx_phone_number"/>
+		<result property="nxCuCommunityId" column="nx_CU_community_id"/>
+		<result property="nxCuWxOpenId" column="nx_CU_wx_open_id"/>
+		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatar_url"/>
+		<result property="nxCuCustomerId" column="nx_CU_customer_id"/>
+		<association property="mainAddress" resultMap="address"/>
+	</resultMap>
+
+    <select id="queryUserWithAddress" resultMap="userWithAddress">
+		select * from nx_customer_user as ncu
+		left join nx_customer_user_address as ncua  on ncua.nx_cua_customer_user_id = ncu.nx_CU_user_id
+		and ncua.nx_cua_is_selected = 1 where nx_CU_user_id = #{gbDepartmentUserId}
+	</select>
+    <select id="queryUserByOpenIdAndCommerceId" resultType="com.nongxinle.entity.NxCustomerUserEntity">
+		select * from nx_customer_user as ncu
+		<where>
+			<if test="openId != null">
+				and ncu.nx_CU_wx_open_id = #{openId}
+			</if>
+			<if test="commerceId != null">
+				and ncu.nx_CU_commerce_id = #{commerceId}
+			</if>
+		</where>
+	</select>
 
 
-	<insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserEntity" useGeneratedKeys="true" keyProperty="nxCuUserId">
+    <insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserEntity" useGeneratedKeys="true" keyProperty="nxCuUserId">
 		insert into nx_customer_user
 		(
 			`nx_CU_user_id`, 
@@ -60,7 +211,9 @@
 			`nx_CU_wx_phone_number`,
 		 	`nx_CU_join_date`,
 		 	`nx_CU_order_amount`,
-		 	`nx_CU_order_times`
+		 	`nx_CU_order_times`,
+		 	`nx_CU_community_id`,
+		 	`nx_CU_commerce_id`
 		 	)
 		values
 		(
@@ -73,7 +226,9 @@
 			#{nxCuWxPhoneNumber},
 		 	#{nxCuJoinDate},
 		 	#{nxCuOrderAmount},
-		 	#{nxCuOrderTimes}
+		 	#{nxCuOrderTimes},
+		 	#{nxCuCommunityId},
+		 	#{nxCuCommerceId}
 		)
 	</insert>
 	 
@@ -88,6 +243,8 @@
 			<if test="nxCuJoinDate != null">`nx_CU_join_date` = #{nxCuJoinDate}, </if>
 			<if test="nxCuOrderAmount != null">`nx_CU_order_amount` = #{nxCuOrderAmount}, </if>
 			<if test="nxCuOrderTimes != null">`nx_CU_order_times` = #{nxCuOrderTimes}, </if>
+			<if test="nxCuCommunityId != null">`nx_CU_community_id` = #{nxCuCommunityId}, </if>
+			<if test="nxCuCommerceId != null">`nx_CU_commerce_id` = #{nxCuCommerceId}, </if>
 			<if test="nxCuWxPhoneNumber != null">`nx_CU_wx_phone_number` = #{nxCuWxPhoneNumber}</if>
 		</set>
 		where nx_CU_user_id = #{nxCuUserId}

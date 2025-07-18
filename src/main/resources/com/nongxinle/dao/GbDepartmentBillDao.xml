@@ -35,6 +35,7 @@
     </resultMap>
     <resultMap id="issueDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
@@ -50,8 +51,14 @@
     </resultMap>
 
 
-    <resultMap id="disGoods" type="GbDistributerGoodsEntity">
+    <resultMap id="disGoods" type="com.nongxinle.entity.GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+		<result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+		<result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+		<result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+		<result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
 		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
 		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
@@ -65,6 +72,7 @@
         <result property="gbDgGoodsPlace" column="gb_dg_goods_place"/>
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -85,9 +93,11 @@
     </resultMap>
 
 
-    <resultMap id="depStock" type="GbDepartmentGoodsStockEntity">
+    <resultMap id="depStock" type="com.nongxinle.entity.GbDepartmentGoodsStockEntity">
 
         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
+        <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
         <result property="gbDgsNxDistributerId" column="gb_dgs_nx_distributer_id"/>
         <result property="gbDgsNxDistributerId" column="gb_dgs_nx_distributer_id"/>
@@ -102,6 +112,8 @@
         <result property="gbDgsRestWeightShowStandard" column="gb_dgs_rest_weight_show_standard"/>
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
+		<result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsPrice" column="gb_dgs_price"/>
         <result property="gbDgsWeight" column="gb_dgs_weight"/>
@@ -111,7 +123,7 @@
         <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
-        <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_department_father_id"/>
+        <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsStatus" column="gb_dgs_status"/>
         <result property="gbDgsReceiveUserId" column="gb_dgs_receive_user_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
@@ -119,6 +131,8 @@
         <result property="gbDgsDate" column="gb_dgs_date"/>
         <result property="gbDgsWarnFullTime" column="gb_dgs_warn_full_time"/>
         <result property="gbDgsWasteFullTime" column="gb_dgs_waste_full_time"/>
+        <result property="gbDgsWasteTimeQuantumName" column="gb_dgs_waste_time_quantumName"/>
+        <result property="gbDgsWarnTimeQuantumName" column="gb_dgs_warn_time_quantum_name"/>
         <result property="gbDgsFullTime" column="gb_dgs_full_time"/>
         <result property="gbDgsDoWasteFullTime" column="gb_dgs_do_waste_full_time"/>
         <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
@@ -128,12 +142,74 @@
         <result property="gbDgsWarnTimeQuantumName" column="gb_dgs_warn_time_quantum_name"/>
         <result property="gbDgsWasteTimeQuantumName" column="gb_dgs_waste_time_quantum_name"/>
         <result property="gbDgsGbPurGoodsId" column="gb_dgs_gb_pur_goods_id"/>
-        <result property="gbDgsGbPurGoodsId" column="from_gb_dgs_gb_pur_goods_id"/>
-        <result property="gbDgsGbPriceGoodsId" column="from_gb_dgs_gb_price_goods_id"/>
+        <result property="gbDgsGbPurGoodsId" column="gb_dgs_gb_pur_goods_id"/>
+        <result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_goods_id"/>
     </resultMap>
 
-    <resultMap id="applys" type="GbDepartmentOrdersEntity">
+
+    <resultMap id="nxOrder" type="NxDepartmentOrdersEntity">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoNxGoodsId" column="nx_DO_nx_goods_id"/>
+        <result property="nxDoOrderUserId" column="nx_DO_order_user_id"/>
+        <result property="nxDoApplyDate" column="nx_DO_apply_date"/>
+        <result property="nxDoApplyOnlyTime" column="nx_DO_apply_only_time"/>
+        <result property="nxDoApplyFullTime" column="nx_DO_apply_full_time"/>
+        <result property="nxDoArriveOnlyDate" column="nx_DO_arrive_only_date"/>
+        <result property="nxDoArriveDate" column="nx_DO_arrive_date"/>
+        <result property="nxDoArriveWhatDay" column="nx_DO_arrive_what_day"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+        <result property="nxDoDisGoodsFatherId" column="nx_DO_dis_goods_father_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoDepDisGoodsPrice" column="nx_DO_dep_dis_goods_price"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoOperationTime" column="nx_DO_operation_time"/>
+        <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="nx_DO_weight_id"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+    </resultMap>
+
+    <resultMap id="applys" type="com.nongxinle.entity.GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoBillId" column="gb_DO_bill_id"/>
@@ -184,10 +260,12 @@
         <result property="gbDoWeightTotalId" column="gb_DO_weight_total_id"/>
         <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
+        <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
         <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxDepartmentOrdersEntity" resultMap="nxOrder"/>
         <collection property="goodsStockEntityList" resultMap="depStock"/>
     </resultMap>
-    <resultMap id="issueUser" type="GbDepartmentUserEntity">
+    <resultMap id="issueUser" type="com.nongxinle.entity.GbDepartmentUserEntity">
         <id property="gbDepartmentUserId" column="gb_department_user_id"/>
 		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
         <result property="gbDuCustomerService" column="gb_DU_customer_service"/>
@@ -204,8 +282,14 @@
         <result property="gbDuPrintBillDeviceId" column="gb_DU_print_bill_device_id"/>
     </resultMap>
 
-    <resultMap id="billDetail" type="GbDepartmentBillEntity">
+    <resultMap id="billDetail" type="com.nongxinle.entity.GbDepartmentBillEntity">
         <id property="gbDepartmentBillId" column="gb_department_bill_id"/>
+        <result property="gbDbPayTotal" column="gb_DB_pay_total"/>
+        <result property="gbDbUserCouponId" column="gb_DB_user_coupon_id"/>
+        <result property="gbDbUserCouponTotal" column="gb_DB_user_coupon_total"/>
+        <result property="gbDbReturnOrderId" column="gb_DB_return_order_id"/>
+        <result property="gbDbReturnTotal" column="gb_DB_return_total"/>
+        <result property="gbDbSetAutoGoods" column="gb_DB_set_auto_goods"/>
         <result property="gbDbSellingTotal" column="gb_DB_selling_total"/>
         <result property="gbDbDate" column="gb_DB_date"/>
         <result property="gbDbDepId" column="gb_DB_dep_id"/>
@@ -227,8 +311,17 @@
         <collection property="gbDepartmentOrdersEntities" resultMap="applys"/>
     </resultMap>
 
-    <resultMap id="billDetailWithApplys" type="GbDepartmentBillEntity">
+    <resultMap id="billDetailWithApplys" type="com.nongxinle.entity.GbDepartmentBillEntity">
         <id property="gbDepartmentBillId" column="gb_department_bill_id"/>
+        <result property="gbDbDepId" column="gb_DB_dep_id"/>
+        <result property="gbDbDepFatherId" column="gb_DB_dep_father_id"/>
+        <result property="gbDbPayTotal" column="gb_DB_pay_total"/>
+        <result property="gbDbDay" column="gb_DB_day"/>
+        <result property="gbDbUserCouponId" column="gb_DB_user_coupon_id"/>
+        <result property="gbDbUserCouponTotal" column="gb_DB_user_coupon_total"/>
+        <result property="gbDbReturnOrderId" column="gb_DB_return_order_id"/>
+        <result property="gbDbReturnTotal" column="gb_DB_return_total"/>
+        <result property="gbDbSetAutoGoods" column="gb_DB_set_auto_goods"/>
         <result property="gbDbSellingTotal" column="gb_DB_selling_total"/>
         <result property="gbDbDate" column="gb_DB_date"/>
         <result property="gbDbDepId" column="gb_DB_dep_id"/>
@@ -246,6 +339,7 @@
         <association property="gbDepartmentEntity" resultMap="fatherDep"/>
         <association property="issueDepartmentEntity" resultMap="issueDep"/>
         <association property="issueUserEntity" resultMap="issueUser"/>
+
 <!--        <collection property="gbDepartmentOrdersEntities" resultMap="applys"/>-->
     </resultMap>
 
@@ -296,6 +390,9 @@
             <if test="depId != null">
                 and gb_DB_dep_id = #{depId}
             </if>
+            <if test="notEqualDepId != null">
+                and gb_DB_dep_id != #{notEqualDepId}
+            </if>
             <if test="issueDepId != null">
                 and gb_DB_issue_dep_id = #{issueDepId}
             </if>
@@ -337,7 +434,7 @@
             </if>
 
             <if test="payId != null ">
-                and gb_DB_gb_supplier_payment_id = #{payId}
+                and gb.gb_DB_gb_supplier_payment_id = #{payId}
             </if>
             <if test="settleId != null and settleId == -1">
                 and gb_DB_dep_settle_id is null
@@ -348,6 +445,20 @@
                     #{orderType}
                 </foreach>
             </if>
+
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
         </where>
         order by gb_DB_time DESC
     </select>
@@ -398,6 +509,12 @@
                     #{orderType}
                 </foreach>
             </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </select>
     <select id="queryBillsCountByParamsGb" resultType="java.lang.Integer">
@@ -439,14 +556,23 @@
                     #{orderType}
                 </foreach>
             </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
 
         </where>
     </select>
     <select id="queryGbDepBillsSubTotal" resultType="java.lang.Double">
-        select sum(gb_DB_total) from gb_department_bill
+        select sum(gb_DB_pay_total) from gb_department_bill
         <where>
             <if test="depId != null">
                 and gb_DB_dep_id = #{depId}
+            </if>
+            <if test="notEqualDepId != null">
+                and gb_DB_dep_id != #{notEqualDepId}
             </if>
             <if test="issueDepId != null">
                 and gb_DB_issue_dep_id = #{issueDepId}
@@ -494,6 +620,12 @@
                     #{orderType}
                 </foreach>
             </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
             <if test="settleId != null and settleId == -1">
                 and gb_DB_dep_settle_id is null
             </if>
@@ -505,7 +637,9 @@
     <select id="queryDepartmentBillList" resultMap="billDetail">
         select * from gb_department_bill as gdb
         left join gb_department_orders as gdo on gdo.gb_DO_bill_id = gdb.gb_department_bill_id
+         left join nx_department_order_history as ndo on ndo.nx_department_orders_id = gdo.gb_DO_nx_department_order_id
         left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdo.gb_DO_dis_goods_id
+
         <where>
             <if test="userId != null">
                 and gb_DB_issue_user_id = #{userId}
@@ -524,7 +658,7 @@
                 and gb_DB_dis_id = #{disId}
             </if>
             <if test="nxDisId != null">
-                and gb_DB_issue_nx_dis_id = #{nxDisId}
+                and gdb.gb_DB_issue_nx_dis_id = #{nxDisId}
             </if>
             <if test="status != null">
                 and gb_DB_status &lt; #{status}
@@ -533,7 +667,7 @@
                 and gb_DB_date = #{date}
             </if>
             <if test="willDate != null ">
-                and gb_DB_will_pay_date = #{willDate}
+                and gdb.gb_DB_will_pay_date = #{willDate}
             </if>
             <if test="startDate != null ">
                 and gb_DB_date &gt;= #{startDate}
@@ -557,6 +691,12 @@
                     #{orderType}
                 </foreach>
             </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
             <if test="month != null ">
                 and gb_DB_month = #{month}
             </if>
@@ -566,7 +706,7 @@
         </where>
     </select>
     <select id="queryGbDepBillsSellingSubTotal" resultType="java.lang.Double">
-        select sum(gb_DB_selling_total) from gb_department_bill
+        select sum(gdb.gb_DB_selling_total) from gb_department_bill as gdb
         <where>
             <if test="depId != null">
                 and gb_DB_dep_id = #{depId}
@@ -613,6 +753,12 @@
                     #{orderType}
                 </foreach>
             </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
             <if test="settleId != null and settleId == -1">
                 and gb_DB_dep_settle_id is null
             </if>
@@ -627,6 +773,9 @@
             </if>
             <if test="issueDepId != null">
                 and gb_DB_issue_dep_id = #{issueDepId}
+            </if>
+            <if test="notEqualDepId != null">
+                and gb_DB_dep_id != #{notEqualDepId}
             </if>
             <if test="issueType != null">
                 and gb_DB_issue_order_type = #{issueType}
@@ -672,12 +821,23 @@
                 <foreach item="orderType" collection="orderTypes" open="(" separator="," close=")">
                     #{orderType}
                 </foreach>
+                </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
             </if>
 
         </where>
     </select>
-    <resultMap id="applysWithStock" type="GbDepartmentOrdersEntity">
+    <resultMap id="applysWithStock" type="com.nongxinle.entity.GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoApplyDate" column="gb_DO_apply_date"/>
@@ -710,8 +870,14 @@
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
         <collection property="goodsStockEntityList" resultMap="depStock"/>
     </resultMap>
-    <resultMap id="billSearchGoods" type="GbDepartmentBillEntity">
+    <resultMap id="billSearchGoods" type="com.nongxinle.entity.GbDepartmentBillEntity">
         <id property="gbDepartmentBillId" column="gb_department_bill_id"/>
+        <result property="gbDbPayTotal" column="gb_DB_pay_total"/>
+        <result property="gbDbUserCouponId" column="gb_DB_user_coupon_id"/>
+        <result property="gbDbUserCouponTotal" column="gb_DB_user_coupon_total"/>
+        <result property="gbDbReturnOrderId" column="gb_DB_return_order_id"/>
+        <result property="gbDbReturnTotal" column="gb_DB_return_total"/>
+        <result property="gbDbSetAutoGoods" column="gb_DB_set_auto_goods"/>
         <result property="gbDbSellingTotal" column="gb_DB_selling_total"/>
         <result property="gbDbDate" column="gb_DB_date"/>
         <result property="gbDbDepId" column="gb_DB_dep_id"/>
@@ -739,6 +905,12 @@
         left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gddg.gb_DDG_dis_goods_id
         left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_department_order_id = gdo.gb_department_orders_id
         <where>
+            <if test="depId != null">
+                and gdb.gb_DB_dep_id = #{depId}
+            </if>
+            <if test="equalStatus != null">
+                and gdb.gb_DB_status = #{equalStatus}
+            </if>
             <if test="depGoodsId != null">
                 and gdo.gb_DO_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -758,18 +930,92 @@
                     #{orderType}
                 </foreach>
             </if>
+            <if test="depFatherIds != null">
+                and gb_DB_dep_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
 
     </select>
     <select id="queryDepartBillByTradeNo" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
-        select * from gb_department_bill where gb_DB_wx_out_trade_no = #{ordersSn}
+        select * from gb_department_bill as gdb where gdb.gb_DB_wx_out_trade_no = #{ordersSn}
     </select>
 
-<!--    <select id="queryDepartBillListByTradeNo" resultType="com.nongxinle.entity.GbDepartmentBillEntity">-->
-<!--        select * from gb_department_bill where  gb_DB_wx_out_trade_no = #{ordersSn}-->
-<!--    </select>-->
+    <select id="queryDepartBillListByTradeNo" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
+        select * from gb_department_bill as gdb where  gdb.gb_DB_wx_out_trade_no = #{ordersSn}
+    </select>
+
+
+
+    <select id="queryBillFromWhichDepartment" resultMap="billDetail">
+        select *,
+        toDep.gb_department_id   'gb_department_id',
+        toDep.gb_department_name 'gb_department_name',
+        dep.gb_department_id     'f_gb_department_id',
+        dep.gb_department_name   'f_gb_department_name',
+        dep.gb_department_dis_id 'f_gb_department_dis_id'
+
+        from gb_department_bill as gdb
+        left join gb_department_orders as dor on dor.gb_DO_bill_id = gdb.gb_department_bill_id
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
+        left join gb_department as toDep on toDep.gb_department_id = gdb.gb_DB_issue_dep_id
+        left join gb_department as dep on dep.gb_department_id = gdb.gb_DB_dep_id
+        left join gb_department_user as issueUser on issueUser.gb_department_user_id = gdb.gb_DB_issue_user_id
+        <where>
+            <if test="depId != null">
+                and gdb.gb_DB_dep_id = #{depId}
+            </if>
+            <if test="equalStatus != null">
+                and gdb.gb_DB_status = #{equalStatus}
+            </if>
+
+            <if test="orderType != null ">
+                and gb_DB_issue_order_type = #{orderType}
+            </if>
+
+        </where>
+
+    </select>
     <select id="queryDepartBillByTsxTradeNo" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
-        select * from gb_department_bill where gb_DB_trade_no = #{nxDbTradeNo}
+        select * from nongxinle.gb_department_bill where gb_DB_trade_no = #{nxDbTradeNo}
+    </select>
+    <resultMap id="nxDis" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerType" column="nx_distributer_type"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <association property="gbDepartmentBillEntities" resultMap="billDetailWithApplys"/>
+    </resultMap>
+    <select id="queryNxDistributer" resultMap="nxDis">
+        select * ,
+        dep.gb_department_id     'f_gb_department_id',
+        dep.gb_department_name   'f_gb_department_name',
+        dep.gb_department_dis_id 'f_gb_department_dis_id'from gb_department_bill as gdb
+        left join nx_distributer as nd on nd.nx_distributer_id = gdb.gb_DB_issue_nx_dis_id
+         left join gb_department as gd  on gd.gb_department_id = gdb.gb_DB_dep_id
+         left join gb_department dep on dep.gb_department_id = gdb.gb_DB_dep_father_id
+          <where>
+              <if test="disId != null">
+                  and gdb.gb_DB_dis_id = #{disId}
+              </if>
+              <if test="equalStatus != null">
+                  and gdb.gb_DB_status = #{equalStatus}
+              </if>
+              <if test="dayStatus != null">
+                  and gdb.gb_DB_status &gt; #{dayStatus}
+              </if>
+
+              <if test="startDate != null">
+                  and gdb.gb_DB_date &gt;= #{startDate}
+              </if>
+
+              <if test="stopDate != null">
+                  and gdb.gb_DB_date &lt;= #{stopDate}
+              </if>
+          </where>
     </select>
 
 
@@ -779,6 +1025,7 @@
         (`gb_department_bill_id`,
          `gb_DB_dis_id`,
          `gb_DB_dep_id`,
+         `gb_DB_dep_father_id`,
          `gb_DB_total`,
          `gb_DB_status`,
          `gb_DB_time`,
@@ -786,6 +1033,7 @@
          `gb_DB_date`,
          `gb_DB_will_pay_date`,
          `gb_DB_month`,
+         `gb_DB_year`,
          `gb_DB_week`,
          `gb_DB_trade_no`,
          `gb_DB_print_times`,
@@ -803,11 +1051,18 @@
          `gb_DB_issue_nx_dis_id`,
          `gb_DB_selling_total`,
          `gb_DB_gb_supplier_payment_id`,
-         `gb_DB_wx_out_trade_no`
+         `gb_DB_wx_out_trade_no`,
+         `gb_DB_set_auto_goods`,
+         `gb_DB_pay_total`,
+         `gb_DB_user_coupon_id`,
+         `gb_DB_user_coupon_total`,
+         `gb_DB_return_order_total`,
+         `gb_DB_return_order_id`
          )
         values (#{gbDepartmentBillId},
                 #{gbDbDisId},
                 #{gbDbDepId},
+                #{gbDbDepFatherId},
                 #{gbDbTotal},
                 #{gbDbStatus},
                 #{gbDbTime},
@@ -815,6 +1070,7 @@
                 #{gbDbDate},
                 #{gbDbWillPayDate},
                 #{gbDbMonth},
+                #{gbDbYear},
                 #{gbDbWeek},
                 #{gbDbTradeNo},
                 #{gbDbPrintTimes},
@@ -832,7 +1088,13 @@
                 #{gbDbIssueNxDisId},
                 #{gbDbSellingTotal},
                 #{gbDbGbSupplierPaymentId},
-                #{gbDbWxOutTradeNo}
+                #{gbDbWxOutTradeNo},
+                #{gbDbSetAutoGoods},
+                #{gbDbPayTotal},
+                #{gbDbUserCouponId},
+                #{gbDbUserCouponTotal},
+                #{gbDbReturnTotal},
+                #{gbDbReturnOrderId}
                 )
     </insert>
 
@@ -841,6 +1103,7 @@
         <set>
             <if test="gbDbDisId != null">`gb_DB_dis_id` = #{gbDbDisId},</if>
             <if test="gbDbDepId != null">`gb_DB_dep_id` = #{gbDbDepId},</if>
+            <if test="gbDbDepFatherId != null">`gb_DB_dep_father_id` = #{gbDbDepFatherId},</if>
             <if test="gbDbTotal != null">`gb_DB_total` = #{gbDbTotal},</if>
             <if test="gbDbStatus != null">`gb_DB_status` = #{gbDbStatus},</if>
             <if test="gbDbTime != null">`gb_DB_time` = #{gbDbTime},</if>
@@ -848,6 +1111,7 @@
             <if test="gbDbDate != null">`gb_DB_date` = #{gbDbDate},</if>
             <if test="gbDbWillPayDate != null">`gb_DB_will_pay_date` = #{gbDbWillPayDate},</if>
             <if test="gbDbMonth != null">`gb_DB_month` = #{gbDbMonth},</if>
+            <if test="gbDbYear != null">`gb_DB_year` = #{gbDbYear},</if>
             <if test="gbDbWeek != null">`gb_DB_week` = #{gbDbWeek},</if>
             <if test="gbDbTradeNo != null">`gb_DB_trade_no` = #{gbDbTradeNo},</if>
             <if test="gbDbPrintTimes != null">`gb_DB_print_times` = #{gbDbPrintTimes},</if>
@@ -865,6 +1129,12 @@
             <if test="gbDbSellingTotal != null">`gb_DB_selling_total` = #{gbDbSellingTotal},</if>
             <if test="gbDbGbSupplierPaymentId != null">`gb_DB_gb_supplier_payment_id` = #{gbDbGbSupplierPaymentId},</if>
             <if test="gbDbWxOutTradeNo != null">`gb_DB_wx_out_trade_no` = #{gbDbWxOutTradeNo},</if>
+            <if test="gbDbSetAutoGoods != null">`gb_DB_set_auto_goods` = #{gbDbSetAutoGoods},</if>
+            <if test="gbDbPayTotal != null">`gb_DB_pay_total` = #{gbDbPayTotal},</if>
+            <if test="gbDbUserCouponId != null">`gb_DB_user_coupon_id` = #{gbDbUserCouponId},</if>
+            <if test="gbDbUserCouponTotal != null">`gb_DB_user_coupon_total` = #{gbDbUserCouponTotal},</if>
+            <if test="gbDbReturnTotal != null">`gb_DB_return_order_total` = #{gbDbReturnTotal},</if>
+            <if test="gbDbReturnOrderId != null">`gb_DB_return_order_id` = #{gbDbReturnOrderId},</if>
             <if test="gbDbDay != null">`gb_DB_day` = #{gbDbDay}</if>
         </set>
         where gb_department_bill_id = #{gbDepartmentBillId}

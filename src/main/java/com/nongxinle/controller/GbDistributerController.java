@@ -5,6 +5,7 @@ package com.nongxinle.controller;
  * @date 06-21 20:42
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -18,11 +19,13 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeAppSupplier;
+import static com.nongxinle.utils.PinYin4jUtils.getHeadStringByString;
 
 
 @RestController
@@ -48,6 +51,118 @@ public class GbDistributerController {
     private NxDistributerGbDistributerService nxDisGbDisService;
     @Autowired
     private GbDistributerFatherGoodsService dgfService;
+    @Autowired
+    private GbDepartmentUserService gbDepartmentUserService;
+
+
+
+
+
+
+
+    @RequestMapping(value = "/XqLi4ZvFRv.txt")
+    @ResponseBody
+    public String nxDisInvite( ) {
+        return "9976e22e84530fdfba7dfe6907737027";
+    }
+
+
+    @RequestMapping(value = "/getDisInfo/{id}")
+    @ResponseBody
+    public R getDisInfo(@PathVariable Integer id) {
+        return R.ok().put("data", gbDistributerService.queryDistributerInfo(id));
+    }
+
+
+
+    @RequestMapping(value = "/updateDisContent", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateDisContent (@RequestBody GbDistributerEntity dis) {
+        gbDistributerService.update(dis);
+        Integer distributerId = dis.getGbDistributerId();
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", distributerId);
+        System.out.println("dpepepepe" + map);
+        List<GbDepartmentEntity> gbDepartmentEntityList = gbDepartmentService.queryDepByDepType(map);
+        if(gbDepartmentEntityList.size() > 0){
+            for(GbDepartmentEntity gbDepartmentEntity: gbDepartmentEntityList){
+                Integer gbDepartmentType = gbDepartmentEntity.getGbDepartmentType();
+//                if(gbDepartmentType.equals(getGbDepartmentTypeMendian())){
+//                    String gbDepartmentName = dis.getGbDistributerName();
+//                    gbDepartmentEntity.setGbDepartmentName(dis.getGbDistributerName());
+//                    gbDepartmentEntity.setGbDepartmentAttrName(dis.getGbDistributerName());
+//                    String headPinyin = getHeadStringByString(gbDepartmentName, false, null);
+//                    gbDepartmentEntity.setGbDepartmentNamePy(headPinyin);
+//                    gbDepartmentService.update(gbDepartmentEntity);
+//                }
+                if(gbDepartmentType.equals(getGbDepartmentTypeJicai())){
+                    String gbDepartmentName = dis.getGbDistributerName()+"集采部";
+                    gbDepartmentEntity.setGbDepartmentName(dis.getGbDistributerName());
+                    gbDepartmentEntity.setGbDepartmentAttrName(dis.getGbDistributerName());
+                    String headPinyin = getHeadStringByString(gbDepartmentName, false, null);
+                    gbDepartmentEntity.setGbDepartmentNamePy(headPinyin);
+                    gbDepartmentService.update(gbDepartmentEntity);
+                }if(gbDepartmentType.equals(getGbDepartmentTypeAppSupplier())){
+                    String gbDepartmentName = dis.getGbDistributerName()+"配送部";
+                    gbDepartmentEntity.setGbDepartmentName(dis.getGbDistributerName());
+                    gbDepartmentEntity.setGbDepartmentAttrName(dis.getGbDistributerName());
+                    String headPinyin = getHeadStringByString(gbDepartmentName, false, null);
+                    gbDepartmentEntity.setGbDepartmentNamePy(headPinyin);
+                    gbDepartmentService.update(gbDepartmentEntity);
+                }
+            }
+        }
+
+        return R.ok();
+    }
+
+    @RequestMapping(value = "/updateGbDisAttrName", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateGbDisAttrName (@RequestBody GbDistributerEntity dis) {
+        gbDistributerService.update(dis);
+        Integer distributerId = dis.getGbDistributerId();
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", distributerId);
+        map.put("type", getGbDepartmentTypeMendian());
+        System.out.println("dpepepepe" + map);
+        List<GbDepartmentEntity> gbDepartmentEntityList = gbDepartmentService.queryDepWithAdminUserByParams(map);
+        if(gbDepartmentEntityList.size() > 0){
+            for(GbDepartmentEntity gbDepartmentEntity: gbDepartmentEntityList){
+                    gbDepartmentEntity.setGbDepartmentAttrName(dis.getGbDistributerPickName());
+                    gbDepartmentService.update(gbDepartmentEntity);
+            }
+        }
+
+        return R.ok().put("data",dis);
+    }
+
+
+    @RequestMapping(value = "/updateGbDistributerWithFile", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateGbDistributerWithFile(@RequestParam("file") MultipartFile file,
+                                        @RequestParam("disId") Integer disId,
+                                        HttpSession session) {
+        //1,上传图片
+        String newUploadName = "userImage";
+        String realPath = UploadFile.upload(session, newUploadName, file);
+
+        String filename = file.getOriginalFilename();
+        String filePath = newUploadName + "/" + filename;
+
+        GbDistributerEntity userEntity = gbDistributerService.queryObject(disId);
+        String oldPath = userEntity.getGbDistributerImg();
+        if (oldPath != null && !oldPath.trim().isEmpty()) {
+            String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+            File file1 = new File(oldAbsolutePath);
+            if (file1.exists()) {
+                file1.delete();
+            }
+        }
+
+        userEntity.setGbDistributerImg(filePath);
+        gbDistributerService.update(userEntity);
+        return R.ok().put("data",userEntity);
+    }
 
 
 
@@ -124,7 +239,6 @@ public class GbDistributerController {
 
                     dgfService.save(grand);
 
-
                 }
             }
             gbDistributerModuleService.update(gbDistributerModuleEntity);
@@ -134,6 +248,25 @@ public class GbDistributerController {
         return R.ok();
     }
 
+    @RequestMapping(value = "/changePrintName", method = RequestMethod.POST)
+    @ResponseBody
+    public R changePrintName (@RequestBody GbDistributerEntity distributer  ) {
+
+        gbDistributerService.update(distributer);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", distributer.getGbDistributerId());
+        map.put("type", 1);
+        List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(map);
+
+        if(departmentEntities.size() > 0){
+            for(GbDepartmentEntity departmentEntity: departmentEntities){
+                departmentEntity.setGbDepartmentPrintName(distributer.getGbDistributerPrintName());
+                gbDepartmentService.update(departmentEntity);
+            }
+        }
+        return R.ok().put("data", distributer);
+    }
 
     @RequestMapping(value = "/getDate")
     @ResponseBody
@@ -270,36 +403,36 @@ public class GbDistributerController {
         return R.ok().put("data", gbDistributerEntity);
     }
 
-    @RequestMapping(value = "/disManRegisterNewGb", method = RequestMethod.POST)
-    @ResponseBody
-    public R disManRegisterNewGb(@RequestBody GbDistributerEntity gbDistributerEntity) {
-//wxApp
-        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-
-        GbDistributerUserEntity distributerUserEntity = gbDistributerEntity.getGbDistributerUserEntity();
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiansuocaigouguanliduanAppId() +
-                "&secret=" + myAPPIDConfig.getLiansuocaigouguanliduanScreat() + "&js_code=" + distributerUserEntity.getGbDiuCode() + "&grant_type=authorization_code";
-        // 发送请求，返回Json字符串
-        String str = WeChatUtil.httpRequest(url, "GET", null);
-        // 转成Json对象 获取openid
-        JSONObject jsonObject = JSONObject.parseObject(str);
-
-        // 我们需要的openid，在一个小程序中，openid是唯一的
-        String openid = jsonObject.get("openid").toString();
-        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerUserService.queryDisUserByOpenIdGb(openid);
-
-        if (gbDistributerUserEntity == null) {
-            gbDistributerEntity.getGbDistributerUserEntity().setGbDiuWxOpenId(openid);
-            Integer resUserId = gbDistributerService.saveNewDistributerGb(gbDistributerEntity);
-            if (resUserId != null) {
-                Map<String, Object> stringObjectMap = gbDistributerUserService.queryDisAndUserInfo(resUserId);
-                return R.ok().put("data", stringObjectMap);
-            }
-            return R.error(-1, "注册失败");
-        } else {
-            return R.error(-1, "此微信号已注册过采购员");
-        }
-    }
+//    @RequestMapping(value = "/disManRegisterNewGb", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R disManRegisterNewGb(@RequestBody GbDistributerEntity gbDistributerEntity) {
+////wxApp
+//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+//
+//        GbDistributerUserEntity distributerUserEntity = gbDistributerEntity.getGbDistributerUserEntity();
+//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiansuocaigouguanliduanAppId() +
+//                "&secret=" + myAPPIDConfig.getLiansuocaigouguanliduanScreat() + "&js_code=" + distributerUserEntity.getGbDiuCode() + "&grant_type=authorization_code";
+//        // 发送请求，返回Json字符串
+//        String str = WeChatUtil.httpRequest(url, "GET", null);
+//        // 转成Json对象 获取openid
+//        JSONObject jsonObject = JSONObject.parseObject(str);
+//
+//        // 我们需要的openid，在一个小程序中，openid是唯一的
+//        String openid = jsonObject.get("openid").toString();
+//        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerUserService.queryDisUserByOpenIdGb(openid);
+//
+//        if (gbDistributerUserEntity == null) {
+//            gbDistributerEntity.getGbDistributerUserEntity().setGbDiuWxOpenId(openid);
+//            Integer resUserId = gbDistributerService.saveNewDistributerGb(gbDistributerEntity);
+//            if (resUserId != null) {
+//                Map<String, Object> stringObjectMap = gbDistributerUserService.queryDisAndUserInfo(resUserId);
+//                return R.ok().put("data", stringObjectMap);
+//            }
+//            return R.error(-1, "注册失败");
+//        } else {
+//            return R.error(-1, "此微信号已注册过采购员");
+//        }
+//    }
 
     @RequestMapping(value = "/7dlJV7E0V9.txt")
     @ResponseBody
@@ -307,37 +440,37 @@ public class GbDistributerController {
         return "76318ecf60874e0f7d2c2642938343d0";
     }
 
-
-    @RequestMapping(value = "/disManRegisterNewGbWithNxDis", method = RequestMethod.POST)
-    @ResponseBody
-    public R disManRegisterNewGbWithNxDis(@RequestBody GbDistributerEntity gbDistributerEntity) {
-//wxApp
-        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-
-        GbDistributerUserEntity distributerUserEntity = gbDistributerEntity.getGbDistributerUserEntity();
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiansuocaigouguanliduanAppId() +
-                "&secret=" + myAPPIDConfig.getLiansuocaigouguanliduanScreat() + "&js_code=" + distributerUserEntity.getGbDiuCode() + "&grant_type=authorization_code";
-        // 发送请求，返回Json字符串
-        String str = WeChatUtil.httpRequest(url, "GET", null);
-        // 转成Json对象 获取openid
-        JSONObject jsonObject = JSONObject.parseObject(str);
-
-        // 我们需要的openid，在一个小程序中，openid是唯一的
-        String openid = jsonObject.get("openid").toString();
-        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerUserService.queryDisUserByOpenIdGb(openid);
-
-        if (gbDistributerUserEntity == null) {
-            gbDistributerEntity.getGbDistributerUserEntity().setGbDiuWxOpenId(openid);
-            Integer resUserId = gbDistributerService.saveNewDistributerGb(gbDistributerEntity);
-            if (resUserId != null) {
-                Map<String, Object> stringObjectMap = gbDistributerUserService.queryDisAndUserInfo(resUserId);
-                return R.ok().put("data", stringObjectMap);
-            }
-            return R.error(-1, "注册失败");
-        } else {
-            return R.error(-1, "此微信号已注册过采购员");
-        }
-    }
+//
+//    @RequestMapping(value = "/disManRegisterNewGbWithNxDis", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R disManRegisterNewGbWithNxDis(@RequestBody GbDistributerEntity gbDistributerEntity) {
+////wxApp
+//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+//
+//        GbDistributerUserEntity distributerUserEntity = gbDistributerEntity.getGbDistributerUserEntity();
+//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiansuocaigouguanliduanAppId() +
+//                "&secret=" + myAPPIDConfig.getLiansuocaigouguanliduanScreat() + "&js_code=" + distributerUserEntity.getGbDiuCode() + "&grant_type=authorization_code";
+//        // 发送请求，返回Json字符串
+//        String str = WeChatUtil.httpRequest(url, "GET", null);
+//        // 转成Json对象 获取openid
+//        JSONObject jsonObject = JSONObject.parseObject(str);
+//
+//        // 我们需要的openid，在一个小程序中，openid是唯一的
+//        String openid = jsonObject.get("openid").toString();
+//        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerUserService.queryDisUserByOpenIdGb(openid);
+//
+//        if (gbDistributerUserEntity == null) {
+//            gbDistributerEntity.getGbDistributerUserEntity().setGbDiuWxOpenId(openid);
+//            Integer resUserId = gbDistributerService.saveNewDistributerGb(gbDistributerEntity);
+//            if (resUserId != null) {
+//                Map<String, Object> stringObjectMap = gbDistributerUserService.queryDisAndUserInfo(resUserId);
+//                return R.ok().put("data", stringObjectMap);
+//            }
+//            return R.error(-1, "注册失败");
+//        } else {
+//            return R.error(-1, "此微信号已注册过采购员");
+//        }
+//    }
 
     @RequestMapping(value = "/disManRegisterNewGbSxWork", method = RequestMethod.POST)
     @ResponseBody
@@ -387,21 +520,64 @@ public class GbDistributerController {
         }
     }
 
-    @RequestMapping(value = "/disManRegisterNewGbSxWithFile",  produces = "text/html;charset=UTF-8")
+//    @RequestMapping(value = "/disManRegisterNewGbSxWithFile",  produces = "text/html;charset=UTF-8")
+//    @ResponseBody
+//    public R disManRegisterNewGbSxWithFile(@RequestParam("file") MultipartFile file,
+//                                           @RequestParam("userName") String userName,
+//                                           @RequestParam("disId") Integer disId,
+//                                           @RequestParam("phone") String phone,
+//                                           @RequestParam("code") String code,
+//                                           HttpSession session) {
+//        System.out.println("hpienei" + phone);
+//
+//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+//
+//
+//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getShixianGuanliAppId() +
+//                "&secret=" + myAPPIDConfig.getShixianGuanliScreat() + "&js_code=" + code + "&grant_type=authorization_code";
+//        // 发送请求，返回Json字符串
+//        String str = WeChatUtil.httpRequest(url, "GET", null);
+//        // 转成Json对象 获取openid
+//        JSONObject jsonObject = JSONObject.parseObject(str);
+//
+//        // 我们需要的openid，在一个小程序中，openid是唯一的
+//        String openid = jsonObject.get("openid").toString();
+//        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerUserService.queryDisUserByOpenIdGb(openid);
+//
+//        if (gbDistributerUserEntity == null) {
+//            //1,上传图片
+//            String newUploadName = "uploadImage";
+//            String realPath = UploadFile.upload(session, newUploadName, file);
+//
+//            String filename = file.getOriginalFilename();
+//            String filePath = newUploadName + "/" + filename;
+//            //1 disuser save
+//            GbDistributerUserEntity distributerUserEntity = new GbDistributerUserEntity();
+//            distributerUserEntity.setGbDiuPrintDeviceId("-1");
+//            distributerUserEntity.setGbDiuWxPhone(phone);
+//            distributerUserEntity.setGbDiuLoginTimes(0);
+//            distributerUserEntity.setGbDiuPrintBillDeviceId("-1");
+//            distributerUserEntity.setGbDiuLoginTimes(0);
+//            distributerUserEntity.setGbDiuWxOpenId(openid);
+//            distributerUserEntity.setGbDiuWxNickName(userName);
+//            distributerUserEntity.setGbDiuWxAvartraUrl(filePath);
+//            distributerUserEntity.setGbDiuUrlChange(1);
+//            distributerUserEntity.setGbDiuDistributerId(disId);
+//            Integer resUserId = gbDistributerService.saveNewDistributerGbForPeisong(distributerUserEntity, disId);
+//            return R.ok();
+//
+//        } else {
+//            return R.error(-1, "此微信号已注册过采购员");
+//        }
+//    }
+
+    @RequestMapping(value = "/singleMendianRegister", method = RequestMethod.POST)
     @ResponseBody
-    public R disManRegisterNewGbSxWithFile(@RequestParam("file") MultipartFile file,
-                                           @RequestParam("userName") String userName,
-                                           @RequestParam("disId") Integer disId,
-                                           @RequestParam("phone") String phone,
-                                           @RequestParam("code") String code,
-                                           HttpSession session) {
-        System.out.println("hpienei" + phone);
-
+    public R singleMendianRegister (@RequestBody GbDistributerEntity gbDistributerEntity  ) {
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-
-
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getShixianGuanliAppId() +
-                "&secret=" + myAPPIDConfig.getShixianGuanliScreat() + "&js_code=" + code + "&grant_type=authorization_code";
+        GbDepartmentUserEntity gbDepartmentUserEntity = gbDistributerEntity.getSingleDepartmentUser();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getSingleMendianAppId() +
+                "&secret=" + myAPPIDConfig.getSingleMendianScreat() + "&js_code=" + gbDepartmentUserEntity.getGbDuCode() + "&grant_type=authorization_code";
         // 发送请求，返回Json字符串
         String str = WeChatUtil.httpRequest(url, "GET", null);
         // 转成Json对象 获取openid
@@ -409,33 +585,20 @@ public class GbDistributerController {
 
         // 我们需要的openid，在一个小程序中，openid是唯一的
         String openid = jsonObject.get("openid").toString();
-        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerUserService.queryDisUserByOpenIdGb(openid);
+        GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUserByOpenId(openid);
 
-        if (gbDistributerUserEntity == null) {
-            //1,上传图片
-            String newUploadName = "uploadImage";
-            String realPath = UploadFile.upload(session, newUploadName, file);
-
-            String filename = file.getOriginalFilename();
-            String filePath = newUploadName + "/" + filename;
-            //1 disuser save
-            GbDistributerUserEntity distributerUserEntity = new GbDistributerUserEntity();
-            distributerUserEntity.setGbDiuPrintDeviceId("-1");
-            distributerUserEntity.setGbDiuWxPhone(phone);
-            distributerUserEntity.setGbDiuLoginTimes(0);
-            distributerUserEntity.setGbDiuPrintBillDeviceId("-1");
-            distributerUserEntity.setGbDiuLoginTimes(0);
-            distributerUserEntity.setGbDiuWxOpenId(openid);
-            distributerUserEntity.setGbDiuWxNickName(userName);
-            distributerUserEntity.setGbDiuWxAvartraUrl(filePath);
-            distributerUserEntity.setGbDiuUrlChange(1);
-            distributerUserEntity.setGbDiuDistributerId(disId);
-            Integer resUserId = gbDistributerService.saveNewDistributerGbForPeisong(distributerUserEntity, disId);
-            return R.ok();
-
+        if (depUserEntities == null) {
+            gbDistributerEntity.getSingleDepartmentUser().setGbDuWxOpenId(openid);
+            Integer resUserId = gbDistributerService.saveSingleMendianDistributerGb(gbDistributerEntity);
+            if (resUserId != null) {
+                Map<String, Object> stringObjectMap = gbDistributerUserService.queryDisAndUserInfo(resUserId);
+                return R.ok().put("data", stringObjectMap);
+            }
+            return R.error(-1, "注册失败");
         } else {
             return R.error(-1, "此微信号已注册过采购员");
         }
+
     }
 
     @RequestMapping(value = "/disManRegisterNewGbSx", method = RequestMethod.POST)

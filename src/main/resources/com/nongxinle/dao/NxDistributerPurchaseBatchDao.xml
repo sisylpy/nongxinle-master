@@ -5,6 +5,14 @@
 
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -17,6 +25,7 @@
 		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+        <result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
 		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
         <result property="nxDgWillPrice" column="nx_dg_will_price"/>
         <result property="nxDgWillPrice" column="nx_dg_will_price"/>
@@ -41,7 +50,7 @@
         <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
         <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
         <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
-       <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
         <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
         <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
         <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
@@ -51,6 +60,7 @@
         <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <association property="nxDepartmentOrdersEntity" resultMap="depOrders"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
+        <collection property="histfyOrdersEntities" resultMap="historyDepOrders"/>
     </resultMap>
 
     <resultMap id="fatherDepartmentGb" type="GbDepartmentEntity">
@@ -71,6 +81,10 @@
 
     <resultMap id="dep" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentPickName" column="nx_department_pick_name"/>
         <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
         <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
         <result property="nxDepartmentType" column="nx_department_type"/>
@@ -82,8 +96,9 @@
 
     <resultMap id="depOrders" type="NxDepartmentOrdersEntity">
          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
         <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -144,10 +159,17 @@
         <result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
         <result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
     </resultMap>
+    <resultMap id="pickUser" type="NxDistributerUserEntity">
+        <id property="nxDistributerUserId" column="pick_nx_distributer_user_id"/>
+        <result property="nxDiuWxAvartraUrl" column="pick_nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuWxNickName" column="pick_nx_DIU_wx_nick_name"/>
+    </resultMap>
+
     <resultMap id="depsOrders" type="NxDepartmentOrdersEntity">
          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
         <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -194,15 +216,77 @@
         <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
         <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
         <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+        <result property="nxDoPickUserId" column="nx_DO_pick_user_id"/>
         <association property="nxDepartmentEntity" resultMap="dep"/>
         <association property="gbDepartmentEntity" resultMap="orderGbDepartment"/>
         <association property="nxRestrauntEntity" resultMap="nxRes"/>
+        <association property="pickUserEntity" resultMap="pickUser"/>
     </resultMap>
 
+
+    <resultMap id="purGoodsDep" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="his_nx_department_id"/>
+        <result property="nxDepartmentName" column="his_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="his_nx_department_attr_name"/>
+        <result property="nxDepartmentFatherId" column="his_nx_department_father_id"/>
+        <association property="fatherDepartmentEntity" resultMap="purGoodsFatherDep"/>
+    </resultMap>
+
+    <resultMap id="purGoodsFatherDep" type="NxDepartmentEntity">
+        <id property="nxDepartmentId" column="his_dd_nx_department_id"/>
+        <result property="nxDepartmentName" column="his_dd_nx_department_name"/>
+        <result property="nxDepartmentAttrName" column="his_dd_nx_department_attr_name"/>
+    </resultMap>
+
+    <resultMap id="purGoodsFatherGbDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="his_df_gb_department_id"/>
+        <result property="gbDepartmentName" column="his_df_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="his_df_gb_department_attr_name"/>
+    </resultMap>
+    <resultMap id="purGbDepartment" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="his_gb_department_id"/>
+        <result property="gbDepartmentName" column="his_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="his_gb_department_attr_name"/>
+        <association property="fatherGbDepartmentEntity" resultMap="purGoodsFatherGbDep"/>
+    </resultMap>
+
+   
+    <resultMap id="historyDepOrders" type="NxDepartmentOrderHistoryEntity">
+        <id property="nxDepartmentOrdersId" column="dorHis_nx_department_orders_id"/>
+        <result property="nxDoDistributerId" column="dorHis_nx_do_distributer_id"/>
+        <result property="nxDoDepartmentId" column="dorHis_nx_DO_department_id"/>
+        <result property="nxDoCostPriceLevel" column="dorHis_nx_cost_price_level"/>
+        <result property="nxDoCostPrice" column="dorHis_nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="dorHis_nx_DO_cost_subtotal"/>
+        <result property="nxDoDepartmentFatherId" column="dorHis_nx_DO_department_father_id"/>
+        <result property="nxDoPurchaseGoodsId" column="dorHis_nx_DO_purchase_goods_id"/>
+        <result property="nxDoDisGoodsId" column="dorHis_nx_DO_dis_goods_id"/>
+        <result property="nxDoDisGoodsFatherId" column="dorHis_nx_DO_dis_goods_father_id"/>
+        <result property="nxDoDisGoodsGrandId" column="dorHis_nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoQuantity" column="dorHis_nx_DO_quantity"/>
+        <result property="nxDoStandard" column="dorHis_nx_DO_standard"/>
+        <result property="nxDoStatus" column="dorHis_nx_DO_status"/>
+        <result property="nxDoWeight" column="dorHis_nx_DO_weight"/>
+        <result property="nxDoPrice" column="dorHis_nx_DO_price"/>
+        <result property="nxDoSubtotal" column="dorHis_nx_DO_subtotal"/>
+        <result property="nxDoCostPrice" column="dorHis_nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="dorHis_nx_DO_cost_subtotal"/>
+        <result property="nxDoWeightId" column="dorHis_nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="dorHis_nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="dorHis_nx_DO_nx_comm_restraunt_father_id"/>
+        <result property="nxDoNxCommRestrauntId" column="dorHis_nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="dorHis_nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="dorHis_nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDepartmentFatherId" column="dorHis_nx_DO_gb_department_father_id"/>
+        <result property="nxDoGbDepartmentId" column="dorHis_nx_DO_gb_department_id"/>
+        <result property="nxDoDisGoodsGrandId" column="dorHis_nx_DO_dis_goods_grand_id"/>
+        <association property="nxDepartmentEntity" resultMap="purGoodsDep"/>
+        <association property="gbDepartmentEntity" resultMap="purGbDepartment"/>
+    </resultMap>
     <resultMap id="purchaseGoods" type="NxDistributerPurchaseGoodsEntity">
         <id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
         <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
-        <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
+        <result property="nxDpgDisGoodsId" column="nx_DPG_dis_goods_id"/>
         <result property="nxDpgQuantity" column="nx_DPG_quantity"/>
         <result property="nxDpgStandard" column="nx_DPG_standard"/>
         <result property="nxDpgExpectPrice" column="nx_DPG_expect_price"/>
@@ -222,6 +306,8 @@
         <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
 		<result property="nxDpgDisGoodsId" column="nx_DPG_dis_goods_id"/>
         <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
+        <result property="nxDpgOrdersAmount" column="nx_DPG_orders_amount"/>
+        <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
 
     </resultMap>
@@ -249,13 +335,19 @@
 
     <resultMap id="dis" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerImg" column="nx_distributer_img"/>
         <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distributer_buy_quantity"/>
     </resultMap>
 
     <resultMap id="disUser" type="NxDistributerUserEntity">
          <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
         <result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
         <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -292,6 +384,8 @@
 
     <resultMap id="jrdhSupplier" type="NxJrdhSupplierEntity">
         <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+		<result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
         <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
         <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
         <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
@@ -358,15 +452,55 @@
                df.nx_department_id              'dd_nx_department_id',
                df.nx_department_name            'dd_nx_department_name',
                df.nx_department_attr_name       'dd_nx_department_attr_name',
+
+               dorHis.nx_department_orders_id    'dorHis_nx_department_orders_id',
+               dorHis.nx_DO_remark               'dorHis_nx_DO_remark',
+               dorHis.nx_DO_status               'dorHis_nx_DO_status',
+               dorHis.nx_DO_purchase_goods_id    'dorHis_nx_Do_purchase_goods_id',
+               dorHis.nx_DO_department_id        'dorHis_nx_DO_department_id',
+               dorHis.nx_DO_department_father_id 'dorHis_nx_DO_department_father_id',
+               dorHis.nx_DO_quantity             'dorHis_nx_DO_quantity',
+               dorHis.nx_DO_standard             'dorHis_nx_DO_standard',
+               dorHis.nx_DO_weight             'dorHis_nx_DO_weight',
+               dorHis.nx_DO_subtotal             'dorHis_nx_DO_subtotal',
+               dorHis.nx_DO_price             'dorHis_nx_DO_price',
+               dorHis.nx_DO_cost_price             'dorHis_nx_DO_cost_price',
+               dorHis.nx_DO_cost_subtotal             'dorHis_nx_DO_cost_subtotal',
+               dorHis.nx_DO_gb_department_id             'dorHis_nx_DO_gb_department_id',
+               dorHis.nx_DO_gb_department_father_id         'dorHis_nx_DO_gb_department_father_id',
+
+               hisDis.nx_department_id              'his_nx_department_id',
+               hisDis.nx_department_name            'his_nx_department_name',
+               hisDis.nx_department_attr_name       'his_nx_department_attr_name',
+               hisDis.nx_department_type            'his_nx_department_type',
+               hisDis.nx_department_father_id       'his_nx_department_father_id',
+               hisDis.nx_department_is_group_dep    'his_nx_department_is_group_dep',
+
+               hisDf.nx_department_id              'his_dd_nx_department_id',
+               hisDf.nx_department_name            'his_dd_nx_department_name',
+               hisDf.nx_department_attr_name       'his_dd_nx_department_attr_name',
+
+               hisGbDs.gb_department_id         'his_gb_department_id',
+               hisGbDs.gb_department_name       'his_gb_department_name',
+               hisGbDf.gb_department_id         'his_df_gb_department_id',
+               hisGbDf.gb_department_name       'his_df_gb_department_name',
+
                purGbDs.gb_department_id         'purGbDs_gb_department_id',
                purGbDs.gb_department_name       'purGbDs_gb_department_name',
+               purGbDs.gb_department_id         'purGbDs_gb_department_id',
+               purGbDs.gb_department_name       'purGbDs_gb_department_name',
+
                purGbDf.gb_department_id         'purGbDf_gb_department_id',
                purGbDf.gb_department_name       'purGbDf_gb_department_name',
+               purGbDf.gb_department_id         'purGbDf_gb_department_id',
+               purGbDf.gb_department_name       'purGbDf_gb_department_name',
+
                sell_user.nx_jrdh_user_id        'sell_user_nx_jrdh_user_id',
                sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
                sell_user.nx_jrdh_wx_nick_name   'sell_user_nx_jrdh_wx_nick_name',
                sell_user.nx_jrdh_url_change     'sell_user_nx_jrdh_url_change'
-        from nx_distributer_purchase_batch as pb
+
+               from nx_distributer_purchase_batch as pb
                  left join nx_distributer_purchase_goods as pg
                            on pb.nx_distributer_purchase_batch_id = pg.nx_DPG_batch_id
                  left join nx_distributer_goods as dg on pg.nx_DPG_dis_goods_id = dg.nx_distributer_goods_id
@@ -374,18 +508,29 @@
                 left join  nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
                  left join nx_distributer_user as du on pb.nx_DPB_pur_user_id = du.nx_distributer_user_id
                  left join nx_distributer as dis on du.nx_DIU_distributer_id = dis.nx_distributer_id
+                 left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = pb.nx_DPB_buy_user_id
+                 left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = pb.nx_DPB_sell_user_id
+
                  left join nx_department_orders as dor
                            on dor.nx_DO_purchase_goods_id = pg.nx_distributer_purchase_goods_id
                  left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
                  left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
-                 left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = pb.nx_DPB_buy_user_id
-                 left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = pb.nx_DPB_sell_user_id
                  left join gb_department as purGbDs on purGbDs.gb_department_id = dor.nx_DO_gb_department_id
                  left join gb_department as purGbDf on purGbDf.gb_department_id = purGbDs.gb_department_father_id
                  left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
 
+                 left join nx_department_order_history as dorHis
+                           on dorHis.nx_DO_purchase_goods_id = pg.nx_distributer_purchase_goods_id
+                 left join nx_department as hisDis on hisDis.nx_department_id = dorHis.nx_DO_department_id
+                 left join nx_department as hisDf on hisDf.nx_department_id = hisDis.nx_department_father_id
+                 left join gb_department as hisGbDs on hisGbDs.gb_department_id = dorHis.nx_DO_gb_department_id
+                 left join gb_department as hisGbDf on hisGbDf.gb_department_id = hisGbDs.gb_department_father_id
+
+
+
+
         where nx_distributer_purchase_batch_id = #{batchId}
-        order by great.nx_dfg_father_goods_sort,ndfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort,df.nx_department_id, ds.nx_department_id,
+        order by great.nx_dfg_father_goods_sort,ndfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort, df.nx_department_id, ds.nx_department_id,
                  purGbDf.gb_department_id, purGbDs.gb_department_id,nr.nx_restraunt_id
 
     </select>
@@ -411,6 +556,9 @@
 
     <select id="queryDisPurchaseBatch" resultMap="purchaseBatch">
         select *,
+        pickUser.nx_distributer_user_id 'pick_nx_distributer_user_id',
+        pickUser.nx_DIU_wx_nick_name 'pick_nx_DIU_wx_nick_name',
+        pickUser.nx_DIU_wx_avartra_url 'pick_nx_DIU_wx_avartra_url',
         ds.nx_department_id 'nx_department_id',
         ds.nx_department_name 'nx_department_name',
         ds.nx_department_attr_name 'nx_department_attr_name',
@@ -418,6 +566,7 @@
         ds.nx_department_father_id 'nx_department_father_id',
         ds.nx_department_is_group_dep 'nx_department_is_group_dep',
         df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_pick_name 'dd_nx_department_pick_name',
         df.nx_department_name 'dd_nx_department_name',
         df.nx_department_attr_name 'dd_nx_department_attr_name',
         purGbDs.gb_department_id         'purGbDs_gb_department_id',
@@ -435,6 +584,8 @@
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         left join nx_department_orders as dor on dor.nx_DO_purchase_goods_id = dpg.nx_distributer_purchase_goods_id
+            and dor.nx_DO_status &lt; 3
+         left join nx_distributer_user as pickUser on pickUser.nx_distributer_user_id = dor.nx_DO_pick_user_id
         left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
         left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
         left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = dpb.nx_DPB_buy_user_id
@@ -453,6 +604,9 @@
             </if>
             <if test="status != null">
                 and nx_DPB_status &lt; #{status}
+            </if>
+            <if test="applyStatus != null">
+                and dor.nx_DO_status &lt; #{applyStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DPB_status = #{equalStatus}
@@ -504,7 +658,7 @@
 
         </where>
         order by nx_distributer_purchase_batch_id DESC,  great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort,
-                 dg.nx_dg_goods_sort,  df.nx_department_id,ds.nx_department_id,purGbDf.gb_department_id,purGbDs.gb_department_id,
+                 dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort, df.nx_department_id,ds.nx_department_id,purGbDf.gb_department_id,purGbDs.gb_department_id,
         nr.nx_restraunt_id
     </select>
 
@@ -592,8 +746,8 @@
                 and nx_DPB_purchase_type = #{purchaseType}
             </if>
         </where>
-
     </select>
+
     <select id="queryDisPurchaseBatchTotal" resultType="java.lang.Double">
         select sum(nx_DPB_sell_subtotal) from nx_distributer_purchase_batch
         <where>
@@ -679,7 +833,11 @@
     </select>
     <resultMap id="nxDis" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerManager" column="nx_distributer_manager"/>
         <result property="nxDistributerAddress" column="nx_distributer_address"/>
         <result property="nxDistributerPhone" column="nx_distributer_phone"/>

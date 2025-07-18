@@ -85,6 +85,12 @@ public class GbDepartmentUserServiceImpl implements GbDepartmentUserService {
 	    return gbDepartmentUserDao.queryDepUserInfoGb(userId);
     }
 
+    @Override
+    public GbDepartmentUserEntity queryDepUsersByOpenIdAndAdmin(Map<String, Object> map) {
+
+	    return gbDepartmentUserDao.queryDepUsersByOpenIdAndAdmin(map);
+    }
+
 
 //	@Override
 //	public List<GbDepartmentUserEntity> queryList(Map<String, Object> map){

@@ -31,5 +31,4 @@ public interface GbDepartmentOrdersHistoryService {
 
     List<GbDepartmentOrdersHistoryEntity> queryGbDepHistoryOrdersByParams(Map<String, Object> map1);
 
-    List<GbDepartmentOrdersHistoryEntity> queryDepHistoryOrdersByParamsGb(Map<String, Object> map1);
 }

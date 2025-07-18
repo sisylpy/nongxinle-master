@@ -9,15 +9,13 @@ import java.io.File;
 import java.util.*;
 
 import com.nongxinle.entity.*;
-import com.nongxinle.service.NxDepartmentOrdersService;
-import com.nongxinle.service.NxDistributerGoodsService;
-import com.nongxinle.service.NxGoodsService;
+import com.nongxinle.service.*;
+import com.nongxinle.utils.Constant;
 import com.nongxinle.utils.UploadFile;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.service.NxDistributerFatherGoodsService;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 
-import static com.nongxinle.utils.PinYin4jUtils.hanziToPinyin;
+import static com.nongxinle.utils.PinYin4jUtils.*;
 
 
 @RestController
@@ -38,7 +36,10 @@ public class NxDistributerFatherGoodsController {
     private NxDistributerGoodsService distributerGoodsService;
     @Autowired
     private NxDepartmentOrdersService nxDepartmentOrdersService;
-
+    @Autowired
+    private NxGoodsService nxGoodsService;
+   @Autowired
+   private NxDepartmentBillService nxDepartmentBillService;
 
     @RequestMapping(value = "/updateNxFatherGoodsSort", method = RequestMethod.POST)
     @ResponseBody
@@ -60,8 +61,10 @@ public class NxDistributerFatherGoodsController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
-        map.put("goodsLevel", 0);
-        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
+        map.put("goodsLevel", 1);
+//        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
+        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisGoodsCataLinshi(disId);
+        System.out.println("abdbbdbdbdd" + fatherGoodsEntities.size());
         return R.ok().put("data", fatherGoodsEntities);
     }
 
@@ -116,10 +119,11 @@ public class NxDistributerFatherGoodsController {
         goodsEntity.setNxDfgFatherGoodsName(goodsName);
         goodsEntity.setNxDfgFathersFatherId(fatherId);
         goodsEntity.setNxDfgDistributerId(disId);
-        goodsEntity.setNxDfgFatherGoodsSort(fatherGoodsEntities.size() + 1);
-        goodsEntity.setNxDfgFatherGoodsLevel(3);
+        int sort = nxDistributerFatherGoodsService.queryMaxSortByFatherId(fatherId);
+        goodsEntity.setNxDfgFatherGoodsSort(sort + 1);
+        goodsEntity.setNxDfgFatherGoodsLevel(2);
         goodsEntity.setNxDfgGoodsAmount(0);
-        goodsEntity.setNxDfgNxGoodsId(-1);
+        goodsEntity.setNxDfgFatherGoodsImg("goodsImage/logo.jpg");
 
         nxDistributerFatherGoodsService.save(goodsEntity);
 
@@ -128,6 +132,30 @@ public class NxDistributerFatherGoodsController {
         fatherGoodsEntity.setNxDfgGoodsAmount(fatherGoodsEntity.getNxDfgGoodsAmount() + 1);
         nxDistributerFatherGoodsService.update(fatherGoodsEntity);
 
+        Integer nxDfgNxGoodsId = fatherGoodsEntity.getNxDfgNxGoodsId(); //父级商品对应的 nxGoodsId
+        NxGoodsEntity nxGoodsEntity = new NxGoodsEntity();
+        nxGoodsEntity.setNxGoodsName(goodsName);
+        String pinyin = hanziToPinyin(goodsName);
+        String headPinyin = getHeadStringByString(goodsName, false, null);
+        String englishKuohao = getEnglishKuohao(goodsName);
+        nxGoodsEntity.setNxGoodsName(englishKuohao);
+        nxGoodsEntity.setNxGoodsPinyin(pinyin);
+        nxGoodsEntity.setNxGoodsPy(headPinyin);
+        nxGoodsEntity.setNxGoodsFatherId(nxDfgNxGoodsId);
+        nxGoodsEntity.setNxGoodsLevel(2);
+        nxGoodsEntity.setNxGoodsFile("goodsImage/logo.jpg");
+        nxGoodsEntity.setNxGoodsSort(0);
+        nxGoodsEntity.setNxGoodsIsHidden(0);
+        nxGoodsEntity.setNxGoodsSonsSort(0);
+
+        int sortg =  nxGoodsService.queryMaxSortByFatherId(nxDfgNxGoodsId);
+        nxGoodsEntity.setNxGoodsSort(sortg + 1);
+        int i = nxGoodsService.querySecondLevelMaxId();
+        nxGoodsEntity.setNxGoodsId(i + 1);
+        nxGoodsService.save(nxGoodsEntity);
+
+        goodsEntity.setNxDfgNxGoodsId(nxGoodsEntity.getNxGoodsId());
+        nxDistributerFatherGoodsService.update(goodsEntity);
 
         return R.ok();
     }
@@ -187,15 +215,15 @@ public class NxDistributerFatherGoodsController {
                                  HttpSession session) {
         NxDistributerFatherGoodsEntity gbDisFatherGoodsEntity = nxDistributerFatherGoodsService.queryObject(fatherId);
         NxDistributerFatherGoodsEntity fatherGoodsEntity = nxDistributerFatherGoodsService.queryObject(fatherId);
-        String gbDistributerFoodImg = fatherGoodsEntity.getNxDfgFatherGoodsImg();
-        ServletContext servletContext = session.getServletContext();
-        String realPath1 = servletContext.getRealPath(gbDistributerFoodImg);
-        File file1 = new File(realPath1);
-        if (file1.exists()) {
-            file1.delete();
+        String oldPath = fatherGoodsEntity.getNxDfgFatherGoodsImg();
+        if (oldPath != null && !oldPath.trim().isEmpty()) {
+            String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+            File file1 = new File(oldAbsolutePath);
+            if (file1.exists()) {
+                file1.delete();
+            }
         }
-
-
+//
         //1,上传图片
         String newUploadName = "goodsImage";
         String headByString = hanziToPinyin(goodsName);
@@ -211,17 +239,19 @@ public class NxDistributerFatherGoodsController {
     }
 
 
-    @RequestMapping(value = "/nxDepGetDisFatherGoods", method = RequestMethod.POST)
+    @RequestMapping(value = "/nxDepGetDisFatherGoodsGb", method = RequestMethod.POST)
     @ResponseBody
-    public R nxDepGetDisFatherGoods(Integer depId, Integer fatherId, Integer limit, Integer page) {
+    public R nxDepGetDisFatherGoodsGb(Integer gbDisId, Integer gbDepId, Integer fatherId, Integer limit, Integer page) {
         Map<String, Object> map = new HashMap<>();
-        map.put("nxDepId", depId);
+        map.put("gbDisId", gbDisId);
+        map.put("gbDepId", gbDepId);
         map.put("grandId", fatherId);
         map.put("isHidden", 0);
+        map.put("notLinshi", 1);
         map.put("offset", (page - 1) * limit);
         map.put("limit", limit);
-        System.out.println("mapapappappapapa" + map);
-        List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.queryNxDepDisGrandGoodsByGreatId(map);
+        System.out.println("mappppGGGGGGGBBBBB" + map);
+        List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.queryGbDisDisGrandGoodsByGreatId(map);
 
         Map<String, Object> mapCount = new HashMap<>();
         mapCount.put("greatGrandId", fatherId);
@@ -232,9 +262,53 @@ public class NxDistributerFatherGoodsController {
         return R.ok().put("page", pageUtil);
     }
 
+
+
+    @RequestMapping(value = "/nxDepGetDisFatherGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R nxDepGetDisFatherGoods(Integer depId, Integer fatherId, Integer limit, Integer page) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("nxDepId", depId);
+        map.put("grandId", fatherId);
+        map.put("isHidden", 0);
+        map.put("notLinshi", 1);
+        map.put("offset", (page - 1) * limit);
+        map.put("limit", limit);
+        System.out.println("mapapappappapapa" + map);
+        List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.queryNxDepDisGrandGoodsByGreatId(map);
+
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("greatGrandId", fatherId);
+        mapCount.put("isHidden", 0);
+        map.put("notLinshi", 1);
+        System.out.println("mapcountttDepPage" + distributerGoodsEntities.size());
+        System.out.println("mapcountttDepPageCount" + mapCount);
+        int total = distributerGoodsService.queryDisGoodsTotal(mapCount);
+        PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
+
+        return R.ok().put("page", pageUtil);
+    }
+
+
+
+
+//    @RequestMapping(value = "/nxDepGetDisFatherGoodsByGrandIdGb", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R nxDepGetDisFatherGoodsByGrandIdGb(Integer gbDepId, Integer gbDisId, Integer fatherId) {
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("gbDisId", gbDisId);
+//        map.put("gbDepId", gbDepId);
+//        map.put("grandId", fatherId);
+//        map.put("isHidden", 0);
+//        System.out.println("granidididdiidid" + map);
+//        List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.queryNxDepDisGrandGoodsByGreatIdAllGb(map);
+//
+//        return R.ok().put("data", distributerGoodsEntities);
+//    }
+
     @RequestMapping(value = "/nxDepGetDisFatherGoodsByGrandId", method = RequestMethod.POST)
     @ResponseBody
-    public R nxDepGetDisFatherGoodsByGrandId(Integer depId, Integer fatherId) {
+    public R nxDepGetDisFatherGoodsByGrandId(Integer depId, Integer fatherId, Integer limit, Integer page) {
         Map<String, Object> map = new HashMap<>();
         map.put("nxDepId", depId);
         map.put("grandId", fatherId);
@@ -323,16 +397,159 @@ public class NxDistributerFatherGoodsController {
         return R.ok().put("page", pageUtil);
     }
 
+    @RequestMapping(value = "/getDisGoodsByGreatGrandIdWithCount", method = RequestMethod.POST)
+    @ResponseBody
+    public R getDisGoodsByGreatGrandIdWithCount(Integer fatherId, Integer limit, Integer page, Integer disId, Integer goodsType) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("grandId", fatherId);
+        map.put("offset", (page - 1) * limit);
+        map.put("limit", limit);
+        if(goodsType != 99){
+            map.put("goodsType", goodsType);
+        }
+        map.put("limit", limit);
+        System.out.println("mapappapapapa" + map);
+        List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.querySupplierGoodsByGreatId(map);
+
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("greatGrandId", fatherId);
+        mapCount.put("isHidden", 0);
+        int total = distributerGoodsService.queryDisGoodsTotal(mapCount);
+        PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
+
+
+        Map<String, Object> returnData = new HashMap<>();
+
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("disId", disId);
+        map3.put("purStatus", 4);
+        Integer preOrders = nxDepartmentOrdersService.queryDepOrdersAcount(map3);
+        map3.put("status", 3);
+        Integer buyOrders = nxDepartmentOrdersService.queryDepOrdersAcount(map3);
+        Map<String, Object> map3Ok = new HashMap<>();
+        map3Ok.put("disId", disId);
+        map3Ok.put("equalStatus", 2);
+        Integer buyOrdersOk = nxDepartmentOrdersService.queryDepOrdersAcount(map3Ok);
+        returnData.put("buyOrders", buyOrders);
+        returnData.put("buyOrdersOk", buyOrdersOk);
+
+        Map<String, Object> map111 = new HashMap<>();
+        map111.put("disId", disId);
+        map111.put("status", 3);
+        // 出库
+        map111.put("goodsType", -1);
+        int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+
+        map111.put("goodsType", 1);
+        int wxCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+        map111.put("goodsType", 2);
+        int wxCountAuto = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+        int wxCountPur =  wxCount + wxCountAuto;
+
+        //ok
+        Map<String, Object> mapOk = new HashMap<>();
+        mapOk.put("disId", disId);
+        mapOk.put("status", 3);
+        mapOk.put("goodsType", -1);
+        mapOk.put("equalPurStatus", 4);
+        //出库完成
+        System.out.println("mapokk" + mapOk);
+        int stockCountOK = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
+        mapOk.put("goodsType", 1);
+        int wxCountOk = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
+        mapOk.put("goodsType", 2);
+        int wxCountOkAuto = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
+        int wxCountPurOk = wxCountOk + wxCountOkAuto;
+
+
+        returnData.put("stockCount", stockCount);
+        returnData.put("stockCountOk", stockCountOK);
+        returnData.put("wxCount", wxCountPur);
+        returnData.put("wxCountOk", wxCountPurOk);
+        returnData.put("preOrders", preOrders);
+
+        returnData.put("is", pageUtil);
+
+        return R.ok().put("page", returnData);
+    }
+
     @RequestMapping(value = "/getDisGoodsByGrandId", method = RequestMethod.POST)
     @ResponseBody
     public R getDisGoodsByGrandId(Integer fatherId, Integer limit, Integer page) {
         Map<String, Object> map = new HashMap<>();
         map.put("fatherId", fatherId);
-        map.put("isHidden", 0);
-        System.out.println("mapapappappapapa" + map);
+//        System.out.println("mapapappappapapa" + map);
+//        Map<String, Object> mapF = new HashMap<>();
+//        mapF.put("fathersFatherId", fatherId);
+//        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(mapF);
+//        if(fatherGoodsEntities.size() > 0){
+//            for(NxDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
+//                Map<String, Object> mapG = new HashMap<>();
+//                mapG.put("dgFatherId", fatherGoodsEntity.getNxDistributerFatherGoodsId());
+//                List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.queryDisGoodsByParams(mapG);
+//                if(distributerGoodsEntities.size() > 0){
+//                    for(NxDistributerGoodsEntity distributerGoodsEntity: distributerGoodsEntities){
+//                        System.out.println("goonanmee==aaaaaa" + distributerGoodsEntity.getNxDgGoodsName() + "id="+ distributerGoodsEntity.getNxDistributerGoodsId()
+//                                + "yuan" + distributerGoodsEntity.getNxDgGoodsSort()
+//                                + "fahthsororor" + fatherGoodsEntity.getNxDfgFatherGoodsSort()
+//                        );
+//                        distributerGoodsEntity.setNxDgGoodsSort(fatherGoodsEntity.getNxDfgFatherGoodsSort());
+//                        distributerGoodsService.update(distributerGoodsEntity);
+//                    }
+//                }
+//
+//            }
+//
+//        }
+
         List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.querySupplierGoodsByFatherId(map);
         return R.ok().put("data", distributerGoodsEntities);
     }
+
+
+    @RequestMapping(value = "/nxDepGetDisCataGoodsGb", method = RequestMethod.POST)
+    @ResponseBody
+    public R nxDepGetDisCataGoodsGb(Integer nxDisId, Integer gbDisId, Integer gbDepFatherId) {
+
+        System.out.println("nenwnwn11111111");
+
+        List<NxDistributerFatherGoodsEntity> greatGrandGoods = nxDistributerFatherGoodsService.queryDisGreatGrandList(nxDisId);
+
+//        if (greatGrandGoods.size() > 0) {
+//            for(int j = 0 ; j < greatGrandGoods.size(); j++) {
+//                NxDistributerFatherGoodsEntity fatherGoodsEntity = greatGrandGoods.get(j);
+//
+//                Map<String, Object> mapG = new HashMap<>();
+//                mapG.put("gbDisId", gbDisId);
+//                mapG.put("gbDepFatherId", gbDepFatherId);
+//                mapG.put("status", 3);
+//                mapG.put("dayuStatus", -1);
+//                mapG.put("greatGrandId", fatherGoodsEntity.getNxDistributerFatherGoodsId());
+//                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(mapG);
+//                fatherGoodsEntity.setNewOrderCount(integer);
+//
+//                List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = fatherGoodsEntity.getFatherGoodsEntities();
+//                if (fatherGoodsEntities.size() > 0) {
+//
+//                    for(int i = 0; i < fatherGoodsEntities.size(); i++){
+//                        NxDistributerFatherGoodsEntity secondFatherEntity = fatherGoodsEntities.get(i);
+//                        mapG.put("grandId", secondFatherEntity.getNxDistributerFatherGoodsId());
+//                        Integer integer2 = nxDepartmentOrdersService.queryDepOrdersAcount(mapG);
+//                        secondFatherEntity.setNewOrderCount(integer2);
+//
+//                    }
+//
+//                }
+//
+//
+//            }
+//
+//        }
+
+        return R.ok().put("data", greatGrandGoods);
+
+    }
+
 
 
     /**
@@ -345,35 +562,53 @@ public class NxDistributerFatherGoodsController {
     @ResponseBody
     public R nxDepGetDisCataGoods(Integer nxDisId, Integer depId) {
 
-
+        System.out.println("nenwnwn11111111");
         List<NxDistributerFatherGoodsEntity> greatGrandGoods = nxDistributerFatherGoodsService.queryDisGreatGrandList(nxDisId);
 
-        if (greatGrandGoods.size() > 0) {
-            for (NxDistributerFatherGoodsEntity fatherGoodsEntity : greatGrandGoods) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("depId", depId);
-                map.put("status", 3);
-                map.put("dayuStatus", -1);
-                map.put("greatGrandId", fatherGoodsEntity.getNxDistributerFatherGoodsId());
-                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map);
-                fatherGoodsEntity.setNewOrderCount(integer);
-
-                List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = fatherGoodsEntity.getFatherGoodsEntities();
-                if (fatherGoodsEntities.size() > 0) {
-                    for (NxDistributerFatherGoodsEntity secondFatherEntity : fatherGoodsEntities) {
-                        map.put("grandId", secondFatherEntity.getNxDistributerFatherGoodsId());
-                        Integer integer2 = nxDepartmentOrdersService.queryDepOrdersAcount(map);
-                        secondFatherEntity.setNewOrderCount(integer2);
-
-                    }
-                }
-
-
+        NxDistributerFatherGoodsEntity fatherGoodsEntity = greatGrandGoods.get(0);
+        List<Integer> ids = new ArrayList<>();
+        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = fatherGoodsEntity.getFatherGoodsEntities();
+        if(fatherGoodsEntities.size() > 0){
+            for(NxDistributerFatherGoodsEntity grandEntity : fatherGoodsEntities){
+                ids.add(grandEntity.getNxDistributerFatherGoodsId());
             }
         }
 
-        return R.ok().put("data", greatGrandGoods);
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", nxDisId);
+        map.put("notLinshi", 1);
+        map.put("isHidden", 0);
+        map.put("grandIds", ids);
+        System.out.println("mappaisaiapapapa" + map);
+        List<Integer > departmentDisGoodsEntities =   distributerGoodsService.queryOnlyDepGoodsIds(map);
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("cataArr",greatGrandGoods);
+        mapR.put("depGoodsArr", departmentDisGoodsEntities);
 
+        return R.ok().put("data", mapR);
+
+    }
+
+
+    @RequestMapping(value = "/getNxDisGoodsIdsByGreatId/{id}")
+    @ResponseBody
+    public R getNxDisGoodsIdsByGreatId(@PathVariable Integer id) {
+
+
+        List<NxDistributerFatherGoodsEntity>  fatherGoodsEntities = nxDistributerFatherGoodsService.queryListByFatherId(id);
+        List<Integer> ids = new ArrayList<>();
+        if(fatherGoodsEntities.size() > 0){
+            for(NxDistributerFatherGoodsEntity grandEntity : fatherGoodsEntities){
+                ids.add(grandEntity.getNxDistributerFatherGoodsId());
+            }
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("notLinshi", 1);
+        map.put("isHidden", 0);
+        map.put("grandIds", ids);
+        List<Integer > departmentDisGoodsEntities =   distributerGoodsService.queryOnlyDepGoodsIds(map);
+
+        return R.ok().put("data",departmentDisGoodsEntities);
     }
 
     /**
@@ -386,7 +621,67 @@ public class NxDistributerFatherGoodsController {
 
         List<NxDistributerFatherGoodsEntity> greatGrandGoods = nxDistributerFatherGoodsService.queryDisGreatGrandList(disId);
 
+
         return R.ok().put("data", greatGrandGoods);
+
+    }
+
+
+
+    @RequestMapping(value = "/getDisGoodsCataWithCount")
+    @ResponseBody
+    public R getDisGoodsCataWithCount(Integer disId, Integer goodsType) {
+
+        Map<String, Object> returnData = new HashMap<>();
+
+
+        Map<String, Object> mapG = new HashMap<>();
+        mapG.put("disId", disId);
+        if(goodsType != 99){
+            mapG.put("goodsType", goodsType);
+        }
+
+        System.out.println("mapdgGg" + mapG);
+        int count =  distributerGoodsService.queryDisGoodsTotal(mapG);
+
+        if(count > 0){
+            List<NxDistributerFatherGoodsEntity> greatGrandGoods = nxDistributerFatherGoodsService.queryDisGreatGrandListWithType(mapG);
+            if(greatGrandGoods.size() > 0){
+                for(NxDistributerFatherGoodsEntity greatGrand : greatGrandGoods){
+                    List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = greatGrand.getFatherGoodsEntities();
+                    if(fatherGoodsEntities.size() > 0){
+                        for(NxDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
+                            fatherGoodsEntity.setNxDistributerGoodsEntities(null);
+                        }
+                    }
+                }
+            }
+            returnData.put("list", greatGrandGoods);
+        }else{
+            returnData.put("list", new ArrayList<>());
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("isLinshi", 1);
+        int wxCountAuto1 = distributerGoodsService.queryDisGoodsTotal(map);
+
+        Map<String, Object> mapPrice = new HashMap<>();
+        mapPrice.put("disId", disId);
+        mapPrice.put("willPrice", 0.1);
+        int  priceCount = distributerGoodsService.queryDisGoodsTotal(mapPrice);
+
+        Map<String, Object> mapBuyPrice = new HashMap<>();
+        mapBuyPrice.put("disId", disId);
+        mapBuyPrice.put("buyPrice", 0.1);
+        int  buyPriceCount = distributerGoodsService.queryDisGoodsTotal(mapBuyPrice);
+
+
+
+        returnData.put("lishiCount", wxCountAuto1);
+        returnData.put("priceCount", priceCount);
+        returnData.put("buyPriceCount", buyPriceCount);
+
+        return R.ok().put("data", returnData);
 
     }
 

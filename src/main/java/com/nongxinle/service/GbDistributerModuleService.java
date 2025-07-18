@@ -27,4 +27,6 @@ public interface GbDistributerModuleService {
 	void delete(Integer gbDistributerModuleId);
 	
 	void deleteBatch(Integer[] gbDistributerModuleIds);
+
+    GbDistributerModuleEntity queryModelByDisId(Integer gbDistributerId);
 }

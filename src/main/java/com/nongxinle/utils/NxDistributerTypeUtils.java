@@ -8,8 +8,10 @@ public class NxDistributerTypeUtils {
 
 
     public final static Integer NX_DIS_USER_ADMIN = 0; //管理员
-    public final static Integer NX_DIS_USER_PURCHASE = 1; //采购员
+    public final static Integer NX_DIS_USER_STAFF = 1; //文员
+    public final static Integer NX_DIS_USER_KUFNG = 2; //库房管理员
     public final static Integer NX_DIS_USER_WEIGHTER = 3; //称重员
+    public final static Integer NX_DIS_USER_PURCHASE = 4; //采购员
     public final static Integer NX_DIS_USER_DRIVER = 5; //司机
 
     public final static Integer NX_DEP_ORDER_UN_PURCHASE = 0; //订单未采购
@@ -43,10 +45,46 @@ public class NxDistributerTypeUtils {
     public final static Integer NX_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY = 3; //Dis用户完成
 
 
+    public final static Integer NX_DIS_PAY_LIST_WEB = 0; //web
+    public final static Integer NX_DIS_PAY_LIST_PRINTER = 1; //web
+    public final static Integer NX_DIS_PAY_LIST_RECORD = 2; //web
+    public final static Integer NX_DIS_PAY_LIST_ORDER = 3; //web
+    public final static Integer NX_DIS_PAY_Goods_Add = 4; //web
 
+    public final static Integer NX_DIS_PAY_LIST_GB = 6; //web
+
+
+    public final static Integer NX_ORDER_AGENT_AI = 0; //web
+    public final static Integer NX_ORDER_AGENT_PASTE = 1; //web
+    public final static Integer NX_ORDER_AGENT_SEARCH = 2; //web
+    public final static Integer NX_ORDER_AGENT_DEP = 3; //web
+    public final static Integer NX_ORDER_AGENT_DIS = 4; //web
+
+    public static Integer getNxDisPayListWeb() {
+        return NX_DIS_PAY_LIST_WEB;
+    }
+    public static Integer getNxDisPayListGb() {
+        return NX_DIS_PAY_LIST_GB;
+    }
+    public static Integer getNxDisPayListRecord() {
+        return NX_DIS_PAY_LIST_RECORD;
+    }
+    public static Integer getNxDisPayListPrinter() {
+        return NX_DIS_PAY_LIST_PRINTER;
+    }
+    public static Integer getNxDisPayListOrder() {
+        return NX_DIS_PAY_LIST_ORDER;
+    }
+
+    public static Integer getNxDisPayGoodsAdd() {
+        return NX_DIS_PAY_Goods_Add;
+    }
 
     public static Integer getNxDisUserAdmin() {
         return NX_DIS_USER_ADMIN;
+    }
+    public static Integer getNxDisUserStaff() {
+        return NX_DIS_USER_STAFF;
     }
     public static Integer getNxDisUserPurchase() {
         return NX_DIS_USER_PURCHASE;
@@ -56,6 +94,9 @@ public class NxDistributerTypeUtils {
     }
     public static Integer getNxDisUserWeighter() {
         return NX_DIS_USER_WEIGHTER;
+    }
+    public static Integer getNxDisUserKufng() {
+        return NX_DIS_USER_KUFNG;
     }
 
     public static Integer getNxDepOrderBuyStatusUnPurchase() {

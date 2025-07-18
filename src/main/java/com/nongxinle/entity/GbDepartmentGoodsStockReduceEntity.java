@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,6 +48,7 @@ public class GbDepartmentGoodsStockReduceEntity implements Serializable {
 	 *  
 	 */
 	private Integer gbDgsrGbDisGoodsFatherId;
+	private Integer gbDgsrGbDisGoodsGrandId;
 	/**
 	 *  批次采购商品id
 	 */
@@ -77,6 +79,7 @@ public class GbDepartmentGoodsStockReduceEntity implements Serializable {
 	 */
 	private Integer gbDgsrDoUserId;
 	private Integer gbDgsrStockNxDistribtuerId;
+	private Integer gbDgsrStockNxSupplierId;
 	/**
 	 *  执行废弃用户
 	 */
@@ -124,7 +127,6 @@ public class GbDepartmentGoodsStockReduceEntity implements Serializable {
     private GbDepartmentUserEntity gbDepartmentUserEntity;
     private GbDistributerPurchaseGoodsEntity gbDisPurchaseGoodsEntity;
     private GbDepartmentGoodsStockReduceAttachmentEntity gbDeGoodsStockReduceAttachmentEntity;
-
 	private GbDepartmentGoodsStockEntity gbDepartmentGoodsStockEntity;
 	private GbDepartmentGoodsStockRecordEntity gbDepartmentGoodsStockRecordEntity;
 

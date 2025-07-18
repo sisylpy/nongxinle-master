@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxGoodsPriceDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxGoodsPriceEntity">
+		select * from nx_goods_price where nx_goods_price_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxGoodsPriceEntity">
+		select * from nx_goods_price 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_goods_price 
+	</select>
+
+
+    <select id="queryPriceGoodsByParams" resultType="com.nongxinle.entity.NxGoodsPriceEntity">
+		select * from nx_goods_price
+		<where>
+			<if test="nxGoodsId != null">
+				and nx_gp_nx_goods_id = #{nxGoodsId}
+			</if>
+			<if test="date != null">
+				and nx_gp_date = #{date}
+			</if>
+			<if test="cityId != null">
+				and nx_gp_sys_city_id = #{cityId}
+			</if>
+			<if test="marketId != null">
+				and nx_gp_sys_market_id = #{marketId}
+			</if>
+		</where>
+	</select>
+	<select id="queryLowestPriceByParams" resultType="java.lang.Double">
+		select nx_gp_lowest_price from nx_goods_price
+		<where>
+			<if test="nxGoodsId != null">
+				and nx_gp_nx_goods_id = #{nxGoodsId}
+			</if>
+			<if test="date != null">
+				and nx_gp_date = #{date}
+			</if>
+			<if test="cityId != null">
+				and nx_gp_sys_city_id = #{cityId}
+			</if>
+			<if test="marketId != null">
+				and nx_gp_sys_market_id = #{marketId}
+			</if>
+
+		</where>
+	</select>
+	<select id="queryHighestPriceByParams" resultType="java.lang.Double">
+		select nx_gp_highest_price from nx_goods_price
+		<where>
+			<if test="nxGoodsId != null">
+				and nx_gp_nx_goods_id = #{nxGoodsId}
+			</if>
+			<if test="date != null">
+				and nx_gp_date = #{date}
+			</if>
+			<if test="cityId != null">
+				and nx_gp_sys_city_id = #{cityId}
+			</if>
+			<if test="marketId != null">
+				and nx_gp_sys_market_id = #{marketId}
+			</if>
+
+		</where>
+	</select>
+	<select id="queryPriceGoodsCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_goods_price
+		<where>
+			<if test="nxGoodsId != null">
+				and nx_gp_nx_goods_id = #{nxGoodsId}
+			</if>
+			<if test="date != null">
+				and nx_gp_date = #{date}
+			</if>
+			<if test="cityId != null">
+				and nx_gp_sys_city_id = #{cityId}
+			</if>
+			<if test="marketId != null">
+				and nx_gp_sys_market_id = #{marketId}
+			</if>
+
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxGoodsPriceEntity">
+		insert into nx_goods_price
+		(
+			`nx_goods_price_id`, 
+			`nx_gp_nx_goods_id`,
+			`nx_gp_date`, 
+			`nx_gp_lowest_price`, 
+			`nx_gp_lowest_weight`, 
+			`nx_gp_lowest_nx_distributer_id`, 
+			`nx_gp_lowest_jrdh_supplier_id`, 
+			`nx_gp_highest_price`, 
+			`nx_gp_highest_weight`, 
+			`nx_gp_highest_nx_distributer_id`, 
+			`nx_gp_highest_jrdh_supplier_id`, 
+			`nx_gp_sys_city_id`, 
+			`nx_gp_sys_market_id`
+		)
+		values
+		(
+			#{nxGoodsPriceId}, 
+			#{nxGpNxGoodsId},
+			#{nxGpDate}, 
+			#{nxGpLowestPrice}, 
+			#{nxGpLowestWeight}, 
+			#{nxGpLowestNxDistributerId}, 
+			#{nxGpLowestJrdhSupplierId}, 
+			#{nxGpHighestPrice}, 
+			#{nxGpHighestWeight}, 
+			#{nxGpHighestNxDistributerId}, 
+			#{nxGpHighestJrdhSupplierId}, 
+			#{nxGpSysCityId}, 
+			#{nxGpSysMarketId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxGoodsPriceEntity">
+		update nx_goods_price 
+		<set>
+			<if test="nxGpNxGoodsId != null">`nx_gp_nx_goods_id` = #{nxGpNxGoodsId}, </if>
+			<if test="nxGpDate != null">`nx_gp_date` = #{nxGpDate}, </if>
+			<if test="nxGpLowestPrice != null">`nx_gp_lowest_price` = #{nxGpLowestPrice}, </if>
+			<if test="nxGpLowestWeight != null">`nx_gp_lowest_weight` = #{nxGpLowestWeight}, </if>
+			<if test="nxGpLowestNxDistributerId != null">`nx_gp_lowest_nx_distributer_id` = #{nxGpLowestNxDistributerId}, </if>
+			<if test="nxGpLowestJrdhSupplierId != null">`nx_gp_lowest_jrdh_supplier_id` = #{nxGpLowestJrdhSupplierId}, </if>
+			<if test="nxGpHighestPrice != null">`nx_gp_highest_price` = #{nxGpHighestPrice}, </if>
+			<if test="nxGpHighestWeight != null">`nx_gp_highest_weight` = #{nxGpHighestWeight}, </if>
+			<if test="nxGpHighestNxDistributerId != null">`nx_gp_highest_nx_distributer_id` = #{nxGpHighestNxDistributerId}, </if>
+			<if test="nxGpHighestJrdhSupplierId != null">`nx_gp_highest_jrdh_supplier_id` = #{nxGpHighestJrdhSupplierId}, </if>
+			<if test="nxGpSysCityId != null">`nx_gp_sys_city_id` = #{nxGpSysCityId}, </if>
+			<if test="nxGpSysMarketId != null">`nx_gp_sys_market_id` = #{nxGpSysMarketId}</if>
+		</set>
+		where nx_goods_price_id = #{nxGoodsPriceId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_goods_price where nx_goods_price_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_goods_price where nx_goods_price_id in 
+		<foreach item="nxGoodsPriceId" collection="array" open="(" separator="," close=")">
+			#{nxGoodsPriceId}
+		</foreach>
+	</delete>
+
+</mapper>

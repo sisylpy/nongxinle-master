@@ -39,5 +39,4 @@ public interface GbDepartmentGoodsStockReduceDailyDao extends BaseDao<GbDepartme
 
     TreeSet<GbDepartmentEntity> queryWhichDepsHaveDailyTotal(Map<String, Object> mapDep);
 
-    Double queryReduceFinishCount(Map<String, Object> map0);
 }

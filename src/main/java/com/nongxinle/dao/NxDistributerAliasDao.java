@@ -9,7 +9,11 @@ package com.nongxinle.dao;
 
 import com.nongxinle.entity.NxDistributerAliasEntity;
 
+import java.util.List;
+import java.util.Map;
+
 
 public interface NxDistributerAliasDao extends BaseDao<NxDistributerAliasEntity> {
-	
+
+    List<NxDistributerAliasEntity> queryAliasByParmas(Map<String, Object> map);
 }

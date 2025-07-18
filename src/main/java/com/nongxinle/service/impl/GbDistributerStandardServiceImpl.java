@@ -58,4 +58,11 @@ public class GbDistributerStandardServiceImpl implements GbDistributerStandardSe
 		return gbDistributerStandardDao.queryDisStandardByDisGoodsIdGb(disGoodsId);
     }
 
+    @Override
+    public List<GbDistributerStandardEntity> queryDisStandardByParams(Map<String, Object> mapNx) {
+
+	    return gbDistributerStandardDao.queryDisStandardByParams(mapNx);
+
+    }
+
 }

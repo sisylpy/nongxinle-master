@@ -10,7 +10,7 @@ package com.nongxinle.service;
 import com.nongxinle.entity.GbDepartmentEntity;
 import com.nongxinle.entity.GbDistributerEntity;
 import com.nongxinle.entity.GbDistributerPurchaseBatchEntity;
-import com.nongxinle.entity.GbDistributerPurchaseGoodsEntity;
+import com.nongxinle.entity.NxJrdhSupplierEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ public interface GbDistributerPurchaseBatchService {
 	
 	void deleteBatch(String[] nxDpbUuids);
 
-	List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object> map);
+	List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object>  map);
 
     GbDistributerPurchaseBatchEntity queryBatchWithOrders(Integer batchId);
 
@@ -50,4 +50,8 @@ public interface GbDistributerPurchaseBatchService {
     List<GbDistributerEntity> queryGbDistributerBySellerId(String sellId);
 
     GbDistributerPurchaseBatchEntity queryBatchItemByParams(Map<String, Object> mapB);
+
+    List<NxJrdhSupplierEntity> querySupplierList(Map<String, Object> map);
+
+    List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatchInfo(Map<String, Object> map);
 }

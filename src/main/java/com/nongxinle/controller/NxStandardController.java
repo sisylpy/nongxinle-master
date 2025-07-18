@@ -58,25 +58,25 @@ public class NxStandardController {
 	@ResponseBody
 	public R saveNxStandard (@RequestBody NxStandardEntity standard) {
 	    nxStandardService.save(standard);
-	    //加给批发商
+	    //加给批发商nxSGoodsId
 
-		Integer nxSGoodsId = standard.getNxSGoodsId();
-		List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(nxSGoodsId);
-
-		for (NxDistributerGoodsEntity disGoods : distributerGoodsEntities) {
-			Integer distributerGoodsId = disGoods.getNxDistributerGoodsId();
-			String nxStandardName = standard.getNxStandardName();
-			Map<String, Object> map = new HashMap<>();
-			map.put("standardName", nxStandardName);
-			map.put("disGoodsId", distributerGoodsId );
-			List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(map);
-			if(distributerStandardEntities.size() == 0){
-				NxDistributerStandardEntity disStandard = new NxDistributerStandardEntity();
-				disStandard.setNxDsDisGoodsId(distributerGoodsId);
-				disStandard.setNxDsStandardName(nxStandardName);
-				nxDistributerStandardService.save(disStandard);
-			}
-		}
+//		Integer nxSGoodsId = standard.getNxSGoodsId();
+//		List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(nxSGoodsId);
+//
+//		for (NxDistributerGoodsEntity disGoods : distributerGoodsEntities) {
+//			Integer distributerGoodsId = disGoods.getNxDistributerGoodsId();
+//			String nxStandardName = standard.getNxStandardName();
+//			Map<String, Object> map = new HashMap<>();
+//			map.put("standardName", nxStandardName);
+//			map.put("disGoodsId", distributerGoodsId );
+//			List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(map);
+//			if(distributerStandardEntities.size() == 0){
+//				NxDistributerStandardEntity disStandard = new NxDistributerStandardEntity();
+//				disStandard.setNxDsDisGoodsId(distributerGoodsId);
+//				disStandard.setNxDsStandardName(nxStandardName);
+//				nxDistributerStandardService.save(disStandard);
+//			}
+//		}
 
 		return R.ok().put("data", standard);
 	}

@@ -242,5 +242,17 @@ public class GbDepartmentGoodsDailyServiceImpl implements GbDepartmentGoodsDaily
 		return gbDepartmentGoodsDailyDao.queryDepGoodsDailyListWithReduceByParams(mapSearch);
     }
 
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryFatherGoodsByParams(Map<String, Object> mapSearch) {
+
+		return gbDepartmentGoodsDailyDao.queryFatherGoodsByParams(mapSearch);
+    }
+
+    @Override
+    public TreeSet<GbDistributerGoodsEntity> queryDisGoodsWithBusinessDep(Map<String, Object> mapSearch) {
+
+		return gbDepartmentGoodsDailyDao.queryDisGoodsWithBusinessDep(mapSearch);
+    }
+
 
 }

@@ -29,6 +29,7 @@ public class GbTypeUtils {
 
     public final static Integer GB_DIS_GOODS_TYPE_ZICAI = 1; //自采商品
     public final static Integer GB_DIS_GOODS_TYPE_JICAI = 2; //集采商品
+    public final static Integer GB_DIS_GOODS_TYPE_SUPPLIER = 21; //自动采购供货商商品
     public final static Integer GB_DIS_GOODS_TYPE_CHUKU = 3; //出库商品
     public final static Integer GB_DIS_GOODS_TYPE_KITCHEN = 4; //中央厨房商品
     public final static Integer GB_DIS_GOODS_TYPE_APP_SUPPLIER = 5; //配送商商品
@@ -36,7 +37,6 @@ public class GbTypeUtils {
 
     public final static Integer GB_DIS_WEIGHT_TOTAL_TYPE_STOCK = 3; //窗口商品
     public final static Integer GB_DIS_WEIGHT_TOTAL_TYPE_WINDOW = 23; //窗口商品
-
 
     public final static Integer GB_DIS_GOODS_INVENTORY_TYPE_MONTH = 3;
     public final static Integer GB_DIS_GOODS_INVENTORY_TYPE_WEEK = 2;
@@ -47,7 +47,8 @@ public class GbTypeUtils {
     public final static Integer GB_ORDER_TYPE_CHUKU = 3;  //出库订单
     public final static Integer GB_ORDER_TYPE_CHUKU_CAIGOU = 31; // 库房采购订单  中央厨房采购订单
     public final static Integer GB_ORDER_TYPE_KITCHEN = 4; // 中央厨房订单
-    public final static Integer GB_ORDER_TYPE_APP_SUPPLIER = 5; // 供货商订单
+    public final static Integer GB_ORDER_TYPE_KITCHEN_CAIGOU = 41; // 中央厨房订单
+    public final static Integer GB_ORDER_TYPE_APP_SUPPLIER = 5; // 京京送货App供货商订单
     public final static Integer GB_ORDER_TYPE_TUIHUO = 9;  // 退货订单
 //    public final static Integer GB_ORDER_TYPE_WINDOW = 23;  //窗口订单
 
@@ -59,14 +60,17 @@ public class GbTypeUtils {
     public final static Integer GB_DEP_USER_ADMIN_KUFANG = 3; //库房端
     public final static Integer GB_DEP_USER_ADMIN_KUFANGCAIGOUYUAN = 31; //库房采购员
     public final static Integer GB_DEP_USER_ADMIN_KITCHEN = 4; // 中央厨房端
+    public final static Integer GB_DEP_USER_ADMIN_KITCHENCAIGOUYUAN = 41; // 中央厨房采购员
     public final static Integer GB_DEP_USER_ADMIN_APP_SUPPLIER = 5; // 中央厨房端
     public final static Integer GB_DEP_USER_ADMIN_PEISONGYUAN = 6; // 配送员
+    public final static Integer GB_DEP_USER_ADMIN_YOUHUIJUAN = 7; // 配送员
 
     //1,cost;2waste;3loass;4return
     public final static Integer GB_DEPART_GOODS_STOCK_REDUCE_TYPE_PRODUCE = 1;
     public final static Integer GB_DEPART_GOODS_STOCK_REDUCE_TYPE_WASTE = 2;
     public final static Integer GB_DEPART_GOODS_STOCK_REDUCE_TYPE_LOSS = 3;
     public final static Integer GB_DEPART_GOODS_STOCK_REDUCE_TYPE_RETURN = 4;
+    public final static Integer GB_DEPART_GOODS_STOCK_REDUCE_TYPE_STARS = 5;
 
 
     public final static Integer GB_ORDER_STATUS_NEW = 0;  //新订单
@@ -81,6 +85,8 @@ public class GbTypeUtils {
     public final static Integer GB_ORDER_BUY_STATUS_HAS_PRINTED = 2;  //打印拣货单
     public final static Integer GB_ORDER_BUY_STATUS_HAS_WEIGHT_AND_PRICE = 3;  //
     public final static Integer GB_ORDER_BUY_STATUS_HAS_FINISH_PUR_GOODS = 4;  //
+    public final static Integer GB_ORDER_BUY_STATUS_UN_PAY_FINISH = 5;  //
+    public final static Integer GB_ORDER_BUY_STATUS_HAVE_PAY_FINISH = 6;  //
 
 
     public final static Integer GB_PURCHASE_GOODS_STATUS_NEW = 0;  //新采购商品
@@ -93,9 +99,12 @@ public class GbTypeUtils {
     public final static Integer GB_DIS_PURCHASE_BATCH_UN_READ = -1; //卖方未读
     public final static Integer GB_DIS_PURCHASE_BATCH_HAVE_READ = 0; //卖方已读
     public final static Integer GB_DIS_PURCHASE_BATCH_SELLER_REPLY = 1; //卖方回复
-    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH = 2; //Dis用户完成
-    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY = 3; //Dis用户完成
-    
+    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_WAIT_RECEIVE = 2; //等待收货
+    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY = 3; //收货完成
+
+
+//    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH = 2; //Dis用户完成
+
     
     public final static Integer GB_WEIGHT_GOODS_STATUS_PREPARE = -1;  //
     public final static Integer GB_WEIGHT_GOODS_STATUS_PRINTED = 0;  //
@@ -127,6 +136,9 @@ public class GbTypeUtils {
     public static Integer getGbDepartGoodsStockReduceTypeReturn(){
         return GB_DEPART_GOODS_STOCK_REDUCE_TYPE_RETURN;
     }
+    public static Integer getGbDepartGoodsStockReduceTypeStars(){
+        return GB_DEPART_GOODS_STOCK_REDUCE_TYPE_STARS;
+    }
 
 
     public static Integer getGbDepartmentTypeJicai(){
@@ -148,6 +160,7 @@ public class GbTypeUtils {
 
 
     public static Integer getGbDisGoodsTypeJicai(){ return GB_DIS_GOODS_TYPE_JICAI; }
+    public static Integer getGbDisGoodsTypeSupplier(){ return GB_DIS_GOODS_TYPE_SUPPLIER; }
     public static Integer getGbDisGoodsTypeChuku(){ return GB_DIS_GOODS_TYPE_CHUKU; }
     public static Integer getGbDisGoodsTypeZicai(){ return GB_DIS_GOODS_TYPE_ZICAI; }
     public static Integer getGbDisGoodsTypeKitchen(){ return GB_DIS_GOODS_TYPE_KITCHEN; }
@@ -164,11 +177,12 @@ public class GbTypeUtils {
     public static  Integer getGbOrderTypeChuKuCaiGou() {
         return GB_ORDER_TYPE_CHUKU_CAIGOU;
     }
-    public static  Integer getGbOrderTypeZiCai() {
-        return GB_ORDER_TYPE_ZICAI;
-    }
+    public static  Integer getGbOrderTypeZiCai() { return GB_ORDER_TYPE_ZICAI; }
     public static  Integer getGbOrderTypeKitchen() {
         return GB_ORDER_TYPE_KITCHEN;
+    }
+    public static  Integer getGbOrderTypeKitchenCaiGou() {
+        return GB_ORDER_TYPE_KITCHEN_CAIGOU;
     }
     public static  Integer getGbOrderTypeAppSupplier() {
         return GB_ORDER_TYPE_APP_SUPPLIER;
@@ -191,6 +205,7 @@ public class GbTypeUtils {
     public static Integer getGbDepUserAdminKufangguanliyuan(){ return GB_DEP_USER_ADMIN_KUFANG; }
     public static Integer getGbDepUserAdminKitchenguanliyuan(){ return GB_DEP_USER_ADMIN_KITCHEN; }
     public static Integer getGbDepUserAdminKufangcaigouyuan(){ return GB_DEP_USER_ADMIN_KUFANGCAIGOUYUAN; }
+    public static Integer getGbDepUserAdminKitchencaigouyuan(){ return GB_DEP_USER_ADMIN_KITCHENCAIGOUYUAN; }
     public static Integer getGbDepUserAdminAppSupplier(){ return GB_DEP_USER_ADMIN_APP_SUPPLIER; }
     public static Integer getGbDepUserAdminPeisongyuan(){ return GB_DEP_USER_ADMIN_PEISONGYUAN; }
 
@@ -206,6 +221,8 @@ public class GbTypeUtils {
     public static Integer getGbOrderBuyStatusPrepareing(){ return GB_ORDER_BUY_STATUS_HAS_PRINTED; }
     public static Integer getGbOrderBuyStatusHasWeightAndPrice(){ return GB_ORDER_BUY_STATUS_HAS_WEIGHT_AND_PRICE; }
     public static Integer getGbOrderBuyStatusHasFinishPurGoods(){ return GB_ORDER_BUY_STATUS_HAS_FINISH_PUR_GOODS; }
+    public static Integer getGbOrderBuyStatusUnPayFinish(){ return GB_ORDER_BUY_STATUS_UN_PAY_FINISH; }
+    public static Integer getGbOrderBuyStatusHavePayFinish(){ return GB_ORDER_BUY_STATUS_HAVE_PAY_FINISH; }
 
     public static Integer getGbPurchaseGoodsStatusNew(){ return GB_PURCHASE_GOODS_STATUS_NEW; }
     public static Integer getGbPurchaseGoodsStatusProcurement(){ return GB_PURCHASE_GOODS_STATUS_PROCUREMENT; }
@@ -231,8 +248,11 @@ public class GbTypeUtils {
     public static Integer getGbDisPurchaseBatchSellerReply() {
         return GB_DIS_PURCHASE_BATCH_SELLER_REPLY;
     }
-    public static Integer getGbDisPurchaseBatchDisUserFinish() {
-        return GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH;
+//    public static Integer getGbDisPurchaseBatchDisUserFinish() {
+//        return GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH;
+//    }
+    public static Integer getGbDisPurchaseBatchDisUserWaitReceive() {
+        return GB_DIS_PURCHASE_BATCH_DIS_USER_WAIT_RECEIVE;
     }
     public static Integer getGbDisPurchaseBatchDisUserFinishPay() {
         return GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY;

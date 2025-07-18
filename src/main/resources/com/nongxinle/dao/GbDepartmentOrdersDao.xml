@@ -97,7 +97,8 @@
         and gddg.gb_DDG_department_father_id = #{toDepId}
 
         left join gb_department_orders as newDor on newDor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and newDor.gb_DO_buy_status = 0 and newDor.gb_DO_to_department_id = #{toDepId}  and newDor.gb_DO_department_id != #{toDepId}
+        and newDor.gb_DO_buy_status = 0 and newDor.gb_DO_to_department_id = #{toDepId} and newDor.gb_DO_department_id !=
+        #{toDepId}
         and newDor.gb_DO_weight_goods_id is null
         left join gb_department as ds on ds.gb_department_id = newDor.gb_DO_department_id
         left join gb_department as df on df.gb_department_id = ds.gb_department_father_id
@@ -105,7 +106,8 @@
         left join gb_distributer_weight_goods as pre_gdwg on pre_gdwg.gb_dwg_dis_goods_id = dg.gb_distributer_goods_id
         and pre_gdwg.gb_dwg_status = -1 and pre_gdwg.gb_dwg_dep_id = #{toDepId}
         left join gb_department_orders as pre_dor on pre_dor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and pre_dor.gb_DO_weight_goods_id = pre_gdwg.gb_distributer_weight_goods_id and pre_dor.gb_DO_status &gt; #{dayuStatus}
+        and pre_dor.gb_DO_weight_goods_id = pre_gdwg.gb_distributer_weight_goods_id and pre_dor.gb_DO_status &gt;
+        #{dayuStatus}
         left join gb_department as pre_ds on pre_ds.gb_department_id = pre_dor.gb_DO_department_id
         left join gb_department as pre_df on pre_df.gb_department_id = pre_ds.gb_department_father_id
 
@@ -149,7 +151,8 @@
             </if>
 
         </where>
-        order by dfg.gb_distributer_father_goods_id, dg.gb_dg_goods_pinyin,newDor.gb_DO_department_id,pre_dor.gb_DO_department_id
+        order by dfg.gb_distributer_father_goods_id,
+        dg.gb_dg_goods_pinyin,newDor.gb_DO_department_id,pre_dor.gb_DO_department_id
     </select>
 
     <select id="queryDisOrdersByParams" resultMap="applys">
@@ -163,9 +166,8 @@
         dor.gb_DO_purchase_goods_id
         left join gb_department as gd on gd.gb_department_id = dg.gb_dg_gb_department_id
         left join nx_distributer as nd on nd.nx_distributer_id = dg.gb_dg_nx_distributer_id
-       left join gb_department as  orderDap on   dor.gb_DO_to_department_id = orderDap.gb_department_id
-
-
+        left join gb_department as orderDap on dor.gb_DO_to_department_id = orderDap.gb_department_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.gb_DO_nx_distributer_goods_id
         <where>
             <if test="disId != null">
                 and dor.gb_DO_distributer_id = #{disId}
@@ -180,7 +182,7 @@
                 and dor.gb_DO_status = #{equalStatus}
             </if>
             <if test="dayuStatus != null">
-                and dor.gb_DO_status &gt; #{equalStatus}
+                and dor.gb_DO_status &gt; #{dayuStatus}
             </if>
             <if test="status != null">
                 and dor.gb_DO_status &lt; #{status}
@@ -192,11 +194,14 @@
                 and dor.gb_DO_goods_type = #{goodsType}
             </if>
             <if test="startDate != null">
-                and dor.gb_DO_arrive_date &gt;=  #{startDate}
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
             </if>
 
             <if test="stopDate != null">
-                and dor.gb_DO_arrive_date &lt;=  #{stopDate}
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+            <if test="orderTypeNotEqual != null">
+                and dor.gb_DO_order_type != #{orderTypeNotEqual}
             </if>
             <if test="orderType != null">
                 and dor.gb_DO_order_type = #{orderType}
@@ -261,16 +266,9 @@
                 and dor.gb_DO_dep_dis_goods_id = #{depGoodsId}
             </if>
 
+            order by dor.gb_do_order_type DESC, dor.gb_department_orders_id
 
         </where>
-        <if test="orderBy != null and orderBy == 'time'">
-            order by dor.gb_department_orders_id DESC
-        </if>
-
-
-        <if test="orderBy == null">
-            order by dg.gb_dg_dfg_goods_father_id, dg.gb_dg_goods_py
-        </if>
 
 
     </select>
@@ -361,6 +359,9 @@
         left join gb_distributer_purchase_goods as gdpg on gdpg.gb_distributer_purchase_goods_id =
         dor.gb_DO_purchase_goods_id
         <where>
+            <if test="billId != null">
+                and gb_DO_bill_id = #{billId}
+            </if>
             <if test="disId != null">
                 and gb_DO_distributer_id = #{disId}
             </if>
@@ -422,9 +423,9 @@
     </select>
 
     <resultMap id="gbGoods" type="NxGoodsEntity">
-                <id property="nxGoodsId" column="nx_goods_id"/>
+        <id property="nxGoodsId" column="nx_goods_id"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
-		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+        <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
         <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
         <result property="nxGoodsLevel" column="nx_goods_level"/>
@@ -441,8 +442,8 @@
 
     <resultMap id="orderUser" type="GbDepartmentUserEntity">
         <id property="gbDepartmentUserId" column="gb_department_user_id"/>
-		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
-		<result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+        <result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+        <result property="gbDuCustomerService" column="gb_DU_customer_service"/>
         <result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
         <result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
         <result property="gbDuUrlChange" column="gb_DU_url_change"/>
@@ -536,6 +537,7 @@
     <resultMap id="fatherDepartment" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="dd_gb_department_id"/>
         <result property="gbDepartmentName" column="dd_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="dd_gb_department_attr_name"/>
         <result property="gbDepartmentType" column="dd_gb_department_type"/>
         <result property="gbDepartmentSettleType" column="dd_gb_department_settle_type"/>
         <result property="gbDepartmentFilePath" column="dd_gb_department_file_path"/>
@@ -545,7 +547,8 @@
 
     <resultMap id="orderDepartment" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
-		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
@@ -557,7 +560,6 @@
         <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
         <association property="fatherGbDepartmentEntity" resultMap="fatherDepartment"/>
     </resultMap>
-
 
 
     <resultMap id="purOrder" type="GbDepartmentOrdersEntity">
@@ -582,6 +584,9 @@
 
     <resultMap id="depDisGoods" type="GbDepartmentDisGoodsEntity">
         <id property="gbDepartmentDisGoodsId" column="gb_department_dis_goods_id"/>
+		<result property="gbDdgOrderGoodsName" column="gb_DDG_order_goods_name"/>
+		<result property="gbDdgOrderPriceLevel" column="gb_DDG_order_price_level"/>
+		<result property="gbDdgPrintStandard" column="gb_DDG_print_standard"/>
         <result property="gbDdgGbDisId" column="gb_DDG_gb_dis_id"/>
         <result property="gbDdgDepGoodsName" column="gb_DDG_dep_goods_name"/>
         <result property="gbDdgDepGoodsStandardname" column="gb_DDG_dep_goods_standardname"/>
@@ -610,7 +615,7 @@
         <result property="gbDdgOrderStandard" column="gb_DDG_order_standard"/>
         <result property="gbDdgOrderWeight" column="gb_DDG_order_weight"/>
         <association property="gbDepartmentOrdersEntity" resultMap="purOrder"/>
-     </resultMap>
+    </resultMap>
     <!--    <resultMap id="inDepGoods" type="GbDepartmentIndependentGoodsEntity">-->
     <!--        <id property="gbDepartmentIndependentGoodsId" column="gb_department_independent_goods_id"/>-->
     <!--        <result property="gbDigGoodsName" column="gb_DIG_goods_name"/>-->
@@ -626,10 +631,16 @@
 
     <resultMap id="disGoods" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
-		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+        <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+        <result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+        <result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+        <result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+        <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
         <result property="gbDgGoodsStandardWeight" column="gb_dg_goods_standard_weight"/>
@@ -638,6 +649,7 @@
         <result property="gbDgGoodsPlace" column="gb_dg_goods_place"/>
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+        <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -658,24 +670,29 @@
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
         <association property="gbDepartmentEntity" resultMap="outDep"/>
-        <association property="nxDistributerEntity" resultMap="nxDistributer"/>
+        <association property="nxDistributerGoodsEntity" resultMap="nxDisGoods"/>
+<!--        <association property="nxDistributerEntity" resultMap="nxDistributer"/>-->
         <collection property="gbDistributerStandardEntities" resultMap="disStandards"/>
     </resultMap>
 
     <resultMap id="depStock" type="GbDepartmentGoodsStockEntity">
 
         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+        <result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
+        <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
-		<result property="gbDgsNxDistributerId" column="gb_dgs_nx_distributer_id"/>
-		<result property="gbDgsSellingPrice" column="gb_dgs_selling_price"/>
-		<result property="gbDgsSellingSubtotal" column="gb_dgs_selling_subtotal"/>
+        <result property="gbDgsNxDistributerId" column="gb_dgs_nx_distributer_id"/>
+        <result property="gbDgsSellingPrice" column="gb_dgs_selling_price"/>
+        <result property="gbDgsSellingSubtotal" column="gb_dgs_selling_subtotal"/>
         <result property="gbDgsAfterProfitSubtotal" column="gb_dgs_after_profit_subtotal"/>
-		<result property="gbDgsBetweenPrice" column="gb_dgs_between_price"/>
-		<result property="gbDgsProfitWeight" column="gb_dgs_profit_weight"/>
-		<result property="gbDgsProfitSubtotal" column="gb_dgs_profit_subtotal"/>
-		<result property="gbDgsRestWeightShowStandard" column="gb_dgs_rest_weight_show_standard"/>
+        <result property="gbDgsBetweenPrice" column="gb_dgs_between_price"/>
+        <result property="gbDgsProfitWeight" column="gb_dgs_profit_weight"/>
+        <result property="gbDgsProfitSubtotal" column="gb_dgs_profit_subtotal"/>
+        <result property="gbDgsRestWeightShowStandard" column="gb_dgs_rest_weight_show_standard"/>
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
+        <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -686,6 +703,8 @@
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
         <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsStatus" column="gb_dgs_status"/>
@@ -694,6 +713,8 @@
         <result property="gbDgsDate" column="gb_dgs_date"/>
         <result property="gbDgsWarnFullTime" column="gb_dgs_warn_full_time"/>
         <result property="gbDgsWasteFullTime" column="gb_dgs_waste_full_time"/>
+        <result property="gbDgsWasteTimeQuantumName" column="gb_dgs_waste_time_quantumName"/>
+        <result property="gbDgsWarnTimeQuantumName" column="gb_dgs_warn_time_quantum_name"/>
         <result property="gbDgsFullTime" column="gb_dgs_full_time"/>
         <result property="gbDgsDoWasteFullTime" column="gb_dgs_do_waste_full_time"/>
         <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
@@ -722,8 +743,10 @@
     </resultMap>
 
     <resultMap id="purGoods" type="GbDistributerPurchaseGoodsEntity">
-		<id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
-		<result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
+        <id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
+        <result property="gbDpgPurchaseNxSupplierId" column="gb_DPG_purchase_nx_supplier_id"/>
+        <result property="gbDpgOrdersBillAmount" column="gb_DPG_orders_bill_amount"/>
+        <result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
         <result property="gbDpgOrdersFinishAmount" column="gb_DPG_orders_finish_amount"/>
         <result property="gbDpgDisGoodsId" column="gb_DPG_dis_goods_id"/>
         <result property="gbDpgDisGoodsFatherId" column="gb_DPG_dis_goods_father_id"/>
@@ -737,7 +760,7 @@
         <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
         <result property="gbDpgBuyQuantity" column="gb_DPG_buy_quantity"/>
         <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
-		<result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
         <result property="gbDpgOrdersAmount" column="gb_DPG_orders_amount"/>
         <result property="gbDpgTypeAddUserId" column="gb_DPG_type_add_user_id"/>
         <result property="gbDpgInputType" column="gb_DPG_input_type"/>
@@ -745,7 +768,7 @@
         <result property="gbDpgDistributerId" column="gb_DPG_distributer_id"/>
         <result property="gbDpgInputType" column="gb_DPG_input_type"/>
         <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
-		<result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
         <result property="gbDpgPurchaseFullTime" column="gb_DPG_purchase_full_time"/>
         <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
         <result property="gbDpgPurchaseMonth" column="gb_DPG_purchase_month"/>
@@ -765,8 +788,140 @@
         <result property="gbDpgWasteFullTime" column="gb_DPG_waste_full_time"/>
     </resultMap>
 
-    <resultMap id="applys" type="GbDepartmentOrdersEntity">
+
+    <resultMap id="jrdhSellUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="sell_user_nx_jrdh_user_id"/>
+        <result property="nxJrdhWxAvartraUrl" column="sell_user_nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="sell_user_nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="sell_user_nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="sell_user_nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="sell_user_nx_jrdh_nx_comm_user_id"/>
+        <result property="nxJrdhUrlChange" column="sell_user_nx_jrdh_url_change"/>
+    </resultMap>
+    <resultMap id="jrdhBuyUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+        <result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_comm_user_id"/>
+        <result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+    </resultMap>
+
+    <resultMap id="depUser" type="GbDepartmentUserEntity">
+        <id property="gbDepartmentUserId" column="gb_department_user_id"/>
+        <result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+        <result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+        <result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
+        <result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
+        <result property="gbDuUrlChange" column="gb_DU_url_change"/>
+        <result property="gbDuWxOpenId" column="gb_DU_wx_open_id"/>
+        <result property="gbDuPrintDeviceId" column="gb_DU_print_device_id"/>
+        <result property="gbDuDistributerId" column="gb_DU_distributer_id"/>
+        <result property="gbDuPrintBillDeviceId" column="gb_DU_print_bill_device_id"/>
+    </resultMap>
+
+    <resultMap id="jrdhSupplier" type="NxJrdhSupplierEntity">
+        <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+        <result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+        <result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
+        <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
+        <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
+        <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
+        <result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
+        <result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+        <association property="jrdhUserEntity" resultMap="jrdhSellUser"/>
+        <association property="buyerUserEntity" resultMap="jrdhBuyUser"/>
+        <association property="gbPurUserEntity" resultMap="depUser"/>
+        <collection property="batchEntities" resultMap="purBatch"/>
+    </resultMap>
+
+    <resultMap id="purBatch" type="GbDistributerPurchaseBatchEntity">
+        <id property="gbDistributerPurchaseBatchId" column="gb_distributer_purchase_batch_id"/>
+        <result property="gbDpbNxDistributerId" column="gb_DPB_nx_distributer_id"/>
+        <result property="gbDpbSellUserId" column="gb_DPB_sell_user_id"/>
+        <result property="gbDpbBuyUserId" column="gb_DPB_buy_user_id"/>
+        <result property="gbDpbDistributerId" column="gb_DPB_distributer_id"/>
+        <result property="gbDpbUserAdminType" column="gb_DPB_user_admin_type"/>
+        <result property="gbDpbTime" column="gb_DPB_time"/>
+        <result property="gbDpbDate" column="gb_DPB_date"/>
+        <result property="gbDpbHour" column="gb_DPB_hour"/>
+        <result property="gbDpbMinute" column="gb_DPB_minute"/>
+        <result property="gbDpbStatus" column="gb_DPB_status"/>
+        <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
+        <result property="gbDpbPurUserId" column="gb_DPB_pur_user_id"/>
+        <result property="gbDpbSubtotal" column="gb_DPB_subtotal"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbPaySubtotal" column="gb_DPB_pay_subtotal"/>
+        <result property="gbDpbPurchaseMonth" column="gb_DPB_purchase_month"/>
+        <result property="gbDpbPurchaseWeek" column="gb_DPB_purchase_week"/>
+        <result property="gbDpbPurchaseYear" column="gb_DPB_purchase_year"/>
+        <result property="gbDpbPurchaseFullTime" column="gb_DPB_purchase_full_time"/>
+        <result property="gbDpbPayType" column="gb_DPB_pay_type"/>
+        <result property="gbDpbPurDepartmentId" column="gb_DPB_pur_department_id"/>
+        <result property="gbDpbSupplierId" column="gb_DPB_supplier_id"/>
+        <association property="purchaseGoodsEntity" resultMap="purGoodsFroBatch"/>
+    </resultMap>
+
+    <resultMap id="purGoodsFroBatch" type="GbDistributerPurchaseGoodsEntity">
+        <id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
+        <result property="gbDpgPurchaseNxSupplierId" column="gb_DPG_purchase_nx_supplier_id"/>
+        <result property="gbDpgOrdersBillAmount" column="gb_DPG_orders_bill_amount"/>
+        <result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
+        <result property="gbDpgOrdersFinishAmount" column="gb_DPG_orders_finish_amount"/>
+        <result property="gbDpgDisGoodsId" column="gb_DPG_dis_goods_id"/>
+        <result property="gbDpgDisGoodsFatherId" column="gb_DPG_dis_goods_father_id"/>
+        <result property="gbDpgQuantity" column="gb_DPG_quantity"/>
+        <result property="gbDpgStandard" column="gb_DPG_standard"/>
+        <result property="gbDpgPurUserId" column="gb_DPG_pur_user_id"/>
+        <result property="gbDpgStatus" column="gb_DPG_status"/>
+        <result property="gbDpgBuyPrice" column="gb_DPG_buy_price"/>
+        <result property="gbDpgBuyScalePrice" column="gb_Dpg_buy_scale_price"/>
+        <result property="gbDpgBuyScaleQuantity" column="gb_Dpg_buy_scale_quantity"/>
+        <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
+        <result property="gbDpgBuyQuantity" column="gb_DPG_buy_quantity"/>
+        <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgOrdersAmount" column="gb_DPG_orders_amount"/>
+        <result property="gbDpgTypeAddUserId" column="gb_DPG_type_add_user_id"/>
+        <result property="gbDpgInputType" column="gb_DPG_input_type"/>
+        <result property="gbDpgTime" column="gb_DPG_time"/>
+        <result property="gbDpgDistributerId" column="gb_DPG_distributer_id"/>
+        <result property="gbDpgInputType" column="gb_DPG_input_type"/>
+        <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgPurchaseFullTime" column="gb_DPG_purchase_full_time"/>
+        <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
+        <result property="gbDpgPurchaseMonth" column="gb_DPG_purchase_month"/>
+        <result property="gbDpgPurchaseDate" column="gb_DPG_purchase_date"/>
+        <result property="gbDpgPurchaseYear" column="gb_DPG_purchase_year"/>
+        <result property="gbDpgDisGoodsPriceId" column="gb_DPG_dis_goods_price_id"/>
+        <result property="gbDpgPurUserId" column="gb_DPG_pur_user_id"/>
+        <result property="gbDpgPurchaseDepartmentId" column="gb_DPG_purchase_department_id"/>
+        <result property="gbDpgPurchaseWeek" column="gb_DPG_purchase_week"/>
+        <result property="gbDpgPurchaseWeekYear" column="gb_DPG_purchase_week_year"/>
+        <result property="gbDpgBatchId" column="gb_DPG_batch_id"/>
+        <result property="gbDpgBuyScaleQuantity" column="gb_DPG_buy_scale_quantity"/>
+        <result property="gbDpgBuyScale" column="gb_DPG_buy_scale"/>
+        <result property="gbDpgBuyScalePrice" column="gb_DPG_buy_scale_price"/>
+        <result property="gbDpgBuyPriceReason" column="gb_DPG_buy_price_reason"/>
+        <result property="gbDpgWarnFullTime" column="gb_DPG_warn_full_time"/>
+        <result property="gbDpgWasteFullTime" column="gb_DPG_waste_full_time"/>
+        <association property="gbDepartmentOrdersEntity" resultMap="applysWithDep"/>
+    </resultMap>
+
+    <resultMap id="applysWithDep" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
@@ -826,16 +981,18 @@
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <association property="gbDepartmentUserEntity" resultMap="orderUser"/>
         <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
-        <association property="gbDistributerPurchaseGoodsEntity" resultMap="purGoods"/>
-        <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
-        <association property="stockDepartment" resultMap="stockDep"/>
-        <association property="receiveUserEntity" resultMap="receUser"/>
-        <collection property="goodsStockEntityList" resultMap="depStock"/>
+        <association property="gbDepartmentEntity" resultMap="dep"/>
     </resultMap>
-
-
-    <resultMap id="orders" type="GbDepartmentOrdersEntity">
+    <resultMap id="applysSimple" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
+        <result property="gbDoNxDistributerGoodsId" column="gb_DO_nx_distributer_goods_id"/>
+        <result property="gbDoNxDistributerId" column="gb_DO_nx_distributer_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
@@ -869,18 +1026,159 @@
         <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
         <result property="gbDoDistributerId" column="gb_DO_distributer_id"/>
         <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
-
         <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
-
-      <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
         <result property="gbDoOperationTime" column="gb_DO_operation_time"/>
         <result property="gbDoIsAgent" column="gb_DO_is_agent"/>
         <result property="gbDoPurchaseGoodsId" column="gb_DO_purchase_goods_id"/>
         <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
-
         <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
+        <result property="gbDoNxDistributerId" column="gb_DO_nx_distributer_id"/>
+        <result property="gbDoNxDistributerGoodsId" column="gb_DO_nx_distributer_goods_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
+        <result property="gbDoOrderType" column="gb_DO_order_type"/>
+        <result property="gbDoBillId" column="gb_DO_bill_id"/>
+        <result property="gbDoReceiveUserId" column="gb_DO_receive_user_id"/>
+        <result property="gbDoScalePrice" column="gb_DO_scale_price"/>
+        <result property="gbDoScaleWeight" column="gb_DO_scale_weight"/>
+        <result property="gbDoPurchaseUserId" column="gb_DO_purchase_user_id"/>
+        <result property="gbDoReceiveUserId" column="gb_DO_return_user_id"/>
+        <result property="gbDoWeightTotalId" column="gb_DO_weight_total_id"/>
+        <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
+        <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
+        <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
+        <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
+        <association property="gbDepartmentUserEntity" resultMap="orderUser"/>
+        <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
 
-      <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+    </resultMap>
+    <resultMap id="applys" type="GbDepartmentOrdersEntity">
+        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
+        <result property="gbDoNxDistributerGoodsId" column="gb_DO_nx_distributer_goods_id"/>
+        <result property="gbDoNxDistributerId" column="gb_DO_nx_distributer_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
+        <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
+        <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
+        <result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
+        <result property="gbDoOrderUserId" column="gb_DO_order_user_id"/>
+        <result property="gbDoApplyDate" column="gb_DO_apply_date"/>
+        <result property="gbDoApplyArriveDate" column="gb_DO_apply_arrive_date"/>
+        <result property="gbDoApplyOnlyTime" column="gb_DO_apply_only_time"/>
+        <result property="gbDoApplyFullTime" column="gb_DO_apply_full_time"/>
+        <result property="gbDoArriveOnlyDate" column="gb_DO_arrive_only_date"/>
+        <result property="gbDoArriveDate" column="gb_DO_arrive_date"/>
+        <result property="gbDoArriveWhatDay" column="gb_DO_arrive_what_day"/>
+        <result property="gbDoQuantity" column="gb_DO_quantity"/>
+        <result property="gbDoStandard" column="gb_DO_standard"/>
+        <result property="gbDoDsStandardScale" column="gb_DO_ds_standard_scale"/>
+        <result property="gbDoDsStandardId" column="gb_DO_ds_standard_id"/>
+        <result property="gbDoDsStandardScale" column="gb_DO_ds_standard_scale"/>
+        <result property="gbDoRemark" column="gb_DO_remark"/>
+        <result property="gbDoStatus" column="gb_DO_status"/>
+        <result property="gbDoWeight" column="gb_DO_weight"/>
+        <result property="gbDoScaleWeight" column="gb_DO_scale_weight"/>
+        <result property="gbDoScalePrice" column="gb_DO_scale_price"/>
+        <result property="gbDoPrice" column="gb_DO_price"/>
+        <result property="gbDoSubtotal" column="gb_DO_subtotal"/>
+        <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
+        <result property="gbDoNxGoodsFatherId" column="gb_DO_nx_goods_father_id"/>
+        <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
+        <result property="gbDoDisGoodsId" column="gb_DO_dis_goods_id"/>
+        <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
+        <result property="gbDoDisGoodsFatherId" column="gb_DO_dis_goods_father_id"/>
+        <result property="gbDoDepartmentId" column="gb_DO_department_id"/>
+        <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
+        <result property="gbDoDistributerId" column="gb_DO_distributer_id"/>
+        <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
+        <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoOperationTime" column="gb_DO_operation_time"/>
+        <result property="gbDoIsAgent" column="gb_DO_is_agent"/>
+        <result property="gbDoPurchaseGoodsId" column="gb_DO_purchase_goods_id"/>
+        <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
+        <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
+        <result property="gbDoNxDistributerId" column="gb_DO_nx_distributer_id"/>
+        <result property="gbDoNxDistributerGoodsId" column="gb_DO_nx_distributer_goods_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
+        <result property="gbDoOrderType" column="gb_DO_order_type"/>
+        <result property="gbDoBillId" column="gb_DO_bill_id"/>
+        <result property="gbDoReceiveUserId" column="gb_DO_receive_user_id"/>
+        <result property="gbDoScalePrice" column="gb_DO_scale_price"/>
+        <result property="gbDoScaleWeight" column="gb_DO_scale_weight"/>
+        <result property="gbDoPurchaseUserId" column="gb_DO_purchase_user_id"/>
+        <result property="gbDoReceiveUserId" column="gb_DO_return_user_id"/>
+        <result property="gbDoWeightTotalId" column="gb_DO_weight_total_id"/>
+        <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
+        <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
+        <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
+        <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
+        <association property="gbDepartmentUserEntity" resultMap="orderUser"/>
+        <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxDistributerGoodsEntity" resultMap="nxDisGoods"/>
+        <association property="gbDistributerPurchaseGoodsEntity" resultMap="purGoods"/>
+        <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
+        <association property="stockDepartment" resultMap="stockDep"/>
+        <association property="receiveUserEntity" resultMap="receUser"/>
+        <collection property="goodsStockEntityList" resultMap="depStock"/>
+    </resultMap>
+
+    <resultMap id="orders" type="GbDepartmentOrdersEntity">
+        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
+        <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
+        <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
+        <result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
+        <result property="gbDoOrderUserId" column="gb_DO_order_user_id"/>
+        <result property="gbDoApplyDate" column="gb_DO_apply_date"/>
+        <result property="gbDoApplyArriveDate" column="gb_DO_apply_arrive_date"/>
+        <result property="gbDoApplyOnlyTime" column="gb_DO_apply_only_time"/>
+        <result property="gbDoApplyFullTime" column="gb_DO_apply_full_time"/>
+        <result property="gbDoArriveOnlyDate" column="gb_DO_arrive_only_date"/>
+        <result property="gbDoArriveDate" column="gb_DO_arrive_date"/>
+        <result property="gbDoArriveWhatDay" column="gb_DO_arrive_what_day"/>
+        <result property="gbDoQuantity" column="gb_DO_quantity"/>
+        <result property="gbDoStandard" column="gb_DO_standard"/>
+        <result property="gbDoDsStandardScale" column="gb_DO_ds_standard_scale"/>
+        <result property="gbDoDsStandardId" column="gb_DO_ds_standard_id"/>
+        <result property="gbDoDsStandardScale" column="gb_DO_ds_standard_scale"/>
+        <result property="gbDoRemark" column="gb_DO_remark"/>
+        <result property="gbDoStatus" column="gb_DO_status"/>
+        <result property="gbDoWeight" column="gb_DO_weight"/>
+        <result property="gbDoScaleWeight" column="gb_DO_scale_weight"/>
+        <result property="gbDoScalePrice" column="gb_DO_scale_price"/>
+        <result property="gbDoPrice" column="gb_DO_price"/>
+        <result property="gbDoSubtotal" column="gb_DO_subtotal"/>
+        <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
+        <result property="gbDoNxGoodsFatherId" column="gb_DO_nx_goods_father_id"/>
+        <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
+        <result property="gbDoDisGoodsId" column="gb_DO_dis_goods_id"/>
+        <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
+        <result property="gbDoDisGoodsFatherId" column="gb_DO_dis_goods_father_id"/>
+        <result property="gbDoDepartmentId" column="gb_DO_department_id"/>
+        <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
+        <result property="gbDoDistributerId" column="gb_DO_distributer_id"/>
+        <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
+        <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoOperationTime" column="gb_DO_operation_time"/>
+        <result property="gbDoIsAgent" column="gb_DO_is_agent"/>
+        <result property="gbDoPurchaseGoodsId" column="gb_DO_purchase_goods_id"/>
+        <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
+        <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
         <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
         <result property="gbDoNxDistributerId" column="gb_DO_nx_distributer_id"/>
         <result property="gbDoNxDistributerGoodsId" column="gb_DO_nx_distributer_goods_id"/>
@@ -900,19 +1198,27 @@
         <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
         <result property="gbDoWeightTotalId" column="gb_DO_weight_total_id"/>
+        <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
         <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
         <association property="gbDepartmentEntity" resultMap="orderDepartment"/>
         <collection property="goodsStockEntityList" resultMap="depStock"/>
-     </resultMap>
+    </resultMap>
     <resultMap id="newOrders" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="newDor_gb_department_orders_id"/>
         <result property="gbDoQuantity" column="newDor_gb_DO_quantity"/>
+        <result property="gbDoWeight" column="newDor_gb_DO_weight"/>
+        <result property="gbDoPrice" column="newDor_gb_DO_price"/>
+        <result property="gbDoSubtotal" column="newDor_gb_DO_subtotal"/>
+        <result property="gbDoNxDepartmentOrderId" column="newDor_gb_do_nx_department_order_id"/>
+        <result property="gbDoDisGoodsId" column="newDor_gb_DO_dis_goods_id"/>
+        <result property="gbDoDisGoodsFatherId" column="newDor_gb_DO_dis_goods_father_id"/>
         <result property="gbDoStandard" column="newDor_gb_DO_standard"/>
         <result property="gbDoDsStandardScale" column="newDor_gb_DO_ds_standard_scale"/>
         <result property="gbDoDsStandardId" column="newDor_gb_DO_ds_standard_id"/>
         <result property="gbDoRemark" column="newDor_gb_DO_remark"/>
         <result property="gbDoOrderType" column="newDor_gb_DO_order_type"/>
         <result property="gbDoDepartmentId" column="newDor_gb_DO_department_id"/>
+        <result property="gbDoDepartmentFatherId" column="newDor_gb_DO_department_father_id"/>
         <result property="gbDoToDepartmentId" column="newDor_gb_DO_to_department_id"/>
         <result property="gbDoStatus" column="newDor_gb_DO_status"/>
         <result property="gbDoBuyStatus" column="newDor_gb_DO_buy_status"/>
@@ -920,7 +1226,9 @@
         <result property="gbDoWeightTotalId" column="newDor_gb_DO_weight_total_id"/>
         <result property="gbDoWeightGoodsId" column="newDor_gb_DO_weight_goods_id"/>
         <result property="gbDoPurchaseGoodsId" column="newDor_gb_DO_purchase_goods_id"/>
-        <collection property="gbDepartmentEntity" resultMap="orderDepartment"/>
+        <result property="gbDoNxDistributerId" column="newDor_gb_DO_nx_distributer_id"/>
+        <result property="gbDoNxDistributerGoodsId" column="newDor_gb_DO_nx_distributer_goods_id"/>
+        <association property="gbDepartmentEntity" resultMap="orderDepartment"/>
     </resultMap>
     <resultMap id="selfOrders" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="selfDor_gb_department_orders_id"/>
@@ -1024,11 +1332,16 @@
         <result property="gbDoWeightTotalId" column="weight_gb_DO_weight_total_id"/>
         <result property="gbDoWeightGoodsId" column="weight_gb_DO_weight_goods_id"/>
         <association property="gbDepartmentEntity" resultMap="WeightOrderDepartment"/>
-<!--        <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>-->
+        <!--        <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>-->
     </resultMap>
 
     <resultMap id="ordersWithGoods" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
@@ -1061,18 +1374,14 @@
         <result property="gbDoDepartmentFatherId" column="gb_DO_department_father_id"/>
         <result property="gbDoDistributerId" column="gb_DO_distributer_id"/>
         <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
-
         <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
-
-      <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
         <result property="gbDoOperationTime" column="gb_DO_operation_time"/>
         <result property="gbDoIsAgent" column="gb_DO_is_agent"/>
         <result property="gbDoPurchaseGoodsId" column="gb_DO_purchase_goods_id"/>
         <result property="gbDoDepDisGoodsId" column="gb_DO_dep_dis_goods_id"/>
-
         <result property="gbDoGoodsType" column="gb_DO_goods_type"/>
-
-      <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
+        <result property="gbDoDgsrReturnId" column="gb_DO_dgsr_return_id"/>
         <result property="gbDoNxDepartmentOrderId" column="gb_DO_nx_department_order_id"/>
         <result property="gbDoNxDistributerId" column="gb_DO_nx_distributer_id"/>
         <result property="gbDoNxDistributerGoodsId" column="gb_DO_nx_distributer_goods_id"/>
@@ -1085,8 +1394,8 @@
         <result property="gbDoWeightTotalId" column="gb_DO_weight_total_id"/>
         <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
-
         <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxDistributerGoodsEntity" resultMap="nxDisGoods"/>
     </resultMap>
 
 
@@ -1100,7 +1409,7 @@
     </resultMap>
     <resultMap id="printedWeightTotal" type="GbDistributerWeightTotalEntity">
         <id property="gbDistributerWeightTotalId" column="printed_gb_distributer_weight_total_id"/>
-        <result property="gbGwtStatus"  column="printed_gb_gwt_status"/>
+        <result property="gbGwtStatus" column="printed_gb_gwt_status"/>
         <result property="gbGwtDate" column="printed_gb_gwt_date"/>
         <result property="gbGwtDisId" column="printed_gb_gwt_dis_id"/>
         <result property="gbGwtDepFatherId" column="printed_gb_gwt_dep_father_id"/>
@@ -1110,9 +1419,10 @@
         <result property="gbGwtType" column="printed_gb_gwt_type"/>
         <result property="gbGwtUserId" column="printed_gb_gwt_user_id"/>
     </resultMap>
+
     <resultMap id="deliveryWeightTotal" type="GbDistributerWeightTotalEntity">
         <id property="gbDistributerWeightTotalId" column="delivery_gb_distributer_weight_total_id"/>
-        <result property="gbGwtStatus"  column="delivery_gb_gwt_status"/>
+        <result property="gbGwtStatus" column="delivery_gb_gwt_status"/>
         <result property="gbGwtDate" column="delivery_gb_gwt_status"/>
         <result property="gbGwtDisId" column="delivery_gb_gwt_status"/>
         <result property="gbGwtDepFatherId" column="delivery_gb_gwt_dep_father_id"/>
@@ -1143,10 +1453,16 @@
 
     <resultMap id="disGoodsWithWeightGoods" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
-		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+        <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+        <result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+        <result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+        <result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+        <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
         <result property="gbDgGoodsStandardWeight" column="gb_dg_goods_standard_weight"/>
@@ -1173,18 +1489,25 @@
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+        <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
         <association property="prepareWeightGoods" resultMap="prepareWeightGoods"/>
         <association property="gbDepartmentOrdersEntity" resultMap="selfOrders"/>
         <collection property="printedWeightGoods" resultMap="printedWeightGoods"/>
         <collection property="finishWeightGoods" resultMap="deliveryWeightGoods"/>
         <collection property="gbDepartmentOrdersEntities" resultMap="newOrders"/>
-     </resultMap>
+    </resultMap>
     <resultMap id="disGoodsWithOrders" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+        <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+        <result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+        <result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+        <result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
         <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
@@ -1212,19 +1535,27 @@
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+        <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
         <collection property="gbDepartmentOrdersEntities" resultMap="newOrders"/>
         <collection property="prepareOrderEntities" resultMap="preOrders"/>
         <collection property="weightedOrderEntities" resultMap="weightOrder"/>
-<!--        <collection property="gbDistributerStandardEntities" resultMap="disStandards"/>-->
+        <!--        <collection property="gbDistributerStandardEntities" resultMap="disStandards"/>-->
         <collection property="deliveryOrderEntities" resultMap="deliveryOrder"/>
     </resultMap>
 
     <resultMap id="disGoodsWithOneOrder" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+        <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+        <result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+        <result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+        <result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSort" column="gb_dg_goods_sort"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
         <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
@@ -1252,9 +1583,11 @@
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+        <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
         <association property="gbDepartmentOrdersEntity" resultMap="applys"/>
         <collection property="gbDistributerStandardEntities" resultMap="disStandards"/>
+        <collection property="gbDepartmentOrdersEntities" resultMap="newOrders"/>
     </resultMap>
 
     <resultMap id="unPlanPurchaseOrdersDisFatherGoods" type="GbDistributerFatherGoodsEntity">
@@ -1280,6 +1613,11 @@
 
     <resultMap id="ordersForGoods" type="GbDepartmentOrdersEntity">
         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
         <result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
         <result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
         <result property="gbDoApplyDate" column="gb_DO_apply_date"/>
@@ -1320,7 +1658,7 @@
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
         left join gb_department as dep on dep.gb_department_id = dor.gb_DO_department_father_id
         left join gb_department_goods_stock as dgs on dgs.gb_dgs_gb_department_order_id = dor.gb_department_orders_id
-        left join gb_department_dis_goods as gddg  on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id
+        left join gb_department_dis_goods as gddg on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id
         <where>
             <if test="disId != null">
                 and dor.gb_DO_distributer_id = #{disId}
@@ -1340,6 +1678,7 @@
             <if test="applyDate != null">
                 and dor.gb_DO_apply_date = #{applyDate}
             </if>
+
             <if test="date != null">
                 and dor.gb_DO_arrive_date = #{date}
             </if>
@@ -1444,7 +1783,7 @@
         dor.gb_DO_to_department_id,
         dor.gb_DO_goods_type,
         dor.gb_DO_selling_price,
-         dor.gb_DO_selling_price,
+        dor.gb_DO_selling_price,
         dg.gb_distributer_goods_id,
         dg.gb_dg_goods_name,
         dg.gb_dg_goods_brand,
@@ -1467,7 +1806,7 @@
         left join gb_distributer_standard as gds on gds.gb_DS_dis_goods_id = dg.gb_distributer_goods_id
         left join gb_department_user as du on du.gb_department_user_id = dor.gb_DO_order_user_id
         left join gb_department as ds on ds.gb_department_id = dor.gb_DO_department_id
-         left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_department_order_id = dor.gb_department_orders_id
+        left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_department_order_id = dor.gb_department_orders_id
         <where>
             <if test="disId != null">
                 and dor.gb_DO_distributer_id = #{disId}
@@ -1478,15 +1817,20 @@
             <if test="status != null">
                 and dor.gb_DO_status &lt; #{status}
             </if>
+            <if test="dayuStatus != null">
+                and dor.gb_DO_status &gt; #{dayuStatus}
+            </if>
             <if test="depGoodsId != null">
                 and dor.gb_DO_dep_dis_goods_id = #{depGoodsId}
             </if>
             <if test="startDate != null">
-                and dor.gb_DO_arrive_date &gt;=  #{startDate}
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
             </if>
-
+            <if test="purGoodsId != null">
+                and dor.gb_DO_purchase_goods_id = #{purGoodsId}
+            </if>
             <if test="stopDate != null">
-                and dor.gb_DO_arrive_date &lt;=  #{stopDate}
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
             </if>
 
         </where>
@@ -1502,7 +1846,7 @@
         where gb_DO_nx_department_order_id = #{nxDepartmentOrdersId};
     </select>
     <select id="queryMendianDisOrdersByParams" resultMap="applys">
-        select
+        select * ,
         ds.gb_department_id 'ds_gb_department_id',
         ds.gb_department_name 'ds_gb_department_name',
         ds.gb_department_type 'ds_gb_department_type',
@@ -1513,40 +1857,6 @@
         stockDep.gb_department_id 'stock_gb_department_id',
         stockDep.gb_department_name 'stock_gb_department_name',
 
-        dor.gb_department_orders_id,
-        dor.gb_DO_nx_goods_id,
-        dor.gb_DO_order_user_id,
-        dor.gb_DO_apply_date,
-        dor.gb_DO_apply_only_time,
-        dor.gb_DO_quantity,
-        dor.gb_DO_standard,
-        dor.gb_DO_ds_standard_scale,
-        dor.gb_DO_ds_standard_id,
-        dor.gb_DO_remark,
-        dor.gb_DO_status,
-        dor.gb_DO_buy_status,
-        dor.gb_DO_dgsr_return_id,
-        dor.gb_DO_weight,
-        dor.gb_DO_price,
-        dor.gb_DO_subtotal,
-        dor.gb_DO_apply_full_time,
-        dor.gb_DO_arrive_only_date,
-        dor.gb_DO_nx_goods_father_id,
-        dor.gb_DO_dis_goods_id,
-        dor.gb_DO_department_id,
-        dor.gb_DO_distributer_id,
-        dor.gb_DO_is_agent,
-        dor.gb_DO_purchase_goods_id,
-        dor.gb_DO_dep_dis_goods_id,
-        dor.gb_DO_to_department_id,
-        dor.gb_DO_goods_type,
-        dg.gb_distributer_goods_id,
-        dg.gb_dg_goods_name,
-        dg.gb_dg_goods_brand,
-        dg.gb_dg_goods_detail,
-        dg.gb_dg_goods_place,
-        dg.gb_dg_goods_standardname,
-        dg.gb_dg_goods_standard_weight,
         recUser.gb_department_user_id 'recUser_gb_department_user_id',
         recUser.gb_DU_wx_nick_name 'recUser_gb_DU_wx_nick_name',
         orderUser.gb_department_user_id 'gb_department_user_id',
@@ -1608,11 +1918,20 @@
 
 
     </select>
-    <select id="queryDisOrdersListByParams" resultType="com.nongxinle.entity.GbDepartmentOrdersEntity">
+    <select id="queryDisOrdersListByParams" resultMap="ordersWithGoods">
         select * from gb_department_orders as dor
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
+         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.gb_DO_nx_distributer_goods_id
+
         <where>
             <if test="disId != null">
                 and dor.gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="disGoodsId != null">
+                and dor.gb_DO_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="billId != null">
+                and dor.gb_DO_bill_id = #{billId}
             </if>
             <if test="nxGoodsId != null">
                 and dor.gb_DO_nx_distributer_goods_id = #{nxGoodsId}
@@ -1636,6 +1955,9 @@
                 and dor.gb_DO_buy_status = #{equalBuyStatus}
             </if>
 
+            <if test="orderType != null">
+                and dor.gb_DO_order_type = #{orderType}
+            </if>
             <if test="orderTypeNotEqual != null">
                 and dor.gb_DO_order_type != #{orderTypeNotEqual}
             </if>
@@ -1652,11 +1974,11 @@
                 and dor.gb_DO_dep_dis_goods_id = #{depGoodsId}
             </if>
             <if test="startDate != null">
-                and dor.gb_DO_arrive_date &gt;=  #{startDate}
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
             </if>
 
             <if test="stopDate != null">
-                and dor.gb_DO_arrive_date &lt;=  #{stopDate}
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
             </if>
 
         </where>
@@ -1664,7 +1986,8 @@
 
     <resultMap id="dep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
-		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
@@ -1676,7 +1999,8 @@
     </resultMap>
     <resultMap id="outDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
-		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
@@ -1690,6 +2014,9 @@
         <where>
             <if test="disId != null">
                 and gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="notEqualDepFatherId != null">
+                and gb_DO_department_father_id != #{notEqualDepFatherId}
             </if>
             <if test="depFatherId != null">
                 and gb_DO_department_father_id = #{depFatherId}
@@ -1722,30 +2049,153 @@
             <if test="depType != null">
                 and dep.gb_department_type = #{depType}
             </if>
-<!--            <if test="orDepType != null">-->
-<!--                or dep.gb_department_type = #{orDepType}-->
-<!--            </if>-->
 
-
+            <if test="depFatherIds != null">
+                and gb_DO_department_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
-            order by dep.gb_department_id
+        order by dep.gb_department_id
     </select>
 
 
+    <resultMap id="nxDisGoods" type="NxDistributerGoodsEntity">
+
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+        <result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+        <result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+        <result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+        <result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+        <result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgPullOff" column="nx_dg_pull_off"/>
+        <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+        <result property="nxDgNxFatherId" column="nx_dg_nx_father_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgGoodsPinyin" column="nx_dg_goods_pinyin"/>
+        <result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+        <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+        <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+        <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+    </resultMap>
+
     <resultMap id="nxDistributer" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerManager" column="nx_distributer_manager"/>
         <result property="nxDistributerAddress" column="nx_distributer_address"/>
         <result property="nxDistributerPhone" column="nx_distributer_phone"/>
         <result property="nxDistributerImg" column="nx_distributer_img"/>
         <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
-        <collection property="peisongOrders" resultMap="orders"/>
-
+        <collection property="gbFatherGoodsEntities" resultMap="greatGrandGoods"/>
+        <!--        <collection property="gbDistributerGoods" resultMap="disGoodsWithOrders"/>-->
     </resultMap>
+
+
     <select id="queryGbDepNxDistributerOrder" resultMap="nxDistributer">
-        select * from gb_department_orders as gdo
-        left join nx_distributer as nd on nd.nx_distributer_id = gdo.gb_DO_nx_distributer_id
+        select * ,
+        newDor.gb_department_orders_id 'newDor_gb_department_orders_id',
+        newDor.gb_DO_quantity 'newDor_gb_DO_quantity',
+        newDor.gb_DO_weight 'newDor_gb_DO_weigth',
+        newDor.gb_DO_standard 'newDor_gb_DO_standard',
+        newDor.gb_DO_ds_standard_scale 'newDor_gb_DO_ds_standard_scale',
+        newDor.gb_DO_ds_standard_id 'newDor_gb_DO_ds_standard_id',
+        newDor.gb_DO_remark 'newDor_gb_DO_remark',
+        newDor.gb_DO_status 'newDor_gb_DO_status',
+        newDor.gb_DO_buy_status 'newDor_gb_DO_buy_status',
+        newDor.gb_DO_weight 'newDor_gb_DO_weight',
+        newDor.gb_DO_price 'newDor_gb_DO_price',
+        newDor.gb_DO_subtotal 'newDor_gb_DO_subtotal',
+        newDor.gb_DO_dis_goods_id 'newDor_gb_DO_dis_goods_id',
+        newDor.gb_DO_dis_goods_father_id 'newDor_gb_DO_dis_goods_father_id',
+        newDor.gb_DO_department_id 'newDor_gb_DO_department_id',
+        newDor.gb_DO_department_father_id 'newDor_gb_DO_department_father_id',
+        newDor.gb_DO_to_department_id 'newDor_gb_DO_to_department_id',
+        newDor.gb_DO_order_type 'newDor_gb_DO_order_type',
+        newDor.gb_DO_purchase_goods_id 'newDor_gb_DO_purchase_goods_id',
+        newDor.gb_DO_nx_distributer_id 'newDor_gb_DO_nx_distributer_id',
+        newDor.gb_DO_nx_goods_id 'newDor_gb_DO_nx_goods_id',
+        gd.gb_department_id 'dd_gb_department_id',
+        gd.gb_department_name 'dd_gb_department_name',
+        gd.gb_department_type 'dd_gb_department_type',
+        gd.gb_department_father_id 'dd_gb_department_father_id',
+        gd.gb_department_is_group_dep 'dd_gb_department_is_group_dep',
+        gd.gb_department_settle_type 'dd_gb_department_settle_type',
+        gd.gb_department_attr_name 'dd_gb_department_attr_name',
+        gd.gb_department_name 'dd_gb_department_name',
+
+        ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
+        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
+        ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',
+        ndfgGrant.gb_dfg_father_goods_color 'ndfgGrant_gb_dfg_father_goods_color',
+        ndfgGrant.gb_dfg_father_goods_level 'ndfgGrant_gb_dfg_father_goods_level',
+        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
+        ndfgGrant.gb_dfg_father_goods_sort 'ndfgGrant_gb_dfg_fathers_goods_sort',
+        ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',
+        ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',
+        ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name',
+        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
+        ndfgGreatGrand.gb_dfg_father_goods_sort 'ndfgGreatGrand_gb_dfg_father_goods_sort',
+        ndfgGreatGrand.gb_dfg_father_goods_level 'ndfgGreatGrand_gb_dfg_father_goods_level'
+
+        from gb_department_orders as newDor
+        left join nx_distributer as nd on nd.nx_distributer_id = newDor.gb_DO_nx_distributer_id
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = newDor.gb_DO_dis_goods_id
+        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =
+        newDor.gb_DO_dis_goods_father_id and ndfgGrant.gb_distributer_father_goods_id = gdg.gb_dg_dfg_goods_grand_id
+        left join gb_distributer_father_goods as ndfgGreatGrand on
+        ndfgGreatGrand.gb_distributer_father_goods_id = ndfgGrant.gb_dfg_fathers_father_id
+        left join gb_department as ds on ds.gb_department_id = newDor.gb_DO_department_id
+        left join gb_department as gd on gd.gb_department_id = newDor.gb_DO_department_father_id
+
         <where>
             <if test="disId != null">
                 and gb_DO_distributer_id = #{disId}
@@ -1754,49 +2204,43 @@
             <if test="status != null">
                 and gb_DO_status &lt; #{status}
             </if>
+            <if test="dayuBuyStatus != null">
+                and gb_DO_buy_status &gt; #{dayuBuyStatus}
+            </if>
             <if test="depFatherId != null">
-                and gb_DO_department_father_id  = #{depFatherId}
+                and gb_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="startDate != null">
+                and gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and gb_DO_arrive_date &lt;= #{stopDate}
             </if>
             <if test="toDepId != null">
                 and gb_DO_to_department_id = #{toDepId}
             </if>
-            <if test="nxDis != null and nxDis == 1">
-                and gb_DO_nx_distributer_id != -1
-            </if>
+            <!--            <if test="nxDis != null and nxDis == 1">-->
+            <!--                and gb_DO_nx_distributer_id != -1-->
+            <!--            </if>-->
 
         </where>
+        order by ndfgGreatGrand.gb_dfg_father_goods_sort,ndfgGrant.gb_dfg_father_goods_sort, gdg.gb_dg_goods_sort
     </select>
 
-<!--    <resultMap id="disGoodsWithWeightOrder" type="GbDistributerGoodsEntity">-->
-<!--        <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
-		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>-->
-<!--        <result property="gbDgGoodsName" column="gb_dg_goods_name"/>-->
-<!--        <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>-->
-<!--        <result property="gbDgGoodsStandardWeight" column="gb_dg_goods_standard_weight"/>-->
-<!--        <result property="gbDgGoodsBrand" column="gb_dg_goods_brand"/>-->
-<!--        <result property="gbDgGoodsPlace" column="gb_dg_goods_place"/>-->
-<!--        <result property="gbDgGoodsDetail" column="gb_dg_goods_detail"/>-->
-<!--        <result property="gbDgGoodsPinyin" column="gb_dg_goods_pinyin"/>-->
-<!--        <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>-->
-<!--        <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>-->
-<!--        <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>-->
-<!--        <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>-->
-<!--        <result property="gbDgControlPrice" column="gb_dg_control_price"/>-->
-<!--        <result property="gbDgControlFresh" column="gb_dg_control_fresh"/>-->
-<!--        <result property="gbDgFreshWarnHour" column="gb_dg_fresh_warn_hour"/>-->
-<!--        <result property="gbDgFreshWasteHour" column="gb_dg_fresh_waste_hour"/>-->
-<!--        <association property="gbDepartmentDisGoodsEntity" resultMap="depDisGoods"/>-->
-<!--        <collection property="gbDepartmentOrdersEntities" resultMap="orders"/>-->
-<!--    </resultMap>-->
+
     <resultMap id="weightDisGoods" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
-		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+        <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+        <result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+        <result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+        <result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+        <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
         <result property="gbDgGoodsDetail" column="gb_dg_goods_detail"/>
@@ -1805,6 +2249,7 @@
         <result property="gbDgPullOff" column="gb_dg_pull_off"/>
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+        <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
         <result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
         <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -1838,9 +2283,14 @@
     </resultMap>
     <resultMap id="weightDepDisGoods" type="GbDepartmentDisGoodsEntity">
         <id property="gbDepartmentDisGoodsId" column="gb_department_dis_goods_id"/>
+		<result property="gbDdgOrderGoodsName" column="gb_DDG_order_goods_name"/>
+		<result property="gbDdgOrderPriceLevel" column="gb_DDG_order_price_level"/>
+		<result property="gbDdgPrintStandard" column="gb_DDG_print_standard"/>
         <result property="gbDdgGbDisId" column="gb_DDG_gb_dis_id"/>
         <result property="gbDdgDisGoodsId" column="gb_DDG_dis_goods_id"/>
         <result property="gbDdgDisGoodsFatherId" column="gb_DDG_dis_goods_father_id"/>
+         <result property="gbDdgDisGoodsGrandId" column="gb_DDG_dis_goods_grand_id"/>
+        <result property="gbDdgDisGoodsGreatId" column="gb_DDG_dis_goods_great_id"/>
         <result property="gbDdgDepGoodsName" column="gb_DDG_dep_goods_name"/>
         <result property="gbDdgDepGoodsStandardname" column="gb_DDG_dep_goods_standardname"/>
         <result property="gbDdgGoodsType" column="gb_DDG_goods_type"/>
@@ -1886,62 +2336,99 @@
 
     <select id="queryWeightGoodsByParams" resultMap="weightShelf">
         select * ,
-               ds.gb_department_id 'gb_department_id',
-               ds.gb_department_name 'gb_department_name',
-               ds.gb_department_type 'gb_department_type',
-               ds.gb_department_father_id 'gb_department_father_id',
-               ds.gb_department_is_group_dep 'gb_department_is_group_dep',
-               df.gb_department_id 'dd_gb_department_id',
-               df.gb_department_name 'dd_gb_department_name'
+        ds.gb_department_id 'gb_department_id',
+        ds.gb_department_name 'gb_department_name',
+        ds.gb_department_type 'gb_department_type',
+        ds.gb_department_father_id 'gb_department_father_id',
+        ds.gb_department_is_group_dep 'gb_department_is_group_dep',
+        df.gb_department_id 'dd_gb_department_id',
+        df.gb_department_name 'dd_gb_department_name'
         from gb_department_orders as gdo
-        left join gb_distributer_goods  as gdg on gdg.gb_distributer_goods_id = gdo.gb_DO_dis_goods_id
-        left join gb_distributer_goods_shelf_goods   as gdgsg on gdgsg.gb_DGSG_dis_goods_id = gdg.gb_distributer_goods_id
-         left join gb_distributer_goods_shelf as gdgs on gdgs.gb_distributer_goods_shelf_id = gdgsg.gb_DGSG_shelf_id
-        left join gb_department_dis_goods as gddg  on gddg.gb_department_dis_goods_id = gdgsg.gb_DGSG_dis_goods_id
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdo.gb_DO_dis_goods_id
+        left join gb_distributer_goods_shelf_goods as gdgsg on gdgsg.gb_DGSG_dis_goods_id = gdg.gb_distributer_goods_id
+        left join gb_distributer_goods_shelf as gdgs on gdgs.gb_distributer_goods_shelf_id = gdgsg.gb_DGSG_shelf_id
+        left join gb_department_dis_goods as gddg on gddg.gb_department_dis_goods_id = gdgsg.gb_DGSG_dis_goods_id
         left join gb_department as ds on ds.gb_department_id = gdo.gb_DO_department_id
         left join gb_department as df on df.gb_department_id = gdo.gb_DO_department_father_id
-       <where>
-           <if test="weightId != null">
-               and gdo.gb_DO_weight_total_id = #{weightId}
-           </if>
-           <if test="depFatherId != null">
-               and gb_DO_department_father_id  = #{depFatherId}
-           </if>
-           <if test="orderDepId != null">
-               and gdo.gb_DO_department_father_id = #{orderDepId}
-           </if>
-           <if test="equalBuyStatus != null">
-               and gdo.gb_DO_buy_status = #{equalBuyStatus}
-           </if>
-           <if test="status != null">
-               and gdo.gb_DO_status &lt; #{status}
-           </if>
-             order by gdgs.gb_distributer_goods_shelf_sort,gdgsg.gb_DGSG_sort,df.gb_department_id
-       </where>
-
+        <where>
+            <if test="weightId != null">
+                and gdo.gb_DO_weight_total_id = #{weightId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="orderDepId != null">
+                and gdo.gb_DO_department_father_id = #{orderDepId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and gdo.gb_DO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="status != null">
+                and gdo.gb_DO_status &lt; #{status}
+            </if>
+            order by gdgs.gb_distributer_goods_shelf_sort,gdgsg.gb_DGSG_sort,df.gb_department_id
+        </where>
 
 
     </select>
     <select id="queryGbDepartmentOrderAmount" resultType="java.lang.Integer">
-        select COUNT(*) from gb_department_orders
+        select COUNT(*) from gb_department_orders as dor
         <where>
+            <if test="nxGreatId != null">
+                and dor.gb_DO_nx_goods_great_id = #{nxGreatId}
+            </if>
+            <if test="disId != null">
+                and dor.gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="nxDisId != null">
+                and dor.gb_DO_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.gb_DO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="notOutOrder != null">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
+            <if test="startDate != null">
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+
+            <if test="billId != null">
+                and gb_DO_bill_id = #{billId}
+            </if>
+            <if test="disGoodsGrandId != null">
+                and gb_DO_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="fathersFatherId != null">
+                and gb_DO_dis_goods_father_id = #{fathersFatherId}
+            </if>
             <if test="toDepId != null">
-                and gb_DO_to_department_id  = #{toDepId}
+                and gb_DO_to_department_id = #{toDepId}
             </if>
             <if test="disGoodsId != null">
-                and gb_DO_dis_goods_id  = #{disGoodsId}
+                and gb_DO_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="nxFatherGoodsId != null">
+                and gb_DO_nx_goods_father_id = #{nxFatherGoodsId}
             </if>
             <if test="depId != null">
-                and gb_DO_department_id  = #{depId}
+                and gb_DO_department_id = #{depId}
             </if>
             <if test="depFatherId != null">
-                and gb_DO_department_father_id  = #{depFatherId}
+                and gb_DO_department_father_id = #{depFatherId}
             </if>
             <if test="status != null">
                 and gb_DO_status &lt; #{status}
             </if>
             <if test="equalStatus != null">
                 and gb_DO_status = #{equalStatus}
+            </if>
+            <if test="weightId != null">
+                and gb_DO_weight_total_id = #{weightId}
             </if>
             <if test="equalBuyStatus != null">
                 and gb_DO_buy_status = #{equalBuyStatus}
@@ -1953,6 +2440,9 @@
             <if test="orderType != null">
                 and gb_DO_order_type = #{orderType}
             </if>
+            <if test="notEqualOrderType != null">
+                and gb_DO_order_type != #{notEqualOrderType}
+            </if>
             <if test="dayuBuyStatus != null">
                 and gb_DO_buy_status &gt; #{dayuBuyStatus}
             </if>
@@ -1963,20 +2453,38 @@
             <if test="hasWeight != null and hasWeight == 1">
                 and gb_DO_weight is not null
             </if>
+            <if test="depFatherIds != null">
+                and gb_DO_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </select>
     <select id="queryGbOrdersSubtotal" resultType="java.lang.Double">
-        select SUM(gb_DO_subtotal) from gb_department_orders
+        select SUM(gb_DO_subtotal) from gb_department_orders as dor
         <where>
+
+            <if test="orderType != null">
+                and gb_DO_order_type = #{orderType}
+            </if>
+
+            <if test="nxDisId != null">
+                and gb_DO_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="nxGreatId != null">
+                and gb_DO_nx_goods_great_id = #{nxGreatId}
+            </if>
+            <if test="billId != null">
+                and gb_DO_bill_id = #{billId}
+            </if>
             <if test="toDepId != null">
-                and gb_DO_to_department_id  = #{toDepId}
+                and gb_DO_to_department_id = #{toDepId}
             </if>
             <if test="depFatherId != null">
-                and gb_DO_department_father_id  = #{depFatherId}
+                and gb_DO_department_father_id = #{depFatherId}
             </if>
-            <if test="status != null">
-                and gb_DO_status &lt; #{status}
-            </if>
+
             <if test="equalStatus != null">
                 and gb_DO_status = #{equalStatus}
             </if>
@@ -1985,6 +2493,48 @@
             </if>
             <if test="hasWeight != null and hasWeight == 1">
                 and gb_DO_weight is not null
+            </if>
+
+            <if test="notOutOrder != null and notOutOrder == 1">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
+            <if test="goodsId != null">
+                and dor.gb_DO_dis_goods_id = #{goodsId}
+            </if>
+            <if test="goodsFatherId != null">
+                and dor.gb_DO_dis_goods_father_id = #{goodsFatherId}
+            </if>
+            <if test="disId != null">
+                and dor.gb_DO_distributer_id = #{disId}
+            </if>
+
+            <if test="depId != null">
+                and dor.gb_DO_department_id = #{depId}
+            </if>
+            <if test="equalStatus != null">
+                and dor.gb_DO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.gb_DO_status &gt; #{dayuStatus}
+            </if>
+            <if test="status != null">
+                and dor.gb_DO_status &lt; #{status}
+            </if>
+
+            <if test="startDate != null">
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+
+
+            <if test="depFatherIds != null">
+                and dor.gb_DO_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
             </if>
         </where>
     </select>
@@ -2003,10 +2553,16 @@
 
     <resultMap id="disGoodsWithWeight" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
-		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
-		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
-		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
-		<result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+        <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+        <result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+        <result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+        <result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
+        <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
+        <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
+        <result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
+        <result property="gbDgSellingPrice" column="gb_dg_selling_price"/>
         <result property="gbDgGoodsName" column="gb_dg_goods_name"/>
         <result property="gbDgGoodsStandardname" column="gb_dg_goods_standardname"/>
         <result property="gbDgGoodsDetail" column="gb_dg_goods_detail"/>
@@ -2015,6 +2571,7 @@
         <result property="gbDgPullOff" column="gb_dg_pull_off"/>
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+        <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
         <result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
         <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -2066,14 +2623,15 @@
         from gb_department_orders as weight_dor
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = weight_dor.gb_DO_dis_goods_id
         left join gb_distributer_weight_goods as gdwg on gdwg.gb_dwg_dis_goods_id = dg.gb_distributer_goods_id
-            and gdwg.gb_distributer_weight_goods_id = weight_dor.gb_DO_weight_goods_id
+        and gdwg.gb_distributer_weight_goods_id = weight_dor.gb_DO_weight_goods_id
         left join gb_distributer_father_goods as dfg on dfg.gb_distributer_father_goods_id =
         dg.gb_dg_dfg_goods_father_id
         left join gb_department as ds on ds.gb_department_id = weight_dor.gb_DO_department_id
         left join gb_department as df on df.gb_department_id = ds.gb_department_father_id
-       left join gb_department_dis_goods as gddg  on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id and
-       gddg.gb_DDG_department_id = weight_dor.gb_DO_department_id
-       left join gb_department_goods_stock as gdgs  on gdgs.gb_dgs_gb_department_order_id = weight_dor.gb_department_orders_id
+        left join gb_department_dis_goods as gddg on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id and
+        gddg.gb_DDG_department_id = weight_dor.gb_DO_department_id
+        left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_department_order_id =
+        weight_dor.gb_department_orders_id
         <where>
 
             <if test="weightId != null">
@@ -2092,55 +2650,60 @@
     </resultMap>
     <select id="queryFatherGoods" resultMap="disFatherGoods">
         select * from gb_department_orders as dor
-         left join gb_distributer_goods as gdg  on gdg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
-         left join gb_distributer_father_goods as gdfg  on gdfg.gb_distributer_father_goods_id = gdg.gb_dg_dfg_goods_father_id
-         left join gb_department as dep on dep.gb_department_id = dor.gb_DO_department_id
-         <where>
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
+        left join gb_distributer_father_goods as gdfg on gdfg.gb_distributer_father_goods_id =
+        gdg.gb_dg_dfg_goods_father_id
+        left join gb_department as dep on dep.gb_department_id = dor.gb_DO_department_id
+        <where>
+            <if test="disId != null">
+                and dor.gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="depType != null">
+                and dep.gb_department_type = #{depType}
+            </if>
+            <if test="depId != null">
+                and dor.gb_DO_department_id = #{depId}
+            </if>
+            <if test="equalStatus != null">
+                and dor.gb_DO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.gb_DO_status &gt; #{equalStatus}
+            </if>
+            <if test="status != null">
+                and dor.gb_DO_status &lt; #{status}
+            </if>
 
-
-             <if test="disId != null">
-                 and dor.gb_DO_distributer_id = #{disId}
-             </if>
-             <if test="depType != null">
-                 and dep.gb_department_type = #{depType}
-             </if>
-             <if test="depId != null">
-                 and dor.gb_DO_department_id = #{depId}
-             </if>
-             <if test="equalStatus != null">
-                 and dor.gb_DO_status = #{equalStatus}
-             </if>
-             <if test="dayuStatus != null">
-                 and dor.gb_DO_status &gt; #{equalStatus}
-             </if>
-             <if test="status != null">
-                 and dor.gb_DO_status &lt; #{status}
-             </if>
-
-         </where>
-           order by gdfg.gb_dfg_father_goods_sort
+            <if test="depFatherIds != null">
+                and gb_DO_department_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        order by gdfg.gb_dfg_father_goods_sort
 
     </select>
 
-<!--
-#         weight_ds.gb_department_id 'weight_ds_gb_department_id',
-#         weight_ds.gb_department_name 'weight_ds_gb_department_name',
-#         weight_ds.gb_department_type 'weight_ds_gb_department_type',
-#         weight_ds.gb_department_father_id 'weight_ds_gb_department_father_id',
-#         weight_ds.gb_department_is_group_dep 'weight_ds_gb_department_is_group_dep',
-#         weight_df.gb_department_id 'weight_df_gb_department_id',
-#         weight_df.gb_department_name 'weight_df_gb_department_name'
-#         from  gb_distributer_goods as dg
-#         left join gb_department_orders as weight_dor on dg.gb_distributer_goods_id = weight_dor.gb_DO_dis_goods_id
-#         left join gb_distributer_weight_goods as gdwg on gdwg.gb_dwg_dis_goods_id = dg.gb_distributer_goods_id
-#         left join gb_distributer_father_goods as dfg on dfg.gb_distributer_father_goods_id =
-#         dg.gb_dg_dfg_goods_father_id
-#         left join gb_department as weight_ds on weight_ds.gb_department_id = weight_dor.gb_DO_department_id
-#         left join gb_department as weight_df on weight_df.gb_department_id = weight_ds.gb_department_father_id
-#         left join gb_department_dis_goods as gddg  on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id and
-#         gddg.gb_DDG_department_id = weight_dor.gb_DO_department_id
-#         left join gb_department_goods_stock as gdgs   on gdgs.gb_dgs_gb_department_id = weight_ds.gb_department_id
-#         and gdgs.gb_dgs_gb_dis_goods_id = weight_dor.gb_DO_dis_goods_id-->
+    <!--
+    #         weight_ds.gb_department_id 'weight_ds_gb_department_id',
+    #         weight_ds.gb_department_name 'weight_ds_gb_department_name',
+    #         weight_ds.gb_department_type 'weight_ds_gb_department_type',
+    #         weight_ds.gb_department_father_id 'weight_ds_gb_department_father_id',
+    #         weight_ds.gb_department_is_group_dep 'weight_ds_gb_department_is_group_dep',
+    #         weight_df.gb_department_id 'weight_df_gb_department_id',
+    #         weight_df.gb_department_name 'weight_df_gb_department_name'
+    #         from  gb_distributer_goods as dg
+    #         left join gb_department_orders as weight_dor on dg.gb_distributer_goods_id = weight_dor.gb_DO_dis_goods_id
+    #         left join gb_distributer_weight_goods as gdwg on gdwg.gb_dwg_dis_goods_id = dg.gb_distributer_goods_id
+    #         left join gb_distributer_father_goods as dfg on dfg.gb_distributer_father_goods_id =
+    #         dg.gb_dg_dfg_goods_father_id
+    #         left join gb_department as weight_ds on weight_ds.gb_department_id = weight_dor.gb_DO_department_id
+    #         left join gb_department as weight_df on weight_df.gb_department_id = weight_ds.gb_department_father_id
+    #         left join gb_department_dis_goods as gddg  on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id and
+    #         gddg.gb_DDG_department_id = weight_dor.gb_DO_department_id
+    #         left join gb_department_goods_stock as gdgs   on gdgs.gb_dgs_gb_department_id = weight_ds.gb_department_id
+    #         and gdgs.gb_dgs_gb_dis_goods_id = weight_dor.gb_DO_dis_goods_id-->
     <select id="disGetTodayGoodsOrder" resultMap="disGoodsWithOrders">
         select *,
 
@@ -2188,7 +2751,6 @@
         newDor.gb_DO_to_department_id 'newDor_gb_DO_to_department_id',
         newDor.gb_DO_order_type 'newDor_gb_DO_order_type',
         newDor.gb_DO_purchase_goods_id 'newDor_gb_DO_purchase_goods_id',
-
 
 
         pre_dor.gb_department_orders_id 'pre_gb_department_orders_id',
@@ -2279,35 +2841,44 @@
         left join gb_distributer_standard as gds on gds.gb_DS_dis_goods_id = dg.gb_distributer_goods_id
 
         left join gb_department_orders as newDor on newDor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and newDor.gb_DO_buy_status = 0 and newDor.gb_DO_order_type &lt; #{notOrderType}
+        and newDor.gb_DO_buy_status = 0
         left join gb_department as ds on ds.gb_department_id = newDor.gb_DO_department_id
         left join gb_department as df on df.gb_department_id = ds.gb_department_father_id
         left join gb_department_orders as pre_dor on pre_dor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and pre_dor.gb_DO_buy_status = 1 and pre_dor.gb_DO_status &gt; -1  and pre_dor.gb_DO_status &lt; 4     and pre_dor.gb_DO_order_type  &lt; #{notOrderType}
+        and pre_dor.gb_DO_buy_status = 1 and pre_dor.gb_DO_status &gt; -1 and pre_dor.gb_DO_status &lt; 4
+
         left join gb_department as pre_ds on pre_ds.gb_department_id = pre_dor.gb_DO_department_id
         left join gb_department as pre_df on pre_df.gb_department_id = pre_ds.gb_department_father_id
         left join gb_department_orders as weight_dor on weight_dor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and  weight_dor.gb_DO_buy_status &gt; 2  and  weight_dor.gb_DO_status &lt; 4 and weight_dor.gb_DO_order_type  &lt; #{notOrderType}
+        and weight_dor.gb_DO_buy_status &gt; 2 and weight_dor.gb_DO_status &lt; 4
         left join gb_department as weight_ds on weight_ds.gb_department_id = weight_dor.gb_DO_department_id
         left join gb_department as weight_df on weight_df.gb_department_id = weight_ds.gb_department_father_id
         left join gb_department_orders as pur_dor on pur_dor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
         left join gb_department as pur_ds on pur_ds.gb_department_id = pur_dor.gb_DO_department_id
         left join gb_department as pur_df on pur_df.gb_department_id = pur_ds.gb_department_father_id
         <where>
+
+            <if test="equalBuyStatus != null">
+                and dor.gb_DO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="notOutOrder != null and notOutOrder == 1">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
+
             <if test="disId != null">
                 and dor.gb_DO_distributer_id = #{disId}
             </if>
             <if test="status != null">
-                and dor.gb_DO_status &lt;  #{status}
+                and dor.gb_DO_status &lt; #{status}
             </if>
             <if test="goodsFatherId != null">
-                and dor.gb_DO_dis_goods_father_id =  #{goodsFatherId}
+                and dor.gb_DO_dis_goods_father_id = #{goodsFatherId}
             </if>
             <if test="toDepId != null">
-                and dor.gb_DO_to_department_id  = #{toDepId}
+                and dor.gb_DO_to_department_id = #{toDepId}
             </if>
             <if test="depFatherId != null">
-                and dor.gb_DO_department_father_id  = #{depFatherId}
+                and dor.gb_DO_department_father_id = #{depFatherId}
             </if>
             <if test="status != null">
                 and dor.gb_DO_status &lt; #{status}
@@ -2318,19 +2889,26 @@
             <if test="isSelf != null">
                 and dg.gb_dg_is_self_control = #{isSelf}
             </if>
+            <if test="depFatherIds != null">
+                and dor.gb_DO_department_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
 
         </where>
-        order by dg.gb_dg_goods_py,newDor.gb_DO_department_id,pre_dor.gb_DO_department_id,weight_dor.gb_DO_department_id,pur_dor.gb_DO_department_id
+        order by
+        dg.gb_dg_goods_py,newDor.gb_DO_department_id,pre_dor.gb_DO_department_id,weight_dor.gb_DO_department_id,pur_dor.gb_DO_department_id
 
     </select>
     <select id="queryGbOrdersSellingSubtotal" resultType="java.lang.Double">
         select SUM(gb_DO_selling_subtotal) from gb_department_orders
         <where>
             <if test="toDepId != null">
-                and gb_DO_to_department_id  = #{toDepId}
+                and gb_DO_to_department_id = #{toDepId}
             </if>
             <if test="depFatherId != null">
-                and gb_DO_department_father_id  = #{depFatherId}
+                and gb_DO_department_father_id = #{depFatherId}
             </if>
             <if test="status != null">
                 and gb_DO_status &lt; #{status}
@@ -2346,10 +2924,12 @@
             </if>
         </where>
     </select>
+
     <resultMap id="grandGoods" type="GbDistributerFatherGoodsEntity">
         <id property="gbDistributerFatherGoodsId" column="ndfgGrant_gb_distributer_father_goods_id"/>
         <result property="gbDfgFathersFatherId" column="ndfgGrant_gb_dfg_fathers_father_id"/>
         <result property="gbDfgFatherGoodsName" column="ndfgGrant_gb_dfg_father_goods_name"/>
+        <result property="gbDfgFatherGoodsSort" column="ndfgGrant_gb_dfg_father_goods_sort"/>
         <collection property="fatherGoodsEntities" resultMap="fatherGoodsWithOrder"/>
     </resultMap>
 
@@ -2359,7 +2939,9 @@
         <result property="gbDfgFatherGoodsSort" column="gb_dfg_father_goods_sort"/>
         <collection property="gbDistributerGoodsEntities" resultMap="disGoodsWithOneOrder"/>
 
+
     </resultMap>
+
     <select id="stockGetDepApply" resultMap="grandGoods">
         select *,
         ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
@@ -2367,20 +2949,23 @@
         ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',
         ndfgGrant.gb_dfg_father_goods_color 'ndfgGrant_gb_dfg_father_goods_color',
         ndfgGrant.gb_dfg_father_goods_level 'ndfgGrant_gb_dfg_father_goods_level'
-        from nongxinle.gb_department_orders as gdo
+        from gb_department_orders as gdo
         left join gb_distributer_goods as gdg on gdo.gb_DO_dis_goods_id = gdg.gb_distributer_goods_id
-        left join gb_distributer_father_goods as gdfg on gdfg.gb_distributer_father_goods_id = gdg.gb_dg_dfg_goods_father_id
-        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id = gdfg.gb_dfg_fathers_father_id
 
-        left join gb_department_dis_goods as gddg  on gddg.gb_department_dis_goods_id = gdo.gb_DO_dep_dis_goods_id
-          left join gb_department_goods_stock as gdgs  on gdgs.gb_dgs_gb_department_order_id = gdo.gb_department_orders_id
-          left join gb_distributer_standard as gds   on gds.gb_DS_dis_goods_id = gdg.gb_distributer_goods_id
+        left join gb_distributer_father_goods as gdfg on gdfg.gb_distributer_father_goods_id =
+        gdg.gb_dg_dfg_goods_father_id
+        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =
+        gdfg.gb_dfg_fathers_father_id
+
+        left join gb_department_dis_goods as gddg on gddg.gb_department_dis_goods_id = gdo.gb_DO_dep_dis_goods_id
+        left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_department_order_id = gdo.gb_department_orders_id
+        left join gb_distributer_standard as gds on gds.gb_DS_dis_goods_id = gdg.gb_distributer_goods_id
         <where>
             <if test="toDepId != null">
-                and gb_DO_to_department_id  = #{toDepId}
+                and gb_DO_to_department_id = #{toDepId}
             </if>
             <if test="depFatherId != null">
-                and gb_DO_department_father_id  = #{depFatherId}
+                and gb_DO_department_father_id = #{depFatherId}
             </if>
             <if test="status != null">
                 and gb_DO_status &lt; #{status}
@@ -2397,17 +2982,18 @@
             <if test="hasWeight != null and hasWeight == 1">
                 and gb_DO_weight is not null
             </if>
+
             <if test="weightId != null and weightId == 1">
                 and gb_DO_weight_total_id is not null
             </if>
             <if test="weightId != null and weightId == -1">
-                and gb_DO_weight_total_id is  null
+                and gb_DO_weight_total_id is null
             </if>
             <if test="isSelf != null">
                 and gdg.gb_dg_is_self_control = #{isSelf}
             </if>
         </where>
-          order by gdfg.gb_dfg_father_goods_sort, gdg.gb_dg_goods_pinyin
+        order by gdfg.gb_dfg_father_goods_sort, gdg.gb_dg_goods_pinyin
 
     </select>
     <resultMap id="shelfGoodsUnPurchase" type="GbDistributerGoodsShelfGoodsEntity">
@@ -2538,12 +3124,15 @@
         from gb_department_orders as dor
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
         left join gb_distributer_standard as gds on gds.gb_DS_dis_goods_id = dg.gb_distributer_goods_id
-        left join gb_distributer_goods_shelf_goods as  gdgsg on gdgsg.gb_DGSG_dis_goods_id = dg.gb_distributer_goods_id
+        left join gb_distributer_goods_shelf_goods as gdgsg on gdgsg.gb_DGSG_dis_goods_id = dg.gb_distributer_goods_id
         left join gb_distributer_goods_shelf as gdgs on gdgs.gb_distributer_goods_shelf_id = gdgsg.gb_DGSG_shelf_id
+        and gdgs.gb_distributer_goods_shelf_dep_id = #{toDepId}
         left join gb_department_dis_goods as gddg on gddg.gb_DDG_dis_goods_id = dg.gb_distributer_goods_id
-        and gddg.gb_DDG_department_father_id = #{toDepId} and gddg.gb_department_dis_goods_id = gdgsg.gb_DGSG_dep_dis_goods_id
+        and gddg.gb_DDG_department_father_id = #{toDepId} and gddg.gb_department_dis_goods_id =
+        gdgsg.gb_DGSG_dep_dis_goods_id
         left join gb_department_orders as newDor on newDor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and newDor.gb_DO_buy_status = 0 and newDor.gb_DO_to_department_id = #{toDepId} and newDor.gb_DO_department_id != #{toDepId}
+        and newDor.gb_DO_buy_status = 0 and newDor.gb_DO_to_department_id = #{toDepId} and newDor.gb_DO_department_id !=
+        #{toDepId}
         and newDor.gb_DO_weight_goods_id is null
 
         left join gb_department as ds on ds.gb_department_id = newDor.gb_DO_department_id
@@ -2551,8 +3140,9 @@
         left join gb_distributer_weight_goods as pre_gdwg on pre_gdwg.gb_dwg_dis_goods_id = dg.gb_distributer_goods_id
         and pre_gdwg.gb_dwg_status = -1 and pre_gdwg.gb_dwg_dep_id = #{toDepId}
         left join gb_department_orders as pre_dor on pre_dor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
-        and pre_dor.gb_DO_weight_goods_id = pre_gdwg.gb_distributer_weight_goods_id
-        left join gb_department as pre_ds on pre_ds.gb_department_id = pre_dor.gb_DO_department_id  and pre_dor.gb_DO_department_id != #{toDepId}
+        and pre_dor.gb_DO_weight_goods_id = pre_gdwg.gb_distributer_weight_goods_id and pre_dor.gb_DO_status &lt;3
+        left join gb_department as pre_ds on pre_ds.gb_department_id = pre_dor.gb_DO_department_id and
+        pre_dor.gb_DO_department_id != #{toDepId}
         left join gb_department as pre_df on pre_df.gb_department_id = pre_ds.gb_department_father_id
 
         left join gb_department_orders as selfDor on selfDor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
@@ -2600,21 +3190,38 @@
             </if>
 
         </where>
-        order by gdgs.gb_distributer_goods_shelf_sort, gdgsg.gb_DGSG_sort, newDor.gb_DO_department_id,pre_dor.gb_DO_department_id
+        order by gdgs.gb_distributer_goods_shelf_sort, gdgsg.gb_DGSG_sort,
+        newDor.gb_DO_department_id,pre_dor.gb_DO_department_id
 
 
     </select>
-<!--    <select id="disGetPrintedPurGoodsApply" resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">-->
+    <!--    <select id="disGetPrintedPurGoodsApply" resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">-->
 
-<!--    </select>-->
+    <!--    </select>-->
     <select id="queryOrdersDisGoodsAcount" resultType="java.lang.Integer">
-        select COUNT(*)   from gb_distributer_goods as dg
+        select COUNT(*) from gb_distributer_goods as dg
         left join gb_department_orders as dor on dor.gb_DO_dis_goods_id = dg.gb_distributer_goods_id
+        <if test="nxGreatId != null">
+            and dor.gb_DO_nx_goods_great_id = #{nxGreatId}
+        </if>
         <if test="disId != null">
             and dor.gb_DO_distributer_id = #{disId}
         </if>
         <if test="status != null">
             and dor.gb_DO_status &lt; #{status}
+        </if>
+        <if test="equalBuyStatus != null">
+            and dor.gb_DO_buy_status = #{equalBuyStatus}
+        </if>
+        <if test="notOutOrder != null">
+            and dor.gb_DO_purchase_goods_id != -1
+        </if>
+        <if test="startDate != null">
+            and dor.gb_DO_arrive_date &gt;= #{startDate}
+        </if>
+
+        <if test="stopDate != null">
+            and dor.gb_DO_arrive_date &lt;= #{stopDate}
         </if>
         <if test="buyStatus != null">
             and dor.gb_DO_buy_status &lt; #{buyStatus}
@@ -2652,6 +3259,15 @@
         select * from gb_department_orders as dor
         left join gb_department as dep on dep.gb_department_id = dor.gb_DO_department_father_id
         <where>
+            <if test="nxGreatId != null">
+                and dor.gb_DO_nx_goods_great_id = #{nxGreatId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.gb_DO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="notOutOrder != null">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
             <if test="disId != null">
                 and dor.gb_DO_distributer_id = #{disId}
             </if>
@@ -2672,13 +3288,12 @@
             </if>
 
             <if test="startDate != null">
-                and dor.gb_DO_arrive_date &gt;=  #{startDate}
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
             </if>
 
             <if test="stopDate != null">
-                and dor.gb_DO_arrive_date &lt;=  #{stopDate}
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
             </if>
-
 
             <if test="nxDisGoodsId != null">
                 and dor.gb_DO_nx_distributer_goods_id = #{nxDisGoodsId}
@@ -2688,8 +3303,473 @@
         </where>
     </select>
     <select id="queryReturnOrderByReduceId" resultType="com.nongxinle.entity.GbDepartmentOrdersEntity">
-        select * from gb_department_orders where gb_DO_dgsr_return_id = #{gbDepartmentGoodsStockReduceId}
+        select *
+        from gb_department_orders
+        where gb_DO_dgsr_return_id = #{gbDepartmentGoodsStockReduceId}
     </select>
+
+
+    <!--    <resultMap id="fatherGoods" type="GbDistributerFatherGoodsEntity">-->
+    <!--        <id property="gbDistributerFatherGoodsId" column="gb_distributer_father_goods_id"/>-->
+    <!--        <result property="gbDfgFathersFatherId" column="gb_dfg_fathers_father_id"/>-->
+    <!--        <result property="gbDfgFatherGoodsName" column="gb_dfg_father_goods_name"/>-->
+    <!--        <result property="gbDfgFatherGoodsColor" column="gb_dfg_father_goods_color"/>-->
+    <!--        <result property="gbDfgFatherGoodsSort" column="gb_dfg_father_goods_sort"/>-->
+    <!--        <result property="gbDfgFatherGoodsLevel" column="gb_dfg_father_goods_level"/>-->
+    <!--        <collection property="gbDistributerGoodsEntities" resultMap="disGoods"/>-->
+    <!--    </resultMap>-->
+    <!--    <resultMap id="grandGoods" type="GbDistributerFatherGoodsEntity">-->
+    <!--        <id property="gbDistributerFatherGoodsId" column="ndfgGrant_gb_distributer_father_goods_id"/>-->
+    <!--        <result property="gbDfgFathersFatherId" column="ndfgGrant_gb_dfg_fathers_father_id"/>-->
+    <!--        <result property="gbDfgFatherGoodsName" column="ndfgGrant_gb_dfg_father_goods_name"/>-->
+    <!--        <result property="gbDfgFatherGoodsColor" column="ndfgGrant_gb_dfg_father_goods_color"/>-->
+    <!--        <result property="gbDfgFatherGoodsSort" column="ndfgGrant_gb_dfg_father_goods_sort"/>-->
+    <!--        <result property="gbDfgFatherGoodsLevel" column="ndfgGrant_gb_dfg_father_goods_level"/>-->
+    <!--        <collection property="fatherGoodsEntities" resultMap="fatherGoods"/>-->
+    <!--    </resultMap>-->
+
+    <resultMap id="greatGrandGoods" type="GbDistributerFatherGoodsEntity">
+        <id property="gbDistributerFatherGoodsId" column="ndfgGreatGrand_gb_distributer_father_goods_id"/>
+        <result property="gbDfgFathersFatherId" column="ndfgGreatGrand_gb_dfg_fathers_father_id"/>
+        <result property="gbDfgFatherGoodsName" column="ndfgGreatGrand_gb_dfg_father_goods_name"/>
+        <result property="gbDfgFatherGoodsColor" column="ndfgGreatGrand_gb_dfg_father_goods_color"/>
+        <result property="gbDfgFatherGoodsSort" column="ndfgGreatGrand_gb_dfg_father_goods_sort"/>
+        <result property="gbDfgFatherGoodsLevel" column="ndfgGreatGrand_gb_dfg_father_goods_level"/>
+        <result property="gbDfgFatherGoodsSort" column="ndfgGreatGrand_gb_dfg_father_goods_sort"/>
+        <collection property="fatherGoodsEntities" resultMap="grandGoods"/>
+    </resultMap>
+
+    <select id="queryGreatGrandForJrdh" resultMap="greatGrandGoods">
+        select * ,
+        ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
+        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
+        ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',
+        ndfgGrant.gb_dfg_father_goods_color 'ndfgGrant_gb_dfg_father_goods_color',
+        ndfgGrant.gb_dfg_father_goods_level 'ndfgGrant_gb_dfg_father_goods_level',
+        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
+        ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',
+        ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',
+        ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name',
+        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
+        ndfgGreatGrand.gb_dfg_father_goods_level 'ndfgGreatGrand_gb_dfg_father_goods_level'
+        from gb_department_orders as dor
+        left join gb_distributer_father_goods as ndfg on ndfg.gb_distributer_father_goods_id =
+        dor.gb_DO_dis_goods_father_id
+        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =
+        ndfg.gb_dfg_fathers_father_id
+        left join gb_distributer_father_goods as ndfgGreatGrand on
+        ndfgGreatGrand.gb_distributer_father_goods_id = ndfgGrant.gb_dfg_fathers_father_id
+        <where>
+            <if test="nxGreatId != null">
+                and dor.gb_DO_nx_goods_great_id = #{nxGreatId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.gb_DO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="notOutOrder != null and notOutOrder == 1">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
+
+            <if test="disId != null">
+                and dor.gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and dor.gb_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and dor.gb_DO_department_id = #{depId}
+            </if>
+            <if test="equalStatus != null">
+                and dor.gb_DO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.gb_DO_status &gt; #{equalStatus}
+            </if>
+            <if test="status != null">
+                and dor.gb_DO_status &lt; #{status}
+            </if>
+
+            <if test="startDate != null">
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+
+
+            <if test="depFatherIds != null">
+                and dor.gb_DO_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+
+    <select id="querySupplierByOrdersParams" resultMap="jrdhSupplier">
+        select *,
+        sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+        sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+        sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+        from gb_department_orders as dor
+        left join gb_department as gd on gd.gb_department_id = dor.gb_DO_department_father_id
+        left join gb_distributer_purchase_goods as gdpg on gdpg.gb_distributer_purchase_goods_id =
+        dor.gb_DO_purchase_goods_id
+        left join gb_distributer_purchase_batch as gdpb on gdpb.gb_distributer_purchase_batch_id = gdpg.gb_DPG_batch_id
+        left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = gdpb.gb_DPB_supplier_id
+        left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = njs.nx_jrdhs_user_id
+        left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = njs.nx_jrdhs_nx_jrdh_buy_user_id
+        left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_gb_pur_user_id
+        <where>
+            <if test="nxGreatId != null">
+                and dor.gb_DO_nx_goods_great_id = #{nxGreatId}
+            </if>
+            <if test="equalBuyStatus != null">
+                and dor.gb_DO_buy_status = #{equalBuyStatus}
+            </if>
+            <if test="notOutOrder != null and notOutOrder == 1">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
+
+            <if test="goodsId != null">
+                and dor.gb_DO_dis_goods_id = #{goodsId}
+            </if>
+            <if test="disId != null">
+                and dor.gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and dor.gb_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and dor.gb_DO_department_id = #{depId}
+            </if>
+            <if test="equalStatus != null">
+                and dor.gb_DO_status = #{equalStatus}
+            </if>
+            <if test="dayuStatus != null">
+                and dor.gb_DO_status &gt; #{equalStatus}
+            </if>
+            <if test="status != null">
+                and dor.gb_DO_status &lt; #{status}
+            </if>
+
+            <if test="startDate != null">
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+
+
+            <if test="depFatherIds != null">
+                and dor.gb_DO_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="selectLastOrder" resultType="com.nongxinle.entity.GbDepartmentOrdersEntity">
+
+        SELECT
+            t.gb_DO_dis_goods_id  AS gbDoDisGoodsId,
+            t.gb_DO_quantity      AS gbDoQuantity,
+            t.gb_DO_apply_date    AS gbDoApplyDate,
+            t.gb_DO_standard    AS gbDoStandard
+        FROM (
+                 SELECT
+                     gb_DO_dis_goods_id,
+                     gb_DO_quantity,
+                     gb_DO_apply_date,
+                     gb_DO_standard,
+                     ROW_NUMBER() OVER (
+                         PARTITION BY gb_DO_dis_goods_id
+                         ORDER BY gb_DO_apply_date DESC
+                         ) AS rn
+                 FROM gb_department_orders
+                 <where>
+                     <if test="depId != null">
+                         AND gb_DO_department_id    = #{depId}
+                     </if>
+                     <if test="gid != null">
+                         AND gb_DO_dis_goods_id      = #{gid}
+                     </if>
+                 </where>
+
+
+             ) t
+        WHERE t.rn = 1
+    </select>
+    <select id="selectFrequentGoods" resultType="java.lang.Integer">
+        SELECT gb_DO_dis_goods_id
+        FROM gb_department_orders
+        WHERE gb_DO_department_id = #{depId}
+          AND gb_DO_apply_date >= CURDATE() - INTERVAL #{windowDays} DAY
+        GROUP BY gb_DO_dis_goods_id
+        HAVING COUNT(*) >= #{minTimes} order by gb_DO_dis_goods_id
+
+    </select>
+    <select id="selectDailyUsage" resultType="com.nongxinle.entity.DailyUsage">
+        SELECT gb_DO_apply_date AS date,
+               SUM(gb_DO_quantity) AS qty
+        FROM gb_department_orders
+
+
+         <where>
+             <if test="depId != null">
+                 and gb_DO_department_id = #{depId}
+             </if>
+             <if test="gid != null">
+                 AND gb_DO_dis_goods_id  = #{gid}
+             </if>
+             <if test="windowDays != null">
+                 AND gb_DO_apply_date >= CURDATE() - INTERVAL #{windowDays} DAY
+             </if>
+         </where>
+        GROUP BY gb_DO_apply_date
+    </select>
+    <select id="queryGoodsIds" resultType="java.lang.Integer">
+        select gb_DO_dis_goods_id from gb_department_orders
+        <where>
+            <if test="depId != null">
+                and gb_DO_department_id = #{depId}
+            </if>
+            <if test="date != null">
+                and gb_DO_arrive_date = #{date}
+            </if>
+            <if test="status != null">
+                and gb_DO_status &lt; #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectFrequentGoodsCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM (
+                 SELECT h.gb_DO_dis_goods_id
+                 FROM gb_department_orders h
+                          INNER JOIN gb_distributer_goods g ON h.gb_DO_dis_goods_id = g.gb_distributer_goods_id
+                          INNER JOIN gb_distributer_father_goods f ON g.gb_dg_dfg_goods_father_id = f.gb_distributer_father_goods_id
+                          LEFT JOIN gb_distributer_father_goods gf ON f.gb_dfg_fathers_father_id = gf.gb_distributer_father_goods_id
+                          LEFT JOIN gb_distributer_father_goods ggf ON gf.gb_dfg_fathers_father_id = ggf.gb_distributer_father_goods_id
+                 WHERE h.gb_DO_department_id = #{depId}
+                   AND h.gb_DO_apply_date >= DATE_SUB(CURDATE(), INTERVAL #{windowDays} DAY)
+                 GROUP BY h.gb_DO_dis_goods_id
+                 HAVING COUNT(*) >= #{minTimes}
+             ) t
+    </select>
+
+    <select id="selectFrequentGoodsWithPage" resultType="java.lang.Integer">
+
+        SELECT *
+        FROM (
+        SELECT
+        h.gb_DO_dis_goods_id,
+        COALESCE(ggf.gb_dfg_father_goods_sort, 0) AS ggf_sort,
+        COALESCE(gf.gb_dfg_father_goods_sort, 0) AS gf_sort,
+        COALESCE(f.gb_dfg_father_goods_sort, 0) AS f_sort,
+        COUNT(*) as cnt
+        FROM gb_department_orders h
+        INNER JOIN gb_distributer_goods g ON h.gb_DO_dis_goods_id = g.gb_distributer_goods_id
+        INNER JOIN gb_distributer_father_goods f ON g.gb_dg_dfg_goods_father_id = f.gb_distributer_father_goods_id
+        LEFT JOIN gb_distributer_father_goods gf ON f.gb_dfg_fathers_father_id = gf.gb_distributer_father_goods_id
+        LEFT JOIN gb_distributer_father_goods ggf ON gf.gb_dfg_fathers_father_id = ggf.gb_distributer_father_goods_id
+        WHERE h.gb_DO_department_id = #{depId}
+        AND h.gb_DO_apply_date >= DATE_SUB(CURDATE(), INTERVAL #{windowDays} DAY)
+        GROUP BY h.gb_DO_dis_goods_id
+        HAVING cnt >= #{minTimes}
+        ) t
+        ORDER BY
+        t.ggf_sort,
+        t.gf_sort,
+        t.f_sort
+        <if test="limit != null and offset != null">
+            LIMIT #{limit} OFFSET #{offset}
+        </if>
+
+
+
+<!--        SELECT DISTINCT h.gb_DO_dis_goods_id-->
+<!--        FROM gb_department_orders h-->
+<!--        INNER JOIN gb_distributer_goods g ON h.gb_DO_dis_goods_id = g.gb_distributer_goods_id-->
+<!--        INNER JOIN gb_distributer_father_goods f ON g.gb_dg_dfg_goods_father_id = f.gb_distributer_father_goods_id-->
+<!--        LEFT JOIN gb_distributer_father_goods gf ON f.gb_dfg_fathers_father_id = gf.gb_distributer_father_goods_id-->
+<!--        LEFT JOIN gb_distributer_father_goods ggf ON gf.gb_dfg_fathers_father_id = ggf.gb_distributer_father_goods_id-->
+<!--        WHERE h.gb_DO_department_id = #{depId}-->
+<!--        AND h.gb_DO_apply_date >= DATE_SUB(CURDATE(), INTERVAL #{windowDays} DAY)-->
+<!--        GROUP BY h.gb_DO_dis_goods_id-->
+<!--        HAVING COUNT(*) >= #{minTimes}-->
+<!--        ORDER BY-->
+<!--        COALESCE(ggf.gb_dfg_father_goods_sort, 0),-->
+<!--        COALESCE(gf.gb_dfg_father_goods_sort, 0),-->
+<!--        COALESCE(f.gb_dfg_father_goods_sort, 0)-->
+<!--        <if test="limit != null and offset != null">-->
+<!--            LIMIT #{limit} OFFSET #{offset}-->
+<!--        </if>-->
+
+    </select>
+    <select id="queryDisHistoryOrdersByParamsForAi" resultType="com.nongxinle.entity.GbDepartmentOrdersEntity">
+        SELECT
+        gb_department_orders_id,
+        gb_DO_dis_goods_id,
+        gb_DO_quantity,
+        gb_DO_standard,
+        gb_DO_apply_date
+        FROM  gb_department_orders dor
+        <where>
+            <if test="disGoodsId != null">
+                AND dor.gb_DO_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="depId != null">
+                AND dor.gb_DO_department_id = #{depId}
+            </if>
+        </where>
+        ORDER BY dor.gb_DO_apply_date DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+
+    </select>
+
+
+    <resultMap id="grandGoodsForAi" type="GbDistributerFatherGoodsEntity">
+        <id property="gbDistributerFatherGoodsId" column="gb_distributer_father_goods_id"/>
+        <result property="gbDfgFathersFatherId" column="gb_dfg_fathers_father_id"/>
+        <result property="gbDfgFatherGoodsName" column="gb_dfg_father_goods_name"/>
+        <result property="gbDfgFatherGoodsImg" column="gb_dfg_father_goods_img"/>
+        <result property="gbDfgNxGoodsId" column="gb_dfg_nx_goods_id"/>
+        <result property="gbDfgFatherGoodsSort" column="gb_dfg_father_goods_sort"/>
+        <result property="gbDfgFatherGoodsColor" column="gb_dfg_father_goods_color"/>
+        <collection property="gbDistributerGoodsEntities" resultMap="disGoodsWithOrders"/>
+    </resultMap>
+    <select id="queryGrandGoodsOrder" resultMap="grandGoodsForAi">
+        select
+        dor.*,
+        ndg.*,
+        ngdf.*,
+        ngds.*,
+        grand.gb_distributer_father_goods_id,
+        grand.gb_dfg_father_goods_name,
+        grand.gb_dfg_fathers_father_id,
+        grand.gb_dfg_father_goods_sort,
+        grand.gb_dfg_father_goods_color,
+
+        greatGrand.gb_distributer_father_goods_id,
+        greatGrand.gb_dfg_father_goods_name,
+        greatGrand.gb_dfg_fathers_father_id,
+        greatGrand.gb_dfg_father_goods_sort,
+        greatGrand.gb_dfg_father_goods_color,
+
+        ngdf.gb_department_id 'dd_gb_department_id',
+        ngdf.gb_department_name 'dd_gb_department_name',
+        ngdf.gb_department_attr_name 'dd_gb_department_attr_name',
+        ngds.gb_department_id 'nds_gb_department_id',
+        ngds.gb_department_name 'nds_gb_department_name',
+        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
+        ngds.gb_department_type 'nds_gb_department_type',
+        ngds.gb_department_father_id 'nds_gb_department_father_id',
+        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
+        ngdf.gb_department_id 'ndf_dd_gb_department_id',
+        ngdf.gb_department_name 'ndf_dd_gb_department_name',
+        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name'
+
+        from gb_department_orders as dor
+
+        left join gb_department as ngds on ngds.gb_department_id = dor.gb_DO_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = dor.gb_DO_department_father_id
+        left join gb_distributer_goods as ndg on ndg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
+        left join gb_distributer_father_goods as grand on dor.gb_DO_dis_goods_grand_id =
+        grand.gb_distributer_father_goods_id
+        left join gb_distributer_father_goods as greatGrand on greatGrand.gb_distributer_father_goods_id =
+        grand.gb_dfg_fathers_father_id
+
+
+        <where>
+            <if test="disId != null">
+                and dor.gb_DO_distributer_id = #{disId}
+            </if>
+            <if test="goodsType != null">
+                and dor.gb_DO_goods_type = #{goodsType}
+            </if>
+            <if test="gbDepFatherId != null">
+                and dor.gb_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="gbDepId != null">
+                and dor.gb_DO_gb_department_id = #{gbDepId}
+            </if>
+            <if test="depId != null">
+                and dor.gb_DO_department_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                and dor.gb_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="resFatherId != null">
+                and dor.gb_DO_nx_comm_restraunt_father_id = #{resFatherId}
+            </if>
+            <if test="gbDepFatherId != null">
+                and dor.gb_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+
+            <if test="status != null">
+                and dor.gb_DO_status &lt; #{status}
+            </if>
+            <if test="grandId != null">
+                and dor.gb_DO_dis_goods_grand_id = #{grandId}
+            </if>
+            <if test="purStatus != null">
+                and dor.gb_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="dayuPurStatus != null">
+                and dor.gb_DO_purchase_status &gt; #{dayuPurStatus}
+            </if>
+            <if test="equalStatus != null">
+                and dor.gb_DO_status = #{equalStatus}
+            </if>
+            <if test="equalPurStatus != null">
+                and dor.gb_DO_purchase_status = #{equalPurStatus}
+            </if>
+
+            <if test="arriveDate != null">
+                and dor.gb_DO_arrive_date = #{arriveDate}
+            </if>
+            <if test="startDate != null">
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+            <if test="arriveDate != null">
+                and dor.gb_DO_arrive_date = #{arriveDate}
+            </if>
+            <if test="startDate != null">
+                and dor.gb_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.gb_DO_arrive_date &lt;= #{stopDate}
+            </if>
+            <if test="purType != null and purType == -1">
+                and dor.gb_DO_purchase_goods_id is null
+            </if>
+            <if test="purType != null and purType == 0">
+                and dor.gb_DO_purchase_goods_id = -1
+            </if>
+            <if test="purType != null and purType == 1">
+                and dor.gb_DO_purchase_goods_id != -1
+            </if>
+
+        </where>
+        order by greatGrand.gb_dfg_father_goods_sort, grand.gb_dfg_father_goods_sort,
+         dor.gb_department_orders_id
+
+    </select>
+
 
     <!-- and pre_dor.gb_DO_buy_status = 1 and pre_dor.gb_DO_to_department_id = #{toDepId}
             and pre_dor.gb_DO_status &lt; 3 and pre_dor.gb_DO_department_id != #{toDepId}-->
@@ -2702,6 +3782,7 @@
          `gb_DO_nx_goods_father_id`,
          `gb_DO_dis_goods_id`,
          `gb_DO_dis_goods_father_id`,
+         `gb_DO_dis_goods_grand_id`,
          `gb_DO_dep_dis_goods_id`,
          `gb_DO_quantity`,
          `gb_DO_standard`,
@@ -2750,14 +3831,18 @@
          `gb_DO_selling_subtotal`,
          `gb_DO_weight_goods_id`,
          `gb_DO_price_different`,
-         `gb_DO_dgsr_return_id`
-
+         `gb_DO_dgsr_return_id`,
+         `gb_DO_nx_goods_grand_id`,
+         `gb_DO_nx_goods_great_id`,
+         `gb_DO_print_standard`,
+         `gb_DO_cost_price_level`
          )
         values (#{gbDepartmentOrdersId},
                 #{gbDoNxGoodsId},
                 #{gbDoNxGoodsFatherId},
                 #{gbDoDisGoodsId},
                 #{gbDoDisGoodsFatherId},
+                #{gbDoDisGoodsGrandId},
                 #{gbDoDepDisGoodsId},
                 #{gbDoQuantity},
                 #{gbDoStandard},
@@ -2806,9 +3891,11 @@
                 #{gbDoSellingSubtotal},
                 #{gbDoWeightGoodsId},
                 #{gbDoPriceDifferent},
-                #{gbDoDgsrReturnId}
-
-
+                #{gbDoDgsrReturnId},
+                #{gbDoNxGoodsGrandId},
+                #{gbDoNxGoodsGreatId},
+                #{gbDoPrintStandard},
+                #{gbDoCostPriceLevel}
                 )
     </insert>
 
@@ -2819,6 +3906,7 @@
             <if test="gbDoNxGoodsFatherId != null">`gb_DO_nx_goods_father_id` = #{gbDoNxGoodsFatherId},</if>
             <if test="gbDoDisGoodsId != null">`gb_DO_dis_goods_id` = #{gbDoDisGoodsId},</if>
             <if test="gbDoDisGoodsFatherId != null">`gb_DO_dis_goods_father_id` = #{gbDoDisGoodsFatherId},</if>
+            <if test="gbDoDisGoodsGrandId != null">`gb_DO_dis_goods_grand_id` = #{gbDoDisGoodsGrandId},</if>
             <if test="gbDoDepDisGoodsId != null">`gb_DO_dep_dis_goods_id` = #{gbDoDepDisGoodsId},</if>
             <if test="gbDoQuantity != null">`gb_DO_quantity` = #{gbDoQuantity},</if>
             <if test="gbDoStandard != null">`gb_DO_standard` = #{gbDoStandard},</if>
@@ -2829,7 +3917,7 @@
             <if test="gbDoDepartmentId != null">`gb_DO_department_id` = #{gbDoDepartmentId},</if>
             <if test="gbDoDepartmentFatherId != null">`gb_DO_department_father_id` = #{gbDoDepartmentFatherId},</if>
             <if test="gbDoDistributerId != null">`gb_DO_distributer_id` = #{gbDoDistributerId},</if>
-            <if test="gbDoBillId != null">`gb_DO_bill_id` = #{gbDoBillId},</if>
+            <if test="gbDoBillId != '-99'">`gb_DO_bill_id` = #{gbDoBillId},</if>
             <if test="gbDoStatus != null">`gb_DO_status` = #{gbDoStatus},</if>
             <if test="gbDoOrderUserId != null">`gb_DO_order_user_id` = #{gbDoOrderUserId},</if>
             <if test="gbDoPickUserId != '-99'">`gb_DO_pick_user_id` = #{gbDoPickUserId},</if>
@@ -2851,7 +3939,8 @@
             <if test="gbDoNxDistributerId != null">`gb_DO_nx_distributer_id` = #{gbDoNxDistributerId},</if>
             <if test="gbDoNxDistributerGoodsId != null">`gb_DO_nx_distributer_goods_id` = #{gbDoNxDistributerGoodsId},
             </if>
-            <if test="gbDoNxDepartmentOrderId != null">`gb_DO_nx_department_order_id` = #{gbDoNxDepartmentOrderId},</if>
+            <if test="gbDoNxDepartmentOrderId != '-99'">`gb_DO_nx_department_order_id` = #{gbDoNxDepartmentOrderId},
+            </if>
             <if test="gbDoToDepartmentId != null">`gb_DO_to_department_id` = #{gbDoToDepartmentId},</if>
             <if test="gbDoCostSubtotal != '-99'">`gb_DO_cost_subtotal` = #{gbDoCostSubtotal},</if>
             <if test="gbDoPurchaseGoodsId != '-99'">`gb_DO_purchase_goods_id` = #{gbDoPurchaseGoodsId},</if>
@@ -2871,6 +3960,10 @@
             <if test="gbDoSellingSubtotal != null">`gb_DO_selling_subtotal` = #{gbDoSellingSubtotal},</if>
             <if test="gbDoPriceDifferent != null">`gb_DO_price_different` = #{gbDoPriceDifferent},</if>
             <if test="gbDoDgsrReturnId != null">`gb_DO_dgsr_return_id` = #{gbDoDgsrReturnId},</if>
+            <if test="gbDoNxGoodsGrandId != null">`gb_DO_nx_goods_grand_id` = #{gbDoNxGoodsGrandId},</if>
+            <if test="gbDoNxGoodsGreatId != null">`gb_DO_nx_goods_great_id` = #{gbDoNxGoodsGreatId},</if>
+            <if test="gbDoPrintStandard != null">`gb_DO_print_standard` = #{gbDoPrintStandard},</if>
+            <if test="gbDoCostPriceLevel != null">`gb_DO_cost_price_level` = #{gbDoCostPriceLevel},</if>
             <if test="gbDoArriveDate != null">`gb_DO_arrive_date` = #{gbDoArriveDate}</if>
         </set>
         where gb_department_orders_id = #{gbDepartmentOrdersId}

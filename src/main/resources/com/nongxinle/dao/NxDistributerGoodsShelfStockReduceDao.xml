@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerGoodsShelfStockReduceDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		select * from nx_distributer_goods_shelf_stock_reduce where nx_distributer_goods_shelf_stock_reduce_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		select * from nx_distributer_goods_shelf_stock_reduce 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_goods_shelf_stock_reduce 
+	</select>
+	<select id="queryReduceListByParams"
+			resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		select * from nx_distributer_goods_shelf_stock_reduce
+		<where>
+			<if test="orderId != null">
+				and nx_dgssr_nx_dep_order_id = #{orderId}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		insert into nx_distributer_goods_shelf_stock_reduce
+		(
+			`nx_distributer_goods_shelf_stock_reduce_id`, 
+			`nx_dgssr_nx_distributer_id`, 
+			`nx_dgssr_nx_dis_goods_id`, 
+			`nx_dgssr_nx_dis_goods_father_id`, 
+			`nx_dgssr_nx_stock_id`, 
+			`nx_dgssr_date`, 
+			`nx_dgssr_week`, 
+			`nx_dgssr_month`, 
+			`nx_dgssr_full_time`, 
+			`nx_dgssr_type`, 
+			`nx_dgssr_do_user_id`, 
+			`nx_dgssr_cost_weight`, 
+			`nx_dgssr_cost_subtotal`, 
+			`nx_dgssr_waste_weight`, 
+			`nx_dgssr_waste_subtotal`, 
+			`nx_dgssr_loss_weight`, 
+			`nx_dgssr_loss_subtotal`, 
+			`nx_dgssr_return_weight`, 
+			`nx_dgssr_return_subtotal`, 
+			`nx_dgssr_produce_weight`, 
+			`nx_dgssr_produce_subtotal`, 
+			`nx_dgssr_nx_pur_goods_id`, 
+			`nx_dgssr_goods_inventory_type`, 
+			`nx_dgssr_status`,
+			`nx_dgssr_nx_dep_order_id`
+		)
+		values
+		(
+			#{nxDistributerGoodsShelfStockReduceId}, 
+			#{nxDgssrNxDistributerId}, 
+			#{nxDgssrNxDisGoodsId}, 
+			#{nxDgssrNxDisGoodsFatherId}, 
+			#{nxDgssrNxStockId}, 
+			#{nxDgssrDate}, 
+			#{nxDgssrWeek}, 
+			#{nxDgssrMonth}, 
+			#{nxDgssrFullTime}, 
+			#{nxDgssrType}, 
+			#{nxDgssrDoUserId}, 
+			#{nxDgssrCostWeight}, 
+			#{nxDgssrCostSubtotal}, 
+			#{nxDgssrWasteWeight}, 
+			#{nxDgssrWasteSubtotal}, 
+			#{nxDgssrLossWeight}, 
+			#{nxDgssrLossSubtotal}, 
+			#{nxDgssrReturnWeight}, 
+			#{nxDgssrReturnSubtotal}, 
+			#{nxDgssrProduceWeight}, 
+			#{nxDgssrProduceSubtotal}, 
+			#{nxDgssrNxPurGoodsId}, 
+			#{nxDgssrGoodsInventoryType}, 
+			#{nxDgssrStatus},
+			#{nxDgssrNxDepOrderId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		update nx_distributer_goods_shelf_stock_reduce 
+		<set>
+			<if test="nxDgssrNxDistributerId != null">`nx_dgssr_nx_distributer_id` = #{nxDgssrNxDistributerId}, </if>
+			<if test="nxDgssrNxDisGoodsId != null">`nx_dgssr_nx_dis_goods_id` = #{nxDgssrNxDisGoodsId}, </if>
+			<if test="nxDgssrNxDisGoodsFatherId != null">`nx_dgssr_nx_dis_goods_father_id` = #{nxDgssrNxDisGoodsFatherId}, </if>
+			<if test="nxDgssrNxStockId != null">`nx_dgssr_nx_stock_id` = #{nxDgssrNxStockId}, </if>
+			<if test="nxDgssrDate != null">`nx_dgssr_date` = #{nxDgssrDate}, </if>
+			<if test="nxDgssrWeek != null">`nx_dgssr_week` = #{nxDgssrWeek}, </if>
+			<if test="nxDgssrMonth != null">`nx_dgssr_month` = #{nxDgssrMonth}, </if>
+			<if test="nxDgssrFullTime != null">`nx_dgssr_full_time` = #{nxDgssrFullTime}, </if>
+			<if test="nxDgssrType != null">`nx_dgssr_type` = #{nxDgssrType}, </if>
+			<if test="nxDgssrDoUserId != null">`nx_dgssr_do_user_id` = #{nxDgssrDoUserId}, </if>
+			<if test="nxDgssrCostWeight != null">`nx_dgssr_cost_weight` = #{nxDgssrCostWeight}, </if>
+			<if test="nxDgssrCostSubtotal != null">`nx_dgssr_cost_subtotal` = #{nxDgssrCostSubtotal}, </if>
+			<if test="nxDgssrWasteWeight != null">`nx_dgssr_waste_weight` = #{nxDgssrWasteWeight}, </if>
+			<if test="nxDgssrWasteSubtotal != null">`nx_dgssr_waste_subtotal` = #{nxDgssrWasteSubtotal}, </if>
+			<if test="nxDgssrLossWeight != null">`nx_dgssr_loss_weight` = #{nxDgssrLossWeight}, </if>
+			<if test="nxDgssrLossSubtotal != null">`nx_dgssr_loss_subtotal` = #{nxDgssrLossSubtotal}, </if>
+			<if test="nxDgssrReturnWeight != null">`nx_dgssr_return_weight` = #{nxDgssrReturnWeight}, </if>
+			<if test="nxDgssrReturnSubtotal != null">`nx_dgssr_return_subtotal` = #{nxDgssrReturnSubtotal}, </if>
+			<if test="nxDgssrProduceWeight != null">`nx_dgssr_produce_weight` = #{nxDgssrProduceWeight}, </if>
+			<if test="nxDgssrProduceSubtotal != null">`nx_dgssr_produce_subtotal` = #{nxDgssrProduceSubtotal}, </if>
+			<if test="nxDgssrNxPurGoodsId != null">`nx_dgssr_nx_pur_goods_id` = #{nxDgssrNxPurGoodsId}, </if>
+			<if test="nxDgssrGoodsInventoryType != null">`nx_dgssr_goods_inventory_type` = #{nxDgssrGoodsInventoryType}, </if>
+			<if test="nxDgssrNxDepOrderId != null">`nx_dgssr_nx_dep_order_id` = #{nxDgssrNxDepOrderId}, </if>
+			<if test="nxDgssrStatus != null">`nx_dgssr_status` = #{nxDgssrStatus}</if>
+		</set>
+		where nx_distributer_goods_shelf_stock_reduce_id = #{nxDistributerGoodsShelfStockReduceId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_goods_shelf_stock_reduce where nx_distributer_goods_shelf_stock_reduce_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_goods_shelf_stock_reduce where nx_distributer_goods_shelf_stock_reduce_id in 
+		<foreach item="nxDistributerGoodsShelfStockReduceId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerGoodsShelfStockReduceId}
+		</foreach>
+	</delete>
+
+</mapper>

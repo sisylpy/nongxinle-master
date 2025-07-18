@@ -1,5 +1,8 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.entity.NxECommerceCommunityEntity;
+import com.nongxinle.entity.NxECommerceEntity;
+import com.nongxinle.service.NxECommerceCommunityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,8 @@ import com.nongxinle.service.NxCommunityService;
 public class NxCommunityServiceImpl implements NxCommunityService {
 	@Autowired
 	private NxCommunityDao nxCommunityDao;
+	@Autowired
+	private NxECommerceCommunityService nxECommerceCommunityService;
 	
 	@Override
 	public NxCommunityEntity queryObject(Integer nxCommunityId){
@@ -52,10 +57,37 @@ public class NxCommunityServiceImpl implements NxCommunityService {
 		nxCommunityDao.deleteBatch(nxCommunityIds);
 	}
 
+	@Override
+	public NxCommunityEntity saveWithEcommerce(NxCommunityEntity nxCommunity) {
+
+		nxCommunity.setNxCommunityOpenTime("06:00");
+		nxCommunity.setNxCommunityCloseTime("22:00");
+		 nxCommunityDao.save(nxCommunity);
+
+		System.out.println("abcckckkckckc" + nxCommunity.getNxCommunityCommerceId());
+		System.out.println("abcckckkckckc" + nxCommunity.getNxCommunityId());
+
+		NxECommerceCommunityEntity entity = new NxECommerceCommunityEntity();
+		entity.setNxEccEId(nxCommunity.getNxCommunityCommerceId());
+		entity.setNxEccCommunityId(nxCommunity.getNxCommunityId());
+		nxECommerceCommunityService.save(entity);
+
+
+		return nxCommunity;
+
+	}
 
     @Override
-    public List<NxCommunityEntity> queryDistributerCommunityList(Integer disId) {
-        return nxCommunityDao.queryDistributerCommunityList(disId);
+    public NxECommerceEntity queryCommunityByECommerceId(Integer id) {
+
+		return nxCommunityDao.queryCommunityByECommerceId(id);
     }
+
+    @Override
+    public List<NxCommunityEntity> queryCommunityListByUserPoint(String nxCuaLocation) {
+
+		return nxCommunityDao.queryCommunityListByUserPoint(nxCuaLocation);
+    }
+
 
 }

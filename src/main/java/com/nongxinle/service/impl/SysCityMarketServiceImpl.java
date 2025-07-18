@@ -51,5 +51,17 @@ public class SysCityMarketServiceImpl implements SysCityMarketService {
 	public void deleteBatch(Integer[] sysCityMarketIds){
 		sysCityMarketDao.deleteBatch(sysCityMarketIds);
 	}
-	
+
+    @Override
+    public List<SysCityMarketEntity> queryMarketByParams(Map<String, Object> map) {
+
+		return sysCityMarketDao.queryMarketByParams(map);
+    }
+
+    @Override
+    public List<SysCityMarketEntity> queryMarketNxDisByParams(Map<String, Object> map) {
+
+		return sysCityMarketDao.queryMarketNxDisByParams(map);
+    }
+
 }

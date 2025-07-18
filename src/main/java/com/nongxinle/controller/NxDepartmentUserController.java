@@ -44,8 +44,6 @@ public class NxDepartmentUserController {
     private NxDistributerPurchaseBatchService nxDPBService;
 
     @Autowired
-    private NxDepartmentDisGoodsService nxDepartmentDisGoodsService;
-    @Autowired
     private NxDistributerPurchaseGoodsService nxDistributerPurchaseGoodsService;
     @Autowired
     private NxJrdhUserService nxJrdhUserService;
@@ -54,6 +52,67 @@ public class NxDepartmentUserController {
     @Autowired
     private NxGoodsService nxGoodsService;
 
+
+    @RequestMapping(value = "/machineGetUser/{id}")
+    @ResponseBody
+    public R machineGetUser(@PathVariable String  id) {
+        NxDepartmentUserEntity  userEntity =  nxDepartmentUserService.queryDepUserByMachineId(id);
+        if(userEntity != null){
+            userEntity.setNxDuLoginCode("-1");
+            nxDepartmentUserService.update(userEntity);
+            Integer nxDepartmentUserId = userEntity.getNxDepartmentUserId();
+            Map<String, Object> stringObjectMap = nxDepartmentService.queryDepAndUserInfo(nxDepartmentUserId);
+            return R.ok().put("data", stringObjectMap);
+        }else{
+            return R.error(-1,"no");
+        }
+
+    }
+
+
+
+    @RequestMapping(value = "/depUserLoginDaoDuDesk", method = RequestMethod.POST)
+    @ResponseBody
+    public R depUserLoginDaoDuDesk(String code, String machineId) {
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String orderAppID = myAPPIDConfig.getLaoDuDinghuoAppID();
+        String orderScreat = myAPPIDConfig.getLaoDuDinghuoScreat();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + orderAppID + "&secret=" +
+                orderScreat + "&js_code=" + code +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+        System.out.println(str);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openId = jsonObject.get("openid").toString();
+        System.out.println("logigngignigbyouseriid" + openId);
+        NxDepartmentUserEntity depUserEntity = nxDepartmentUserService.queryDepUserByOpenId(openId);
+        if (depUserEntity != null) {
+            depUserEntity.setNxDuLoginCode(machineId);
+            nxDepartmentUserService.update(depUserEntity);
+            Integer nxDepartmentUserId = depUserEntity.getNxDepartmentUserId();
+            Map<String, Object> stringObjectMap = nxDepartmentService.queryDepAndUserInfo(nxDepartmentUserId);
+            return R.ok().put("data", stringObjectMap);
+        } else {
+            return R.error(-1, "用户不存在");
+        }
+    }
+
+//
+//    @RequestMapping(value = "/Q8bKzs8V1p.txt")
+//    @ResponseBody
+//    public String nxDepDeskUserLoginLaoDuDesk( ) {
+//        return "7d7b94b7c94c3153c8b88c46c9d0f647";
+//    }
+
+    @RequestMapping(value = "/Q8bKzs8V1p.txt")
+    @ResponseBody
+    public String nxDepDeskUserLoginLaoDu( ) {
+        return "7d7b94b7c94c3153c8b88c46c9d0f647";
+    }
 
     @RequestMapping(value = "/updateDepUserAdmin", method = RequestMethod.POST)
     @ResponseBody
@@ -130,7 +189,7 @@ public class NxDepartmentUserController {
         nxDepartmentUserEntity.setNxDuUrlChange(1);
         nxDepartmentUserService.update(nxDepartmentUserEntity);
 
-        return R.ok();
+        return R.ok().put("data", nxDepartmentUserEntity);
 
     }
 
@@ -283,8 +342,8 @@ public class NxDepartmentUserController {
         System.out.println("aaa" + disId + userName + depFatherId + depId + code);
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
 
-        String orderAppID = myAPPIDConfig.getOrderAppID();
-        String orderScreat = myAPPIDConfig.getOrderScreat();
+        String orderAppID = myAPPIDConfig.getJingjingOrderAppID();
+        String orderScreat = myAPPIDConfig.getJingjingOrderScreat();
 
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + orderAppID + "&secret=" + orderScreat + "&js_code=" + code + "&grant_type=authorization_code";
         // 发送请求，返回Json字符串
@@ -309,10 +368,8 @@ public class NxDepartmentUserController {
                 entity.setNxDepartmentIsGroupDep(1);
                 entity.setNxDepartmentWorkingStatus(0);
                 entity.setNxDepartmentSubAmount(0);
-                entity.setNxDepartmentFatherId(0);
-                entity.setNxDepartmentSettleType(99);
-                entity.setNxDepartmentPromotionGoodsId(651);
-                System.out.println("ddafadaveeeee" + entity);
+                entity.setNxDepartmentFatherId(depId);
+                entity.setNxDepartmentSettleType(0);
                 nxDepartmentService.saveJustDepartment(entity);
 
 //                savePromotion(entity);
@@ -349,6 +406,84 @@ public class NxDepartmentUserController {
         }
     }
 
+
+
+
+    @ResponseBody
+    @RequestMapping(value = "/depOrderUserSaveWithFileLaodu", produces = "text/html;charset=UTF-8")
+    public R depOrderUserSaveWithFileLaodu(@RequestParam("file") MultipartFile file,
+                                      @RequestParam("userName") String userName,
+                                      @RequestParam("disId") Integer disId,
+                                      @RequestParam("depFatherId") Integer depFatherId,
+                                      @RequestParam("depId") Integer depId,
+                                      @RequestParam("code") String code,
+                                           @RequestParam("admin") Integer admin,
+                                      HttpSession session) {
+
+        System.out.println("aaa" + disId + userName + depFatherId + depId + code);
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+
+        String orderAppID = myAPPIDConfig.getLaoDuDinghuoAppID();
+        String orderScreat = myAPPIDConfig.getLaoDuDinghuoScreat();
+
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + orderAppID + "&secret=" + orderScreat + "&js_code=" + code + "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        System.out.println("jsonObjectjsonObject" + jsonObject);
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        System.out.println("opeidiididid" + openid);
+        NxDepartmentUserEntity depUserEntities = nxDepartmentUserService.queryDepUserByOpenId(openid);
+        if (depUserEntities != null) {
+            return R.error(-1, "请直接登陆");
+        } else {
+            //第一个用户默认是isAdmin
+            NxDepartmentUserEntity nxDepartmentUser = new NxDepartmentUserEntity();
+
+//            if (depFatherId == -1) {
+//                NxDepartmentEntity entity = new NxDepartmentEntity();
+//                entity.setNxDepartmentName(userName);
+//                entity.setNxDepartmentAttrName(userName);
+//                entity.setNxDepartmentDisId(disId);
+//                entity.setNxDepartmentIsGroupDep(1);
+//                entity.setNxDepartmentWorkingStatus(0);
+//                entity.setNxDepartmentSubAmount(0);
+//                entity.setNxDepartmentFatherId(0);
+//                entity.setNxDepartmentSettleType(0);
+//                entity.setNxDepartmentPromotionGoodsId(651);
+//                System.out.println("ddafadaveeeee" + entity);
+//                nxDepartmentService.saveJustDepartment(entity);
+
+//                savePromotion(entity);
+//                depId = entity.getNxDepartmentId();
+                nxDepartmentUser.setNxDuAdmin(admin);
+
+
+            //1,上传图片
+            String newUploadName = "uploadImage";
+            String realPath = UploadFile.upload(session, newUploadName, file);
+
+            String filename = file.getOriginalFilename();
+            String filePath = newUploadName + "/" + filename;
+            nxDepartmentUser.setNxDuWxAvartraUrl(filePath);
+            nxDepartmentUser.setNxDuWxNickName(userName);
+            nxDepartmentUser.setNxDuUrlChange(1);
+            nxDepartmentUser.setNxDuDepartmentId(depId);
+            nxDepartmentUser.setNxDuDepartmentFatherId(depFatherId);
+            nxDepartmentUser.setNxDuDistributerId(disId);
+            nxDepartmentUser.setNxDuWxOpenId(openid);
+            nxDepartmentUser.setNxDuJoinDate(formatWhatDay(0));
+            nxDepartmentUser.setNxDuLoginTimes(0);
+            nxDepartmentUserService.save(nxDepartmentUser);
+
+
+            return R.ok();
+        }
+    }
+
     /**
      * ORDER
      * 部门用户登陆
@@ -360,11 +495,8 @@ public class NxDepartmentUserController {
     public R depUserLogin(@PathVariable String code) {
 
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-		String orderAppID = myAPPIDConfig.getOrderAppID();
-//        String orderAppID = myAPPIDConfig.getShixianLiliAppId();
-		String orderScreat = myAPPIDConfig.getOrderScreat();
-//        String orderScreat = myAPPIDConfig.getShixianLiliScreat();
-
+		String orderAppID = myAPPIDConfig.getJingjingOrderAppID();
+		String orderScreat = myAPPIDConfig.getJingjingOrderScreat();
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + orderAppID + "&secret=" +
                 orderScreat + "&js_code=" + code +
                 "&grant_type=authorization_code";
@@ -376,10 +508,44 @@ public class NxDepartmentUserController {
 
         // 我们需要的openid，在一个小程序中，openid是唯一的
         String openId = jsonObject.get("openid").toString();
+        System.out.println("logigngignigbyouseriid" + openId);
         NxDepartmentUserEntity depUserEntity = nxDepartmentUserService.queryDepUserByOpenId(openId);
         if (depUserEntity != null) {
             Integer nxDepartmentUserId = depUserEntity.getNxDepartmentUserId();
             Map<String, Object> stringObjectMap = nxDepartmentService.queryDepAndUserInfo(nxDepartmentUserId);
+            return R.ok().put("data", stringObjectMap);
+        } else {
+            return R.error(-1, "用户不存在");
+        }
+    }
+
+
+
+    @RequestMapping(value = "/depUserLoginDaoDu/{code}")
+    @ResponseBody
+    public R depUserLoginDaoDu(@PathVariable String code) {
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String orderAppID = myAPPIDConfig.getLaoDuDinghuoAppID();
+        String orderScreat = myAPPIDConfig.getLaoDuDinghuoScreat();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + orderAppID + "&secret=" +
+                orderScreat + "&js_code=" + code +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+        System.out.println(str);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openId = jsonObject.get("openid").toString();
+        System.out.println("logigngignigbyouseriid" + openId);
+        NxDepartmentUserEntity depUserEntity = nxDepartmentUserService.queryDepUserByOpenId(openId);
+        if (depUserEntity != null) {
+            Integer nxDepartmentUserId = depUserEntity.getNxDepartmentUserId();
+            Map<String, Object> stringObjectMap = nxDepartmentService.queryDepAndUserInfoAll(nxDepartmentUserId);
+
+            System.out.println("queryDepAndUserInfoAllqueryDepAndUserInfoAllqueryDepAndUserInfoAll");
             return R.ok().put("data", stringObjectMap);
         } else {
             return R.error(-1, "用户不存在");
@@ -461,117 +627,6 @@ public class NxDepartmentUserController {
 //        nxDepartmentOrdersService.update(ordersEntity);
 //
 //    }
-
-
-    private void savePurGoodsAuto(NxDepartmentOrdersEntity ordersEntity) {
-
-
-        Integer nxDistributerPurchaseGoodsId = 0;
-        //判断是否有已经分的
-
-        Integer doDisGoodsId = ordersEntity.getNxDoDisGoodsId();
-        NxDistributerGoodsEntity disGoods = nxDistributerGoodsService.queryObject(doDisGoodsId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("disGoodsId", doDisGoodsId);
-        map.put("equalStatus", 0);
-        NxDistributerPurchaseGoodsEntity havePurGoods = nxDistributerPurchaseGoodsService.queryIfHavePurGoods(map);
-        if (havePurGoods != null) {
-            havePurGoods.setNxDpgOrdersAmount(havePurGoods.getNxDpgOrdersAmount() + 1);
-            NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryObject(doDisGoodsId);
-            if (ordersEntity.getNxDoStandard().equals(distributerGoodsEntity.getNxDgGoodsStandardname())) {
-                BigDecimal decimal = new BigDecimal(havePurGoods.getNxDpgQuantity());
-                BigDecimal decimal1 = new BigDecimal(ordersEntity.getNxDoQuantity());
-                BigDecimal totaoWeight = decimal.add(decimal1).setScale(1, BigDecimal.ROUND_HALF_UP);
-                BigDecimal decimal2 = totaoWeight.multiply(new BigDecimal(havePurGoods.getNxDpgBuyPrice())).setScale(1, BigDecimal.ROUND_HALF_UP);
-                havePurGoods.setNxDpgQuantity(totaoWeight.toString());
-                havePurGoods.setNxDpgBuyQuantity(totaoWeight.toString());
-                havePurGoods.setNxDpgBuySubtotal(decimal2.toString());
-            }
-
-            nxDistributerPurchaseGoodsService.update(havePurGoods);
-            nxDistributerPurchaseGoodsId = havePurGoods.getNxDistributerPurchaseGoodsId();
-
-        } else {
-
-            NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = new NxDistributerPurchaseGoodsEntity();
-            purchaseGoodsEntity.setNxDpgDisGoodsFatherId(disGoods.getNxDgDfgGoodsFatherId());
-            purchaseGoodsEntity.setNxDpgDisGoodsGrandId(disGoods.getNxDgDfgGoodsGrandId());
-            purchaseGoodsEntity.setNxDpgDistributerId(disGoods.getNxDgDistributerId());
-            purchaseGoodsEntity.setNxDpgApplyDate(formatWhatDay(0));
-            purchaseGoodsEntity.setNxDpgCostLevel(disGoods.getNxDgBuyingPriceIsGrade());
-            purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
-            purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
-            purchaseGoodsEntity.setNxDpgOrdersAmount(1);
-            purchaseGoodsEntity.setNxDpgFinishAmount(0);
-            purchaseGoodsEntity.setNxDpgPurchaseType(1);
-            purchaseGoodsEntity.setNxDpgExpectPrice(disGoods.getNxDgBuyingPrice());
-            purchaseGoodsEntity.setNxDpgBuyPrice(disGoods.getNxDgBuyingPrice());
-            purchaseGoodsEntity.setNxDpgDisGoodsId(doDisGoodsId);
-            purchaseGoodsEntity.setNxDpgInputType(disGoods.getNxDgPurchaseAuto());
-            NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryObject(doDisGoodsId);
-            if (ordersEntity.getNxDoStandard().equals(distributerGoodsEntity.getNxDgGoodsStandardname())) {
-                purchaseGoodsEntity.setNxDpgQuantity(ordersEntity.getNxDoQuantity());
-                BigDecimal totaoWeight = new BigDecimal(ordersEntity.getNxDoQuantity());
-                purchaseGoodsEntity.setNxDpgStandard(ordersEntity.getNxDoStandard());
-                BigDecimal decimal2 = totaoWeight.multiply(new BigDecimal(purchaseGoodsEntity.getNxDpgBuyPrice())).setScale(1, BigDecimal.ROUND_HALF_UP);
-                purchaseGoodsEntity.setNxDpgQuantity(totaoWeight.toString());
-                purchaseGoodsEntity.setNxDpgBuyQuantity(totaoWeight.toString());
-                purchaseGoodsEntity.setNxDpgBuySubtotal(decimal2.toString());
-            }
-            nxDistributerPurchaseGoodsService.save(purchaseGoodsEntity);
-            nxDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxDistributerPurchaseGoodsId();
-
-            //给autoBatch更新gbDepartmentOrderid
-            if (disGoods.getNxDgSupplierId() != null) {
-                //
-                Map<String, Object> mapBatch = new HashMap<>();
-                Integer gbDgGbSupplierId = disGoods.getNxDgSupplierId();
-                mapBatch.put("supplierId", gbDgGbSupplierId);
-                mapBatch.put("status", 1);
-                mapBatch.put("purchaseType", 2);
-                List<NxDistributerPurchaseBatchEntity> entities = nxDPBService.queryDisPurchaseBatch(mapBatch);
-                System.out.println("enenenbebbebeebbebeb" + entities.size());
-
-                if (entities.size() == 0) {
-                    //
-                    NxDistributerPurchaseBatchEntity batchEntity = new NxDistributerPurchaseBatchEntity();
-                    batchEntity.setNxDpbDate(formatWhatDay(0));
-                    batchEntity.setNxDpbTime(formatWhatTime(0));
-                    batchEntity.setNxDpbMonth(formatWhatMonth(0));
-                    batchEntity.setNxDpbPruchaseWeek(getWeek(0));
-                    batchEntity.setNxDpbYear(formatWhatYear(0));
-                    batchEntity.setNxDpbPayFullTime(formatWhatYearDayTime(0));
-                    batchEntity.setNxDpbStatus(-1);
-                    batchEntity.setNxDpbPurchaseType(2);
-                    batchEntity.setNxDpbSupplierId(gbDgGbSupplierId);
-                    NxJrdhSupplierEntity supplierEntity = jrdhSupplierService.queryObject(gbDgGbSupplierId);
-                    batchEntity.setNxDpbSellUserId(supplierEntity.getNxJrdhsUserId());
-                    batchEntity.setNxDpbDistributerId(ordersEntity.getNxDoDistributerId());
-                    batchEntity.setNxDpbPurUserId(supplierEntity.getNxJrdhsNxPurUserId());
-                    batchEntity.setNxDpbBuyUserId(supplierEntity.getNxJrdhsNxJrdhBuyUserId());
-                    NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryObject(supplierEntity.getNxJrdhsNxJrdhBuyUserId());
-                    batchEntity.setNxDpbBuyUserOpenId(nxJrdhUserEntity.getNxJrdhWxOpenId());
-                    nxDPBService.save(batchEntity);
-
-                    purchaseGoodsEntity.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
-                    purchaseGoodsEntity.setNxDpgStatus(getGbPurchaseGoodsStatusProcurement());
-                    purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
-                    purchaseGoodsEntity.setNxDpgTime(formatWhatYearDayTime(0));
-                    purchaseGoodsEntity.setNxDpgDistributerId(batchEntity.getNxDpbDistributerId());
-                    nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
-                } else {
-                    NxDistributerPurchaseBatchEntity batchEntity = entities.get(0);
-                    purchaseGoodsEntity.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
-                    nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
-                }
-            }
-
-        }
-        ordersEntity.setNxDoPurchaseGoodsId(nxDistributerPurchaseGoodsId);
-        nxDepartmentOrdersService.update(ordersEntity);
-
-
-    }
 
 //
 //    private Integer checkDepDisGoods(NxDepartmentOrdersEntity nxDepartmentOrders) {
@@ -657,7 +712,9 @@ public class NxDepartmentUserController {
     @RequestMapping(value = "/getDepUserInfo/{userId}")
     @ResponseBody
     public R getDepUserInfo(@PathVariable Integer userId) {
-        NxDepartmentUserEntity nxDepartmentUserEntity = nxDepartmentUserService.queryObject(userId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("userId", userId);
+        NxDepartmentUserEntity nxDepartmentUserEntity = nxDepartmentUserService.queryDepUserInfo(map);
         return R.ok().put("data", nxDepartmentUserEntity);
     }
 
@@ -731,6 +788,17 @@ public class NxDepartmentUserController {
     public R getDepUsersByFatherId(@PathVariable Integer depId) {
         List<NxDepartmentUserEntity> userEntities = nxDepartmentUserService.queryAllUsersByDepFatherId(depId);
         return R.ok().put("data", userEntities);
+    }
+
+
+    @RequestMapping(value = "/deleteDepUserWithDep/{userId}")
+    @ResponseBody
+    public R deleteDepUserWithDep(@PathVariable Integer userId) {
+        NxDepartmentUserEntity userEntity = nxDepartmentUserService.queryObject(userId);
+        Integer nxDuDepartmentId = userEntity.getNxDuDepartmentId();
+        nxDepartmentService.delete(nxDuDepartmentId);
+        nxDepartmentUserService.delete(userId);
+        return R.ok();
     }
 
 

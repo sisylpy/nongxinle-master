@@ -106,5 +106,23 @@ public class GbDistributerFatherGoodsServiceImpl implements GbDistributerFatherG
 		return gbDistributerFatherGoodsDao.queryDisFathersGoodsByNxGoodsId(nxGoodsId);
     }
 
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryDisGoodsCataLinshi(Integer nxDistributerId) {
+
+		return gbDistributerFatherGoodsDao.queryDisGoodsCataLinshi(nxDistributerId);
+    }
+
+    @Override
+    public GbDistributerFatherGoodsEntity queryDisGoodsCataLinshiFatherGoods(Map<String, Object> map) {
+
+		return gbDistributerFatherGoodsDao.queryDisGoodsCataLinshiFatherGoods(map);
+    }
+
+    @Override
+    public int queryGbFatherGoodsMaxSort(Map<String, Object> map5) {
+
+		return gbDistributerFatherGoodsDao.queryGbFatherGoodsMaxSort(map5);
+    }
+
 
 }

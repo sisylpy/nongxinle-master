@@ -55,6 +55,10 @@ public class NxDepartmentDisGoodsEntity implements Serializable, Comparable {
 	 *  
 	 */
 	private Integer nxDdgDisGoodsGrandId;
+
+	private Integer nxDdgDisGoodsGreatId;
+
+	private String nxDdgOrderPriceLevel;
 	/**
 	 *  
 	 */
@@ -72,6 +76,8 @@ public class NxDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private String nxDdgOrderStandard;
 	private String nxDdgGoodsPlace;
 	private String nxDdgOrderCostPrice;
+	private String nxDdgOrderGoodsName;
+	private String nxDdgPickDetail;
 	/**
 	 *  
 	 */
@@ -84,10 +90,103 @@ public class NxDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private Integer nxDdgGbDepartmentId;
 	private Integer nxDdgOrderSellerUserId;
 	private Integer nxDdgOrderBuyerUserId;
+	private Integer nxDdgNxDistributerId;
+	private Integer nxDdgGbDistributerId;
+	private NxDepartmentEntity nxDepartmentEntity;
+	private GbDepartmentEntity gbDepartmentEntity;
+	private String nxTipText;
 
+	/**
+	 * AI建议订货量
+	 */
+	private String aiOrderQuantity;
 
+	/**
+	 * AI建议订货单位
+	 */
+	private String aiOrderStandard;
+
+	/**
+	 * 长期日均用量
+	 */
+	private String aiDailyUsage;
+
+	/**
+	 * 最近7天平均用量
+	 */
+	private String aiRecentAvgUsage;
+
+	/**
+	 * 用量波动性(CV)
+	 */
+	private String aiUsageVariation;
+
+	/**
+	 * 安全库存
+	 */
+	private String aiSafetyStock;
+
+	/**
+	 * 再订货点
+	 */
+	private String aiReorderPoint;
+
+	/**
+	 * 当前库存
+	 */
+	private String aiCurrentStock;
+
+	/**
+	 * 当前库存单位
+	 */
+	private String aiCurrentStockUnit;
+
+	/**
+	 * 上次订货日期
+	 */
+	private String aiLastOrderDate;
+
+	/**
+	 * 上次订货量
+	 */
+	private String aiLastOrderQuantity;
+
+	/**
+	 * 上次订货单位
+	 */
+	private String aiLastOrderUnit;
+
+	/**
+	 * 距离上次订货天数
+	 */
+	private String aiDaysSinceLastOrder;
+
+	/**
+	 * 预计明天用量
+	 */
+	private String aiTomorrowNeed;
+
+	private String aiAvailableDays;
+
+	private NxDistributerFatherGoodsEntity cataFather;
 
 	private List<NxDepartmentStandardEntity> nxDepStandardEntities;
+	private List<NxDistributerStandardEntity> nxDistributerStandardEntities;
+	private String nxDisGoodsFile;
+	private String nxDisGoodsFileLarge;
+	private String nxDisStandardWeight;
+	private String nxDgWillPriceOne;
+	private String nxDgWillPriceOneWeight;
+	private String nxDgWillPriceTwo;
+	private String nxDgWillPriceTwoWeight;
+
+	private String nxDgWillPriceThree;
+	private String nxDgWillPriceThreeWeight;
+	private String nxDgWillPriceOneStandard;
+	private String nxDgWillPriceTwoStandard;
+	private String nxDgWillPriceOneAboutPrice;
+	private String nxDgWillPriceTwoAboutPrice;
+	private String nxDgWillPriceThreeAboutPrice;
 
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 	private NxDepartmentOrdersEntity nxDepartmentOrdersEntity;

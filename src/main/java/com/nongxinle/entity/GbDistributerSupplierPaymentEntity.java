@@ -45,8 +45,10 @@ public class GbDistributerSupplierPaymentEntity implements Serializable {
 	 */
 	private String gbDspPayTotal;
 	private Integer gbDspDistributerId;
-	private GbDistributerSupplierEntity gbDistributerSupplierEntity;
+	private NxJrdhSupplierEntity jrdhSupplierEntity;
 	private NxDistributerEntity nxDistributerEntity;
+	private GbDistributerUserEntity payUserEntity;
+	private String gbDspPayFullTime;
 
 	private List<GbDistributerPurchaseBatchEntity> gbDisPurchaseBatchEntities;
 	private List<GbDepartmentBillEntity> gbDepartmentBillEntities;

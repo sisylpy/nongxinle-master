@@ -1,9 +1,7 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.entity.*;
-import com.nongxinle.service.GbDepartmentOrdersService;
 import com.nongxinle.service.GbDistributerPurchaseGoodsService;
-import com.nongxinle.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.nongxinle.service.GbDistributerPurchaseBatchService;
-
-import static com.nongxinle.utils.CommonUtils.generateUUID;
-import static com.nongxinle.utils.DateUtils.*;
 
 
 @Service("gbDistributerPurchaseBatchService")
@@ -66,7 +61,7 @@ public class GbDistributerPurchaseBatchServiceImpl implements GbDistributerPurch
 	}
 
 	@Override
-	public List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object> map) {
+	public List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object>  map) {
 		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatch(map);
 	}
 
@@ -124,6 +119,19 @@ public class GbDistributerPurchaseBatchServiceImpl implements GbDistributerPurch
     public GbDistributerPurchaseBatchEntity queryBatchItemByParams(Map<String, Object> mapB) {
 
 		return nxDistributerPurchaseBatchDao.queryBatchItemByParams(mapB);
+    }
+
+    @Override
+    public List<NxJrdhSupplierEntity> querySupplierList(Map<String, Object> map) {
+
+
+		return nxDistributerPurchaseBatchDao.querySupplierList(map);
+    }
+
+    @Override
+    public List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatchInfo(Map<String, Object> map) {
+
+		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatchInfo(map);
     }
 
 

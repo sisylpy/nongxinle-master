@@ -40,10 +40,21 @@
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
 		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
 		<result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 	</resultMap>
+
 	<resultMap id="nxDisUser" type="NxDistributerUserEntity">
 		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
 		<result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
 		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -73,7 +84,14 @@
 
 
 	<resultMap id="dis" type="GbDistributerEntity">
-		<id property="gbDistributerId" column="gb_distributer_id"/>
+<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
 		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
 		<result property="gbDistributerName" column="gb_distributer_name"/>
 		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
@@ -144,7 +162,12 @@
 
 	</select>
 
-    <insert id="save" parameterType="com.nongxinle.entity.SysUserEntity" useGeneratedKeys="true" keyProperty="userId">
+
+    <select id="queryUserByDisId" resultType="com.nongxinle.entity.SysUserEntity">
+		select * from sys_user where user_dis_id = #{disId}
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.SysUserEntity" useGeneratedKeys="true" keyProperty="userId">
 		insert into sys_user
 		(
 			`user_id`, 
@@ -189,7 +212,7 @@
 		update sys_user set `password` = #{newPassword} 
 			where user_id = #{userId} and password = #{password}
 	</update>
-	
+
 	<delete id="deleteBatch">
 		delete from sys_user where user_id in 
 		<foreach item="userId" collection="array" open="(" separator="," close=")">

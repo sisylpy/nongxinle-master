@@ -27,4 +27,6 @@ public interface NxECommerceService {
 	void delete(Integer nxECommerceId);
 	
 	void deleteBatch(Integer[] nxECommerceIds);
+
+    NxECommerceEntity queryGbByGbId(Integer id);
 }

@@ -93,6 +93,12 @@ public class NxRestrauntController {
         return R.ok();
     }
 
+
+    /**
+     * 获取配送路线接口
+     * @param userId
+     * @return
+     */
     @RequestMapping(value = "/getDriverDeliveryRestraunts/{userId}")
     @ResponseBody
     public R getDriverDeliveryRestraunts(@PathVariable Integer userId ) {

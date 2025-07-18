@@ -1,13 +1,12 @@
 package com.nongxinle.service;
 
 /**
- *
- *
  * @author lpy
  * @date 06-21 21:51
  */
 
 import com.nongxinle.entity.*;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -15,60 +14,60 @@ import java.util.Map;
 public interface NxDepartmentOrdersService {
 
 
-	List<NxDepartmentOrdersEntity> queryDisOrdersByParams(Map<String, Object> map);
+    List<NxDepartmentOrdersEntity> queryDisOrdersByParams(Map<String, Object> map);
 
-	List<NxDepartmentEntity> queryDistributerTodayDepartments(Map<String, Object> map);
+    List<NxDepartmentEntity> queryDistributerTodayDepartments(Map<String, Object> map);
 
-	void save(NxDepartmentOrdersEntity nxDepartmentOrders);
+    void save(NxDepartmentOrdersEntity nxDepartmentOrders);
 
-	List<NxDistributerFatherGoodsEntity>  disGetUnPlanPurchaseApplys(Map<String, Object> map);
-	List<NxDepartmentOrdersEntity> queryOrdersForDisGoods(Map<String, Object> map1);
+    List<NxDistributerFatherGoodsEntity> disGetUnPlanPurchaseApplys(Map<String, Object> map);
+
+    List<NxDepartmentOrdersEntity> queryOrdersForDisGoods(Map<String, Object> map1);
 
 
 //	////////
 
 
+    NxDepartmentOrdersEntity queryObject(Integer nxDepartmentOrdersId);
 
-	NxDepartmentOrdersEntity queryObject(Integer nxDepartmentOrdersId);
-	
-	List<NxDepartmentOrdersEntity> queryList(Map<String, Object> map);
+    List<NxDepartmentOrdersEntity> queryList(Map<String, Object> map);
 
-	void update(NxDepartmentOrdersEntity nxDepartmentOrders);
-	
-	void delete(Integer nxDepartmentOrdersId);
+    void update(NxDepartmentOrdersEntity nxDepartmentOrders);
+
+    void delete(Integer nxDepartmentOrdersId);
 
 
-	int queryTotalByParams(Map<String, Object> deliverymap);
+    int queryTotalByParams(Map<String, Object> deliverymap);
 
     List<NxDepartmentOrdersEntity> disQueryDisOrdersByParams(Map<String, Object> map);
 
     List<NxDepartmentOrdersEntity> queryReturnOrdersByBillId(Integer billId);
 
-    void saveGbOrders(NxDepartmentOrdersEntity ordersEntity);
+//    void saveGbOrders(NxDepartmentOrdersEntity ordersEntity);
 
-	List<NxDepartmentEntity> queryOrderDepartmentList(Map<String, Object> map1);
+    List<NxDepartmentEntity> queryOrderDepartmentList(Map<String, Object> map1);
 
     List<NxDistributerFatherGoodsEntity> queryDepOrdersOrderFatherGoods(Map<String, Object> map);
 
     Integer queryDepOrdersAcount(Map<String, Object> map);
 
-	Double queryDepOrdersSubtotal(Map<String, Object> map);
+    Double queryDepOrdersSubtotal(Map<String, Object> map);
 
 
     Double queryDepOrdersProfitSubtotal(Map<String, Object> map2);
 
-	List<NxRestrauntEntity> queryOrderNxRestrauntList(Map<String, Object> map1);
+    List<NxRestrauntEntity> queryOrderNxRestrauntList(Map<String, Object> map1);
 
     List<GbDepartmentEntity> queryOrderGbDepartmentList(Map<String, Object> map1);
 
     List<NxDepartmentOrdersEntity> queryDepWeightOrder(Map<String, Object> map);
 
-	List<NxDepartmentOrdersEntity> queryNotWeightDisOrdersByParams(Map<String, Object> map1);
+    List<NxDepartmentOrdersEntity> queryNotWeightDisOrdersByParams(Map<String, Object> map1);
 
     List<GbDistributerEntity> queryOrderGbDistributerList(Map<String, Object> map1);
 
 
-	void saveForGb(NxDepartmentOrdersEntity ordersEntity);
+    void saveForGb(NxDepartmentOrdersEntity ordersEntity);
 
     List<NxDistributerFatherGoodsEntity> disGetUnPlanPurchaseApplysSearch(Map<String, Object> map);
 
@@ -111,4 +110,32 @@ public interface NxDepartmentOrdersService {
     double queryCostSubtotal(Map<String, Object> map1222);
 
     List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object> map2);
+
+    void deleteBatch(Integer[] nxOrdersSubIds);
+
+    Integer queryDepOrdersAcountByDepGoods(Map<String, Object> mapDep);
+
+    List<NxDistributerGoodsShelfEntity> queryShelfGoodsOrder(Map<String, Object> map);
+
+    Integer queryReturnOrderCount(Map<String, Object> map);
+
+    double queryReturnSubtotal(Map<String, Object> mapR);
+
+    List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1);
+
+    void moveOrderToHistory(NxDepartmentOrdersEntity orders);
+
+    Map<String, Object> queryStockGoodsData(Map<String, Object> params);
+
+    List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map);
+
+    Map<Integer, Map<String, Integer>> batchQueryDepStats(@Param("list") List<Integer> depIds);
+
+
+    Map<Integer, Map<String, Integer>> batchQueryGbDepStats(@Param("list") List<Integer>  gbDepIds);
+
+    Map<String, Object> getOrderStats(Integer disId);
+
+
+    List<Integer> queryOnlyNxGoodsIds(Map<String, Object> map);
 }

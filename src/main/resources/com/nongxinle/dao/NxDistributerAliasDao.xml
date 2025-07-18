@@ -17,20 +17,38 @@
  	<select id="queryTotal" resultType="int">
 		select count(*) from nx_distributer_alias 
 	</select>
-	 
+	<select id="queryAliasByParmas" resultType="com.nongxinle.entity.NxDistributerAliasEntity">
+		select * from nx_distributer_alias
+		<where>
+			<if test="nxId != null">
+				and nx_DA_nx_alias_id = #{nxId}
+			</if>
+			<if test="disGoodsId != null">
+				and nx_DA_dis_goods_id = #{disGoodsId}
+			</if>
+
+		</where>
+	</select>
+
 	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerAliasEntity"
 		useGeneratedKeys="true" keyProperty="nxDistributerAliasId">
 		insert into nx_distributer_alias
 		(
 			`nx_distributer_alias_id`, 
 			`nx_DA_dis_goods_id`, 
-			`nx_DA_alias_name`
+			`nx_DA_alias_name`,
+			`nx_DA_nx_alias_id`,
+			`nx_DA_alias_pinyin`,
+			`nx_DA_alias_py`
 		)
 		values
 		(
 			#{nxDistributerAliasId}, 
 			#{nxDaDisGoodsId}, 
-			#{nxDaAliasName}
+			#{nxDaAliasName},
+			#{nxDaNxAliasId},
+			#{nxDaAliasPinyin},
+			#{nxDaAliasPy}
 		)
 	</insert>
 	 
@@ -38,6 +56,9 @@
 		update nx_distributer_alias 
 		<set>
 			<if test="nxDaDisGoodsId != null">`nx_DA_dis_goods_id` = #{nxDaDisGoodsId}, </if>
+			<if test="nxDaNxAliasId != null">`nx_DA_nx_alias_id` = #{nxDaNxAliasId}, </if>
+			<if test="nxDaAliasPinyin != null">`nx_DA_alias_pinyin` = #{nxDaAliasPinyin}, </if>
+			<if test="nxDaAliasPy != null">`nx_DA_alias_py` = #{nxDaAliasPy}, </if>
 			<if test="nxDaAliasName != null">`nx_DA_alias_name` = #{nxDaAliasName}</if>
 		</set>
 		where nx_distributer_alias_id = #{nxDistributerAliasId}

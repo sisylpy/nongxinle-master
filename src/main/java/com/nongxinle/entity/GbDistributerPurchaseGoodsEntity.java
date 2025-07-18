@@ -32,6 +32,7 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
 	 *  采购父级商品id
 	 */
 	private Integer gbDpgDisGoodsFatherId;
+	private Integer gbDpgDisGoodsGrandId;
 	/**
 	 *  采购数量
 	 */
@@ -53,6 +54,7 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
 	 */
 	private Integer gbDpgPurchaseType;
 	private Integer gbDpgPurchaseNxDistributerId;
+	private Integer gbDpgPurchaseNxSupplierId;
 	/**
 	 *  采购时间
 	 */
@@ -95,8 +97,20 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
     private String gbDpgWasteFullTime;
     private Integer gbDpgWeightId;
     private Integer gbDpgOrdersFinishAmount;
-    private GbDistributerGoodsPriceEntity gbDistributerGoodsPriceEntity;
+    private Integer gbDpgOrdersBillAmount;
 
+    private String  gbDpgStockRestWeight;
+    private String  gbDpgStockProduceWeight;
+    private String  gbDpgStockLossWeight;
+    private String  gbDpgStockWasteWeight;
+    private String  gbDpgStockRestWeightTotal;
+    private String  gbDpgStockReturnWeightTotal;
+
+    private GbDistributerGoodsPriceEntity gbDistributerGoodsPriceEntity;
+    private NxDistributerEntity nxDistributerEntity;
+    private NxJrdhSupplierEntity nxJrdhSupplierEntity;
+
+	private NxGoodsPriceEntity nxGoodsPriceEntity;
 
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;

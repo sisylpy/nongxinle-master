@@ -20,6 +20,7 @@
 
 	<resultMap id="disUser" type="NxDistributerUserEntity">
 		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
 		<result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
 		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -30,6 +31,15 @@
 	</resultMap>
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -118,7 +128,11 @@
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
 		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
 		<result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
 		<result property="nxDistributerManager" column="nx_distributer_manager"/>
 		<result property="nxDistributerAddress" column="nx_distributer_address"/>
 		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
@@ -140,6 +154,7 @@
 <!--	</resultMap>-->
 	<resultMap id="disUserWithNxDis" type="NxDistributerUserEntity">
 		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
 		<result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
 		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>

@@ -44,73 +44,73 @@ public class NxCommunityCommunityOrdersServiceImpl implements NxCommunityOrdersS
 		return nxCommunityOrdersDao.queryTotal(map);
 	}
 
-	@Override
-	public void save(NxCommunityOrdersEntity nxOrders){
-		nxOrders.setNxCoSubFinished(0);
-
-		nxCommunityOrdersDao.save(nxOrders);
-
-		Integer ordersUserId = nxOrders.getNxCoUserId();
-
-		Integer nxOrdersId = nxOrders.getNxCommunityOrdersId();
-		List<NxCommunityOrdersSubEntity> nxOrdersSubEntities = nxOrders.getNxOrdersSubEntities();
-
-		for (NxCommunityOrdersSubEntity sub : nxOrdersSubEntities) {
-			//子订单
-			sub.setNxCosOrdersId(nxOrdersId);
-			sub.setNxCosStatus(3);
-			sub.setNxCosBuyStatus(3);
-			sub.setNxCosOrderUserId(ordersUserId);
-			sub.setNxCosDistributerId(nxOrders.getNxCoDistributerId());
-			sub.setNxCosCommunityId(nxOrders.getNxCoCommunityId());
-			nxCommunityOrdersSubDao.update(sub);
-
-
-//			//客户用户记录更新
-			Integer nxOsCommunityGoodsId = sub.getNxCosCommunityGoodsId();
-			Map<String, Object> map = new HashMap<>();
-			map.put("nxOsCommunityGoodsId", nxOsCommunityGoodsId);
-			map.put("nxCugUserId", ordersUserId);
-			NxCustomerUserGoodsEntity userGoodsEntity = nxCustomerUserGoodsDao.queryByCommunityGoodsId(map);
-
-
-
-			if(userGoodsEntity != null){
-				userGoodsEntity.setNxCugLastOrderTime(formatWhatDayTime(0));
-				userGoodsEntity.setNxCugLastOrderQuantity(sub.getNxCosQuantity());
-				userGoodsEntity.setNxCugLastOrderStandard(sub.getNxCosStandard());
-				userGoodsEntity.setNxCugLastOrderTime(formatWhatDay(0));
-				userGoodsEntity.setNxCugJoinMyTemplate(0);
-				Integer nxCugOrderTimes = userGoodsEntity.getNxCugOrderTimes();
-				userGoodsEntity.setNxCugOrderTimes(nxCugOrderTimes + 1);
-				String nxCugOrderAmount = userGoodsEntity.getNxCugOrderAmount();
-				String nxOsQuantity = sub.getNxCosQuantity();
-				BigDecimal add = new BigDecimal(nxCugOrderAmount).add(new BigDecimal(nxOsQuantity));
-				userGoodsEntity.setNxCugOrderAmount(add.toString());
-				nxCustomerUserGoodsDao.update(userGoodsEntity);
-			}else {
-				NxCustomerUserGoodsEntity newUserGoodsEntity = new NxCustomerUserGoodsEntity();
-				newUserGoodsEntity.setNxCugFirstOrderTime(formatWhatDay(0));
-				newUserGoodsEntity.setNxCugOrderAmount(sub.getNxCosQuantity());
-				newUserGoodsEntity.setNxCugCommunityGoodsId(sub.getNxCosCommunityGoodsId());
-				newUserGoodsEntity.setNxCugOrderTimes(1);
-				newUserGoodsEntity.setNxCugUserId(ordersUserId);
-				newUserGoodsEntity.setNxCugLastOrderTime(formatWhatDay(0));
-				newUserGoodsEntity.setNxCugJoinMyTemplate(0);
-				newUserGoodsEntity.setNxCugLastOrderQuantity(sub.getNxCosQuantity());
-				newUserGoodsEntity.setNxCugLastOrderStandard(sub.getNxCosStandard());
-				nxCustomerUserGoodsDao.save(newUserGoodsEntity);
-
-
-			}
-
-			//商品点击数加1
-//			NxCommunityGoodsEntity disGoods = nxCommunityGoodsDao.queryObject(nxOsCommunityGoodsId);
-//			disGoods.setNxCgGoodsTotalHits(disGoods.getNxCgGoodsTotalHits() + 1);
-
-		}
-
-	}
+//	@Override
+//	public void save(NxCommunityOrdersEntity nxOrders){
+//		nxOrders.setNxCoSubFinished(0);
+//
+//		nxCommunityOrdersDao.save(nxOrders);
+//
+//		Integer ordersUserId = nxOrders.getNxCoUserId();
+//
+//		Integer nxOrdersId = nxOrders.getNxCommunityOrdersId();
+//		List<NxCommunityOrdersSubEntity> nxOrdersSubEntities = nxOrders.getNxOrdersSubEntities();
+//
+//		for (NxCommunityOrdersSubEntity sub : nxOrdersSubEntities) {
+//			//子订单
+//			sub.setNxCosOrdersId(nxOrdersId);
+//			sub.setNxCosStatus(3);
+//			sub.setNxCosBuyStatus(3);
+//			sub.setNxCosOrderUserId(ordersUserId);
+//			sub.setNxCosDistributerId(nxOrders.getNxCoDistributerId());
+//			sub.setNxCosCommunityId(nxOrders.getNxCoCommunityId());
+//			nxCommunityOrdersSubDao.update(sub);
+//
+//
+////			//客户用户记录更新
+//			Integer nxOsCommunityGoodsId = sub.getNxCosCommunityGoodsId();
+//			Map<String, Object> map = new HashMap<>();
+//			map.put("nxOsCommunityGoodsId", nxOsCommunityGoodsId);
+//			map.put("nxCugUserId", ordersUserId);
+//			NxCustomerUserGoodsEntity userGoodsEntity = nxCustomerUserGoodsDao.queryByCommunityGoodsId(map);
+//
+//
+//
+//			if(userGoodsEntity != null){
+//				userGoodsEntity.setNxCugLastOrderTime(formatWhatDayTime(0));
+//				userGoodsEntity.setNxCugLastOrderQuantity(sub.getNxCosQuantity());
+//				userGoodsEntity.setNxCugLastOrderStandard(sub.getNxCosStandard());
+//				userGoodsEntity.setNxCugLastOrderTime(formatWhatDay(0));
+//				userGoodsEntity.setNxCugJoinMyTemplate(0);
+//				Integer nxCugOrderTimes = userGoodsEntity.getNxCugOrderTimes();
+//				userGoodsEntity.setNxCugOrderTimes(nxCugOrderTimes + 1);
+//				String nxCugOrderAmount = userGoodsEntity.getNxCugOrderAmount();
+//				String nxOsQuantity = sub.getNxCosQuantity();
+//				BigDecimal add = new BigDecimal(nxCugOrderAmount).add(new BigDecimal(nxOsQuantity));
+//				userGoodsEntity.setNxCugOrderAmount(add.toString());
+//				nxCustomerUserGoodsDao.update(userGoodsEntity);
+//			}else {
+//				NxCustomerUserGoodsEntity newUserGoodsEntity = new NxCustomerUserGoodsEntity();
+//				newUserGoodsEntity.setNxCugFirstOrderTime(formatWhatDay(0));
+//				newUserGoodsEntity.setNxCugOrderAmount(sub.getNxCosQuantity());
+//				newUserGoodsEntity.setNxCugCommunityGoodsId(sub.getNxCosCommunityGoodsId());
+//				newUserGoodsEntity.setNxCugOrderTimes(1);
+//				newUserGoodsEntity.setNxCugUserId(ordersUserId);
+//				newUserGoodsEntity.setNxCugLastOrderTime(formatWhatDay(0));
+//				newUserGoodsEntity.setNxCugJoinMyTemplate(0);
+//				newUserGoodsEntity.setNxCugLastOrderQuantity(sub.getNxCosQuantity());
+//				newUserGoodsEntity.setNxCugLastOrderStandard(sub.getNxCosStandard());
+//				nxCustomerUserGoodsDao.save(newUserGoodsEntity);
+//
+//
+//			}
+//
+//			//商品点击数加1
+////			NxCommunityGoodsEntity disGoods = nxCommunityGoodsDao.queryObject(nxOsCommunityGoodsId);
+////			disGoods.setNxCgGoodsTotalHits(disGoods.getNxCgGoodsTotalHits() + 1);
+//
+//		}
+//
+//	}
 
 
 	
@@ -121,7 +121,7 @@ public class NxCommunityCommunityOrdersServiceImpl implements NxCommunityOrdersS
 	}
 	
 	@Override
-	public void delete(Integer nxOrdersId){
+	public void deleteWithSubOrders(Integer nxOrdersId){
 		nxCommunityOrdersDao.delete(nxOrdersId);
 
 		Map<String, Object> map = new HashMap<>();
@@ -143,26 +143,7 @@ public class NxCommunityCommunityOrdersServiceImpl implements NxCommunityOrdersS
 
 
 
-	@Override
-	public List<NxCommunityOrdersEntity> queryOrdersToWeigh(Map<String, Object> map) {
-		return nxCommunityOrdersDao.queryOrdersToWeigh(map);
-	}
 
-
-	@Override
-	public void updateSub(NxCommunityOrdersEntity nxOrders) {
-		List<NxCommunityOrdersSubEntity> nxOrdersSubEntities = nxOrders.getNxOrdersSubEntities();
-		for (NxCommunityOrdersSubEntity sub : nxOrdersSubEntities) {
-			nxCommunityOrdersSubDao.update(sub);
-		}
-
-		Map<String, Object> map = new HashMap<>();
-		map.put("nxOrdersId", nxOrders.getNxCommunityOrdersId());
-		map.put("nxOrdersSubFinished", nxOrders.getNxCoSubFinished() );
-		map.put("nxOrdersStatus", nxOrders.getNxCoStatus());
-		map.put("nxOrdersAmount", nxOrders.getNxCoAmount());
-		nxCommunityOrdersDao.update(map);
-	}
 
 
 	@Override
@@ -170,15 +151,6 @@ public class NxCommunityCommunityOrdersServiceImpl implements NxCommunityOrdersS
 		return nxCommunityOrdersDao.queryOrdersDetail(map);
 	}
 
-	@Override
-	public List<NxCommunityOrdersEntity> queryOrdersPaymentInformation(Map<String, Object> map) {
-		return nxCommunityOrdersDao.queryOrdersPaymentInformation(map);
-	}
-
-    @Override
-    public Integer updatePaymentStatus(Map<String, Object> map) {
-		return nxCommunityOrdersDao.update(map);
-	}
 
     @Override
     public List<NxCommunityOrdersEntity> queryCustomerOrder(Map<String, Object> map) {
@@ -214,6 +186,85 @@ public class NxCommunityCommunityOrdersServiceImpl implements NxCommunityOrdersS
 
 		 nxCommunityOrdersDao.save(ordersEntity);
 	}
+
+	@Override
+	public void justSaveWithUserGoods(NxCommunityOrdersEntity nxOrders) {
+
+		nxCommunityOrdersDao.save(nxOrders);
+
+		Integer ordersUserId = nxOrders.getNxCoUserId();
+
+		List<NxCommunityOrdersSubEntity> nxOrdersSubEntities = nxOrders.getNxOrdersSubEntities();
+
+		for (NxCommunityOrdersSubEntity sub : nxOrdersSubEntities) {
+
+			Integer nxOsCommunityGoodsId = sub.getNxCosCommunityGoodsId();
+			Map<String, Object> map = new HashMap<>();
+			map.put("nxOsCommunityGoodsId", nxOsCommunityGoodsId);
+			map.put("nxCugUserId", ordersUserId);
+			NxCustomerUserGoodsEntity userGoodsEntity = nxCustomerUserGoodsDao.queryByCommunityGoodsId(map);
+
+			if (userGoodsEntity != null) {
+				userGoodsEntity.setNxCugLastOrderTime(formatWhatDayTime(0));
+				userGoodsEntity.setNxCugLastOrderQuantity(sub.getNxCosQuantity());
+				userGoodsEntity.setNxCugLastOrderStandard(sub.getNxCosStandard());
+				userGoodsEntity.setNxCugLastOrderTime(formatWhatDay(0));
+				userGoodsEntity.setNxCugJoinMyTemplate(0);
+				Integer nxCugOrderTimes = userGoodsEntity.getNxCugOrderTimes();
+				userGoodsEntity.setNxCugOrderTimes(nxCugOrderTimes + 1);
+				String nxCugOrderAmount = userGoodsEntity.getNxCugOrderAmount();
+				String nxOsQuantity = sub.getNxCosQuantity();
+				BigDecimal add = new BigDecimal(nxCugOrderAmount).add(new BigDecimal(nxOsQuantity));
+				userGoodsEntity.setNxCugOrderAmount(add.toString());
+				nxCustomerUserGoodsDao.update(userGoodsEntity);
+			} else {
+				NxCustomerUserGoodsEntity newUserGoodsEntity = new NxCustomerUserGoodsEntity();
+				newUserGoodsEntity.setNxCugFirstOrderTime(formatWhatDay(0));
+				newUserGoodsEntity.setNxCugOrderAmount(sub.getNxCosQuantity());
+				newUserGoodsEntity.setNxCugCommunityGoodsId(sub.getNxCosCommunityGoodsId());
+				newUserGoodsEntity.setNxCugOrderTimes(1);
+				newUserGoodsEntity.setNxCugUserId(ordersUserId);
+				newUserGoodsEntity.setNxCugLastOrderTime(formatWhatDay(0));
+				newUserGoodsEntity.setNxCugJoinMyTemplate(0);
+				newUserGoodsEntity.setNxCugLastOrderQuantity(sub.getNxCosQuantity());
+				newUserGoodsEntity.setNxCugLastOrderStandard(sub.getNxCosStandard());
+				newUserGoodsEntity.setNxCugType(0);
+				nxCustomerUserGoodsDao.save(newUserGoodsEntity);
+
+
+			}
+
+		}
+	}
+
+    @Override
+    public NxCommunityOrdersEntity queryOrdersItemDetail(Map<String, Object> map) {
+
+		return nxCommunityOrdersDao.queryOrdersItemDetail(map);
+    }
+
+    @Override
+    public Integer queryCommOrderCount(Map<String, Object> map) {
+
+		return nxCommunityOrdersDao.queryCommOrderCount(map);
+    }
+
+    @Override
+    public double queryCommOrderSubtotal(Map<String, Object> map) {
+
+		return nxCommunityOrdersDao.queryCommOrderSubtotal(map);
+    }
+
+	@Override
+	public void delete(Integer nxOrdersId) {
+		nxCommunityOrdersDao.delete(nxOrdersId);
+	}
+
+    @Override
+    public NxCommunityOrdersEntity queryRefundOrder(Integer orderId) {
+
+		return nxCommunityOrdersDao.queryRefundOrder(orderId);
+    }
 
 
 }

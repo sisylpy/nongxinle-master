@@ -18,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -26,6 +28,7 @@ import static com.nongxinle.utils.CommonUtils.generateBillTradeNo;
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.DateUtils.getLastMonth;
 import static com.nongxinle.utils.GbTypeUtils.*;
+import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeKufang;
 
 
 @RestController
@@ -41,11 +44,583 @@ public class GbDepartmentBillController {
     private GbDepartmentGoodsStockService gbDepartmentGoodsStockService;
     @Autowired
     private NxDistributerService nxDistributerService;
+    @Autowired
+    private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
+    @Autowired
+    private GbDistributerPurchaseGoodsService gbDistributerPurchaseGoodsService;
+    @Autowired
+    private GbDistributerGoodsPriceService goodsPriceService;
+    @Autowired
+    private GbDistributerGoodsService gbDistributerGoodsService;
+    @Autowired
+    private GbDepartmentGoodsStockReduceService gbDepGoodsStockReduceService;
+    @Autowired
+    private GbDepartmentGoodsDailyService gbDepGoodsDailyService;
 
 
+    @RequestMapping(value = "/stockReceiveBill", method = RequestMethod.POST)
+    @ResponseBody
+    public R stockReceiveBill(@RequestBody GbDepartmentBillEntity billEntity) {
+
+        Boolean ifCanReceiveTime = getIfCanReceiveTime();
+        if(ifCanReceiveTime){
+            List<GbDepartmentOrdersEntity> ordersEntities = billEntity.getGbDepartmentOrdersEntities();
+            Integer gbDbIssueDepId = billEntity.getGbDbIssueDepId();
+            GbDepartmentEntity issueDepartment = gbDepartmentService.queryObject(gbDbIssueDepId);
+            if (ordersEntities.size() > 0) {
+                for (GbDepartmentOrdersEntity ordersEntity : ordersEntities) {
+                    if(ordersEntity.getHasChoice()){
+                        departmentReceivePurBill(ordersEntity);
+                    }else{
+                        ordersEntity.setGbDoStatus(getGbOrderStatusHasFinished());
+                        ordersEntity.setGbDoBillId(null);
+                        gbDepartmentOrdersService.update(ordersEntity);
+                    }
+                }
+            }
+            billEntity.setGbDbStatus(0);
+            gbDepartmentBillService.update(billEntity);
+            return R.ok();
+        }else{
+            return R.error(-1,"5分钟之内是更新时间，请稍后操作");
+        }
+    }
+
+
+
+    @RequestMapping(value = "/mendianReceiveBill", method = RequestMethod.POST)
+    @ResponseBody
+    public R mendianReceiveBill(@RequestBody GbDepartmentBillEntity billEntity) {
+        Boolean ifCanReceiveTime = getIfCanReceiveTime();
+        if(ifCanReceiveTime){
+            List<GbDepartmentOrdersEntity> ordersEntities = billEntity.getGbDepartmentOrdersEntities();
+            Integer gbDbIssueDepId = billEntity.getGbDbIssueDepId();
+            GbDepartmentEntity issueDepartment = gbDepartmentService.queryObject(gbDbIssueDepId);
+            Integer gbDepartmentType = issueDepartment.getGbDepartmentType();
+            if (ordersEntities.size() > 0) {
+                for (GbDepartmentOrdersEntity ordersEntity : ordersEntities) {
+                    if(ordersEntity.getHasChoice()){
+                        if (gbDepartmentType.equals(getGbDepartmentTypeKufang()) || gbDepartmentType.equals(getGbDepartmentTypeKitchen())) {
+                            departmentReceiveOutStock(ordersEntity);
+                        } else {
+                            departmentReceivePurBill(ordersEntity);
+                        }
+                    }else{
+                        ordersEntity.setGbDoStatus(getGbOrderStatusHasFinished());
+                        ordersEntity.setGbDoBillId(null);
+                        gbDepartmentOrdersService.update(ordersEntity);
+                    }
+                }
+            }
+            billEntity.setGbDbStatus(0);
+            gbDepartmentBillService.update(billEntity);
+            return R.ok();
+        }else{
+            return R.error(-1,"5分钟之内是更新时间，请稍后操作");
+        }
+    }
+
+
+    public R departmentReceiveOutStock(@RequestBody GbDepartmentOrdersEntity order) {
+
+
+        Integer gbDepartmentOrdersId = order.getGbDepartmentOrdersId();
+        Integer gbDoDepDisGoodsId = order.getGbDoDepDisGoodsId();
+        GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(gbDoDepDisGoodsId);
+
+        GbDepartmentOrdersEntity ordersEntity = gbDepartmentOrdersService.queryObject(gbDepartmentOrdersId);
+        Integer gbDoStatus = ordersEntity.getGbDoStatus();
+        //判断没有被别人收货
+        if (gbDoStatus.equals(getGbOrderStatusHasBill())) {
+            //1,修改库存数据
+//            if (order.getGbDoOrderType().equals(getGbOrderTypeChuKu()) || order.getGbDoOrderType().equals(getGbOrderTypeKitchen())) {
+            List<GbDepartmentGoodsStockEntity> goodsStockEntityList = order.getGoodsStockEntityList();
+            for (GbDepartmentGoodsStockEntity stock : goodsStockEntityList) {
+
+                //判断是否价格异常商品
+                if (stock.getGbDgsGbPriceGoodsId() != null) {
+                    GbDistributerGoodsPriceEntity goodsPriceEntity = goodsPriceService.queryObject(stock.getGbDgsGbPriceGoodsId());
+                    String subtotal = stock.getGbDgsSubtotal();
+                    BigDecimal whatSubtotal = new BigDecimal(subtotal).multiply(new BigDecimal(goodsPriceEntity.getGbDgpPurScale()));
+                    stock.setGbDgsGbPriceSubtotal(whatSubtotal.toString());
+                    stock.setGbDgsGbPriceGoodsId(goodsPriceEntity.getGbDistributerGoodsPriceId());
+                    stock.setGbDgsGbPriceSubtotalScale(goodsPriceEntity.getGbDgpPurScale());
+                }
+                stock.setGbDgsFullTime(formatFullTime());
+                stock.setGbDgsDate(formatWhatDay(0));
+                stock.setGbDgsTimeStamp(getTimeStamp());
+                stock.setGbDgsWeek(getWeek(0));
+                stock.setGbDgsMonth(formatWhatMonth(0));
+                stock.setGbDgsYear(formatWhatYear(0));
+                stock.setGbDgsInventoryFullTime(formatFullTime());
+                stock.setGbDgsInventoryDate(formatWhatDay(0));
+                stock.setGbDgsInventoryWeek(getWeekOfYear(0).toString());
+                stock.setGbDgsInventoryMonth(formatWhatMonth(0));
+                stock.setGbDgsInventoryYear(formatWhatYear(0));
+                stock.setGbDgsStars(5);
+                stock.setGbDgsStatus(0);
+
+                // showStandard
+                if (departmentDisGoodsEntity.getGbDdgShowStandardId() != -1) {
+                    String gbDdgShowStandardScale = departmentDisGoodsEntity.getGbDdgShowStandardScale();
+                    BigDecimal divide = new BigDecimal(order.getGbDoWeight()).divide(new BigDecimal(gbDdgShowStandardScale), 1, BigDecimal.ROUND_HALF_UP);
+                    stock.setGbDgsRestWeightShowStandard(divide.toString());
+                    stock.setGbDgsRestWeightShowStandardName(departmentDisGoodsEntity.getGbDdgShowStandardName());
+                }
+
+
+                gbDepartmentGoodsStockService.update(stock);
+
+                //depDisGoods
+                orderAddDepDisGoods(order, stock, gbDoDepDisGoodsId);
+
+                //add outStockProdeuce
+                //add outStockProdeuce
+                Integer gbDoDisGoodsId = order.getGbDoDisGoodsId();
+                GbDistributerGoodsEntity gbDistributerGoodsEntity = gbDistributerGoodsService.queryObject(gbDoDisGoodsId);
+                if (gbDistributerGoodsEntity.getGbDgIsSelfControl() == 0) {
+                    System.out.println("adddkkdkkdkdkdkdkkdkkdkdkdk");
+                    addNewStockReduce(stock);
+                    subtractOutGoodsDailyBusiness(stock);
+                }
+
+
+                // add departmentGoodsDaily
+                updateDepGoodsDailyBusiness(stock);
+            }
+
+            //2，修改订单状态
+            order.setGbDoStatus(getGbOrderStatusReceived());
+            gbDepartmentOrdersService.update(order);
+            return R.ok();
+        } else {
+            return R.error(-1, "已经完成收货");
+        }
+
+    }
+
+
+    public R departmentReceivePurBill(@RequestBody GbDepartmentOrdersEntity order) {
+        Integer gbDepartmentOrdersId = order.getGbDepartmentOrdersId();
+        Integer gbDoDepDisGoodsId = order.getGbDoDepDisGoodsId();
+        GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(gbDoDepDisGoodsId);
+
+        GbDepartmentOrdersEntity ordersEntity = gbDepartmentOrdersService.queryObject(gbDepartmentOrdersId);
+        Integer gbDoStatus = ordersEntity.getGbDoStatus();
+        //判断没有被别人收货
+        if (gbDoStatus.equals(getGbOrderStatusHasBill())) {
+
+
+            //0,修改订单上次价格涨幅
+            String gbDdgOrderDate = departmentDisGoodsEntity.getGbDdgOrderDate();
+
+            if (gbDdgOrderDate != null && order.getGbDoPrice() != null) {
+                BigDecimal decimal = new BigDecimal(departmentDisGoodsEntity.getGbDdgOrderPrice());
+                BigDecimal decimal1 = new BigDecimal(order.getGbDoPrice());
+                BigDecimal subtract1 = decimal1.subtract(decimal);
+                order.setGbDoPriceDifferent(subtract1.toString());
+            } else {
+                order.setGbDoPriceDifferent("0");
+            }
+
+            GbDepartmentGoodsStockEntity stockEntity = new GbDepartmentGoodsStockEntity();
+            stockEntity.setGbDgsGbDepartmentId(order.getGbDoDepartmentId());
+            stockEntity.setGbDgsGbDepartmentFatherId(order.getGbDoDepartmentFatherId());
+            stockEntity.setGbDgsGbPurGoodsId(order.getGbDoPurchaseGoodsId());
+            stockEntity.setGbDgsGbDistributerId(order.getGbDoDistributerId());
+            stockEntity.setGbDgsWeight(order.getGbDoWeight());
+            stockEntity.setGbDgsPrice(order.getGbDoPrice());
+            stockEntity.setGbDgsSubtotal(order.getGbDoSubtotal());
+            stockEntity.setGbDgsRestWeight(order.getGbDoWeight());
+            stockEntity.setGbDgsRestSubtotal(order.getGbDoSubtotal());
+            stockEntity.setGbDgsGbDisGoodsId(order.getGbDoDisGoodsId());
+            stockEntity.setGbDgsGbDisGoodsGrandId(order.getGbDoDisGoodsGrandId());
+            stockEntity.setGbDgsGbDepDisGoodsId(order.getGbDoDepDisGoodsId());
+            stockEntity.setGbDgsDate(formatWhatDay(0));
+            stockEntity.setGbDgsTimeStamp(getTimeStamp());
+            stockEntity.setGbDgsWeek(getWeek(0));
+            stockEntity.setGbDgsMonth(formatWhatMonth(0));
+            stockEntity.setGbDgsYear(formatWhatYear(0));
+            stockEntity.setGbDgsFullTime(formatFullTime());
+            stockEntity.setGbDgsLossWeight("0");
+            stockEntity.setGbDgsLossSubtotal("0");
+            stockEntity.setGbDgsReturnWeight("0");
+            stockEntity.setGbDgsReturnSubtotal("0");
+            stockEntity.setGbDgsProduceWeight("0");
+            stockEntity.setGbDgsProduceSubtotal("0");
+            stockEntity.setGbDgsWasteWeight("0");
+            stockEntity.setGbDgsWasteSubtotal("0");
+            String gbDdgSellingPrice = departmentDisGoodsEntity.getGbDdgSellingPrice();
+            if (gbDdgSellingPrice != null && new BigDecimal(gbDdgSellingPrice).compareTo(new BigDecimal(0)) == 1) {
+                stockEntity.setGbDgsAfterProfitSubtotal("0");
+                stockEntity.setGbDgsBetweenPrice("0");
+                stockEntity.setGbDgsCostRate("0");
+                stockEntity.setGbDgsSellingSubtotal("0");
+                stockEntity.setGbDgsProduceSellingSubtotal("0");
+                stockEntity.setGbDgsProfitSubtotal("0");
+                stockEntity.setGbDgsProfitWeight("0");
+                stockEntity.setGbDgsSellingPrice(gbDdgSellingPrice);
+            } else {
+                stockEntity.setGbDgsSellingPrice("-1");
+            }
+
+            // showStandard
+            if (departmentDisGoodsEntity.getGbDdgShowStandardId() != -1) {
+                String gbDdgShowStandardScale = departmentDisGoodsEntity.getGbDdgShowStandardScale();
+                BigDecimal divide = new BigDecimal(order.getGbDoWeight()).divide(new BigDecimal(gbDdgShowStandardScale), 1, BigDecimal.ROUND_HALF_UP);
+                stockEntity.setGbDgsRestWeightShowStandard(divide.toString());
+                stockEntity.setGbDgsRestWeightShowStandardName(departmentDisGoodsEntity.getGbDdgShowStandardName());
+            }
+
+            //判断是否有保鲜时间参数
+            if (order.getGbDoPurchaseGoodsId() != -1) {
+                GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(order.getGbDoPurchaseGoodsId());
+                if (purchaseGoodsEntity.getGbDpgWarnFullTime() != null && purchaseGoodsEntity.getGbDpgWasteFullTime() != null) {
+                    stockEntity.setGbDgsWarnFullTime(purchaseGoodsEntity.getGbDpgWarnFullTime());
+                    stockEntity.setGbDgsWasteFullTime(purchaseGoodsEntity.getGbDpgWasteFullTime());
+
+                    String gbDpgWarnFullTime = purchaseGoodsEntity.getGbDpgWarnFullTime();
+                    String gbDpgWasteFullTime = purchaseGoodsEntity.getGbDpgWasteFullTime();
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                    // 设置日期字符串
+                    // 解析日期字符串为Date对象
+                    Date dateWaste = null;
+                    Date dateWarn = null;
+                    try {
+                        dateWaste = dateFormat.parse(gbDpgWasteFullTime);
+                        dateWarn = dateFormat.parse(gbDpgWarnFullTime);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    // 获取时间戳
+                    long timestampWaste = dateWaste.getTime();
+                    long timestampWarn = dateWarn.getTime();
+                    // 输出时间戳
+                    System.out.println("zhelieiieieiieieiieeiie" + dateWaste + "abcc" + timestampWaste);
+                    stockEntity.setGbDgsWasteTimeQuantumName(String.valueOf(timestampWaste));
+                    stockEntity.setGbDgsWarnTimeQuantumName(String.valueOf(timestampWarn));
+
+                }
+                //判断是否价格异常商品
+                if (purchaseGoodsEntity.getGbDpgDisGoodsPriceId() != null) {
+                    GbDistributerGoodsPriceEntity goodsPriceEntity = goodsPriceService.queryObject(purchaseGoodsEntity.getGbDpgDisGoodsPriceId());
+                    String doWeight = order.getGbDoWeight();
+                    Integer gbDgpPurWhat = goodsPriceEntity.getGbDgpPurWhat();
+                    String whatSubtotal = "";
+                    if (gbDgpPurWhat == 1) {
+                        String gbDgpGoodsHighestPrice = goodsPriceEntity.getGbDgpGoodsHighestPrice();
+                        String purPrice = goodsPriceEntity.getGbDgpPurPrice();
+                        BigDecimal diffPrice = new BigDecimal(purPrice).subtract(new BigDecimal(gbDgpGoodsHighestPrice));
+                        BigDecimal subtotal = diffPrice.multiply(new BigDecimal(doWeight)).setScale(1, BigDecimal.ROUND_HALF_UP);
+                        whatSubtotal = subtotal.toString();
+                    }
+                    if (gbDgpPurWhat == -1) {
+                        String lowestPrice = goodsPriceEntity.getGbDgpGoodsLowestPrice();
+                        String purPrice = goodsPriceEntity.getGbDgpPurPrice();
+                        BigDecimal diffPrice = new BigDecimal(purPrice).subtract(new BigDecimal(lowestPrice));
+                        BigDecimal subtotal = diffPrice.multiply(new BigDecimal(doWeight)).setScale(1, BigDecimal.ROUND_HALF_UP);
+                        whatSubtotal = subtotal.toString();
+                    }
+
+                    //价控最低价的成本
+                    //实际成本与最低成本的差价
+                    stockEntity.setGbDgsGbPriceSubtotal(whatSubtotal); // 相差了多少成本
+                    stockEntity.setGbDgsGbPriceGoodsId(purchaseGoodsEntity.getGbDpgDisGoodsPriceId());
+                    stockEntity.setGbDgsGbPriceSubtotalScale(goodsPriceEntity.getGbDgpPurScale());
+                }
+
+            }
+
+
+            stockEntity.setGbDgsStatus(0);
+            stockEntity.setGbDgsGbDepartmentOrderId(order.getGbDepartmentOrdersId());
+            stockEntity.setGbDgsGbGoodsStockId(-1);
+            stockEntity.setGbDgsGbFromDepartmentId(order.getGbDoToDepartmentId());
+            stockEntity.setGbDgsNxDistributerId(order.getGbDoNxDistributerId());
+            stockEntity.setGbDgsReceiveUserId(order.getGbDoReceiveUserId());
+            stockEntity.setGbDgsInventoryDate(formatWhatDay(0));
+            stockEntity.setGbDgsInventoryWeek(getWeekOfYear(0).toString());
+            stockEntity.setGbDgsInventoryMonth(formatWhatMonth(0));
+            stockEntity.setGbDgsInventoryYear(formatWhatYear(0));
+            stockEntity.setGbDgsStars(5);
+            stockEntity.setGbDgsNxSupplierId(-1);
+            gbDepartmentGoodsStockService.save(stockEntity);
+
+            updateDepGoodsDailyBusiness(stockEntity);
+
+            orderAddDepDisGoods(order, stockEntity, gbDoDepDisGoodsId);
+
+            //2，修改订单状态
+            order.setGbDoStatus(getGbOrderStatusReceived());
+            gbDepartmentOrdersService.update(order);
+
+//            //3，修改送货单收货单子数量
+            if (order.getGbDoPurchaseGoodsId() != -1) {
+                GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(order.getGbDoPurchaseGoodsId());
+                BigDecimal gbPgOrderAmount = new BigDecimal(purchaseGoodsEntity.getGbDpgOrdersAmount());
+                BigDecimal gbDbFinishAmount = new BigDecimal(purchaseGoodsEntity.getGbDpgOrdersFinishAmount());
+                if (gbDbFinishAmount.add(new BigDecimal(1)).compareTo(gbPgOrderAmount) == 0) {
+                    purchaseGoodsEntity.setGbDpgOrdersFinishAmount(purchaseGoodsEntity.getGbDpgOrdersAmount());
+                    purchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusReceive());
+                } else {
+                    BigDecimal add = gbDbFinishAmount.add(new BigDecimal(1));
+                    purchaseGoodsEntity.setGbDpgOrdersFinishAmount(add.intValue());
+                }
+                gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+            }
+
+            return R.ok();
+        } else {
+            return R.error(-1, "已经完成收货");
+        }
+
+    }
+
+
+    private void addNewStockReduce(GbDepartmentGoodsStockEntity stockEntity) {
+        Integer gbDgsGbGoodsStockId = stockEntity.getGbDgsGbGoodsStockId();
+        GbDepartmentGoodsStockEntity stock = gbDepartmentGoodsStockService.queryObject(gbDgsGbGoodsStockId);
+        GbDepartmentGoodsStockReduceEntity reduceEntity = new GbDepartmentGoodsStockReduceEntity();
+        reduceEntity.setGbDgsrType(getGbDepartGoodsStockReduceTypeProduce()); //
+        reduceEntity.setGbDgsrStatus(0);
+        reduceEntity.setGbDgsrGbDistributerId(stock.getGbDgsGbDistributerId());
+        reduceEntity.setGbDgsrGbDepartmentId(stock.getGbDgsGbDepartmentId());
+        reduceEntity.setGbDgsrGbDepartmentFatherId(stock.getGbDgsGbDepartmentFatherId());
+        reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
+        reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
+        reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
+        reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
+        reduceEntity.setGbDgsrFullTime(formatFullTime());
+        reduceEntity.setGbDgsrDoUserId(stock.getGbDgsReduceWeightUserId());
+        reduceEntity.setGbDgsrDate(formatWhatDay(0));
+        reduceEntity.setGbDgsrStockNxDistribtuerId(stock.getGbDgsNxDistributerId());
+        reduceEntity.setGbDgsrStockNxSupplierId(stock.getGbDgsNxSupplierId());
+        reduceEntity.setGbDgsrWeek(getWeekOfYear(0).toString());
+        reduceEntity.setGbDgsrMonth(formatWhatMonth(0));
+        reduceEntity.setGbDgsrCostWeight(stockEntity.getGbDgsWeight());
+        reduceEntity.setGbDgsrCostSubtotal(stockEntity.getGbDgsSubtotal());
+        reduceEntity.setGbDgsrProduceWeight(stockEntity.getGbDgsWeight());
+        reduceEntity.setGbDgsrProduceSubtotal(stockEntity.getGbDgsSubtotal());
+        reduceEntity.setGbDgsrGbPurGoodsId(stock.getGbDgsGbPurGoodsId());
+        reduceEntity.setGbDgsrReturnWeight("0");
+        reduceEntity.setGbDgsrReturnSubtotal("0");
+        reduceEntity.setGbDgsrWasteWeight("0");
+        reduceEntity.setGbDgsrWasteSubtotal("0");
+        reduceEntity.setGbDgsrLossWeight("0");
+        reduceEntity.setGbDgsrLossSubtotal("0");
+        reduceEntity.setGbDgsrGbGoodsInventoryType(1);
+        gbDepGoodsStockReduceService.save(reduceEntity);
+
+        BigDecimal myChangeWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+        BigDecimal myChangeSubtotal = new BigDecimal(stockEntity.getGbDgsSubtotal());
+
+        //update
+        BigDecimal allWeight = new BigDecimal(stock.getGbDgsProduceWeight()).add(myChangeWeight).setScale(1, BigDecimal.ROUND_HALF_UP); //总损耗数量
+        BigDecimal allSubtotal = new BigDecimal(stock.getGbDgsProduceSubtotal()).add(myChangeSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP); //总损耗数量
+        stock.setGbDgsProduceWeight(allWeight.toString());
+        stock.setGbDgsProduceSubtotal(allSubtotal.toString());
+        gbDepartmentGoodsStockService.update(stock);
+
+    }
+
+
+    private void subtractOutGoodsDailyBusiness(GbDepartmentGoodsStockEntity stockEntity) {
+        Integer gbDgsGbGoodsStockId = stockEntity.getGbDgsGbGoodsStockId();
+        GbDepartmentGoodsStockEntity stock = gbDepartmentGoodsStockService.queryObject(gbDgsGbGoodsStockId);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("depGoodsId", stock.getGbDgsGbDepDisGoodsId());
+        map.put("date", formatWhatDay(0));
+        System.out.println("searchchdddialldydydyydyydydy" + map);
+        GbDepartmentGoodsDailyEntity depGoodsDailyItem = gbDepGoodsDailyService.queryDepGoodsDailyItem(map);
+        if (depGoodsDailyItem != null) {
+            BigDecimal restWeight = new BigDecimal(depGoodsDailyItem.getGbDgdRestWeight());
+            BigDecimal produceWeight = new BigDecimal(depGoodsDailyItem.getGbDgdProduceWeight());
+            BigDecimal produceSubtotal = new BigDecimal(depGoodsDailyItem.getGbDgdProduceSubtotal());
+
+            BigDecimal outWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+            BigDecimal outSubtotal = new BigDecimal(stockEntity.getGbDgsSubtotal());
+            BigDecimal produceAllWeight = produceWeight.add(outWeight);
+            BigDecimal produceAllSubtotal = produceSubtotal.add(outSubtotal);
+            BigDecimal totalRestWeight = restWeight.subtract(outWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            depGoodsDailyItem.setGbDgdRestWeight(totalRestWeight.toString());
+            depGoodsDailyItem.setGbDgdProduceWeight(produceAllWeight.toString());
+            depGoodsDailyItem.setGbDgdProduceSubtotal(produceAllSubtotal.toString());
+            gbDepGoodsDailyService.update(depGoodsDailyItem);
+        }
+
+    }
+
+
+    private void updateDepGoodsDailyBusiness(GbDepartmentGoodsStockEntity stock) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("depGoodsId", stock.getGbDgsGbDepDisGoodsId());
+        map.put("date", formatWhatDay(0));
+        GbDepartmentGoodsDailyEntity depGoodsDailyItem = gbDepGoodsDailyService.queryDepGoodsDailyItem(map);
+        if (depGoodsDailyItem != null) {
+            BigDecimal weight = new BigDecimal(depGoodsDailyItem.getGbDgdWeight());
+            BigDecimal total = new BigDecimal(depGoodsDailyItem.getGbDgdSubtotal());
+            BigDecimal restWeight = new BigDecimal(depGoodsDailyItem.getGbDgdRestWeight());
+            BigDecimal totalWeight = new BigDecimal(stock.getGbDgsWeight()).add(weight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalSubtotal = new BigDecimal(stock.getGbDgsSubtotal()).add(total).setScale(1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalRestWeight = new BigDecimal(stock.getGbDgsWeight()).add(restWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            depGoodsDailyItem.setGbDgdWeight(totalWeight.toString());
+            depGoodsDailyItem.setGbDgdSubtotal(totalSubtotal.toString());
+            depGoodsDailyItem.setGbDgdRestWeight(totalRestWeight.toString());
+            depGoodsDailyItem.setGbDgdSellClearHour("-1");
+            depGoodsDailyItem.setGbDgdSellClearMinute("-1");
+            depGoodsDailyItem.setGbDgdStatus(0);
+            gbDepGoodsDailyService.update(depGoodsDailyItem);
+
+        } else {
+            GbDepartmentGoodsDailyEntity dailyEntity = new GbDepartmentGoodsDailyEntity();
+            dailyEntity.setGbDgdGbDistributerId(stock.getGbDgsGbDistributerId());
+            dailyEntity.setGbDgdGbDepartmentId(stock.getGbDgsGbDepartmentId());
+            dailyEntity.setGbDgdGbDepartmentFatherId(stock.getGbDgsGbDepartmentFatherId());
+            dailyEntity.setGbDgdGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
+            dailyEntity.setGbDgdGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
+            dailyEntity.setGbDgdGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
+            dailyEntity.setGbDgdDate(formatWhatDay(0));
+            dailyEntity.setGbDgdWeek(getWeekOfYear(0).toString());
+            dailyEntity.setGbDgdMonth(formatWhatMonth(0));
+            dailyEntity.setGbDgdYear(formatWhatYear(0));
+            dailyEntity.setGbDgdDay(getWeek(0));
+            dailyEntity.setGbDgdWeight(stock.getGbDgsWeight());
+            dailyEntity.setGbDgdRestWeight(stock.getGbDgsWeight());
+            dailyEntity.setGbDgdSubtotal(stock.getGbDgsSubtotal());
+            dailyEntity.setGbDgdProduceWeight("0");
+            dailyEntity.setGbDgdProduceSubtotal("0");
+            dailyEntity.setGbDgdLossWeight("0");
+            dailyEntity.setGbDgdLossSubtotal("0");
+            dailyEntity.setGbDgdReturnWeight("0");
+            dailyEntity.setGbDgdReturnSubtotal("0");
+            dailyEntity.setGbDgdWasteWeight("0");
+            dailyEntity.setGbDgdWasteSubtotal("0");
+            dailyEntity.setGbDgdSalesSubtotal("0");
+            dailyEntity.setGbDgdProfitSubtotal("0");
+            dailyEntity.setGbDgdAfterProfitSubtotal("0");
+            dailyEntity.setGbDgdSellClearHour("-1");
+            dailyEntity.setGbDgdSellClearMinute("-1");
+            dailyEntity.setGbDgdLastWeight("0");
+            dailyEntity.setGbDgdLastProduceWeight("0");
+            Integer gbDgdGbDisGoodsId = dailyEntity.getGbDgdGbDisGoodsId();
+            GbDistributerGoodsEntity distributerGoodsEntity = gbDistributerGoodsService.queryObject(gbDgdGbDisGoodsId);
+            if (distributerGoodsEntity.getGbDgControlFresh() == 1) {
+                dailyEntity.setGbDgdFreshRate("100");
+            } else {
+                dailyEntity.setGbDgdFreshRate("0");
+            }
+            dailyEntity.setGbDgdFullTime(formatFullTime());
+            dailyEntity.setGbDgdStatus(0);
+            gbDepGoodsDailyService.save(dailyEntity);
+        }
+    }
+
+
+    private void orderAddDepDisGoods(GbDepartmentOrdersEntity ordersEntity, GbDepartmentGoodsStockEntity stockEntity, Integer depDisGoodsId) {
+
+        BigDecimal stockSubtotal = new BigDecimal(stockEntity.getGbDgsSubtotal());
+        BigDecimal stockWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+        BigDecimal subTotal = new BigDecimal(0);
+        BigDecimal weight = new BigDecimal(0);
+        GbDepartmentDisGoodsEntity depDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(depDisGoodsId);
+        subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).add(stockSubtotal);
+        weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).add(stockWeight);
+        //updateOrder
+        depDisGoodsEntity.setGbDdgOrderDate(formatWhatDay(0));
+        depDisGoodsEntity.setGbDdgOrderPrice(ordersEntity.getGbDoPrice());
+        depDisGoodsEntity.setGbDdgOrderQuantity(ordersEntity.getGbDoQuantity());
+        depDisGoodsEntity.setGbDdgOrderRemark(ordersEntity.getGbDoRemark());
+        depDisGoodsEntity.setGbDdgOrderStandard(ordersEntity.getGbDoStandard());
+        depDisGoodsEntity.setGbDdgOrderWeight(ordersEntity.getGbDoWeight());
+
+
+        if (new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale()).compareTo(new BigDecimal(0)) == 1) {
+            BigDecimal showScale = new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale());
+            BigDecimal standardWeight = weight.divide(showScale, 1, BigDecimal.ROUND_HALF_UP);
+            depDisGoodsEntity.setGbDdgShowStandardWeight(standardWeight.toString());
+        }
+
+        depDisGoodsEntity.setGbDdgStockTotalSubtotal(subTotal.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+        depDisGoodsEntity.setGbDdgStockTotalWeight(weight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+        depDisGoodsEntity.setGbDdgInventoryDate(formatWhatDay(0));
+        depDisGoodsEntity.setGbDdgInventoryFullTime(formatWhatFullTime(0));
+        gbDepartmentDisGoodsService.update(depDisGoodsEntity);
+
+    }
+
+
+    private void updateDepDisGoods(GbDepartmentGoodsStockEntity stockEntity, Integer depDisGoodsId, String what) {
+        System.out.println("updateDepDisGoodsupdateDepDisGoods" + what);
+        BigDecimal stockSubtotal = new BigDecimal(stockEntity.getGbDgsSubtotal());
+        BigDecimal stockWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+        System.out.println("sotoscksubd;dldl" + stockWeight);
+        System.out.println("sotoscksubd;dldl" + stockSubtotal);
+        BigDecimal subTotal = new BigDecimal(0);
+        BigDecimal weight = new BigDecimal(0);
+        GbDepartmentDisGoodsEntity depDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(depDisGoodsId);
+        System.out.println("depgoeoidididiid" + depDisGoodsEntity.getGbDepartmentDisGoodsId());
+        if (what.equals("add")) {
+            subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).add(stockSubtotal);
+            weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).add(stockWeight);
+            System.out.println("adddddd" + subTotal + "weight" + weight);
+        }
+        if (what.equals("subtract")) {
+            subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).subtract(stockSubtotal);
+            weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).subtract(stockWeight);
+
+        }
+        System.out.println("zahuishsihsis" + subTotal);
+        if (new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale()).compareTo(new BigDecimal(0)) == 1) {
+            BigDecimal showScale = new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale());
+            BigDecimal standardWeight = weight.divide(showScale, 1, BigDecimal.ROUND_HALF_UP);
+            depDisGoodsEntity.setGbDdgShowStandardWeight(standardWeight.toString());
+        }
+        System.out.println("suttootototo-------" + subTotal + "weithht=====" + weight);
+        depDisGoodsEntity.setGbDdgStockTotalSubtotal(subTotal.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+        depDisGoodsEntity.setGbDdgStockTotalWeight(weight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+        depDisGoodsEntity.setGbDdgInventoryDate(formatWhatDay(0));
+        depDisGoodsEntity.setGbDdgInventoryFullTime(formatWhatFullTime(0));
+
+        gbDepartmentDisGoodsService.update(depDisGoodsEntity);
+
+    }
+
+
+    private void updateDepDisGoodsNoPrice(GbDepartmentGoodsStockEntity stockEntity, GbDepartmentGoodsStockEntity outStockEntity, String what) {
+        BigDecimal stockWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+        BigDecimal fromStockPriceB = new BigDecimal(outStockEntity.getGbDgsPrice());
+        BigDecimal stockSubtotal = fromStockPriceB.multiply(stockWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+        BigDecimal subTotal = new BigDecimal(0);
+        BigDecimal weight = new BigDecimal(0);
+        GbDepartmentDisGoodsEntity depDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(outStockEntity.getGbDgsGbDepDisGoodsId());
+        if (what.equals("add")) {
+            subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).add(stockSubtotal);
+            weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).add(stockWeight);
+
+        }
+        if (what.equals("subtract")) {
+            subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).subtract(stockSubtotal);
+            weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).subtract(stockWeight);
+
+        }
+        if (new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale()).compareTo(new BigDecimal(0)) == 1) {
+            BigDecimal showScale = new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale());
+            BigDecimal standardWeight = weight.divide(showScale, 1, BigDecimal.ROUND_HALF_UP);
+            depDisGoodsEntity.setGbDdgShowStandardWeight(standardWeight.toString());
+        }
+
+        depDisGoodsEntity.setGbDdgStockTotalSubtotal(subTotal.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+        depDisGoodsEntity.setGbDdgStockTotalWeight(weight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+        depDisGoodsEntity.setGbDdgInventoryDate(formatWhatDay(0));
+        depDisGoodsEntity.setGbDdgInventoryFullTime(formatWhatFullTime(0));
+        gbDepartmentDisGoodsService.update(depDisGoodsEntity);
+
+    }
 
     @ResponseBody
-    @RequestMapping(value = "/restrauntCashPay",method = RequestMethod.POST)
+    @RequestMapping(value = "/restrauntCashPay", method = RequestMethod.POST)
     public R restrauntCashPay(@RequestBody GbDepartmentBillEntity billEntity) {
         System.out.println("billl" + billEntity);
 
@@ -65,7 +640,7 @@ public class GbDepartmentBillController {
         params.put("appid", config.getAppID());
         params.put("mch_id", config.getMchID());
         params.put("nonce_str", CommonUtils.generateUUID());
-        params.put("body",  "订单支付");
+        params.put("body", "订单支付");
         params.put("out_trade_no", tradeNo);
         params.put("fee_type", "CNY");
         params.put("total_fee", s1);
@@ -80,7 +655,7 @@ public class GbDepartmentBillController {
 
             WXPay wxpay = new WXPay(config);
             long time = System.currentTimeMillis();
-            String tString = String.valueOf(time/1000);
+            String tString = String.valueOf(time / 1000);
             Map<String, String> resp = wxpay.unifiedOrder(params);
             System.out.println(resp);
             SortedMap<String, String> reMap = new TreeMap<>();
@@ -119,7 +694,7 @@ public class GbDepartmentBillController {
             String xml = WxPayUtils.InputStream2String(is);
             Map<String, String> notifyMap = WxPayUtils.xmlToMap(xml);// 将微信发的xml转map
 
-            System.out.println("微信返回给回调函数的信息为："+xml);
+            System.out.println("微信返回给回调函数的信息为：" + xml);
 
             if (notifyMap.get("result_code").equals("SUCCESS")) {
 
@@ -155,7 +730,7 @@ public class GbDepartmentBillController {
 
     @RequestMapping(value = "/depSearchBillGoods", method = RequestMethod.POST)
     @ResponseBody
-    public R depSearchBillGoods (Integer depGoodsId,String startDate, String stopDate) {
+    public R depSearchBillGoods(Integer depGoodsId, String startDate, String stopDate) {
         Map<String, Object> map = new HashMap<>();
         map.put("depGoodsId", depGoodsId);
         map.put("startDate", startDate);
@@ -168,7 +743,7 @@ public class GbDepartmentBillController {
 
     @RequestMapping(value = "/disGetNxDistributerUnPayBills", method = RequestMethod.POST)
     @ResponseBody
-    public R disGetNxDistributerUnPayBills (Integer nxDisId, Integer gbDisId, Integer status) {
+    public R disGetNxDistributerUnPayBills(Integer nxDisId, Integer gbDisId, Integer status) {
 
         Map<String, Object> map = new HashMap<>();
         map.put("nxDisId", nxDisId);
@@ -177,24 +752,23 @@ public class GbDepartmentBillController {
         List<GbDepartmentBillEntity> billEntities = gbDepartmentBillService.queryBillsByParamsGb(map);
 
         Double aDouble = 0.0;
-        if(gbDepartmentBillService.queryDepartmentBillCount(map) > 0){
+        if (gbDepartmentBillService.queryDepartmentBillCount(map) > 0) {
             aDouble = gbDepartmentBillService.queryGbDepBillsSubTotal(map);
         }
 
 
         Map<String, Object> map6 = new HashMap<>();
-        map6.put("total", new BigDecimal(aDouble).setScale(1,BigDecimal.ROUND_HALF_UP));
-        map6.put("arr", billEntities );
+        map6.put("total", new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP));
+        map6.put("arr", billEntities);
 
-        return R.ok().put("data",map6);
+        return R.ok().put("data", map6);
     }
-
 
 
     @RequestMapping(value = "/disGetNxDistributerBills", method = RequestMethod.POST)
     @ResponseBody
-    public R disGetNxDistributerBills (Integer nxDisId, Integer gbDisId, String startDate,
-                                       String stopDate, Integer status) {
+    public R disGetNxDistributerBills(Integer nxDisId, Integer gbDisId, String startDate,
+                                      String stopDate, Integer status) {
         //第一个月
         Map<String, Object> map = new HashMap<>();
         map.put("nxDisId", nxDisId);
@@ -214,17 +788,17 @@ public class GbDepartmentBillController {
         mapSub.put("month", formatWhatMonth(0));
         mapSub.put("status", 4);
         Double aDouble = 0.0;
-        if(gbDepartmentBillService.queryDepartmentBillCount(mapSub) > 0){
+        if (gbDepartmentBillService.queryDepartmentBillCount(mapSub) > 0) {
             aDouble = gbDepartmentBillService.queryGbDepBillsSubTotal(mapSub);
         }
         Double aDoubleOne = 0.0;
         mapSub.put("month", getLastMonth());
-        if(gbDepartmentBillService.queryDepartmentBillCount(mapSub) > 0){
+        if (gbDepartmentBillService.queryDepartmentBillCount(mapSub) > 0) {
             aDoubleOne = gbDepartmentBillService.queryGbDepBillsSubTotal(mapSub);
         }
         Double aDoubleTwo = 0.0;
         mapSub.put("month", getLastTwoMonth());
-        if(gbDepartmentBillService.queryDepartmentBillCount(mapSub) > 0){
+        if (gbDepartmentBillService.queryDepartmentBillCount(mapSub) > 0) {
             aDoubleTwo = gbDepartmentBillService.queryGbDepBillsSubTotal(mapSub);
         }
 
@@ -236,22 +810,22 @@ public class GbDepartmentBillController {
         mapSubHave.put("dayuStatus", 3);
         int count1 = gbDepartmentBillService.queryDepartmentBillCount(mapSubHave);
         Double aDoubleHave = 0.0;
-        if(count1 > 0){
+        if (count1 > 0) {
             aDoubleHave = gbDepartmentBillService.queryGbDepBillsSubTotal(mapSubHave);
         }
 
         mapSubHave.put("month", getLastMonth());
         int count2 = gbDepartmentBillService.queryDepartmentBillCount(mapSubHave);
         Double aDoubleHaveOne = 0.0;
-        if(count2 > 0){
+        if (count2 > 0) {
             aDoubleHaveOne = gbDepartmentBillService.queryGbDepBillsSubTotal(mapSubHave);
         }
 
 
         mapSubHave.put("month", getLastTwoMonth());
         int count3 = gbDepartmentBillService.queryDepartmentBillCount(mapSubHave);
-        Double aDoubleHaveTwo = 0.0 ;
-        if(count3 > 0){
+        Double aDoubleHaveTwo = 0.0;
+        if (count3 > 0) {
             aDoubleHaveTwo = gbDepartmentBillService.queryGbDepBillsSubTotal(mapSubHave);
         }
 
@@ -259,19 +833,19 @@ public class GbDepartmentBillController {
         Map<String, Object> map3 = new HashMap<>();
         map3.put("arr", billEntities);
         map3.put("month", formatWhatMonth(0));
-        map3.put("unSubtotal", new BigDecimal(aDouble).setScale(1,BigDecimal.ROUND_HALF_UP));
-        map3.put("haveSubtotal", new BigDecimal(aDoubleHave).setScale(1,BigDecimal.ROUND_HALF_UP));
+        map3.put("unSubtotal", new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP));
+        map3.put("haveSubtotal", new BigDecimal(aDoubleHave).setScale(1, BigDecimal.ROUND_HALF_UP));
 
         Map<String, Object> map4 = new HashMap<>();
         map4.put("arr", billEntities1);
         map4.put("month", getLastMonth());
-        map4.put("unSubtotal", new BigDecimal(aDoubleOne).setScale(1,BigDecimal.ROUND_HALF_UP));
-        map4.put("haveSubtotal", new BigDecimal(aDoubleHaveOne).setScale(1,BigDecimal.ROUND_HALF_UP));
+        map4.put("unSubtotal", new BigDecimal(aDoubleOne).setScale(1, BigDecimal.ROUND_HALF_UP));
+        map4.put("haveSubtotal", new BigDecimal(aDoubleHaveOne).setScale(1, BigDecimal.ROUND_HALF_UP));
         Map<String, Object> map5 = new HashMap<>();
         map5.put("arr", billEntities2);
         map5.put("month", getLastTwoMonth());
-        map5.put("unSubtotal", new BigDecimal(aDoubleTwo).setScale(1,BigDecimal.ROUND_HALF_UP));
-        map5.put("haveSubtotal", new BigDecimal(aDoubleHaveTwo).setScale(1,BigDecimal.ROUND_HALF_UP));
+        map5.put("unSubtotal", new BigDecimal(aDoubleTwo).setScale(1, BigDecimal.ROUND_HALF_UP));
+        map5.put("haveSubtotal", new BigDecimal(aDoubleHaveTwo).setScale(1, BigDecimal.ROUND_HALF_UP));
 
         List<Map<String, Object>> resultData = new ArrayList<>();
         resultData.add(map3);
@@ -284,15 +858,15 @@ public class GbDepartmentBillController {
         maptotal.put("disId", gbDisId);
         Double aDoubleTotal = 0.0;
         int count = gbDepartmentBillService.queryDepartmentBillCount(maptotal);
-        if(count > 0){
-             aDoubleTotal = gbDepartmentBillService.queryGbDepBillsSubTotal(maptotal);
+        if (count > 0) {
+            aDoubleTotal = gbDepartmentBillService.queryGbDepBillsSubTotal(maptotal);
         }
         Map<String, Object> map6 = new HashMap<>();
-        map6.put("total", new BigDecimal(aDoubleTotal).setScale(1,BigDecimal.ROUND_HALF_UP));
+        map6.put("total", new BigDecimal(aDoubleTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
         map6.put("count", count);
-        map6.put("bill", resultData );
+        map6.put("bill", resultData);
 
-        return R.ok().put("data",map6);
+        return R.ok().put("data", map6);
     }
 
     @RequestMapping(value = "/getDepBills", method = RequestMethod.POST)
@@ -302,22 +876,22 @@ public class GbDepartmentBillController {
         map.put("depId", depFatherId);
         map.put("startDate", startDate);
         map.put("stopDate", stopDate);
-        if(issueDepId != -1){
+        if (issueDepId != -1) {
             map.put("issueDepId", issueDepId);
         }
-        if(nxDisId != -1){
+        if (nxDisId != -1) {
             map.put("nxDisId", nxDisId);
         }
         List<GbDepartmentBillEntity> billEntities = gbDepartmentBillService.queryBillsByParamsGb(map);
         Double aDouble = gbDepartmentBillService.queryGbDepBillsSubTotal(map);
         Map<String, Object> mapR = new HashMap<>();
-        if(billEntities.size() > 0){
-            mapR.put("arr",billEntities);
-            mapR.put("billTotal", new BigDecimal(aDouble).setScale(1,BigDecimal.ROUND_HALF_UP) );
+        if (billEntities.size() > 0) {
+            mapR.put("arr", billEntities);
+            mapR.put("billTotal", new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP));
             return R.ok().put("data", mapR);
 
-        }else{
-            return R.error(-1,"没有数据");
+        } else {
+            return R.error(-1, "没有数据");
         }
 
     }
@@ -434,15 +1008,15 @@ public class GbDepartmentBillController {
         GbDepartmentBillEntity salesBill = gbDepartmentBillService.queryGbDepartmentBillDetail(billId);
         String gbDepartmentName = "";
         String gbDuWxNickName = "";
-        System.out.println("Zahsuifuda" + salesBill.getGbDbIssueOrderType());
-        if (salesBill.getGbDbIssueNxDisId() != null) {
-            Integer gbDbIssueNxDisId = salesBill.getGbDbIssueNxDisId();
-            NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(gbDbIssueNxDisId);
-            gbDuWxNickName = nxDistributerEntity.getNxDistributerName();
-        } else {
-            gbDepartmentName = salesBill.getIssueDepartmentEntity().getGbDepartmentName();
-            gbDuWxNickName = salesBill.getIssueUserEntity().getGbDuWxNickName();
-        }
+//        System.out.println("Zahsuifuda" + salesBill.getGbDbIssueOrderType());
+//        if (salesBill.getGbDbIssueNxDisId() != null) {
+//            Integer gbDbIssueNxDisId = salesBill.getGbDbIssueNxDisId();
+//            NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(gbDbIssueNxDisId);
+//            gbDuWxNickName = nxDistributerEntity.getNxDistributerName();
+//        } else {
+//            gbDepartmentName = salesBill.getIssueDepartmentEntity().getGbDepartmentName();
+//            gbDuWxNickName = salesBill.getIssueUserEntity().getGbDuWxNickName();
+//        }
 
 
         Map<String, Object> map = new HashMap<>();
@@ -626,29 +1200,92 @@ public class GbDepartmentBillController {
         return R.ok().put("data", billEntityList);
     }
 
-    @RequestMapping(value = "/getDepartmentAccountBills")
+
+    //
+
+    @RequestMapping(value = "/getPurchaseDepartmentBills")
     @ResponseBody
-    public R getDepartmentAccountBills(Integer depFatherId, Integer issueDepId, String startDate, String stopDate,
-                                       Integer orderType, String[]  orderTypes) {
-
-
+    public R getPurchaseDepartmentBills(Integer issueDepId, String startDate, String stopDate, String[] orderTypes, String searchDepIds
+                                        ) {
 
         //本月的账单
         Map<String, Object> map = new HashMap<>();
-        if(depFatherId != -1){
-            map.put("depId", depFatherId);
-        }
+
         map.put("startDate", startDate);
         map.put("stopDate", stopDate);
-        map.put("dayuStatus", -1);
-        if(orderType != -1){
-            map.put("orderType", orderType);
+//        map.put("dayuStatus", -1);
+        map.put("orderTypes", orderTypes);
+        map.put("issueDepId", issueDepId);
+        List<String> idsGb = new ArrayList<>();
+        if (!searchDepIds.equals("-1")) {
+            String[] arrGb = searchDepIds.split(",");
+            for (String idGb : arrGb) {
+                idsGb.add(idGb);
+                if (idsGb.size() > 0) {
+                    map.put("depFatherIds", idsGb);
+                }
+            }
         }
-        if(orderType != -1){
-            map.put("orderTypes", orderTypes);
+
+        List<GbDepartmentBillEntity> billEntityList = gbDepartmentBillService.queryBillsByParamsGb(map);
+
+        //查询总账款金额
+        String formatSubTotal = "0";
+        String formatSellSubTotal = "0";
+        Map<String, Object> map12 = new HashMap<>();
+
+        map12.put("startDate", startDate);
+        map12.put("stopDate", stopDate);
+//        map12.put("dayuStatus", -1);
+        map12.put("orderTypes", orderTypes);
+        map12.put("issueDepId", issueDepId);
+        if (!searchDepIds.equals("-1")) {
+            String[] arrGb = searchDepIds.split(",");
+            for (String idGb : arrGb) {
+                idsGb.add(idGb);
+                if (idsGb.size() > 0) {
+                    map12.put("depFatherIds", idsGb);
+                }
+            }
         }
-        if (issueDepId != -1) {
-            map.put("issueDepId", issueDepId);
+
+        int count = gbDepartmentBillService.queryDepartmentBillCount(map12);
+        if (count > 0) {
+            Double subTotal = gbDepartmentBillService.queryGbDepBillsSubTotal(map12);
+            formatSubTotal = String.format("%.2f", subTotal);
+        }
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("arr", billEntityList);
+        resultMap.put("total", formatSubTotal);
+        return R.ok().put("data", resultMap);
+    }
+
+
+    @RequestMapping(value = "/getIssueDepartmentBills")
+    @ResponseBody
+    public R getIssueDepartmentBills(Integer issueDepId, String startDate, String stopDate, String[] orderTypes,
+                                     String searchDepIds) {
+
+        //本月的账单
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("startDate", startDate);
+        map.put("stopDate", stopDate);
+//        map.put("dayuStatus", -1);
+        map.put("orderTypes", orderTypes);
+        map.put("issueDepId", issueDepId);
+        map.put("notEqualDepId", issueDepId);
+        List<String> idsGb = new ArrayList<>();
+
+        if (!searchDepIds.equals("-1")) {
+            String[] arrGb = searchDepIds.split(",");
+            for (String idGb : arrGb) {
+                idsGb.add(idGb);
+                if (idsGb.size() > 0) {
+                    map.put("depFatherIds", idsGb);
+                }
+            }
         }
 
         System.out.println("roodoososossos" + map);
@@ -659,20 +1296,21 @@ public class GbDepartmentBillController {
         String formatSubTotal = "0";
         String formatSellSubTotal = "0";
         Map<String, Object> map12 = new HashMap<>();
-        if(depFatherId != -1){
-            map12.put("depId", depFatherId);
-        }
+
         map12.put("startDate", startDate);
         map12.put("stopDate", stopDate);
         map12.put("dayuStatus", -1);
-        if(orderType != -1){
-            map12.put("orderType", orderType);
-        }
-        if(orderType != -1){
-            map.put("orderTypes", orderTypes);
-        }
-        if (issueDepId != -1) {
-            map12.put("issueDepId", issueDepId);
+        map12.put("orderTypes", orderTypes);
+        map12.put("issueDepId", issueDepId);
+        map12.put("notEqualDepId", issueDepId);
+        if (!searchDepIds.equals("-1")) {
+            String[] arrGb = searchDepIds.split(",");
+            for (String idGb : arrGb) {
+                idsGb.add(idGb);
+                if (idsGb.size() > 0) {
+                    map12.put("depFatherIds", idsGb);
+                }
+            }
         }
         int count = gbDepartmentBillService.queryDepartmentBillCount(map12);
         if (count > 0) {
@@ -687,6 +1325,65 @@ public class GbDepartmentBillController {
     }
 
 
+    @RequestMapping(value = "/getDepartmentAccountBills")
+    @ResponseBody
+    public R getDepartmentAccountBills(Integer depFatherId, Integer issueDepId, String startDate, String stopDate,
+                                       Integer orderType, String[] orderTypes) {
+
+
+        //本月的账单
+        Map<String, Object> map = new HashMap<>();
+        if (depFatherId != -1) {
+            map.put("depId", depFatherId);
+        }
+        map.put("startDate", startDate);
+        map.put("stopDate", stopDate);
+        map.put("dayuStatus", -1);
+        if (orderType != -1) {
+            map.put("orderType", orderType);
+        } else {
+            map.put("orderTypes", orderTypes);
+        }
+        if (issueDepId != -1) {
+            map.put("issueDepId", issueDepId);
+
+        }
+
+
+        List<GbDepartmentBillEntity> billEntityList = gbDepartmentBillService.queryBillsByParamsGb(map);
+
+        //查询总账款金额
+        String formatSubTotal = "0";
+        String formatSellSubTotal = "0";
+        Map<String, Object> map12 = new HashMap<>();
+        if (depFatherId != -1) {
+            map12.put("depId", depFatherId);
+        }
+        map12.put("startDate", startDate);
+        map12.put("stopDate", stopDate);
+        map12.put("dayuStatus", -1);
+        if (orderType != -1) {
+            map12.put("orderType", orderType);
+        } else {
+            map12.put("orderTypes", orderTypes);
+        }
+
+        if (issueDepId != -1) {
+            map12.put("issueDepId", issueDepId);
+//            map12.put("notEqualDepId", issueDepId);
+        }
+        int count = gbDepartmentBillService.queryDepartmentBillCount(map12);
+        if (count > 0) {
+            Double subTotal = gbDepartmentBillService.queryGbDepBillsSubTotal(map12);
+            formatSubTotal = String.format("%.2f", subTotal);
+        }
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("arr", billEntityList);
+        resultMap.put("total", formatSubTotal);
+        return R.ok().put("data", resultMap);
+    }
+
 
     @RequestMapping(value = "/getDepartmentBillDetail/{billId}")
     @ResponseBody
@@ -698,13 +1395,13 @@ public class GbDepartmentBillController {
 
     @RequestMapping(value = "/getPurchaserDepartmentBill", method = RequestMethod.POST)
     @ResponseBody
-    public R getPurchaserDepartmentBill(Integer depId, Integer searchDepId, String[] orderTypes) {
+    public R getPurchaserDepartmentBill(Integer depId, Integer searchDepIds, String[] orderTypes) {
 
         //第一个月
         Map<String, Object> map = new HashMap<>();
 
-        if(searchDepId != -1){
-            map.put("depId", searchDepId);
+        if (searchDepIds != -1) {
+            map.put("depId", searchDepIds);
         }
         map.put("issueDepId", depId);
         map.put("month", formatWhatMonth(0));
@@ -770,7 +1467,6 @@ public class GbDepartmentBillController {
     }
 
 
-
     @RequestMapping(value = "/saveAccountBillGb", method = RequestMethod.POST)
     @ResponseBody
     public R saveAccountBillGb(@RequestBody GbDepartmentBillEntity gbDepartmentBill) {
@@ -790,7 +1486,18 @@ public class GbDepartmentBillController {
             orders.setGbDoArriveOnlyDate(formatWhatDate(0));
             orders.setGbDoArriveDate(formatWhatDay(0));
             orders.setGbDoBillId(gbDepartmentBill.getGbDepartmentBillId());
+            orders.setGbDoWeightGoodsId(null);
+            orders.setGbDoWeightTotalId(null);
             gbDepartmentOrdersService.update(orders);
+
+            //3，修改送货单收货单子数量
+            if (orders.getGbDoPurchaseGoodsId() != -1) {
+                GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(orders.getGbDoPurchaseGoodsId());
+                BigDecimal  billAmount = new BigDecimal(purchaseGoodsEntity.getGbDpgOrdersBillAmount());
+                BigDecimal add = billAmount.add(new BigDecimal(1));
+                purchaseGoodsEntity.setGbDpgOrdersBillAmount(add.intValue());
+                gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+            }
         }
         return R.ok();
     }

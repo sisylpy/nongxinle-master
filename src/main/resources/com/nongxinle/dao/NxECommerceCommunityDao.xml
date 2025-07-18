@@ -20,14 +20,35 @@
 
 	<resultMap id="community" type="NxCommunityEntity">
 		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
+		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
+		<result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
+		<result property="nxCommunityDeliveryPayMaxFee" column="nx_community_delivery_pay_max_fee"/>
+		<result property="nxCommunityDeliveryPayPercent" column="nx_community_delivery_pay_percent"/>
+		<result property="nxCommunitySysBusinessAreaId" column="nx_community_sys_business_area_id"/>
+		<result property="nxCommunitySysCityId" column="nx_community_sys_city_id"/>
+		<result property="nxCommunitySysDistrictId" column="nx_community_sys_district_id"/>
+		<result property="nxCommunitySysProvinceId" column="nx_community_sys_province_id"/>
+		<result property="nxCommunityPrePrintTimes" column="nx_community_pre_print_times"/>
+		<result property="nxCommunityOpenTime" column="nx_community_open_time"/>
+		<result property="nxCommunityCloseTime" column="nx_community_close_time"/>
+		<result property="nxCommunityWxFile" column="nx_community_wx_file"/>
+		<result property="nxCommunityDoorFile" column="nx_community_door_file"/>
+		<result property="nxCommunityType" column="nx_community_type"/>
 		<result property="nxCommunityName" column="nx_community_name"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+		<result property="nxCommunityLat" column="nx_community_lat"/>
+		<result property="nxCommunityLng" column="nx_community_lng"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
 	</resultMap>
 
     <select id="queryCommunityByCommerceId" resultMap="community">
 		select * from nx_e_commerce_community as cc
 		left join nx_community as com on cc.nx_ECC_community_id = com.nx_community_id
-
 		where nx_ECC_e_id = #{commerceId}
+	</select>
+    <select id="queryByCommunityId" resultType="com.nongxinle.entity.NxECommerceCommunityEntity">
+		select * from nx_e_commerce_community where nx_ECC_community_id = #{communityId}
 	</select>
 
     <insert id="save" parameterType="com.nongxinle.entity.NxECommerceCommunityEntity" useGeneratedKeys="true"

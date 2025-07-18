@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.TreeSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +38,7 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	 */
 	private Integer gbDoDisGoodsId;
 	private Integer gbDoDisGoodsFatherId;
+	private Integer gbDoDisGoodsGrandId;
 
 	private  Integer gbDoDepDisGoodsId;
 
@@ -102,6 +104,7 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	 *  部门订单商品进货状态
 	 */
 	private Integer gbDoBuyStatus;
+	private Integer gbDoCostPriceLevel;
 	/**
 	 *  部门订单申请时间
 	 */
@@ -127,10 +130,14 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	private Integer gbDoGoodsType;
 
 	private String gbDoOperationTime;
+	private String gbDoPrintStandard;
 
 	private String gbDoArriveWhatDay;
 
 	private Integer gbDoIsAgent;
+
+	private Integer gbDoNxGoodsGrandId;
+	private Integer gbDoNxGoodsGreatId;
 
 	private String gbDoApplyOnlyTime;
 	private String gbDoCostPrice;
@@ -158,12 +165,20 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
     private GbDistributerGoodsEntity gbDistributerGoodsEntity;
     private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
     private GbDistributerPurchaseGoodsEntity gbDistributerPurchaseGoodsEntity;
+    private GbDistributerPurchaseGoodsEntity returnPurGoodsEntity;
 
 	private GbDepartmentUserEntity gbDepartmentUserEntity;
 	private GbDepartmentEntity gbDepartmentEntity;
 	private GbDepartmentEntity orderDepartment;
 	private GbDepartmentUserEntity receiveUserEntity;
 	private GbDepartmentUserEntity pickerUserEntity;
+	private NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity;
+
+	private String gbDoGoodsName;
+	private List<GbDistributerGoodsEntity> gbDistributerGoodsEntityList;
+	private TreeSet<NxGoodsEntity> nxGoodsEntities;
+	private List<GbDepartmentOrdersEntity> hasOrderList;
+
 
 
 	private Boolean onFocus;
@@ -171,6 +186,7 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	private Boolean hasChoice =  true;
 
 	private Boolean isNotice = false ;
+	private Boolean stockIsZero = false ;
 
 	private Boolean showDate = true;
 
@@ -183,6 +199,8 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 
 	private GbDepartmentGoodsStockEntity selfControlStockEntity;
 	private NxDepartmentOrdersEntity nxDepartmentOrdersEntity;
+	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+
 
 	@Override
 	public boolean equals(Object o) {

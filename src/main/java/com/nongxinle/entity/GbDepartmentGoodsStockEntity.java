@@ -42,6 +42,7 @@ public class GbDepartmentGoodsStockEntity implements Serializable,Comparable {
 	 */
 	private Integer gbDgsGbDisGoodsId;
 	private Integer gbDgsGbDisGoodsFatherId;
+	private Integer gbDgsGbDisGoodsGrandId;
 	/**
 	 *  
 	 */
@@ -70,6 +71,7 @@ public class GbDepartmentGoodsStockEntity implements Serializable,Comparable {
 	 *  接收用户
 	 */
 	private Integer gbDgsReceiveUserId;
+	private Integer gbDgsNxSupplierId;
 	/**
 	 *  批次状态
 	 */
@@ -128,6 +130,7 @@ public class GbDepartmentGoodsStockEntity implements Serializable,Comparable {
 
 	private Integer gbDgsDepSettleId;
 	private Integer gbDgsFromDepSettleId;
+	private Integer gbDgsStars;
 
 	private String gbStockWarnHours;
 	private String gbStockWasetHours;
@@ -165,11 +168,17 @@ public class GbDepartmentGoodsStockEntity implements Serializable,Comparable {
 	private GbDepartmentUserEntity stockUserEntity;
 	private GbDistributerPurchaseGoodsEntity purchaseGoodsEntity;
 	private GbDepartmentGoodsStockReduceEntity returnReduceEntity;
+	private List<GbDepartmentGoodsStockReduceEntity> starReduce;
 	private GbDepartmentGoodsStockReduceAttachmentEntity reduceAttachmentEntity;
 	private List<GbDepartmentGoodsStockReduceEntity> goodsStockReduceEntityList;
+	private List<GbDepartmentGoodsStockEntity> outStockList;
 
 	private  List<GbDepartmentEntity> wasteDepartmentEntities;
 	private Double goodsWasteTotal;
+
+	private NxDistributerEntity nxDistributerEntity;
+	private NxJrdhSupplierEntity nxJrdhSupplierEntity;
+
 	@Override
 	public int compareTo(Object o) {
 		if (o instanceof GbDepartmentGoodsStockEntity) {

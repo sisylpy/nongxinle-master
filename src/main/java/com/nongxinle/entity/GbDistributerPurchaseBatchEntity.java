@@ -50,7 +50,6 @@ public class GbDistributerPurchaseBatchEntity implements Serializable, Comparabl
 	private String gbDpbMinute;
 	private String gbDpbSubtotal;
 
-	private Integer gbDpbSupplierUserId;
 
 	private String groupDate;
 	private Integer gbDpbPurDepartmentId;
@@ -70,16 +69,19 @@ public class GbDistributerPurchaseBatchEntity implements Serializable, Comparabl
 	private Integer gbDpbBuyUserId;
 	private Integer gbDpbSellUserId;
 	private Integer gbDpbPurchaseType;
+	private Integer gbDpbNxDistributerId;
 
 
 
-	private List<GbDistributerPurchaseBatchEntity> gbDPBEntities1;
 	private List<GbDistributerPurchaseGoodsEntity> gbDPGEntities;
 	private GbDistributerEntity gbDistributerEntity;
 	private GbDepartmentUserEntity nxJrdhPurEntity;
-	private NxJrdhUserEntity nxJrdhBuyerEntity;
+//	private NxJrdhUserEntity nxJrdhBuyerEntity;
 	private NxJrdhUserEntity nxJrdhSellerEntity;
 	private NxJrdhSupplierEntity nxJrdhSupplierEntity;
+	private GbDistributerPurchaseGoodsEntity purchaseGoodsEntity;
+	private GbDepartmentEntity purDeparment;
+
 
 	@Override
 	public boolean equals(Object o) {

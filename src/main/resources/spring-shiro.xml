@@ -44,9 +44,11 @@
 				/sys/loginGb=anon
 				/api/**=anon
 				/wx/** = anon
+				/images/**=anon
 				/uploadImage/**=anon
 				/foodImage/**=anon
 				/goodsImage/**=anon
+				/userImage/**=anon
 				/numberRecord/**=anon
 	        	/captcha.jpg=anon
 				/i7948FzJJ6.txt=anon

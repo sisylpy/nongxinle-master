@@ -51,5 +51,11 @@ public class NxECommerceServiceImpl implements NxECommerceService {
 	public void deleteBatch(Integer[] nxECommerceIds){
 		nxECommerceDao.deleteBatch(nxECommerceIds);
 	}
-	
+
+    @Override
+    public NxECommerceEntity queryGbByGbId(Integer id) {
+
+		return nxECommerceDao.queryGbByGbId(id);
+    }
+
 }

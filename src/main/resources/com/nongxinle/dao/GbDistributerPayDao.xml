@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerPayDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerPayEntity">
+		select * from gb_distributer_pay where gb_distributer_pay_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerPayEntity">
+		select * from gb_distributer_pay 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_pay 
+	</select>
+
+	<resultMap id="gbDis" type="GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+		<result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
+		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
+		<result property="gbDistributerName" column="gb_distributer_name"/>
+		<result property="gbDistributerManager" column="gb_distributer_manager"/>
+		<result property="gbDistributerAddress" column="gb_distributer_address"/>
+		<result property="gbDistributerPhone" column="gb_distributer_phone"/>
+		<result property="gbDistributerImg" column="gb_distributer_img"/>
+		<result property="gbDistributerSettleDate" column="gb_distributer_settle_date"/>
+		<result property="gbDistributerSettleMonth" column="gb_distributer_settle_month"/>
+		<result property="gbDistributerSettleWeek" column="gb_distributer_settle_week"/>
+		<result property="gbDistributerSettleFullTime" column="gb_distributer_settle_full_time"/>
+		<result property="gbDistributerSettleTimes" column="gb_distributer_settle_times"/>
+		<result property="gbDistributerSettleYear" column="gb_distributer_settle_year"/>
+		<result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
+	</resultMap>
+
+	<resultMap id="payWithDetail" type="GbDistributerPayEntity">
+		<id property="gbDistributerPayId" column="gb_distributer_pay_id"/>
+		<result property="gbGdpGbNewDisId" column="gb_gdp_gb_new_dis_id"/>
+		<result property="gbGdpBuyQuantity" column="gb_gdp_buy_quantity"/>
+		<result property="gbGdpGbDisId" column="gb_gdp_gb_dis_id"/>
+		<result property="gbGdpPaySubtotal" column="gb_gdp_pay_subtotal"/>
+		<result property="gbGdpStatus" column="gb_gdp_status"/>
+		<result property="gbGdpType" column="gb_gdp_type"/>
+		<result property="gbGdpFromTime" column="gb_gdp_form_time"/>
+		<result property="gbGdpTradeNo" column="gb_gdp_trade_no"/>
+		<result property="gbGdpStopTime" column="gb_gdp_stop_time"/>
+		<result property="gbGdpPayTime" column="gb_gdp_pay_time"/>
+		<association property="newDistributer" resultMap="gbDis"/>
+	</resultMap>
+
+    <select id="queryDisPayListByParams" resultMap="payWithDetail">
+     select * from gb_distributer_pay as gdp
+     left join gb_distributer as gd on gd.gb_distributer_id = gdp.gb_gdp_gb_new_dis_id
+		<where>
+			<if test="disId != null">
+				and gb_gdp_gb_dis_id = #{disId}
+			</if>
+			<if test="equalStatus != null">
+				and gb_gdp_status = #{equalStatus}
+			</if>
+			<if test="type != null">
+				and gb_gdp_type = #{type}
+			</if>
+		</where>
+
+	</select>
+	<select id="queryListByTradeNo" resultType="com.nongxinle.entity.GbDistributerPayEntity">
+		select * from gb_distributer_pay where  gb_gdp_trade_no = #{ordersSn}
+	</select>
+    <select id="queryPayItemByPayId" resultType="com.nongxinle.entity.GbDistributerPayEntity">
+		select * from gb_distributer_pay where gb_distributer_pay_id = #{payId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDistributerPayEntity" useGeneratedKeys="true" keyProperty="gbDistributerPayId">
+		insert into gb_distributer_pay
+		(
+			`gb_distributer_pay_id`, 
+			`gb_gdp_gb_dis_id`, 
+			`gb_gdp_pay_subtotal`, 
+			`gb_gdp_from_time`, 
+			`gb_gdp_stop_time`, 
+			`gb_gdp_pay_time`, 
+			`gb_gdp_type`, 
+			`gb_gdp_status`, 
+			`gb_gdp_trade_no`, 
+			`gb_gdp_gb_new_dis_id`,
+			`gb_gdp_buy_quantity`,
+			`gb_gdp_img_url`,
+			`gb_gdp_sell_detail`
+		)
+		values
+		(
+			#{gbDistributerPayId}, 
+			#{gbGdpGbDisId}, 
+			#{gbGdpPaySubtotal}, 
+			#{gbGdpFromTime}, 
+			#{gbGdpStopTime}, 
+			#{gbGdpPayTime}, 
+			#{gbGdpType}, 
+			#{gbGdpStatus}, 
+			#{gbGdpTradeNo}, 
+			#{gbGdpGbNewDisId},
+			#{gbGdpBuyQuantity},
+			#{gbGdpImgUrl},
+			#{gbGdpSellDetail}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerPayEntity">
+		update gb_distributer_pay 
+		<set>
+			<if test="gbGdpGbDisId != null">`gb_gdp_gb_dis_id` = #{gbGdpGbDisId}, </if>
+			<if test="gbGdpPaySubtotal != null">`gb_gdp_pay_subtotal` = #{gbGdpPaySubtotal}, </if>
+			<if test="gbGdpFromTime != null">`gb_gdp_from_time` = #{gbGdpFromTime}, </if>
+			<if test="gbGdpStopTime != null">`gb_gdp_stop_time` = #{gbGdpStopTime}, </if>
+			<if test="gbGdpPayTime != null">`gb_gdp_pay_time` = #{gbGdpPayTime}, </if>
+			<if test="gbGdpType != null">`gb_gdp_type` = #{gbGdpType}, </if>
+			<if test="gbGdpStatus != null">`gb_gdp_status` = #{gbGdpStatus}, </if>
+			<if test="gbGdpTradeNo != null">`gb_gdp_trade_no` = #{gbGdpTradeNo}, </if>
+			<if test="gbGdpGbNewDisId != null">`gb_gdp_gb_new_dis_id` = #{gbGdpGbNewDisId}, </if>
+			<if test="gbGdpImgUrl != null">`gb_gdp_img_url` = #{gbGdpImgUrl}, </if>
+			<if test="gbGdpSellDetail != null">`gb_gdp_sell_detail` = #{gbGdpSellDetail}, </if>
+			<if test="gbGdpBuyQuantity != null">`gb_gdp_buy_quantity` = #{gbGdpBuyQuantity}</if>
+		</set>
+		where gb_distributer_pay_id = #{gbDistributerPayId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_pay where gb_distributer_pay_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_pay where gb_distributer_pay_id in 
+		<foreach item="gbDistributerPayId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerPayId}
+		</foreach>
+	</delete>
+
+</mapper>

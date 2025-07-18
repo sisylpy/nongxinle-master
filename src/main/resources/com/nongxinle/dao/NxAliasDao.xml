@@ -6,23 +6,73 @@
 	<select id="queryObject" resultType="com.nongxinle.entity.NxAliasEntity">
 		select * from nx_alias where nx_alias_id = #{value}
 	</select>
+	<select id="queryNxAliasList" resultType="com.nongxinle.entity.NxAliasEntity">
+		select * from nx_alias
+		<where>
+			<if test="goodsId != null">
+				and nx_als_goods_id = #{goodsId}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="aliasList" type="NxAliasEntity">
+		<id property="nxAliasId" column="nx_alias_id"/>
+		<result property="nxAliasName" column="nx_alias_name"/>
+		<result property="nxAlsGoodsId" column="nx_als_goods_id"/>
+	</resultMap>
+
+	<resultMap id="nxGoodsWithAlias" type="NxGoodsEntity">
+		<id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
+		<result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+		<result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+		<result property="nxGoodsLevel" column="nx_goods_level"/>
+		<result property="nxGoodsName" column="nx_goods_name"/>
+		<result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+		<result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
+		<result property="nxGoodsBrand" column="nx_goods_brand"/>
+		<result property="nxGoodsPlace" column="nx_goods_place"/>
+		<result property="nxGoodsDetail" column="nx_goods_detail"/>
+		<result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+		<result property="nxGoodsPy" column="nx_goods_py"/>
+		<result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+		<collection property="nxAliasEntities" resultMap="aliasList"/>
+	</resultMap>
+
+    <select id="queryNxGoodsByName" resultMap="nxGoodsWithAlias">
+		select * from nx_alias as na
+		left join nx_goods as ng  on na.nx_als_goods_id = ng.nx_goods_id
+		<where>
+			<if test="name != null">
+				and nx_alias_name = #{name}
+			</if>
+			<if test="level != null">
+				and ng.nx_goods_level = #{level}
+			</if>
+		</where>
+	</select>
 
 
-	<insert id="save" parameterType="com.nongxinle.entity.NxAliasEntity"
+    <insert id="save" parameterType="com.nongxinle.entity.NxAliasEntity"
 			useGeneratedKeys="true" keyProperty="nxAliasId">
 		insert into nx_alias
 		(
 			`nx_alias_id`, 
 			`nx_alias_name`, 
 			`nx_als_goods_id`, 
-			`nx_als_sort`
+			`nx_als_sort`,
+			`nx_alias_pinyin`,
+			`nx_alias_py`
 		)
 		values
 		(
 			#{nxAliasId}, 
 			#{nxAliasName}, 
 			#{nxAlsGoodsId}, 
-			#{nxAlsSort}
+			#{nxAlsSort},
+			#{nxAliasPinyin},
+			#{nxAliasPy}
 		)
 	</insert>
 	 
@@ -31,6 +81,8 @@
 		<set>
 			<if test="nxAliasName != null">`nx_alias_name` = #{nxAliasName}, </if>
 			<if test="nxAlsGoodsId != null">`nx_als_goods_id` = #{nxAlsGoodsId}, </if>
+			<if test="nxAliasPinyin != null">`nx_alias_pinyin` = #{nxAliasPinyin}, </if>
+			<if test="nxAliasPy != null">`nx_alias_py` = #{nxAliasPy}, </if>
 			<if test="nxAlsSort != null">`nx_als_sort` = #{nxAlsSort}</if>
 		</set>
 		where nx_alias_id = #{nxAliasId}

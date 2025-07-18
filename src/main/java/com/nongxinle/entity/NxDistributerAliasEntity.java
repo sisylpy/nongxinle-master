@@ -27,9 +27,12 @@ public class NxDistributerAliasEntity implements Serializable {
 	 *  
 	 */
 	private Integer nxDaDisGoodsId;
+	private Integer nxDaNxAliasId;
 	/**
 	 *  
 	 */
 	private String nxDaAliasName;
+	private String nxDaAliasPy;
+	private String nxDaAliasPinyin;
 
 }

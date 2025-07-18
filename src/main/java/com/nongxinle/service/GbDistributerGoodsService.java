@@ -7,10 +7,7 @@ package com.nongxinle.service;
  * @date 06-18 21:32
  */
 
-import com.nongxinle.entity.GbDistributerEntity;
-import com.nongxinle.entity.GbDistributerFatherGoodsEntity;
-import com.nongxinle.entity.GbDistributerGoodsEntity;
-import com.nongxinle.entity.NxDistributerEntity;
+import com.nongxinle.entity.*;
 
 import java.util.List;
 import java.util.Map;
@@ -70,7 +67,27 @@ public interface GbDistributerGoodsService {
 
     List<GbDistributerEntity> queryGbDisByNxGoodsId(Integer nxGoodsId);
 
-    GbDistributerGoodsEntity queryLinshiGoods(Integer lsGoodsId);
+    GbDistributerGoodsEntity queryGbGoodsByNxGoodsId(Integer lsGoodsId);
 
     List<GbDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrdersGb(Map<String, Object> map);
+
+    List<GbDepartmentEntity> queryOutDepsByFatherId(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> querySupplierGoodsByGreatIdGb(Map<String, Object> map);
+
+    int queryLinshiGoodsAcount(Integer gbDistributerId);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByName(Map<String, Object> mapZero);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByLikeName(Map<String, Object> mapOne);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByNamePinyin(Map<String, Object> mapTwo);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByAlias(Map<String, Object> mapA);
+
+    GbDistributerGoodsEntity getTipText(GbDistributerGoodsEntity distributerGoodsEntity);
+
+    List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map);
+
+    GbDistributerGoodsEntity queryDisGoodsDetail(Integer nxDdgDisGoodsId);
 }

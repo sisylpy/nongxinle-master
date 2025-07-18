@@ -106,10 +106,6 @@
     <select id="queryRetPurBatchByParams" resultMap="batchWithGoods">
 		select *,
 
-		sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
-		sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
-		sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
-		sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
 		from nx_retailer_purchase_batch as rpb
 		left join nx_retailer_purchase_goods as rpg on rpg.nx_RPG_batch_id = rpb.nx_retailer_purchase_batch_id
         left join nx_retailer_goods_shelf_goods as rgsg on rgsg.nx_retailer_goods_shelf_goods_id  = rpg.nx_RPG_shelf_goods_id

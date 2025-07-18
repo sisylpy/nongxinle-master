@@ -39,8 +39,6 @@ public class GbDepartmentGoodsStockReduceController {
     @Autowired
     private GbDistributerPurchaseGoodsService gbDistributerPurchaseGoodsService;
     @Autowired
-    private GbDepFoodGoodsSalesService gbDepFoodGoodsSalesService;
-    @Autowired
     private GbDistributerService gbDistributerService;
     @Autowired
     private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
@@ -50,53 +48,365 @@ public class GbDepartmentGoodsStockReduceController {
     private GbDepartmentOrdersService gbDepartmentOrdersService;
     @Autowired
     private NxDepartmentOrdersService nxDepartmentOrdersService;
+    @Autowired
+    private GbDistributerPurchaseBatchService gbDistributerPurchaseBatchService;
+    @Autowired
+    private NxDepartmentBillService nxDepartmentBillService;
+
 
 
     @RequestMapping(value = "/getWhichDayReduce", method = RequestMethod.POST)
     @ResponseBody
-    public R getWhichDayReduce(String searchDepIds, Integer disGoodsId, String  date, String type) {
+    public R getWhichDayReduce(String searchDepIds, Integer disGoodsId, String startDate, String stopDate, String type) {
         Map<String, Object> map = new HashMap<>();
-        if(!searchDepIds.equals("-1")){
+        Map<String, Object> mapTotal = new HashMap<>();
+        if (!searchDepIds.equals("-1")) {
             String[] arrGb = searchDepIds.split(",");
             List<String> idsGb = new ArrayList<>();
             for (String idGb : arrGb) {
                 idsGb.add(idGb);
                 if (idsGb.size() > 0) {
                     map.put("depFatherIds", idsGb);
+                    mapTotal.put("depFatherIds", idsGb);
                 }
             }
+        } else {
+            map.put("depType", getGbDepartmentTypeMendian());
+            mapTotal.put("depType", getGbDepartmentTypeMendian());
         }
         map.put("disGoodsId", disGoodsId);
-        map.put("date", date);
-        map.put("inventoryType", type);
 
+        mapTotal.put("disGoodsId", disGoodsId);
+        mapTotal.put("startDate", startDate);
+        mapTotal.put("stopDate", stopDate);
 
-        System.out.println("abcccc" + map);
+        double total = 0.0;
+        double totalWeight = 0.0;
 
-        List<GbDepartmentEntity> departmentEntities = gbDepartmentStockReduceService.queryReduceDepartment(map);
+        if (type.equals("1")) {
+            map.put("produce", 0);
+            mapTotal.put("produce", 0);
+        } else if (type.equals("2")) {
+            map.put("waste", 0);
+            mapTotal.put("waste", 0);
+        } else if (type.equals("3")) {
+            map.put("loss", 0);
+            mapTotal.put("loss", 0);
+        } else if (type.equals("4")) {
+            map.put("return", 0);
+            mapTotal.put("return", 0);
+        }
+        Integer integer4 = gbDepartmentStockReduceService.queryReduceTypeCount(mapTotal);
 
-        for(GbDepartmentEntity gbDepartmentEntity: departmentEntities){
+        double produceTotal = 0.0;
+        double produceTotalWeight = 0.0;
+        double wasteTotal = 0.0;
+        double wasteTotalWeight = 0.0;
+        double lossTotal = 0.0;
+        double lossTotalWeight = 0.0;
 
-            Double aDouble = gbDepartmentStockReduceService.queryReduceProduceTotal(map);
-            gbDepartmentEntity.setDepProduceGoodsTotalString(new BigDecimal(aDouble).setScale(1,BigDecimal.ROUND_HALF_UP).toString());
+        if (integer4 > 0) {
+            if (type.equals("0")) {
+                produceTotal = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(mapTotal);
+                produceTotalWeight = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(mapTotal);
+                wasteTotal = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(mapTotal);
+                wasteTotalWeight = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(mapTotal);
+                lossTotal = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(mapTotal);
+                lossTotalWeight = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(mapTotal);
+                total = produceTotal + wasteTotal + lossTotal;
+                totalWeight = produceTotalWeight + wasteTotalWeight + lossTotalWeight;
 
-
-
+            } else if (type.equals("1")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(mapTotal);
+            } else if (type.equals("2")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(mapTotal);
+            } else if (type.equals("3")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(mapTotal);
+            } else if (type.equals("4")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyReturnWeight(mapTotal);
+            }
 
         }
 
 
+        Integer howManyDaysInPeriod = 0;
+        if (!startDate.equals(stopDate)) {
+            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
+        }
 
-        return R.ok().put("data", departmentEntities);
+        List<Map<String, Object>> resultList = new ArrayList<>();
+
+
+        if (type.equals("1")) {
+            map.put("produce", 0);
+        } else if (type.equals("2")) {
+            map.put("waste", 0);
+        } else if (type.equals("3")) {
+            map.put("loss", 0);
+        } else if (type.equals("4")) {
+            map.put("return", 0);
+        }
+
+        double totalDay = 0.0;
+        double totalWeightDay = 0.0;
+
+        double produceTotalDay = 0.0;
+        double produceTotalWeightDay = 0.0;
+        double wasteTotalDay = 0.0;
+        double wasteTotalWeightDay = 0.0;
+        double lossTotalDay = 0.0;
+        double lossTotalWeightDay = 0.0;
+
+
+        if (howManyDaysInPeriod > 0) {
+            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
+                // dateList
+                String whichDay = "";
+                if (i == 0) {
+                    whichDay = startDate;
+                } else {
+                    whichDay = afterWhatDay(startDate, i);
+                }
+                map.put("date", whichDay);
+                Map<String, Object> mapReduce = new HashMap<>();
+                mapReduce.put("date", whichDay);
+
+                Integer integer4Day = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+
+                if (integer4Day > 0) {
+                    if (type.equals("0")) {
+                        produceTotalDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(map);
+                        produceTotalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(map);
+                        wasteTotalDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(map);
+                        wasteTotalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(map);
+                        lossTotalDay = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(map);
+                        lossTotalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(map);
+                        totalDay = produceTotalDay + wasteTotalDay + lossTotalDay;
+                        totalWeightDay = produceTotalWeightDay + wasteTotalWeightDay + lossTotalWeightDay;
+
+                    } else if (type.equals("1")) {
+                        totalDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(map);
+                        totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(map);
+                    } else if (type.equals("2")) {
+                        totalDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(map);
+                        totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(map);
+                    } else if (type.equals("3")) {
+                        totalDay = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(map);
+                        totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(map);
+                    } else if (type.equals("4")) {
+                        totalDay = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(map);
+                        totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyReturnWeight(map);
+                    }
+                }
+                mapReduce.put("totalDay", totalDay);
+                mapReduce.put("totalWeightDay", totalWeightDay);
+                System.out.println("kanakndninteterere" + map);
+                if (integer4Day > 0) {
+                    TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsWithBusinessDep(map);
+                    mapReduce.put("arr", distributerGoodsEntities);
+                    resultList.add(mapReduce);
+                }
+
+            }
+        } else {
+            map.put("date", startDate);
+            Integer integer4Day = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+            if (type.equals("0")) {
+                produceTotalDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(map);
+                produceTotalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(map);
+                wasteTotalDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(map);
+                wasteTotalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(map);
+                lossTotalDay = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(map);
+                lossTotalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(map);
+                totalDay = produceTotalDay + wasteTotalDay + lossTotalDay;
+                totalWeightDay = produceTotalWeightDay + wasteTotalWeightDay + lossTotalWeightDay;
+
+            } else if (type.equals("1")) {
+                totalDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(map);
+                totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(map);
+            } else if (type.equals("2")) {
+                totalDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(map);
+                totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(map);
+            } else if (type.equals("3")) {
+                totalDay = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(map);
+                totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(map);
+            } else if (type.equals("4")) {
+                totalDay = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(map);
+                totalWeightDay = gbDepGoodsDailyService.queryDepGoodsDailyReturnWeight(map);
+            }
+            Map<String, Object> mapReduce = new HashMap<>();
+            mapReduce.put("date", startDate);
+            mapReduce.put("totalDay", totalDay);
+            mapReduce.put("totalWeightDay", totalWeightDay);
+            Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+            System.out.println("kanakndn" + integer);
+            if (integer4Day > 0) {
+                TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsWithBusinessDep(map);
+                mapReduce.put("arr", distributerGoodsEntities);
+                resultList.add(mapReduce);
+            }
+        }
+
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("arr", resultList);
+        mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("totalWeight", new BigDecimal(totalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("produce", new BigDecimal(produceTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("produceWeight", new BigDecimal(produceTotalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("waste", new BigDecimal(wasteTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("wasteWeight", new BigDecimal(wasteTotalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("loss", new BigDecimal(lossTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("lossWeight", new BigDecimal(lossTotalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        return R.ok().put("data", mapR);
     }
 
+    @RequestMapping(value = "/depGetWhichDayReduce", method = RequestMethod.POST)
+    @ResponseBody
+    public R depGetWhichDayReduce(String depId, Integer disGoodsId, String startDate, String stopDate, String type) {
+        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> mapTotal = new HashMap<>();
+        map.put("depId", depId);
+        mapTotal.put("depId", depId);
+        map.put("disGoodsId", disGoodsId);
 
+        mapTotal.put("disGoodsId", disGoodsId);
+        mapTotal.put("startDate", startDate);
+        mapTotal.put("stopDate", stopDate);
+
+        double total = 0.0;
+        double totalWeight = 0.0;
+
+        if (type.equals("1")) {
+            map.put("produce", 0);
+            mapTotal.put("produce", 0);
+        } else if (type.equals("2")) {
+            map.put("waste", 0);
+            mapTotal.put("waste", 0);
+        } else if (type.equals("3")) {
+            map.put("loss", 0);
+            mapTotal.put("loss", 0);
+        } else if (type.equals("4")) {
+            map.put("return", 0);
+            mapTotal.put("return", 0);
+        }
+        Integer integer4 = gbDepartmentStockReduceService.queryReduceTypeCount(mapTotal);
+
+        double produceTotal = 0.0;
+        double produceTotalWeight = 0.0;
+        double wasteTotal = 0.0;
+        double wasteTotalWeight = 0.0;
+        double lossTotal = 0.0;
+        double lossTotalWeight = 0.0;
+
+        if (integer4 > 0) {
+            if (type.equals("0")) {
+                produceTotal = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(mapTotal);
+                produceTotalWeight = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(mapTotal);
+                wasteTotal = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(mapTotal);
+                wasteTotalWeight = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(mapTotal);
+                lossTotal = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(mapTotal);
+                lossTotalWeight = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(mapTotal);
+                total = produceTotal + wasteTotal + lossTotal;
+                totalWeight = produceTotalWeight + wasteTotalWeight + lossTotalWeight;
+
+            } else if (type.equals("1")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(mapTotal);
+            } else if (type.equals("2")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(mapTotal);
+            } else if (type.equals("3")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(mapTotal);
+            } else if (type.equals("4")) {
+                total = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(mapTotal);
+                totalWeight = gbDepGoodsDailyService.queryDepGoodsDailyReturnWeight(mapTotal);
+            }
+
+        }
+
+
+        Integer howManyDaysInPeriod = 0;
+        if (!startDate.equals(stopDate)) {
+            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
+        }
+
+        List<Map<String, Object>> resultList = new ArrayList<>();
+
+        if (howManyDaysInPeriod > 0) {
+            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
+                // dateList
+                String whichDay = "";
+                if (i == 0) {
+                    whichDay = startDate;
+                } else {
+                    whichDay = afterWhatDay(startDate, i);
+                }
+                map.put("date", whichDay);
+                Map<String, Object> mapReduce = new HashMap<>();
+                mapReduce.put("reduceDate", whichDay);
+                mapReduce.put("depId", depId);
+                mapReduce.put("disGoodsId", disGoodsId);
+                if(!type.equals("0")){
+                    mapReduce.put("equalType", type);
+                }
+
+                System.out.println("kanakndn" + mapReduce);
+                Integer integer = gbDepartmentStockReduceService.queryReduceTypeCount(mapReduce);
+                if (integer > 0) {
+                    List<GbDepartmentGoodsStockEntity> departmentGoodsStockEntities = gbDepGoodsStockService.queryGoodsStockReduceByParams(mapReduce);
+                    if(departmentGoodsStockEntities.size() > 0){
+                        mapReduce.put("arr", departmentGoodsStockEntities);
+                        resultList.add(mapReduce);
+                    }
+
+                }
+
+            }
+        } else {
+
+            map.put("date", startDate);
+            Map<String, Object> mapReduce = new HashMap<>();
+            mapReduce.put("reduceDate", startDate);
+            mapReduce.put("depId", depId);
+            mapReduce.put("disGoodsId", disGoodsId);
+            if(!type.equals("0")){
+                mapReduce.put("equalType", type);
+            }
+
+            Integer integer = gbDepartmentStockReduceService.queryReduceTypeCount(mapReduce);
+            if (integer > 0) {
+                List<GbDepartmentGoodsStockEntity> departmentGoodsStockEntities = gbDepGoodsStockService.queryGoodsStockReduceByParams(mapReduce);
+                if(departmentGoodsStockEntities.size() > 0){
+                    mapReduce.put("arr", departmentGoodsStockEntities);
+                    resultList.add(mapReduce);
+                }
+
+            }
+        }
+
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("arr", resultList);
+        mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("totalWeight", new BigDecimal(totalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("produce", new BigDecimal(produceTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("produceWeight", new BigDecimal(produceTotalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("waste", new BigDecimal(wasteTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("wasteWeight", new BigDecimal(wasteTotalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("loss", new BigDecimal(lossTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapR.put("lossWeight", new BigDecimal(lossTotalWeight).setScale(1, BigDecimal.ROUND_HALF_UP));
+        return R.ok().put("data", mapR);
+    }
     @RequestMapping(value = "/getDisGoodsPurListForCost", method = RequestMethod.POST)
     @ResponseBody
-    public R getDisGoodsPurListForCost(String searchDepIds, Integer disGoodsId, String  startDate,
+    public R getDisGoodsPurListForCost(String searchDepIds, Integer disGoodsId, String startDate,
                                        String stopDate) {
         Map<String, Object> map = new HashMap<>();
-        if(!searchDepIds.equals("-1")){
+        if (!searchDepIds.equals("-1")) {
             String[] arrGb = searchDepIds.split(",");
             List<String> idsGb = new ArrayList<>();
             for (String idGb : arrGb) {
@@ -115,8 +425,8 @@ public class GbDepartmentGoodsStockReduceController {
 
         List<String> dateList = new ArrayList<>();
         List<String> list = new ArrayList<>();
-        if(salesEntities.size() > 0){
-            for(GbDistributerPurchaseGoodsEntity purchaseGoodsEntity : salesEntities){
+        if (salesEntities.size() > 0) {
+            for (GbDistributerPurchaseGoodsEntity purchaseGoodsEntity : salesEntities) {
                 String gbDpgPurchaseDate = purchaseGoodsEntity.getGbDpgPurchaseDate();
                 String gbDpgBuyQuantity = purchaseGoodsEntity.getGbDpgBuyPrice();
                 String substring = gbDpgPurchaseDate.substring(8, 10);
@@ -148,23 +458,20 @@ public class GbDepartmentGoodsStockReduceController {
 
         }
         Map<String, Object> mapResult = new HashMap<>();
-        mapResult.put("arr",salesEntities );
+        mapResult.put("arr", salesEntities);
         mapResult.put("totalWeight", new BigDecimal(doutbleCost).setScale(1, BigDecimal.ROUND_HALF_UP));
         mapResult.put("totalSubtotal", new BigDecimal(doutbleCostV).setScale(1, BigDecimal.ROUND_HALF_UP));
         mapResult.put("perPrice", perPrice);
         mapResult.put("purCount", purCount);
         mapResult.put("list", list);
-        mapResult.put("purWeight", new BigDecimal(perBuy).setScale(1,BigDecimal.ROUND_HALF_UP));
+        mapResult.put("purWeight", new BigDecimal(perBuy).setScale(1, BigDecimal.ROUND_HALF_UP));
         mapResult.put("perDay", perDay);
-
-
 
 
         mapResult.put("date", dateList);
 
         return R.ok().put("data", mapResult);
     }
-
 
 
     @RequestMapping(value = "/deleteReduceItem/{id}")
@@ -209,6 +516,16 @@ public class GbDepartmentGoodsStockReduceController {
             reduceBusinessSubtotal = new BigDecimal(reduceEntity.getGbDgsrWasteSubtotal());
             stockEntity.setGbDgsWasteWeight("0");
             stockEntity.setGbDgsWasteSubtotal("0");
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("depGoodsId", stockEntity.getGbDgsGbDepDisGoodsId());
+            map.put("date", formatWhatDay(0));
+            System.out.println("mapdaialay" +map);
+            GbDepartmentGoodsDailyEntity dailyEntity = gbDepGoodsDailyService.queryDepGoodsDailyItem(map);
+            dailyEntity.setGbDgdSellClearMinute("-1");
+            dailyEntity.setGbDgdSellClearHour("-1");
+            gbDepGoodsDailyService.update(dailyEntity);
+
         }
         if (gbDgsrType.equals(getGbDepartGoodsStockReduceTypeReturn())) {
             reduceBusinessWeight = new BigDecimal(reduceEntity.getGbDgsrReturnWeight());
@@ -220,25 +537,30 @@ public class GbDepartmentGoodsStockReduceController {
             stockEntity.setGbDgsReturnWeight(newReturnWeight.toString());
             stockEntity.setGbDgsReturnSubtotal(newReturnSubtotal.toString());
 
-            GbDepartmentOrdersEntity ordersEntity =    gbDepartmentOrdersService.queryReturnOrderByReduceId(reduceEntity.getGbDepartmentGoodsStockReduceId());
-
+            GbDepartmentOrdersEntity ordersEntity = gbDepartmentOrdersService.queryReturnOrderByReduceId(reduceEntity.getGbDepartmentGoodsStockReduceId());
             Integer purchaseGoodsId = ordersEntity.getGbDoPurchaseGoodsId();
+            GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(purchaseGoodsId);
+            Integer gbDpgBatchId = purchaseGoodsEntity.getGbDpgBatchId();
+            gbDistributerPurchaseBatchService.delete(gbDpgBatchId);
             gbDistributerPurchaseGoodsService.delete(purchaseGoodsId);
 
             //nxOrder
-            if(stockEntity.getGbDgsNxDistributerId() != null && stockEntity.getGbDgsNxDistributerId() != -1){
-                Integer gbDoNxDepartmentOrderId = ordersEntity.getGbDoNxDepartmentOrderId();
-                nxDepartmentOrdersService.delete(gbDoNxDepartmentOrderId);
-            }
-            
+//            if (stockEntity.getGbDgsNxDistributerId() != null && stockEntity.getGbDgsNxDistributerId() != -1) {
+//                Integer gbDoNxDepartmentOrderId = ordersEntity.getGbDoNxDepartmentOrderId();
+//
+//                NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.queryObject(gbDoNxDepartmentOrderId);
+//                Integer nxDoBillId = nxDepartmentOrdersEntity.getNxDoBillId();
+//                nxDepartmentBillService.delete(nxDoBillId);
+//                nxDepartmentOrdersService.delete(gbDoNxDepartmentOrderId);
+//
+//            }
+
             gbDepartmentOrdersService.delete(ordersEntity.getGbDepartmentOrdersId());
 
-            if(stockEntity.getGbDgsGbGoodsStockId() != -1){
-              GbDepartmentGoodsStockEntity stockEntityReturn =   gbDepGoodsStockService.queryReturnStockItemByOrderId(ordersEntity.getGbDepartmentOrdersId());
-              gbDepGoodsStockService.delete(stockEntityReturn.getGbDepartmentGoodsStockId());
-
-           }
-
+            if (stockEntity.getGbDgsGbGoodsStockId() != -1) {
+                GbDepartmentGoodsStockEntity stockEntityReturn = gbDepGoodsStockService.queryReturnStockItemByOrderId(ordersEntity.getGbDepartmentOrdersId());
+                gbDepGoodsStockService.delete(stockEntityReturn.getGbDepartmentGoodsStockId());
+            }
 
         }
 
@@ -250,15 +572,14 @@ public class GbDepartmentGoodsStockReduceController {
         //修改depGoods数量
         addDepDisGoodsTotal(reduceBusinessWeight, reduceBusinessSubtotal, stockEntity.getGbDgsGbDepDisGoodsId());
         //改变daily数据
-        String betweentPrice ="0";
-        if(stockEntity.getGbDgsBetweenPrice() != null){
+        String betweentPrice = "0";
+        if (stockEntity.getGbDgsBetweenPrice() != null) {
             betweentPrice = stockEntity.getGbDgsBetweenPrice();
         }
 
         changeDepGoodsStockReduceDailyEntity(reduceEntity, gbDgsrType, reduceBusinessWeight, reduceBusinessSubtotal, betweentPrice, stockEntity.getGbDgsSellingPrice());
         //删除redude条目
         gbDepartmentStockReduceService.delete(reduceEntity.getGbDepartmentGoodsStockReduceId());
-
 
         return R.ok();
     }
@@ -298,7 +619,7 @@ public class GbDepartmentGoodsStockReduceController {
                         BigDecimal subtract = gbDgdProduceWeight.subtract(gbDgdLastWeight);
                         BigDecimal decimal = subtract.divide(gbDgdProduceWeight, 2, BigDecimal.ROUND_HALF_UP);
                         depGoodsDailyEntity.setGbDgdFreshRate(decimal.toString());
-                    }else if (gbDgdProduceWeight.compareTo(gbDgdLastWeight) == 0) {
+                    } else if (gbDgdProduceWeight.compareTo(gbDgdLastWeight) == 0) {
                         depGoodsDailyEntity.setGbDgdFreshRate("50.0");
                     } else {
                         depGoodsDailyEntity.setGbDgdFreshRate("0.0");
@@ -600,6 +921,7 @@ public class GbDepartmentGoodsStockReduceController {
     @RequestMapping(value = "/getDistributerGoodsFatherMangement", method = RequestMethod.POST)
     @ResponseBody
     public R getDistributerGoodsFatherMangement(String startDate, String stopDate, String disGoodsFatherId, String type, Integer disId) {
+        Map<String, Object> mapResult = new HashMap<>();
         Map<String, Object> map = new HashMap<>();
 //        map.put("status", 2);
         map.put("startDate", startDate);
@@ -712,12 +1034,11 @@ public class GbDepartmentGoodsStockReduceController {
             goodsEntity.setWasteDepartmentEntities(departmentEntities1);
         }
         Map<String, Object> mapG = new HashMap<>();
-        mapG.put("status", 2);
+//        mapG.put("status", 0);
         mapG.put("disId", disId);
         mapG.put("startDate", startDate);
         mapG.put("stopDate", stopDate);
         mapG.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-
         Integer integer2 = gbDepGoodsDailyService.queryDepGoodsDailyCount(mapG);
         BigDecimal decimal = new BigDecimal(0);
         if (integer2 > 0) {
@@ -746,16 +1067,15 @@ public class GbDepartmentGoodsStockReduceController {
     }
 
 
-
     @RequestMapping(value = "/getDistributerGoodsFreshMangement", method = RequestMethod.POST)
     @ResponseBody
-    public R getDistributerGoodsFreshMangement(String startDate, String stopDate, Integer disId, String type,Integer depId) {
+    public R getDistributerGoodsFreshMangement(String startDate, String stopDate, Integer disId, String type, String searchDepIds, String searchDepId) {
+        Map<String, Object> mapResult = new HashMap<>();
+
         Map<String, Object> map = new HashMap<>();
-        map.put("status", 2);
         map.put("startDate", startDate);
         map.put("stopDate", stopDate);
         map.put("disId", disId);
-        map.put("depType", getGbDepartmentTypeMendian());
         if (type.equals("produce")) {
             map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
         }
@@ -765,25 +1085,41 @@ public class GbDepartmentGoodsStockReduceController {
         if (type.equals("loss")) {
             map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
         }
-        if(depId != -1){
-            map.put("depId", depId);
-        }
 
+        if(!searchDepId.equals("-1")){
+            map.put("depFatherId", searchDepId);
+        }else{
+            if (!searchDepIds.equals("-1")) {
+//                String[] arrGb = searchDepIds.split(",");
+                String[] arrGb = searchDepIds.split(",");
+                List<String> idsGb = new ArrayList<>();
+                for (String idGb : arrGb) {
+                    idsGb.add(idGb);
+                }
+                map.put("depFatherIds", idsGb);
+            }
+        }
+        System.out.println("kkkkkkkkkkkk" + map);
         TreeSet<GbDistributerGoodsEntity> aaa = gbDepartmentStockReduceService.queryGoodsStockRecordTreeByParams(map);
         for (GbDistributerGoodsEntity goodsEntity : aaa) {
             //1 求总wasteTotal
             Map<String, Object> map1 = new HashMap<>();
             map1.put("disGoodsId", goodsEntity.getGbDistributerGoodsId());
-            map1.put("depType", getGbDepartmentTypeMendian());
-            if(depId != -1){
-                map1.put("depId", depId);
+            if(!searchDepId.equals("-1")){
+                map1.put("depFatherId", searchDepId);
+            }else{
+                if (!searchDepIds.equals("-1")) {
+                    String[] arrGb = searchDepIds.split(",");
+                    map1.put("depFatherIds", arrGb);
+                }
             }
+
             Double aDouble = 0.0;
             if (type.equals("produce")) {
                 map1.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
                 Integer integer = gbDepartmentStockReduceService.queryReduceTypeCount(map1);
                 if (integer > 0) {
-                     aDouble = gbDepartmentStockReduceService.queryReduceProduceTotal(map1);
+                    aDouble = gbDepartmentStockReduceService.queryReduceProduceTotal(map1);
                     goodsEntity.setGoodsProduceTotal(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
                     goodsEntity.setGoodsProduceTotalString(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                 }
@@ -792,6 +1128,7 @@ public class GbDepartmentGoodsStockReduceController {
                 map1.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
                 Integer integer = gbDepartmentStockReduceService.queryReduceTypeCount(map1);
                 if (integer > 0) {
+                    System.out.println("whhwiiwiwiiwiiwiw" + map1);
                     aDouble = gbDepartmentStockReduceService.queryReduceWasteTotal(map1);
                     goodsEntity.setGoodsWasteTotal(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
                     goodsEntity.setGoodsWasteTotalString(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
@@ -802,7 +1139,7 @@ public class GbDepartmentGoodsStockReduceController {
                 map1.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
                 Integer integer = gbDepartmentStockReduceService.queryReduceTypeCount(map1);
                 if (integer > 0) {
-                     aDouble = gbDepartmentStockReduceService.queryReduceLossTotal(map1);
+                    aDouble = gbDepartmentStockReduceService.queryReduceLossTotal(map1);
                     goodsEntity.setGoodsLossTotal(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
                     goodsEntity.setGoodsLossTotalString(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                 }
@@ -811,19 +1148,32 @@ public class GbDepartmentGoodsStockReduceController {
 
             //2, 求和
             List<GbDepartmentEntity> departmentEntities1 = new ArrayList<>();
-            Map<String, Object> mapDis = new HashMap<>();
-            mapDis.put("disId", disId);
-            mapDis.put("type", getGbDepartmentTypeMendian());
 
-            if(depId != -1){
-                GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(depId);
+            if(!searchDepId.equals("-1")){
+                GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(Integer.valueOf(searchDepId));
                 departmentEntities1.add(gbDepartmentEntity);
             }else{
-                departmentEntities1  = gbDepartmentService.queryDepByDepType(mapDis);
+                if (!searchDepIds.equals("-1")) {
+                    String[] arrGb = searchDepIds.split(",");
+                    for (String idGb : arrGb) {
+                        GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(Integer.valueOf(idGb));
+                        departmentEntities1.add(gbDepartmentEntity);
+                    }
+                } else {
+                    Map<String, Object> mapDis = new HashMap<>();
+                    mapDis.put("disId", disId);
+                    List<String> idsGb = new ArrayList<>();
+                    idsGb.add("1");
+                    idsGb.add("2");
+                    idsGb.add("3");
+                    mapDis.put("types", idsGb);
+                    System.out.println("afadsfjaslfaslfjas;" + mapDis);
+                    departmentEntities1 = gbDepartmentService.queryDepByDepType(mapDis);
+                }
             }
 
-            List<GbDepartmentEntity> resultDep = new ArrayList<>();
 
+            System.out.println("sososoososoosoememe" + departmentEntities1.size());
             for (GbDepartmentEntity departmentEntity : departmentEntities1) {
                 Map<String, Object> map3 = new HashMap<>();
                 map3.put("disGoodsId", goodsEntity.getGbDistributerGoodsId());
@@ -843,7 +1193,7 @@ public class GbDepartmentGoodsStockReduceController {
                 List<GbDepartmentGoodsStockReduceEntity> stockreduceEntities = gbDepartmentStockReduceService.queryStockReduceListByParams(map3);
                 if (stockreduceEntities.size() > 0) {
                     if (type.equals("produce")) {
-                         aDouble2 = gbDepartmentStockReduceService.queryReduceProduceTotal(map3);
+                        aDouble2 = gbDepartmentStockReduceService.queryReduceProduceTotal(map3);
                         departmentEntity.setDepProduceGoodsTotal(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
                         departmentEntity.setDepProduceGoodsTotalString(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     }
@@ -854,12 +1204,12 @@ public class GbDepartmentGoodsStockReduceController {
                     }
 
                     if (type.equals("loss")) {
-                         aDouble2 = gbDepartmentStockReduceService.queryReduceLossTotal(map3);
+                        aDouble2 = gbDepartmentStockReduceService.queryReduceLossTotal(map3);
                         departmentEntity.setDepLossGoodsTotal(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
                         departmentEntity.setDepLossGoodsTotalString(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     }
 
-                }else{
+                } else {
                     departmentEntity.setDepProduceGoodsTotal(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
                     departmentEntity.setDepProduceGoodsTotalString(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     departmentEntity.setDepWasteGoodsTotal(new BigDecimal(aDouble2).setScale(1, BigDecimal.ROUND_HALF_UP).doubleValue());
@@ -871,22 +1221,131 @@ public class GbDepartmentGoodsStockReduceController {
             }
             goodsEntity.setWasteDepartmentEntities(departmentEntities1);
         }
+
+
         if (type.equals("produce")) {
             TreeSet<GbDistributerGoodsEntity> abc = abcProduce(aaa);
-            return R.ok().put("data", abc);
+            mapResult.put("arr", abc);
         }
         if (type.equals("waste")) {
             TreeSet<GbDistributerGoodsEntity> abc = abcWaste(aaa);
-            return R.ok().put("data", abc);
+            mapResult.put("arr", abc);
         }
         if (type.equals("loss")) {
             TreeSet<GbDistributerGoodsEntity> abc = abcLoss(aaa);
-            return R.ok().put("data", abc);
+            mapResult.put("arr", abc);
         }
-        return R.error(-1, "获取失败");
+
+        String time = "--:--";
+
+        Integer integerT = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+        if (integerT > 0) {
+            int clearHourT = gbDepGoodsDailyService.queryDepGoodsDailyClearHour(map);
+            int clearMinuteT = gbDepGoodsDailyService.queryDepGoodsDailyClearMinute(map);
+            int hourT = clearHourT * 60;
+            int totalMinute = (hourT + clearMinuteT) / integerT;
+            int hour = totalMinute / 60;
+            int minT = totalMinute % 60;
+
+            String minStringT = "";
+            if (minT < 10) {
+                minStringT = "0" + minT;
+            } else {
+                minStringT = Integer.toString(minT);
+            }
+            time = hour + ":" + minStringT;
+        }
+        mapResult.put("time", time);
+
+        //freshRate
+        Map<String, Object> mapF = new HashMap<>();
+        mapF.put("disId", disId);
+        mapF.put("startDate", startDate);
+        mapF.put("stopDate", stopDate);
+        mapF.put("produce", 0);
+        mapF.put("controlFresh", 1);
+        if(!searchDepId.equals("-1")){
+            mapF.put("depFatherId", searchDepId);
+        }else{
+            if (!searchDepIds.equals("-1")) {
+                String[] arrGb = searchDepIds.split(",");
+                mapF.put("depFatherIds", arrGb);
+            } else {
+                mapF.put("depType", getGbDepartmentTypeMendian());
+            }
+        }
+        Integer integer1 = gbDepGoodsDailyService.queryDepGoodsDailyCount(mapF);
+        double Tv = 0;
+        if (integer1 > 0) {
+            double v = gbDepGoodsDailyService.queryDepGoodsFreshRate(mapF);
+            Tv = v / integer1;
+        }
+
+        mapResult.put("freshRate", new BigDecimal(Tv).setScale(2, BigDecimal.ROUND_HALF_UP));
+        Map<String, Object> mapG = new HashMap<>();
+        mapG.put("disId", disId);
+        mapG.put("startDate", startDate);
+        mapG.put("stopDate", stopDate);
+        if(!searchDepId.equals("-1")){
+            mapG.put("depFatherId", searchDepId);
+        }else{
+            if (!searchDepIds.equals("-1")) {
+                String[] arrGb = searchDepIds.split(",");
+                mapG.put("depFatherIds", arrGb);
+            } else {
+                mapG.put("depType", getGbDepartmentTypeMendian());
+            }
+        }
+        Integer integer2 = gbDepGoodsDailyService.queryDepGoodsDailyCount(mapG);
+        Double wasteSubtotal = 0.0;
+        if (integer2 > 0) {
+            wasteSubtotal = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(mapG);
+        }
+        mapResult.put("freshGoods", new BigDecimal(wasteSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+
+
+        //总部门数据 1，部门
+        List<GbDepartmentEntity> listDep = new ArrayList<>();
+        if (!searchDepIds.equals("-1")) {
+            String[] arrGb = searchDepIds.split(",");
+            for (String idGb : arrGb) {
+                GbDepartmentEntity departmentEntity = gbDepartmentService.queryObject(Integer.valueOf(idGb));
+                mapF.put("depFatherIds", null);
+                mapF.put("depFatherId", departmentEntity.getGbDepartmentId());
+                Integer integer1Dep = gbDepGoodsDailyService.queryDepGoodsDailyCount(mapF);
+                double TvDep = 0;
+                if (integer1Dep > 0) {
+                    double vDep = gbDepGoodsDailyService.queryDepGoodsFreshRate(mapF);
+                    TvDep = vDep / integer1Dep;
+                    departmentEntity.setDepFreshRateString(new BigDecimal(TvDep).setScale(1,BigDecimal.ROUND_HALF_UP).toString());
+
+                }else{
+                    departmentEntity.setDepFreshRateString("0.0");
+                }
+                listDep.add(departmentEntity);
+            }
+        }
+        mapResult.put("depArr", listDep);
+
+        // //总部门数据 2，数值
+        if(!searchDepIds.equals("-1")){
+            String[] arrGb = searchDepIds.split(",");
+            mapF.put("depFatherIds", arrGb);
+        }else{
+            mapF.put("depType", getGbDepartmentTypeMendian());
+        }
+        mapF.put("depFatherId", null);
+        double totalData = 0.0;
+        System.out.println("weneieiieieieiieieiieieiieieiieieiiei" + mapF);
+        Integer integer1Total = gbDepGoodsDailyService.queryDepGoodsDailyCount(mapF);
+        if(integer1Total > 0){
+            double vDep = gbDepGoodsDailyService.queryDepGoodsFreshRate(mapF);
+            totalData = vDep / integer1Total;
+        }
+        mapResult.put("totalData", new BigDecimal(totalData).setScale(2,BigDecimal.ROUND_HALF_UP));
+
+        return R.ok().put("data", mapResult);
     }
-
-
 
 
 //    @RequestMapping(value = "/getDistributerGoodsFreshData", method = RequestMethod.POST)
@@ -1141,79 +1600,79 @@ public class GbDepartmentGoodsStockReduceController {
         return ts;
 
     }
-
-    @RequestMapping(value = "/getMendianCostStatics")
-    @ResponseBody
-    public R getMendianCostStatics(Integer disId, String startDate, String stopDate) {
-
-        List<Map<String, Object>> depList = new ArrayList<>();
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("type", 3);
-        List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(map);
-        for (GbDepartmentEntity dep : departmentEntities) {
-            Map<String, Object> mapDep = new HashMap<>();
-            mapDep.put("dep", dep);
-
-            Map<String, Object> map1 = new HashMap<>();
-            map1.put("depFatherId", dep.getGbDepartmentId());
-            map1.put("startDate", startDate);
-            map1.put("stopDate", stopDate);
-            map1.put("disId", disId);
-
-            map1.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-            Integer aDoubleCostCount = gbDepartmentStockReduceService.queryReduceTypeCount(map1);
-            if (aDoubleCostCount > 0) {
-                Double aDoubleCost = gbDepartmentStockReduceService.queryReduceProduceTotal(map1);
-                mapDep.put("produce", aDoubleCost.toString());
-            } else {
-                mapDep.put("produce", "0");
-            }
-
-            Map<String, Object> map2 = new HashMap<>();
-            map2.put("depFatherId", dep.getGbDepartmentId());
-            map2.put("startDate", startDate);
-            map2.put("stopDate", stopDate);
-            map2.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-            Integer aDoubleCostLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map2);
-            if (aDoubleCostLoss > 0) {
-                Double aDoubleLoss = gbDepartmentStockReduceService.queryReduceLossTotal(map2);
-                mapDep.put("loss", aDoubleLoss.toString());
-            } else {
-                mapDep.put("loss", "0");
-            }
-
-            Map<String, Object> map3 = new HashMap<>();
-            map3.put("depFatherId", dep.getGbDepartmentId());
-            map3.put("startDate", startDate);
-            map3.put("stopDate", stopDate);
-            map3.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-            Integer aDoubleCostWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map3);
-            if (aDoubleCostWaste > 0) {
-                Double aDoubleWaste = gbDepartmentStockReduceService.queryReduceWasteTotal(map3);
-                mapDep.put("waste", aDoubleWaste.toString());
-            } else {
-                mapDep.put("waste", "0");
-            }
-            Map<String, Object> map4 = new HashMap<>();
-            map4.put("depFatherId", dep.getGbDepartmentId());
-            map4.put("startDate", startDate);
-            map4.put("stopDate", stopDate);
-            map4.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-            Integer aDoubleCostReturn = gbDepartmentStockReduceService.queryReduceTypeCount(map4);
-            if (aDoubleCostReturn > 0) {
-                Double aDoubleReturn = gbDepartmentStockReduceService.queryReduceReturnTotal(map4);
-
-                mapDep.put("return", aDoubleReturn.toString());
-            } else {
-                mapDep.put("return", "0");
-            }
-            depList.add(mapDep);
-
-        }
-
-        return R.ok().put("data", depList);
-    }
+//
+//    @RequestMapping(value = "/getMendianCostStatics")
+//    @ResponseBody
+//    public R getMendianCostStatics(Integer disId, String startDate, String stopDate) {
+//
+//        List<Map<String, Object>> depList = new ArrayList<>();
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("disId", disId);
+//        map.put("type", 3);
+//        List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(map);
+//        for (GbDepartmentEntity dep : departmentEntities) {
+//            Map<String, Object> mapDep = new HashMap<>();
+//            mapDep.put("dep", dep);
+//
+//            Map<String, Object> map1 = new HashMap<>();
+//            map1.put("depFatherId", dep.getGbDepartmentId());
+//            map1.put("startDate", startDate);
+//            map1.put("stopDate", stopDate);
+//            map1.put("disId", disId);
+//
+//            map1.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+//            Integer aDoubleCostCount = gbDepartmentStockReduceService.queryReduceTypeCount(map1);
+//            if (aDoubleCostCount > 0) {
+//                Double aDoubleCost = gbDepartmentStockReduceService.queryReduceProduceTotal(map1);
+//                mapDep.put("produce", aDoubleCost.toString());
+//            } else {
+//                mapDep.put("produce", "0");
+//            }
+//
+//            Map<String, Object> map2 = new HashMap<>();
+//            map2.put("depFatherId", dep.getGbDepartmentId());
+//            map2.put("startDate", startDate);
+//            map2.put("stopDate", stopDate);
+//            map2.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+//            Integer aDoubleCostLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map2);
+//            if (aDoubleCostLoss > 0) {
+//                Double aDoubleLoss = gbDepartmentStockReduceService.queryReduceLossTotal(map2);
+//                mapDep.put("loss", aDoubleLoss.toString());
+//            } else {
+//                mapDep.put("loss", "0");
+//            }
+//
+//            Map<String, Object> map3 = new HashMap<>();
+//            map3.put("depFatherId", dep.getGbDepartmentId());
+//            map3.put("startDate", startDate);
+//            map3.put("stopDate", stopDate);
+//            map3.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+//            Integer aDoubleCostWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map3);
+//            if (aDoubleCostWaste > 0) {
+//                Double aDoubleWaste = gbDepartmentStockReduceService.queryReduceWasteTotal(map3);
+//                mapDep.put("waste", aDoubleWaste.toString());
+//            } else {
+//                mapDep.put("waste", "0");
+//            }
+//            Map<String, Object> map4 = new HashMap<>();
+//            map4.put("depFatherId", dep.getGbDepartmentId());
+//            map4.put("startDate", startDate);
+//            map4.put("stopDate", stopDate);
+//            map4.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+//            Integer aDoubleCostReturn = gbDepartmentStockReduceService.queryReduceTypeCount(map4);
+//            if (aDoubleCostReturn > 0) {
+//                Double aDoubleReturn = gbDepartmentStockReduceService.queryReduceReturnTotal(map4);
+//
+//                mapDep.put("return", aDoubleReturn.toString());
+//            } else {
+//                mapDep.put("return", "0");
+//            }
+//            depList.add(mapDep);
+//
+//        }
+//
+//        return R.ok().put("data", depList);
+//    }
 
 
     @RequestMapping(value = "/getDepCostStatistics")
@@ -1309,29 +1768,24 @@ public class GbDepartmentGoodsStockReduceController {
         return R.ok().put("data", grandGoodsList);
     }
 
-
-    @RequestMapping(value = "/getDepSettleGoodsCostDetail", method = RequestMethod.POST)
-    @ResponseBody
-    public R getDepSettleGoodsCostDetail(Integer depId, Integer disGoodsId, Integer month) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("depId", depId);
-        map.put("month", month);
-        map.put("businessDisGoodsId", disGoodsId);
-        List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockWithReduceList(map);
-//        List<GbDepartmentGoodsStockReduceEntity> reduceEntities = gbDepartmentStockReduceService.queryStockReduceListByParams(map);
-
-        List<GbDepFoodSalesEntity> salesEntities = gbDepFoodGoodsSalesService.queryDepFoodsWithGoods(map);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("reduceArr", stockEntities);
-        result.put("foodArr", salesEntities);
-        return R.ok().put("data", result);
-    }
-
-
-
-
-
+//
+//    @RequestMapping(value = "/getDepSettleGoodsCostDetail", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getDepSettleGoodsCostDetail(Integer depId, Integer disGoodsId, Integer month) {
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("depId", depId);
+//        map.put("month", month);
+//        map.put("businessDisGoodsId", disGoodsId);
+//        List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockWithReduceList(map);
+////        List<GbDepartmentGoodsStockReduceEntity> reduceEntities = gbDepartmentStockReduceService.queryStockReduceListByParams(map);
+//
+//        List<GbDepFoodSalesEntity> salesEntities = gbDepFoodGoodsSalesService.queryDepFoodsWithGoods(map);
+//
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("reduceArr", stockEntities);
+//        result.put("foodArr", salesEntities);
+//        return R.ok().put("data", result);
+//    }
 
 
     @RequestMapping(value = "/getDistributerGoodsCostData", method = RequestMethod.POST)
@@ -1417,30 +1871,30 @@ public class GbDepartmentGoodsStockReduceController {
 //        return R.ok().put("data", entities);
 //    }
 
-    @RequestMapping(value = "/depGetStockReduceDetail", method = RequestMethod.POST)
-    @ResponseBody
-    public R depGetStockReduceDetail(Integer depFatherId, String type, Integer depId) {
-        //cost查询
-        Map<String, Object> map = new HashMap<>();
-        if (depFatherId != null) {
-            map.put("depFatherId", depFatherId);
-        }
-        if (depId != null) {
-            map.put("depId", depId);
-        }
-        if (type.equals("cost")) {
-            map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-        } else if (type.equals("waste")) {
-            map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-        } else if (type.equals("loss")) {
-            map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-        } else if (type.equals("return")) {
-            map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-        }
-        List<GbDistributerGoodsEntity> gbDistributerGoodsEntities = gbDepartmentStockReduceService.queryReduceGoodsTypeByParams(map);
-
-        return R.ok().put("data", gbDistributerGoodsEntities);
-    }
+//    @RequestMapping(value = "/depGetStockReduceDetail", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R depGetStockReduceDetail(Integer depFatherId, String type, Integer depId) {
+//        //cost查询
+//        Map<String, Object> map = new HashMap<>();
+//        if (depFatherId != null) {
+//            map.put("depFatherId", depFatherId);
+//        }
+//        if (depId != null) {
+//            map.put("depId", depId);
+//        }
+//        if (type.equals("cost")) {
+//            map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+//        } else if (type.equals("waste")) {
+//            map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+//        } else if (type.equals("loss")) {
+//            map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+//        } else if (type.equals("return")) {
+//            map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+//        }
+//        List<GbDistributerGoodsEntity> gbDistributerGoodsEntities = gbDepartmentStockReduceService.queryReduceGoodsTypeByParams(map);
+//
+//        return R.ok().put("data", gbDistributerGoodsEntities);
+//    }
 
 
     @RequestMapping(value = "/disGetReduceTotal", method = RequestMethod.POST)
@@ -1771,6 +2225,7 @@ public class GbDepartmentGoodsStockReduceController {
 
         Map<String, Object> map1 = new HashMap<>();
         map1.put("fromDepId", depId);
+        map1.put("depFatherIdNotEqual", depId);
         map1.put("dayuStatus", -1);
         Integer integer2 = gbDepGoodsStockService.queryGoodsStockCount(map1);
         Double outDouble = 0.0;
@@ -1966,12 +2421,14 @@ public class GbDepartmentGoodsStockReduceController {
             Double outTotal = 0.0;
             Map<String, Object> map145 = new HashMap<>();
             map145.put("fromDepId", depId);
+            map145.put("depFatherIdNotEqual", depId);
             map145.put("equalStatus", 0);
             Integer stockAmount55 = gbDepGoodsStockService.queryGoodsStockCount(map145);
             if (stockAmount55 > 0) {
                 //出库金额
                 Map<String, Object> map42 = new HashMap<>();
                 map42.put("fromDepId", depId);
+                map42.put("depFatherIdNotEqual", depId);
                 map42.put("equalStatus", 0);
                 Double outNewTotal = gbDepGoodsStockService.queryDepGoodsSubtotal(map42);
                 outTotal = outTotal + outNewTotal;
@@ -1981,12 +2438,14 @@ public class GbDepartmentGoodsStockReduceController {
             //old Stock out金额 goods_record table status == 0
             Map<String, Object> map1451 = new HashMap<>();
             map1451.put("fromDepId", depId);
+            map1451.put("depFatherIdNotEqual", depId);
             map1451.put("equalStatus", 0);
             Integer stockPriceAmount55 = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map1451);
             if (stockPriceAmount55 > 0) {
                 //出库金额
                 Map<String, Object> map42 = new HashMap<>();
                 map42.put("fromDepId", depId);
+                map42.put("depFatherIdNotEqual", depId);
                 map42.put("equalStatus", 0);
                 Double outOldTotal = gbDepGoodsStockRecordService.queryGoodsStockRecordSubtotal(map42);
                 outTotal = outOldTotal + outTotal;
@@ -2007,6 +2466,7 @@ public class GbDepartmentGoodsStockReduceController {
             Double waitingTotal = 0.0;
             Map<String, Object> map1446 = new HashMap<>();
             map1446.put("fromDepId", depId);
+            map1446.put("depFatherIdNotEqual", depId);
             map1446.put("status", 0);
             map1446.put("depFatherIdNotEqual", depId);
             Integer stockAmount16 = gbDepGoodsStockService.queryGoodsStockCount(map1446);
@@ -2014,6 +2474,7 @@ public class GbDepartmentGoodsStockReduceController {
                 //正在出库，门店未收货的金额
                 Map<String, Object> map4 = new HashMap<>();
                 map4.put("fromDepId", depId);
+                map4.put("depFatherIdNotEqual", depId);
                 map4.put("status", 0);
                 map4.put("depFatherIdNotEqual", depId);
                 waitingTotal = gbDepGoodsStockService.queryDepGoodsSubtotal(map4);
@@ -2267,6 +2728,7 @@ public class GbDepartmentGoodsStockReduceController {
             Double outTotal = 0.0;
             Map<String, Object> map145 = new HashMap<>();
             map145.put("fromDepId", depId);
+            map145.put("depFatherIdNotEqual", depId);
             map145.put("equalStatus", 0);
             Integer stockAmount55 = gbDepGoodsStockService.queryGoodsStockCount(map145);
             if (stockAmount55 > 0) {
@@ -2282,12 +2744,14 @@ public class GbDepartmentGoodsStockReduceController {
             //old Stock out金额 goods_record table status == 0
             Map<String, Object> map1451 = new HashMap<>();
             map1451.put("fromDepId", depId);
+            map1451.put("depFatherIdNotEqual", depId);
             map1451.put("equalStatus", 0);
             Integer stockPriceAmount55 = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map1451);
             if (stockPriceAmount55 > 0) {
                 //出库金额
                 Map<String, Object> map42 = new HashMap<>();
                 map42.put("fromDepId", depId);
+                map42.put("depFatherIdNotEqual", depId);
                 map42.put("equalStatus", 0);
                 Double outOldTotal = gbDepGoodsStockRecordService.queryGoodsStockRecordSubtotal(map42);
                 outTotal = outOldTotal + outTotal;

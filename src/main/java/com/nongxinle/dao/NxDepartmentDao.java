@@ -33,4 +33,9 @@ public interface NxDepartmentDao extends BaseDao<NxDepartmentEntity> {
     int  queryDepartmentCount(Map<String, Object> map);
 
     List<NxDepartmentEntity> queryDepartmentListByParams(Map<String, Object> map);
+
+    NxDepartmentEntity queryUserDepInfo(Integer nxDuDepartmentId);
+
+    NxDepartmentEntity queryDepInfoAll(Integer nxDepartmentId);
+
 }

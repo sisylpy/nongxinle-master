@@ -56,6 +56,7 @@
 
 	<resultMap id="gbDep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
 		<result property="gbDepartmentName" column="gb_department_name"/>
 		<result property="gbDepartmentType" column="gb_department_type"/>
@@ -65,7 +66,14 @@
 		<result property="gbDepartmentLevel" column="gb_department_level"/>
 	</resultMap>
 	<resultMap id="distributer" type="gbDistributerEntity">
-		<id property="gbDistributerId" column="gb_distributer_id"/>
+<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
 		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
 		<result property="gbDistributerName" column="gb_distributer_name"/>
 		<result property="gbDistributerImg" column="gb_distributer_img"/>

@@ -11,5 +11,6 @@ import com.nongxinle.entity.GbDistributerModuleEntity;
 
 
 public interface GbDistributerModuleDao extends BaseDao<GbDistributerModuleEntity> {
-	
+
+    GbDistributerModuleEntity queryModelByDisId(Integer gbDistributerId);
 }

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerCouponDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerCouponEntity">
+		select * from nx_distributer_coupon where nx_distributer_coupon_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerCouponEntity">
+		select * from nx_distributer_coupon 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_coupon 
+	</select>
+    <select id="queryLoadDownListByParams" resultType="com.nongxinle.entity.NxDistributerCouponEntity">
+		select * from nx_distributer_coupon
+		<where>
+			<if test="disId != null">
+				and nx_dc_distributer_id = #{disId}
+			</if>
+			<if test="equalStatus != null">
+				and nx_dc_status = #{equalStatus}
+			</if>
+			<if test="cityId != null">
+				and nx_dc_city_id = #{cityId}
+			</if>
+		</where>
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerCouponEntity">
+		insert into nx_distributer_coupon
+		(
+			`nx_distributer_coupon_id`, 
+			`nx_distributer_coupon_name`, 
+			`nx_dc_price`, 
+			`nx_dc_price_great_grand_id`, 
+			`nx_dc_stop_time`, 
+			`nx_dc_start_time`, 
+			`nx_dc_words`, 
+			`nx_dc_file_path`, 
+			`nx_dc_distributer_id`, 
+			`nx_dc_type`, 
+			`nx_dc_status`, 
+			`nx_dc_start_time_zone`, 
+			`nx_dc_stop_time_zone`, 
+			`nx_dc_start_date`, 
+			`nx_dc_stop_date`, 
+			`nx_dc_down_count`, 
+			`nx_dc_use_count`, 
+			`nx_dc_subtotal_price`, 
+			`nx_dc_price_percent`,
+			`nx_dc_city_id`,
+			`nx_dc_market_id`,
+			`nx_dc_start_which_day`,
+			`nx_dc_stop_which_day`
+		)
+		values
+		(
+			#{nxDistributerCouponId}, 
+			#{nxDistributerCouponName}, 
+			#{nxDcPrice}, 
+			#{nxDcPriceGreatGrandId}, 
+			#{nxDcStopTime}, 
+			#{nxDcStartTime}, 
+			#{nxDcWords}, 
+			#{nxDcFilePath}, 
+			#{nxDcDistributerId}, 
+			#{nxDcType}, 
+			#{nxDcStatus}, 
+			#{nxDcStartTimeZone}, 
+			#{nxDcStopTimeZone}, 
+			#{nxDcStartDate}, 
+			#{nxDcStopDate}, 
+			#{nxDcDownCount}, 
+			#{nxDcUseCount}, 
+			#{nxDcSubtotalPrice}, 
+			#{nxDcPricePercent},
+			#{nxDcCityId},
+			#{nxDcMarketId},
+			#{nxDcStartWhichDay},
+			#{nxDcStopWhichDay}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerCouponEntity">
+		update nx_distributer_coupon 
+		<set>
+			<if test="nxDistributerCouponName != null">`nx_distributer_coupon_name` = #{nxDistributerCouponName}, </if>
+			<if test="nxDcPrice != null">`nx_dc_price` = #{nxDcPrice}, </if>
+			<if test="nxDcPriceGreatGrandId != null">`nx_dc_price_great_grand_id` = #{nxDcPriceGreatGrandId}, </if>
+			<if test="nxDcStopTime != null">`nx_dc_stop_time` = #{nxDcStopTime}, </if>
+			<if test="nxDcStartTime != null">`nx_dc_start_time` = #{nxDcStartTime}, </if>
+			<if test="nxDcWords != null">`nx_dc_words` = #{nxDcWords}, </if>
+			<if test="nxDcFilePath != null">`nx_dc_file_path` = #{nxDcFilePath}, </if>
+			<if test="nxDcDistributerId != null">`nx_dc_distributer_id` = #{nxDcDistributerId}, </if>
+			<if test="nxDcType != null">`nx_dc_type` = #{nxDcType}, </if>
+			<if test="nxDcStatus != null">`nx_dc_status` = #{nxDcStatus}, </if>
+			<if test="nxDcStartTimeZone != null">`nx_dc_start_time_zone` = #{nxDcStartTimeZone}, </if>
+			<if test="nxDcStopTimeZone != null">`nx_dc_stop_time_zone` = #{nxDcStopTimeZone}, </if>
+			<if test="nxDcStartDate != null">`nx_dc_start_date` = #{nxDcStartDate}, </if>
+			<if test="nxDcStopDate != null">`nx_dc_stop_date` = #{nxDcStopDate}, </if>
+			<if test="nxDcDownCount != null">`nx_dc_down_count` = #{nxDcDownCount}, </if>
+			<if test="nxDcUseCount != null">`nx_dc_use_count` = #{nxDcUseCount}, </if>
+			<if test="nxDcSubtotalPrice != null">`nx_dc_subtotal_price` = #{nxDcSubtotalPrice}, </if>
+			<if test="nxDcCityId != null">`nx_dc_city_id` = #{nxDcCityId}, </if>
+			<if test="nxDcMarketId != null">`nx_dc_market_id` = #{nxDcMarketId}, </if>
+			<if test="nxDcStartWhichDay != null">`nx_dc_start_which_day` = #{nxDcStartWhichDay}, </if>
+			<if test="nxDcStopWhichDay != null">`nx_dc_stop_which_day` = #{nxDcStopWhichDay}, </if>
+			<if test="nxDcPricePercent != null">`nx_dc_price_percent` = #{nxDcPricePercent}</if>
+		</set>
+		where nx_distributer_coupon_id = #{nxDistributerCouponId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_coupon where nx_distributer_coupon_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_coupon where nx_distributer_coupon_id in 
+		<foreach item="nxDistributerCouponId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerCouponId}
+		</foreach>
+	</delete>
+
+</mapper>

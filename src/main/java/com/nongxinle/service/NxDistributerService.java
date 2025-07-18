@@ -37,4 +37,5 @@ public interface NxDistributerService {
     List<NxDistributerEntity> queryAllTypeOne();
 
 
+    void delteNxDis(Integer id);
 }

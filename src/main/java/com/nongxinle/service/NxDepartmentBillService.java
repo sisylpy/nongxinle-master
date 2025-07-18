@@ -45,4 +45,22 @@ public interface NxDepartmentBillService {
     List<NxDepartmentBillEntity> queryBillsListByParams(Map<String, Object> map);
 
     NxDepartmentBillEntity queryDepartBillByTradeNo(String ordersSn);
+
+    NxDepartmentBillEntity queryDepartBillByJustTradeNo(String gbDbTradeNo);
+
+    int queryBillsCount(Map<String, Object> mapB);
+
+    double queryReturnSubtotalByBillId(Integer billId);
+
+    List<NxDepartmentBillEntity> queryBindMap(Map<String, Object> map);
+
+    double querySubtoalBindMap(Map<String, Object> map1);
+
+    int queryCountBindMap(Map<String, Object> params);
+
+    List<NxDepartmentBillEntity> queryReturnBill(Map<String, Object> map);
+
+    NxDepartmentBillEntity queryItemByGbDepBillId(Integer gbDepartmentBillId);
+
+    Map<String, Object> getBillStats(Integer disId);
 }

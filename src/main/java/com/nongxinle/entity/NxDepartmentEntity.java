@@ -63,6 +63,7 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	private Integer nxDepartmentPromotionGoodsId;
 
 	private Integer nxDepartmentDisRouteId;
+	private Integer nxDepartmentRecordMinutes;
 
 	private Integer nxDepartmentDriverId;
 	private Integer nxDepartmentOweBoxNumber;
@@ -72,12 +73,20 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	private Integer nxDepartmentAddCount;
 	private Integer nxDepartmentPurOrderCount;
 	private Integer nxDepartmentNeedNotPurOrderCount;
+	private Integer nxDepartmentOrderTotal;
 	private String nxDepartmentPayTotal;
+	private String nxDepartmentJoinDate;
 	private String nxDepartmentProfitTotal;
 
+	private String nxDepartmentPinyin;
+	private String nxDepartmentAppId;
+	private String nxDepartmentPickName;
+	private String nxDepartmentLat;
+	private String nxDepartmentLng;
 
 
 	private NxDepartmentEntity fatherDepartmentEntity;
+	private NxDistributerPayEntity payEntity;
 
 	private NxDepartmentUserEntity nxDepartmentUserEntity;
 	

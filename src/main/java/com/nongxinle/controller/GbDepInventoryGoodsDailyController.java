@@ -47,152 +47,152 @@ public class GbDepInventoryGoodsDailyController {
     private GbDepartmentGoodsStockReduceService gbDepartmentStockReduceService;
 
 
-    @RequestMapping(value = "/getMendianCostTypeStaticsByGoodsFatherId", method = RequestMethod.POST)
-    @ResponseBody
-    public R getMendianCostTypeStaticsByGoodsFatherId(Integer disId, String startDate, String stopDate,
-                                                      String startWeek, String stopWeek, String year,
-                                                      String startMonth, String stopMonth, Integer type, String ids, Integer goodsFatherId) {
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("fathersFatherId", goodsFatherId);
-        List<GbDistributerFatherGoodsEntity> fatherGoodsEntities1 = gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(map);
-        TreeSet<GbDistributerFatherGoodsEntity> greatGrandGoods = new TreeSet<>();
-        if (fatherGoodsEntities1.size() > 0) {
-
-            for (GbDistributerFatherGoodsEntity fatherGoods : fatherGoodsEntities1) {
-                Integer gbDistributerFatherGoodsId = fatherGoods.getGbDistributerFatherGoodsId();
-
-                //daily
-                if (type.equals(getDISGoodsInventroyDaily())) {
-                    Map<String, Object> map0 = new HashMap<>();
-
-                    map0.put("disId", disId);
-                    map0.put("goodsFatherId", gbDistributerFatherGoodsId);
-                    if (!startDate.equals("-1")) {
-                        map0.put("startDate", startDate);
-                    }
-                    if (!stopDate.equals("-1")) {
-                        map0.put("notDayuStopDate", stopDate);
-                    }
-                    BigDecimal decimal = new BigDecimal(1);
-                    if (!startDate.equals("-1") && !stopDate.equals("-1")) {
-                        Integer howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
-                        decimal = new BigDecimal(Integer.parseInt(howManyDaysInPeriod.toString()));
-                    }
-                    Integer integer = gbDepInvGoodsDailyService.queryDailyGoodsInventoryCount(map0);
-                    if (integer > 0) {
-                        map0.put("goodsFatherId", fatherGoods.getGbDistributerFatherGoodsId());
-                        Double produceTotal = gbDepInvGoodsDailyService.queryDailyGoodsProduceTotal(map0);
-                        Double produceTotalWaste = gbDepInvGoodsDailyService.queryDailyGoodsWasteTotal(map0);
-                        Double produceTotalLoss = gbDepInvGoodsDailyService.queryDailyGoodsLossTotal(map0);
-                        BigDecimal addTotal = new BigDecimal(produceTotal).add(new BigDecimal(produceTotalWaste)).add(new BigDecimal(produceTotalLoss));
-                        BigDecimal everyDayWeight = addTotal.divide(decimal, 2, BigDecimal.ROUND_HALF_UP);
-                        fatherGoods.setEveryDayWeight(everyDayWeight.doubleValue());
-                        fatherGoods.setEveryDayWeightString(everyDayWeight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                        System.out.println("dfakfjasdsafdas;fd" + map0);
-                        TreeSet<GbDepInventoryGoodsDailyEntity> distributerFatherGoodsEntities = gbDepInvGoodsDailyService.queryTreeDailyDisGoodsList(map0);
-
-                        TreeSet<GbDistributerGoodsEntity> dailyGoodsTree = new TreeSet<>();
-                        List<GbDistributerGoodsEntity> distributerGoodsEntities = new ArrayList<>();
-
-                        for (GbDepInventoryGoodsDailyEntity dailyEntity : distributerFatherGoodsEntities) {
-                            Integer gbIgdDisGoodsId = dailyEntity.getGbIgdDisGoodsId();
-                            GbDistributerGoodsEntity goodsEntity = gbDistributerGoodsService.queryObject(gbIgdDisGoodsId);
-                            dailyGoodsTree.add(goodsEntity);
-                        }
-                        for (GbDistributerGoodsEntity goodsEntity : dailyGoodsTree) {
-                            map0.put("disGoodsId", goodsEntity.getGbDistributerGoodsId());
-                            Double produceTotalGoods = gbDepInvGoodsDailyService.queryDailyGoodsProduceTotal(map0);
-                            Double produceTotalWasteGoods = gbDepInvGoodsDailyService.queryDailyGoodsWasteTotal(map0);
-                            Double produceTotalLossGoods = gbDepInvGoodsDailyService.queryDailyGoodsLossTotal(map0);
-                            BigDecimal addTotalGoods = new BigDecimal(produceTotalGoods).add(new BigDecimal(produceTotalWasteGoods)).add(new BigDecimal(produceTotalLossGoods));
-                            BigDecimal everyDayWeightGoods = addTotalGoods.divide(decimal, 2, BigDecimal.ROUND_HALF_UP);
-                            goodsEntity.setEveryDayWeight(everyDayWeightGoods.doubleValue());
-                            goodsEntity.setEveryDayWeightString(everyDayWeightGoods.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            distributerGoodsEntities.add(goodsEntity);
-                        }
-                        fatherGoods.setGbDistributerGoodsEntities(distributerGoodsEntities);
-                        greatGrandGoods.add(fatherGoods);
-                    }
-                }
-
-
-            }
-            return R.ok().put("data", greatGrandGoods);
-        }
-        return R.ok();
-
-    }
-
-
-    @RequestMapping(value = "/getMendianCostTypeStatics", method = RequestMethod.POST)
-    @ResponseBody
-    public R getMendianCostTypeStatics(Integer disId, String startDate, String stopDate,
-                                       String startWeek, String stopWeek, String year,
-                                       String startMonth, String stopMonth, Integer type, String ids) {
-        TreeSet<GbDistributerFatherGoodsEntity> greatGrandGoods = new TreeSet<>();
-        TreeSet<GbDistributerFatherGoodsEntity> resultFatherGoodsList = new TreeSet<>();
-
-        Map<String, Object> map0 = new HashMap<>();
-        if (!startDate.equals("-1")) {
-            map0.put("startDate", startDate);
-        }
-        if (!stopDate.equals("-1")) {
-            map0.put("stopDate", stopDate);
-        }
-        map0.put("disId", disId);
-        BigDecimal decimal = new BigDecimal(1);
-        if (!startDate.equals("-1") && !stopDate.equals("-1") && !startDate.equals(stopDate)) {
-            Integer howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
-            decimal = new BigDecimal(Integer.parseInt(howManyDaysInPeriod.toString()));
-        } else {
-            decimal = new BigDecimal(1);
-        }
-
-        greatGrandGoods = gbDepInvGoodsDailyService.queryTreeDailyGoodsList(map0);
-        if (greatGrandGoods.size() > 0) {
-            for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandGoods) {
-                List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
-                for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
-                    BigDecimal grandDouble = new BigDecimal(0);
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        map0.put("goodsFatherId", father.getGbDistributerFatherGoodsId());
-//                            Double produceTotal = gbDepInvGoodsDailyService.queryDailyGoodsProduceTotal(map0);
-                        Double produceTotal = gbDepInvGoodsDailyService.queryDailyGoodsProduceWeight(map0);
-//                            Double produceTotalWaste = gbDepInvGoodsDailyService.queryDailyGoodsWasteTotal(map0);
-//                            Double produceTotalLoss = gbDepInvGoodsDailyService.queryDailyGoodsLossTotal(map0);
-//                            BigDecimal addTotal = new BigDecimal(produceTotal).add(new BigDecimal(produceTotalWaste)).add(new BigDecimal(produceTotalLoss));
-//                            BigDecimal everyDayWeight = addTotal.divide(decimal, 1, BigDecimal.ROUND_HALF_UP);
-//                            BigDecimal everyDayWeight = new BigDecimal(produceTotal).divide(decimal, 1, BigDecimal.ROUND_HALF_UP);
-                        father.setFatherProduceWeight(produceTotal);
-                        father.setFatherProduceWeightString(new BigDecimal(produceTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-//                            father.setEveryDayWeight(everyDayWeight.doubleValue());
-//                            father.setEveryDayWeightString(everyDayWeight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        grandDouble = grandDouble.add(new BigDecimal(produceTotal));
-
-
-                    }
-//                    grandFather.setFatherGoodsEntities(abcFatherGoodsProduceWeight(fatherGoodsEntities));
-                    grandFather.setFatherProduceWeight(grandDouble.doubleValue());
-                    grandFather.setFatherProduceWeightString(grandDouble.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                    resultFatherGoodsList.add(grandFather);
-                    resultFatherGoodsList = abcFatherGoodsProduceWeight(resultFatherGoodsList);
-
-                }
-
-            }
-        }
-
+//    @RequestMapping(value = "/getMendianCostTypeStaticsByGoodsFatherId", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getMendianCostTypeStaticsByGoodsFatherId(Integer disId, String startDate, String stopDate,
+//                                                      String startWeek, String stopWeek, String year,
+//                                                      String startMonth, String stopMonth, Integer type, String ids, Integer goodsFatherId) {
 //
-//        if (type.equals("waste")) {
-//            mapCost.put("arr", abcFatherWaste(resultGrandFatherList));
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("fathersFatherId", goodsFatherId);
+//        List<GbDistributerFatherGoodsEntity> fatherGoodsEntities1 = gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(map);
+//        TreeSet<GbDistributerFatherGoodsEntity> greatGrandGoods = new TreeSet<>();
+//        if (fatherGoodsEntities1.size() > 0) {
+//
+//            for (GbDistributerFatherGoodsEntity fatherGoods : fatherGoodsEntities1) {
+//                Integer gbDistributerFatherGoodsId = fatherGoods.getGbDistributerFatherGoodsId();
+//
+//                //daily
+//                if (type.equals(getDISGoodsInventroyDaily())) {
+//                    Map<String, Object> map0 = new HashMap<>();
+//
+//                    map0.put("disId", disId);
+//                    map0.put("goodsFatherId", gbDistributerFatherGoodsId);
+//                    if (!startDate.equals("-1")) {
+//                        map0.put("startDate", startDate);
+//                    }
+//                    if (!stopDate.equals("-1")) {
+//                        map0.put("notDayuStopDate", stopDate);
+//                    }
+//                    BigDecimal decimal = new BigDecimal(1);
+//                    if (!startDate.equals("-1") && !stopDate.equals("-1")) {
+//                        Integer howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
+//                        decimal = new BigDecimal(Integer.parseInt(howManyDaysInPeriod.toString()));
+//                    }
+//                    Integer integer = gbDepInvGoodsDailyService.queryDailyGoodsInventoryCount(map0);
+//                    if (integer > 0) {
+//                        map0.put("goodsFatherId", fatherGoods.getGbDistributerFatherGoodsId());
+//                        Double produceTotal = gbDepInvGoodsDailyService.queryDailyGoodsProduceTotal(map0);
+//                        Double produceTotalWaste = gbDepInvGoodsDailyService.queryDailyGoodsWasteTotal(map0);
+//                        Double produceTotalLoss = gbDepInvGoodsDailyService.queryDailyGoodsLossTotal(map0);
+//                        BigDecimal addTotal = new BigDecimal(produceTotal).add(new BigDecimal(produceTotalWaste)).add(new BigDecimal(produceTotalLoss));
+//                        BigDecimal everyDayWeight = addTotal.divide(decimal, 2, BigDecimal.ROUND_HALF_UP);
+//                        fatherGoods.setEveryDayWeight(everyDayWeight.doubleValue());
+//                        fatherGoods.setEveryDayWeightString(everyDayWeight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//
+//                        System.out.println("dfakfjasdsafdas;fd" + map0);
+//                        TreeSet<GbDepInventoryGoodsDailyEntity> distributerFatherGoodsEntities = gbDepInvGoodsDailyService.queryTreeDailyDisGoodsList(map0);
+//
+//                        TreeSet<GbDistributerGoodsEntity> dailyGoodsTree = new TreeSet<>();
+//                        List<GbDistributerGoodsEntity> distributerGoodsEntities = new ArrayList<>();
+//
+//                        for (GbDepInventoryGoodsDailyEntity dailyEntity : distributerFatherGoodsEntities) {
+//                            Integer gbIgdDisGoodsId = dailyEntity.getGbIgdDisGoodsId();
+//                            GbDistributerGoodsEntity goodsEntity = gbDistributerGoodsService.queryObject(gbIgdDisGoodsId);
+//                            dailyGoodsTree.add(goodsEntity);
+//                        }
+//                        for (GbDistributerGoodsEntity goodsEntity : dailyGoodsTree) {
+//                            map0.put("disGoodsId", goodsEntity.getGbDistributerGoodsId());
+//                            Double produceTotalGoods = gbDepInvGoodsDailyService.queryDailyGoodsProduceTotal(map0);
+//                            Double produceTotalWasteGoods = gbDepInvGoodsDailyService.queryDailyGoodsWasteTotal(map0);
+//                            Double produceTotalLossGoods = gbDepInvGoodsDailyService.queryDailyGoodsLossTotal(map0);
+//                            BigDecimal addTotalGoods = new BigDecimal(produceTotalGoods).add(new BigDecimal(produceTotalWasteGoods)).add(new BigDecimal(produceTotalLossGoods));
+//                            BigDecimal everyDayWeightGoods = addTotalGoods.divide(decimal, 2, BigDecimal.ROUND_HALF_UP);
+//                            goodsEntity.setEveryDayWeight(everyDayWeightGoods.doubleValue());
+//                            goodsEntity.setEveryDayWeightString(everyDayWeightGoods.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                            distributerGoodsEntities.add(goodsEntity);
+//                        }
+//                        fatherGoods.setGbDistributerGoodsEntities(distributerGoodsEntities);
+//                        greatGrandGoods.add(fatherGoods);
+//                    }
+//                }
+//
+//
+//            }
+//            return R.ok().put("data", greatGrandGoods);
 //        }
-//        map123.put("cost", mapCost);
-
-        return R.ok().put("data", resultFatherGoodsList);
-    }
+//        return R.ok();
+//
+//    }
+//
+//
+//    @RequestMapping(value = "/getMendianCostTypeStatics", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getMendianCostTypeStatics(Integer disId, String startDate, String stopDate,
+//                                       String startWeek, String stopWeek, String year,
+//                                       String startMonth, String stopMonth, Integer type, String ids) {
+//        TreeSet<GbDistributerFatherGoodsEntity> greatGrandGoods = new TreeSet<>();
+//        TreeSet<GbDistributerFatherGoodsEntity> resultFatherGoodsList = new TreeSet<>();
+//
+//        Map<String, Object> map0 = new HashMap<>();
+//        if (!startDate.equals("-1")) {
+//            map0.put("startDate", startDate);
+//        }
+//        if (!stopDate.equals("-1")) {
+//            map0.put("stopDate", stopDate);
+//        }
+//        map0.put("disId", disId);
+//        BigDecimal decimal = new BigDecimal(1);
+//        if (!startDate.equals("-1") && !stopDate.equals("-1") && !startDate.equals(stopDate)) {
+//            Integer howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
+//            decimal = new BigDecimal(Integer.parseInt(howManyDaysInPeriod.toString()));
+//        } else {
+//            decimal = new BigDecimal(1);
+//        }
+//
+//        greatGrandGoods = gbDepInvGoodsDailyService.queryTreeDailyGoodsList(map0);
+//        if (greatGrandGoods.size() > 0) {
+//            for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandGoods) {
+//                List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
+//                for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
+//                    BigDecimal grandDouble = new BigDecimal(0);
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        map0.put("goodsFatherId", father.getGbDistributerFatherGoodsId());
+////                            Double produceTotal = gbDepInvGoodsDailyService.queryDailyGoodsProduceTotal(map0);
+//                        Double produceTotal = gbDepInvGoodsDailyService.queryDailyGoodsProduceWeight(map0);
+////                            Double produceTotalWaste = gbDepInvGoodsDailyService.queryDailyGoodsWasteTotal(map0);
+////                            Double produceTotalLoss = gbDepInvGoodsDailyService.queryDailyGoodsLossTotal(map0);
+////                            BigDecimal addTotal = new BigDecimal(produceTotal).add(new BigDecimal(produceTotalWaste)).add(new BigDecimal(produceTotalLoss));
+////                            BigDecimal everyDayWeight = addTotal.divide(decimal, 1, BigDecimal.ROUND_HALF_UP);
+////                            BigDecimal everyDayWeight = new BigDecimal(produceTotal).divide(decimal, 1, BigDecimal.ROUND_HALF_UP);
+//                        father.setFatherProduceWeight(produceTotal);
+//                        father.setFatherProduceWeightString(new BigDecimal(produceTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+////                            father.setEveryDayWeight(everyDayWeight.doubleValue());
+////                            father.setEveryDayWeightString(everyDayWeight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                        grandDouble = grandDouble.add(new BigDecimal(produceTotal));
+//
+//
+//                    }
+////                    grandFather.setFatherGoodsEntities(abcFatherGoodsProduceWeight(fatherGoodsEntities));
+//                    grandFather.setFatherProduceWeight(grandDouble.doubleValue());
+//                    grandFather.setFatherProduceWeightString(grandDouble.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                    resultFatherGoodsList.add(grandFather);
+//                    resultFatherGoodsList = abcFatherGoodsProduceWeight(resultFatherGoodsList);
+//
+//                }
+//
+//            }
+//        }
+//
+////
+////        if (type.equals("waste")) {
+////            mapCost.put("arr", abcFatherWaste(resultGrandFatherList));
+////        }
+////        map123.put("cost", mapCost);
+//
+//        return R.ok().put("data", resultFatherGoodsList);
+//    }
 
 
     private TreeSet<GbDistributerFatherGoodsEntity> abcFatherGoodsEveryMonthWeight(TreeSet<GbDistributerFatherGoodsEntity> goodsEntities) {
@@ -604,6 +604,7 @@ public class GbDepInventoryGoodsDailyController {
             reduceEntity.setGbDgsrDoUserId(stock.getGbDgsReduceWeightUserId());
             reduceEntity.setGbDgsrDate(formatWhatDay(0));
             reduceEntity.setGbDgsrStockNxDistribtuerId(stock.getGbDgsNxDistributerId());
+            reduceEntity.setGbDgsrStockNxSupplierId(stock.getGbDgsNxSupplierId());
             reduceEntity.setGbDgsrWeek(getWeekOfYear(0).toString());
             reduceEntity.setGbDgsrMonth(formatWhatMonth(0));
             reduceEntity.setGbDgsrCostWeight(useWeight.toString());
@@ -657,6 +658,7 @@ public class GbDepInventoryGoodsDailyController {
                 reduceEntity.setGbDgsrDoUserId(stock.getGbDgsReduceWeightUserId());
                 reduceEntity.setGbDgsrDate(formatWhatDay(0));
                 reduceEntity.setGbDgsrStockNxDistribtuerId(stock.getGbDgsNxDistributerId());
+                reduceEntity.setGbDgsrStockNxSupplierId(stock.getGbDgsNxSupplierId());
                 reduceEntity.setGbDgsrWeek(getWeekOfYear(0).toString());
                 reduceEntity.setGbDgsrMonth(formatWhatMonth(0));
                 reduceEntity.setGbDgsrCostWeight(useWeight.toString());

@@ -784,6 +784,7 @@ public class GbDepartmentSettleController {
             //  update 出库settleId
             Map<String, Object> map6 = new HashMap<>();
             map6.put("fromDepId", depFatherId);
+            map6.put("depFatherIdNotEqual", depFatherId);
             map6.put("fromSettleId", -1);
 
             int count = gbDepGoodsStockService.queryGoodsStockCount(map6);

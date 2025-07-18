@@ -11,23 +11,20 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import com.github.wxpay.sdk.WXPay;
-import com.nongxinle.entity.GbDepartmentBillEntity;
-import com.nongxinle.entity.GbDistributerPurchaseBatchEntity;
-import com.nongxinle.service.GbDepartmentBillService;
-import com.nongxinle.service.GbDistributerPurchaseBatchService;
+import com.nongxinle.entity.*;
+import com.nongxinle.service.*;
 import com.nongxinle.utils.*;
 import com.sun.codemodel.internal.JForEach;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.entity.GbDistributerSupplierPaymentEntity;
-import com.nongxinle.service.GbDistributerSupplierPaymentService;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.nongxinle.utils.DateUtils.formatFullTime;
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
+import static com.nongxinle.utils.GbTypeUtils.getGbOrderBuyStatusHavePayFinish;
 
 
 @RestController
@@ -39,11 +36,44 @@ public class GbDistributerSupplierPaymentController {
     private GbDistributerPurchaseBatchService gbDPBService;
     @Autowired
     private GbDepartmentBillService gbDepartmentBillService;
+    @Autowired
+    private NxDepartmentBillService nxDepartmentBillService;
+    @Autowired
+    private GbDistributerPurchaseGoodsService gbDPGoodsService;
+    @Autowired
+    private GbDepartmentOrdersService gbDepartmentOrdersService;
+
+
 
 
     @RequestMapping(value = "/disSettleNxDepartmentBills", method = RequestMethod.POST)
     @ResponseBody
     public R disSettleNxDepartmentBills(@RequestBody GbDistributerSupplierPaymentEntity paymentEntity) {
+
+        paymentEntity.setGbDspStatus(0);
+        gbDisSupplierPaymentService.save(paymentEntity);
+
+        Integer gbDisSupplierPaymentId = paymentEntity.getGbDistributerSupplierPaymentId();
+        for (GbDepartmentBillEntity departmentBillEntity : paymentEntity.getGbDepartmentBillEntities()) {
+            departmentBillEntity.setGbDbGbSupplierPaymentId(gbDisSupplierPaymentId);
+            departmentBillEntity.setGbDbStatus(4);
+            gbDepartmentBillService.update(departmentBillEntity);
+
+            System.out.println("seraeekenxnxnxnxnnxnxnxn" + departmentBillEntity.getGbDbTradeNo());
+            NxDepartmentBillEntity billEntity = nxDepartmentBillService.queryDepartBillByJustTradeNo(departmentBillEntity.getGbDbTradeNo());
+            billEntity.setNxDbStatus(1);
+            nxDepartmentBillService.update(billEntity);
+            System.out.println("updaufdasdafasfdasfa");
+        }
+
+        return R.ok();
+
+    }
+
+
+    @RequestMapping(value = "/disSettleNxDepartmentBills0", method = RequestMethod.POST)
+    @ResponseBody
+    public R disSettleNxDepartmentBills0(@RequestBody GbDistributerSupplierPaymentEntity paymentEntity) {
 		String gbDspPayTotal = paymentEntity.getGbDspPayTotal();
 		Double aDouble = Double.parseDouble(gbDspPayTotal) * 100;
 		int i = aDouble.intValue();
@@ -93,7 +123,12 @@ public class GbDistributerSupplierPaymentController {
 				departmentBillEntity.setGbDbGbSupplierPaymentId(gbDisSupplierPaymentId);
 				departmentBillEntity.setGbDbStatus(4);
 				gbDepartmentBillService.update(departmentBillEntity);
-			}
+
+                NxDepartmentBillEntity billEntity = nxDepartmentBillService.queryDepartBillByJustTradeNo(departmentBillEntity.getGbDbTradeNo());
+                billEntity.setNxDbStatus(1);
+                billEntity.setNxDbWxOutTradeNo(tradeNo);
+                nxDepartmentBillService.update(billEntity);
+            }
 
 			return R.ok().put("map", reMap);
 		} catch (Exception e) {
@@ -170,6 +205,9 @@ public class GbDistributerSupplierPaymentController {
     @ResponseBody
     public R disSettleSupplierBills(@RequestBody GbDistributerSupplierPaymentEntity paymentEntity) {
 
+        paymentEntity.setGbDspStatus(0);
+        paymentEntity.setGbDspDate(formatWhatDay(0));
+        paymentEntity.setGbDspPayFullTime(formatFullTime());
         gbDisSupplierPaymentService.save(paymentEntity);
         Integer gbDisSupplierPaymentId = paymentEntity.getGbDistributerSupplierPaymentId();
 
@@ -181,22 +219,30 @@ public class GbDistributerSupplierPaymentController {
                 batchEntity.setGbDpbStatus(4);
                 batchEntity.setGbDpbGbSupplierPaymentId(gbDisSupplierPaymentId);
                 gbDPBService.update(batchEntity);
-            }
-        }
-        if (paymentEntity.getGbDspNxDistributerId() != -1) {
-            for (GbDepartmentBillEntity departmentBillEntity : paymentEntity.getGbDepartmentBillEntities()) {
-                total = total.add(new BigDecimal(departmentBillEntity.getGbDbTotal()));
-                departmentBillEntity.setGbDbStatus(4);
-                departmentBillEntity.setGbDbGbSupplierPaymentId(gbDisSupplierPaymentId);
-                gbDepartmentBillService.update(departmentBillEntity);
+
+                Map<String, Object> map = new HashMap<>();
+                map.put("batchId", batchEntity.getGbDistributerPurchaseBatchId());
+                System.out.println("whwhwhwhhwhw" + map);
+                List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntities = gbDPGoodsService.queryPurchaseGoodsByParams(map);
+                if(purchaseGoodsEntities.size() > 0){
+                    for(GbDistributerPurchaseGoodsEntity purchaseGoodsEntity: purchaseGoodsEntities){
+                        Map<String, Object> mapO = new HashMap<>();
+                        mapO.put("purGoodsId", purchaseGoodsEntity.getGbDistributerPurchaseGoodsId());
+                        System.out.println("Fdafjfaksf;laksjf;dasljf;lksad" + mapO);
+                        List<GbDepartmentOrdersEntity> ordersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(mapO);
+                        if(ordersEntities.size() > 0){
+                            for(GbDepartmentOrdersEntity ordersEntity: ordersEntities){
+                                ordersEntity.setGbDoBuyStatus(getGbOrderBuyStatusHavePayFinish());
+                                gbDepartmentOrdersService.update(ordersEntity);
+                            }
+                        }
+                    }
+                }
             }
         }
 
-
-        paymentEntity.setGbDspDate(formatWhatDay(0));
         paymentEntity.setGbDspPayTotal(total.toString());
         gbDisSupplierPaymentService.update(paymentEntity);
-
 
         return R.ok();
     }

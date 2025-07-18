@@ -19,7 +19,7 @@
 	</select>
 
 	<select id="queryCgGoodsSetListByParams" resultType="com.nongxinle.entity.NxCommunityGoodsSetItemEntity">
-		select * from nongxinle.nx_community_goods_set_item
+		select * from nx_community_goods_set_item
         <where>
 			<if test="goodsId != null">
 				and nx_cgsi_item_cg_goods_id = #{goodsId}
@@ -41,7 +41,11 @@
 			`nx_cgsi_item_file_path`,
 			`nx_cgsi_item_type`,
 			`nx_cgsi_item_quantity`,
-			`nx_cgsi_item_sort`
+			`nx_cgsi_item_sort`,
+			`nx_cgsi_item_status`,
+			`nx_cgsi_item_huaxian_price`,
+			`nx_cgsi_item_limit_count`,
+			`nx_cgsi_cg_goods_id`
 		)
 		values
 		(
@@ -53,7 +57,11 @@
 			#{nxCgsiItemFilePath},
 			#{nxCgsiItemType},
 			#{nxCgsiItemQuantity},
-			#{nxCgsiItemSort}
+			#{nxCgsiItemSort},
+			#{nxCgsiItemStatus},
+			#{nxCgsiItemHuaxianPrice},
+			#{nxCgsiItemLimitCount},
+			#{nxCgsiCgGoodsId}
 		)
 	</insert>
 	 
@@ -67,6 +75,10 @@
 			<if test="nxCgsiItemType != null">`nx_cgsi_item_type` = #{nxCgsiItemType}, </if>
 			<if test="nxCgsiItemQuantity != null">`nx_cgsi_item_quantity` = #{nxCgsiItemQuantity}, </if>
 			<if test="nxCgsiItemSort != null">`nx_cgsi_item_sort` = #{nxCgsiItemSort}, </if>
+			<if test="nxCgsiItemStatus != null">`nx_cgsi_item_status` = #{nxCgsiItemStatus}, </if>
+			<if test="nxCgsiItemHuaxianPrice != null">`nx_cgsi_item_huaxian_price` = #{nxCgsiItemHuaxianPrice}, </if>
+			<if test="nxCgsiItemLimitCount != null">`nx_cgsi_item_limit_count` = #{nxCgsiItemLimitCount}, </if>
+			<if test="nxCgsiCgGoodsId != -99">`nx_cgsi_cg_goods_id` = #{nxCgsiCgGoodsId}, </if>
 			<if test="nxCgsiItemFilePath != null">`nx_cgsi_item_file_path` = #{nxCgsiItemFilePath}</if>
 		</set>
 		where nx_community_goods_set_item_id = #{nxCommunityGoodsSetItemId}

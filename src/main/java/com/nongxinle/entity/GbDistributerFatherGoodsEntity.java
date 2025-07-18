@@ -63,6 +63,7 @@ public class GbDistributerFatherGoodsEntity implements Serializable,Comparable {
 	private Integer gbDfgPriceThreeAmount;
 	private Integer gbDfgNxGoodsId;
 	private List<GbDistributerGoodsEntity> gbDistributerGoodsEntities;
+	private NxGoodsEntity nxGoodsEntity;
 
 	private List<GbDistributerFatherGoodsEntity> fatherGoodsEntities;
 	private List<GbDistributerPurchaseGoodsEntity> gbDistributerPurchaseGoodsEntities;
@@ -73,6 +74,8 @@ public class GbDistributerFatherGoodsEntity implements Serializable,Comparable {
 	private Boolean isSelected = false;
 
 	private BigDecimal purchaseSubTotal;
+	private BigDecimal purchaseSelfSubTotal;
+	private BigDecimal purchaseSupplierSubTotal;
 	private Double highestTotal ;
 	private Double lowestTotal;
 	private String fatherStockSubtotalString;
@@ -161,6 +164,8 @@ public class GbDistributerFatherGoodsEntity implements Serializable,Comparable {
 
 	private String fatherWasteRateString;
 	private Double fatherWasteRate;
+	private int orderAmount;
+
 	@Override
 	public int compareTo(Object o) {
 		if (o instanceof GbDistributerFatherGoodsEntity) {

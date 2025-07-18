@@ -5,6 +5,7 @@ package com.nongxinle.controller;
  * @date 05-11 21:54
  */
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,10 @@ public class NxJrdhSupplierController {
     private NxDistributerGoodsService nxDistributerGoodsService;
     @Autowired
     private GbDistributerGoodsService gbDistributerGoodsService;
+    @Autowired
+    private GbDepartmentGoodsStockService gbDepGoodsStockService;
+    @Autowired
+    private NxJrdhUserService nxJrdhUserService;
 
 
 
@@ -59,6 +64,8 @@ public class NxJrdhSupplierController {
     @ResponseBody
     public R saveJrdhSupplier(@RequestBody NxJrdhSupplierEntity suppler) {
         suppler.setNxJrdhsUserId(-1);
+        suppler.setNxJrdhsSysCityId(5);
+        suppler.setNxJrdhsSysMarketId(-1);
         nxJrdhSupplierService.save(suppler);
         return R.ok();
     }
@@ -71,20 +78,34 @@ public class NxJrdhSupplierController {
         map.put("status", 3);
         map.put("payType", 1);
         int i = gbPurBatchService.queryDisPurchaseBatchCount(map);
-        if (i > 0) {
-            return R.error(-1, "有未结账账单");
+
+        Map<String, Object> mapST = new HashMap<>();
+        mapST.put("supplierId",id);
+        mapST.put("restWeight", 0);
+        Integer integer = gbDepGoodsStockService.queryGoodsStockCount(mapST);
+
+        if (i > 0 || integer > 0) {
+            return R.error(-1, "有未结账账单或库存");
         } else {
             NxJrdhSupplierEntity supplierEntity = nxJrdhSupplierService.queryObject(id);
             Map<String, Object> mapS = new HashMap<>();
             mapS.put("supplierId", supplierEntity.getNxJrdhSupplierId());
+            mapS.put("disId", supplierEntity.getNxJrdhsGbDistributerId());
             List<GbDistributerGoodsEntity> gbDistributerGoodsEntities = gbDistributerGoodsService.queryDisGoodsByParams(mapS);
             if(gbDistributerGoodsEntities.size() > 0){
                 for(GbDistributerGoodsEntity distributerGoodsEntity: gbDistributerGoodsEntities){
                     distributerGoodsEntity.setGbDgGbSupplierId(null);
+                    distributerGoodsEntity.setGbDgNxDistributerId(-1);
+                    distributerGoodsEntity.setGbDgNxDistributerGoodsId(-1);
                     gbDistributerGoodsService.update(distributerGoodsEntity);
                 }
             }
+
+            Integer nxJrdhsUserId = supplierEntity.getNxJrdhsUserId();
+            nxJrdhUserService.delete(nxJrdhsUserId);
+
             nxJrdhSupplierService.delete(id);
+
             return R.ok();
 
         }
@@ -111,6 +132,17 @@ public class NxJrdhSupplierController {
                     nxDistributerGoodsService.update(distributerGoodsEntity);
                 }
             }
+            map.put("status", 5);
+            List<NxDistributerPurchaseBatchEntity> batchEntities = nxPurBatchService.queryDisPurchaseBatch(map);
+            if(batchEntities.size() > 0){
+                for(NxDistributerPurchaseBatchEntity batchEntity: batchEntities){
+                    nxPurBatchService.delete(batchEntity.getNxDistributerPurchaseBatchId());
+                }
+            }
+
+            Integer nxJrdhsUserId = supplierEntity.getNxJrdhsUserId();
+            nxJrdhUserService.delete(nxJrdhsUserId);
+
             nxJrdhSupplierService.delete(id);
             return R.ok();
 
@@ -121,7 +153,6 @@ public class NxJrdhSupplierController {
     @RequestMapping(value = "/sellerGetAllDistributer/{sellId}")
     @ResponseBody
     public R sellerGetAllDistributer(@PathVariable String sellId) {
-
 
         List<NxDistributerEntity> nxDistributerEntities = nxPurBatchService.queryNxDistributerBySellerId(sellId);
         List<GbDistributerEntity> gbDistributerEntities = gbPurBatchService.queryGbDistributerBySellerId(sellId);
@@ -154,7 +185,7 @@ public class NxJrdhSupplierController {
 
 
 
-
+//
     //disGetAllSellers
     @RequestMapping(value = "/gbDisGetAllSuppliers/{disId}")
     @ResponseBody
@@ -162,6 +193,31 @@ public class NxJrdhSupplierController {
         Map<String, Object> map3 = new HashMap<>();
         map3.put("gbDisId", disId);
         List<NxJrdhSupplierEntity> nxJrdhSupplierEntities = nxJrdhSupplierService.queryJrdhSupplerByParams(map3);
+
+        return R.ok().put("data", nxJrdhSupplierEntities);
+    }
+
+    @RequestMapping(value = "/depGetSupplier/{depId}")
+    @ResponseBody
+    public R depGetSupplier(@PathVariable Integer depId) {
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("gbDepId", depId);
+        List<NxJrdhSupplierEntity> nxJrdhSupplierEntities = nxJrdhSupplierService.queryJrdhSupplerByParams(map3);
+        if(nxJrdhSupplierEntities.size() > 0){
+            for(NxJrdhSupplierEntity supplierEntity: nxJrdhSupplierEntities){
+                Map<String, Object> mapB = new HashMap<>();
+                mapB.put("supplierId",supplierEntity.getNxJrdhSupplierId());
+                mapB.put("payType", 1);
+                mapB.put("equalStatus", 3);
+                Double aDouble = 0.0;
+                Integer integer = gbPurBatchService.queryDisPurchaseBatchCount(mapB);
+                if(integer > 0){
+                    aDouble  = gbPurBatchService.querySupplierUnSettleSubtotal(mapB);
+                }
+                supplierEntity.setBillCount(integer);
+                supplierEntity.setTotal(new BigDecimal(aDouble).setScale(1,BigDecimal.ROUND_HALF_UP).toString());
+            }
+        }
 
         return R.ok().put("data", nxJrdhSupplierEntities);
     }

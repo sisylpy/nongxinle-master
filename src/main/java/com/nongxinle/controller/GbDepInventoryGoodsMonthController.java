@@ -384,12 +384,14 @@ public class GbDepInventoryGoodsMonthController {
 				reduceEntity.setGbDgsrGbDepartmentFatherId(stock.getGbDgsGbDepartmentFatherId());
 				reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
 				reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
+				reduceEntity.setGbDgsrGbDisGoodsGrandId(stock.getGbDgsGbDisGoodsGrandId());
 				reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
 				reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
 				reduceEntity.setGbDgsrFullTime(formatFullTime());
 				reduceEntity.setGbDgsrDoUserId(stock.getGbDgsReduceWeightUserId());
 				reduceEntity.setGbDgsrDate(formatWhatDay(0));
                 reduceEntity.setGbDgsrStockNxDistribtuerId(stock.getGbDgsNxDistributerId());
+                reduceEntity.setGbDgsrStockNxSupplierId(stock.getGbDgsNxSupplierId());
                 reduceEntity.setGbDgsrWeek(getWeekOfYear(0).toString());
 				reduceEntity.setGbDgsrMonth(formatWhatMonth(0));
 
@@ -445,12 +447,14 @@ public class GbDepInventoryGoodsMonthController {
             reduceEntity.setGbDgsrGbDepartmentFatherId(stock.getGbDgsGbDepartmentFatherId());
             reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
             reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
+            reduceEntity.setGbDgsrGbDisGoodsGrandId(stock.getGbDgsGbDisGoodsGrandId());
             reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
             reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
             reduceEntity.setGbDgsrFullTime(formatFullTime());
             reduceEntity.setGbDgsrDoUserId(stock.getGbDgsReduceWeightUserId());
             reduceEntity.setGbDgsrDate(formatWhatDay(0));
             reduceEntity.setGbDgsrStockNxDistribtuerId(stock.getGbDgsNxDistributerId());
+            reduceEntity.setGbDgsrStockNxSupplierId(stock.getGbDgsNxSupplierId());
             reduceEntity.setGbDgsrWeek(getWeekOfYear(0).toString());
             reduceEntity.setGbDgsrMonth(formatWhatMonth(0));
             reduceEntity.setGbDgsrCostWeight(useWeight.toString());
@@ -528,12 +532,14 @@ public class GbDepInventoryGoodsMonthController {
                 reduceEntity.setGbDgsrGbDepartmentFatherId(stock.getGbDgsGbDepartmentFatherId());
                 reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
                 reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
+                reduceEntity.setGbDgsrGbDisGoodsGrandId(stock.getGbDgsGbDisGoodsGrandId());
                 reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
                 reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
                 reduceEntity.setGbDgsrFullTime(formatFullTime());
                 reduceEntity.setGbDgsrDoUserId(stock.getGbDgsReduceWeightUserId());
                 reduceEntity.setGbDgsrDate(formatWhatDay(0));
                 reduceEntity.setGbDgsrStockNxDistribtuerId(stock.getGbDgsNxDistributerId());
+                reduceEntity.setGbDgsrStockNxSupplierId(stock.getGbDgsNxSupplierId());
                 reduceEntity.setGbDgsrWeek(getWeekOfYear(0).toString());
                 reduceEntity.setGbDgsrMonth(formatWhatMonth(0));
                 reduceEntity.setGbDgsrCostWeight(useWeight.toString());

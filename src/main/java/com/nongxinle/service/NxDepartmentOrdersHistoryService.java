@@ -7,8 +7,8 @@ package com.nongxinle.service;
  * @date 05-08 19:09
  */
 
-import com.nongxinle.entity.NxDepartmentOrdersHistoryEntity;
-import com.nongxinle.entity.NxDistributerGoodsEntity;
+import com.nongxinle.entity.*;
+import com.nongxinle.utils.PageUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,10 @@ public interface NxDepartmentOrdersHistoryService {
 
     List<NxDepartmentOrdersHistoryEntity> queryDepHistoryOrdersByParams(Map<String, Object> map1);
 
-    int queryOrderTimes(Map<String, Object> map);
-
     List<NxDistributerGoodsEntity> queryDepTodayOrder(Map<String, Object> map);
+
+	List<NxDistributerGoodsEntity> queryDisGoodsByParams(Map<String, Object> mapGD);
+
+	List<Map<String,Object>> queryLogs(Map<String, Object> mapLog);
+
 }

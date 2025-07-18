@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.nongxinle.entity.NxCommunityEntity;
+import com.nongxinle.entity.NxECommerceCommunityEntity;
+import com.nongxinle.service.NxCommunityService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,80 +25,42 @@ import com.nongxinle.utils.R;
 
 
 @RestController
-@RequestMapping("nxecommerce")
+@RequestMapping("api/nxecommerce")
 public class NxECommerceController {
 	@Autowired
 	private NxECommerceService nxECommerceService;
-	
+	@Autowired
+	private NxCommunityService nxCommunityService;
+
+
+	@RequestMapping(value = "/getGbCommunity/{id}")
+	@ResponseBody
+	public R getGbCommunity(@PathVariable Integer id) {
+
+		NxECommerceEntity entity  = nxCommunityService.queryCommunityByECommerceId(id);
+
+		return R.ok().put("data", entity);
+	}
+
 
 	
-	/**
-	 * 列表
-	 */
+	@RequestMapping(value = "/gbGetECommerce/{id}")
 	@ResponseBody
-	@RequestMapping("/list")
-	@RequiresPermissions("nxecommerce:list")
-	public R list(Integer page, Integer limit){
-		Map<String, Object> map = new HashMap<>();
-		map.put("offset", (page - 1) * limit);
-		map.put("limit", limit);
-		
-		//查询列表数据
-		List<NxECommerceEntity> nxECommerceList = nxECommerceService.queryList(map);
-		int total = nxECommerceService.queryTotal(map);
-		
-		PageUtils pageUtil = new PageUtils(nxECommerceList, total, limit, page);
-		
-		return R.ok().put("page", pageUtil);
+	public R gbGetECommerce(@PathVariable Integer id) {
+		NxECommerceEntity commerceEntity = nxECommerceService.queryGbByGbId(id);
+		return R.ok().put("data", commerceEntity);
+	}
+
+	@RequestMapping(value = "/registerGbCommerce", method = RequestMethod.POST)
+	@ResponseBody
+	public R registerGbCommerce (@RequestBody NxECommerceEntity entity) {
+	    nxECommerceService.save(entity);
+	    return R.ok();
 	}
 	
-	
-	/**
-	 * 信息
-	 */
-	@ResponseBody
-	@RequestMapping("/info/{nxECommerceId}")
-	@RequiresPermissions("nxecommerce:info")
-	public R info(@PathVariable("nxECommerceId") Integer nxECommerceId){
-		NxECommerceEntity nxECommerce = nxECommerceService.queryObject(nxECommerceId);
-		
-		return R.ok().put("nxECommerce", nxECommerce);
-	}
-	
-	/**
-	 * 保存
-	 */
-	@ResponseBody
-	@RequestMapping("/save")
-	@RequiresPermissions("nxecommerce:save")
-	public R save(@RequestBody NxECommerceEntity nxECommerce){
-		nxECommerceService.save(nxECommerce);
-		
-		return R.ok();
-	}
-	
-	/**
-	 * 修改
-	 */
-	@ResponseBody
-	@RequestMapping("/update")
-	@RequiresPermissions("nxecommerce:update")
-	public R update(@RequestBody NxECommerceEntity nxECommerce){
-		nxECommerceService.update(nxECommerce);
-		
-		return R.ok();
-	}
-	
-	/**
-	 * 删除
-	 */
-	@ResponseBody
-	@RequestMapping("/delete")
-	@RequiresPermissions("nxecommerce:delete")
-	public R delete(@RequestBody Integer[] nxECommerceIds){
-		nxECommerceService.deleteBatch(nxECommerceIds);
-		
-		return R.ok();
-	}
+
+
+
+
 	
 }

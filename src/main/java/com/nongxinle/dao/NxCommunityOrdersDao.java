@@ -32,4 +32,11 @@ public interface NxCommunityOrdersDao extends BaseDao<NxCommunityOrdersEntity> {
 
     NxCommunityOrdersEntity queryPindanDetail(Map<String, Object> map);
 
+    NxCommunityOrdersEntity queryOrdersItemDetail(Map<String, Object> map);
+
+    Integer queryCommOrderCount(Map<String, Object> map);
+
+    double queryCommOrderSubtotal(Map<String, Object> map);
+
+    NxCommunityOrdersEntity queryRefundOrder(Integer orderId);
 }

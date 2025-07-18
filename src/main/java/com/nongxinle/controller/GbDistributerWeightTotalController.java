@@ -6,17 +6,16 @@ package com.nongxinle.controller;
  */
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 
 import static com.nongxinle.utils.DateUtils.*;
@@ -40,44 +39,62 @@ public class GbDistributerWeightTotalController {
     @Autowired
     private GbDistributerGoodsPriceService gbDistributerGoodsPriceService;
 
+    @Autowired
+    private GbDepartmentGoodsStockService gbDepartmentGoodsStockService;
 
 
-    @RequestMapping(value = "/depDeleteWeight/{id}")
+    @RequestMapping(value = "/getWeightOrderByWeightId/{id}")
     @ResponseBody
-    public R depDeleteWeight(@PathVariable Integer id) {
+    public R getWeightOrderByWeightId(@PathVariable Integer id) {
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("weightId", id);
+        List<GbDistributerFatherGoodsEntity> ordersEntities3 = gbDepartmentOrdersService.stockGetDepApply(map3);
 
-        Map<String, Object> map = new HashMap<>();
-        map.put("weightId", id);
-        GbDistributerWeightTotalEntity gbDistributerWeightTotalEntity = gbDisWeightTotalService.queryObject(id);
-       //出库
-        if(gbDistributerWeightTotalEntity.getGbGwtType().equals(getGbOrderTypeChuKu()) || gbDistributerWeightTotalEntity.getGbGwtType().equals(getGbOrderTypeKitchen())){
-            List<GbDepartmentOrdersEntity> ordersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
-            if (ordersEntities.size() > 0) {
-                for (GbDepartmentOrdersEntity order : ordersEntities) {
-                    order.setGbDoWeightTotalId(null);
-                    order.setGbDoBuyStatus(getGbOrderBuyStatusNew());
-                    gbDepartmentOrdersService.update(order);
-                }
+        List<GbDistributerFatherGoodsEntity> result = new ArrayList<>();
+        if ((ordersEntities3.size() > 0)) {
+            for (GbDistributerFatherGoodsEntity father : ordersEntities3) {
+                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = father.getFatherGoodsEntities();
+                result.addAll(fatherGoodsEntities);
             }
 
-            List<GbDistributerWeightGoodsEntity> weightGoodsEntities =  gbDisWeightGoodsService.queryWeightGoodsByParams(map);
-            if(weightGoodsEntities.size() > 0){
-                for (GbDistributerWeightGoodsEntity weightGoodsEntity: weightGoodsEntities){
-                    weightGoodsEntity.setGbDwgWeightId(null);
-                    weightGoodsEntity.setGbDwgStatus(getGbWeightGoodsStatusPrepare());
-                    gbDisWeightGoodsService.update(weightGoodsEntity);
-                }
-            }
+            return R.ok().put("data", result);
+        } else {
+            return R.error(-1, "没有订单");
+
         }
 
-        //采购
-        if(gbDistributerWeightTotalEntity.getGbGwtType() == 2){
+    }
+
+    @RequestMapping(value = "/purchaseDepDeleteWeight/{id}")
+    @ResponseBody
+    public R purchaseDepDeleteWeight(@PathVariable Integer id) {
+        Map<String, Object> mapCheck = new HashMap<>();
+        mapCheck.put("weightId", id);
+        mapCheck.put("equalStatus",3);
+        System.out.println("mapssosochchhchchcch" + mapCheck);
+        Integer orderAmount = gbDepartmentOrdersService.queryGbDepartmentOrderAmount(mapCheck);
+        if(orderAmount > 0){
+            System.out.println("fnafnn有商品已经采购完成");
+            return R.error(-1,"有商品已经采购完成");
+        }else{
+
+            System.out.println("cuocucoucoccucocucocucoc");
+            Map<String, Object> map = new HashMap<>();
+            map.put("weightId", id);
             List<GbDepartmentOrdersEntity> ordersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
             if (ordersEntities.size() > 0) {
                 for (GbDepartmentOrdersEntity order : ordersEntities) {
+                        order.setGbDoStatus(getGbOrderStatusNew());
+                        order.setGbDoBuyStatus(getGbOrderBuyStatusNew());
+                        order.setGbDoPurchaseUserId(-1);
+                        order.setGbDoPrice(null);
+                        order.setGbDoWeight("0");
+                        order.setGbDoScalePrice(null);
+                        order.setGbDoScaleWeight(null);
+                        order.setGbDoSubtotal(null);
+                        gbDepartmentOrdersService.update(order);
+                    order.setGbDoWeightGoodsId(null);
                     order.setGbDoWeightTotalId(null);
-                    order.setGbDoBuyStatus(0);
-                    gbDepartmentOrdersService.update(order);
                 }
             }
             List<GbDistributerPurchaseGoodsEntity> purchaseGoodsByParams = purchaseGoodsService.queryPurchaseGoodsByParams(map);
@@ -88,6 +105,7 @@ public class GbDistributerWeightTotalController {
                         gbDistributerGoodsPriceService.delete(gbDpgDisGoodsPriceId);
                     }
                     purchaseGoodsEntity.setGbDpgWeightId(null);
+                    purchaseGoodsEntity.setGbDpgDisGoodsPriceId(null);
                     purchaseGoodsEntity.setGbDpgBatchId(null);
                     purchaseGoodsEntity.setGbDpgStatus(0);
                     purchaseGoodsEntity.setGbDpgPurchaseType(null);
@@ -100,25 +118,65 @@ public class GbDistributerWeightTotalController {
                     purchaseGoodsEntity.setGbDpgPurchaseWeek(null);
                     purchaseGoodsEntity.setGbDpgPurchaseFullTime(null);
                     purchaseGoodsEntity.setGbDpgPurchaseWeekYear(null);
+                    purchaseGoodsEntity.setGbDpgBuyScaleQuantity(null);
+                    purchaseGoodsEntity.setGbDpgBuyScalePrice(null);
                     purchaseGoodsEntity.setGbDpgPurUserId(null);
                     purchaseGoodsEntity.setGbDpgWarnFullTime(null);
                     purchaseGoodsEntity.setGbDpgWasteFullTime(null);
+
                     purchaseGoodsService.update(purchaseGoodsEntity);
                 }
             }
+
+            gbDisWeightTotalService.delete(id);
         }
+
+
+
+
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/depDeleteWeight/{id}")
+    @ResponseBody
+    public R depDeleteWeight(@PathVariable Integer id) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("weightId", id);
+       //出库
+            List<GbDepartmentOrdersEntity> ordersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
+            if (ordersEntities.size() > 0) {
+                for (GbDepartmentOrdersEntity order : ordersEntities) {
+                    if(order.getGbDoBuyStatus() < 3){
+                        order.setGbDoBuyStatus(getGbOrderBuyStatusProcurement());
+                    }
+                    order.setGbDoWeightTotalId(null);
+                    gbDepartmentOrdersService.update(order);
+                }
+                List<GbDistributerWeightGoodsEntity> weightGoodsEntities =  gbDisWeightGoodsService.queryWeightGoodsByParams(map);
+                if(weightGoodsEntities.size() > 0){
+                    for (GbDistributerWeightGoodsEntity weightGoodsEntity: weightGoodsEntities){
+                        weightGoodsEntity.setGbDwgWeightId(null);
+                        weightGoodsEntity.setGbDwgStatus(getGbWeightGoodsStatusPrepare());
+                        gbDisWeightGoodsService.update(weightGoodsEntity);
+                    }
+                }
+            }else{
+                List<GbDistributerWeightGoodsEntity> weightGoodsEntities =  gbDisWeightGoodsService.queryWeightGoodsByParams(map);
+                if(weightGoodsEntities.size() > 0){
+                    for (GbDistributerWeightGoodsEntity weightGoodsEntity: weightGoodsEntities){
+                        gbDisWeightGoodsService.delete(weightGoodsEntity.getGbDistributerWeightGoodsId());
+                    }
+                }
+            }
+
 
 		gbDisWeightTotalService.delete(id);
 
         return R.ok();
     }
 
-
-    /**
-     *
-     * @param weightTotal
-     * @return
-     */
     @RequestMapping(value = "/depPrintWeightOrders", method = RequestMethod.POST)
     @ResponseBody
     public R depPrintWeightOrders(@RequestBody GbDistributerWeightTotalEntity weightTotal) {
@@ -137,9 +195,12 @@ public class GbDistributerWeightTotalController {
         if(weightTotal.getGbGwtType().equals(getGbOrderTypeChuKu()) || weightTotal.getGbGwtType().equals(getGbOrderTypeKitchen())){
             for (String orderId : split) {
                 GbDepartmentOrdersEntity ordersEntity = gbDepartmentOrdersService.queryObject(Integer.valueOf(orderId));
-                ordersEntity.setGbDoBuyStatus(getGbOrderBuyStatusPrepareing());
+                if(ordersEntity.getGbDoBuyStatus() == 1){
+                    ordersEntity.setGbDoBuyStatus(getGbOrderBuyStatusPrepareing());
+                }
                 ordersEntity.setGbDoWeightTotalId(gbDistributerWeightTotalId);
                 gbDepartmentOrdersService.update(ordersEntity);
+
             }
             String gbGwtDepDisGoodsIds = weightTotal.getGbGwtDepDisGoodsIds();
             System.out.println("ididsiisisis" + weightTotal.getGbGwtDepDisGoodsIds());

@@ -7,11 +7,10 @@ package com.nongxinle.entity;
  */
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.Objects;
-import java.util.TreeSet;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -85,12 +84,16 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private String gbDgFreshWasteHour;
     private Integer gbDgGoodsInventoryType;
     private Integer gbDgGbSupplierId;
+    private Integer gbDgDfgGoodsGrandId;
+    private Integer gbDgDfgGoodsGreatId;
+
 
 
 	/**
 	 *  gbGoodsGrandid
 	 */
 	private Integer gbDgNxGrandId;
+	private Integer gbDgQuantityDays;
 
 	private Integer gbDgIsFranchisePrice;
 	/**
@@ -127,6 +130,7 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private String gbDgGoodsHighestPrice;
 	private String gbDgSelfPrice;
 	private String gbDgSellingPrice;
+	private String gbDgNxDistributerGoodsPrice;
 
 
 	private Integer gbDgNxDistributerId;
@@ -139,101 +143,148 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 
 	private Boolean isSelected = false;
 
+	@JSONField(serialize = false)
 	private List<NxStandardEntity> nxStandardEntities;
+	@JSONField(serialize = false)
 	private List<GbDistributerAliasEntity> gbDistributerAliasEntities;
+	@JSONField(serialize = false)
 	private List<NxAliasEntity> nxAliasEntities;
+	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
+	@JSONField(serialize = false)
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;
+		@JSONField(serialize = false)
 	private GbDistributerWeightGoodsEntity gbDistributerWeightGoodsEntity;
 
+	@JSONField(serialize = false)
 	private List<GbDistributerStandardEntity> gbDistributerStandardEntities;
+	@JSONField(serialize = false)
 	private NxDistributerEntity nxDistributerEntity;
+	@JSONField(serialize = false)
 	private GbDepartmentEntity gbDepartmentEntity;
+	@JSONField(serialize = false)
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+	@JSONField(serialize = false)
 	private List<GbDistributerPurchaseGoodsEntity>  unPurDisGoodsList;
+	@JSONField(serialize = false)
 	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
+	@JSONField(serialize = false)
 	private GbDepartmentGoodsStockEntity gbDepartmentGoodsStockEntity;
+	@JSONField(serialize = false)
 	private GbDistributerGoodsShelfEntity gbDistributerGoodsShelfEntity;
+	@JSONField(serialize = false)
 	private GbDistributerGoodsShelfGoodsEntity gbDistributerGoodsShelfGoodsEntity;
+	@JSONField(serialize = false)
 	private List<GbDistributerPurchaseGoodsEntity> wastePurGoodsEntities;
+	@JSONField(serialize = false)
     private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
 
+	@JSONField(serialize = false)
 	private  List<GbDepartmentEntity> wasteDepartmentEntities;
+	@JSONField(serialize = false)
 	private TreeSet<GbDepartmentEntity> stockDepartmentEntities;
+	@JSONField(serialize = false)
 	private TreeSet<GbDepartmentEntity> produceDepartmentEntities;
+	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> prepareOrderEntities;
+	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> weightedOrderEntities;
+	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> deliveryOrderEntities;
+	@JSONField(serialize = false)
 	private GbDistributerWeightGoodsEntity prepareWeightGoods;
+	@JSONField(serialize = false)
 	private List<GbDistributerWeightGoodsEntity> printedWeightGoods;
+	@JSONField(serialize = false)
 	private List<GbDistributerWeightGoodsEntity> finishWeightGoods;
+	@JSONField(serialize = false)
 	private List<GbDistributerGoodsPriceEntity> gbDisGoodsPriceEntities;
 
-
+	private Map<String, Object> purEveryDay;
 
 	private Double goodsStockTotal = 0.0;
 	private String goodsStockTotalString;
+	private Double goodsStockWeightTotal = 0.0;
+	private String goodsStockWeightTotalString = "0";
+
 	private Double outStockTotal = 0.0;
-	private String outStockTotalString;
+	private String outStockTotalString  = "0";
 
 	private Double goodsAverageStockTotal = 0.0;
-	private String goodsAverageStockTotalString;
+	private String goodsAverageStockTotalString  = "0";
 
 
 	private Double goodsPriceTotal = 0.0;
 	private String goodsPriceTotalString;
 	private Double goodsAveragePrice = 0.0;
-	private String goodsAveragePriceString;
+	private String goodsAveragePriceString  = "0";
 	private Integer goodsAveragePriceWhat = 0;
 
 	private Double goodsAveragePricePercent = 0.0;
-	private String goodsAveragePricePercentString;
+	private String goodsAveragePricePercentString  = "0";
 
+	private String goodsAverageOrderTimes  = "0";
+	private double goodsAverageStars ;
+	private String goodsAverageStarsString  = "0";
+
+	private int goodsStarGreen;
+	private int goodsStarGray;
+	private int goodsStarHalf;
 
 	private Double goodsCostTotal = 0.0;
-	private String goodsCostTotalString;
+	private String goodsCostTotalString  = "0";
 
 	private Double goodsCostWeightTotal = 0.0;
-	private String goodsCostWeightTotalString;
+	private String goodsCostWeightTotalString  = "0";
 	private Double goodsWeightTotal = 0.0;
-	private String goodsWeightTotalString;
+	private String goodsWeightTotalString  = "0";
+
 
 
 	private Double goodsWasteTotal = 0.0;
-	private String goodsWasteTotalString;
+	private String goodsWasteTotalString  = "0";
 	private Double goodsWasteWeightTotal = 0.0;
-	private String goodsWasteWeightTotalString;
+	private String goodsWasteWeightTotalString  = "0";
+	private String goodsWastePercent  = "0";
 
 	private Double goodsLossTotal = 0.0;
-	private String goodsLossTotalString;
+	private String goodsLossTotalString  = "0";
 	private Double goodsLossWeightTotal = 0.0;
-	private String goodsLossWeightTotalString;
+	private String goodsLossWeightTotalString  = "0";
+	private String goodsLossPercent  = "0";
 
 	private Double goodsProduceTotal = 0.0;
-	private String goodsProduceTotalString;
+	private String goodsProduceTotalString  = "0";
 	private Double goodsProfitTotal = 0.0;
-	private String goodsProfitTotalString;
+	private String goodsProfitTotalString  = "0";
+
 
 	private Double goodsProduceWeightTotal = 0.0;
 	private String goodsProduceWeightTotalString;
+	private String goodsProducePercent;
 
+	private Double goodsReturnWeightTotal = 0.0;
+	private String goodsReturnWeightTotalString  = "0";
+	private Double goodsReturnTotal = 0.0;
+	private String goodsReturnTotalString = "0";
+	private String goodsReturnPercent = "0";
 
 	private Double goodsEveryWasteTotal = 0.0;
-	private String goodsEveryWasteTotalString;
+	private String goodsEveryWasteTotalString = "0";
 	private Double goodsEveryWasteWeightTotal = 0.0;
-	private String goodsEveryWasteWeightTotalString;
+	private String goodsEveryWasteWeightTotalString = "0";
 
 	private Double goodsEveryLossTotal = 0.0;
-	private String goodsEveryLossTotalString;
+	private String goodsEveryLossTotalString = "0";
 	private Double goodsEveryLossWeightTotal = 0.0;
-	private String goodsEveryLossWeightTotalString;
+	private String goodsEveryLossWeightTotalString = "0";
 
 	private Double goodsEveryProfitTotal = 0.0;
-	private String goodsEveryProfitTotalString;
+	private String goodsEveryProfitTotalString = "0";
 	private Double goodsEveryProduceTotal = 0.0;
-	private String goodsEveryProduceTotalString;
+	private String goodsEveryProduceTotalString = "0";
 	private Double goodsEveryProduceWeightTotal = 0.0;
-	private String goodsEveryProduceWeightTotalString;
+	private String goodsEveryProduceWeightTotalString = "0";
 	private Double everyDayWeight;
 	private String everyDayWeightString;
 	private Double everyWeekWeight;
@@ -268,13 +319,87 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private Double goodsWasteRate;
 	private int goodsPurTotalCount;
 	private String goodsPurTotalWeight;
+	private String goodsPurTotalSubtotal;
+
+	private Map<String, Object> goodsData;
 
 
+	@JSONField(serialize = false)
 	private GbDepartmentGoodsStockReduceEntity reduceEntity;
 
-
-
+	@JSONField(serialize = false)
 	private NxJrdhSupplierEntity gbDistributerAppointSupplierEntity;
+
+	private String gbTipText;
+	private String aiOrderQuantity;
+
+	/**
+	 * AI建议订货单位
+	 */
+	private String aiOrderStandard;
+
+	/**
+	 * 长期日均用量
+	 */
+	private String aiDailyUsage;
+
+	/**
+	 * 最近7天平均用量
+	 */
+	private String aiRecentAvgUsage;
+
+	/**
+	 * 用量波动性(CV)
+	 */
+	private String aiUsageVariation;
+
+	/**
+	 * 安全库存
+	 */
+	private String aiSafetyStock;
+
+	/**
+	 * 再订货点
+	 */
+	private String aiReorderPoint;
+
+	/**
+	 * 当前库存
+	 */
+	private String aiCurrentStock;
+
+	/**
+	 * 当前库存单位
+	 */
+	private String aiCurrentStockUnit;
+
+	/**
+	 * 上次订货日期
+	 */
+	private String aiLastOrderDate;
+
+	/**
+	 * 上次订货量
+	 */
+	private String aiLastOrderQuantity;
+
+	/**
+	 * 上次订货单位
+	 */
+	private String aiLastOrderUnit;
+
+	/**
+	 * 距离上次订货天数
+	 */
+	private String aiDaysSinceLastOrder;
+
+	/**
+	 * 预计明天用量
+	 */
+	private String aiTomorrowNeed;
+
+	private String aiAvailableDays;
+
 
 	@Override
 	public boolean equals(Object o) {

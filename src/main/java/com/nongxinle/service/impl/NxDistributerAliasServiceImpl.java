@@ -51,5 +51,11 @@ public class NxDistributerAliasServiceImpl implements NxDistributerAliasService 
 	public void deleteBatch(Integer[] nxDistributerAliasIds){
 		nxDistributerAliasDao.deleteBatch(nxDistributerAliasIds);
 	}
-	
+
+    @Override
+    public List<NxDistributerAliasEntity> queryAliasByParmas(Map<String, Object> map) {
+
+		return nxDistributerAliasDao.queryAliasByParmas(map);
+    }
+
 }

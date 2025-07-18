@@ -1,6 +1,7 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.entity.NxCommunityEntity;
+import com.nongxinle.entity.NxECommerceEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -58,6 +59,12 @@ public class NxECommerceCommunityServiceImpl implements NxECommerceCommunityServ
 
 		return nxECommerceCommunityDao.queryCommunityByCommerceId(commerceId);
 
+    }
+
+    @Override
+    public NxECommerceCommunityEntity queryByCommunityId(Integer communityId) {
+
+		return nxECommerceCommunityDao.queryByCommunityId(communityId);
     }
 
 }

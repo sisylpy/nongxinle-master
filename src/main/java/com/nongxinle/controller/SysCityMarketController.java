@@ -27,6 +27,22 @@ public class SysCityMarketController {
 	@Autowired
 	private SysCityMarketService sysCityMarketService;
 	
+	@RequestMapping(value = "/jjshGetMarket", method = RequestMethod.POST)
+	@ResponseBody
+	public R jjshGetMarket(Integer maId, Integer cityId) {
+
+		Map<String, Object> map = new HashMap<>();
+		if(maId != -1){
+			map.put("maId", maId);
+		}
+		if(cityId != -1){
+			map.put("cityId", cityId);
+		}
+
+		List<SysCityMarketEntity> marketEntities =  sysCityMarketService.queryMarketByParams(map);
+	    return R.ok().put("data", marketEntities);
+	}
+	
 
 	
 }

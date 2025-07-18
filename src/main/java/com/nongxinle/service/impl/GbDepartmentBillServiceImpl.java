@@ -1,5 +1,6 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.entity.NxDistributerEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -123,6 +124,19 @@ public class GbDepartmentBillServiceImpl implements GbDepartmentBillService {
     public GbDepartmentBillEntity queryDepartBillByTsxTradeNo(String nxDbTradeNo) {
 
 		return gbDepartmentBillDao.queryDepartBillByTsxTradeNo(nxDbTradeNo);
+    }
+
+    @Override
+    public List<GbDepartmentBillEntity> queryBillFromWhichDepartment(Map<String, Object> map4) {
+
+
+		return gbDepartmentBillDao.queryBillFromWhichDepartment(map4);
+    }
+
+    @Override
+    public List<NxDistributerEntity> queryNxDistributer(Map<String, Object> map4) {
+
+		return gbDepartmentBillDao.queryNxDistributer(map4);
     }
 
 

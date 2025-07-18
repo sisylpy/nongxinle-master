@@ -7,6 +7,7 @@ package com.nongxinle.dao;
  * @date 04-14 17:42
  */
 
+import com.nongxinle.entity.NxCommunityGoodsEntity;
 import com.nongxinle.entity.NxCustomerUserGoodsEntity;
 
 import java.util.List;
@@ -18,4 +19,12 @@ public interface NxCustomerUserGoodsDao extends BaseDao<NxCustomerUserGoodsEntit
     NxCustomerUserGoodsEntity queryByCommunityGoodsId(Map<String, Object> map);
 
     List<NxCustomerUserGoodsEntity> queryUserGoods(Map<String, Object> map);
+
+    NxCustomerUserGoodsEntity queryUserGoodsByParams(Map<String, Object> map);
+
+    List<NxCommunityGoodsEntity> queryUserLoveGoods(Map<String, Object> map);
+
+    List<NxCommunityGoodsEntity> userQueryCommGoods(Map<String, Object> map);
+
+    int queryUserGoodsCount(Map<String, Object> mapUG);
 }

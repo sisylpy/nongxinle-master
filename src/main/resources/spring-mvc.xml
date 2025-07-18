@@ -21,6 +21,19 @@
 	<!-- websocket相关扫描，主要扫描：WebSocketConfig.java 这个类路径 -->
 	<context:component-scan base-package="com.nongxinle.utils"/>
 
+	<context:property-placeholder location="classpath:application.properties"/>
+
+	<mvc:resources mapping="/goodsImage/**"
+				   location="file:///opt/tomcat/latest/app-data/images/goodsImage/"/>
+	<mvc:resources mapping="/uploadImage/**"
+				   location="file:///opt/tomcat/latest/app-data/images/uploadImage/"/>
+	<mvc:resources mapping="/foodImage/**"
+				   location="file:///opt/tomcat/latest/app-data/images/foodImage/"/>
+	<mvc:resources mapping="/userImage/**"
+				   location="file:///opt/tomcat/latest/app-data/images/userImage/"/>
+	<mvc:resources mapping="/uploadClock/**"
+				   location="file:///opt/tomcat/latest/app-data/images/uploadClock/"/>
+
 
 	<!-- 下面标签可以不加 等价于所有component-scan-->
 	<context:annotation-config />
@@ -48,6 +61,9 @@
                         <value>WriteMapNullValue</value>
                         <value>QuoteFieldNames</value>
                         <value>WriteDateUseDateFormat</value>
+                        <value>DisableCircularReferenceDetect</value>
+                        <value>WriteNullListAsEmpty</value>
+                        <value>WriteNullStringAsEmpty</value>
                     </list>
                 </property>
             </bean>

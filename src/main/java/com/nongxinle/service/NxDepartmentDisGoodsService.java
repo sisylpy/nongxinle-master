@@ -8,6 +8,7 @@ package com.nongxinle.service;
  */
 
 import com.nongxinle.entity.*;
+import com.nongxinle.utils.PageUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public interface NxDepartmentDisGoodsService {
 
 	List<NxDepartmentEntity> queryDepartmentsByDisGoodsId(Integer disGoodsId);
 
-	List<NxDistributerFatherGoodsEntity> depGetDepDisGoodsCata(Integer depId);
+	List<NxDistributerFatherGoodsEntity> depGetDepDisGoodsCata(Map<String, Object> map);
 
 	List<NxDepartmentDisGoodsEntity> queryDepGoodsByFatherId(Map<String, Object> map);
 
@@ -66,7 +67,26 @@ public interface NxDepartmentDisGoodsService {
 
 	List<GbDepartmentEntity> queryGbDepartmentsByDisGoodsId(Integer disGoodsId);
 
-    List<NxDistributerFatherGoodsEntity> queryDepDisGoodsWithOrders(Integer depFatherId);
+    List<NxDistributerFatherGoodsEntity> queryDepDisGoodsWithOrders(Map<String, Object> mapDep);
 
-    NxDepartmentDisGoodsEntity queryDepartmentGoods(Map<String, Object> mapDep);
+	List<NxDepartmentDisGoodsEntity> queryDepartmentGoods(Map<String, Object> mapDep);
+
+    List<NxDistributerFatherGoodsEntity> queryGbDisGbDepGoods(Map<String, Object> map);
+
+	List<NxDepartmentDisGoodsEntity> queryDepDisGoodsOrders(Map<String, Object> map);
+
+    int queryDepGoodsCount(Map<String, Object> map);
+
+    List<NxDepartmentDisGoodsEntity> queryWenti();
+
+
+	List<Integer> queryOnlyDepGoodsIds(Map<String, Object> map);
+
+    List<NxDepartmentDisGoodsEntity> queryDepDisGoodsOrdersForAi(Map<String, Object> map);
+
+	NxDepartmentDisGoodsEntity getTipText(NxDepartmentDisGoodsEntity departmentDisGoodsEntity);
+
+	PageUtils computeReorder(Integer depId, Integer page, Integer limit);
+
+    NxDepartmentDisGoodsEntity queryDepartmentGoodsOnly(Map<String, Object> map);
 }

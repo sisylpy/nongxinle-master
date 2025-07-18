@@ -44,7 +44,95 @@
 		order by gb_department_orders_history_id
 	</select>
 
-    <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+
+	<!-- 5.1 过去 days 天内，下单次数 ≥ minTimes 的商品 -->
+	<select id="selectFrequentGoods" resultType="java.lang.Integer">
+		SELECT gb_DOH_dis_goods_id
+		FROM gb_department_orders_history
+		WHERE gb_DOH_department_id = #{depId}
+		  AND gb_DOH_apply_date >= CURDATE() - INTERVAL #{windowDays} DAY
+		GROUP BY gb_DOH_dis_goods_id
+		HAVING COUNT(*) >= #{minTimes} order by gb_DOH_dis_goods_id
+	</select>
+
+	<!-- 5.2 过去 days 天内每天平均用量 -->
+	<select id="selectAvgDaily" resultType="com.nongxinle.entity.AvgDaily">
+		SELECT
+		gb_DOH_dis_goods_id AS goodsId,
+		SUM(gb_DOH_quantity) / #{days} AS avgDailyQty
+		FROM gb_department_orders_history
+		WHERE gb_DOH_department_id = #{depId}
+		AND gb_DOH_dis_goods_id IN
+		<foreach item="gid" collection="goodsIds" open="(" separator="," close=")">
+			#{gid}
+		</foreach>
+		AND gb_DOH_apply_date >= CURDATE() - INTERVAL #{days} DAY
+		GROUP BY gb_DOH_dis_goods_id
+	</select>
+
+
+	<!-- 5.3 每个商品最近一次订货 -->
+	<select id="selectLastOrders" parameterType="map" resultType="com.nongxinle.entity.NxDepartmentOrdersHistoryEntity">
+		SELECT
+		t.nxDohDisGoodsId  AS nxDohDisGoodsId,
+		t.nxDohQuantity    AS nxDohQuantity,
+		t.nxDohApplyDate   AS nxDohApplyDate
+		FROM (
+		SELECT
+		gb_DOH_dis_goods_id  AS nxDohDisGoodsId,
+		gb_DOH_quantity      AS nxDohQuantity,
+		gb_DOH_apply_date    AS nxDohApplyDate,
+		ROW_NUMBER() OVER (
+		PARTITION BY gb_DOH_dis_goods_id
+		ORDER BY gb_DOH_apply_date DESC
+		) AS rn
+		FROM gb_department_orders_history
+		WHERE gb_DOH_department_id = #{depId}
+		AND gb_DOH_dis_goods_id IN
+		<foreach item="gid" collection="goodsIds" open="(" separator="," close=")">
+			#{gid}
+		</foreach>
+		) t
+		WHERE t.rn = 1
+	</select>
+
+	<select id="selectDailyUsage" resultType="com.nongxinle.entity.DailyUsage">
+		SELECT gb_DOH_apply_date AS date,
+			   SUM(gb_DOH_quantity) AS qty
+		FROM gb_department_orders_history
+		WHERE gb_DOH_department_id = #{depId}
+		  AND gb_DOH_dis_goods_id      = #{gid}
+		  AND gb_DOH_apply_date >= CURDATE() - INTERVAL #{windowDays} DAY
+		GROUP BY gb_DOH_apply_date
+	</select>
+
+	<select id="selectLastOrder"
+			parameterType="java.util.Map"
+			resultType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
+		SELECT
+			t.gb_DOH_dis_goods_id  AS nxDohDisGoodsId,
+			t.gb_DOH_quantity      AS nxDohQuantity,
+			t.gb_DOH_apply_date    AS nxDohApplyDate,
+			t.gb_DOH_standard    AS nxDohStandard
+		FROM (
+				 SELECT
+					 gb_DOH_dis_goods_id,
+					 gb_DOH_quantity,
+					 gb_DOH_apply_date,
+					 gb_DOH_standard,
+					 ROW_NUMBER() OVER (
+						 PARTITION BY gb_DOH_dis_goods_id
+						 ORDER BY gb_DOH_apply_date DESC
+						 ) AS rn
+				 FROM gb_department_orders_history
+				 WHERE gb_DOH_department_id    = #{depId}
+				   AND gb_DOH_dis_goods_id      = #{gid}
+			 ) t
+		WHERE t.rn = 1
+	</select>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepartmentOrdersHistoryEntity">
 		insert into gb_department_orders_history
 		(
 			`gb_department_orders_history_id`, 
@@ -58,7 +146,9 @@
 			`gb_DOH_apply_date`, 
 			`gb_DOH_sell_type`,
 		 	`gb_DOH_standard_id`,
-		 	`gb_DOH_standard_scale`
+		 	`gb_DOH_standard_scale`,
+		 	`gb_DOH_dis_goods_id`,
+		 	`gb_DOH_distributer_id`
 		)
 		values
 		(
@@ -73,7 +163,9 @@
 			#{gbDohApplyDate}, 
 			#{gbDohSellType},
 		 	#{gbDohStandardId},
-		 	#{gbDohStandardScale}
+		 	#{gbDohStandardScale},
+		 	#{gbDohDisGoodsId},
+		 	#{gbDohDistributerId}
 		)
 	</insert>
 	 
@@ -90,6 +182,8 @@
 			<if test="gbDohApplyDate != null">`gb_DOH_apply_date` = #{gbDohApplyDate}, </if>
 			<if test="gbDohStandardId != null">`gb_DOH_standard_id` = #{gbDohStandardId}, </if>
 			<if test="gbDohStandardScale != null">`gb_DOH_standard_scale` = #{gbDohStandardScale}, </if>
+			<if test="gbDohDisGoodsId != null">`gb_DOH_dis_goods_id` = #{gbDohDisGoodsId}, </if>
+			<if test="gbDohDistributerId != null">`gb_DOH_distributer_id` = #{gbDohDistributerId}, </if>
 			<if test="gbDohSellType != null">`gb_DOH_sell_type` = #{gbDohSellType}</if>
 		</set>
 		where gb_department_orders_history_id = #{gbDepartmentOrdersHistoryId}

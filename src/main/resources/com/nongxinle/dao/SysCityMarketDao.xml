@@ -17,19 +17,70 @@
  	<select id="queryTotal" resultType="int">
 		select count(*) from sys_city_market 
 	</select>
-	 
+    <select id="queryMarketByParams" resultType="com.nongxinle.entity.SysCityMarketEntity">
+		select * from sys_city_market as scm
+		left join  sys_city as sc  on scm.sys_cm_city_id = sc.sys_city_id
+		<where>
+			<if test="maId != null">
+				sys_cm_machine_agent_id = #{maId}
+			</if>
+			<if test="cityId != null">
+				sys_city_id = #{cityId}
+			</if>
+		</where>
+	</select>
+	<resultMap id="nxDisGbDis" type="NxDistributerGbDistributerEntity">
+		<id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+		<result property="nxDgdNxSupplierId" column="nx_DGD_nx_supplier_id"/>
+		<result property="nxDgdNxDistributerId" column="nx_dgd_nx_distributer_id"/>
+		<result property="nxDgdGbDistributerId" column="nx_dgd_gb_distributer_id"/>
+		<result property="nxDgdStatus" column="nx_dgd_status"/>
+		<result property="nxDgdGbDepId" column="nx_dgd_gb_dep_id"/>
+	</resultMap>
+
+	<resultMap id="nxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+		<result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+		<association property="nxDistributerGbDistributerEntity" resultMap="nxDisGbDis"/>
+	</resultMap>
+	
+
+	<resultMap id="marketWithDis" type="SysCityMarketEntity">
+		<id property="sysCityMarketId" column="sys_city_market_id"/>
+		<result property="sysCmMarketName" column="sys_cm_market_name"/>
+		<result property="sysCmCityId" column="sys_cm_city_id"/>
+		<collection property="nxDistributerEntities" resultMap="nxDis"/>
+	</resultMap>
+	<select id="queryMarketNxDisByParams" resultMap="marketWithDis">
+		select  * from sys_city_market as scm 
+		left join nx_distributer as nd on nd.nx_distributer_business_type_id = scm.sys_city_market_id
+		left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_nx_distributer_id = nd.nx_distributer_id and ndgd.nx_DGD_gb_dep_id = #{depId}
+	</select>
+
 	<insert id="save" parameterType="com.nongxinle.entity.SysCityMarketEntity">
 		insert into sys_city_market
 		(
 			`sys_city_market_id`, 
 			`sys_cm_city_id`, 
-			`sys_cm_market_name`
+			`sys_cm_market_name`,
+			`sys_cm_machine_agent_id`
+
 		)
 		values
 		(
 			#{sysCityMarketId}, 
 			#{sysCmCityId}, 
-			#{sysCmMarketName}
+			#{sysCmMarketName},
+			#{sysCmMachineAgentId}
 		)
 	</insert>
 	 

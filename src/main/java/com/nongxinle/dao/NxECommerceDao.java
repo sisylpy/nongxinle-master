@@ -11,5 +11,7 @@ import com.nongxinle.entity.NxECommerceEntity;
 
 
 public interface NxECommerceDao extends BaseDao<NxECommerceEntity> {
-	
+
+    NxECommerceEntity queryGbByGbId(Integer id)
+            ;
 }

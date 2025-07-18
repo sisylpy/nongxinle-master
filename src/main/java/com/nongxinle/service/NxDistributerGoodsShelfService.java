@@ -36,4 +36,8 @@ public interface NxDistributerGoodsShelfService {
 	List<NxDistributerFatherGoodsEntity> disGetUnPlanShelfPurchaseApplys(Map<String, Object> map);
 
     List<NxDistributerGoodsShelfEntity> queryShelfWithDetailByParams(Map<String, Object> map);
+
+    List<NxDistributerGoodsShelfEntity> queryStockShelf(Map<String, Object> params);
+
+    List<NxDistributerGoodsShelfEntity> queryShelfList(Map<String, Object> params);
 }

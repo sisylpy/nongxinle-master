@@ -24,6 +24,7 @@
 
     <resultMap id="gbDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
@@ -35,6 +36,9 @@
     </resultMap>
     <resultMap id="nxDisGbDis" type="NxDistributerGbDistributerEntity">
         <id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+		<result property="nxDgdNxSupplierId" column="nx_DGD_nx_supplier_id"/>
+		<result property="nxDgdFromNxDepId" column="nx_DGD_from_nx_dep_id"/>
+		<result property="nxDgdFromNxDisId" column="nx_DGD_from_nx_dis_id"/>
         <result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
         <result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
         <result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
@@ -48,7 +52,11 @@
 
     <resultMap id="dis" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerManager" column="nx_distributer_manager"/>
         <result property="nxDistributerAddress" column="nx_distributer_address"/>
         <result property="nxDistributerPhone" column="nx_distributer_phone"/>
@@ -66,13 +74,20 @@
 
     <select id="queryTypeNxDistribterWithPeisong" resultMap="typeDis">
         select *
-        from sys_business_type as sbt
-                 left join nx_distributer as nd on nd.nx_distributer_business_type_id = sbt.sys_business_type_id
+        from sys_city_market as scm
+                 left join nx_distributer as nd on nd.nx_distributer_business_type_id = scm.sys_city_market_id
                  left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = #{depId}
                and ndgd.nx_DGD_nx_distributer_id  = nd.nx_distributer_id
-        where
-              sbt.sys_by_dis_type = 1
-        order by sbt.sys_business_type_id
+
+
+    </select>
+    <select id="querySysListByParams" resultType="com.nongxinle.entity.SysBusinessTypeEntity">
+        select * from nongxinle.sys_business_type
+        <where>
+            <if test="type != null">
+                and sys_by_dis_type = #{type}
+            </if>
+        </where>
     </select>
 
     <insert id="save" parameterType="com.nongxinle.entity.SysBusinessTypeEntity">

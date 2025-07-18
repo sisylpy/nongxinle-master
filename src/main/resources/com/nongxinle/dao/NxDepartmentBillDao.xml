@@ -17,23 +17,29 @@
     </select>
 
 
-
     <select id="queryBillsByParams" resultMap="billWithApplys">
         select * from nx_department_bill as db
-        left join nx_department_orders as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
+        left join nx_department_order_history as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
         left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_department as nd on nd.nx_department_id = db.nx_DB_dep_id
         <where>
+            <if test="gbDepFatherIdNotEqual != null">
+               and nx_DB_gb_dep_father_id != #{gbDepFatherIdNotEqual}
+            </if>
             <if test="depId != null">
-                nx_DB_dep_id = #{depId}
+               and nx_DB_dep_id = #{depId}
             </if>
             <if test="depFatherId != null">
-                nx_DB_dep_father_id = #{depFatherId}
+              and  nx_DB_dep_father_id = #{depFatherId}
             </if>
             <if test="disId != null">
                 and nx_DB_dis_id = #{disId}
             </if>
             <if test="status != null">
                 and nx_DB_status &lt; #{status}
+            </if>
+            <if test="settleType != null ">
+                and nd.nx_department_settle_type = #{settleType}
             </if>
             <if test="equalStatus != null ">
                 and nx_DB_status = #{equalStatus}
@@ -54,23 +60,32 @@
 
 
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
-       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
-		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
-		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+        <result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
         <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
-		<result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
-		<result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
-		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
-		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
-		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
-		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
+        <result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
         <result property="nxDgWillPrice" column="nx_dg_will_price"/>
         <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
         <result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
@@ -91,7 +106,7 @@
         <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
         <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
         <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
-       <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
         <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
         <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
         <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
@@ -102,9 +117,10 @@
     </resultMap>
 
     <resultMap id="applys" type="NxDepartmentOrdersEntity">
-         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
         <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -167,6 +183,9 @@
 
     <resultMap id="billWithApplys" type="NxDepartmentBillEntity">
         <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
+        <result property="nxDbGbDepartmentBillId" column="nx_DB_gb_department_bill_id"/>
+        <result property="nxDbGbDepFatherId" column="nx_DB_gb_dep_Father_id"/>
+        <result property="nxDbStatus" column="nx_DB_status"/>
         <result property="nxDbDepFatherId" column="nx_DB_dep_father_id"/>
         <result property="nxDbDepId" column="nx_DB_dep_id"/>
         <result property="nxDbDisId" column="nx_DB_dis_id"/>
@@ -180,6 +199,7 @@
         <result property="nxDbWeek" column="nx_DB_week"/>
         <result property="nxDbDay" column="nx_DB_day"/>
         <result property="nxDbGbDepId" column="nx_DB_gb_dep_id"/>
+        <result property="nxDbGbDepFatherId" column="nx_DB_gb_dep_father_id"/>
         <result property="nxDbGbDisId" column="nx_DB_gb_dis_id"/>
         <result property="nxDbProfitTotal" column="nx_DB_profit_total"/>
         <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
@@ -192,13 +212,17 @@
     <select id="querySalesBillApplys" resultMap="billWithApplys">
         select *
         from nx_department_bill as b
-                 left join nx_department_orders as dor on dor.nx_DO_bill_id = b.nx_department_bill_id
+                 left join nx_department_order_history as dor on dor.nx_DO_bill_id = b.nx_department_bill_id
                  left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+            left join  nx_department as dep on dep.nx_department_id = dor.nx_DO_department_id
         where nx_department_bill_id = #{billId}
     </select>
     <select id="queryTotalByParams" resultType="java.lang.Integer">
         select count(*) from nx_department_bill
         <where>
+            <if test="gbDisId != null">
+               and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
             <if test="depId != null ">
                 and nx_DB_dep_id = #{depId}
             </if>
@@ -214,33 +238,46 @@
             <if test="month != null ">
                 and nx_DB_month = #{month}
             </if>
+            <if test="year != null ">
+                and nx_DB_year = #{year}
+            </if>
             <if test="equalStatus != null ">
                 and nx_DB_status = #{equalStatus}
             </if>
             <if test="nxCommId != null ">
                 and nx_DB_nx_community_id = #{nxCommId}
             </if>
+            <if test="orDepFatherId != null ">
+                or nx_DB_dep_father_id = #{orDepFatherId}
+            </if>
 
         </where>
     </select>
     <select id="queryReturnNumberByBillId" resultType="java.lang.Integer">
-        select count(*) from nx_department_bill as ndb
-        left join nx_department_orders as dor on dor.nx_DO_bill_id = ndb.nx_department_bill_id
-        where nx_department_bill_id = #{billId} and dor.nx_DO_return_status = 0
+        select count(*)
+        from nx_department_bill as ndb
+                 left join nx_department_order_history as dor on dor.nx_DO_bill_id = ndb.nx_department_bill_id
+        where nx_department_bill_id = #{billId}
+          and dor.nx_DO_return_status = 0
     </select>
+
     <select id="queryReturnBillOrdersByBillId" resultMap="billWithApplys">
-        select * from nx_department_bill as db
-        left join nx_department_orders as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
-        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
-        left join nx_department as nd on nd.nx_department_id = db.nx_DB_dep_id
+        select *
+        from nx_department_bill as db
+                 left join nx_department_order_history as dor on dor.nx_DO_return_bill_id = db.nx_department_bill_id
+                 left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+                 left join nx_department as nd on nd.nx_department_id = db.nx_DB_dep_id
         where nx_department_bill_id = #{billId}
     </select>
+
     <resultMap id="gbdep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
-		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
+        <result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentDisId" column="gb_department_dis_id"/>
+        <result property="gbDepartmentFatherId" column="gb_department_father_id"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
         <result property="gbDepartmentDepSettleId" column="gb_department_dep_settle_id"/>
         <result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
@@ -251,6 +288,7 @@
         <result property="gbDepartmentSettleWeek" column="gb_department_settle_week"/>
         <result property="gbDepartmentSettleMonth" column="gb_department_settle_month"/>
         <result property="gbDepartmentLevel" column="gb_department_level"/>
+        <association property="gbSubDepartments" resultMap="needNotBuyGbDeps"/>
     </resultMap>
 
     <resultMap id="nxRes" type="NxRestrauntEntity">
@@ -262,6 +300,9 @@
     </resultMap>
     <resultMap id="billWithGbDepAndApplys" type="NxDepartmentBillEntity">
         <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
+        <result property="nxDbGbDepartmentBillId" column="nx_DB_gb_department_bill_id"/>
+        <result property="nxDbGbDepFatherId" column="nx_DB_gb_dep_Father_id"/>
+        <result property="nxDbStatus" column="nx_DB_status"/>
         <result property="nxDbDepFatherId" column="nx_DB_dep_father_id"/>
         <result property="nxDbDisId" column="nx_DB_dis_id"/>
         <result property="nxDbCostTotal" column="nx_DB_cost_total"/>
@@ -274,6 +315,7 @@
         <result property="nxDbWeek" column="nx_DB_week"/>
         <result property="nxDbDay" column="nx_DB_day"/>
         <result property="nxDbGbDepId" column="nx_DB_gb_dep_id"/>
+        <result property="nxDbGbDepFatherId" column="nx_DB_gb_dep_father_id"/>
         <result property="nxDbGbDisId" column="nx_DB_gb_dis_id"/>
         <result property="nxDbProfitTotal" column="nx_DB_profit_total"/>
         <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
@@ -286,34 +328,46 @@
 
     <select id="queryGbDepBillsByParams" resultMap="billWithGbDepAndApplys">
         select * from nx_department_bill as db
-        left join nx_department_orders as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
+        left join nx_department_order_history as dor on dor.nx_DO_bill_id = db.nx_department_bill_id
         left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join gb_department as gd on gd.gb_department_id = db.nx_DB_gb_dep_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = db.nx_DB_nx_restraunt_id
         <where>
-            <if test="depId != null">
-                nx_DB_dep_id = #{depId}
-            </if>
-            <if test="depFatherId != null">
-                nx_DB_dep_father_id = #{depFatherId}
+            <if test="gbDisId != null">
+              and  db.nx_DB_gb_dis_id = #{gbDisId}
             </if>
             <if test="disId != null">
-                and nx_DB_dis_id = #{disId}
+                and db.nx_DB_dis_id = #{disId}
+            </if>
+            <if test="depId != null">
+               and  db.nx_DB_dep_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+               and db.nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="dayuStatus != null">
+                and db.nx_DB_status &gt; #{dayuStatus}
             </if>
             <if test="status != null">
-                and nx_DB_status &lt; #{status}
+                and db.nx_DB_status &lt; #{status}
             </if>
             <if test="equalStatus != null ">
-                and nx_DB_status = #{equalStatus}
+                and db.nx_DB_status = #{equalStatus}
             </if>
             <if test="month != null ">
-                and nx_DB_month = #{month}
+                and db.nx_DB_month = #{month}
             </if>
             <if test="gbDisId != null ">
-                and nx_DB_gb_dis_id = #{gbDisId}
+                and db.nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="startDate != null ">
+                and db.nx_DB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null ">
+                and db.nx_DB_date &lt;= #{stopDate}
             </if>
             <if test="nxCommId != null ">
-                and nx_DB_nx_community_id = #{nxCommId}
+                and db.nx_DB_nx_community_id = #{nxCommId}
             </if>
 
         </where>
@@ -322,11 +376,14 @@
     <select id="queryBillSubtotalByParams" resultType="java.lang.Double">
         select SUM(nx_DB_total) from nx_department_bill
         <where>
+            <if test="gbDisId != null">
+               and nx_DB_gb_dis_id = #{gbDisId}
+            </if>
             <if test="depId != null">
-                nx_DB_dep_id = #{depId}
+               and nx_DB_dep_id = #{depId}
             </if>
             <if test="depFatherId != null">
-                nx_DB_dep_father_id = #{depFatherId}
+               and nx_DB_dep_father_id = #{depFatherId}
             </if>
             <if test="disId != null">
                 and nx_DB_dis_id = #{disId}
@@ -350,14 +407,16 @@
         </where>
     </select>
     <select id="queryBillCostSubtotalByParams" resultType="java.lang.Double">
-#         select SUM(nx_DB_cost_total) from nx_department_bill
         select SUM(nx_DB_total) from nx_department_bill
         <where>
+            <if test="settleType != null">
+               and nx_DB_settle_type = #{settleType}
+            </if>
             <if test="depId != null">
-                nx_DB_dep_id = #{depId}
+                and nx_DB_dep_id = #{depId}
             </if>
             <if test="depFatherId != null">
-                nx_DB_dep_father_id = #{depFatherId}
+                and nx_DB_dep_father_id = #{depFatherId}
             </if>
             <if test="disId != null">
                 and nx_DB_dis_id = #{disId}
@@ -383,13 +442,28 @@
 
     <resultMap id="nxDep" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentPickName" column="nx_department_pick_name"/>
         <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
+        <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+        <result property="nxDepartmentWorkingStatus" column="nx_department_working_status"/>
+        <result property="nxDepartmentType" column="nx_department_type"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
-        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
-        <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
+        <result property="nxDepartmentDisId" column="nx_department_dis_id"/>
+        <result property="nxDepartmentType" column="nx_department_type"/>
+        <result property="nxDepartmentSettleType" column="nx_department_settle_type"/>
+        <result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
+        <result property="nxDepartmentSubAmount" column="nx_department_sub_amount"/>
+        <result property="nxDepartmentJoinDate" column="nx_department_join_date"/>
+        <result property="nxDepartmentOrderTotal" column="nx_department_order_total"/>
     </resultMap>
     <resultMap id="billWithDep" type="NxDepartmentBillEntity">
         <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
+        <result property="nxDbGbDepartmentBillId" column="nx_DB_gb_department_bill_id"/>
+        <result property="nxDbGbDepFatherId" column="nx_DB_gb_dep_Father_id"/>
+        <result property="nxDbStatus" column="nx_DB_status"/>
         <result property="nxDbDepFatherId" column="nx_DB_dep_father_id"/>
         <result property="nxDbDepId" column="nx_DB_dep_id"/>
         <result property="nxDbDisId" column="nx_DB_dis_id"/>
@@ -403,49 +477,273 @@
         <result property="nxDbWeek" column="nx_DB_week"/>
         <result property="nxDbDay" column="nx_DB_day"/>
         <result property="nxDbGbDepId" column="nx_DB_gb_dep_id"/>
+        <result property="nxDbGbDepFatherId" column="nx_DB_gb_dep_father_id"/>
         <result property="nxDbGbDisId" column="nx_DB_gb_dis_id"/>
         <result property="nxDbProfitTotal" column="nx_DB_profit_total"/>
         <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
         <result property="nxDbNxCommunityId" column="nx_DB_nx_community_id"/>
         <result property="nxDbNxRestrauntId" column="nx_DB_nx_restraunt_id"/>
         <association property="nxDepartmentEntity" resultMap="nxDep"/>
+        <association property="gbDepartmentEntity" resultMap="needNotBuyGbDeps"/>
     </resultMap>
 
     <select id="queryBillsListByParams" resultMap="billWithDep">
-        select * from nx_department_bill as db
+        select *,
+        ngds.gb_department_id 'nds_gb_department_id',
+        ngds.gb_department_name 'nds_gb_department_name',
+        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
+        ngds.gb_department_type 'nds_gb_department_type',
+        ngds.gb_department_father_id 'nds_gb_department_father_id',
+        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
+        ngdf.gb_department_id 'ndf_dd_gb_department_id',
+        ngdf.gb_department_name 'ndf_dd_gb_department_name',
+        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',
+        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name'
+        from nx_department_bill as db
         left join nx_department as nd on db.nx_DB_dep_id = nd.nx_department_id
+        left join gb_department as ngds on ngds.gb_department_id = db.nx_DB_gb_dep_id
+        left join gb_department as ngdf on ngdf.gb_department_id = db.nx_DB_gb_dep_father_id
 
         <where>
+            <if test="gbDepFatherIdNotEqual != null">
+                and db.nx_DB_gb_dep_father_id != #{gbDepFatherIdNotEqual}
+            </if>
+            <if test="gbDisId != null">
+                and db.nx_DB_gb_dis_id = #{gbDisId}
+            </if>
             <if test="depId != null">
-                nx_DB_dep_id = #{depId}
+                and db.nx_DB_dep_id = #{depId}
             </if>
             <if test="depFatherId != null">
-                nx_DB_dep_father_id = #{depFatherId}
+                and  db.nx_DB_dep_father_id = #{depFatherId}
             </if>
             <if test="disId != null">
-                and nx_DB_dis_id = #{disId}
+                and db.nx_DB_dis_id = #{disId}
             </if>
             <if test="status != null">
-                and nx_DB_status &lt; #{status}
+                and db.nx_DB_status &lt; #{status}
             </if>
             <if test="equalStatus != null ">
-                and nx_DB_status = #{equalStatus}
+                and db.nx_DB_status = #{equalStatus}
             </if>
             <if test="month != null ">
-                and nx_DB_month = #{month}
+                and db.nx_DB_month = #{month}
+            </if>
+            <if test="dayuMonth != null ">
+                and db.nx_DB_month &gt;= #{dayuMonth}
+            </if>
+            <if test="xiaoyuMonth != null ">
+                and db.nx_DB_month &lt;= #{xiaoyuMonth}
+            </if>
+            <if test="year != null ">
+                and db.nx_DB_year = #{year}
             </if>
             <if test="gbDisId != null ">
-                and nx_DB_gb_dis_id = #{gbDisId}
+                and db.nx_DB_gb_dis_id = #{gbDisId}
             </if>
             <if test="nxCommId != null ">
-                and nx_DB_nx_community_id = #{nxCommId}
+                and db.nx_DB_nx_community_id = #{nxCommId}
+            </if>
+            <if test="startDate != null ">
+                and db.nx_DB_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null ">
+                and db.nx_DB_date &lt;= #{stopDate}
             </if>
 
         </where>
         order by nx_DB_time DESC
     </select>
     <select id="queryDepartBillByTradeNo" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
-        select * from nx_department_bill where nx_DB_wx_out_trade_no = #{ordersSn}
+        select *
+        from nx_department_bill as ndb
+        where ndb.nx_DB_wx_out_trade_no = #{ordersSn}
+    </select>
+    <select id="queryDepartBillByJustTradeNo" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
+        select *
+        from nx_department_bill
+        where nx_DB_trade_no = #{gbDbTradeNo}
+    </select>
+    <select id="queryBillsCount" resultType="java.lang.Integer">
+        select COUNT(*) from nx_department_bill as db
+        left join nx_department as nd on nd.nx_department_id = db.nx_DB_dep_id
+        <where>
+
+            <if test="gbDepFatherIdNotEqual != null">
+               and db.nx_DB_gb_dep_father_id != #{gbDepFatherIdNotEqual}
+            </if>
+            <if test="month != null">
+                and db.nx_DB_month = #{month}
+            </if>
+            <if test="depFatherId != null">
+                and db.nx_DB_dep_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and db.nx_DB_dep_id = #{depId}
+            </if>
+            <if test="disId != null">
+                and db.nx_DB_dis_id = #{disId}
+            </if>
+            <if test="gbDisId != null">
+                and db.nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null">
+                and db.nx_DB_nx_community_id = #{nxCommId}
+            </if>
+            <if test="settleType != null">
+                and nd.nx_department_settle_type = #{settleType}
+            </if>
+            <if test="equalStatus != null">
+                and db.nx_DB_status = #{equalStatus}
+            </if>
+            <if test="status != null">
+                and db.nx_DB_status &lt; #{status}
+            </if>
+
+        </where>
+    </select>
+
+    <select id="queryBindMap" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
+        select * from nx_department_bill as db
+        <where>
+            <!-- 条件组 1 -->
+            <if test="map != null">
+                <foreach item="value" index="key" collection="map">
+                    <if test="value != null">
+                        and ${key} = #{value}
+                    </if>
+                </foreach>
+            </if>
+
+            <!-- 条件组 2 -->
+            <if test="map1 != null">
+                or (
+                <foreach item="value" index="key" collection="map1">
+                    <if test="value != null">
+                        ${key} = #{value} and
+                    </if>
+                </foreach>
+                1=1 <!-- 避免最后的 AND 语法错误 -->
+                )
+            </if>
+        </where>
+        order by nx_DB_time DESC
+
+    </select>
+    <select id="querySubtoalBindMap" resultType="java.lang.Double">
+        select SUM(nx_DB_total) from nx_department_bill as db
+        <where>
+            <!-- 条件组 1 -->
+            <if test="map != null">
+                <foreach item="value" index="key" collection="map">
+                    <if test="value != null">
+                        and ${key} = #{value}
+                    </if>
+                </foreach>
+            </if>
+
+            <!-- 条件组 2 -->
+            <if test="map1 != null">
+                or (
+                <foreach item="value" index="key" collection="map1">
+                    <if test="value != null">
+                        ${key} = #{value} and
+                    </if>
+                </foreach>
+                1=1 <!-- 避免最后的 AND 语法错误 -->
+                )
+            </if>
+        </where>
+    </select>
+    <select id="queryCountBindMap" resultType="java.lang.Integer">
+        select COUNT(*) from nx_department_bill as db
+        <where>
+            <!-- 条件组 1 -->
+            <if test="map != null">
+                <foreach item="value" index="key" collection="map">
+                    <if test="value != null">
+                        and ${key} = #{value}
+                    </if>
+                </foreach>
+            </if>
+
+            <!-- 条件组 2 -->
+            <if test="map1 != null">
+                or (
+                <foreach item="value" index="key" collection="map1">
+                    <if test="value != null">
+                        ${key} = #{value} and
+                    </if>
+                </foreach>
+                1=1 <!-- 避免最后的 AND 语法错误 -->
+                )
+            </if>
+        </where>
+    </select>
+
+
+    <resultMap id="ngdsFatherDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="ndf_dd_gb_department_id"/>
+        <result property="gbDepartmentName" column="ndf_dd_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="ndf_dd_gb_department_att_name"/>
+        <result property="gbDepartmentSubAmount" column="ndf_dd_gb_department_sub_amount"/>
+    </resultMap>
+
+
+    <resultMap id="needNotBuyGbDeps" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="nds_gb_department_id"/>
+        <result property="gbDepartmentName" column="nds_gb_department_name"/>
+        <result property="gbDepartmentAttrName" column="nds_gb_department_attr_name"/>
+        <result property="gbDepartmentFatherId" column="nds_gb_department_father_id"/>
+        <association property="fatherGbDepartmentEntity" resultMap="ngdsFatherDep"/>
+    </resultMap>
+
+    <select id="queryReturnBill" resultMap="billWithDep">
+        select *,
+        ngds.gb_department_id 'nds_gb_department_id',
+        ngds.gb_department_name 'nds_gb_department_name',
+        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
+        ngds.gb_department_type 'nds_gb_department_type',
+        ngds.gb_department_father_id 'nds_gb_department_father_id',
+        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
+        ngdf.gb_department_id 'ndf_dd_gb_department_id',
+        ngdf.gb_department_name 'ndf_dd_gb_department_name',
+        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',
+        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name'
+               from nongxinle.nx_department_bill as db
+        left join gb_department as ngdf  on ngdf.gb_department_id = db.nx_DB_gb_dep_father_id
+        left join gb_department as ngds on ngds.gb_department_id = db.nx_DB_gb_dep_id
+
+        <where>
+            <if test="month != null">
+                and db.nx_DB_month = #{month}
+            </if>
+            <if test="gbDisId != null">
+               and db.nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="depFatherId != null">
+                and db.nx_DB_dep_id = #{depFatherId}
+            </if>
+            <if test="disId != null">
+                and db.nx_DB_dis_id = #{disId}
+            </if>
+            <if test="gbDisId != null">
+                and db.nx_DB_gb_dis_id = #{gbDisId}
+            </if>
+            <if test="nxCommId != null">
+                and db.nx_DB_nx_community_id = #{nxCommId}
+            </if>
+            <if test="settleType != null">
+                and ngdf.nx_department_settle_type = #{settleType}
+            </if>
+            <if test="equalStatus != null">
+                and db.nx_DB_status = #{equalStatus}
+            </if>
+
+        </where>
+    </select>
+    <select id="queryItemByGbDepBillId" resultType="com.nongxinle.entity.NxDepartmentBillEntity">
+        select * from nx_department_bill where nx_DB_gb_department_bill_id = #{gbDepartmentBillId}
     </select>
 
 
@@ -473,7 +771,10 @@
          `nx_DB_profit_scale`,
          `nx_DB_nx_community_id`,
          `nx_DB_nx_restraunt_id`,
-         `nx_DB_wx_out_trade_no`
+         `nx_DB_wx_out_trade_no`,
+         `nx_DB_year`,
+         `nx_DB_gb_department_bill_id`,
+         `nx_DB_gb_dep_father_id`
          )
         values (#{nxDepartmentBillId},
                 #{nxDbDisId},
@@ -496,7 +797,10 @@
                 #{nxDbProfitScale},
                 #{nxDbNxCommunityId},
                 #{nxDbNxRestrauntId},
-                #{nxDbWxOutTradeNo}
+                #{nxDbWxOutTradeNo},
+                #{nxDbYear},
+                #{nxDbGbDepartmentBillId},
+                #{nxDbGbDepFatherId}
                 )
     </insert>
 
@@ -517,12 +821,15 @@
             <if test="nxDbDay != null">`nx_DB_day` = #{nxDbDay},</if>
             <if test="nxDbGbDisId != null">`nx_DB_gb_dis_id` = #{nxDbGbDisId},</if>
             <if test="nxDbGbDepId != null">`nx_DB_gb_dep_id` = #{nxDbGbDepId},</if>
+            <if test="nxDbGbDepFatherId != null">`nx_DB_gb_dep_father_id` = #{nxDbGbDepFatherId},</if>
             <if test="nxDbProfitTotal != null">`nx_DB_profit_total` = #{nxDbProfitTotal},</if>
             <if test="nxDbCostTotal != null">`nx_DB_cost_total` = #{nxDbCostTotal},</if>
             <if test="nxDbProfitScale != null">`nx_DB_profit_scale` = #{nxDbProfitScale},</if>
             <if test="nxDbNxCommunityId != null">`nx_DB_nx_community_id` = #{nxDbNxCommunityId},</if>
             <if test="nxDbNxRestrauntId != null">`nx_DB_nx_restraunt_id` = #{nxDbNxRestrauntId},</if>
             <if test="nxDbWxOutTradeNo != null">`nx_DB_wx_out_trade_no` = #{nxDbWxOutTradeNo},</if>
+            <if test="nxDbYear != null">`nx_DB_year` = #{nxDbYear},</if>
+            <if test="nxDbGbDepartmentBillId != null">`nx_DB_gb_department_bill_id` = #{nxDbGbDepartmentBillId},</if>
             <if test="nxDbIssueUserId != null">`nx_DB_issue_user_id` = #{nxDbIssueUserId}</if>
         </set>
         where nx_department_bill_id = #{nxDepartmentBillId}

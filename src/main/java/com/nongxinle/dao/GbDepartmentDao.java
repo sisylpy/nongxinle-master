@@ -33,4 +33,10 @@ public interface GbDepartmentDao extends BaseDao<GbDepartmentEntity> {
     List<GbDepartmentEntity> queryDepByDepType(Map<String, Object> mapDis);
 
     List<GbDepartmentEntity> queryGroupDepsByDisIdWithUnPayBill(Map<String, Object> map);
+
+    GbDepartmentEntity queryDepInfoByDisId(Map<String, Object> map);
+
+    int queryDepHasOrdersCount(Map<String, Object> mapDis);
+
+    GbDepartmentEntity querySelfDepInfoGb(Integer gbDuDepartmentId);
 }

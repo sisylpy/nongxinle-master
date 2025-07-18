@@ -32,6 +32,31 @@ public class NxPrinterUserController {
 	private NxPrinterUserService nxPrinterUserService;
 
 
+	@RequestMapping(value = "/printerUserLogin/{code}")
+	@ResponseBody
+	public R printerUserLogin(@PathVariable String code) {
+		System.out.println("aa" + code);
+		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+
+		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiziDriverAppID() +
+				"&secret=" + myAPPIDConfig.getLiziDriverScreat() + "&js_code=" + code + "&grant_type=authorization_code";
+		// 发送请求，返回Json字符串
+		String str = WeChatUtil.httpRequest(url, "GET", null);
+
+		// 转成Json对象 获取openidPrinterUserRegister
+		JSONObject jsonObject = JSONObject.parseObject(str);
+		System.out.println(jsonObject);
+
+		// 我们需要的openid，在一个小程序中，openid是唯一的
+		String openid = jsonObject.get("openid").toString();
+		NxPrinterUserEntity printerUserEntity = nxPrinterUserService.queryPrinterUserByOpenId(openid);
+		if(printerUserEntity != null){
+			return R.ok().put("data", printerUserEntity);
+		}else{
+			return R.error(-1,"没有注册");
+		}
+
+	}
 
 	@RequestMapping(value = "/getPrinterUserInfo/{userId}")
 	@ResponseBody
@@ -121,31 +146,7 @@ public class NxPrinterUserController {
 
 	}
 
-	@RequestMapping(value = "/printerUserLogin",method = RequestMethod.POST)
-	@ResponseBody
-	public R printerUserLogin(String code, Integer disId) {
 
-		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-		String maimaiAppID = myAPPIDConfig.getLiziDriverAppID();
-		String maimaiScreat = myAPPIDConfig.getLiziDriverScreat();
-		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + maimaiAppID + "&secret=" +
-				maimaiScreat + "&js_code=" + code +
-				"&grant_type=authorization_code";
-		String str = WeChatUtil.httpRequest(url, "GET", null);
-		JSONObject jsonObject = JSONObject.parseObject(str);
-		String openId = jsonObject.get("openid").toString();
-		if (openId != null) {
-			NxPrinterUserEntity nxBuyUserEntity1 = nxPrinterUserService.queryPrinterUserByOpenId(openId);
-
-			if(nxBuyUserEntity1 != null){
-				return R.ok().put("data", nxBuyUserEntity1);
-			}else {
-				return R.error(-1, "请进行注册");
-			}
-		} else {
-			return R.error(-1, "请进行注册");
-		}
-	}
 
 
 	@RequestMapping(value = "/updateNxPrinterUserDeviceId", method = RequestMethod.POST)

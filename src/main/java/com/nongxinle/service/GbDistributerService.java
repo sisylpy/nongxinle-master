@@ -9,6 +9,7 @@ package com.nongxinle.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.nongxinle.entity.GbDistributerEntity;
+import com.nongxinle.entity.GbDistributerPayEntity;
 import com.nongxinle.entity.GbDistributerUserEntity;
 
 import java.util.List;
@@ -43,4 +44,7 @@ public interface GbDistributerService {
     List<GbDistributerEntity> queryGbDisCustomerBySellerOpenId(String openId);
 
 	Integer saveNewDistributerGbForPeisong(GbDistributerUserEntity distributerUserEntity, Integer disId);
+
+    Integer saveSingleMendianDistributerGb(GbDistributerEntity gbDistributerEntity);
+
 }

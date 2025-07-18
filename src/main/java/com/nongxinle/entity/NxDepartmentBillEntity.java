@@ -34,7 +34,8 @@ public class NxDepartmentBillEntity implements Serializable {
 	private Integer nxDbDepId;
 	private Integer nxDbDepFatherId;
 	/**
-	 *  
+	 *
+	 *
 	 */
 	private String nxDbTotal;
 	/**
@@ -53,6 +54,8 @@ public class NxDepartmentBillEntity implements Serializable {
 	private String nxDbDate;
 	private String nxDbWxOutTradeNo;
 
+	private String nxDbYear;
+	private Integer nxDbGbDepartmentBillId;
 	private String nxDbMonth;
 	private String nxDbWeek;
 	private String nxDbTradeNo;
@@ -62,6 +65,7 @@ public class NxDepartmentBillEntity implements Serializable {
 	private Integer nxDbPrintTimes;
 	private Integer nxDbGbDisId;
 	private Integer nxDbGbDepId;
+	private Integer nxDbGbDepFatherId;
 	private Integer nxDbNxCommunityId;
 	private Integer nxDbNxRestrauntId;
     private String nxUserOpenId;

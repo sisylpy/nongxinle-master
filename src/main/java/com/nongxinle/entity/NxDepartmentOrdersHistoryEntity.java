@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,7 @@ public class NxDepartmentOrdersHistoryEntity implements Serializable {
 	 *  部门id
 	 */
 	private Integer nxDohDepDisGoodsId;
+	private Integer nxDohDisGoodsId;
 	/**
 	 *  部门订单申请数量
 	 */
@@ -43,6 +45,7 @@ public class NxDepartmentOrdersHistoryEntity implements Serializable {
 	 *  部门订单部门id
 	 */
 	private Integer nxDohDepartmentId;
+	private Integer nxDohDistributerId;
 	/**
 	 *  
 	 */
@@ -61,5 +64,10 @@ public class NxDepartmentOrdersHistoryEntity implements Serializable {
 	private Integer nxDohSellType;
 	private Integer nxDohOrder;
 	private Integer nxDohOrderTimes;
+	private String nxDohApplyStandard;
+	private String nxDohApplyQuantiy;
+
+	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+	private List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntityList;
 
 }

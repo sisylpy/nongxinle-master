@@ -1,38 +1,26 @@
-/**
- * com.nongxinle.utils class
- *
- * @Author: peiyi li
- * @Date: 2020-03-11 10:42
- */
-
 package com.nongxinle.utils;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
-import java.io.*;
-import java.util.Properties;
-
-/**
- * @author lpy
- * @date 2020-03-11 10:42
- */
-
+import org.apache.commons.configuration.ConfigurationException;
 
 public class PropertiesUtil {
 
+    private static PropertiesConfiguration config;
 
-    public  void saveWxProperty(String key, String value) throws Exception {
-
-        String dir = System.getProperty("user.dir");  //获得tomcat所在的工作路径
-        PropertiesConfiguration configuration = new PropertiesConfiguration(dir + "/wx.properties");
-        System.out.println("dir====" + dir);
-        configuration.setProperty(key, value);
-        configuration.save();
-        System.out.println("condarrrr" + configuration.getKeys());
-        System.out.println("saveWxProperty---------------" + key + "===" + configuration.getString(key));
-
+    static {
+        try {
+            // 假设你的配置文件放在 classpath 下，文件名为 config.properties
+            config = new PropertiesConfiguration("config.properties");
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+        }
     }
 
-
-
-
+    /**
+     * 获取外部图片存放路径
+     * 如果配置文件没有配置，则返回默认路径
+     */
+    public static String getExternalImagesPath() {
+        return config.getString("external.images.path", "file:///opt/tomcat/latest/app-data/images/");
+    }
 }

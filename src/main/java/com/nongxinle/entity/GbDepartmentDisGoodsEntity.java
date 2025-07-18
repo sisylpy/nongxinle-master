@@ -41,6 +41,7 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 	 *  
 	 */
 	private Integer gbDdgDisGoodsFatherId;
+	private Integer gbDdgDisGoodsGrandId;
 	/**
 	 *  
 	 */
@@ -69,6 +70,9 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 	 *  
 	 */
 	private String gbDdgDepGoodsPlace;
+
+	private String gbDisGoodsFile;
+	private String gbDisGoodsFileLarge;
 	/**
 	 *  
 	 */
@@ -77,11 +81,13 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 	 *  
 	 */
 	private Integer gbDdgGoodsType;
+	private Integer gbDgControlFresh;
 	private Integer gbDdgNxDistributerId;
 	private Integer gbDdgNxDistributerGoodsId;
 	private Integer gbDdgGbDepartmentId;
 	private Integer gbDdgGbSupplierId;
 	private Integer gbDdgGbDisId;
+	private Integer gbDdgDisGoodsGreatId;
 
 
 	private String 	gbDdgInventoryDate;
@@ -101,9 +107,18 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private String 	gbDdgOrderQuantity;
 	private String 	gbDdgOrderStandard;
 	private String 	gbDdgOrderWeight;
+	private String 	gbDdgPrintStandard;
+	private String 	gbDdgOrderGoodsName;
+	private String 	gbDdgOrderPriceLevel;
 
 
 	private Integer 	gbDdgPrepareStatus;
+	private Integer 	gbDdgDepGoodsStatus;
+	private Integer 	gbDdgDepGoodsPullOff;
+	private String gbTipText;
+	private String gbDgGoodsStandardWeight;
+
+	private Boolean showStock = false;
 
 
 	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
@@ -126,7 +141,78 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 //	private List<GbDepInventoryGoodsDailyEntity> todayInventoryGoodsDailyEntities;
 //	private List<GbDepInventoryGoodsWeekEntity> todayInventoryGoodsWeekEntities;
 //	private List<GbDepInventoryGoodsMonthEntity> todayInventoryGoodsMonthEntities;
+	/**
+	 * AI建议订货量
+	 */
+	private String aiOrderQuantity;
 
+	/**
+	 * AI建议订货单位
+	 */
+	private String aiOrderStandard;
+
+	/**
+	 * 长期日均用量
+	 */
+	private String aiDailyUsage;
+
+	/**
+	 * 最近7天平均用量
+	 */
+	private String aiRecentAvgUsage;
+
+	/**
+	 * 用量波动性(CV)
+	 */
+	private String aiUsageVariation;
+
+	/**
+	 * 安全库存
+	 */
+	private String aiSafetyStock;
+
+	/**
+	 * 再订货点
+	 */
+	private String aiReorderPoint;
+
+	/**
+	 * 当前库存
+	 */
+	private String aiCurrentStock;
+	private String goodsStockWeightTotalString;
+
+	/**
+	 * 当前库存单位
+	 */
+	private String aiCurrentStockUnit;
+
+	/**
+	 * 上次订货日期
+	 */
+	private String aiLastOrderDate;
+
+	/**
+	 * 上次订货量
+	 */
+	private String aiLastOrderQuantity;
+
+	/**
+	 * 上次订货单位
+	 */
+	private String aiLastOrderUnit;
+
+	/**
+	 * 距离上次订货天数
+	 */
+	private String aiDaysSinceLastOrder;
+
+	/**
+	 * 预计明天用量
+	 */
+	private String aiTomorrowNeed;
+
+	private String aiAvailableDays;
 
 
 	@Override

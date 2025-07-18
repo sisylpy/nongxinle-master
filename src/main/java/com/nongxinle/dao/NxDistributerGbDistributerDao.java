@@ -27,7 +27,10 @@ public interface NxDistributerGbDistributerDao extends BaseDao<NxDistributerGbDi
 
     void save(NxDistributerGbDistributerEntity nxDistributerGbDistributerEntity);
 
-    List<NxDistributerEntity> queryGbDistributerNxDistribtuer(Integer gbDepId);
+    List<NxDistributerGbDistributerEntity> queryGbDistributerNxDistribtuer(Integer gbDepId);
 
     List<NxDistributerEntity> queryGbDistributerNxDistribtuerGoods(Map<String, Object> map);
+
+    List<GbDistributerEntity> queryGbDistributerByParams(Map<String, Object> map);
+
 }

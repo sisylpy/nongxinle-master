@@ -133,5 +133,11 @@ public class NxDistributerUserServiceImpl implements NxDistributerUserService {
 		return nxDistributerUserDao.getAdminUserByParams(map);
     }
 
+    @Override
+    public NxDistributerUserEntity queryUserByPhone(String nxDiuWxPhone) {
+
+		return nxDistributerUserDao.queryUserByPhone(nxDiuWxPhone);
+    }
+
 
 }

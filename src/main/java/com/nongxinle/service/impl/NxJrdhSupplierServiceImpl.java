@@ -71,9 +71,15 @@ public class NxJrdhSupplierServiceImpl implements NxJrdhSupplierService {
     }
 
     @Override
-    public NxJrdhSupplierEntity querySupplierByUserId(Integer sellerId) {
+    public List<NxJrdhSupplierEntity> querySupplierByUserId(Integer sellerId) {
 
 		return nxJrdhSupplierDao.querySupplierByUserId(sellerId);
+    }
+
+    @Override
+    public int queryJrdhSupplierCount(Map<String, Object> map) {
+
+		return nxJrdhSupplierDao.queryJrdhSupplierCount(map);
     }
 
 }

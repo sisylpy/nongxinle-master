@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +20,7 @@ import lombok.ToString;
 public class
 NxDistributerGoodsShelfGoodsEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
 	 *  货架商品id
 	 */
@@ -33,7 +34,10 @@ NxDistributerGoodsShelfGoodsEntity implements Serializable {
 	 */
 	private Integer nxDgsgShelfId;
 	private Integer nxDgsgSort;
+	private Integer nxDgsgShelfSort;
 
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+
+	private List<NxDistributerGoodsShelfStockEntity> nxDisGoodsShelfStockEntities;
 
 }

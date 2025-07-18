@@ -29,8 +29,8 @@ import static com.nongxinle.utils.GbTypeUtils.getGbDepUserAdminMendiancaigouyuan
 public class GbDistributerSupplierController {
     @Autowired
     private GbDistributerSupplierService gbDistributerSupplierService;
-    @Autowired
-    private GbDistributerPurchaseBatchService gbDisPurchaseBatchService;
+//    @Autowired
+//    private GbDistributerPurchaseBatchService gbDisPurchaseBatchService;
 
 
 
@@ -129,20 +129,20 @@ public class GbDistributerSupplierController {
             return R.ok();
         }
     }
-    @RequestMapping(value = "/deleteGbSupplier/{id}")
-    @ResponseBody
-    public R deleteGbSupplier(@PathVariable Integer id) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("supplierId", id);
-        map.put("status", 4);
-        List<GbDistributerPurchaseBatchEntity> entities = gbDisPurchaseBatchService.queryList(map);
-        if(entities.size() > 0){
-            return R.error(-1,"有未结账单");
-        }else{
-            gbDistributerSupplierService.delete(id);
-            return R.ok();
-        }
-    }
+//    @RequestMapping(value = "/deleteGbSupplier/{id}")
+//    @ResponseBody
+//    public R deleteGbSupplier(@PathVariable Integer id) {
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("supplierId", id);
+//        map.put("status", 4);
+//        List<GbDistributerPurchaseBatchEntity> entities = gbDisPurchaseBatchService.queryList(map);
+//        if(entities.size() > 0){
+//            return R.error(-1,"有未结账单");
+//        }else{
+//            gbDistributerSupplierService.delete(id);
+//            return R.ok();
+//        }
+//    }
 
     @RequestMapping(value = "/updateGbSupplier", method = RequestMethod.POST)
     @ResponseBody

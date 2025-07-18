@@ -39,6 +39,7 @@ public class NxCommunityUserEntity implements Serializable {
 	 *  
 	 */
 	private String nxCouWxPhone;
+	private String nxCouDeviceId;
 	/**
 	 *  
 	 */
@@ -51,6 +52,8 @@ public class NxCommunityUserEntity implements Serializable {
 	private String nxCouCode;
 	private Integer nxCouRoleId;
 	private Integer nxCouWorkingStatus;
+	private Integer nxCouUrlIsChange;
+
 
 	private NxCommunityEntity nxCommunityEntity;
 

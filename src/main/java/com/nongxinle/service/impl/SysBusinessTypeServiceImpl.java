@@ -58,4 +58,10 @@ public class SysBusinessTypeServiceImpl implements SysBusinessTypeService {
 		return sysBusinessTypeDao.queryTypeNxDistribterWithPeisong(map);
     }
 
+    @Override
+    public List<SysBusinessTypeEntity> querySysListByParams(Map<String, Object> map) {
+
+		return sysBusinessTypeDao.querySysListByParams(map);
+    }
+
 }

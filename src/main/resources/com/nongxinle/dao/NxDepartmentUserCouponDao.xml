@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentUserCouponDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentUserCouponEntity">
+		select * from nx_department_user_coupon where nx_department_user_coupon_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDepartmentUserCouponEntity">
+		select * from nx_department_user_coupon 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_department_user_coupon 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxDepartmentUserCouponEntity">
+		insert into nx_department_user_coupon
+		(
+			`nx_department_user_coupon_id`, 
+			`nx_duc_coupon_id`, 
+			`nx_duc_nx_dep_user_id`, 
+			`nx_duc_share_user_id`, 
+			`nx_duc_nx_distributer_id`, 
+			`nx_duc_status`, 
+			`nx_gduc_type`, 
+			`nx_duc_use_order_id`, 
+			`nx_duc_from_share_user_id`, 
+			`nx_duc_share_time`, 
+			`nx_duc_nx_department_id`, 
+			`nx_duc_start_date`, 
+			`nx_duc_stop_date`, 
+			`nx_duc_start_time_zone`, 
+			`nx_duc_stop_time_zone`
+		)
+		values
+		(
+			#{nxDepartmentUserCouponId}, 
+			#{nxDucCouponId}, 
+			#{nxDucNxDepUserId}, 
+			#{nxDucShareUserId}, 
+			#{nxDucNxDistributerId}, 
+			#{nxDucStatus}, 
+			#{nxGducType}, 
+			#{nxDucUseOrderId}, 
+			#{nxDucFromShareUserId}, 
+			#{nxDucShareTime}, 
+			#{nxDucNxDepartmentId}, 
+			#{nxDucStartDate}, 
+			#{nxDucStopDate}, 
+			#{nxDucStartTimeZone}, 
+			#{nxDucStopTimeZone}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDepartmentUserCouponEntity">
+		update nx_department_user_coupon 
+		<set>
+			<if test="nxDucCouponId != null">`nx_duc_coupon_id` = #{nxDucCouponId}, </if>
+			<if test="nxDucNxDepUserId != null">`nx_duc_nx_dep_user_id` = #{nxDucNxDepUserId}, </if>
+			<if test="nxDucShareUserId != null">`nx_duc_share_user_id` = #{nxDucShareUserId}, </if>
+			<if test="nxDucNxDistributerId != null">`nx_duc_nx_distributer_id` = #{nxDucNxDistributerId}, </if>
+			<if test="nxDucStatus != null">`nx_duc_status` = #{nxDucStatus}, </if>
+			<if test="nxGducType != null">`nx_gduc_type` = #{nxGducType}, </if>
+			<if test="nxDucUseOrderId != null">`nx_duc_use_order_id` = #{nxDucUseOrderId}, </if>
+			<if test="nxDucFromShareUserId != null">`nx_duc_from_share_user_id` = #{nxDucFromShareUserId}, </if>
+			<if test="nxDucShareTime != null">`nx_duc_share_time` = #{nxDucShareTime}, </if>
+			<if test="nxDucNxDepartmentId != null">`nx_duc_nx_department_id` = #{nxDucNxDepartmentId}, </if>
+			<if test="nxDucStartDate != null">`nx_duc_start_date` = #{nxDucStartDate}, </if>
+			<if test="nxDucStopDate != null">`nx_duc_stop_date` = #{nxDucStopDate}, </if>
+			<if test="nxDucStartTimeZone != null">`nx_duc_start_time_zone` = #{nxDucStartTimeZone}, </if>
+			<if test="nxDucStopTimeZone != null">`nx_duc_stop_time_zone` = #{nxDucStopTimeZone}</if>
+		</set>
+		where nx_department_user_coupon_id = #{nxDepartmentUserCouponId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_department_user_coupon where nx_department_user_coupon_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_department_user_coupon where nx_department_user_coupon_id in 
+		<foreach item="nxDepartmentUserCouponId" collection="array" open="(" separator="," close=")">
+			#{nxDepartmentUserCouponId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -13,6 +13,14 @@ import java.util.*;
  * 日期处理
  */
 public class DateUtils {
+
+    // 汉字数字
+    private static final String[] numerals = {"零", "壹", "貳", "叁", "肆", "伍", "陆", "柒", "捌", "玖"};
+    // 单位
+    private static final String[] units = {"", "拾", "佰", "仟"};
+    private static final String[] bigUnits = {"", "万", "亿"};
+    private static final String[] decimals = {"角", "分"};
+
     /**
      * 时间格式(yyyy-MM-dd)
      */
@@ -28,10 +36,7 @@ public class DateUtils {
     public final static String DATE_TIME_PATTERN = "MM-dd HH:mm";
     public final static String ONLY_DATE_PATTERN = "MM-dd";
     public final static String MONTH_TIME_PATTERN = "MM";
-    public final static String MONTH_TIME_PATTERN_STRING = "mm";
     public final static String Year_TIME_PATTERN = "yyyy";
-    public final static String Time_TIME_PATTERN = "HH:mm:ss";
-
     public final static String ONLY_HAO_PATTERN = "dd";
 
 
@@ -45,6 +50,20 @@ public class DateUtils {
             return df.format(date);
         }
         return null;
+    }
+
+
+    public static Boolean getIfCanReceiveTime() {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+        if (hour == 0 && minute < 5) {
+            System.out.println("当前时间是零点");
+            return false;
+        } else {
+            System.out.println("当前时间不是零点");
+            return true;
+        }
     }
 
 
@@ -135,6 +154,31 @@ public class DateUtils {
     }
 
 
+    public static String formatWhatDayMinute(int what) {
+        Date whatDay = calendarDay(0).getTime();
+        SimpleDateFormat dateFormat1 = new SimpleDateFormat("HH");
+        SimpleDateFormat dateFormat2 = new SimpleDateFormat("mm");
+        String hour = dateFormat1.format(whatDay);
+        String minute = dateFormat2.format(whatDay);
+        BigDecimal hourMinute = new BigDecimal(hour).multiply(new BigDecimal(60));
+        BigDecimal totalMinute = hourMinute.add(new BigDecimal(minute));
+        System.out.println("totoamii------------" + totalMinute);
+        BigDecimal printMinute = totalMinute.add(new BigDecimal(what));
+        System.out.println("printMinuteprintMinuteprintMinute" + printMinute);
+
+        return printMinute.toString();
+    }
+
+    public static int getNowMinute() {
+
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        System.out.println("xianzhaihourr===" + hour);
+        hour = hour * 60;
+        int minute = calendar.get(Calendar.MINUTE) ;
+        int total = hour + minute;
+        return total;
+    }
     public static String formatWhatOnlyDay(int what) {
         Date whatDay = calendarDay(what).getTime();
         SimpleDateFormat dateFormat2 = new SimpleDateFormat(ONLY_DATE_PATTERN);
@@ -288,6 +332,7 @@ public class DateUtils {
         }
         return weekOfYear;
     }
+
     public static String getLastMonthString() {
         Date whatDay = calendarDay(0).getTime();
         SimpleDateFormat dateFormat2 = new SimpleDateFormat(MONTH_TIME_PATTERN);
@@ -329,24 +374,26 @@ public class DateUtils {
         return hanzi + "月";
     }
 
+
     public static String getLastTwoMonth() {
         Date whatDay = calendarDay(0).getTime();
-        SimpleDateFormat dateFormat2 = new SimpleDateFormat(MONTH_TIME_PATTERN);
+        SimpleDateFormat dateFormat2 = new SimpleDateFormat("MM"); // 假设 MONTH_TIME_PATTERN 为 "MM"
         String format1 = dateFormat2.format(whatDay);
-        if (format1.equals("02")) {
-            format1 = "12";
-        } else {
-            BigDecimal bigDecimal = new BigDecimal(format1);
-            BigDecimal aaa = bigDecimal.subtract(new BigDecimal("2"));
-            if (aaa.compareTo(new BigDecimal("10")) == -1) {
-                format1 = "0" + aaa.toString();
-            } else {
-                format1 = aaa.toString();
-            }
+        int month = Integer.parseInt(format1);
+
+        // 减去 2 个月，并处理跨年情况
+        month -= 2;
+        if (month <= 0) {
+            month += 12; // 跨年时月份从上一年补 12 个月
         }
 
-        return format1;
+        // 格式化为两位数月份
+        String result = month < 10 ? "0" + month : String.valueOf(month);
+
+        System.out.println("最后两个月是：" + result);
+        return result;
     }
+
 
 
     public static String formatWhatYear(int what) {
@@ -512,6 +559,8 @@ public class DateUtils {
     public static Integer getTwoDaysEarly(String startDate, String stopDate) {
         String dateFormat = "yyyy-MM-dd";
         SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+        System.out.println("startdata" + startDate);
+        System.out.println("stopDate" + stopDate);
 
         if (stopDate.equals(startDate)) {
             return 0;
@@ -735,8 +784,6 @@ public class DateUtils {
         return sb.append(l).toString();
     }
 
-
-    //
     public static Long changeStringToTime(String dateString) {
         String dateFormat = "yyyy-MM-dd";
         SimpleDateFormat format = new SimpleDateFormat(dateFormat);
@@ -762,6 +809,89 @@ public class DateUtils {
             e.printStackTrace();
         }
         return format1;
+    }
+    public static String convertDoubleToChineseCurrency(double num) {
+        if (num < 0) {
+            return "负" + convertDoubleToChineseCurrency(-num);
+        }
+
+        if (num > 99999999999999.99) {
+            return "金额超出范围";
+        }
+
+        long numLong = Math.round(num * 100); // 将金额转换为整数，单位为分
+        long integerPart = numLong / 100;     // 整数部分
+        int decimalPart = (int) (numLong % 100); // 小数部分
+
+        String integerStr = convertIntegerToChinese(integerPart);
+        String decimalStr = convertDecimalToChinese(decimalPart);
+
+        if (integerPart == 0 && decimalPart == 0) {
+            return "零元整";
+        } else if (decimalPart == 0) {
+            return integerStr + "元整";
+        } else if (integerPart == 0) {
+            return decimalStr;
+        } else {
+            return integerStr + "元" + decimalStr;
+        }
+    }
+
+    private static String convertIntegerToChinese(long num) {
+        StringBuilder result = new StringBuilder();
+        int unitPos = 0; // 大单位位置
+        boolean zero = false; // 标记零
+        while (num > 0) {
+            int section = (int) (num % 10000); // 每四位一组
+            if (zero) {
+                result.insert(0, numerals[0]);
+            }
+            String sectionChinese = convertSectionToChinese(section);
+            if (section != 0) {
+                result.insert(0, sectionChinese + bigUnits[unitPos]);
+            }
+            zero = section == 0 && result.length() > 0;
+            num /= 10000;
+            unitPos++;
+        }
+        return result.toString();
+    }
+
+    private static String convertSectionToChinese(int section) {
+        StringBuilder sectionChinese = new StringBuilder();
+        int unitPos = 0; // 小单位位置
+        boolean zero = true; // 标记零
+        while (section > 0) {
+            int digit = section % 10;
+            if (digit == 0) {
+                if (!zero) {
+                    zero = true;
+                    sectionChinese.insert(0, numerals[0]);
+                }
+            } else {
+                zero = false;
+                sectionChinese.insert(0, numerals[digit] + units[unitPos]);
+            }
+            unitPos++;
+            section /= 10;
+        }
+        return sectionChinese.toString();
+    }
+
+    private static String convertDecimalToChinese(int decimal) {
+        StringBuilder result = new StringBuilder();
+        int jiao = decimal / 10;
+        int fen = decimal % 10;
+        if (jiao == 0 && fen == 0) {
+            return "";
+        }
+        if (jiao != 0) {
+            result.append(numerals[jiao]).append(decimals[0]);
+        }
+        if (fen != 0) {
+            result.append(numerals[fen]).append(decimals[1]);
+        }
+        return result.toString();
     }
 
     private static Calendar calendarDay(int what) {

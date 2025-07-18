@@ -100,4 +100,40 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     double queryCostSubtotal(Map<String, Object> map1222);
 
     List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object> map2);
+
+    Integer queryDepOrdersAcountByDepGoods(Map<String, Object> mapDep);
+
+    List<NxDistributerGoodsShelfEntity> queryShelfGoodsOrder(Map<String, Object> map);
+
+    Integer queryReturnOrderCount(Map<String, Object> map);
+
+    double queryReturnSubtotal(Map<String, Object> mapR);
+
+    List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1);
+
+    NxDepartmentOrdersEntity queryNxOrderByGbOrderId(Integer gbDoNxDepartmentOrderId);
+
+    int insertFromOrder(Integer nxDepartmentOrdersId);
+
+    NxDepartmentOrdersEntity queryHistoryOrderId(Integer orderId);
+
+    int insertToOrder(Integer orderId);
+
+    List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map);
+
+    List<Map<String, Object>> batchQueryDepStats(List<Integer> depIds);
+
+    List<Map<String, Object>> batchQueryGbDepStats(List<Integer> gbDepIds);
+
+    List<Map<String, Object>> batchQueryDepartmentStats(List<Integer> depIds);
+
+    List<Map<String, Object>> batchQueryGbDepartmentStats(List<Integer> gbDepIds);
+
+    int queryLinshiGoodsCount(Map<String, Object> countParams);
+
+
+    List<Integer> queryGoodsIds(Map<String, Object> map);
+
+
+    List<Integer> queryOnlyNxGoodsIds(Map<String, Object> map);
 }

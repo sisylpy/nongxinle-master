@@ -9,13 +9,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.utils.Constant;
 import com.nongxinle.utils.UploadFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -48,10 +46,7 @@ import static com.nongxinle.utils.PinYin4jUtils.*;
 public class NxGoodsController {
     @Autowired
     private NxGoodsService nxGoodsService;
-    @Autowired
-    private NxCommunityGoodsService nxCommunityGoodsService;
-    @Autowired
-    private NxStandardService standardService;
+
     @Autowired
     private NxDistributerGoodsService nxDistributerGoodsService;
     @Autowired
@@ -67,8 +62,6 @@ public class NxGoodsController {
     @Autowired
     private GbDistributerFatherGoodsService gbDisFatherGoodsService;
     @Autowired
-    private NxDistributerService nxDistributerService;
-    @Autowired
     private GbDistributerStandardService dsService;
     @Autowired
     private GbDepartmentOrdersService depOrdersService;
@@ -77,7 +70,142 @@ public class NxGoodsController {
     @Autowired
     private GbDepartmentDisGoodsService gbDepDisGoodsService;
     @Autowired
-    private NxDistributerFatherGoodsService nxDistributerFatherGoodsService;;
+    private NxDistributerFatherGoodsService nxDistributerFatherGoodsService;
+
+
+
+
+
+    @RequestMapping(value = "/getNxGoodsIdsByGreatId/{id}")
+    @ResponseBody
+    public R getNxGoodsIdsByGreatId(@PathVariable Integer id) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("isHidden", 0);
+        map.put("greatGrandId", id);
+        System.out.println("mapapapaa" + map);
+        List<Integer > departmentDisGoodsEntities =   nxGoodsService.queryOnlyGoodsIds(map);
+
+        return R.ok().put("data",departmentDisGoodsEntities);
+    }
+
+    /**
+     * @param searchStr 搜索字符串F
+     * @param disId     批发商id
+     * @return 搜索结果 queryGbDepartmentGoodsByQuickSearchGb
+     */
+    @RequestMapping(value = "/queryDepDisGoodsByQuickSearchGb", method = RequestMethod.POST)
+    @ResponseBody
+    public R queryDepDisGoodsByQuickSearchGb(String searchStr, Integer disId, String depId) {
+
+        Map<String, Object> map3 = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
+        map.put("gbDepId", depId);
+        map.put("gbDisId", disId);
+        map.put("isHidden", 0);
+        Map<String, Object> mapD = new HashMap<>();
+        for (int i = 0; i < searchStr.length(); i++) {
+            String str = searchStr.substring(i, i + 1);
+            if (str.matches("[\u4E00-\u9FFF]")) {
+                String pinyin = hanziToPinyin(searchStr);
+                map.put("searchStr", searchStr);
+                mapD.put("searchStr", searchStr);
+                map.put("searchPinyin", pinyin);
+                mapD.put("searchPinyin", pinyin);
+            } else {
+                map.put("searchPinyin", searchStr);
+                mapD.put("searchPinyin", searchStr);
+            }
+        }
+
+        mapD.put("depId",depId);
+        mapD.put("pull", 0);
+        mapD.put("date", formatWhatDay(0));
+        System.out.println("deppddpdpdpmapDmapD" + mapD);
+        TreeSet<GbDepartmentDisGoodsEntity> disGoodsEntityTreeSet = gbDepDisGoodsService.queryDepDisGoodsQuickSearchStrGb(mapD);
+        map3.put("dep", disGoodsEntityTreeSet);
+
+        List<NxGoodsEntity> equalEntitiesEx = nxGoodsService.queryDisGoodsEqualSearchStrWithDepOrders(map);
+        List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryDisGoodsQuickSearchStrWithDepOrders(map);
+        List<NxGoodsEntity> nxGoodsEntitiesPyin = nxGoodsService.queryDisGoodsQuickSearchPyWithDepOrders(map);
+
+        nxGoodsEntities.removeAll(equalEntitiesEx);
+        System.out.println("nxGoodsEntities=" + nxGoodsEntities.size());
+
+        nxGoodsEntitiesPyin.removeAll(equalEntitiesEx);
+        nxGoodsEntitiesPyin.removeAll(nxGoodsEntities);
+        System.out.println("nxGoodsEntities=" + nxGoodsEntities.size());
+        System.out.println("nxGoodsEntities=" + nxGoodsEntities.size());
+
+// 创建一个新的列表，并按顺序合并
+        List<NxGoodsEntity> combinedList = new ArrayList<>();
+        combinedList.addAll(equalEntitiesEx); // 先添加 equalEntitiesEx
+        combinedList.addAll(nxGoodsEntities); // 再添加 nxGoodsEntities
+        nxGoodsEntitiesPyin.removeAll(combinedList);
+        combinedList.addAll(nxGoodsEntitiesPyin);
+        map3.put("dis", combinedList);
+        return R.ok().put("data", map3);
+    }
+
+
+    @RequestMapping(value = "/gbDepGetNxFatherGoodsByGrandId", method = RequestMethod.POST)
+    @ResponseBody
+    public R gbDepGetNxFatherGoodsByGrandId(Integer depId, Integer fatherId, Integer disId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("gbDepId", depId);
+        map.put("grandId", fatherId);
+        map.put("isHidden", 0);
+        map.put("gbDisId", disId);
+        System.out.println("whatissiisisi" + map);
+        List<NxGoodsEntity> distributerGoodsEntities = nxGoodsService.queryGbDepNxGrandGoodsByGreatIdAll(map);
+
+        return R.ok().put("data", distributerGoodsEntities);
+    }
+
+
+    @RequestMapping(value = "/gbDepGetNxFatherGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R gbDepGetNxFatherGoods(Integer depId, Integer fatherId, Integer limit, Integer page, Integer disId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("gbDisId", disId);
+        if(depId != -1){
+            map.put("gbDepId", depId);
+        }
+        map.put("grandId", fatherId);
+        map.put("isHidden", 0);
+        map.put("offset", (page - 1) * limit);
+        map.put("limit", limit);
+        System.out.println("mapapappappapapa11111" + map);
+        List<NxGoodsEntity> distributerGoodsEntities = nxGoodsService.queryGbDepNxGrandGoodsByGreatId(map);
+
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("greatGrandId", fatherId);
+        mapCount.put("isHidden", 0);
+
+        int total = nxGoodsService.queryTotalByParams(mapCount);
+        PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
+
+        return R.ok().put("page", pageUtil);
+    }
+
+
+    @RequestMapping(value = "/gbDepGetNxCataGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R gbDepGetNxCataGoods() {
+
+        List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.getiBookCoverData();
+        Map<String, Object> map = new HashMap<>();
+        map.put("isHidden", 0);
+        Integer nxGoodsId = nxGoodsEntities.get(0).getNxGoodsId();
+        map.put("greatGrandId", nxGoodsId);
+        List<Integer > departmentDisGoodsEntities =   nxGoodsService.queryOnlyGoodsIds(map);
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("cataArr",nxGoodsEntities);
+        mapR.put("depGoodsArr", departmentDisGoodsEntities);
+        return R.ok().put("data", mapR);
+
+    }
+
 
 
     @RequestMapping(value = "/updateNxGoodsSort", method = RequestMethod.POST)
@@ -95,6 +223,16 @@ public class NxGoodsController {
                 }
             }
 
+            //gbDisFather
+            List<GbDistributerFatherGoodsEntity> fatherGoodsEntitiesG = gbDisFatherGoodsService.queryDisFathersGoodsByNxGoodsId(fatherGoods.getNxGoodsId());
+            if(fatherGoodsEntities.size() > 0){
+                for(GbDistributerFatherGoodsEntity distributerFatherGoodsEntity: fatherGoodsEntitiesG){
+                    distributerFatherGoodsEntity.setGbDfgFatherGoodsSort(fatherGoods.getNxGoodsSort());
+                    gbDisFatherGoodsService.update(distributerFatherGoodsEntity);
+                }
+
+            }
+
 
             List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.querySubNameByFatherId(fatherGoods.getNxGoodsId());
             if(nxGoodsEntities.size() > 0){
@@ -105,72 +243,61 @@ public class NxGoodsController {
                     if(nxDistributerGoodsEntities.size() > 0){
                         for(NxDistributerGoodsEntity distributerGoodsEntity: nxDistributerGoodsEntities){
                             distributerGoodsEntity.setNxDgGoodsSort(goodsEntity.getNxGoodsSort());
+                            distributerGoodsEntity.setNxDgGoodsSonsSort(goodsEntity.getNxGoodsSonsSort());
                             nxDistributerGoodsService.update(distributerGoodsEntity);
                         }
                     }
 
-                }
-            }
-        }
-        return R.ok();
-    }
-
-
-    @RequestMapping(value = "/abcdef")
-    @ResponseBody
-    public R abcde() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", 2);
-        map.put("nxGreatGrandFatherId", 1);
-        List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = nxDistributerGoodsService.queryDisGoodsByParams(map);
-
-        if(nxDistributerGoodsEntities.size() > 0){
-            System.out.println("dnensize" + nxDistributerGoodsEntities.size());
-            for(NxDistributerGoodsEntity distributerGoodsEntity: nxDistributerGoodsEntities){
-                Integer nxDgNxGoodsId = distributerGoodsEntity.getNxDgNxGoodsId();
-                Map<String, Object> mapO = new HashMap<>();
-                mapO.put("nxGoodsId", nxDgNxGoodsId);
-                mapO.put("arriveDate", formatWhatDay(-4));
-                mapO.put("depId", 1);
-                System.out.println("map0" + mapO);
-                List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(mapO);
-                String price = "";
-                if(ordersEntities.size() >  0){
-                    price = ordersEntities.get(0).getNxDoPrice();
-
-                }else {
-                    mapO.put("depId", 2);
-                    List<NxDepartmentOrdersEntity> ordersEntities2 = nxDepartmentOrdersService.queryDisOrdersByParams(mapO);
-                    if(ordersEntities2.size() > 0){
-                        price = ordersEntities2.get(0).getNxDoPrice();
-                    }else{
-                        mapO.put("depId", 3);
-                        List<NxDepartmentOrdersEntity> ordersEntities3 = nxDepartmentOrdersService.queryDisOrdersByParams(mapO);
-                        if(ordersEntities3.size() > 0){
-                            price = ordersEntities3.get(0).getNxDoPrice();
-                        } else{
-                            mapO.put("depId", 4);
-                            List<NxDepartmentOrdersEntity> ordersEntities4 = nxDepartmentOrdersService.queryDisOrdersByParams(mapO);
-                            if(ordersEntities4.size() > 0){
-                                price = ordersEntities4.get(0).getNxDoPrice();
-                            }
+                    //gbGoods
+                    List<GbDistributerGoodsEntity> gbDistributerGoodsEntities = gbDistributerGoodsService.querydisGoodsByNxGoodsId(goodsEntity.getNxGoodsId());
+                    if(gbDistributerGoodsEntities.size() > 0){
+                        for(GbDistributerGoodsEntity gbDistributerGoodsEntity: gbDistributerGoodsEntities){
+                            gbDistributerGoodsEntity.setGbDgGoodsSort(goodsEntity.getNxGoodsSort());
+                            gbDistributerGoodsEntity.setGbDgGoodsSonsSort(goodsEntity.getNxGoodsSonsSort());
+                            gbDistributerGoodsService.update(gbDistributerGoodsEntity);
                         }
                     }
                 }
-                if(price.length() > 0){
-                    distributerGoodsEntity.setNxDgPriceThirdDay(price);
-                }
-//                else{
-//                    distributerGoodsEntity.setNxDgPriceFirstDay("0.1");
-//                }
-                nxDistributerGoodsService.update(distributerGoodsEntity);
-
-
             }
-        }
 
+        }
         return R.ok();
     }
+
+
+//
+//
+//    @RequestMapping(value = "/changeNxGoodsSort", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R changeNxGoodsSort(@RequestBody NxGoodsEntity fatherGoods) {
+//            nxGoodsService.update(fatherGoods);
+//
+//            //nxDisFather
+//            List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByNxGoodsId(fatherGoods.getNxGoodsId());
+//            if(fatherGoodsEntities.size() > 0){
+//                for(NxDistributerFatherGoodsEntity distributerFatherGoodsEntity: fatherGoodsEntities){
+//                    distributerFatherGoodsEntity.setNxDfgFatherGoodsSort(fatherGoods.getNxGoodsSort());
+//                    nxDFatherGoodsService.update(distributerFatherGoodsEntity);
+//                }
+//            }
+//
+//            List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.querySubNameByFatherId(fatherGoods.getNxGoodsId());
+//            if(nxGoodsEntities.size() > 0){
+//                for(NxGoodsEntity goodsEntity: nxGoodsEntities){
+//                    goodsEntity.setNxGoodsSort(fatherGoods.getNxGoodsSort());
+//                    nxGoodsService.update(goodsEntity);
+//                    List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(goodsEntity.getNxGoodsId());
+//                    if(nxDistributerGoodsEntities.size() > 0){
+//                        for(NxDistributerGoodsEntity distributerGoodsEntity: nxDistributerGoodsEntities){
+//                            distributerGoodsEntity.setNxDgGoodsSort(goodsEntity.getNxGoodsSort());
+//                            nxDistributerGoodsService.update(distributerGoodsEntity);
+//                        }
+//                    }
+//
+//                }
+//            }
+//        return R.ok();
+//    }
 
 
     @RequestMapping(value = "/getIbookFathers")
@@ -221,23 +348,6 @@ public class NxGoodsController {
         return R.ok().put("page", pageUtil);
     }
 
-    /**
-     * 删除nxGoods
-     *
-     * @param goodsId goodsId
-     * @return ok
-     */
-    @RequestMapping(value = "/deleteGoods/{goodsId}")
-    @ResponseBody
-    public R deleteGoods(@PathVariable Integer goodsId) {
-
-
-        nxGoodsService.delete(goodsId);
-
-        return R.ok();
-
-    }
-
 
     /**
      * 删除nxGoods
@@ -251,7 +361,7 @@ public class NxGoodsController {
 
         Map<String, Object> map4 = new HashMap<>();
         map4.put("nxGoodsId", goodsId);
-        Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map4);
+        int integer = nxDistributerGoodsService.queryDisGoodsTotal(map4);
         if(integer == 0){
             NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(goodsId);
             Integer nxGoodsFatherId = nxGoodsEntity.getNxGoodsFatherId();
@@ -264,178 +374,16 @@ public class NxGoodsController {
                     nxGoodsService.delete(father.getNxGoodsId());
                 }
             }
-
-            //nxDisGoods
-//            List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(goodsId);
-//            if (nxDistributerGoodsEntities.size() > 0) {
-//                for (NxDistributerGoodsEntity nxDistributerGoodsEntity : nxDistributerGoodsEntities) {
-//                    Integer nxDgDistributerId = nxDistributerGoodsEntity.getNxDgDistributerId();
-//                    Integer nxDgDfgGoodsFatherId = nxDistributerGoodsEntity.getNxDgDfgGoodsFatherId();
-//                    Integer distributerGoodsId = nxDistributerGoodsEntity.getNxDistributerGoodsId();
-//                    canclePostDgnGoods(distributerGoodsId, nxDgDfgGoodsFatherId, nxDgDistributerId);
-//                }
-//            }
-
             nxGoodsService.delete(goodsId);
 
             }else {
-                return R.error(-1,"有订单");
-
+                return R.error(-1,"已在使用中");
             }
-
-
-            //gbDisGoods
-//            List<GbDistributerGoodsEntity> distributerGoodsEntities = gbDistributerGoodsService.querydisGoodsByNxGoodsId(goodsId);
-//            if (distributerGoodsEntities.size() > 0) {
-//                for (GbDistributerGoodsEntity gbDistributerGoodsEntity : distributerGoodsEntities) {
-//                    Integer gbDgDistributerId = gbDistributerGoodsEntity.getGbDgDistributerId();
-//                    Integer gbDgDfgGoodsFatherId = gbDistributerGoodsEntity.getGbDgDfgGoodsFatherId();
-//                    Integer gbDistributerGoodsId = gbDistributerGoodsEntity.getGbDistributerGoodsId();
-//                     canclePostDgnGoodsGb(gbDistributerGoodsId, gbDgDfgGoodsFatherId, gbDgDistributerId);
-//                }
-//            }
-
-
 
             return R.ok();
-
     }
 
 
-    public void canclePostDgnGoods(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {
-        //判断此商品下是否有客户
-
-
-            Map<String, Object> map1 = new HashMap<>();
-            map1.put("disId", disId);
-            map1.put("dgFatherId", disGoodsFatherId);
-            //搜索fatherId下有几个disGoods
-            List<NxDistributerGoodsEntity> totalDisGoods = nxDistributerGoodsService.queryDisGoodsByParams(map1);
-            //如果disGoods的父类只有一个商品
-            if (totalDisGoods.size() == 1) {
-                //父类Entity
-                NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = nxDFatherGoodsService.queryObject(disGoodsFatherId);
-                //disGoods的grandId
-                Integer grandId = nxDistributerFatherGoodsEntity.getNxDfgFathersFatherId();
-                Map<String, Object> mapGrand = new HashMap<>();
-                mapGrand.put("fathersFatherId", grandId);
-                mapGrand.put("disId", disId);
-                //搜索grand有几个兄弟
-                List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByParams(mapGrand);
-                if (fatherGoodsEntities.size() == 1) {
-                    Integer nxDfgFathersFatherId = fatherGoodsEntities.get(0).getNxDfgFathersFatherId();
-                    NxDistributerFatherGoodsEntity grandEntity = nxDFatherGoodsService.queryObject(nxDfgFathersFatherId);
-                    Integer greatGrandId = grandEntity.getNxDfgFathersFatherId();
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("disId", disId);
-                    map.put("fathersFatherId", greatGrandId);
-                    List<NxDistributerFatherGoodsEntity> grandGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByParams(map);
-
-                    //如果grandFather也是只有一个，则删除greatGrandFather
-                    if (grandGoodsEntities.size() == 1) {
-                        nxDFatherGoodsService.delete(greatGrandId);
-                    }
-                    nxDFatherGoodsService.delete(grandId);
-                }
-                nxDFatherGoodsService.delete(disGoodsFatherId);
-            } else {
-                //父类商品数量减去1
-                NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = nxDFatherGoodsService.queryObject(disGoodsFatherId);
-                Integer nxDfgGoodsAmount = nxDistributerFatherGoodsEntity.getNxDfgGoodsAmount();
-                nxDistributerFatherGoodsEntity.setNxDfgGoodsAmount(nxDfgGoodsAmount - 1);
-                nxDFatherGoodsService.update(nxDistributerFatherGoodsEntity);
-            }
-
-            //删除订货单位
-            List<NxDistributerStandardEntity> standardEntities = nxDsService.queryDisStandardByDisGoodsId(disGoodsId);
-            if (standardEntities.size() > 0) {
-                for (NxDistributerStandardEntity disStandard : standardEntities) {
-                    dsService.delete(disStandard.getNxDistributerStandardId());
-                }
-            }
-
-             nxDistributerGoodsService.delete(disGoodsId);
-
-    }
-
-
-    public int canclePostDgnGoodsGb(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {
-        Map<String, Object> map5 = new HashMap<>();
-        map5.put("disGoodsId", disGoodsId);
-        List<GbDepartmentOrdersEntity> ordersEntities = depOrdersService.queryDisOrdersByParams(map5);
-
-        List<GbDepartmentGoodsStockEntity> gbDepGoodsStockEntities = gbDepGoodsStockService.queryGoodsStockByParams(map5);
-
-        Map<String, Object> mapDisGoods = new HashMap<>();
-        mapDisGoods.put("disGoodsId", disGoodsId);
-        mapDisGoods.put("depType", getGbDepartmentTypeMendian());
-        List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepDisGoodsService.queryGbDepDisGoodsByParams(mapDisGoods);
-
-        if (ordersEntities.size() > 0 || gbDepGoodsStockEntities.size() > 0 || departmentDisGoodsEntities.size() > 0) {
-            return 1;
-        } else {
-
-            GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity = gbDisFatherGoodsService.queryObject(disGoodsFatherId);
-            Integer gbDfgGoodsAmount = gbDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
-            gbDistributerFatherGoodsEntity.setGbDfgGoodsAmount(gbDfgGoodsAmount - 1);
-            gbDisFatherGoodsService.update(gbDistributerFatherGoodsEntity);
-
-
-            Map<String, Object> map1 = new HashMap<>();
-            map1.put("disId", disId);
-            map1.put("dgFatherId", disGoodsFatherId);
-            //搜索fatherId下有几个disGoods
-            List<GbDistributerGoodsEntity> totalDisGoods = gbDistributerGoodsService.queryDisGoodsByParams(map1);
-            //如果disGoods的父类只有一个商品
-            if (totalDisGoods.size() == 1) {
-                //父类Entity
-                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity0 = gbDisFatherGoodsService.queryObject(disGoodsFatherId);
-                //disGoods的grandId
-                Integer grandId = gbDistributerFatherGoodsEntity0.getGbDfgFathersFatherId();
-                Map<String, Object> mapGrand = new HashMap<>();
-                mapGrand.put("fathersFatherId", grandId);
-                //搜索grand有几个兄弟
-                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(mapGrand);
-                if (fatherGoodsEntities.size() == 1) {
-                    Integer gbDfgFathersFatherId = fatherGoodsEntities.get(0).getGbDfgFathersFatherId();
-                    GbDistributerFatherGoodsEntity grandEntity = gbDisFatherGoodsService.queryObject(gbDfgFathersFatherId);
-                    Integer greatGrandId = grandEntity.getGbDfgFathersFatherId();
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("fathersFatherId", greatGrandId);
-                    List<GbDistributerFatherGoodsEntity> grandGoodsEntities = gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(map);
-
-                    //如果grandFather也是只有一个，则删除greatGrandFather
-                    if (grandGoodsEntities.size() == 1) {
-                        gbDisFatherGoodsService.delete(greatGrandId);
-                    }
-                    gbDisFatherGoodsService.delete(grandId);
-                }
-                gbDisFatherGoodsService.delete(disGoodsFatherId);
-            } else {
-                //父类商品数量减去1
-                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity1 = gbDisFatherGoodsService.queryObject(disGoodsFatherId);
-                Integer gbDfgGoodsAmount1 = gbDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
-                gbDistributerFatherGoodsEntity.setGbDfgGoodsAmount(gbDfgGoodsAmount1 - 1);
-                gbDisFatherGoodsService.update(gbDistributerFatherGoodsEntity1);
-            }
-
-            //删除订货单位
-            List<GbDistributerStandardEntity> standardEntities = dsService.queryDisStandardByDisGoodsIdGb(disGoodsId);
-            if (standardEntities.size() > 0) {
-                for (GbDistributerStandardEntity disStandard : standardEntities) {
-                    gbDisFatherGoodsService.delete(disStandard.getGbDistributerStandardId());
-                }
-            }
-            int i = gbDistributerGoodsService.delete(disGoodsId);
-            if (i == 1) {
-                return 0;
-            } else {
-                return 1;
-            }
-
-        }
-
-    }
 
     @RequestMapping(value = "/delteNxFather/{id}")
     @ResponseBody
@@ -443,15 +391,15 @@ public class NxGoodsController {
         List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.querySubNameByFatherId(id);
         if(nxGoodsEntities.size() > 0){
             return R.error(-1,"有子商品");
-        }else{
+        }else {
             List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByNxGoodsId(id);
-            if(fatherGoodsEntities.size() > 0){
-                for(NxDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
+            if (fatherGoodsEntities.size() > 0) {
+                for (NxDistributerFatherGoodsEntity fatherGoodsEntity : fatherGoodsEntities) {
                     nxDFatherGoodsService.delete(fatherGoodsEntity.getNxDistributerFatherGoodsId());
                 }
             }
             nxGoodsService.delete(id);
-            return R.ok(); 
+            return R.ok();
         }
 
     }
@@ -611,6 +559,7 @@ public class NxGoodsController {
     @ResponseBody
     public R saveNxGoods(@RequestBody NxGoodsEntity goods) {
 
+
         String goodsName = goods.getNxGoodsName();
         String nxGoodsDetail = goods.getNxGoodsDetail();
         String nxGoodsBrand = goods.getNxGoodsBrand();
@@ -642,36 +591,13 @@ public class NxGoodsController {
             goods.setNxGoodsPinyin(pinyin);
             goods.setNxGoodsPy(headPinyin);
             goods.setNxGoodsLevel(3);
+            Integer nxGoodsGrandId = goods.getNxGoodsGrandId();
+            NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxGoodsGrandId);
+            goods.setNxGoodsGreatGrandId(nxGoodsEntity.getNxGoodsFatherId());
             goods.setNxGoodsFile("goodsImage/logo.jpg");
+            System.out.println("savnemxgoods " + goods);
             nxGoodsService.save(goods);
 
-            //addDisGoodsForDistributer
-//            List<NxDistributerEntity> distributerEntities = nxDistributerService.queryAllTypeOne();
-//            if (distributerEntities.size() > 0) {
-//                for (NxDistributerEntity distributerEntity : distributerEntities) {
-//                    Integer nxDistributerId = distributerEntity.getNxDistributerId();
-//
-//                    //disGoods
-//                    NxDistributerGoodsEntity addNxGoods = new NxDistributerGoodsEntity();
-//                    addNxGoods.setNxDgDistributerId(nxDistributerId);
-//                    addNxGoods.setNxDgNxGoodsId(goods.getNxGoodsId());
-//                    addNxGoods.setNxDgNxFatherId(goods.getNxGoodsFatherId());
-//                    addNxGoods.setNxDgNxGrandId(goods.getNxGoodsGrandId());
-//                    addNxGoods.setNxDgGoodsFile(goods.getNxGoodsFile());
-//                    addNxGoods.setNxDgNxFatherImg(goods.getNxGoodsFile());
-//                    addNxGoods.setNxDgBuyingPrice("0.1");
-//                    addNxGoods.setNxDgWillPrice("0.1");
-//                    addNxGoods.setNxDgPriceFirstDay("0.1");
-//                    addNxGoods.setNxDgPriceSecondDay("0.1");
-//                    addNxGoods.setNxDgPriceThirdDay("0.1");
-//                    addNxGoods.setNxDgBuyingPriceIsGrade(0);
-//                    addNxGoods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
-//                    addNxGoods.setNxDgNxFatherImg(goods.getNxGoodsFile());
-//                    System.out.println("faididi" + addNxGoods.getNxDgNxFatherId());
-//                    saveDisGoods(addNxGoods);
-//                }
-//
-//            }
             Map<String, Object> mapR = new HashMap<>();
             mapR.put("haveSame", -1);
             mapR.put("arr", nxGoodsService.queryObject(goods.getNxGoodsId()));
@@ -748,7 +674,6 @@ public class NxGoodsController {
                     fatherGoods.setNxGoodsId(i + 1);
                     nxGoodsService.save(fatherGoods);
 
-
                     String headPinyin = getHeadStringByString(englishKuohao, false, null);
                     goods.setNxGoodsName(englishKuohao);
                     goods.setNxGoodsPinyin(pinyin);
@@ -757,34 +682,14 @@ public class NxGoodsController {
                     goods.setNxGoodsFile("goodsImage/logo.jpg");
                     goods.setNxGoodsFatherId(fatherGoods.getNxGoodsId());
                     goods.setNxGoodsIsOldestSon(1);
+                    goods.setNxGoodsIsHidden(0);
+                    Integer nxGoodsGrandId = goods.getNxGoodsGrandId();
+                    NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxGoodsGrandId);
+                    goods.setNxGoodsGreatGrandId(nxGoodsEntity.getNxGoodsFatherId());
+
+                    System.out.println("saveNxGoodsWithFathersaveNxGoodsWithFather" + goods);
                     nxGoodsService.save(goods);
 
-                    //addDisGoodsForDistributer
-//                    List<NxDistributerEntity> distributerEntities = nxDistributerService.queryAllTypeOne();
-//                    if (distributerEntities.size() > 0) {
-//                        for (NxDistributerEntity distributerEntity : distributerEntities) {
-//                            Integer nxDistributerId = distributerEntity.getNxDistributerId();
-//
-//                            //disGoods
-//                            NxDistributerGoodsEntity addNxGoods = new NxDistributerGoodsEntity();
-//                            addNxGoods.setNxDgDistributerId(nxDistributerId);
-//                            addNxGoods.setNxDgNxGoodsId(goods.getNxGoodsId());
-//                            addNxGoods.setNxDgNxFatherId(goods.getNxGoodsFatherId());
-//                            addNxGoods.setNxDgNxGrandId(goods.getNxGoodsGrandId());
-//                            addNxGoods.setNxDgGoodsFile(goods.getNxGoodsFile());
-//                            addNxGoods.setNxDgNxFatherImg(goods.getNxGoodsFile());
-//                            addNxGoods.setNxDgBuyingPrice("0.1");
-//                            addNxGoods.setNxDgWillPrice("0.1");
-//                            addNxGoods.setNxDgPriceFirstDay("0.1");
-//                            addNxGoods.setNxDgPriceSecondDay("0.1");
-//                            addNxGoods.setNxDgPriceThirdDay("0.1");
-//                            addNxGoods.setNxDgBuyingPriceIsGrade(0);
-//                            addNxGoods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
-//                            addNxGoods.setNxDgNxFatherImg(goods.getNxGoodsFile());
-//                            addNxGoods.setNxDgGoodsIsHidden(0);
-//                            saveDisGoods(addNxGoods);
-//                        }
-//                    }
                     Map<String, Object> mapR = new HashMap<>();
                     mapR.put("haveSame", 0);
                     mapR.put("arr", nxGoodsService.queryObject(goods.getNxGoodsId()));
@@ -792,191 +697,6 @@ public class NxGoodsController {
                 }
             }
         }
-    }
-
-    private NxDistributerGoodsEntity saveDisGoods(NxDistributerGoodsEntity cgnGoods) {
-        Integer nxDgNxGoodsId = cgnGoods.getNxDgNxGoodsId();
-        NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxDgNxGoodsId);
-        cgnGoods.setNxDgGoodsName(nxGoodsEntity.getNxGoodsName());
-        cgnGoods.setNxDgGoodsStandardname(nxGoodsEntity.getNxGoodsStandardname());
-        cgnGoods.setNxDgGoodsDetail(nxGoodsEntity.getNxGoodsDetail());
-        cgnGoods.setNxDgGoodsPlace(nxGoodsEntity.getNxGoodsPlace());
-        cgnGoods.setNxDgGoodsBrand(nxGoodsEntity.getNxGoodsBrand());
-        cgnGoods.setNxDgGoodsStandardWeight(nxGoodsEntity.getNxGoodsStandardWeight());
-        cgnGoods.setNxDgGoodsPinyin(nxGoodsEntity.getNxGoodsPinyin());
-        cgnGoods.setNxDgGoodsPy(nxGoodsEntity.getNxGoodsPy());
-        cgnGoods.setNxDgPullOff(0);
-        cgnGoods.setNxDgGoodsStatus(0);
-        cgnGoods.setNxStandardEntities(nxGoodsEntity.getNxGoodsStandardEntities());
-        cgnGoods.setNxDistributerAliasEntities(nxGoodsEntity.getNxDistributerAliasEntities());
-        cgnGoods.setNxDgNxFatherId(nxGoodsEntity.getNxGoodsFatherId());
-        cgnGoods.setNxDgNxFatherName(nxGoodsEntity.getFatherGoods().getNxGoodsName());
-        cgnGoods.setNxDgNxFatherImg(nxGoodsEntity.getFatherGoods().getNxGoodsFile());
-        cgnGoods.setNxDgNxGrandName(nxGoodsEntity.getGrandGoods().getNxGoodsName());
-        cgnGoods.setNxDgNxGrandId(nxGoodsEntity.getGrandGoods().getNxGoodsId());
-        cgnGoods.setNxDgGoodsFile(nxGoodsEntity.getNxGoodsFile());
-        cgnGoods.setNxDgNxFatherImg(nxGoodsEntity.getNxGoodsFile());
-        cgnGoods.setNxDgGoodsSort(nxGoodsEntity.getNxGoodsSort());
-        cgnGoods.setNxDgGoodsSonsSort(nxGoodsEntity.getNxGoodsSonsSort());
-        cgnGoods.setNxDgPurchaseAuto(-1);
-        cgnGoods.setNxDgIsOldestSon(nxGoodsEntity.getNxGoodsIsOldestSon());
-
-        //queryGrandFatherId
-        NxGoodsEntity fatherEntity = nxGoodsService.queryObject(cgnGoods.getNxDgNxFatherId());
-        Integer grandFatherId = fatherEntity.getNxGoodsFatherId();
-        cgnGoods.setNxDgNxGrandId(grandFatherId);
-        NxGoodsEntity grandEntity = nxGoodsService.queryObject(grandFatherId);
-        cgnGoods.setNxDgNxGrandName(grandEntity.getNxGoodsName());
-
-
-        //queryGreatGrandFatherId
-        Integer greatGrandFatherId = grandEntity.getNxGoodsFatherId();
-        if (greatGrandFatherId.equals(1)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#20afb8");
-        }
-        if (greatGrandFatherId.equals(2)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#f5c832");
-        }
-        if (greatGrandFatherId.equals(3)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#3cc36e");
-        }
-        if (greatGrandFatherId.equals(4)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#f09628");
-        }
-        if (greatGrandFatherId.equals(5)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#1ebaee");
-        }
-        if (greatGrandFatherId.equals(6)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#f05a32");
-        }
-        if (greatGrandFatherId.equals(7)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#c0a6dd");
-        }
-        if (greatGrandFatherId.equals(8)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#969696");
-        }
-        if (greatGrandFatherId.equals(9)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#318666");
-        }
-        if (greatGrandFatherId.equals(10)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#026bc2");
-        }
-        if (greatGrandFatherId.equals(11)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#06eb6d");
-        }
-        if (greatGrandFatherId.equals(12)) {
-            cgnGoods.setNxDgNxGoodsFatherColor("#0690eb");
-        }
-
-        cgnGoods.setNxDgNxGreatGrandId(greatGrandFatherId);
-        cgnGoods.setNxDgNxGreatGrandName(nxGoodsService.queryObject(greatGrandFatherId).getNxGoodsName());
-
-        Integer nxDgDistributerId = cgnGoods.getNxDgDistributerId();
-
-        // 3， 查询父类
-        Integer nxDgNxFatherId = cgnGoods.getNxDgNxFatherId();
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", nxDgDistributerId);
-        map.put("nxFatherId", nxDgNxFatherId);
-        List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = nxDistributerGoodsService.queryDisGoodsByParams(map);
-
-        if (nxDistributerGoodsEntities.size() > 0) {
-
-            NxDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsEntities.get(0);
-
-            //直接加disGoods和disStandard,不需要加disFatherGoods
-            //1，给父类商品的字段商品数量加1
-            Integer nxDgDfgGoodsFatherId1 = disGoodsEntity.getNxDgDfgGoodsFatherId();
-            Integer nxDgDfgGoodsGrandId = disGoodsEntity.getNxDgDfgGoodsGrandId();
-
-            NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = nxDFatherGoodsService.queryObject(nxDgDfgGoodsFatherId1);
-            Integer nxDfgGoodsAmount = nxDistributerFatherGoodsEntity.getNxDfgGoodsAmount();
-            nxDistributerFatherGoodsEntity.setNxDfgGoodsAmount(nxDfgGoodsAmount + 1);
-            nxDFatherGoodsService.update(nxDistributerFatherGoodsEntity);
-
-            //2，保存disId商品
-            Integer nxDgDfgGoodsFatherId = disGoodsEntity.getNxDgDfgGoodsFatherId();
-            cgnGoods.setNxDgDfgGoodsFatherId(nxDgDfgGoodsFatherId);
-            cgnGoods.setNxDgDfgGoodsGrandId(nxDgDfgGoodsGrandId);
-            cgnGoods.setNxDgGoodsIsHidden(0);
-
-            //1 ，先保存disGoods
-            nxDistributerGoodsService.save(cgnGoods);
-            //
-        } else {
-            //添加fatherGoods的第一个级别
-            NxDistributerFatherGoodsEntity dgf = new NxDistributerFatherGoodsEntity();
-            dgf.setNxDfgDistributerId(cgnGoods.getNxDgDistributerId());
-            dgf.setNxDfgFatherGoodsName(cgnGoods.getNxDgNxFatherName());
-            dgf.setNxDfgFatherGoodsLevel(2);
-            dgf.setNxDfgGoodsAmount(1);
-            dgf.setNxDfgFatherGoodsImg(cgnGoods.getNxDgNxFatherImg());
-            dgf.setNxDfgFatherGoodsColor(cgnGoods.getNxDgNxGoodsFatherColor());
-            dgf.setNxDfgNxGoodsId(cgnGoods.getNxDgNxFatherId());
-            dgf.setNxDfgFatherGoodsSort(nxGoodsEntity.getNxGoodsSort());
-            nxDFatherGoodsService.save(dgf);
-            //继续查询是否有GrandFather
-            String grandName = cgnGoods.getNxDgNxGrandName();
-            Map<String, Object> map2 = new HashMap<>();
-            map2.put("disId", nxDgDistributerId);
-            map2.put("fathersFatherName", grandName);
-            List<NxDistributerFatherGoodsEntity> grandGoodsFather = nxDFatherGoodsService.queryHasDisFathersFather(map2);
-            if (grandGoodsFather.size() > 0) {
-                NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = grandGoodsFather.get(0);
-                dgf.setNxDfgFathersFatherId(nxDistributerFatherGoodsEntity.getNxDistributerFatherGoodsId());
-                nxDFatherGoodsService.update(dgf);
-                //更新disGoods的fatherGoodsId
-                Integer distributerFatherGoodsId = dgf.getNxDistributerFatherGoodsId();
-                Integer nxDfgFathersFatherId = dgf.getNxDfgFathersFatherId();
-                cgnGoods.setNxDgDfgGoodsFatherId(distributerFatherGoodsId);
-                cgnGoods.setNxDgDfgGoodsGrandId(nxDfgFathersFatherId);
-                nxDistributerGoodsService.save(cgnGoods);
-
-            } else {
-                //tianjiaGrand
-                NxDistributerFatherGoodsEntity grand = new NxDistributerFatherGoodsEntity();
-                String nxCgGrandFatherName = cgnGoods.getNxDgNxGrandName();
-                grand.setNxDfgFatherGoodsName(nxCgGrandFatherName);
-                grand.setNxDfgDistributerId(cgnGoods.getNxDgDistributerId());
-                grand.setNxDfgFatherGoodsLevel(1);
-                grand.setNxDfgFatherGoodsColor(cgnGoods.getNxDgNxGoodsFatherColor());
-                grand.setNxDfgNxGoodsId(cgnGoods.getNxDgNxGrandId());
-                nxDFatherGoodsService.save(grand);
-
-                dgf.setNxDfgFathersFatherId(grand.getNxDistributerFatherGoodsId());
-                nxDFatherGoodsService.update(dgf);
-                //更新disGoods的fatherGoodsId
-                Integer distributerFatherGoodsId = dgf.getNxDistributerFatherGoodsId();
-                Integer nxDfgFathersFatherId = dgf.getNxDfgFathersFatherId();
-                cgnGoods.setNxDgDfgGoodsFatherId(distributerFatherGoodsId);
-                cgnGoods.setNxDgDfgGoodsGrandId(nxDfgFathersFatherId);
-                nxDistributerGoodsService.save(cgnGoods);
-                //查询是否有greatGrand
-                String greatGrandName = cgnGoods.getNxDgNxGreatGrandName();
-                Map<String, Object> map3 = new HashMap<>();
-                map3.put("disId", nxDgDistributerId);
-                map3.put("fathersFatherName", greatGrandName);
-                List<NxDistributerFatherGoodsEntity> greatGrandGoodsFather = nxDFatherGoodsService.queryHasDisFathersFather(map3);
-                if (greatGrandGoodsFather.size() > 0) {
-                    NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = greatGrandGoodsFather.get(0);
-                    Integer disFatherId = nxDistributerFatherGoodsEntity.getNxDistributerFatherGoodsId();
-                    grand.setNxDfgFathersFatherId(disFatherId);
-                    nxDFatherGoodsService.update(grand);
-                } else {
-                    NxDistributerFatherGoodsEntity greatGrand = new NxDistributerFatherGoodsEntity();
-                    String greatGrandName1 = cgnGoods.getNxDgNxGreatGrandName();
-                    greatGrand.setNxDfgFatherGoodsName(greatGrandName1);
-                    greatGrand.setNxDfgDistributerId(cgnGoods.getNxDgDistributerId());
-                    greatGrand.setNxDfgFatherGoodsLevel(0);
-                    greatGrand.setNxDfgFatherGoodsColor(cgnGoods.getNxDgNxGoodsFatherColor());
-                    greatGrand.setNxDfgNxGoodsId(cgnGoods.getNxDgNxGreatGrandId());
-                    nxDFatherGoodsService.save(greatGrand);
-                    grand.setNxDfgFathersFatherId(greatGrand.getNxDistributerFatherGoodsId());
-                    nxDFatherGoodsService.update(grand);
-                }
-            }
-        }
-        return cgnGoods;
     }
 
 
@@ -1026,7 +746,10 @@ public class NxGoodsController {
     public R queryCategoryGoodsWithNxDisByQuickSearch(Integer fatherId, String searchStr,
                                                       Integer disId) {
         Map<String, Object> map = new HashMap<>();
-        map.put("fatherId", fatherId);
+        if(fatherId != -1){
+            map.put("fatherId", fatherId);
+        }
+
         map.put("searchStr", searchStr);
         map.put("disId", disId);
         System.out.println("mapSearchchdhdhdh" + map);
@@ -1034,9 +757,55 @@ public class NxGoodsController {
         return R.ok().put("data", goodsEntities);
     }
 
+    @RequestMapping(value = "/queryNxGoodsWithNxDisByQuickSearch", method = RequestMethod.POST)
+    @ResponseBody
+    public R queryNxGoodsWithNxDisByQuickSearch( String searchStr,Integer disId) {
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("searchStr", searchStr);
+        map.put("disId", disId);
+        System.out.println("mapSearchchdhdhdh" + map);
+        List<NxGoodsEntity> goodsEntities = nxGoodsService.queryQuickSearchNxGoodsWithNxDis(map);
+        if(goodsEntities.size() < 100){
+            return R.ok().put("data", goodsEntities);
+        }else{
+            return R.error(-1,"请继续输入搜索关键词");
+        }
+
+    }
+
+    @RequestMapping(value = "/queryShelfNxGoodsWithNxDisByQuickSearch", method = RequestMethod.POST)
+    @ResponseBody
+    public R queryShelfNxGoodsWithNxDisByQuickSearch( String searchStr,Integer disId) {
+        Map<String, Object> map = new HashMap<>();
+        String pinyinString = searchStr;
+
+        map.put("searchStr", searchStr);
+        map.put("disId", disId);
+        for (int i = 0; i < searchStr.length(); i++) {
+            String str = searchStr.substring(i, i + 1);
+            if (str.matches("[\u4E00-\u9FFF]")) {
+                pinyinString = hanziToPinyin(searchStr);
+            }
+        }
+
+        map.put("pinyinStr", pinyinString);
+        System.out.println("mapSearchchdhdhdh" + map);
+//        List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.queryDisShelfGoodsQuickSearchStr(map);
+
+        List<NxGoodsEntity> goodsEntities = nxGoodsService.queryShelfQuickSearchNxGoodsWithNxDis(map);
+        if(goodsEntities.size() < 100){
+            return R.ok().put("data", goodsEntities);
+        }else{
+            return R.error(-1,"请继续输入搜索关键词");
+        }
+
+    }
+
+
     @RequestMapping(value = "/queryAllGoodsWithNxDisByQuickSearch", method = RequestMethod.POST)
     @ResponseBody
-    public R queryAllGoodsWithNxDisByQuickSearch(String searchStr, Integer type) {
+    public R queryAllGoodsWithNxDisByQuickSearch(String searchStr, Integer type, Integer disId) {
 
         List<NxGoodsEntity> goodsEntities = new ArrayList<>();
         Map<String, Object> map = new HashMap<>();
@@ -1054,7 +823,7 @@ public class NxGoodsController {
             }
         }
 
-//        map.put("disId", disId);
+        map.put("disId", disId);
         System.out.println("qsdafdfadaa" + map);
         if (type == 0) {
             goodsEntities = nxGoodsService.queryQuickSearchFatherGoods(map);
@@ -1088,19 +857,32 @@ public class NxGoodsController {
                 goods.setColor("#3cc36e");
             }
             if (goods.getNxGoodsId().equals(4)) {
-                goods.setColor("#1ebaee");
-            }
-            if (goods.getNxGoodsId().equals(5)) {
                 goods.setColor("#f09628");
             }
+            if (goods.getNxGoodsId().equals(5)) {
+                goods.setColor("#1ebaee");
+            }
+
             if (goods.getNxGoodsId().equals(6)) {
                 goods.setColor("#f05a32");
             }
             if (goods.getNxGoodsId().equals(7)) {
-                goods.setColor("#20afb8");
+                goods.setColor("#8a8a8a");
             }
             if (goods.getNxGoodsId().equals(8)) {
-                goods.setColor("#969696");
+                goods.setColor("#d24040");
+            }
+            if (goods.getNxGoodsId().equals(9)) {
+                goods.setColor("#7a6336");
+            }
+            if (goods.getNxGoodsId().equals(10)) {
+                goods.setColor("#405c75");
+            }
+            if (goods.getNxGoodsId().equals(11)) {
+                goods.setColor("#57407e");
+            }
+            if (goods.getNxGoodsId().equals(12)) {
+                goods.setColor("#548bb2");
             }
         }
 
@@ -1142,14 +924,11 @@ public class NxGoodsController {
                         builder.append(",");
                     }
                 }
-
             }
-
 
             fatherGoods.setNxGoodsSubNames(builder.toString());
             newList.add(fatherGoods);
         }
-
 
         return R.ok().put("data", newList);
     }
@@ -1162,84 +941,6 @@ public class NxGoodsController {
         return R.ok().put("data", goodsEntities);
     }
 
-
-    @RequestMapping(value = "/getAddCommunityGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R getAddCommunityGoods(Integer limit, Integer page, Integer fatherId, Integer communityId) {
-        System.out.println("hen");
-        Map<String, Object> map1 = new HashMap<>();
-        map1.put("offset", (page - 1) * limit);
-        map1.put("limit", limit);
-        map1.put("fatherId", fatherId);
-        List<NxGoodsEntity> nxGoodsEntities1 = nxGoodsService.queryNxGoodsByParams(map1);
-
-        List<NxGoodsEntity> goodsEntities = new ArrayList<>();
-
-        for (NxGoodsEntity goods : nxGoodsEntities1) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("communityId", communityId);
-            map.put("goodsId", goods.getNxGoodsId());
-            List<NxCommunityGoodsEntity> dgGoods = nxCommunityGoodsService.queryCommunityDownloadGoods(map);
-            Integer nxGoodsId = goods.getNxGoodsId();
-            List<NxStandardEntity> standardEntities = standardService.queryGoodsStandardListByGoodId(nxGoodsId);
-            goods.setNxGoodsStandardEntities(standardEntities);
-
-            if (dgGoods.size() > 0) {
-                goods.setIsDownload(1);
-                goodsEntities.add(goods);
-            } else {
-                goods.setIsDownload(0);
-                goodsEntities.add(goods);
-            }
-        }
-
-        int total = nxGoodsService.queryTotalByFatherId(fatherId);
-        PageUtils pageUtil = new PageUtils(goodsEntities, total, limit, page);
-        return R.ok().put("page", pageUtil);
-    }
-
-
-    /**
-     * ok
-     * sign获取电子牌商品
-     * @param limit 最大
-     * @param page 第几页
-     * @param fatherId 上级id
-     * @return 商品
-     * todo 暂停disGoods的概念
-     */
-//    @RequestMapping(value = "/getIbookGoodsByFatherId", method = RequestMethod.POST)
-//    @ResponseBody
-//    public R getGoodsByFatherId(Integer limit, Integer page, Integer fatherId, Integer disId) {
-//
-//        List<NxGoodsEntity> nxGoodsEntities1 = queryByFatherIdwithLimit(limit, page, fatherId);
-//
-//        List<NxGoodsEntity> goodsEntities = new ArrayList<>();
-//
-//        for (NxGoodsEntity goods : nxGoodsEntities1) {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("disId", disId);
-//            map.put("goodsId", goods.getNxGoodsId());
-//           List<NxCommunityGoodsEntity> dgGoods = nxCommunityGoodsService.queryDisDownloadGoods(map);
-//            Integer nxGoodsId = goods.getNxGoodsId();
-//            List<NxStandardEntity> standardEntities =  standardService.queryGoodsStandardListByGoodId(nxGoodsId);
-//            goods.setNxGoodsStandardEntities(standardEntities);
-//
-//            if(dgGoods.size() > 0) {
-//               goods.setIsDownload(1);
-//               goodsEntities.add(goods);
-//           }else {
-//               goods.setIsDownload(0);
-//               goodsEntities.add(goods);
-//           }
-//        }
-//
-//        int total = nxGoodsService.queryTotalByFatherId(fatherId);
-//        PageUtils pageUtil = new PageUtils(goodsEntities, total, limit, page);
-//
-//        return R.ok().put("page", pageUtil);
-//
-//    }
 
 
     /**
@@ -1262,10 +963,24 @@ public class NxGoodsController {
         return R.ok().put("data", map);
     }
 
+    @RequestMapping(value = "/getFatherGoodsDeep/{fatherId}")
+    @ResponseBody
+    public R getFatherGoodsDeep(@PathVariable int fatherId) {
+        System.out.println("getfathfhididdeeee" + fatherId) ;
+        Map<String, Object> map = new HashMap<>();
+        map.put("fatherId", fatherId);
+
+        //查询列表数据
+        List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryListWithFatherIdDeep(map);
+        System.out.println("eedeepgoodos" + nxGoodsEntities);
+        return R.ok().put("data", nxGoodsEntities);
+
+    }
 
     @RequestMapping(value = "/getFatherGoods/{fatherId}")
     @ResponseBody
     public R getFatherGoods(@PathVariable Integer fatherId) {
+        System.out.println("getfathfhidid" + fatherId) ;
         Map<String, Object> map = new HashMap<>();
         map.put("fatherId", fatherId);
 
@@ -1611,7 +1326,9 @@ public class NxGoodsController {
 
         //1,上传图片
         String newUploadName = "goodsImage";
-        String englishKuohao = getEnglishKuohao(goodsName);
+        String originalName = goodsName;
+        originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
+        String englishKuohao = getEnglishKuohao(originalName);
         String headByString = hanziToPinyin(englishKuohao);
         String lastFileName = getXiegang(englishKuohao) + formatFullTime();
 
@@ -1664,8 +1381,10 @@ public class NxGoodsController {
 
         //1,上传图片
         String newUploadName = "goodsImage";
-        String headByString = hanziToPinyin(goodsName);
-        String englishKuohao = getEnglishKuohao(goodsName);
+        String originalName = goodsName;
+        originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
+        String headByString = hanziToPinyin(originalName);
+        String englishKuohao = getEnglishKuohao(originalName);
         String lastFileName = getXiegang(englishKuohao) + formatFullTime();
 
         String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
@@ -1697,21 +1416,22 @@ public class NxGoodsController {
                           HttpSession session) {
 
         NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(id);
-        String gbDistributerFoodImg = nxGoodsEntity.getNxGoodsFile();
-        if (nxGoodsEntity.getNxGoodsFile() != null) {
-            ServletContext servletContext = session.getServletContext();
-            String realPath1 = servletContext.getRealPath(gbDistributerFoodImg);
-            File file1 = new File(realPath1);
+
+        String oldPath = nxGoodsEntity.getNxGoodsFile();
+        if (oldPath != null && !oldPath.trim().isEmpty()) {
+            String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+            File file1 = new File(oldAbsolutePath);
             if (file1.exists()) {
                 file1.delete();
             }
         }
 
-
         //1,上传图片
         String newUploadName = "goodsImage";
-        String englishKuohao = getEnglishKuohao(goodsName);
-        String lastFileName = goodsName + formatFullTime();
+        String originalName = goodsName;
+        originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
+        String englishKuohao = getEnglishKuohao(originalName);
+        String lastFileName = originalName + formatFullTime();
         String pinyin = hanziToPinyin(englishKuohao);
         String headPinyin = getHeadStringByString(englishKuohao, false, null);
         nxGoodsEntity.setNxGoodsPinyin(pinyin);
@@ -1750,8 +1470,12 @@ public class NxGoodsController {
 
             // update NxDisGoods
             List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(nxGoodsEntity.getNxGoodsId());
+            System.out.println("nxgoofifififfiifif" + distributerGoodsEntities.size());
             if (distributerGoodsEntities.size() > 0) {
+
                 for (NxDistributerGoodsEntity disGoods : distributerGoodsEntities) {
+                    System.out.println("godosiidididiid" + disGoods.getNxDistributerGoodsId());
+                    System.out.println("godosiidididiid" + filePath);
                     disGoods.setNxDgGoodsFile(filePath);
                     disGoods.setNxDgGoodsName(goodsName);
                     disGoods.setNxDgGoodsPinyin(pinyin);
@@ -1781,11 +1505,9 @@ public class NxGoodsController {
                     gbDistributerGoodsEntity.setGbDgGoodsPinyin(pinyin);
                     gbDistributerGoodsEntity.setGbDgGoodsPy(headPinyin);
                     gbDistributerGoodsService.update(gbDistributerGoodsEntity);
-
                     Map<String, Object> map = new HashMap<>();
                     map.put("disGoodsId",gbDistributerGoodsEntity.getGbDistributerGoodsId() );
                     List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepDisGoodsService.queryGbDepDisGoodsByParams(map);
-
                     if(departmentDisGoodsEntities.size() > 0){
                         for(GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity: departmentDisGoodsEntities){
                             gbDepartmentDisGoodsEntity.setGbDdgDepGoodsName(englishKuohao);
@@ -1809,21 +1531,27 @@ public class NxGoodsController {
                           HttpSession session) {
 
         NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(id);
-        String gbDistributerFoodImg = nxGoodsEntity.getNxGoodsFileBig();
-        if (nxGoodsEntity.getNxGoodsFileBig() != null) {
-            ServletContext servletContext = session.getServletContext();
-            String realPath1 = servletContext.getRealPath(gbDistributerFoodImg);
-            File file1 = new File(realPath1);
+        String oldPath = nxGoodsEntity.getNxGoodsFileBig();
+
+        if (oldPath != null && !oldPath.trim().isEmpty()) {
+            String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+            File file1 = new File(oldAbsolutePath);
+            System.out.println("isfileleieix" + file1);
             if (file1.exists()) {
                 file1.delete();
             }
         }
 
-
         //1,上传图片
+
         String newUploadName = "goodsImage";
-        String englishKuohao = getEnglishKuohao(goodsName);
-        String lastFileName = goodsName + formatFullTime() + "large";
+
+        String originalName = goodsName;
+        originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
+
+        System.out.println("rorirnrnroriginalNameoriginalName" + originalName);
+        String englishKuohao = getEnglishKuohao(originalName);
+        String lastFileName = originalName + formatFullTime() + "large";
         String pinyin = hanziToPinyin(englishKuohao);
         String headPinyin = getHeadStringByString(englishKuohao, false, null);
         nxGoodsEntity.setNxGoodsPinyin(pinyin);
@@ -1831,10 +1559,11 @@ public class NxGoodsController {
         String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
         String filename = file.getOriginalFilename();
         String filePath = newUploadName + "/" + lastFileName + ".jpg";
+        System.out.println("biddiidid" + lastFileName);
         nxGoodsEntity.setNxGoodsFileBig(filePath);
         nxGoodsEntity.setNxGoodsName(englishKuohao);
-        nxGoodsService.update(nxGoodsEntity);
 
+        nxGoodsService.update(nxGoodsEntity);
 
         if (nxGoodsEntity.getNxGoodsLevel() < 3) {
             //NxGoods
@@ -1862,6 +1591,7 @@ public class NxGoodsController {
 
             // update NxDisGoods
             List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(nxGoodsEntity.getNxGoodsId());
+            System.out.println("digoodsisiisiisisi" + distributerGoodsEntities.size());
             if (distributerGoodsEntities.size() > 0) {
                 for (NxDistributerGoodsEntity disGoods : distributerGoodsEntities) {
                     disGoods.setNxDgGoodsFileLarge(filePath);
@@ -1924,8 +1654,28 @@ public class NxGoodsController {
         goods.setNxGoodsName(englishKuohao);
         nxGoodsService.update(goods);
 
+        Integer nxGoodsId = goods.getNxGoodsId();
+        Map<String, Object> map = new HashMap<>();
+        map.put("nxGoodsId", nxGoodsId);
+        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByParams(map);
+        if(fatherGoodsEntities.size() > 0){
+            for(NxDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
+              fatherGoodsEntity.setNxDfgFatherGoodsName(englishKuohao);
+              nxDFatherGoodsService.update(fatherGoodsEntity);
+            }
+        }
+
+        List<GbDistributerFatherGoodsEntity> gbDistributerFatherGoodsEntities= gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(map);
+        if(fatherGoodsEntities.size() > 0){
+            for(GbDistributerFatherGoodsEntity fatherGoodsEntity: gbDistributerFatherGoodsEntities){
+                fatherGoodsEntity.setGbDfgFatherGoodsName(englishKuohao);
+                gbDisFatherGoodsService.update(fatherGoodsEntity);
+            }
+        }
+
         return R.ok();
     }
+
 
     @RequestMapping(value = "/deleteNxGoods/{goodsId}")
     @ResponseBody
@@ -1934,6 +1684,7 @@ public class NxGoodsController {
         map.put("fatherId", goodsId);
         List<NxGoodsEntity> gbDistributerGoodsEntities = nxGoodsService.queryNxGoodsByParams(map);
         List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.querySubNameByFatherId(goodsId);
+
         if (gbDistributerGoodsEntities.size() > 0 || nxGoodsEntities.size() > 0) {
             return R.error(-1, "有商品不能删除");
         } else {
@@ -1943,4 +1694,221 @@ public class NxGoodsController {
     }
 
 
+
+
+
 }
+
+//    public void canclePostDgnGoods(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {
+//        //判断此商品下是否有客户
+//
+//
+//        Map<String, Object> map1 = new HashMap<>();
+//        map1.put("disId", disId);
+//        map1.put("dgFatherId", disGoodsFatherId);
+//        //搜索fatherId下有几个disGoods
+//        List<NxDistributerGoodsEntity> totalDisGoods = nxDistributerGoodsService.queryDisGoodsByParams(map1);
+//        //如果disGoods的父类只有一个商品
+//        if (totalDisGoods.size() == 1) {
+//            //父类Entity
+//            NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = nxDFatherGoodsService.queryObject(disGoodsFatherId);
+//            //disGoods的grandId
+//            Integer grandId = nxDistributerFatherGoodsEntity.getNxDfgFathersFatherId();
+//            Map<String, Object> mapGrand = new HashMap<>();
+//            mapGrand.put("fathersFatherId", grandId);
+//            mapGrand.put("disId", disId);
+//            //搜索grand有几个兄弟
+//            List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByParams(mapGrand);
+//            if (fatherGoodsEntities.size() == 1) {
+//                Integer nxDfgFathersFatherId = fatherGoodsEntities.get(0).getNxDfgFathersFatherId();
+//                NxDistributerFatherGoodsEntity grandEntity = nxDFatherGoodsService.queryObject(nxDfgFathersFatherId);
+//                Integer greatGrandId = grandEntity.getNxDfgFathersFatherId();
+//                Map<String, Object> map = new HashMap<>();
+//                map.put("disId", disId);
+//                map.put("fathersFatherId", greatGrandId);
+//                List<NxDistributerFatherGoodsEntity> grandGoodsEntities = nxDFatherGoodsService.queryDisFathersGoodsByParams(map);
+//
+//                //如果grandFather也是只有一个，则删除greatGrandFather
+//                if (grandGoodsEntities.size() == 1) {
+//                    nxDFatherGoodsService.delete(greatGrandId);
+//                }
+//                nxDFatherGoodsService.delete(grandId);
+//            }
+//            nxDFatherGoodsService.delete(disGoodsFatherId);
+//        } else {
+//            //父类商品数量减去1
+//            NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = nxDFatherGoodsService.queryObject(disGoodsFatherId);
+//            Integer nxDfgGoodsAmount = nxDistributerFatherGoodsEntity.getNxDfgGoodsAmount();
+//            nxDistributerFatherGoodsEntity.setNxDfgGoodsAmount(nxDfgGoodsAmount - 1);
+//            nxDFatherGoodsService.update(nxDistributerFatherGoodsEntity);
+//        }
+//
+//        //删除订货单位
+//        List<NxDistributerStandardEntity> standardEntities = nxDsService.queryDisStandardByDisGoodsId(disGoodsId);
+//        if (standardEntities.size() > 0) {
+//            for (NxDistributerStandardEntity disStandard : standardEntities) {
+//                dsService.delete(disStandard.getNxDistributerStandardId());
+//            }
+//        }
+//
+//        nxDistributerGoodsService.delete(disGoodsId);
+//
+//    }
+//
+//
+//    public int canclePostDgnGoodsGb(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {
+//        Map<String, Object> map5 = new HashMap<>();
+//        map5.put("disGoodsId", disGoodsId);
+//        List<GbDepartmentOrdersEntity> ordersEntities = depOrdersService.queryDisOrdersByParams(map5);
+//
+//        List<GbDepartmentGoodsStockEntity> gbDepGoodsStockEntities = gbDepGoodsStockService.queryGoodsStockByParams(map5);
+//
+//        Map<String, Object> mapDisGoods = new HashMap<>();
+//        mapDisGoods.put("disGoodsId", disGoodsId);
+//        mapDisGoods.put("depType", getGbDepartmentTypeMendian());
+//        List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepDisGoodsService.queryGbDepDisGoodsByParams(mapDisGoods);
+//
+//        if (ordersEntities.size() > 0 || gbDepGoodsStockEntities.size() > 0 || departmentDisGoodsEntities.size() > 0) {
+//            return 1;
+//        } else {
+//
+//            GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity = gbDisFatherGoodsService.queryObject(disGoodsFatherId);
+//            Integer gbDfgGoodsAmount = gbDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
+//            gbDistributerFatherGoodsEntity.setGbDfgGoodsAmount(gbDfgGoodsAmount - 1);
+//            gbDisFatherGoodsService.update(gbDistributerFatherGoodsEntity);
+//
+//
+//            Map<String, Object> map1 = new HashMap<>();
+//            map1.put("disId", disId);
+//            map1.put("dgFatherId", disGoodsFatherId);
+//            //搜索fatherId下有几个disGoods
+//            List<GbDistributerGoodsEntity> totalDisGoods = gbDistributerGoodsService.queryDisGoodsByParams(map1);
+//            //如果disGoods的父类只有一个商品
+//            if (totalDisGoods.size() == 1) {
+//                //父类Entity
+//                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity0 = gbDisFatherGoodsService.queryObject(disGoodsFatherId);
+//                //disGoods的grandId
+//                Integer grandId = gbDistributerFatherGoodsEntity0.getGbDfgFathersFatherId();
+//                Map<String, Object> mapGrand = new HashMap<>();
+//                mapGrand.put("fathersFatherId", grandId);
+//                //搜索grand有几个兄弟
+//                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(mapGrand);
+//                if (fatherGoodsEntities.size() == 1) {
+//                    Integer gbDfgFathersFatherId = fatherGoodsEntities.get(0).getGbDfgFathersFatherId();
+//                    GbDistributerFatherGoodsEntity grandEntity = gbDisFatherGoodsService.queryObject(gbDfgFathersFatherId);
+//                    Integer greatGrandId = grandEntity.getGbDfgFathersFatherId();
+//                    Map<String, Object> map = new HashMap<>();
+//                    map.put("fathersFatherId", greatGrandId);
+//                    List<GbDistributerFatherGoodsEntity> grandGoodsEntities = gbDisFatherGoodsService.queryDisFathersGoodsByParamsGb(map);
+//
+//                    //如果grandFather也是只有一个，则删除greatGrandFather
+//                    if (grandGoodsEntities.size() == 1) {
+//                        gbDisFatherGoodsService.delete(greatGrandId);
+//                    }
+//                    gbDisFatherGoodsService.delete(grandId);
+//                }
+//                gbDisFatherGoodsService.delete(disGoodsFatherId);
+//            } else {
+//                //父类商品数量减去1
+//                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity1 = gbDisFatherGoodsService.queryObject(disGoodsFatherId);
+//                Integer gbDfgGoodsAmount1 = gbDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
+//                gbDistributerFatherGoodsEntity.setGbDfgGoodsAmount(gbDfgGoodsAmount1 - 1);
+//                gbDisFatherGoodsService.update(gbDistributerFatherGoodsEntity1);
+//            }
+//
+//            //删除订货单位
+//            List<GbDistributerStandardEntity> standardEntities = dsService.queryDisStandardByDisGoodsIdGb(disGoodsId);
+//            if (standardEntities.size() > 0) {
+//                for (GbDistributerStandardEntity disStandard : standardEntities) {
+//                    gbDisFatherGoodsService.delete(disStandard.getGbDistributerStandardId());
+//                }
+//            }
+//            int i = gbDistributerGoodsService.delete(disGoodsId);
+//            if (i == 1) {
+//                return 0;
+//            } else {
+//                return 1;
+//            }
+//
+//        }
+//
+//    }
+
+
+
+
+//    @RequestMapping(value = "/getAddCommunityGoods", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getAddCommunityGoods(Integer limit, Integer page, Integer fatherId, Integer communityId) {
+//        System.out.println("hen");
+//        Map<String, Object> map1 = new HashMap<>();
+//        map1.put("offset", (page - 1) * limit);
+//        map1.put("limit", limit);
+//        map1.put("fatherId", fatherId);
+//        List<NxGoodsEntity> nxGoodsEntities1 = nxGoodsService.queryNxGoodsByParams(map1);
+//
+//        List<NxGoodsEntity> goodsEntities = new ArrayList<>();
+//
+//        int total = nxGoodsService.queryTotalByFatherId(fatherId);
+//        PageUtils pageUtil = new PageUtils(goodsEntities, total, limit, page);
+//        return R.ok().put("page", pageUtil);
+//    }
+
+
+/**
+ * ok
+ * sign获取电子牌商品
+ * @param limit 最大
+ * @param page 第几页
+ * @param fatherId 上级id
+ * @return 商品
+ * todo 暂停disGoods的概念
+ */
+//    @RequestMapping(value = "/getIbookGoodsByFatherId", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getGoodsByFatherId(Integer limit, Integer page, Integer fatherId, Integer disId) {
+//
+//        List<NxGoodsEntity> nxGoodsEntities1 = queryByFatherIdwithLimit(limit, page, fatherId);
+//
+//        List<NxGoodsEntity> goodsEntities = new ArrayList<>();
+//
+//        for (NxGoodsEntity goods : nxGoodsEntities1) {
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("disId", disId);
+//            map.put("goodsId", goods.getNxGoodsId());
+//           List<NxCommunityGoodsEntity> dgGoods = nxCommunityGoodsService.queryDisDownloadGoods(map);
+//            Integer nxGoodsId = goods.getNxGoodsId();
+//            List<NxStandardEntity> standardEntities =  standardService.queryGoodsStandardListByGoodId(nxGoodsId);
+//            goods.setNxGoodsStandardEntities(standardEntities);
+//
+//            if(dgGoods.size() > 0) {
+//               goods.setIsDownload(1);
+//               goodsEntities.add(goods);
+//           }else {
+//               goods.setIsDownload(0);
+//               goodsEntities.add(goods);
+//           }
+//        }
+//
+//        int total = nxGoodsService.queryTotalByFatherId(fatherId);
+//        PageUtils pageUtil = new PageUtils(goodsEntities, total, limit, page);
+//
+//        return R.ok().put("page", pageUtil);
+//
+//    }
+
+
+
+/**
+ * 删除nxGoods
+ *
+ * @param goodsId goodsId
+ * @return ok
+ */
+//    @RequestMapping(value = "/deleteGoods/{goodsId}")
+//    @ResponseBody
+//    public R deleteGoods(@PathVariable Integer goodsId) {
+//        nxGoodsService.delete(goodsId);
+//        return R.ok();
+//
+//    }

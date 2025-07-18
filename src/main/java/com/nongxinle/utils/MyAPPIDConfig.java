@@ -22,7 +22,7 @@ public class MyAPPIDConfig  {
     /**
      * 用户名： lipeiyi@grainservice.club
      * 密码： Lpy87176693
-     * @return 李沛谊
+     * @return 李沛谊wx58ba279bc3d04c4a
      */
     public String getShixianZhizuoAppId(){ return "wx5da692125f70da73"; }
     public String getShixianZhizuoScreat(){
@@ -38,9 +38,13 @@ public class MyAPPIDConfig  {
         return "e3c04bb058d205c6402cd073aba44212";
     }
 
+    public String getQingqingxiangAppId(){ return "wxb143cab0d2768fce"; }
+    public String getQingqingxiangScreat(){
+        return "9c7507f77c840624ef678a1ab8e88175";
+    }
 
     /**
-     * 用户名： lipeiyi@grainservice.club
+     * 用户名： lipeiyi@grainservice.
      * 密码： Lpy87176693
      * @return 李沛谊
      */
@@ -49,16 +53,6 @@ public class MyAPPIDConfig  {
         return "319555884ced0820af582ae2e622ee6b";
     }
 
-
-    /**
-     * 用户名： liziyishangone@163.com
-     * 密码： Lpy87176693
-     * @return 张君
-     */
-    public String getLiansuocaigouguanliduanAppId(){ return "wx21c7f34ad4a32e6e"; }
-    public String getLiansuocaigouguanliduanScreat(){
-        return "157214d30f8d53f4207781d4f0113f5e";
-    }
 
     /**
      * 用户名： liziyishangone@163.com
@@ -107,26 +101,17 @@ public class MyAPPIDConfig  {
 
 
     /**
-     * 用户名： lizidistribute@sina.com
+     * 用户名： 13910825707@139.com
      * 密码： Lpy87176693
      * @return 芳芳
      */
-    public String getLiancaiAppoinSupplierAppId(){
-        return "wxaad78fd4a9d898cf";
+    public String getSingleMendianAppId(){
+        return "wx2de966ef906790e3";
     }
-    public String getLiancaiAppoinSupplierScreat(){
-        return "190652f297cf9826ebb72c29aa1ff0f6";
+    public String getSingleMendianScreat(){
+        return "f9d648a20c4ebda653f15e7cf1077acc";
     }
 
-
-
-
-//    public String getYishangpifaAppId(){
-//        return "wx97f8fe9b8570e3a4";
-//    }
-//    public String getYishangpifScreat(){
-//        return "685b78da3c22f6608566f423867ee94c";
-//    }
 
 
 
@@ -136,14 +121,19 @@ public class MyAPPIDConfig  {
      * 密码： Lpy87176693
      * @return
      */
+//    public String getJinriDinghuoAppId(){
+//        return "wxfa34176649802291";
+//    }
+//    public String getJinriDinghuoScreat(){
+//        return "3a49926735fa7d59cfe0eb2f418a18e4";
+//    }
+
     public String getJinriDinghuoAppId(){
-        return "wxfa34176649802291";
+        return "wx1ea78d3f33234284";
     }
     public String getJinriDinghuoScreat(){
-        return "3a49926735fa7d59cfe0eb2f418a18e4";
+        return "9b6bdf783dd366597a4c52484fe1b577";
     }
-
-
 
     /**
      * shanghuo zanyong printID
@@ -179,8 +169,6 @@ public class MyAPPIDConfig  {
     }
 
 
-
-
     /**
      * 用户名： lizipurchase@sina.com
      * 密码： Lpy87176693
@@ -195,17 +183,16 @@ public class MyAPPIDConfig  {
     }
 
 
-
     /**
      * 用户名： texiansongdh@sina.com
      * 密码： Lpy87176693
      * @return AppId
      */
-    public String getOrderAppID() {
+    public String getJingjingOrderAppID() {
         return "wx1ea78d3f33234284";
     }
 
-    public String getOrderScreat(){
+    public String getJingjingOrderScreat(){
         return "9b6bdf783dd366597a4c52484fe1b577";
     }
 
@@ -221,6 +208,15 @@ public class MyAPPIDConfig  {
 
     public String getTexiansongScreat(){
         return "a7e380c56222dfbd5377aeea6bb1eba2";
+    }
+
+
+    public String getTexiansongAdminAppID() {
+        return "wx21c7f34ad4a32e6e";
+    }
+
+    public String getTexiansongAdminScreat(){
+        return "157214d30f8d53f4207781d4f0113f5e";
     }
 
     public String getTexiansongCaigouAppId(){
@@ -261,6 +257,18 @@ public class MyAPPIDConfig  {
         return "7f23a36c0672e7f72a9ecffb3e8fb38d";
     }
 
+
+
+
+
+
+    public String getLaoDuDinghuoAppID() {
+        return "wx38e2e89afe95a51f";
+    }
+
+    public String getLaoDuDinghuoScreat(){
+        return "5d020040fed265d26050f6da30578295";
+    }
 
 
 

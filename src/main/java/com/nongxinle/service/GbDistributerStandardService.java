@@ -29,4 +29,6 @@ public interface GbDistributerStandardService {
 	void deleteBatch(Integer[] gbDistributerStandardIds);
 
     List<GbDistributerStandardEntity> queryDisStandardByDisGoodsIdGb(Integer disGoodsId);
+
+    List<GbDistributerStandardEntity> queryDisStandardByParams(Map<String, Object> mapNx);
 }

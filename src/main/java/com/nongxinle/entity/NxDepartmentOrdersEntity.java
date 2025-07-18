@@ -10,7 +10,9 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.TreeSet;
 
+import com.nongxinle.dao.NxDistributerGoodsShelfStockDao;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -137,7 +139,7 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private String nxDoCostPrice;
 	private String nxDoCostSubtotal;
 	private String nxDoPrintStandard;
-	private String nxDoExpcetPrice;
+	private String nxDoExpectPrice;
 
 	private String nxDoReturnWeight;
 	private String nxDoReturnSubtotal;
@@ -155,11 +157,13 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private Integer nxDoNxRestrauntOrderId;
 	private Integer nxDoGoodsType;
 	private Integer nxDoTodayOrder;
+	private Integer nxDoGbDepDisGoodId;
 	private String nxDoPriceDifferent;
 	private String nxDoProfitSubtotal;
 	private String nxDoProfitScale;
 	private String nxDoCostPriceUpdate;
 	private String nxDoCostPriceLevel;
+	private NxDistributerUserEntity pickUserEntity;
 
 
 
@@ -180,6 +184,8 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private NxDistributerWeightEntity nxDistributerWeightEntity;
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;
 	private List<NxDistributerGoodsEntity> nxDistributerGoodsEntityList;
+	private List<NxDistributerGoodsShelfStockEntity> outStockDisGoodsShelfStockEntities;
+	private TreeSet<NxGoodsEntity> nxGoodsEntities;
 
 //	private NxDepartmentGoodsEntity nxDepartmentGoodsEntity;
 

@@ -9,15 +9,25 @@ package com.nongxinle.dao;
 
 import com.nongxinle.entity.NxCustomerUserEntity;
 
+import java.util.List;
 import java.util.Map;
 
 
 public interface NxCustomerUserDao extends BaseDao<NxCustomerUserEntity> {
 
 
-    String queryOpenId(Integer nxOrdersUserId);
 
     NxCustomerUserEntity queryUserByOpenId(String openid);
 
     Map<String, Object> queryCustomerUserInfo(Integer gbDepartmentUserId);
+
+    List<NxCustomerUserEntity> queryCustomerByParams(Map<String, Object> map);
+
+    Integer queryCustomerUserCount(Map<String, Object> map);
+
+    Integer queryCommerceCustomerUserCount(Map<String, Object> map);
+
+    NxCustomerUserEntity queryUserWithAddress(Integer gbDepartmentUserId);
+
+    NxCustomerUserEntity queryUserByOpenIdAndCommerceId(Map<String, Object> mapU);
 }

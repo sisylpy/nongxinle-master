@@ -9,9 +9,11 @@
 
 	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerAliasEntity">
 		select * from gb_distributer_alias 
-		<if test="offset != null and limit != null">
-			limit #{offset}, #{limit}
-		</if>
+		<where>
+			<if test="goodsId != null">
+				and gb_DA_dis_goods_id = #{goodsId}
+			</if>
+		</where>
 	</select>
 	
  	<select id="queryTotal" resultType="int">

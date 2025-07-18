@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +36,7 @@ public class NxCustomerUserEntity implements Serializable {
 	 *  微信性别
 	 */
 	private Integer nxCuWxGender;
+	private Integer nxCuCommunityId;
 	/**
 	 *  客户id
 	 */
@@ -50,19 +52,24 @@ public class NxCustomerUserEntity implements Serializable {
 	/**
 	 *
 	 */
-	private Date nxCuJoinDate;
+	private String nxCuJoinDate;
 
 	/**
 	 *
 	 */
-	private Float nxCuOrderAmount;
+	private String nxCuOrderAmount;
 
 	/**
 	 *
 	 */
 	private Integer nxCuOrderTimes;
+	private Integer nxCuCommerceId;
 
 	private NxCustomerEntity nxCustomerEntity;
+
+
+	private NxCustomerUserAddressEntity mainAddress;
+	private List<NxCustomerUserCardEntity> userCardEntityList;
 
 
 }

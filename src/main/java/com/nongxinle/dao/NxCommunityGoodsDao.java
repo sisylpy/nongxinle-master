@@ -8,12 +8,9 @@ package com.nongxinle.dao;
  */
 
 import com.nongxinle.entity.NxCommunityGoodsEntity;
-import com.nongxinle.entity.NxCommunityOrdersEntity;
-import com.nongxinle.entity.NxDistributerGoodsEntity;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 
 public interface NxCommunityGoodsDao extends BaseDao<NxCommunityGoodsEntity> {
@@ -22,16 +19,16 @@ public interface NxCommunityGoodsDao extends BaseDao<NxCommunityGoodsEntity> {
 
     int queryTotalByFatherId(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> queryDisDownloadGoods(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> queryDisDownloadGoods(Map<String, Object> map);
 
 
-    List<NxCommunityGoodsEntity> queryCommunityDownloadGoods(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> queryCommunityDownloadGoods(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> queryDistributerGoods(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> queryDistributerGoods(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity>  queryHasNxGoodsFather(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity>  queryHasNxGoodsFather(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> queryStockGoods(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> queryStockGoods(Map<String, Object> map);
 
     List<NxCommunityGoodsEntity> queryCommunityGoodsWithPinyin(Map<String, Object> map);
 
@@ -53,20 +50,20 @@ public interface NxCommunityGoodsDao extends BaseDao<NxCommunityGoodsEntity> {
 
     List<NxCommunityGoodsEntity> queryComResGoodsByParams(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> resManQueryComResGoodsQuickSearchStr(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> resManQueryComResGoodsQuickSearchStr(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> comQueryDisComGoodsByParams(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> comQueryDisComGoodsByParams(Map<String, Object> map);
 
     List<NxCommunityGoodsEntity> queryComGoodsWithSupplierByParams(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> queryChainComResGoodsByParams(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> queryChainComResGoodsByParams(Map<String, Object> map);
 
-    List<NxCommunityGoodsEntity> resQueryComExchangePriceGoodsByDate(Map<String, Object> map7);
+//    List<NxCommunityGoodsEntity> resQueryComExchangePriceGoodsByDate(Map<String, Object> map7);
 
-    List<NxCommunityGoodsEntity> cgQueryCgMangementGoodsQuickSearchStr(Map<String, Object> map);
+//    List<NxCommunityGoodsEntity> cgQueryCgMangementGoodsQuickSearchStr(Map<String, Object> map);
 
 
     NxCommunityGoodsEntity queryRemarkComGoodsDetail(Map<String, Object> map);
 
-    NxCommunityGoodsEntity queryPropertyComGoodsDetail(Map<String, Object> map);
+//    NxCommunityGoodsEntity queryPropertyComGoodsDetail(Map<String, Object> map);
 }

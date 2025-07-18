@@ -1,5 +1,6 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.entity.NxGoodsEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,5 +52,16 @@ public class NxAliasServiceImpl implements NxAliasService {
 	public void deleteBatch(Integer[] nxAliasIds){
 		nxAliasDao.deleteBatch(nxAliasIds);
 	}
-	
+
+    @Override
+    public List<NxAliasEntity> queryNxAliasList(Map<String, Object> map) {
+		return nxAliasDao.queryNxAliasList(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryNxGoodsByName(Map<String, Object> map) {
+
+		return nxAliasDao.queryNxGoodsByName(map);
+    }
+
 }

@@ -69,7 +69,7 @@
 		select count(*) from gb_department_user 
 	</select>
 	<select id="queryAllUsersByDepId" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
-		select * from gb_department_user where gb_DU_department_father_id = #{depId}
+		select * from gb_department_user where gb_DU_department_id = #{depId}
 			order by  gb_DU_admin DESC
 	</select>
 	<select id="queryDepUserByOpenId" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
@@ -83,6 +83,7 @@
 
 	<resultMap id="dep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
 		<result property="gbDepartmentPrintSet" column="gb_department_print_set"/>
 		<result property="gbDepartmentName" column="gb_department_name"/>
@@ -187,7 +188,14 @@
 	</resultMap>
 
 	<resultMap id="distributer" type="GbDistributerEntity">
-		<id property="gbDistributerId" column="gb_distributer_id"/>
+<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
 		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
 		<result property="gbDistributerName" column="gb_distributer_name"/>
 		<result property="gbDistributerManager" column="gb_distributer_manager"/>
@@ -204,9 +212,11 @@
 		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
 		<association property="sysBusinessTypeEntity" resultMap="businessType"/>
 		<association property="appSupplierDepartment" resultMap="appSupplierDep"/>
+
 	</resultMap>
 	<resultMap id="multiDepartment" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
 		<result property="gbDepartmentName" column="gb_department_name"/>
 		<result property="gbDepartmentDisId" column="gb_department_dis_id"/>
@@ -253,6 +263,9 @@
 			<if test="openId != null">
 			and	gdu.gb_DU_wx_open_id = #{openId}
 			</if>
+			<if test="disId != null">
+				and	gdu.gb_DU_distributer_id = #{disId}
+			</if>
 			<if test="admin != null">
 			and	gdu.gb_DU_admin = #{admin}
 			</if>
@@ -263,6 +276,9 @@
 		<where>
 			<if test="depId != null">
 				and	gb_DU_department_id = #{depId}
+			</if>
+			<if test="disId != null">
+				and	gb_DU_distributer_id = #{disId}
 			</if>
 			<if test="admin != null">
 				and	gb_DU_admin = #{admin}
@@ -285,9 +301,20 @@
 		 where 	gb_department_user_id = #{userId}
 
 	</select>
+	<select id="queryDepUsersByOpenIdAndAdmin" resultType="com.nongxinle.entity.GbDepartmentUserEntity">
+		select * from gb_department_user
+         <where>
+			 <if test="admin != null">
+				 and gb_DU_admin = #{admin}
+			 </if>
+			 <if test="openId != null">
+				 and gb_DU_wx_open_id = #{openId}
+			 </if>
+		 </where>
+	</select>
 
 
-    <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentUserEntity"
+	<insert id="save" parameterType="com.nongxinle.entity.GbDepartmentUserEntity"
 			useGeneratedKeys="true" keyProperty="gbDepartmentUserId">
 		insert into gb_department_user
 		(

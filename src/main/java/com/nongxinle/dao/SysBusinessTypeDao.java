@@ -16,4 +16,6 @@ import java.util.Map;
 public interface SysBusinessTypeDao extends BaseDao<SysBusinessTypeEntity> {
 
     List<SysBusinessTypeEntity> queryTypeNxDistribterWithPeisong(Map<String, Object> map);
+
+    List<SysBusinessTypeEntity> querySysListByParams(Map<String, Object> map);
 }

@@ -22,6 +22,18 @@ import java.util.UUID;
 public class CommonUtils {
 
 
+    public static String generatePickNumber (int which){
+
+        Random random = new Random();
+        int wxCountAuto = random.nextInt(which) + 1;
+        String sWhich = String.valueOf(wxCountAuto);
+        System.out.println("999999999wxCountAuto=="+ wxCountAuto);
+        int rannum= (int)(random.nextDouble()*(999-100 + 1))+ 100;
+        String s1 = new StringBuilder(sWhich).append(rannum).toString();
+        return s1;
+    }
+
+
     public static String generateUUID (){
         return UUID.randomUUID().toString().replace("-", "")
                  .substring(0, 32);

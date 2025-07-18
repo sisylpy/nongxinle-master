@@ -62,6 +62,96 @@ public class QyWxControlloer {
     @Autowired
     private NxDepartmentUserService nxDepartmentUserService;
 
+
+
+
+    @RequestMapping(value = "/callbackdjDinghuo", method = RequestMethod.POST)
+    public void acceptMessageDjDinghuo(final HttpServletRequest request,
+                                   @RequestParam(name = "msg_signature") final String sMsgSignature,
+                                   @RequestParam(name = "timestamp") final String sTimestamp,
+                                   @RequestParam(name = "nonce") final String sNonce,
+                                   HttpServletResponse response) {
+
+        System.out.println("callbackdjapp--------------------------------------POST");
+        try {
+            InputStream inputStream = request.getInputStream();
+            String sPostData = IOUtils.toString(inputStream, "UTF-8");
+
+            Map<String, String> stringStringMap = MessageUtil.parseXml(sPostData);
+            String toUserName = stringStringMap.get("ToUserName");
+            System.out.println("toUserNametoUserName===" + toUserName);
+            QywechatEnum qywechatEnum = QywechatEnum.DJAPPPOST;
+
+            qywechatEnum.setCorpid(toUserName);
+            QywechatInfo qywechatInfo = new QywechatInfo();
+            qywechatInfo.setMsgSignature(sMsgSignature);
+            qywechatInfo.setNonce(sNonce);
+            qywechatInfo.setQywechatEnum(qywechatEnum);
+            qywechatInfo.setTimestamp(sTimestamp);
+            qywechatInfo.setSPostData(sPostData);
+            System.out.println("DJororororoorororororoSUITEIDDjSUITEIDDjKH" + sPostData);
+            WXBizMsgCrypt msgCrypt = new WXBizMsgCrypt(qywechatInfo.getQywechatEnum());
+            String sMsg = msgCrypt.decryptMsg(qywechatInfo);
+            Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
+            System.out.println("callbackdjapp回调信息：=========new" + dataMap);
+
+            if (dataMap.get("Event").equals("enter_agent")) {
+                System.out.println("Event====Event" + dataMap.get("Event"));
+                System.out.println("Event !!!!");
+            }
+
+            try {
+                PrintWriter writer = response.getWriter();
+                writer.write("success");
+                writer.flush();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @RequestMapping(value = "/callbackdjDinghuo", method = RequestMethod.GET)
+    @ResponseBody
+    public void callbackdjDinghuo(@RequestParam(name = "msg_signature") final String msgSignature,
+                              @RequestParam(name = "timestamp") final String timestamp,
+                              @RequestParam(name = "nonce") final String nonce,
+                              @RequestParam(name = "echostr") final String echostr,
+                              final HttpServletResponse response) throws Exception {
+        System.out.println("callbackdjapp------------GET");
+        System.out.println("CorpId== suiteid liziqiyecorpidsuiteid-");
+
+        String s = saveProviderAccessToken();
+        System.out.println("sssss=======" + s);
+        String s1 = transferCorpId(s);
+        System.out.println("s1 =================" + s1);
+        QywechatEnum qywechatEnum = QywechatEnum.DJAPPDH;
+        qywechatEnum.setCorpid(s1);
+        WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
+        System.out.println("miwen========" + wxBizMsgCrypt);
+        String sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
+        PrintWriter out = response.getWriter();
+        try {
+            //必须要返回解密之后的明文
+            if (StringUtils.isBlank(sEchoStr)) {
+                log.info("DDDDDHHHHHHHHHcallbackdjappget验签URL验证失败");
+            } else {
+                log.info("DDDDDHHHHHHHHcallbackdjappget验签验证成功!");
+            }
+        } catch (Exception e) {
+            log.error("DDDDHHHHHHHHcallbackdjappget验签报错！", e);
+        }
+        log.info("DDDDHHHHHHHcallbackdjappget验签的echo是{}", sEchoStr);
+        out.write(sEchoStr);
+        out.flush();
+
+    }
+
+
+
+
     @RequestMapping(value = "/callbackdjapp", method = RequestMethod.POST)
     public void acceptMessageDjApp(final HttpServletRequest request,
                                 @RequestParam(name = "msg_signature") final String sMsgSignature,
@@ -387,7 +477,91 @@ public class QyWxControlloer {
 
     }
 
+    @RequestMapping(value = "/callbackCustomer", method = RequestMethod.GET)
+    public void receiveMsgCustomer(@RequestParam(name = "msg_signature") final String msgSignature,
+                           @RequestParam(name = "timestamp") final String timestamp,
+                           @RequestParam(name = "nonce") final String nonce,
+                           @RequestParam(name = "echostr") final String echostr,
+                           final HttpServletResponse response) throws Exception {
+        System.out.println("callback----------------------get");
+        QywechatEnum qywechatEnum = QywechatEnum.JXPPCUSTOMER;
+        WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
+        String sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
+        PrintWriter out = response.getWriter();
+        try {
+            //必须要返回解密之后的明文
+            if (StringUtils.isBlank(sEchoStr)) {
+                log.info("get验签URL验证失败");
+            } else {
+                log.info("get验签验证成功!");
+            }
+        } catch (Exception e) {
+            log.error("get验签报错！", e);
+        }
+        log.info("get验签的echo是{}", sEchoStr);
+        out.write(sEchoStr);
+        out.flush();
+    }
 
+
+    @RequestMapping(value = "/callbackCustomer", method = RequestMethod.POST)
+    public void acceptMessageCustomer(final HttpServletRequest request,
+                              @RequestParam(name = "msg_signature") final String sMsgSignature,
+                              @RequestParam(name = "timestamp") final String sTimestamp,
+                              @RequestParam(name = "nonce") final String sNonce,
+                              HttpServletResponse response) {
+
+        System.out.println("callback----------------------POST");
+
+        try {
+            InputStream inputStream = request.getInputStream();
+            String sPostData = IOUtils.toString(inputStream, "UTF-8");
+            Map<String, String> stringStringMap = MessageUtil.parseXml(sPostData);
+            String toUserName = stringStringMap.get("ToUserName");
+            System.out.println("toUserNametoUserName===" + toUserName);
+            QywechatEnum qywechatEnum = QywechatEnum.JXPPCUSTOMERBACK;
+            qywechatEnum.setCorpid(toUserName);
+            QywechatInfo qywechatInfo = new QywechatInfo();
+            qywechatInfo.setMsgSignature(sMsgSignature);
+            qywechatInfo.setNonce(sNonce);
+            qywechatInfo.setQywechatEnum(qywechatEnum);
+            qywechatInfo.setTimestamp(sTimestamp);
+            qywechatInfo.setSPostData(sPostData);
+            WXBizMsgCrypt msgCrypt = new WXBizMsgCrypt(qywechatInfo.getQywechatEnum());
+            String sMsg = msgCrypt.decryptMsg(qywechatInfo);
+            Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
+            System.out.println("callback回调信息：=========new" + dataMap);
+
+            if(dataMap.get("InfoType") != null){
+
+                if (dataMap.get("InfoType").equals("suite_ticket")) {
+                    saveSuiteToken(dataMap);
+                } else if (dataMap.get("InfoType").equals("create_auth")) {
+                    saveAuthToken(dataMap);
+                } else if (dataMap.get("InfoType").equals("cancel_auth")) {
+                    deleteCorp(dataMap);
+                } else {
+                    System.out.println("infotype!== null and else====" + dataMap.get("InfoType"));
+                }
+            }
+            if(dataMap.get("Event") != null){
+                System.out.println("Event====Event=====" + dataMap.get("Event"));
+            }
+
+
+            try {
+                PrintWriter writer = response.getWriter();
+                writer.write("success");
+                writer.flush();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
     @RequestMapping(value = "/callback", method = RequestMethod.GET)
     public void receiveMsg(@RequestParam(name = "msg_signature") final String msgSignature,

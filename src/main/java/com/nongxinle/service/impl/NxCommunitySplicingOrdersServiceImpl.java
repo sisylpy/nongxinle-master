@@ -44,6 +44,7 @@ public class NxCommunitySplicingOrdersServiceImpl implements NxCommunitySplicing
 	
 	@Override
 	public void delete(Integer nxCommunitySplicingOrdersId){
+		System.out.println("delelelelelsploeooeo");
 		nxCommunitySplicingOrdersDao.delete(nxCommunitySplicingOrdersId);
 	}
 	

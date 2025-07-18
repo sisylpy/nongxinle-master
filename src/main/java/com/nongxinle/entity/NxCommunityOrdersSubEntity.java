@@ -58,11 +58,13 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
 	 *  子订单申请商品小计
 	 */
 	private String nxCosSubtotal;
+	private String nxCosPickUpCode;
 	/**
 	 *  子订单申请商品状态
 	 */
 	private Integer nxCosStatus;
 	private Integer nxCosType;
+	private Integer nxCosSplicingOrdersId;
 	/**
 	 *  子订单商品称重用户id
 	 */
@@ -78,6 +80,8 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
 
 	private Integer nxCosGoodsType;
 	private Integer nxCosGoodsIndex;
+	private Integer nxCosCommerceId;
+	private Integer nxCosDeskId;
 
 	/**
 	 * shangpin
@@ -93,15 +97,18 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
 	private Integer nxCosPurchaseUserId;
 
 	private Integer nxCosOrderUserId;
+	private Integer nxCosServiceType;
 
 	private Boolean hasItem;
 
 
   	private String nxCosSubWeight;
+  	private String nxCosHuaxianSubtotal;
 
   	private Integer nxCosSubDistributerId;
 
   	private Integer nxCosCommunityId;
+  	private Integer nxCosCucId;
 
   	private Integer nxCosGoodsSellType;
 
@@ -113,8 +120,15 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
 
 
 	private String nxCosStandardPrice;
+	private String nxCosService;
+	private String nxCosServiceDate;
+	private String nxCosServiceTime;
+	private String nxCosPrintTime;
+	private String nxCosPrintLog;
 
 	private NxCommunityEntity nxCommunityEntity;
+	private NxCustomerUserGoodsEntity nxCustomerUserGoodsEntity;
+	private NxCustomerUserCardEntity nxCustomerUserCardEntity;
 
 
 

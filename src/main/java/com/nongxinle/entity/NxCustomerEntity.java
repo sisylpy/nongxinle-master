@@ -40,7 +40,7 @@ public class NxCustomerEntity implements Serializable {
 	/**
 	 * 地址
 	 */
-	private Byte nxCustomerType;
+	private Integer nxCustomerType;
 
 	/**
 	 * 地址
@@ -74,6 +74,7 @@ public class NxCustomerEntity implements Serializable {
 	private Float nxCustomerOrderAmount;
 
 	private Integer nxCustomerOrderTimes;
+	private Integer nxCustomerCommerceId;
 
 	private String nxCustomerDetailAddress;
 
@@ -82,6 +83,8 @@ public class NxCustomerEntity implements Serializable {
 	private List<NxCustomerUserEntity>  nxCustomerUserEntities;
 
 	private NxCommunityEntity nxCommunityEntity;
+
+	private NxECommerceEntity nxECommerceEntity;
 
 
 }

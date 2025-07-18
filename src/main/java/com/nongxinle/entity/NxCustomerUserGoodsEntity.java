@@ -26,6 +26,7 @@ public class NxCustomerUserGoodsEntity implements Serializable {
 	 *  客户用户id
 	 */
 	private Integer nxCugUserId;
+	private Integer nxCugType;
 	/**
 	 *  社区商品id
 	 */

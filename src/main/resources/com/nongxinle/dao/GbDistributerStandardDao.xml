@@ -21,6 +21,10 @@
 		select * from gb_distributer_standard where gb_DS_dis_goods_id = #{disGoodsId}
 
 	</select>
+    <select id="queryDisStandardByParams" resultType="com.nongxinle.entity.GbDistributerStandardEntity">
+		select * from gb_distributer_standard where gb_DS_standard_name = #{standardName} and gb_DS_dis_goods_id  =#{disGoodsId}
+
+	</select>
 
     <insert id="save" parameterType="com.nongxinle.entity.GbDistributerStandardEntity" useGeneratedKeys="true"
 	keyProperty="gbDistributerStandardId">

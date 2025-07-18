@@ -30,7 +30,12 @@ public class NxCommunityAdsenseEntity implements Serializable {
 	/**
 	 *  广告位链接
 	 */
-	private String nxCaClick;
+	private String nxCaClickTo;
+	private String nxCommunityAdsenseName;
+	private String nxCaStartTimeZone;
+	private String nxCaStartTime;
+	private String nxCaStopTimeZone;
+	private String nxCaStopTime;
 	/**
 	 *  社区id
 	 */
@@ -39,5 +44,10 @@ public class NxCommunityAdsenseEntity implements Serializable {
 	 *  广告位排序
 	 */
 	private Integer nxCaSort;
+	private Integer nxCaStatus;
+	private Integer nxCaCgGoodsId;
+
+	private NxCommunityGoodsEntity nxCommunityGoodsEntity;
+
 
 }

@@ -15,6 +15,7 @@ import java.util.Map;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.GbDepFoodService;
 import com.nongxinle.service.GbDistributerFoodGoodsService;
+import com.nongxinle.utils.Constant;
 import com.nongxinle.utils.UploadFile;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,13 +88,13 @@ public class GbDistributerFoodController {
 		}else{
 
 			GbDistributerFoodEntity foodEntity = gbDistributerFoodService.queryObject(id);
-			String gbDistributerFoodImg = foodEntity.getGbDistributerFoodImg();
-			ServletContext servletContext = session.getServletContext();
-			String realPath1 = servletContext.getRealPath(gbDistributerFoodImg);
-			System.out.println("zhelishisrellalpathhth0000000" + realPath1);
-			File file1 = new File(realPath1);
-			if(file1.exists()) {
-				file1.delete();
+			String oldPath = foodEntity.getGbDistributerFoodImg();
+			if (oldPath != null && !oldPath.trim().isEmpty()) {
+				String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+				File file1 = new File(oldAbsolutePath);
+				if (file1.exists()) {
+					file1.delete();
+				}
 			}
 			gbDistributerFoodService.delete(id);
 			return R.ok();
@@ -113,21 +114,20 @@ public class GbDistributerFoodController {
 		}else{
 			// old
 			GbDistributerFoodEntity oldFoodEntity = gbDistributerFoodService.queryObject(food.getGbDistributerFoodId());
-			String gbDistributerFoodImgOld = oldFoodEntity.getGbDistributerFoodImg();
-			ServletContext servletContext = session.getServletContext();
-			String oldRealPath = servletContext.getRealPath(gbDistributerFoodImgOld);
-			File fileOld = new File(oldRealPath);
+			String oldPath = oldFoodEntity.getGbDistributerFoodImg();
+			if (oldPath != null && !oldPath.trim().isEmpty()) {
+				String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+				File file1 = new File(oldAbsolutePath);
+				if (file1.exists()) {
+					file1.delete();
+				}
+			}
+
 
 			//new
 			String gbDistributerFoodName = food.getGbDistributerFoodName();
 			String newUploadName = "foodImage";
 			String headByString = hanziToPinyin(gbDistributerFoodName);
-			String newRealPath = servletContext.getRealPath(newUploadName+ "/" + headByString + ".jpg");
-			File newFile = new File(newRealPath);
-			if(fileOld.exists()) {
-				fileOld.renameTo(newFile);
-			}
-
             food.setGbDistributerFoodImg(newUploadName+ "/" + headByString + ".jpg");
 			gbDistributerFoodService.update(food);
 			return R.ok();
@@ -156,12 +156,13 @@ public class GbDistributerFoodController {
 		}else{
 
 			GbDistributerFoodEntity foodEntity = gbDistributerFoodService.queryObject(id);
-			String gbDistributerFoodImg = foodEntity.getGbDistributerFoodImg();
-			ServletContext servletContext = session.getServletContext();
-			String realPath1 = servletContext.getRealPath(gbDistributerFoodImg);
-			File file1 = new File(realPath1);
-			if(file1.exists()) {
-				file1.delete();
+			String oldPath = foodEntity.getGbDistributerFoodImg();
+			if (oldPath != null && !oldPath.trim().isEmpty()) {
+				String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+				File file1 = new File(oldAbsolutePath);
+				if (file1.exists()) {
+					file1.delete();
+				}
 			}
 
 //1,上传图片

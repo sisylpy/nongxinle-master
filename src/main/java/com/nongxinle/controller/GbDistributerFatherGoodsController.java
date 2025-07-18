@@ -15,6 +15,8 @@ import com.nongxinle.entity.*;
 import com.nongxinle.service.GbDepartmentDisGoodsService;
 import com.nongxinle.service.GbDepartmentGoodsStockService;
 import com.nongxinle.service.GbDistributerGoodsService;
+import com.nongxinle.utils.Constant;
+import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.UploadFile;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,90 @@ public class GbDistributerFatherGoodsController {
 	private GbDepartmentGoodsStockService gbDepGoodsStockService;
 	@Autowired
 	private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
+
+
+
+
+
+
+
+	@RequestMapping(value = "/getDisGoodsByGreatGrandIdWithCountGb", method = RequestMethod.POST)
+	@ResponseBody
+	public R getDisGoodsByGreatGrandIdWithCountGb(Integer fatherId, Integer limit, Integer page,  Integer goodsType) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("grandId", fatherId);
+		map.put("offset", (page - 1) * limit);
+		map.put("limit", limit);
+		if(goodsType != 99){
+			map.put("goodsType", goodsType);
+		}
+		map.put("limit", limit);
+		System.out.println("mapappapapapa" + map);
+		List<GbDistributerGoodsEntity> distributerGoodsEntities = gbDistributerGoodsService.querySupplierGoodsByGreatIdGb(map);
+
+		Map<String, Object> mapCount = new HashMap<>();
+		mapCount.put("greatGrandId", fatherId);
+		mapCount.put("isHidden", 0);
+		int total = gbDistributerGoodsService.queryDisGoodsCount(mapCount);
+		PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
+
+
+		Map<String, Object> returnData = new HashMap<>();
+
+		returnData.put("is", pageUtil);
+
+		return R.ok().put("page", returnData);
+	}
+
+
+
+
+
+	@RequestMapping(value = "/getDisGoodsCataWithCountGb")
+	@ResponseBody
+	public R getDisGoodsCataWithCountGb(Integer disId, Integer goodsType) {
+
+		Map<String, Object> returnData = new HashMap<>();
+		Map<String, Object> mapG = new HashMap<>();
+		mapG.put("disId", disId);
+		if(goodsType != 99){
+			mapG.put("type", goodsType);
+		}
+
+		System.out.println("mapdgGg" + mapG);
+		int count =  gbDistributerGoodsService.queryDisGoodsCount(mapG);
+
+		if(count > 0){
+			List<GbDistributerFatherGoodsEntity> greatGrandGoods = gbDistributerFatherGoodsService.queryDisGoodsCataWithGoods(mapG);
+			if(greatGrandGoods.size() > 0){
+				for(GbDistributerFatherGoodsEntity greatGrand : greatGrandGoods){
+					List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = greatGrand.getFatherGoodsEntities();
+					if(fatherGoodsEntities.size() > 0){
+						for(GbDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
+							fatherGoodsEntity.setGbDistributerGoodsEntities(null);
+						}
+					}
+				}
+			}
+			returnData.put("list", greatGrandGoods);
+		}else{
+			returnData.put("list", new ArrayList<>());
+		}
+		Map<String, Object> map = new HashMap<>();
+		map.put("disId", disId);
+		map.put("isLinshi", 1);
+		int wxCountAuto1 = gbDistributerGoodsService.queryDisGoodsCount(map);
+
+
+
+		returnData.put("lishiCount", wxCountAuto1);
+
+		return R.ok().put("data", returnData);
+
+	}
+
+
+
 
 
 	/**
@@ -171,7 +257,7 @@ public class GbDistributerFatherGoodsController {
 		}
 		if(controlString.equals("isNotSelf")){
 			map.put("isSelf",0);
-			map.put("type", getGbDisGoodsTypeChuku());
+//			map.put("type", getGbDisGoodsTypeChuku());
 		}
 		if(controlString.equals("isSelf")){
 			map.put("isSelf",1);
@@ -180,6 +266,7 @@ public class GbDistributerFatherGoodsController {
 		if(isPrice != 0){
 			map.put("isPrice", isPrice);
 		}
+		System.out.println("mapapapapapw"+ map);
 
 		List<GbDistributerFatherGoodsEntity> disGoods =  gbDistributerFatherGoodsService.queryDisGoodsCataWithGoods(map);
 		if(disGoods.size() > 0){
@@ -306,9 +393,9 @@ public class GbDistributerFatherGoodsController {
 		map.put("disId", disId);
 		List<GbDistributerFatherGoodsEntity> disGoods =  gbDistributerFatherGoodsService.queryDisGoodsCata(map);
 
-		if(disGoods.size() > 0){
-			List<GbDistributerFatherGoodsEntity> result = new ArrayList<>();
-			for(GbDistributerFatherGoodsEntity fatherGoodsEntity: disGoods){
+//		if(disGoods.size() > 0){
+//			List<GbDistributerFatherGoodsEntity> result = new ArrayList<>();
+//			for(GbDistributerFatherGoodsEntity fatherGoodsEntity: disGoods){
 				System.out.println("dfadfasfdadfalidiidididi");
 //				List<GbDistributerFatherGoodsEntity> grandFatherGoodsEntities = abcFatherGoodsSort(fatherGoodsEntity.getFatherGoodsEntities());
 //				fatherGoodsEntity.setFatherGoodsEntities(grandFatherGoodsEntities);
@@ -317,13 +404,16 @@ public class GbDistributerFatherGoodsController {
 //					father.setFatherGoodsEntities(fatherGoodsEntities);
 //				}
 
-			}
-		}
+//			}
+//		}
+
+
 
 		System.out.println("wokk" + disGoods);
 		GbDistributerFatherGoodsEntity fatherGoodsEntity = new GbDistributerFatherGoodsEntity();
 		fatherGoodsEntity.setGbDfgFatherGoodsName("添加新类别");
 		fatherGoodsEntity.setGbDfgFatherGoodsColor("#969696");
+//		fatherGoodsEntity.setGbDfgFathersFatherId();
 		disGoods.add(fatherGoodsEntity);
 			return R.ok().put("data", disGoods);
 	}
@@ -364,6 +454,30 @@ public class GbDistributerFatherGoodsController {
 	}
 
 
+
+	@RequestMapping(value = "/saveFatherGoodsLevelZero", method = RequestMethod.POST)
+	@ResponseBody
+	public R saveFatherGoodsLevelZero (@RequestBody GbDistributerFatherGoodsEntity fatherGoods) {
+		Integer gbDfgDistributerId = fatherGoods.getGbDfgDistributerId();
+		Map<String, Object> map5 = new HashMap<>();
+		map5.put("disId", gbDfgDistributerId);
+		map5.put("goodsLevel", 0);
+		List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDistributerFatherGoodsService.queryDisFathersGoodsByParamsGb(map5);
+		if(fatherGoodsEntities.size() > 0){
+			System.out.println("mammxmmxmx" + map5);
+			int sort = gbDistributerFatherGoodsService.queryGbFatherGoodsMaxSort(map5);
+			fatherGoods.setGbDfgFatherGoodsSort(sort + 1);
+			gbDistributerFatherGoodsService.update(fatherGoods);
+		}else{
+			fatherGoods.setGbDfgFatherGoodsSort(1);
+			fatherGoods.setGbDfgGoodsAmount(0);
+		}
+		fatherGoods.setGbDfgNxGoodsId(-1);
+		fatherGoods.setGbDfgGoodsAmount(0);
+		gbDistributerFatherGoodsService.save(fatherGoods);
+		return R.ok();
+	}
+
 	@RequestMapping(value = "/saveFatherGoods", method = RequestMethod.POST)
 	@ResponseBody
 	public R saveFatherGoods (@RequestBody GbDistributerFatherGoodsEntity fatherGoods) {
@@ -374,7 +488,8 @@ public class GbDistributerFatherGoodsController {
 		map5.put("fathersFatherId", fatherGoods.getGbDfgFathersFatherId());
 		List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDistributerFatherGoodsService.queryDisFathersGoodsByParamsGb(map5);
 		if(fatherGoodsEntities.size() > 0){
-			fatherGoods.setGbDfgFatherGoodsSort(fatherGoodsEntities.size() + 1);
+			int sort = gbDistributerFatherGoodsService.queryGbFatherGoodsMaxSort(map5);
+			fatherGoods.setGbDfgFatherGoodsSort(sort + 1);
 			Integer grandid = fatherGoods.getGbDfgFathersFatherId();
 			GbDistributerFatherGoodsEntity greatGrand = gbDistributerFatherGoodsService.queryObject(grandid);
 			greatGrand.setGbDfgGoodsAmount(greatGrand.getGbDfgGoodsAmount() + 1);
@@ -405,6 +520,9 @@ public class GbDistributerFatherGoodsController {
 		return R.ok();
 	}
 
+
+
+
 	@RequestMapping(value = "/deleteFatherGoods/{goodsId}")
 	@ResponseBody
 	public R deleteFatherGoods(@PathVariable Integer goodsId) {
@@ -415,11 +533,13 @@ public class GbDistributerFatherGoodsController {
 		if(gbDistributerGoodsEntities.size() > 0 || fatherGoodsEntities.size() > 0){
 			return R.error(-1,"有商品不能删除");
 		}else{
-
-			Integer grandid = gbDistributerFatherGoodsService.queryObject(goodsId).getGbDfgFathersFatherId();
-			GbDistributerFatherGoodsEntity greatGrand = gbDistributerFatherGoodsService.queryObject(grandid);
-			greatGrand.setGbDfgGoodsAmount(greatGrand.getGbDfgGoodsAmount() - 1);
-			gbDistributerFatherGoodsService.update(greatGrand);
+			GbDistributerFatherGoodsEntity fatherGoodsEntity = gbDistributerFatherGoodsService.queryObject(goodsId);
+			if(fatherGoodsEntity.getGbDfgFatherGoodsLevel() > 0){
+				Integer grandid = fatherGoodsEntity.getGbDfgFathersFatherId();
+				GbDistributerFatherGoodsEntity greatGrand = gbDistributerFatherGoodsService.queryObject(grandid);
+				greatGrand.setGbDfgGoodsAmount(greatGrand.getGbDfgGoodsAmount() - 1);
+				gbDistributerFatherGoodsService.update(greatGrand);
+			}
 
 			gbDistributerFatherGoodsService.delete(goodsId);
 
@@ -437,12 +557,13 @@ public class GbDistributerFatherGoodsController {
 							   HttpSession session) {
 		GbDistributerFatherGoodsEntity gbDisFatherGoodsEntity = gbDistributerFatherGoodsService.queryObject(goodsId);
 		GbDistributerFatherGoodsEntity fatherGoodsEntity = gbDistributerFatherGoodsService.queryObject(goodsId);
-		String gbDistributerFoodImg = fatherGoodsEntity.getGbDfgFatherGoodsImg();
-		ServletContext servletContext = session.getServletContext();
-		String realPath1 = servletContext.getRealPath(gbDistributerFoodImg);
-		File file1 = new File(realPath1);
-		if(file1.exists()) {
-			file1.delete();
+		String oldPath = fatherGoodsEntity.getGbDfgFatherGoodsImg();
+		if (oldPath != null && !oldPath.trim().isEmpty()) {
+			String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+			File file1 = new File(oldAbsolutePath);
+			if (file1.exists()) {
+				file1.delete();
+			}
 		}
 
 

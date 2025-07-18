@@ -32,4 +32,6 @@ public interface GbDepartmentUserDao extends BaseDao<GbDepartmentUserEntity> {
     List<GbDepartmentUserEntity> queryDepUsersByDepIdAndAdmin(Map<String, Object> map);
 
     GbDepartmentUserEntity queryDepUserInfoGb(Integer userId);
+
+    GbDepartmentUserEntity queryDepUsersByOpenIdAndAdmin(Map<String, Object> map);
 }

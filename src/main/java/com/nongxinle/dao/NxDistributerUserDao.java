@@ -34,4 +34,6 @@ public interface NxDistributerUserDao extends BaseDao<NxDistributerUserEntity> {
     NxDistributerUserEntity queryDisUserByRoleAndOpen(Map<String, Object> map1);
 
     List<NxDistributerUserEntity> getAdminUserByParams(Map<String, Object> map);
+
+    NxDistributerUserEntity queryUserByPhone(String nxDiuWxPhone);
 }

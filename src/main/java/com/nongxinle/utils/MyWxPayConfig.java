@@ -22,6 +22,9 @@ public class MyWxPayConfig implements WXPayConfig {
     public String getAppID() {
         return "wx87baf9dcf935518a";
     }
+    public String getJJCGAppID() {
+        return "wx58ba279bc3d04c4a";
+    }
 
     @Override
     public String getMchID() {

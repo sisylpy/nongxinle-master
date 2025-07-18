@@ -36,14 +36,39 @@
 		<result property="gbDepartmentType" column="pur_gb_department_type"/>
 		<result property="gbDepartmentName" column="pur_gb_department_name"/>
 	</resultMap>
+
 	<resultMap id="nxDis" type="NxDistributerEntity">
 		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
 		<result property="nxDistributerName" column="nx_distributer_name"/>
+	    <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+		<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
 		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
 		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 	</resultMap>
+
+	<resultMap id="jjNxDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="jj_nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="jj_nx_distributer_pay_url"/>
+		<result property="nxDistributerShelfQuantity" column="jj_nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="jj_nx_distributer_type"/>
+		<result property="nxDistributerName" column="jj_nx_distributer_name"/>
+		<result property="nxDistributerShowName" column="jj_nx_distributer_show_name"/>
+		<result property="nxDistributerImg" column="jj_nx_distributer_img"/>
+		<result property="nxDistributerAddress" column="jj_nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="jj_nx_distributer_phone"/>
+		<result property="nxDistributerMarketName" column="jj_nx_distributer_market_name"/>
+	</resultMap>
+
 	<resultMap id="nxDisGbDis" type="NxDistributerGbDistributerEntity">
 		<id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+		<result property="nxDgdNxSupplierId" column="nx_DGD_nx_supplier_id"/>
+		<result property="nxDgdFromNxDepId" column="nx_DGD_from_nx_dep_id"/>
+		<result property="nxDgdFromNxDisId" column="nx_DGD_from_nx_dis_id"/>
 		<result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
 		<result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
 		<result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
@@ -52,10 +77,12 @@
 		<result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
 		<result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
 		<result property="nxDgdStatus" column="nx_DGD_status"/>
-		<association property="nxDistributerEntity" resultMap="nxDis"/>
+		<association property="nxDistributerEntity" resultMap="jjNxDis"/>
 	</resultMap>
+
 	<resultMap id="appSupplierDep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="appSupplierDep_gb_department_id"/>
+		<result property="gbDepartmentFatherId" column="appSupplierDep_gb_department_father_id"/>
 		<result property="gbDepartmentDisId" column="appSupplierDep_gb_department_dis_id"/>
 		<result property="gbDepartmentType" column="appSupplierDep_gb_department_type"/>
 		<result property="gbDepartmentName" column="appSupplierDep_gb_department_name"/>
@@ -66,21 +93,47 @@
 		<id property="gbDepartmentId" column="stockDep_gb_department_id"/>
 		<result property="gbDepartmentDisId" column="stockDep_gb_department_dis_id"/>
 		<result property="gbDepartmentType" column="stockDep_gb_department_type"/>
+		<result property="gbDepartmentFatherId" column="stockDep_gb_department_father_id"/>
 		<result property="gbDepartmentName" column="stockDep_gb_department_name"/>
 		<result property="gbDepartmentPrintName" column="stockDep_gb_department_print_name"/>
 		<result property="gbDepartmentFatherId" column="stockDep_gb_department_father_id"/>
 	</resultMap>
+
+	<resultMap id="depUser" type="GbDepartmentUserEntity">
+		<id property="gbDepartmentUserId" column="gb_department_user_id"/>
+		<result property="gbDuLoginTimes" column="gb_DU_login_times"/>
+		<result property="gbDuCustomerService" column="gb_DU_customer_service"/>
+		<result property="gbDuWxNickName" column="gb_DU_wx_nick_name"/>
+		<result property="gbDuWxAvartraUrl" column="gb_DU_wx_avartra_url"/>
+		<result property="gbDuUrlChange" column="gb_DU_url_change"/>
+		<result property="gbDuPrintDeviceId" column="gb_DU_print_device_id"/>
+		<result property="gbDuPrintBillDeviceId" column="gb_DU_print_bill_device_id"/>
+	</resultMap>
+	<resultMap id="subDep" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="sub_gb_department_id"/>
+		<result property="gbDepartmentDisId" column="sub_gb_department_dis_id"/>
+		<result property="gbDepartmentFatherId" column="sub_gb_department_father_id"/>
+		<result property="gbDepartmentType" column="sub_gb_department_type"/>
+		<result property="gbDepartmentName" column="sub_gb_department_name"/>
+		<result property="gbDepartmentPrintName" column="sub_gb_department_print_name"/>
+	</resultMap>
+
 	<resultMap id="mdDep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="md_gb_department_id"/>
 		<result property="gbDepartmentDisId" column="md_gb_department_dis_id"/>
+		<result property="gbDepartmentFatherId" column="md_gb_department_father_id"/>
 		<result property="gbDepartmentType" column="md_gb_department_type"/>
 		<result property="gbDepartmentName" column="md_gb_department_name"/>
 		<result property="gbDepartmentPrintName" column="md_gb_department_print_name"/>
 		<result property="gbDepartmentFatherId" column="md_gb_department_father_id"/>
+		<result property="gbDepartmentSubAmount" column="md_gb_department_sub_amount"/>
+		<collection property="gbDepartmentEntityList" resultMap="subDep"/>
+		<collection property="gbDepartmentUserEntities" resultMap="depUser"/>
 	</resultMap>
 	<resultMap id="kitchenDep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="kitchenDep_gb_department_id"/>
 		<result property="gbDepartmentDisId" column="kitchenDep_gb_department_dis_id"/>
+		<result property="gbDepartmentFatherId" column="kitchenDep_gb_department_father_id"/>
 		<result property="gbDepartmentType" column="kitchenDep_gb_department_type"/>
 		<result property="gbDepartmentName" column="kitchenDep_gb_department_name"/>
 		<result property="gbDepartmentPrintName" column="kitchenDep_gb_department_print_name"/>
@@ -105,7 +158,14 @@
 		<result property="sysByDisType" column="sys_by_dis_type"/>
 	</resultMap>
 	<resultMap id="disInfo" type="GbDistributerEntity">
-		<id property="gbDistributerId" column="gb_distributer_id"/>
+        <id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+        <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
 		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
 		<result property="gbDistributerName" column="gb_distributer_name"/>
 		<result property="gbDistributerImg" column="gb_distributer_img"/>
@@ -122,6 +182,7 @@
 		<association property="appSupplierDepartment" resultMap="appSupplierDep"/>
  		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
 		<association property="sysBusinessTypeEntity" resultMap="sysBusiness"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
 		<collection property="franchiseeDepartmentList" resultMap="franchiseeDeps"/>
  		<collection property="purDepartmentList" resultMap="purDeps"/>
 		<collection property="stockDepartmentList" resultMap="stockDep"/>
@@ -129,57 +190,260 @@
 		<collection property="kitchenDepartmentList" resultMap="kitchenDep"/>
 	</resultMap>
 
-    <select id="queryDisInfo" resultMap="disInfo">
+	<select id="queryDisInfo" resultMap="disInfo">
 		select *,
 			   directDep.gb_department_id 'md_gb_department_id',
 			   directDep.gb_department_dis_id 'md_gb_department_dis_id',
+			   directDep.gb_department_father_id 'md_gb_department_father_id',
 			   directDep.gb_department_name 'md_gb_department_name',
 			   directDep.gb_department_print_name 'md_gb_department_print_name',
+			   directDep.gb_department_sub_amount 'md_gb_department_sub_amount',
+			   sub.gb_department_id 'sub_gb_department_id',
+			   sub.gb_department_father_id 'sub_gb_department_father_id',
+			   sub.gb_department_name 'sub_gb_department_name',
+			   sub.gb_department_dis_id 'sub_gb_department_dis_id',
+
 			   franchDep.gb_department_id 'franchisee_gb_department_id',
+			   franchDep.gb_department_father_id 'franchisee_gb_department_father_id',
 			   franchDep.gb_department_dis_id 'franchisee_gb_department_dis_id',
 			   franchDep.gb_department_name 'franchisee_gb_department_name',
 			   franchDep.gb_department_print_name 'franchisee_gb_department_print_name',
 
 			   purDep.gb_department_id 'pur_gb_department_id',
 			   purDep.gb_department_dis_id 'pur_gb_department_dis_id',
+			   purDep.gb_department_father_id 'pur_gb_department_father_id',
 			   purDep.gb_department_name 'pur_gb_department_name',
 			   purDep.gb_department_print_name 'pur_gb_department_print_name',
 
 			   appSupplierDep.gb_department_id 'appSupplierDep_gb_department_id',
+			   appSupplierDep.gb_department_father_id 'appSupplierDep_gb_department_father_id',
 			   appSupplierDep.gb_department_dis_id 'appSupplierDep_gb_department_dis_id',
 			   appSupplierDep.gb_department_name 'appSupplierDep_gb_department_name',
 			   appSupplierDep.gb_department_print_name 'appSupplierDep_gb_department_print_name',
 			   stockDep.gb_department_id 'stockDep_gb_department_id',
 			   stockDep.gb_department_dis_id 'stockDep_gb_department_dis_id',
+			   stockDep.gb_department_father_id 'stockDep_gb_department_father_id',
 			   stockDep.gb_department_name 'stockDep_gb_department_name',
 			   stockDep.gb_department_print_name 'stockDep_gb_department_print_name',
 
 			   kitchenDep.gb_department_id 'kitchenDep_gb_department_id',
+			   kitchenDep.gb_department_father_id 'kitchenDep_gb_department_father_id',
 			   kitchenDep.gb_department_dis_id 'kitchenDep_gb_department_dis_id',
 			   kitchenDep.gb_department_print_name 'kitchenDep_gb_department_print_name',
-			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name'
-		       from gb_distributer  as dis
-		  left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id
-		  left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id
-				   and directDep.gb_department_type = 1
-		  left join gb_department as franchDep on directDep.gb_department_dis_id = dis.gb_distributer_id
-				   and franchDep.gb_department_type = 11
-		left join gb_department as purDep on purDep.gb_department_dis_id = dis.gb_distributer_id
-		 and purDep.gb_department_type = 2
-		left join gb_department as stockDep on stockDep.gb_department_dis_id = dis.gb_distributer_id
-		and stockDep.gb_department_type = 3
-		 left join sys_business_type as sbt on sbt.sys_business_type_id = dis.gb_distributer_business_type
-		
-		  left join gb_department as kitchenDep on kitchenDep.gb_department_dis_id = dis.gb_distributer_id
-		 and kitchenDep.gb_department_type = 4
-		  left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
-				   and appSupplierDep.gb_department_type = 5
-		  left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id
-		left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id
+			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name',
+
+			   nd2.nx_distributer_id 'nx_distributer_id',
+			   nd2.nx_distributer_pay_url 'nx_distributer_pay_url',
+			   nd2.nx_distributer_shelf_quantity 'nx_distributer_shelf_quantity',
+			   nd2.nx_distributer_type 'nx_distributer_type',
+			   nd2.nx_distributer_name 'nx_distributer_name',
+			   nd2.nx_distributer_show_name 'nx_distributer_show_name',
+			   nd2.nx_distributer_img 'nx_distributer_img',
+			   nd2.nx_distributer_address 'nx_distributer_address',
+			   nd2.nx_distributer_phone 'nx_distributer_phone',
+			   nd2.nx_distributer_market_name 'nx_distributer_market_name',
+
+			   nd.nx_distributer_id 'jj_nx_distributer_id',
+			   nd.nx_distributer_name 'jj_nx_distributer_name',
+			   nd.nx_distributer_show_name 'jj_nx_distributer_show_name',
+			   nd.nx_distributer_img 'jj_nx_distributer_img',
+			   nd.nx_distributer_address 'jj_nx_distributer_address',
+			   nd.nx_distributer_phone 'jj_nx_distributer_phone',
+			   nd.nx_distributer_market_name 'jj_nx_distributer_market_name'
+		from gb_distributer  as dis
+				 left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id
+				 left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id
+			and directDep.gb_department_type = 1 and directDep.gb_department_is_group_dep = 1
+				 left join gb_department as sub on sub.gb_department_father_id = directDep.gb_department_id
+			and sub.gb_department_is_group_dep = 0 and sub.gb_department_level = 1
+				 left join gb_department_user as gdu on gdu.gb_DU_department_father_id = directDep.gb_department_id
+				 left join gb_department as franchDep on franchDep.gb_department_dis_id = dis.gb_distributer_id
+			and franchDep.gb_department_type = 11
+				 left join gb_department as purDep on purDep.gb_department_dis_id = dis.gb_distributer_id
+			and purDep.gb_department_type = 2
+				 left join gb_department as stockDep on stockDep.gb_department_dis_id = dis.gb_distributer_id
+			and stockDep.gb_department_type = 3
+				 left join sys_business_type as sbt on sbt.sys_business_type_id = dis.gb_distributer_business_type
+
+				 left join gb_department as kitchenDep on kitchenDep.gb_department_dis_id = dis.gb_distributer_id
+			and kitchenDep.gb_department_type = 4
+				 left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
+			and appSupplierDep.gb_department_type = 5
+				 left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id
+				 left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id
+				 left join nx_distributer as nd2 on nd2.nx_distributer_id = dis.gb_distributer_nx_dis_id
 		where gb_distributer_id = #{diuDistributerId}
-        order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id
+		order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id
 
 	</select>
+
+<!--	<select id="queryDisInfo" resultMap="disInfo">-->
+<!--		select *,-->
+<!--			   directDep.gb_department_id 'md_gb_department_id',-->
+<!--			   directDep.gb_department_dis_id 'md_gb_department_dis_id',-->
+<!--			   directDep.gb_department_father_id 'md_gb_department_father_id',-->
+<!--			   directDep.gb_department_name 'md_gb_department_name',-->
+<!--			   directDep.gb_department_print_name 'md_gb_department_print_name',-->
+<!--			   directDep.gb_department_sub_amount 'md_gb_department_sub_amount',-->
+<!--			   sub.gb_department_id 'sub_gb_department_id',-->
+<!--			   sub.gb_department_father_id 'sub_gb_department_father_id',-->
+<!--			   sub.gb_department_name 'sub_gb_department_name',-->
+<!--			   sub.gb_department_dis_id 'sub_gb_department_dis_id',-->
+
+<!--			   franchDep.gb_department_id 'franchisee_gb_department_id',-->
+<!--			   franchDep.gb_department_father_id 'franchisee_gb_department_father_id',-->
+<!--			   franchDep.gb_department_dis_id 'franchisee_gb_department_dis_id',-->
+<!--			   franchDep.gb_department_name 'franchisee_gb_department_name',-->
+<!--			   franchDep.gb_department_print_name 'franchisee_gb_department_print_name',-->
+
+<!--			   purDep.gb_department_id 'pur_gb_department_id',-->
+<!--			   purDep.gb_department_dis_id 'pur_gb_department_dis_id',-->
+<!--			   purDep.gb_department_father_id 'pur_gb_department_father_id',-->
+<!--			   purDep.gb_department_name 'pur_gb_department_name',-->
+<!--			   purDep.gb_department_print_name 'pur_gb_department_print_name',-->
+
+<!--			   appSupplierDep.gb_department_id 'appSupplierDep_gb_department_id',-->
+<!--			   appSupplierDep.gb_department_father_id 'appSupplierDep_gb_department_father_id',-->
+<!--			   appSupplierDep.gb_department_dis_id 'appSupplierDep_gb_department_dis_id',-->
+<!--			   appSupplierDep.gb_department_name 'appSupplierDep_gb_department_name',-->
+<!--			   appSupplierDep.gb_department_print_name 'appSupplierDep_gb_department_print_name',-->
+<!--			   stockDep.gb_department_id 'stockDep_gb_department_id',-->
+<!--			   stockDep.gb_department_dis_id 'stockDep_gb_department_dis_id',-->
+<!--			   stockDep.gb_department_father_id 'stockDep_gb_department_father_id',-->
+<!--			   stockDep.gb_department_name 'stockDep_gb_department_name',-->
+<!--			   stockDep.gb_department_print_name 'stockDep_gb_department_print_name',-->
+
+<!--			   kitchenDep.gb_department_id 'kitchenDep_gb_department_id',-->
+<!--			   kitchenDep.gb_department_father_id 'kitchenDep_gb_department_father_id',-->
+<!--			   kitchenDep.gb_department_dis_id 'kitchenDep_gb_department_dis_id',-->
+<!--			   kitchenDep.gb_department_print_name 'kitchenDep_gb_department_print_name',-->
+<!--			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name',-->
+
+<!--			   nd2.nx_distributer_id 'nx_distributer_id',-->
+<!--			   nd2.nx_distributer_pay_url 'nx_distributer_pay_url',-->
+<!--			   nd2.nx_distributer_shelf_quantity 'nx_distributer_shelf_quantity',-->
+<!--			   nd2.nx_distributer_type 'nx_distributer_type',-->
+<!--			   nd2.nx_distributer_name 'nx_distributer_name',-->
+<!--			   nd2.nx_distributer_show_name 'nx_distributer_show_name',-->
+<!--			   nd2.nx_distributer_img 'nx_distributer_img',-->
+<!--			   nd2.nx_distributer_address 'nx_distributer_address',-->
+<!--			   nd2.nx_distributer_phone 'nx_distributer_phone',-->
+<!--			   nd2.nx_distributer_market_name 'nx_distributer_market_name',-->
+
+<!--			   nd.nx_distributer_id 'jj_nx_distributer_id',-->
+<!--			   nd.nx_distributer_name 'jj_nx_distributer_name',-->
+<!--			   nd.nx_distributer_show_name 'jj_nx_distributer_show_name',-->
+<!--			   nd.nx_distributer_img 'jj_nx_distributer_img',-->
+<!--			   nd.nx_distributer_address 'jj_nx_distributer_address',-->
+<!--			   nd.nx_distributer_phone 'jj_nx_distributer_phone',-->
+<!--			   nd.nx_distributer_market_name 'jj_nx_distributer_market_name'-->
+<!--		from gb_distributer  as dis-->
+<!--				 left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id-->
+<!--				 left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--			and directDep.gb_department_type = 1 and directDep.gb_department_is_group_dep = 1-->
+<!--				 left join gb_department as sub on sub.gb_department_father_id = directDep.gb_department_id-->
+<!--			and sub.gb_department_is_group_dep = 0 and sub.gb_department_level = 1-->
+<!--				 left join gb_department_user as gdu on gdu.gb_DU_department_father_id = directDep.gb_department_id-->
+<!--				 left join gb_department as franchDep on franchDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--			and franchDep.gb_department_type = 11-->
+<!--				 left join gb_department as purDep on purDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--			and purDep.gb_department_type = 2-->
+<!--				 left join gb_department as stockDep on stockDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--			and stockDep.gb_department_type = 3-->
+<!--				 left join sys_business_type as sbt on sbt.sys_business_type_id = dis.gb_distributer_business_type-->
+
+<!--				 left join gb_department as kitchenDep on kitchenDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--			and kitchenDep.gb_department_type = 4-->
+<!--				 left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--			and appSupplierDep.gb_department_type = 5-->
+<!--				 left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id-->
+<!--				 left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id-->
+<!--				 left join nx_distributer as nd2 on nd2.nx_distributer_id = dis.gb_distributer_nx_dis_id-->
+<!--		where gb_distributer_id = #{diuDistributerId}-->
+<!--		order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id-->
+
+<!--	</select>-->
+
+
+
+<!--    <select id="queryDisInfo1" resultMap="disInfo">-->
+<!--		select *,-->
+<!--			   directDep.gb_department_id 'md_gb_department_id',-->
+<!--			   directDep.gb_department_dis_id 'md_gb_department_dis_id',-->
+<!--			   directDep.gb_department_father_id 'md_gb_department_father_id',-->
+<!--			   directDep.gb_department_name 'md_gb_department_name',-->
+<!--			   directDep.gb_department_print_name 'md_gb_department_print_name',-->
+<!--			   directDep.gb_department_sub_amount 'md_gb_department_sub_amount',-->
+<!--		       sub.gb_department_id 'sub_gb_department_id',-->
+<!--		       sub.gb_department_father_id 'sub_gb_department_father_id',-->
+<!--		       sub.gb_department_name 'sub_gb_department_name',-->
+<!--		       sub.gb_department_dis_id 'sub_gb_department_dis_id',-->
+
+<!--			   franchDep.gb_department_id 'franchisee_gb_department_id',-->
+<!--			   franchDep.gb_department_father_id 'franchisee_gb_department_father_id',-->
+<!--			   franchDep.gb_department_dis_id 'franchisee_gb_department_dis_id',-->
+<!--			   franchDep.gb_department_name 'franchisee_gb_department_name',-->
+<!--			   franchDep.gb_department_print_name 'franchisee_gb_department_print_name',-->
+
+<!--			   purDep.gb_department_id 'pur_gb_department_id',-->
+<!--			   purDep.gb_department_dis_id 'pur_gb_department_dis_id',-->
+<!--			   purDep.gb_department_father_id 'pur_gb_department_father_id',-->
+<!--			   purDep.gb_department_name 'pur_gb_department_name',-->
+<!--			   purDep.gb_department_print_name 'pur_gb_department_print_name',-->
+
+<!--			   appSupplierDep.gb_department_id 'appSupplierDep_gb_department_id',-->
+<!--			   appSupplierDep.gb_department_father_id 'appSupplierDep_gb_department_father_id',-->
+<!--			   appSupplierDep.gb_department_dis_id 'appSupplierDep_gb_department_dis_id',-->
+<!--			   appSupplierDep.gb_department_name 'appSupplierDep_gb_department_name',-->
+<!--			   appSupplierDep.gb_department_print_name 'appSupplierDep_gb_department_print_name',-->
+<!--			   stockDep.gb_department_id 'stockDep_gb_department_id',-->
+<!--			   stockDep.gb_department_dis_id 'stockDep_gb_department_dis_id',-->
+<!--			   stockDep.gb_department_father_id 'stockDep_gb_department_father_id',-->
+<!--			   stockDep.gb_department_name 'stockDep_gb_department_name',-->
+<!--			   stockDep.gb_department_print_name 'stockDep_gb_department_print_name',-->
+
+<!--			   kitchenDep.gb_department_id 'kitchenDep_gb_department_id',-->
+<!--			   kitchenDep.gb_department_father_id 'kitchenDep_gb_department_father_id',-->
+<!--			   kitchenDep.gb_department_dis_id 'kitchenDep_gb_department_dis_id',-->
+<!--			   kitchenDep.gb_department_print_name 'kitchenDep_gb_department_print_name',-->
+<!--			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name',-->
+<!--			  nd2.nx_distributer_id 'nx_distributer_id',-->
+<!--			   nd2.nx_distributer_pay_url 'nx_distributer_pay_url',-->
+<!--			   nd2.nx_distributer_shelf_quantity 'nx_distributer_shelf_quantity',-->
+<!--			   nd2.nx_distributer_type 'nx_distributer_type',-->
+<!--			   nd2.nx_distributer_name 'nx_distributer_name',-->
+<!--			   nd2.nx_distributer_show_name 'nx_distributer_show_name',-->
+<!--			   nd2.nx_distributer_img 'nx_distributer_img',-->
+<!--			   nd2.nx_distributer_address 'nx_distributer_address',-->
+<!--			   nd2.nx_distributer_phone 'nx_distributer_phone',-->
+<!--			   nd2.nx_distributer_market_name 'nx_distributer_market_name'-->
+<!--		       from gb_distributer  as dis-->
+<!--		  left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id-->
+<!--		  left join nx_distributer as nd2   on nd2.nx_distributer_id = dis.gb_distributer_nx_dis_id-->
+<!--		  left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--				   and directDep.gb_department_type = 1 and directDep.gb_department_is_group_dep = 1-->
+<!--		  left join gb_department as sub on sub.gb_department_father_id = directDep.gb_department_id-->
+<!--		           and sub.gb_department_is_group_dep = 0 and sub.gb_department_level = 1-->
+<!--		           left join gb_department_user as gdu on gdu.gb_DU_department_father_id = directDep.gb_department_id-->
+<!--		  left join gb_department as franchDep on franchDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--				   and franchDep.gb_department_type = 11-->
+<!--		left join gb_department as purDep on purDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--		 and purDep.gb_department_type = 2-->
+<!--		left join gb_department as stockDep on stockDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--		and stockDep.gb_department_type = 3-->
+<!--		 left join sys_business_type as sbt on sbt.sys_business_type_id = dis.gb_distributer_business_type-->
+<!--		-->
+<!--		  left join gb_department as kitchenDep on kitchenDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--		 and kitchenDep.gb_department_type = 4-->
+<!--		  left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id-->
+<!--				   and appSupplierDep.gb_department_type = 5-->
+<!--		  left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id-->
+<!--		left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id-->
+<!--		where gb_distributer_id = #{diuDistributerId}-->
+<!--        order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id-->
+
+<!--	</select>-->
+
     <select id="queryGbUser" resultType="com.nongxinle.entity.GbDistributerUserEntity">
 		select * from gb_distributer_user as du
 		 left join gb_distributer as d on d.gb_distributer_id = du.gb_DIU_distributer_id
@@ -207,6 +471,8 @@
 	</resultMap>
 	<resultMap id="jrdhSupplier" type="NxJrdhSupplierEntity">
 		<id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+		<result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
 		<result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
 		<result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
 		<result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
@@ -229,7 +495,14 @@
 	</resultMap>
 
 	<resultMap id="gbDistributer" type="GbDistributerEntity">
-		<id property="gbDistributerId" column="gb_distributer_id"/>
+<id property="gbDistributerId" column="gb_distributer_id"/>
+		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
 		<result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
 		<result property="gbDistributerName" column="gb_distributer_name"/>
 		<result property="gbDistributerImg" column="gb_distributer_img"/>
@@ -280,7 +553,12 @@
 		 	`gb_distributer_settle_week`,
 		 	`gb_distributer_settle_year`,
 		 	`gb_distributer_settle_times`,
-		 	`gb_distributer_time_quantum`
+		 	`gb_distributer_time_quantum`,
+		 	`gb_distributer_print_name`,
+		 	`gb_distributer_buy_quantity`,
+		 	`gb_distributer_sys_city_id`,
+		 	`gb_distributer_nx_dis_id`,
+		 	`gb_distributer_pick_name`
 		)
 		values
 		(
@@ -299,7 +577,12 @@
 		 	#{gbDistributerSettleWeek},
 		 	#{gbDistributerSettleYear},
 		 	#{gbDistributerSettleTimes},
-		 	#{gbDistributerTimeQuantum}
+		 	#{gbDistributerTimeQuantum},
+		 	#{gbDistributerPrintName},
+		 	#{gbDistributerBuyQuantity},
+		 	#{gbDistributerSysCityId},
+		 	#{gbDistributerNxDisId},
+		 	#{gbDistributerPickName}
 		)
 	</insert>
 
@@ -321,6 +604,11 @@
 			<if test="gbDistributerSettleYear != null">`gb_distributer_settle_year` = #{gbDistributerSettleYear}, </if>
 			<if test="gbDistributerSettleTimes != null">`gb_distributer_settle_times` = #{gbDistributerSettleTimes}, </if>
 			<if test="gbDistributerTimeQuantum != null">`gb_distributer_time_quantum` = #{gbDistributerTimeQuantum}, </if>
+			<if test="gbDistributerPrintName != null">`gb_distributer_print_name` = #{gbDistributerPrintName}, </if>
+			<if test="gbDistributerBuyQuantity != null">`gb_distributer_buy_quantity` = #{gbDistributerBuyQuantity}, </if>
+			<if test="gbDistributerSysCityId != null">`gb_distributer_sys_city_id` = #{gbDistributerSysCityId}, </if>
+			<if test="gbDistributerNxDisId != null">`gb_distributer_nx_dis_id` = #{gbDistributerNxDisId}, </if>
+			<if test="gbDistributerPickName != null">`gb_distributer_pick_name` = #{gbDistributerPickName}, </if>
 			<if test="gbDistributerImg != null">`gb_distributer_img` = #{gbDistributerImg}</if>
 		</set>
 		where gb_distributer_id = #{gbDistributerId}

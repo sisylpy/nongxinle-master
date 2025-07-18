@@ -7,7 +7,6 @@ package com.nongxinle.service;
  * @date 2020-02-10 19:43:11
  */
 
-import com.nongxinle.entity.NxDistributerGoodsEntity;
 import com.nongxinle.entity.NxGoodsEntity;
 
 import java.util.List;
@@ -67,6 +66,31 @@ public interface NxGoodsService {
 
 	int querySecondLevelMaxId();
 
+	int queryMaxSortByFatherId(Integer nxDfgNxGoodsId);
+
+    int queryMaxIdByGrandId(Integer nxDfgNxGoodsId);
+
+	List<NxGoodsEntity> queryQuickSearchNxGoodsWithNxDis(Map<String, Object> map);
+
+    List<NxGoodsEntity> queryShelfQuickSearchNxGoodsWithNxDis(Map<String, Object> map);
+
+    List<NxGoodsEntity> queryGbDepNxGrandGoodsByGreatId(Map<String, Object> map);
+
+	List<NxGoodsEntity> queryGbDepNxGrandGoodsByGreatIdAll(Map<String, Object> map);
+
+	List<NxGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
+
+    List<NxGoodsEntity> queryDisGoodsEqualSearchStrWithDepOrders(Map<String, Object> map);
+
+    List<NxGoodsEntity> queryDisGoodsQuickSearchPyWithDepOrders(Map<String, Object> map);
+
+    List<NxGoodsEntity> queryListWithFatherIdDeep(Map<String, Object> map);
+
+    List<NxGoodsEntity> queryNumberGoods();
+
+    int queryTotalByParams(Map<String, Object> mapCount);
+
+    List<Integer> queryOnlyGoodsIds(Map<String, Object> map);
 
 
 //    List<NxGoodsEntity> queryCataNxDistribterWithPeisong(Map<String, Object> map);

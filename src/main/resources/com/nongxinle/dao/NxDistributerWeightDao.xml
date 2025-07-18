@@ -23,6 +23,7 @@
 
     <resultMap id="disUser" type="NxDistributerUserEntity">
          <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
         <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
         <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -95,6 +96,20 @@
 
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -107,6 +122,7 @@
 		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+        <result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
 		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
         <result property="nxDgWillPrice" column="nx_dg_will_price"/>
         <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
@@ -146,6 +162,7 @@
 
     <resultMap id="fatherDepartment" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="dd_nx_department_id"/>
+        <result property="nxDepartmentPinyin" column="dd_nx_department_pinyin"/>
         <result property="nxDepartmentName" column="dd_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="dd_nx_department_attr_name"/>
         <result property="nxDepartmentType" column="dd_nx_department_type"/>
@@ -158,6 +175,10 @@
 
     <resultMap id="orderDepartment" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentPickName" column="nx_department_pick_name"/>
         <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
         <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
         <result property="nxDepartmentType" column="nx_department_type"/>
@@ -190,8 +211,9 @@
     </resultMap>
     <resultMap id="depOrdersOnly" type="NxDepartmentOrdersEntity">
          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
         <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -246,8 +268,9 @@
 
     <resultMap id="depOrders" type="NxDepartmentOrdersEntity">
          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
         <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -399,6 +422,8 @@
                ds.nx_department_father_id 'nx_department_father_id',
                ds.nx_department_is_group_dep 'nx_department_is_group_dep',
                df.nx_department_id 'dd_nx_department_id',
+               df.nx_department_pick_name 'dd_nx_department_pick_name',
+               df.nx_department_pick_name 'dd_nx_department_pick_name',
                df.nx_department_name 'dd_nx_department_name',
                df.nx_department_attr_name 'dd_nx_department_attr_name',
                purGbDs.gb_department_id 'purGbDs_gb_department_id',
@@ -422,7 +447,7 @@
         left join gb_department as purGbDf on purGbDf.gb_department_id = ndo.nx_DO_gb_department_father_id
         left join nx_restraunt as purNr on purNr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
         where nx_distributer_weight_id = #{id}
-        order by  great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort, ndg.nx_dg_goods_sort, ds.nx_department_id
+        order by  great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort, ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort, ds.nx_department_id
     </select>
 
 
@@ -503,6 +528,14 @@
 
     <resultMap id="disGoodsWithNeedNotOrders" type="NxDistributerGoodsEntity">
        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -515,6 +548,7 @@
 		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+        <result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
 		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
         <result property="nxDgWillPrice" column="nx_dg_will_price"/>
         <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
@@ -709,6 +743,10 @@
 
     <resultMap id="depWithOrders" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentPickName" column="nx_department_pick_name"/>
         <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>

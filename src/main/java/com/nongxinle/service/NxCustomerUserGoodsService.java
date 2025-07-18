@@ -7,6 +7,7 @@ package com.nongxinle.service;
  * @date 2020-02-10 19:43:11
  */
 
+import com.nongxinle.entity.NxCommunityGoodsEntity;
 import com.nongxinle.entity.NxCustomerUserGoodsEntity;
 
 import java.util.List;
@@ -29,4 +30,9 @@ public interface NxCustomerUserGoodsService {
 	void deleteBatch(Integer[] custUGoodsIds);
 
     List<NxCustomerUserGoodsEntity> queryUserGoods(Map<String, Object> map);
+
+    NxCustomerUserGoodsEntity queryUserGoodsByParams(Map<String, Object> map);
+
+    List<NxCommunityGoodsEntity> userQueryCommGoods(Map<String, Object> map);
+
 }

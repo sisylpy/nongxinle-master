@@ -21,26 +21,60 @@
 		select * from nx_community_user where nx_COU_wx_open_id = #{openId} and nx_COU_role_id = #{roleId}
 	</select>
 
+	<resultMap id="commerce" type="NxECommerceEntity">
+		<id property="nxECommerceId" column="nx_e_commerce_id"/>
+		<result property="nxECommerceGbDisId" column="nx_e_commerce_gb_dis_id"/>
+		<result property="nxECommerceName" column="nx_e_commerce_name"/>
+	</resultMap>
+	<resultMap id="ecommerceCommunity" type="NxECommerceCommunityEntity">
+		<id property="nxEccId" column="nx_ECC_id"/>
+		<result property="nxEccCommunityId" column="nx_ECC_community_id"/>
+		<result property="nxEccEId" column="nx_ECC_e_id"/>
+		<association property="nxCommunityEntity" resultMap="community"/>
+	</resultMap>
+
 	<resultMap id="community" type="NxCommunityEntity">
 		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
+		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
+		<result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
+		<result property="nxCommunityDeliveryPayMaxFee" column="nx_community_delivery_pay_max_fee"/>
+		<result property="nxCommunityDeliveryPayPercent" column="nx_community_delivery_pay_percent"/>
+		<result property="nxCommunitySysBusinessAreaId" column="nx_community_sys_business_area_id"/>
+		<result property="nxCommunitySysCityId" column="nx_community_sys_city_id"/>
+		<result property="nxCommunitySysDistrictId" column="nx_community_sys_district_id"/>
+		<result property="nxCommunitySysProvinceId" column="nx_community_sys_province_id"/>
+		<result property="nxCommunityPrePrintTimes" column="nx_community_pre_print_times"/>
+		<result property="nxCommunityOpenTime" column="nx_community_open_time"/>
+		<result property="nxCommunityCloseTime" column="nx_community_close_time"/>
+		<result property="nxCommunityWxFile" column="nx_community_wx_file"/>
+		<result property="nxCommunityDoorFile" column="nx_community_door_file"/>
+		<result property="nxCommunityType" column="nx_community_type"/>
 		<result property="nxCommunityName" column="nx_community_name"/>
 		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
 		<result property="nxCommunityLat" column="nx_community_lat"/>
 		<result property="nxCommunityLng" column="nx_community_lng"/>
 		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+		<association property="nxECommerceCommunityEntity" resultMap="ecommerceCommunity"/>
 	</resultMap>
+
 	<resultMap id="comUser" type="NxCommunityUserEntity">
 		<id property="nxCommunityUserId" column="nx_community_user_id"/>
+		<result property="nxCouUrlIsChange" column="nx_COU_url_is_change"/>
 		<result property="nxCouCommunityId" column="nx_COU_community_id"/>
 		<result property="nxCouWxAvartraUrl" column="nx_COU_wx_avartra_url"/>
 		<result property="nxCouWxNickName" column="nx_COU_wx_nick_name"/>
 		<result property="nxCouWxOpenId" column="nx_COU_wx_open_id"/>
 		<result property="nxCouWxPhone" column="nx_COU_wx_phone"/>
+		<result property="nxCouAdmin" column="nx_COU_admin"/>
+		<result property="nxCouDeviceId" column="nx_COU_device_id"/>
 		<association property="nxCommunityEntity" resultMap="community"/>
 	</resultMap>
 	<select id="queryComUserInfo" resultMap="comUser">
 		select * from nx_community_user as u
 		left join nx_community as c on u.nx_COU_community_id = c.nx_community_id
+		 left join nx_e_commerce_community as necc on necc.nx_ECC_community_id = c.nx_community_id
+		left join nx_e_commerce as nec  on nec.nx_e_commerce_id = necc.nx_ECC_e_id
 		<where>
 			<if test="userId != null">
 				and nx_community_user_id = #{userId}
@@ -48,16 +82,20 @@
 			<if test="roleId != null">
 				and u.nx_COU_role_id = #{roleId}
 			</if>
+			<if test="openId != null">
+				and u.nx_COU_wx_open_id = #{openId}
+			</if>
 		</where>
 	</select>
+
 	<select id="queryCommunityRoleUsers" resultType="com.nongxinle.entity.NxCommunityUserEntity">
 		select * from nx_community_user
 		<where>
 			<if test="roleId != null">
 				and nx_COU_role_id = #{roleId}
 			</if>
-			<if test="comId != null">
-				and nx_COU_community_id = #{comId}
+			<if test="commId != null">
+				and nx_COU_community_id = #{commId}
 				</if>
 			<if test="equalStatus != null">
 				and nx_COU_working_status = #{equalStatus}
@@ -67,6 +105,15 @@
 	</select>
 	
 	
+
+
+
+    <select id="getAdmainUserByComId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user where nx_COU_community_id = #{commId} and nx_COU_admin = 1
+	</select>
+    <select id="queryUserByPhone" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+		select * from nx_community_user where nx_COU_wx_phone = #{nxCouWxPhone}
+	</select>
 	<resultMap id="restraunts" type="NxRestrauntEntity">
 		<id property="nxRestrauntId" column="nx_restraunt_id"/>
 		<result property="nxRestrauntName" column="nx_restraunt_name"/>
@@ -82,24 +129,16 @@
 		<result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
 		<result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
 	</resultMap>
-	
 	<select id="queryDeliveryRestrauntsByDriverId" resultMap="restraunts">
 		select * from nx_community_user  as u
-			left join nx_restraunt as r on r.nx_restraunt_driver_id = u.nx_community_user_id
+		left join nx_restraunt as r on r.nx_restraunt_driver_id = u.nx_community_user_id
 		<where>
 			<if test="userId != null">
 				and  r.nx_restraunt_driver_id = #{userId}
 			</if>
-		  and r.nx_restraunt_working_status = 3
+			and r.nx_restraunt_working_status = 3
 		</where>
 
-	</select>
-
-    <select id="getAdmainUserByComId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
-		select * from nx_community_user where nx_COU_community_id = #{comId} and nx_COU_admin = 1
-	</select>
-    <select id="queryUserByPhone" resultType="com.nongxinle.entity.NxCommunityUserEntity">
-		select * from nx_community_user where nx_COU_wx_phone = #{nxCouWxPhone}
 	</select>
 
 
@@ -115,7 +154,9 @@
 			`nx_COU_community_id`,
 			`nx_COU_admin`,
 		 	`nx_COU_role_id`,
-		 	`nx_COU_working_status`
+		 	`nx_COU_working_status`,
+		 	`nx_COU_device_id`,
+		 	`nx_COU_url_is_change`
 		)
 		values
 		(
@@ -127,7 +168,9 @@
 			#{nxCouCommunityId},
 			#{nxCouAdmin},
 		 	#{nxCouRoleId},
-		 	#{nxCouWorkingStatus}
+		 	#{nxCouWorkingStatus},
+		 	#{nxCouDeviceId},
+		 	#{nxCouUrlIsChange}
 		)
 	</insert>
 	 
@@ -141,6 +184,8 @@
 			<if test="nxCouCommunityId != null">`nx_COU_community_id` = #{nxCouCommunityId}, </if>
 			<if test="nxCouRoleId != null">`nx_COU_role_id` = #{nxCouRoleId}, </if>
 			<if test="nxCouWorkingStatus != null">`nx_COU_working_status` = #{nxCouWorkingStatus}, </if>
+			<if test="nxCouDeviceId != null">`nx_COU_device_id` = #{nxCouDeviceId}, </if>
+			<if test="nxCouUrlIsChange != null">`nx_COU_url_is_change` = #{nxCouUrlIsChange}, </if>
 			<if test="nxCouAdmin != null">`nx_COU_admin` = #{nxCouAdmin}</if>
 		</set>
 		where nx_community_user_id = #{nxCommunityUserId}

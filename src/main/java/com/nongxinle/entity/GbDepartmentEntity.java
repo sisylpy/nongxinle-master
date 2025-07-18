@@ -85,6 +85,11 @@ public class GbDepartmentEntity implements Serializable, Comparable {
 	private Integer gbDepartmentDepSettleId;
 	private Integer gbDepartmentLevel;
 
+	private String gbDepartmentUnPayTotal;
+	private Integer gbDepartmentAddCount;
+	private Integer gbDepartmentPurOrderCount;
+	private Integer gbDepartmentNeedNotPurOrderCount;
+
 
 	private GbDistributerUserEntity gbDistributerUserEntity;
 	private GbDepartmentEntity fatherGbDepartmentEntity;
@@ -104,6 +109,7 @@ public class GbDepartmentEntity implements Serializable, Comparable {
 	private List<GbDepartmentGoodsStockReduceEntity> gbDepGoodsStockReduceEntities;
 	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
 	private List<GbDistributerFatherGoodsEntity> fatherGoodsEntities;
+	private List<GbDistributerGoodsEntity> distributerGoodsEntities;
 
     private List<NxDistributerGbDistributerEntity> appSupplierList;
     private GbDepartmentBillEntity unPayBill;
@@ -198,6 +204,9 @@ public class GbDepartmentEntity implements Serializable, Comparable {
 	private Double depStockMany;
 	private String depStockManyString;
 
+	private String gbDepartmentLatitude;
+	private String gbDepartmentLongitude;
+
 	private Map<String, Object>  totalMap;
 
 	private List<String> dayData;
@@ -205,6 +214,7 @@ public class GbDepartmentEntity implements Serializable, Comparable {
 	private Integer cankaoDepId;
 
 	private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
+	private GbDepartmentGoodsDailyEntity departmentGoodsDailyEntity;
 
 
 

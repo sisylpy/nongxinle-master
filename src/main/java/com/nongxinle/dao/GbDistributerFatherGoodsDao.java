@@ -34,4 +34,10 @@ public interface GbDistributerFatherGoodsDao extends BaseDao<GbDistributerFather
     GbDistributerFatherGoodsEntity queryAppFatherGoods(Map<String, Object> map);
 
     List<GbDistributerFatherGoodsEntity> queryDisFathersGoodsByNxGoodsId(Integer nxGoodsId);
+
+    List<GbDistributerFatherGoodsEntity> queryDisGoodsCataLinshi(Integer nxDistributerId);
+
+    GbDistributerFatherGoodsEntity queryDisGoodsCataLinshiFatherGoods(Map<String, Object> map);
+
+    int queryGbFatherGoodsMaxSort(Map<String, Object> map5);
 }

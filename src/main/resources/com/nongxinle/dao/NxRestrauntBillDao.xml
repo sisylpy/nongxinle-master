@@ -75,6 +75,7 @@
     </resultMap>
     <resultMap id="comGoods" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
 		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
 		<result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>

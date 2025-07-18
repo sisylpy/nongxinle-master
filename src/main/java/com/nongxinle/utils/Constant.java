@@ -71,6 +71,7 @@ public class Constant {
      * 应用的唯一身份标识
      */
     public static final String SuiteID = "ww2cddb5d2d7b3ee5d";
+    public static final String SuiteIDCUSTOMER = "ww3e0009db138d780f"; //客服的 id
     public static final String SuiteIDRX = "wwe01d611c376073f4";
     public static final String SuiteIDSX = "ww2eeda7e648715801";
     /**
@@ -90,14 +91,17 @@ public class Constant {
      * 回调/通用开发参数Token, 两者解密算法一样，所以为方便设为一样
      */
     public static final String TOKEN = "6Hk";
+    public static final String TOKENCUSTOMER= "m7oM";
     public static final String TOKENRX = "tMPGGtq";
     public static final String TOKENSX = "jPk2ATwy5yUfSRHIqr";
     public static final String LSCGTOKEN = "pei";
+
 
     /**
      * 回调/通用开发参数EncodingAESKey, 两者解密算法一样，所以为方便设为一样
      */
     public static final String EncodingAESKey = "j2HDS3Gmoep2GJGVn2fJtLxWXGNQMXO5AUf3CheyU6T";
+    public static final String EncodingAESKeyCustomer = "UhWNWfrpC4NmpeYQOfDntXSI1iyev3YfCqO7vBT3g8s";
     public static final String EncodingAESKeyRx = "xBDXXGyqKjOSWjG6D671NT4DbuehgeyyEkAYby2mxm6";
     public static final String EncodingAESKeySx = "BaTvU0Mrqm1adPgzitl2AGNroOIH4vXKGDMyqmJMg0o";
     public static final String LSCGEncodingAESKey = "Oqr4iCoPG8HT3hKCf2e3rrOa9POQeNIWr9G17flhKti";
@@ -119,6 +123,18 @@ public class Constant {
     public static final String MOBANID = "dk79f21376ebff6142";
 
 
+    //    daijianDinghuo
+    public static final String TOKENDjDh = "tA8QXu9fOT2vmNR";
+    public static final String SUITEIDDjDh = "dk79f21376ebff6142";//?
+    public static final String EncodingAESKeyDjDh = "nuDCoPYgx4DcJjbZmjE6iHqAKP6f5nwGC7aFUFOamht";
+    public static final String CORPIDDjTRSDH = "ww8bb9f761c253a58d";//?
+//    public static final String MOBANID = "dk79f21376ebff6142";
+
+
+
+    //
+
+    public static final String EXTERNAL_IMAGE_DIR = "/opt/tomcat/latest/app-data/images/";
 
 
 

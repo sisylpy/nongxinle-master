@@ -8,6 +8,7 @@ package com.nongxinle.dao;
  */
 
 import com.nongxinle.entity.GbDepartmentBillEntity;
+import com.nongxinle.entity.NxDistributerEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,11 @@ public interface GbDepartmentBillDao extends BaseDao<GbDepartmentBillEntity> {
 
     GbDepartmentBillEntity queryDepartBillByTradeNo(String ordersSn);
 
-//    List<GbDepartmentBillEntity> queryDepartBillListByTradeNo(String ordersSn);
+    List<GbDepartmentBillEntity> queryDepartBillListByTradeNo(String ordersSn);
+
+    List<GbDepartmentBillEntity> queryBillFromWhichDepartment(Map<String, Object> map4);
 
     GbDepartmentBillEntity queryDepartBillByTsxTradeNo(String nxDbTradeNo);
+
+    List<NxDistributerEntity> queryNxDistributer(Map<String, Object> map4);
 }

@@ -42,4 +42,8 @@ public interface NxDepartmentUserService {
     List<NxDepartmentUserEntity> queryAllDepUsers();
 
     List<NxDepartmentUserEntity> queryAllUsersByDepFatherId(Integer depId);
+
+    NxDepartmentUserEntity queryDepUserInfo(Map<String, Object> map);
+
+    NxDepartmentUserEntity queryDepUserByMachineId(String id);
 }

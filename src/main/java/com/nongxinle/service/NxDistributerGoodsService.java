@@ -7,10 +7,7 @@ package com.nongxinle.service;
  * @date 07-27 17:38
  */
 
-import com.nongxinle.entity.NxDistributerEntity;
-import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
-import com.nongxinle.entity.NxDistributerGoodsEntity;
-import com.nongxinle.entity.NxGoodsEntity;
+import com.nongxinle.entity.*;
 
 import java.util.List;
 import java.util.Map;
@@ -87,4 +84,37 @@ public interface NxDistributerGoodsService {
 
     NxDistributerGoodsEntity queryDisGoodsDetailWithLinshi(Integer doDisGoodsId);
 
+    List<NxDistributerGoodsEntity> queryDisGoodsWithGbGoodsByParams(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisShelfGoodsQuickSearchStr(Map<String, Object> map);
+
+    List<NxDistributerGoodsShelfGoodsEntity> queryDisShelfGoods(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisLinshiGoodsQuickSearchStr(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisNxGoodsQuickSearchStrByGrandId(Map<String, Object> map);
+
+    List<NxDistributerEntity> queryYishangByGoods(Map<String, Object> map);
+
+    List<NxDistributerEntity> queryLinshiGoodsForNx();
+
+    int queryLinshiGoodsAcount(Integer nxDistributerId);
+
+    List<NxDistributerGoodsEntity> queryGbDisDisGrandGoodsByGreatId(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithGbDepOrders(Map<String, Object> map);
+
+    int queryNxGoodsSonsSortByParams(Map<String, Object> mapF);
+
+    List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatIdAllGb(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisGoodsByLikeName(Map<String, Object> mapOne);
+
+    NxDistributerGoodsEntity querySameGoodsWithOrders(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisGoodsByNameLikePinyin(Map<String, Object> mapTwo);
+
+    List<NxDistributerGoodsEntity> queryDisGoodsByAliasLike(Map<String, Object> mapA);
+
+    List<Integer> queryOnlyDepGoodsIds(Map<String, Object> map);
 }

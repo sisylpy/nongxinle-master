@@ -11,6 +11,7 @@ import com.nongxinle.entity.NxDepartmentEntity;
 import com.nongxinle.entity.NxDepartmentUserEntity;
 
 import java.util.List;
+import java.util.Map;
 
 
 public interface NxDepartmentUserDao extends BaseDao<NxDepartmentUserEntity> {
@@ -28,4 +29,8 @@ public interface NxDepartmentUserDao extends BaseDao<NxDepartmentUserEntity> {
     List<NxDepartmentUserEntity> queryAllDepUsers();
 
     List<NxDepartmentUserEntity> queryAllUsersByDepFatherId(Integer depId);
+
+    NxDepartmentUserEntity queryDepUserInfo(Map<String, Object> map);
+
+    NxDepartmentUserEntity queryDepUserByMachineId(String id);
 }

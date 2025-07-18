@@ -17,8 +17,11 @@
  	<select id="queryTotal" resultType="int">
 		select count(*) from gb_distributer_module 
 	</select>
-	 
-	<insert id="save" parameterType="com.nongxinle.entity.GbDistributerModuleEntity">
+    <select id="queryModelByDisId" resultType="com.nongxinle.entity.GbDistributerModuleEntity">
+		select * from gb_distributer_module where  gb_dm_distributer_id = #{gbDistributerId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDistributerModuleEntity">
 		insert into gb_distributer_module
 		(
 			`gb_distributer_module_id`, 

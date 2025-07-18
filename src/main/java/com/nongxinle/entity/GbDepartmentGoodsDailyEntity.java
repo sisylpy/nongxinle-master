@@ -44,10 +44,12 @@ public class GbDepartmentGoodsDailyEntity implements Serializable {
 	 *  
 	 */
 	private Integer gbDgdGbDisGoodsFatherId;
+	private Integer gbDgdGbDisGoodsGrandId;
 	/**
 	 *  
 	 */
 	private Integer gbDgdGbDepDisGoodsId;
+	private Integer gbDgdStatus;
 	/**
 	 *  执行废弃用户
 	 */

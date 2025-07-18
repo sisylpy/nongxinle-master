@@ -33,6 +33,7 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	 *  商品状态
 	 */
 	private Integer nxDgGoodsStatus;
+	private Integer nxDgQuantityDays;
 	/**
 	 *  是否称重
 	 */
@@ -95,7 +96,6 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private String sellAmount;
 	private String sellSubtotal;
 	private Integer nxDgPurchaseAuto;
-//	private Integer nxDgGoodsType;
 	private Integer nxDgGoodsSort;
 
 	private String nxDgBuyingPrice;
@@ -127,14 +127,23 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private Integer nxDgBuyingPriceIsGrade;
 	private Integer nxDgDfgGoodsGrandId;
 	private Integer nxDgIsOldestSon;
-	private String orderContent;
+	private String  orderContent;
+	private String  nxDgOutTotalWeight;
 	private Integer orderSize;
 	private Integer nxDgGoodsSonsSort;
 	private Integer nxDgGoodsIsHidden;
+	private Integer gbDisGoodsId;
+	private Integer gbDisGoodsFatherId;
+	private Integer gbDisGoodsType;
+	private Integer gbDisGoodsToDepId;
+	private String perPrice;
 
 	private NxGoodsEntity nxGoodsEntity;
 	private NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity;
     private NxJrdhSupplierEntity nxJrdhSupplierEntity;
+    private GbDistributerGoodsEntity  hasGbGoods;
+
+    private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
 	private List<NxDistributerStandardEntity> nxDistributerStandardEntities;
 
 	private List<NxStandardEntity> nxStandardEntities;
@@ -146,17 +155,30 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private Integer isDownload;
 
 	private List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities;
+	private List<NxDepartmentOrdersEntity> histfyOrdersEntities;
 	private List<NxDepartmentOrdersEntity> neetNotPurOrders;
 	private NxDepartmentOrdersEntity nxDepartmentOrdersEntity;
 	private List<NxRestrauntOrdersEntity> nxRestrauntOrdersEntities;
 
+	private List<NxDepartmentOrdersHistoryEntity> nxDepartmentOrdersHistoryEntities;
+
+	private NxDistributerEntity nxDistributerEntity;
 	private NxDepartmentDisGoodsEntity departmentDisGoodsEntity;
 	private NxCommunityGoodsEntity nxCommunityGoodsEntity;
 	private List<NxDistributerPurchaseGoodsEntity>  unPurGoodsDisGoodsList;
 	private List<NxDistributerPurchaseGoodsEntity>  unPurOrdersDisGoodsList;
 	private NxDistributerGoodsEntity sonGoods;
 	private List<NxDistributerGoodsEntity> allSons;
-	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
+//	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
+	private NxDistributerPurchaseGoodsEntity shelfPurGoods;
+	private NxDistributerGoodsShelfGoodsEntity shelfGoodsEntity;
+
+	private String nxDgWillPriceOneStandard;
+	private String nxDgWillPriceTwoStandard;
+	private String nxDgWillPriceThreeStandard;
+	private String nxDgWillPriceOneAboutPrice;
+	private String nxDgWillPriceTwoAboutPrice;
+	private String nxDgWillPriceThreeAboutPrice;
 
 	@Override
 	public int compareTo(Object o) {

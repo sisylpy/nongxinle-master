@@ -18,8 +18,68 @@
 		select count(*) from nx_community 
 	</select>
 
-	<select id="queryDistributerCommunityList" resultType="com.nongxinle.entity.NxCommunityEntity">
-		select * from nx_community where nx_community_dis_id = #{disId}
+	<resultMap id="community" type="NxCommunityEntity">
+		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
+		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
+		<result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
+		<result property="nxCommunityDeliveryPayMaxFee" column="nx_community_delivery_pay_max_fee"/>
+		<result property="nxCommunityDeliveryPayPercent" column="nx_community_delivery_pay_percent"/>
+		<result property="nxCommunitySysBusinessAreaId" column="nx_community_sys_business_area_id"/>
+		<result property="nxCommunitySysCityId" column="nx_community_sys_city_id"/>
+		<result property="nxCommunitySysDistrictId" column="nx_community_sys_district_id"/>
+		<result property="nxCommunitySysProvinceId" column="nx_community_sys_province_id"/>
+		<result property="nxCommunityPrePrintTimes" column="nx_community_pre_print_times"/>
+		<result property="nxCommunityOpenTime" column="nx_community_open_time"/>
+		<result property="nxCommunityCloseTime" column="nx_community_close_time"/>
+		<result property="nxCommunityWxFile" column="nx_community_wx_file"/>
+		<result property="nxCommunityDoorFile" column="nx_community_door_file"/>
+		<result property="nxCommunityType" column="nx_community_type"/>
+		<result property="nxCommunityName" column="nx_community_name"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+		<result property="nxCommunityLat" column="nx_community_lat"/>
+		<result property="nxCommunityLng" column="nx_community_lng"/>
+		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+<!--		<result property="nxCommunityLocation" column="nx_community_location" jdbcType="OTHER"-->
+<!--				javaType="com.nongxinle.entity.NxLocation"-->
+<!--				typeHandler="org.apache.ibatis.type.ObjectTypeHandler"/>-->
+	</resultMap>
+
+	<resultMap id="comerceComunity" type="NxECommerceCommunityEntity">
+		<id property="nxEccId" column="nx_ECC_id"/>
+		<result property="nxEccEId" column="nx_ECC_e_id"/>
+		<result property="nxEccCommunityId" column="nx_ECC_community_id"/>
+		<association property="nxCommunityEntity" resultMap="community"/>
+	</resultMap>
+
+	<resultMap id="commerce" type="NxECommerceEntity">
+		<id property="nxECommerceId" column="nx_e_commerce_id"/>
+		<result property="nxECommerceName" column="nx_e_commerce_name"/>
+        <association property="nxECommerceCommunityEntity" resultMap="comerceComunity"/>
+		<collection property="nxECommerceCommunityEntities" resultMap="comerceComunity"/>
+	</resultMap>
+
+	<resultMap id="commerceWithList" type="NxECommerceEntity">
+		<id property="nxECommerceId" column="nx_e_commerce_id"/>
+		<result property="nxECommerceName" column="nx_e_commerce_name"/>
+		<collection property="nxECommerceCommunityEntities" resultMap="comerceComunity"/>
+	</resultMap>
+
+    <select id="queryCommunityByECommerceId" resultMap="commerceWithList">
+		select * from nx_e_commerce as nec
+         left join nx_e_commerce_community as necc on necc.nx_ECC_e_id = nec.nx_e_commerce_id
+		left join nx_community as nc on nc.nx_community_id = necc.nx_ECC_community_id
+		 where nec.nx_e_commerce_id = #{id}
+	</select>
+
+	<select id="queryCommunityListByUserPoint" resultType="com.nongxinle.entity.NxCommunityEntity">
+		SELECT * ,
+		ST_AsText(nx_community_location) AS location,
+		ST_Distance_Sphere(nx_community_location, ST_GeomFromText('POINT(116.3883 39.9289)')) AS distance
+		FROM
+		nx_community
+		WHERE
+		ST_Distance_Sphere(nx_community_location, ST_GeomFromText('POINT(116.3883 39.9289)')) &lt; 100000;
 	</select>
 
 
@@ -35,7 +95,22 @@
 		 	`nx_community_commerce_id`,
 		 	`nx_community_polygon`,
 		 	`nx_community_region`,
-		 	`nx_community_delivery_address`
+		 	`nx_community_delivery_address`,
+		 	`nx_community_type`,
+		 	`nx_community_wx_file`,
+		 	`nx_community_open_time`,
+		 	`nx_community_close_time`,
+		 	`nx_community_door_file`,
+		 	`nx_community_pre_print_times`,
+			`nx_community_delivery_mix_subtotal`,
+			`nx_community_delivery_fee_free_distance`,
+			`nx_community_delivery_pay_percent`,
+			`nx_community_delivery_pay_max_fee`,
+			`nx_community_sys_city_id`,
+			`nx_community_sys_business_area_id`,
+			`nx_community_sys_district_id`,
+			`nx_community_sys_province_id`,
+			`nx_community_location`
 		)
 		values
 		(
@@ -47,24 +122,151 @@
 		 	#{nxCommunityCommerceId},
 		 	#{nxCommunityPolygon},
 		 	#{nxCommunityRegion},
-		 	#{nxCommunityDeliveryAddress}
+		 	#{nxCommunityDeliveryAddress},
+		 	#{nxCommunityType},
+		 	#{nxCommunityWxFile},
+		 	#{nxCommunityOpenTime},
+		 	#{nxCommunityCloseTime},
+		 	#{nxCommunityDoorFile},
+		 	#{nxCommunityPrePrintTimes},
+			#{nxCommunityDeliveryMixSubtotal},
+			#{nxCommunityDeliveryFeeFreeDistance},
+			#{nxCommunityDeliveryPayPercent},
+			#{nxCommunityDeliveryPayMaxFee},
+			#{nxCommunitySysCityId},
+			#{nxCommunitySysBusinessAreaId},
+			#{nxCommunitySysDistrictId},
+			#{nxCommunitySysProvinceId},
+			ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')'))
 		)
 	</insert>
-	 
+
+	<insert id="saveOne" parameterType="com.nongxinle.entity.NxCommunityEntity" useGeneratedKeys="true"
+			keyProperty="nxCommunityId">
+		insert into nx_community
+		(
+			`nx_community_id`,
+			`nx_community_name`,
+			`nx_community_lat`,
+			`nx_community_lng`,
+			`nx_community_route_id`,
+			`nx_community_commerce_id`,
+			`nx_community_polygon`,
+			`nx_community_region`,
+			`nx_community_delivery_address`,
+			`nx_community_type`,
+			`nx_community_wx_file`,
+			`nx_community_open_time`,
+			`nx_community_close_time`,
+			`nx_community_door_file`,
+			`nx_community_pre_print_times`,
+			`nx_community_delivery_mix_subtotal`,
+			`nx_community_delivery_fee_free_distance`,
+			`nx_community_delivery_pay_percent`,
+			`nx_community_delivery_pay_max_fee`,
+			`nx_community_sys_city_id`,
+			`nx_community_sys_business_area_id`,
+			`nx_community_sys_district_id`,
+			`nx_community_sys_province_id`,
+			`nx_community_location`,
+			`nx_community_bill_print_sn`,
+			`nx_community_business_phone`
+		)
+		values
+		(
+			#{nxCommunityId},
+			#{nxCommunityName},
+			#{nxCommunityLat},
+			#{nxCommunityLng},
+			#{nxCommunityRouteId},
+			#{nxCommunityCommerceId},
+			#{nxCommunityPolygon},
+			#{nxCommunityRegion},
+			#{nxCommunityDeliveryAddress},
+			#{nxCommunityType},
+			#{nxCommunityWxFile},
+			#{nxCommunityOpenTime},
+			#{nxCommunityCloseTime},
+			#{nxCommunityDoorFile},
+			#{nxCommunityPrePrintTimes},
+			#{nxCommunityDeliveryMixSubtotal},
+			#{nxCommunityDeliveryFeeFreeDistance},
+			#{nxCommunityDeliveryPayPercent},
+			#{nxCommunityDeliveryPayMaxFee},
+			#{nxCommunitySysCityId},
+			#{nxCommunitySysBusinessAreaId},
+			#{nxCommunitySysDistrictId},
+			#{nxCommunitySysProvinceId},
+			ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')')),
+			#{nxCommunityBillPrintSn},
+			#{nxCommunityBusinessPhone}
+		)
+	</insert>
+
 	<update id="update" parameterType="com.nongxinle.entity.NxCommunityEntity">
-		update nx_community 
+		update nx_community
 		<set>
 			<if test="nxCommunityName != null">`nx_community_name` = #{nxCommunityName}, </if>
-			<if test="nxCommunityLat != null">`nx_community_lat` = #{nxCommunityLat}, </if>
 			<if test="nxCommunityRouteId != null">`nx_community_route_id` = #{nxCommunityRouteId}, </if>
+			<if test="nxCommunityLng != null">`nx_community_lng` = #{nxCommunityLng}, </if>
+			<if test="nxCommunityLat != null">`nx_community_lat` = #{nxCommunityLat}, </if>
 			<if test="nxCommunityCommerceId != null">`nx_community_commerce_id` = #{nxCommunityCommerceId}, </if>
 			<if test="nxCommunityPolygon != null">`nx_community_polygon` = #{nxCommunityPolygon}, </if>
 			<if test="nxCommunityRegion != null">`nx_community_region` = #{nxCommunityRegion}, </if>
 			<if test="nxCommunityDeliveryAddress != null">`nx_community_delivery_address` = #{nxCommunityDeliveryAddress}, </if>
-			<if test="nxCommunityLng != null">`nx_community_lng` = #{nxCommunityLng}</if>
+			<if test="nxCommunityType != null">`nx_community_type` = #{nxCommunityType}, </if>
+			<if test="nxCommunityWxFile != null">`nx_community_wx_file` = #{nxCommunityWxFile}, </if>
+			<if test="nxCommunityOpenTime != null">`nx_community_open_time` = #{nxCommunityOpenTime}, </if>
+			<if test="nxCommunityCloseTime != null">`nx_community_close_time` = #{nxCommunityCloseTime}, </if>
+			<if test="nxCommunityDoorFile != null">`nx_community_door_file` = #{nxCommunityDoorFile}, </if>
+			<if test="nxCommunityPrePrintTimes != null">`nx_community_pre_print_times` = #{nxCommunityPrePrintTimes}, </if>
+			<if test="nxCommunityDeliveryMixSubtotal != null">`nx_community_delivery_mix_subtotal` = #{nxCommunityDeliveryMixSubtotal}, </if>
+			<if test="nxCommunityDeliveryFeeFreeDistance != null">`nx_community_delivery_fee_free_distance` = #{nxCommunityDeliveryFeeFreeDistance}, </if>
+			<if test="nxCommunityDeliveryPayPercent != null">`nx_community_delivery_pay_percent` = #{nxCommunityDeliveryPayPercent}, </if>
+			<if test="nxCommunityDeliveryPayMaxFee != null">`nx_community_delivery_pay_max_fee` = #{nxCommunityDeliveryPayMaxFee}, </if>
+			<if test="nxCommunitySysCityId != null">`nx_community_sys_city_id` = #{nxCommunitySysCityId}, </if>
+			<if test="nxCommunitySysBusinessAreaId != null">`nx_community_sys_business_area_id` = #{nxCommunitySysBusinessAreaId}, </if>
+			<if test="nxCommunitySysDistrictId != null">`nx_community_sys_district_id` = #{nxCommunitySysDistrictId}, </if>
+			<if test="nxCommunitySysProvinceId != null">`nx_community_sys_province_id` = #{nxCommunitySysProvinceId}, </if>
+			<if test="nxCommunityBillPrintSn != null">`nx_community_bill_print_sn` = #{nxCommunityBillPrintSn}, </if>
+			<if test="nxCommunityBusinessPhone != null">`nx_community_business_phone` = #{nxCommunityBusinessPhone}, </if>
+			<if test="nxCommunityLocation != null">
+				`nx_community_location` =
+				ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')'))
+			</if>
 		</set>
 		where nx_community_id = #{nxCommunityId}
 	</update>
+
+
+
+	<!--	<update id="update" parameterType="com.nongxinle.entity.NxCommunityEntity">-->
+<!--		update nx_community -->
+<!--		<set>-->
+<!--			<if test="nxCommunityName != null">`nx_community_name` = #{nxCommunityName}, </if>-->
+<!--			<if test="nxCommunityRouteId != null">`nx_community_route_id` = #{nxCommunityRouteId}, </if>-->
+<!--			<if test="nxCommunityCommerceId != null">`nx_community_commerce_id` = #{nxCommunityCommerceId}, </if>-->
+<!--			<if test="nxCommunityPolygon != null">`nx_community_polygon` = #{nxCommunityPolygon}, </if>-->
+<!--			<if test="nxCommunityRegion != null">`nx_community_region` = #{nxCommunityRegion}, </if>-->
+<!--			<if test="nxCommunityDeliveryAddress != null">`nx_community_delivery_address` = #{nxCommunityDeliveryAddress}, </if>-->
+<!--			<if test="nxCommunityType != null">`nx_community_type` = #{nxCommunityType}, </if>-->
+<!--			<if test="nxCommunityWxFile != null">`nx_community_wx_file` = #{nxCommunityWxFile}, </if>-->
+<!--			<if test="nxCommunityOpenTime != null">`nx_community_open_time` = #{nxCommunityOpenTime}, </if>-->
+<!--			<if test="nxCommunityCloseTime != null">`nx_community_close_time` = #{nxCommunityCloseTime}, </if>-->
+<!--			<if test="nxCommunityDoorFile != null">`nx_community_door_file` = #{nxCommunityDoorFile}, </if>-->
+<!--			<if test="nxCommunityPrePrintTimes != null">`nx_community_pre_print_times` = #{nxCommunityPrePrintTimes}, </if>-->
+<!--			<if test="nxCommunityDeliveryMixSubtotal != null">`nx_community_delivery_mix_subtotal` = #{nxCommunityDeliveryMixSubtotal}, </if>-->
+<!--			<if test="nxCommunityDeliveryFeeFreeDistance != null">`nx_community_delivery_fee_free_distance` = #{nxCommunityDeliveryFeeFreeDistance}, </if>-->
+<!--			<if test="nxCommunityDeliveryPayPercent != null">`nx_community_delivery_pay_percent` = #{nxCommunityDeliveryPayPercent}, </if>-->
+<!--			<if test="nxCommunityDeliveryPayMaxFee != null">`nx_community_delivery_pay_max_fee` = #{nxCommunityDeliveryPayMaxFee}, </if>-->
+<!--			<if test="nxCommunitySysCityId != null">`nx_community_sys_city_id` = #{nxCommunitySysCityId}, </if>-->
+<!--			<if test="nxCommunitySysBusinessAreaId != null">`nx_community_sys_business_area_id` = #{nxCommunitySysBusinessAreaId}, </if>-->
+<!--			<if test="nxCommunitySysCityId != null">`nx_community_sys_district_id` = #{nxCommunitySysCityId}, </if>-->
+<!--			<if test="nxCommunitySysProvinceId != null">`nx_community_sys_province_id` = #{nxCommunitySysProvinceId}</if>-->
+
+<!--		</set>-->
+<!--		where nx_community_id = #{nxCommunityId}-->
+<!--	</update>-->
 	
 	<delete id="delete">
 		delete from nx_community where nx_community_id = #{value}

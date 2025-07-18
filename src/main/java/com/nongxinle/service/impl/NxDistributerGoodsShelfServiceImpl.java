@@ -77,4 +77,16 @@ public class NxDistributerGoodsShelfServiceImpl implements NxDistributerGoodsShe
 		return nxDistributerGoodsShelfDao.queryShelfWithDetailByParams(map);
     }
 
+    @Override
+    public List<NxDistributerGoodsShelfEntity> queryStockShelf(Map<String, Object> params) {
+
+		return nxDistributerGoodsShelfDao.queryStockShelf(params);
+    }
+
+    @Override
+    public List<NxDistributerGoodsShelfEntity> queryShelfList(Map<String, Object> params) {
+
+		return nxDistributerGoodsShelfDao.queryShelfList(params);
+    }
+
 }

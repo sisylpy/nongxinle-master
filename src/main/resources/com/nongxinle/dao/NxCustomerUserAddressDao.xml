@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerUserAddressDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCustomerUserAddressEntity">
+		select * from nx_customer_user_address where nx_customer_user_address_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCustomerUserAddressEntity">
+		select * from nx_customer_user_address 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_customer_user_address 
+	</select>
+    <select id="queryAddressByUserId" resultType="com.nongxinle.entity.NxCustomerUserAddressEntity">
+     select * from nx_customer_user_address where nx_cua_customer_user_id = #{userId}
+	</select>
+    <select id="queryMainAddressByUserId" resultType="com.nongxinle.entity.NxCustomerUserAddressEntity">
+		select * from nx_customer_user_address where nx_cua_customer_user_id = #{nxCuaCustomerUserId}
+		and nx_cua_is_selected = 1;
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserAddressEntity">
+		insert into nx_customer_user_address
+		(
+			`nx_customer_user_address_id`, 
+			`nx_cua_customer_user_id`, 
+			`nx_cua_community_id`, 
+			`nx_cua_status`, 
+			`nx_cua_type`, 
+			`nx_cua_user_name`, 
+			`nx_cua_user_phone`, 
+			`nx_cua_address_building_name`, 
+			`nx_cua_address_detail`, 
+			`nx_cua_is_selected`,
+			`nx_cua_sys_district_id`,
+			`nx_cua_sys_city_id`,
+			`nx_cua_sys_province_id`,
+			`nx_cua_sys_business_area_id`,
+			`nx_cua_lat`,
+			`nx_cua_lng`,
+			`nx_cua_location`
+		)
+		values
+		(
+			#{nxCustomerUserAddressId}, 
+			#{nxCuaCustomerUserId}, 
+			#{nxCuaCommunityId}, 
+			#{nxCuaStatus}, 
+			#{nxCuaType}, 
+			#{nxCuaUserName}, 
+			#{nxCuaUserPhone}, 
+			#{nxCuaAddressBuildingName}, 
+			#{nxCuaAddressDetail}, 
+			#{nxCuaIsSelected},
+			#{nxCuaSysDistrictId},
+			#{nxCuaSysCityId},
+			#{nxCuaSysProvinceId},
+			#{nxCuaSysBusinessAreaId},
+			#{nxCuaLat},
+			#{nxCuaLng},
+			ST_GeomFromText(CONCAT('POINT(', #{nxCuaLng}, ' ', #{nxCuaLat}, ')'))
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCustomerUserAddressEntity">
+		update nx_customer_user_address 
+		<set>
+			<if test="nxCuaCustomerUserId != null">`nx_cua_customer_user_id` = #{nxCuaCustomerUserId}, </if>
+			<if test="nxCuaCommunityId != null">`nx_cua_community_id` = #{nxCuaCommunityId}, </if>
+			<if test="nxCuaStatus != null">`nx_cua_status` = #{nxCuaStatus}, </if>
+			<if test="nxCuaType != null">`nx_cua_type` = #{nxCuaType}, </if>
+			<if test="nxCuaUserName != null">`nx_cua_user_name` = #{nxCuaUserName}, </if>
+			<if test="nxCuaUserPhone != null">`nx_cua_user_phone` = #{nxCuaUserPhone}, </if>
+			<if test="nxCuaAddressBuildingName != null">`nx_cua_address_building_name` = #{nxCuaAddressBuildingName}, </if>
+			<if test="nxCuaAddressDetail != null">`nx_cua_address_detail` = #{nxCuaAddressDetail}, </if>
+			<if test="nxCuaSysDistrictId != null">`nx_cua_sys_district_id` = #{nxCuaSysDistrictId}, </if>
+			<if test="nxCuaSysProvinceId != null">`nx_cua_sys_province_id` = #{nxCuaSysProvinceId}, </if>
+			<if test="nxCuaSysCityId != null">`nx_cua_sys_city_id` = #{nxCuaSysCityId}, </if>
+			<if test="nxCuaSysBusinessAreaId != null">`nx_cua_sys_business_area_id` = #{nxCuaSysBusinessAreaId}, </if>
+			<if test="nxCuaLat != null">`nx_cua_lat` = #{nxCuaLat}, </if>
+			<if test="nxCuaLng != null">`nx_cua_lng` = #{nxCuaLng}, </if>
+			<if test="nxCuaIsSelected != null">`nx_cua_is_selected` = #{nxCuaIsSelected},</if>
+
+			<if test="nxCuaLocation != null">
+				`nx_cua_location` =
+				ST_GeomFromText(CONCAT('POINT(', #{nxCuaLng}, ' ', #{nxCuaLat}, ')'))
+			</if>
+		</set>
+		where nx_customer_user_address_id = #{nxCustomerUserAddressId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_customer_user_address where nx_customer_user_address_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_customer_user_address where nx_customer_user_address_id in 
+		<foreach item="nxCustomerUserAddressId" collection="array" open="(" separator="," close=")">
+			#{nxCustomerUserAddressId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -54,6 +54,9 @@
 			<if test="depId != null">
 				and  gb_gwt_dep_father_id = #{depId}
 			</if>
+			<if test="userId != null">
+				and  gb_gwt_user_id = #{userId}
+			</if>
 			<if test="status != null">
 				and  gb_gwt_status  &lt; #{status}
 			</if>

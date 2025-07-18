@@ -21,6 +21,12 @@
 
 	<resultMap id="disGoods" type="GbDistributerGoodsEntity">
 		<id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+		<result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+		<result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+		<result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+		<result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+		<result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
 		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
 		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
@@ -33,6 +39,7 @@
 		<result property="gbDgPullOff" column="gb_dg_pull_off"/>
 		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
 		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
 		<result property="gbDgNxDistributerId" column="gb_dg_nx_distributer_id"/>
 		<result property="gbDgNxDistributerGoodsId" column="gb_dg_nx_distributer_goods_id"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -60,6 +67,8 @@
 	<resultMap id="goodsStock" type="GbDepartmentGoodsStockEntity">
 
         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
+        <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
 		<result property="gbDgsNxDistributerId" column="gb_dgs_nx_distributer_id"/>
 		<result property="gbDgsSellingPrice" column="gb_dgs_selling_price"/>
@@ -71,6 +80,10 @@
 		<result property="gbDgsRestWeightShowStandard" column="gb_dgs_rest_weight_show_standard"/>
 		<result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
 		<result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
+		<result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
 		<result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
 		<result property="gbDgsPrice" column="gb_dgs_price"/>
 		<result property="gbDgsWeight" column="gb_dgs_weight"/>
@@ -80,14 +93,16 @@
 		<result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
 		<result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
 		<result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
-		<result property="gbDgsGbDepartmentFatherId" column="gb_dgs_department_father_id"/>
+		<result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
 		<result property="gbDgsStatus" column="gb_dgs_status"/>
 		<result property="gbDgsReceiveUserId" column="gb_dgs_receive_user_id"/>
 		<result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
 		<result property="gbDgsGbGoodsStockId" column="gb_dgs_gb_goods_stock_id"/>
 		<result property="gbDgsDate" column="gb_dgs_date"/>
 		<result property="gbDgsWarnFullTime" column="gb_dgs_warn_full_time"/>
-		<result property="gbDgsWasteFullTime" column="gb_dgs_waste_full_time"/>
+        <result property="gbDgsWasteFullTime" column="gb_dgs_waste_full_time"/>
+        <result property="gbDgsWasteTimeQuantumName" column="gb_dgs_waste_time_quantumName"/>
+        <result property="gbDgsWarnTimeQuantumName" column="gb_dgs_warn_time_quantum_name"/>
 		<result property="gbDgsFullTime" column="gb_dgs_full_time"/>
 		<result property="gbDgsDoWasteFullTime" column="gb_dgs_do_waste_full_time"/>
 		<result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
@@ -97,8 +112,8 @@
 		<result property="gbDgsWarnTimeQuantumName" column="gb_dgs_warn_time_quantum_name"/>
 		<result property="gbDgsWasteTimeQuantumName" column="gb_dgs_waste_time_quantum_name"/>
 		<result property="gbDgsGbPurGoodsId" column="gb_dgs_gb_pur_goods_id"/>
-		<result property="gbDgsGbPurGoodsId" column="from_gb_dgs_gb_pur_goods_id"/>
-		<result property="gbDgsGbPriceGoodsId" column="from_gb_dgs_gb_price_goods_id"/>
+		<result property="gbDgsGbPurGoodsId" column="gb_dgs_gb_pur_goods_id"/>
+		<result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_goods_id"/>
 
 	</resultMap>
 	<resultMap id="monthStock" type="GbDepInventoryGoodsMonthEntity">

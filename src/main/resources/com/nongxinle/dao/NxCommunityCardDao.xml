@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityCardDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityCardEntity">
+		select * from nx_community_card where nx_community_card_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityCardEntity">
+		select * from nx_community_card 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_card 
+	</select>
+
+    <select id="queryCardListByParams" resultType="com.nongxinle.entity.NxCommunityCardEntity">
+		select * from nx_community_card as ncc
+		<where>
+			<if test="commId != null">
+				and nx_cc_community_id = #{commId}
+			</if>
+			<if test="status != null">
+				and nx_cc_status = #{status}
+			</if>
+		</where>
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityCardEntity">
+		insert into nx_community_card
+		(
+			`nx_community_card_id`, 
+			`nx_community_card_name`, 
+			`nx_cc_price`,
+			`nx_cc_words`, 
+			`nx_cc_file_path`, 
+			`nx_cc_community_id`, 
+			`nx_cc_type`, 
+			`nx_cc_status`,
+			`nx_cc_effective_days`,
+			`nx_cc_user_count`
+		)
+		values
+		(
+			#{nxCommunityCardId}, 
+			#{nxCommunityCardName}, 
+			#{nxCcPrice},
+			#{nxCcWords}, 
+			#{nxCcFilePath}, 
+			#{nxCcCommunityId}, 
+			#{nxCcType}, 
+			#{nxCcStatus},
+			#{nxCcEffectiveDays},
+			#{nxCcUserCount}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityCardEntity">
+		update nx_community_card 
+		<set>
+			<if test="nxCommunityCardName != null">`nx_community_card_name` = #{nxCommunityCardName}, </if>
+			<if test="nxCcPrice != null">`nx_cc_price` = #{nxCcPrice}, </if>
+			<if test="nxCcWords != null">`nx_cc_words` = #{nxCcWords}, </if>
+			<if test="nxCcFilePath != null">`nx_cc_file_path` = #{nxCcFilePath}, </if>
+			<if test="nxCcCommunityId != null">`nx_cc_community_id` = #{nxCcCommunityId}, </if>
+			<if test="nxCcType != null">`nx_cc_type` = #{nxCcType}, </if>
+			<if test="nxCcStatus != null">`nx_cc_status` = #{nxCcStatus}, </if>
+			<if test="nxCcUserCount != null">`nx_cc_user_count` = #{nxCcUserCount}, </if>
+			<if test="nxCcEffectiveDays != null">`nx_cc_effective_days` = #{nxCcEffectiveDays}</if>
+		</set>
+		where nx_community_card_id = #{nxCommunityCardId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_card where nx_community_card_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_card where nx_community_card_id in 
+		<foreach item="nxCommunityCardId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityCardId}
+		</foreach>
+	</delete>
+
+</mapper>

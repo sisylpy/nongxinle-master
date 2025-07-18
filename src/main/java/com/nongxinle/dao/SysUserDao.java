@@ -37,4 +37,8 @@ public interface SysUserDao extends BaseDao<SysUserEntity> {
     List<Long> queryAllMenuIdCode(Long userId);
 
     SysUserEntity queryNxUserByUserName(String userName);
+
+    SysUserEntity queryUserByDisId(Integer disId);
+
+    SysUserEntity printerUserLogin(Map<String, Object> map);
 }

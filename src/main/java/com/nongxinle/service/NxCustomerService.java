@@ -31,4 +31,7 @@ public interface NxCustomerService {
     List<NxCustomerEntity> queryCommunityCustomers(Map<String, Object> map);
 
 	int queryCustomerOfCommunityTotal(Map<String, Object> map);
+
+    NxCustomerEntity querycustomerDetail(Integer nxCuCustomerId);
+
 }

@@ -43,6 +43,7 @@ public class NxCommunityOrdersEntity implements Serializable {
 	 *  订单状态
 	 */
 	private Integer nxCoStatus;
+	private Integer nxCoDeskId;
 	/**
 	 *  订单送达
 	 */
@@ -55,7 +56,12 @@ public class NxCommunityOrdersEntity implements Serializable {
 	 *  订单送达时间
 	 */
 	private String nxCoServiceTime;
+	private String nxCoServiceMinute;
+	private String nxCoServiceHour;
 	private String nxCoWeighNumber;
+	private String nxCoBuyMemberCardSubtotal;
+	private String nxCoDeliveryFee;
+	private Integer nxCoBuyMemberCardTime;
 
 
 	/**
@@ -70,6 +76,7 @@ public class NxCommunityOrdersEntity implements Serializable {
 	 * zidingdan
 	 */
 	private List<NxCommunityOrdersSubEntity> nxOrdersSubEntities;
+	private List<NxCustomerUserCardEntity> nxCustomerUserCardEntities;
 
 	/**
 	 * kehu
@@ -94,18 +101,21 @@ public class NxCommunityOrdersEntity implements Serializable {
 
 
 	private Integer nxCoType;
+	private Integer nxCoServiceType;
 
 	private  Integer nxCoCommunityId;
+	private  Integer nxCoCommerceId;
+	private  Integer nxCoDeliveryAddressId;
 
 	private String nxCoUserOpenId;
 	private String nxCoWxOutTradeNo;
-	private int nxCoBuyMemberOrderTime;
 
 	private NxCustomerUserEntity orderUser;
 
 	private NxCustomerUserEntity deliveryUser;
 	private NxCommunitySplicingOrdersEntity orderUserSplicingOrder;
 	private List<NxCommunitySplicingOrdersEntity> allSplicingOrders;
+	private NxCustomerUserAddressEntity deliveryAddress;
 
 
 

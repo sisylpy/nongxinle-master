@@ -36,152 +36,152 @@ public class GbDepartmentGoodsStockRecordController {
     private GbDepartmentService gbDepartmentService;
 
 
-    @RequestMapping(value = "/getEveryGoodsStockMany", method = RequestMethod.POST)
-    @ResponseBody
-    public R getEveryGoodsStockMany(Integer goodsFatherId, String startDate, String stopDate, String ids, Integer disId) {
-        TreeSet<GbDistributerGoodsEntity> disGoodsEntities = new TreeSet<>();
-        Map<String, Object> map0 = new HashMap<>();
-        if (!startDate.equals("-1")) {
-            map0.put("startDate", startDate);
-        }
-        if (!stopDate.equals("-1")) {
-            map0.put("notDayuStopDate", stopDate);
-        }
-        map0.put("disGoodsFatherId", goodsFatherId);
-
-        // stock
-        List<GbDistributerGoodsEntity> fatherGoodsEntities1 = gbDepGoodsStockService.queryDisGoodsStockByParams(map0);
-        if (fatherGoodsEntities1.size() > 0) {
-            disGoodsEntities.addAll(fatherGoodsEntities1);
-        }
-
-        if (!startDate.equals("-1") && !stopDate.equals("-1")) {
-            System.out.println("getMendianCostTypeStatics" + map0);
-            List<GbDistributerGoodsEntity> stockRecordGoodsEntitiesList = gbDepGoodsStockRecordService.queryDisGoodsByParams(map0);
-            if (stockRecordGoodsEntitiesList.size() > 0) {
-                disGoodsEntities.addAll(stockRecordGoodsEntitiesList);
-            }
-        }
-
-        if (disGoodsEntities.size() > 0) {
-            for (GbDistributerGoodsEntity goodsEntity : disGoodsEntities) {
-                map0.put("goodsId", goodsEntity.getGbDistributerGoodsId());
-                BigDecimal totalMany = new BigDecimal(0);
-                Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map0);
-                if (stockCount > 0) {
-                    long timeStampTotal = gbDepGoodsStockService.queryGoodsStockTimeStamp(map0);
-                    long averageTimeStamp = timeStampTotal / stockCount;
-                    long nowTimeStamp = System.currentTimeMillis() / 1000;
-                    long diffTime = nowTimeStamp - averageTimeStamp;
-                    long diffDay = diffTime / 1000 / 60 / 60 / 24;
-                    totalMany = new BigDecimal(diffDay).setScale(2, BigDecimal.ROUND_HALF_UP);
-                }
-                if (!startDate.equals("-1") && !stopDate.equals("-1")) {
-                    Integer stockRecordCount = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map0);
-                    if (stockRecordCount > 0) {
-                        Double aDoubleStockRecord = gbDepGoodsStockRecordService.queryManyTotal(map0);
-                        double averageStockRecordMany = aDoubleStockRecord / stockRecordCount;
-                        totalMany = totalMany.add(new BigDecimal(averageStockRecordMany));
-                    }
-                }
-                goodsEntity.setGoodsStockManyString(totalMany.toString());
-            }
-        }
-        
-        return R.ok().put("data", disGoodsEntities);
-    }
-
-    @RequestMapping(value = "/getMendianStockMany", method = RequestMethod.POST)
-    @ResponseBody
-    public R getMendianStockMany(Integer disId, String startDate, String stopDate, String ids, Integer inventoryType) {
-
-        TreeSet<GbDistributerFatherGoodsEntity> greatGrandGoods = new TreeSet<>();
-
-        Map<String, Object> map0 = new HashMap<>();
-        map0.put("disId", disId);
-        map0.put("inventoryType", inventoryType);
-        if (!startDate.equals("-1")) {
-            map0.put("startDate", startDate);
-        }
-        if (!stopDate.equals("-1")) {
-            map0.put("notDayuStopDate", stopDate);
-        }
-
-        // stock
-        List<GbDistributerFatherGoodsEntity> fatherGoodsEntities1 = gbDepGoodsStockService.queryDepStockDisFatherGoodsFather(map0);
-        if (fatherGoodsEntities1.size() > 0) {
-            greatGrandGoods.addAll(fatherGoodsEntities1);
-        }
-
-        if (!startDate.equals("-1") && !stopDate.equals("-1")) {
-            System.out.println("getMendianCostTypeStatics" + map0);
-            List<GbDistributerFatherGoodsEntity> greatGrandGoodsList = gbDepGoodsStockRecordService.queryDepStockRecordDisFatherGoodsFather(map0);
-            if (greatGrandGoodsList.size() > 0) {
-                greatGrandGoods.addAll(greatGrandGoodsList);
-            }
-        }
-
-        if (greatGrandGoods.size() > 0) {
-            for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandGoods) {
-                BigDecimal greatGrandMany = new BigDecimal(0);
-                BigDecimal greatGrandInteger = new BigDecimal(0);
-                List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
-                for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
-                    BigDecimal grandMany = new BigDecimal(0);
-                    BigDecimal grandInteger = new BigDecimal(0);
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        map0.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-
-                        BigDecimal totalMany = new BigDecimal(0);
-                        Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map0);
-                        if (stockCount > 0) {
-                            long timeStampTotal = gbDepGoodsStockService.queryGoodsStockTimeStamp(map0);
-                            long averageTimeStamp = timeStampTotal / stockCount;
-                            System.out.println("averageTimeStamp" + averageTimeStamp);
-                            long nowTimeStamp = System.currentTimeMillis() / 1000;
-                            System.out.println("nowTimeStampnowTimeStamp" + nowTimeStamp);
-                            long diffTime = nowTimeStamp - averageTimeStamp;
-                            System.out.println("diffTimediffTime" + diffTime);
-
-                            long diffDay = diffTime / 60 / 60 / 24;
-                            System.out.println("diffdaya===" + diffDay);
-                            totalMany = new BigDecimal(diffDay).setScale(2, BigDecimal.ROUND_HALF_UP);
-                            grandInteger = grandInteger.add(new BigDecimal(stockCount));
-                            grandMany = grandMany.add(totalMany);
-                        }
-
-                        if (!startDate.equals("-1") && !stopDate.equals("-1")) {
-                            Integer stockRecordCount = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map0);
-                            if (stockRecordCount > 0) {
-                                Double aDoubleStockRecord = gbDepGoodsStockRecordService.queryManyTotal(map0);
-                                double averageStockRecordMany = aDoubleStockRecord / stockRecordCount;
-                                totalMany = totalMany.add(new BigDecimal(averageStockRecordMany));
-                                grandInteger = grandInteger.add(new BigDecimal(stockRecordCount));
-                                grandMany = grandMany.add(totalMany);
-                            }
-                        }
-                        father.setFatherStockManyString(totalMany.toString());
-
-                    }
-                    System.out.println("idididididttgrandIntegert" + grandInteger);
-                    if (grandInteger.compareTo(BigDecimal.ZERO) == 1) {
-                        BigDecimal divide = grandMany.divide(grandInteger, 2).setScale(2, BigDecimal.ROUND_HALF_UP);
-                        grandFather.setFatherStockManyString(divide.toString());
-                    }
-                }
-//                if (greatGrandInteger.compareTo(BigDecimal.ZERO) == 1) {
-//                    BigDecimal divide = greatGrandMany.divide(greatGrandInteger, 2).setScale(2, BigDecimal.ROUND_HALF_UP);
-//                    greatGrandFather.setFatherStockManyString(divide.toString());
+//    @RequestMapping(value = "/getEveryGoodsStockMany", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getEveryGoodsStockMany(Integer goodsFatherId, String startDate, String stopDate, String ids, Integer disId) {
+//        TreeSet<GbDistributerGoodsEntity> disGoodsEntities = new TreeSet<>();
+//        Map<String, Object> map0 = new HashMap<>();
+//        if (!startDate.equals("-1")) {
+//            map0.put("startDate", startDate);
+//        }
+//        if (!stopDate.equals("-1")) {
+//            map0.put("notDayuStopDate", stopDate);
+//        }
+//        map0.put("disGoodsFatherId", goodsFatherId);
 //
+//        // stock
+//        List<GbDistributerGoodsEntity> fatherGoodsEntities1 = gbDepGoodsStockService.queryDisGoodsStockByParams(map0);
+//        if (fatherGoodsEntities1.size() > 0) {
+//            disGoodsEntities.addAll(fatherGoodsEntities1);
+//        }
+//
+//        if (!startDate.equals("-1") && !stopDate.equals("-1")) {
+//            System.out.println("getMendianCostTypeStatics" + map0);
+//            List<GbDistributerGoodsEntity> stockRecordGoodsEntitiesList = gbDepGoodsStockRecordService.queryDisGoodsByParams(map0);
+//            if (stockRecordGoodsEntitiesList.size() > 0) {
+//                disGoodsEntities.addAll(stockRecordGoodsEntitiesList);
+//            }
+//        }
+//
+//        if (disGoodsEntities.size() > 0) {
+//            for (GbDistributerGoodsEntity goodsEntity : disGoodsEntities) {
+//                map0.put("goodsId", goodsEntity.getGbDistributerGoodsId());
+//                BigDecimal totalMany = new BigDecimal(0);
+//                Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map0);
+//                if (stockCount > 0) {
+//                    long timeStampTotal = gbDepGoodsStockService.queryGoodsStockTimeStamp(map0);
+//                    long averageTimeStamp = timeStampTotal / stockCount;
+//                    long nowTimeStamp = System.currentTimeMillis() / 1000;
+//                    long diffTime = nowTimeStamp - averageTimeStamp;
+//                    long diffDay = diffTime / 1000 / 60 / 60 / 24;
+//                    totalMany = new BigDecimal(diffDay).setScale(2, BigDecimal.ROUND_HALF_UP);
 //                }
-            }
+//                if (!startDate.equals("-1") && !stopDate.equals("-1")) {
+//                    Integer stockRecordCount = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map0);
+//                    if (stockRecordCount > 0) {
+//                        Double aDoubleStockRecord = gbDepGoodsStockRecordService.queryManyTotal(map0);
+//                        double averageStockRecordMany = aDoubleStockRecord / stockRecordCount;
+//                        totalMany = totalMany.add(new BigDecimal(averageStockRecordMany));
+//                    }
+//                }
+//                goodsEntity.setGoodsStockManyString(totalMany.toString());
+//            }
+//        }
+//
+//        return R.ok().put("data", disGoodsEntities);
+//    }
 
-        }
-
-
-        return R.ok().put("data", greatGrandGoods);
-    }
+//    @RequestMapping(value = "/getMendianStockMany", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getMendianStockMany(Integer disId, String startDate, String stopDate, String ids, Integer inventoryType) {
+//
+//        TreeSet<GbDistributerFatherGoodsEntity> greatGrandGoods = new TreeSet<>();
+//
+//        Map<String, Object> map0 = new HashMap<>();
+//        map0.put("disId", disId);
+//        map0.put("inventoryType", inventoryType);
+//        if (!startDate.equals("-1")) {
+//            map0.put("startDate", startDate);
+//        }
+//        if (!stopDate.equals("-1")) {
+//            map0.put("notDayuStopDate", stopDate);
+//        }
+//
+//        // stock
+//        List<GbDistributerFatherGoodsEntity> fatherGoodsEntities1 = gbDepGoodsStockService.queryDepStockDisFatherGoodsFather(map0);
+//        if (fatherGoodsEntities1.size() > 0) {
+//            greatGrandGoods.addAll(fatherGoodsEntities1);
+//        }
+//
+//        if (!startDate.equals("-1") && !stopDate.equals("-1")) {
+//            System.out.println("getMendianCostTypeStatics" + map0);
+//            List<GbDistributerFatherGoodsEntity> greatGrandGoodsList = gbDepGoodsStockRecordService.queryDepStockRecordDisFatherGoodsFather(map0);
+//            if (greatGrandGoodsList.size() > 0) {
+//                greatGrandGoods.addAll(greatGrandGoodsList);
+//            }
+//        }
+//
+//        if (greatGrandGoods.size() > 0) {
+//            for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandGoods) {
+//                BigDecimal greatGrandMany = new BigDecimal(0);
+//                BigDecimal greatGrandInteger = new BigDecimal(0);
+//                List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
+//                for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
+//                    BigDecimal grandMany = new BigDecimal(0);
+//                    BigDecimal grandInteger = new BigDecimal(0);
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        map0.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
+//
+//                        BigDecimal totalMany = new BigDecimal(0);
+//                        Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map0);
+//                        if (stockCount > 0) {
+//                            long timeStampTotal = gbDepGoodsStockService.queryGoodsStockTimeStamp(map0);
+//                            long averageTimeStamp = timeStampTotal / stockCount;
+//                            System.out.println("averageTimeStamp" + averageTimeStamp);
+//                            long nowTimeStamp = System.currentTimeMillis() / 1000;
+//                            System.out.println("nowTimeStampnowTimeStamp" + nowTimeStamp);
+//                            long diffTime = nowTimeStamp - averageTimeStamp;
+//                            System.out.println("diffTimediffTime" + diffTime);
+//
+//                            long diffDay = diffTime / 60 / 60 / 24;
+//                            System.out.println("diffdaya===" + diffDay);
+//                            totalMany = new BigDecimal(diffDay).setScale(2, BigDecimal.ROUND_HALF_UP);
+//                            grandInteger = grandInteger.add(new BigDecimal(stockCount));
+//                            grandMany = grandMany.add(totalMany);
+//                        }
+//
+//                        if (!startDate.equals("-1") && !stopDate.equals("-1")) {
+//                            Integer stockRecordCount = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map0);
+//                            if (stockRecordCount > 0) {
+//                                Double aDoubleStockRecord = gbDepGoodsStockRecordService.queryManyTotal(map0);
+//                                double averageStockRecordMany = aDoubleStockRecord / stockRecordCount;
+//                                totalMany = totalMany.add(new BigDecimal(averageStockRecordMany));
+//                                grandInteger = grandInteger.add(new BigDecimal(stockRecordCount));
+//                                grandMany = grandMany.add(totalMany);
+//                            }
+//                        }
+//                        father.setFatherStockManyString(totalMany.toString());
+//
+//                    }
+//                    System.out.println("idididididttgrandIntegert" + grandInteger);
+//                    if (grandInteger.compareTo(BigDecimal.ZERO) == 1) {
+//                        BigDecimal divide = grandMany.divide(grandInteger, 2).setScale(2, BigDecimal.ROUND_HALF_UP);
+//                        grandFather.setFatherStockManyString(divide.toString());
+//                    }
+//                }
+////                if (greatGrandInteger.compareTo(BigDecimal.ZERO) == 1) {
+////                    BigDecimal divide = greatGrandMany.divide(greatGrandInteger, 2).setScale(2, BigDecimal.ROUND_HALF_UP);
+////                    greatGrandFather.setFatherStockManyString(divide.toString());
+////
+////                }
+//            }
+//
+//        }
+//
+//
+//        return R.ok().put("data", greatGrandGoods);
+//    }
 
 
 

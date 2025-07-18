@@ -29,6 +29,13 @@
 			<if test="depId != null">
 				and nx_DOH_department_id = #{depId}
 			</if>
+			<if test="disId != null">
+				and nx_DOH_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and nx_DOH_dis_goods_id = #{disGoodsId}
+			</if>
+
 		</where>
 		order by nx_department_orders_history_id
 	</select>
@@ -46,8 +53,9 @@
 
 	<resultMap id="depOrders" type="NxDepartmentOrdersEntity">
 		<id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
 		<result property="nxDoTodayOrder" column="nx_DO_today_order"/>
 		<result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -97,8 +105,11 @@
 		<result property="nxDoProfitScale" column="nx_DO_profit_scale"/>
 		<result property="nxDoProfitSubtotal" column="nx_DO_profit_subtotal"/>
 	</resultMap>
+
+
 	<resultMap id="depHistoryOrders" type="NxDepartmentOrdersHistoryEntity">
 		<id property="nxDepartmentOrdersHistoryId" column="nx_department_orders_history_id"/>
+		<result property="nxDohDisGoodsId" column="nx_DOH_dis_goods_id"/>
 		<result property="nxDohQuantity" column="nx_DOH_quantity"/>
 		<result property="nxDohStandard" column="nx_DOH_standard"/>
 		<result property="nxDohApplyDate" column="nx_DOH_apply_date"/>
@@ -112,7 +123,14 @@
 	</resultMap>
 
 	<resultMap id="depGoodsWithHistory" type="NxDepartmentDisGoodsEntity">
-		<id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+		 <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
+		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
+		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
+		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
+        <result property="nxDdgPickDetail" column="nx_DDG_pick_detail"/>
+        <result property="nxDdgGbDepartmentId" column="nx_DDG_gb_department_id"/>
+        <result property="nxDdgGbDepartmentFatherId" column="nx_DDG_gb_department_father_id"/>
 		<result property="nxDdgDisGoodsGrandId" column="nx_DDG_dis_goods_grand_id"/>
 		<result property="nxDdgDepGoodsName" column="nx_DDG_dep_goods_name"/>
 		<result property="nxDdgOrderPrice" column="nx_DDG_order_price"/>
@@ -137,9 +155,18 @@
 	</resultMap>
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
-        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
-        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
-        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+		<result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+		<result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+		<result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+		<result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+		<result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+		<result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
+		<result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+		<result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+		<result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
 		<result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
 		<result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
 		<result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
@@ -148,27 +175,32 @@
 		<result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
 		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+		<result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
 		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+		<result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
 		<result property="nxDgWillPrice" column="nx_dg_will_price"/>
+		<result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
+		<result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
+		<result property="nxDgPriceThirdDay" column="nx_dg_price_third_day"/>
 		<result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
-		<result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
-		<result property="nxDgPullOff" column="nx_dg_pull_off"/>
 		<result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
-		<result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
-		<result property="nxDgNxFatherId" column="nx_dg_nx_father_id"/>
+		<result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+		<result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
 		<result property="nxDgGoodsName" column="nx_dg_goods_name"/>
 		<result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
 		<result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
-		<result property="nxDgGoodsPinyin" column="nx_dg_goods_pinyin"/>
-		<result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
-		<result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
 		<result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+		<result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
 		<result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+		<result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+		<result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+		<result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+		<result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
 		<result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
 		<result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
 		<result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
 		<result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
-		<result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
 		<result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
 		<result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
 		<result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
@@ -178,14 +210,15 @@
 		<result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
 		<result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
-		<collection property="nxDistributerStandardEntities" resultMap="disStandard"/>
+		<collection property="nxDepartmentOrdersHistoryEntities" resultMap="depHistoryOrders"/>
+
 	</resultMap>
 	<select id="queryDepTodayOrder" resultMap="depGoodsWithHistory">
 		select * from nx_department_orders_history as ndoh
 		left join nx_department_dis_goods as nddg on nddg.nx_department_dis_goods_id = ndoh.nx_DOH_dep_dis_goods_id
 		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = nddg.nx_DDG_dis_goods_id
 		left join nx_distributer_standard as nds  on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
-		left join nx_department_orders as ndo on ndo.nx_DO_department_id = #{depId}
+		left join nx_department_order_history as ndo on ndo.nx_DO_department_id = #{depId}
 		 and ndo.nx_DO_status &lt; 3 and ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id
 		<where>
 			<if test="depFatherId != null">
@@ -198,12 +231,224 @@
           order by ndoh.nx_DOH_order, ndoh.nx_DOH_order_times
 	</select>
 
-	<insert id="save" parameterType="com.nongxinle.entity.NxDepartmentOrdersHistoryEntity">
+	<select id="queryRecentOrders" resultType="java.lang.Integer">
+
+
+	</select>
+	<select id="queryDepOrderCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_department_orders_history
+			<where>
+				<if test="depFatherId != null">
+					and  nx_DOH_department_father_id = #{depFatherId}
+				</if>
+				<if test="depId != null">
+					and  nx_DOH_department_id = #{depId}
+				</if>
+				<if test="startDate != null">
+					and  nx_DOH_apply_date &gt; #{startDate}
+				</if>
+			</where>
+	</select>
+	<select id="queryDisGoodsByParams" resultMap="disGoods">
+		select  * from nx_department_orders_history as ndoh
+		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndoh.nx_DOH_dis_goods_id
+		<where>
+			<if test="depFatherId != null">
+				and  nx_DOH_department_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null">
+				and  nx_DOH_department_id = #{depId}
+			</if>
+			<if test="startDate != null">
+				and  nx_DOH_apply_date &gt; #{startDate}
+			</if>
+		</where>
+	</select>
+
+
+
+	<select id="queryLogs" resultType="java.util.Map">
+		SELECT nx_DOH_apply_date, nx_DOH_quantity
+		FROM nx_department_orders_history
+		<where>
+			<if test="depFatherId != null">
+				AND nx_DOH_department_father_id = #{depFatherId}
+			</if>
+			<if test="depId != null">
+				AND nx_DOH_department_id = #{depId}
+			</if>
+			<if test="disGoodsId != null">
+				AND nx_DOH_dis_goods_id = #{disGoodsId}
+			</if>
+			LIMIT 3
+		</where>
+
+
+	</select>
+
+		<!-- 5.1 过去 days 天内，下单次数 ≥ minTimes 的商品 -->
+		<select id="selectFrequentGoods" resultType="java.lang.Integer">
+			SELECT nx_DOH_dis_goods_id
+			FROM nx_department_orders_history
+			WHERE nx_DOH_department_id = #{depId}
+			  AND nx_DOH_apply_date >= CURDATE() - INTERVAL #{windowDays} DAY
+			GROUP BY nx_DOH_dis_goods_id
+			HAVING COUNT(*) >= #{minTimes} order by nx_DOH_dis_goods_id
+		</select>
+
+	<!-- 5.2 过去 days 天内每天平均用量 -->
+	<select id="selectAvgDaily" resultType="com.nongxinle.entity.AvgDaily">
+		SELECT
+		nx_DOH_dis_goods_id AS goodsId,
+		SUM(nx_DOH_quantity) / #{days} AS avgDailyQty
+		FROM nx_department_orders_history
+		WHERE nx_DOH_department_id = #{depId}
+		AND nx_DOH_dis_goods_id IN
+		<foreach item="gid" collection="goodsIds" open="(" separator="," close=")">
+			#{gid}
+		</foreach>
+		AND nx_DOH_apply_date >= CURDATE() - INTERVAL #{days} DAY
+		GROUP BY nx_DOH_dis_goods_id
+	</select>
+
+
+	<!-- 5.3 每个商品最近一次订货 -->
+	<select id="selectLastOrders" parameterType="map" resultType="com.nongxinle.entity.NxDepartmentOrdersHistoryEntity">
+		SELECT
+		t.nxDohDisGoodsId  AS nxDohDisGoodsId,
+		t.nxDohQuantity    AS nxDohQuantity,
+		t.nxDohApplyDate   AS nxDohApplyDate
+		FROM (
+		SELECT
+		nx_DOH_dis_goods_id  AS nxDohDisGoodsId,
+		nx_DOH_quantity      AS nxDohQuantity,
+		nx_DOH_apply_date    AS nxDohApplyDate,
+		ROW_NUMBER() OVER (
+		PARTITION BY nx_DOH_dis_goods_id
+		ORDER BY nx_DOH_apply_date DESC
+		) AS rn
+		FROM nx_department_orders_history
+		WHERE nx_DOH_department_id = #{depId}
+		AND nx_DOH_dis_goods_id IN
+		<foreach item="gid" collection="goodsIds" open="(" separator="," close=")">
+			#{gid}
+		</foreach>
+		) t
+		WHERE t.rn = 1
+	</select>
+
+<!--	<select id="selectDailyUsage" resultType="com.nongxinle.entity.DailyUsage">-->
+<!--		SELECT nx_DOH_apply_date AS date,-->
+<!--			   SUM(nx_DOH_quantity) AS qty-->
+<!--		FROM nx_department_orders_history-->
+<!--		WHERE nx_DOH_department_id = #{depId}-->
+<!--		  AND nx_DOH_dis_goods_id      = #{gid}-->
+<!--		  AND nx_DOH_apply_date >= CURDATE() - INTERVAL #{windowDays} DAY-->
+<!--		GROUP BY nx_DOH_apply_date-->
+<!--		ORDER BY DATE(nx_DOH_apply_date) ASC-->
+<!--	</select>-->
+<!--	<select id="selectLastOrder"-->
+<!--			parameterType="java.util.Map"-->
+<!--			resultType="com.nongxinle.entity.NxDepartmentOrdersHistoryEntity">-->
+<!--		SELECT-->
+<!--			t.nx_DOH_dis_goods_id  AS nxDohDisGoodsId,-->
+<!--			t.nx_DOH_quantity      AS nxDohQuantity,-->
+<!--			t.nx_DOH_apply_date    AS nxDohApplyDate,-->
+<!--			t.nx_DOH_standard    AS nxDohStandard-->
+<!--		FROM (-->
+<!--				 SELECT-->
+<!--					 nx_DOH_dis_goods_id,-->
+<!--					 nx_DOH_quantity,-->
+<!--					 nx_DOH_apply_date,-->
+<!--					 nx_DOH_standard,-->
+<!--					 ROW_NUMBER() OVER (-->
+<!--						 PARTITION BY nx_DOH_dis_goods_id-->
+<!--						 ORDER BY nx_DOH_apply_date DESC-->
+<!--						 ) AS rn-->
+<!--				 FROM nx_department_orders_history-->
+<!--				 WHERE nx_DOH_department_id    = #{depId}-->
+<!--				   AND nx_DOH_dis_goods_id      = #{gid}-->
+<!--			 ) t-->
+<!--		WHERE t.rn = 1-->
+<!--	</select>-->
+
+
+	<!--	&lt;!&ndash; 5.3 每个商品最近一次订货 &ndash;&gt;-->
+<!--	<select id="selectLastOrders" resultType="com.nongxinle.entity.NxDepartmentOrdersHistoryEntity">-->
+<!--		SELECT-->
+<!--		nx_DOH_dis_goods_id   AS nxDoDisGoodsId,-->
+<!--		nx_DOH_quantity       AS nxDoQuantity,-->
+<!--		nx_DOH_apply_date     AS nxDoApplyDate-->
+<!--		FROM (-->
+<!--		SELECT-->
+<!--		nx_DOH_dis_goods_id AS nxDoDisGoodsId,-->
+<!--		nx_DOH_quantity     AS nxDoQuantity,-->
+<!--		nx_DOH_apply_date   AS nxDoApplyDate,-->
+<!--		ROW_NUMBER() OVER (-->
+<!--		PARTITION BY nx_DOH_dis_goods_id-->
+<!--		ORDER BY nx_DOH_apply_date DESC-->
+<!--		) AS rn-->
+<!--		FROM nx_department_orders_history-->
+<!--		WHERE nx_DOH_department_id = #{depId}-->
+<!--		AND nx_DOH_dis_goods_id IN-->
+<!--		<foreach item="gid" collection="goodsIds" open="(" separator="," close=")">-->
+<!--			#{gid}-->
+<!--		</foreach>-->
+<!--		) t-->
+<!--		WHERE t.rn = 1-->
+<!--	</select>-->
+
+
+
+	<resultMap id="depStandard" type="NxDepartmentStandardEntity">
+		<id property="nxDepartmentStandardId" column="nx_department_standard_id"/>
+		<result property="nxDdsStandardName" column="nx_DDS_standard_name"/>
+	</resultMap>
+
+	<resultMap id="depDisGoods" type="NxDepartmentDisGoodsEntity">
+		 <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
+		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
+		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
+		<result property="nxDdgPickDetail" column="nx_DDG_pick_detail"/>
+		<result property="nxDdgGbDepartmentId" column="nx_DDG_gb_department_id"/>
+		<result property="nxDdgDisGoodsId" column="nx_DDG_dis_goods_id"/>
+		<result property="nxDdgGbDepartmentFatherId" column="nx_DDG_gb_department_father_id"/>
+		<result property="nxDdgDisGoodsGrandId" column="nx_DDG_dis_goods_grand_id"/>
+		<result property="nxDdgDepGoodsName" column="nx_DDG_dep_goods_name"/>
+		<result property="nxDdgDepGoodsStandardname" column="nx_DDG_dep_goods_standardname"/>
+		<result property="nxDdgDepGoodsBrand" column="nx_DDG_dep_goods_brand"/>
+		<result property="nxDdgDepGoodsDetail" column="nx_DDG_dep_goods_detail"/>
+		<result property="nxDdgDepGoodsPlace" column="nx_DDG_dep_goods_place"/>
+		<result property="nxDdgDisGoodsId" column="nx_DDG_dis_goods_id"/>
+		<result property="nxDdgOrderPrice" column="nx_DDG_order_price"/>
+		<result property="nxDdgOrderDate" column="nx_DDG_order_date"/>
+		<result property="nxDdgOrderQuantity" column="nx_DDG_order_quantity"/>
+		<result property="nxDdgOrderStandard" column="nx_DDG_order_standard"/>
+		<result property="nxDdgOrderCostPrice" column="nx_DDG_order_cost_price"/>
+		<result property="nxDdgDepartmentFatherId" column="nx_DDG_department_father_id"/>
+		<result property="nxDdgDepartmentId" column="nx_DDG_department_id"/>
+		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
+		<!--        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>-->
+		<collection property="nxDepStandardEntities" resultMap="depStandard"/>
+
+	</resultMap>
+	<resultMap id="inDepGoods" type="NxDepartmentIndependentGoodsEntity">
+		<id property="nxDepartmentIndependentGoodsId" column="nx_department_independent_goods_id"/>
+		<result property="nxDigGoodsName" column="nx_DIG_goods_name"/>
+		<result property="nxDigGoodsStandardname" column="nx_DIG_goods_standardname"/>
+	</resultMap>
+
+
+
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentOrdersHistoryEntity">
 		insert into nx_department_orders_history
 		(
 			`nx_department_orders_history_id`, 
 			`nx_DOH_dep_dis_goods_id`, 
-			`nx_DOH_quantity`, 
+			`nx_DOH_dis_goods_id`,
+			`nx_DOH_quantity`,
 			`nx_DOH_standard`, 
 			`nx_DOH_remark`, 
 			`nx_DOH_department_id`, 
@@ -212,13 +457,16 @@
 			`nx_DOH_apply_date`, 
 			`nx_DOH_sell_type`,
 			`nx_DOH_order`,
-			`nx_DOH_order_times`
+			`nx_DOH_order_times`,
+			`nx_DOH_distributer_id`,
+			`nx_DOH_apply_standard`
 		)
 		values
 		(
 			#{nxDepartmentOrdersHistoryId}, 
 			#{nxDohDepDisGoodsId}, 
-			#{nxDohQuantity}, 
+			#{nxDohDisGoodsId},
+			#{nxDohQuantity},
 			#{nxDohStandard}, 
 			#{nxDohRemark}, 
 			#{nxDohDepartmentId}, 
@@ -227,7 +475,9 @@
 			#{nxDohApplyDate}, 
 			#{nxDohSellType},
 			#{nxDohOrder},
-			#{nxDohOrderTimes}
+			#{nxDohOrderTimes},
+			#{nxDohDistributerId},
+			#{nxDohApplyStandard}
 		)
 	</insert>
 	 
@@ -235,6 +485,7 @@
 		update nx_department_orders_history 
 		<set>
 			<if test="nxDohDepDisGoodsId != null">`nx_DOH_dep_dis_goods_id` = #{nxDohDepDisGoodsId}, </if>
+			<if test="nxDohDisGoodsId != null">`nx_DOH_dis_goods_id` = #{nxDohDisGoodsId}, </if>
 			<if test="nxDohQuantity != null">`nx_DOH_quantity` = #{nxDohQuantity}, </if>
 			<if test="nxDohStandard != null">`nx_DOH_standard` = #{nxDohStandard}, </if>
 			<if test="nxDohRemark != null">`nx_DOH_remark` = #{nxDohRemark}, </if>
@@ -244,6 +495,8 @@
 			<if test="nxDohApplyDate != null">`nx_DOH_apply_date` = #{nxDohApplyDate}, </if>
 			<if test="nxDohOrder != null">`nx_DOH_order` = #{nxDohOrder}, </if>
 			<if test="nxDohOrderTimes != null">`nx_DOH_order_times` = #{nxDohOrderTimes}, </if>
+			<if test="nxDohDistributerId != null">`nx_DOH_distributer_id` = #{nxDohDistributerId}, </if>
+			<if test="nxDohApplyStandard != null">`nx_DOH_apply_standard` = #{nxDohApplyStandard}, </if>
 			<if test="nxDohSellType != null">`nx_DOH_sell_type` = #{nxDohSellType}</if>
 		</set>
 		where nx_department_orders_history_id = #{nxDepartmentOrdersHistoryId}

@@ -147,12 +147,14 @@ public class GbDepInventoryDailyController {
 
 			Map<String, Object> map145 = new HashMap<>();
 			map145.put("fromDepId", depFatherId);
+			map145.put("depFatherIdNotEqual", depFatherId);
 			map145.put("equalStatus",0);
 			Integer stockAmount55 = gbDepGoodsStockService.queryGoodsStockCount(map145);
 			if(stockAmount55 > 0){
 				//出库金额
 				Map<String, Object> map42 = new HashMap<>();
 				map42.put("fromDepId",depFatherId);
+				map42.put("depFatherIdNotEqual",depFatherId);
 				map42.put("equalStatus", 0);
 				Double outNewTotal =  gbDepGoodsStockService.queryDepGoodsSubtotal(map42);
 				outTotal = outTotal + outNewTotal;
@@ -161,12 +163,14 @@ public class GbDepInventoryDailyController {
 			//old Stock out金额 goods_record table status == 0
 			Map<String, Object> map1451 = new HashMap<>();
 			map1451.put("fromDepId", depFatherId);
+			map1451.put("depFatherIdNotEqual", depFatherId);
 			map1451.put("equalStatus",0);
 			Integer stockPriceAmount55 = gbDepGoodsStockRecordService.queryGoodsStockRecordCount(map1451);
 			if(stockPriceAmount55 > 0){
 				//出库金额
 				Map<String, Object> map42 = new HashMap<>();
 				map42.put("fromDepId",depFatherId);
+				map42.put("depFatherIdNotEqual",depFatherId);
 				map42.put("equalStatus", 0);
 				Double outOldTotal =  gbDepGoodsStockRecordService.queryGoodsStockRecordSubtotal(map42);
 				outTotal = outOldTotal + outTotal;
@@ -177,12 +181,14 @@ public class GbDepInventoryDailyController {
 			//wait out
 			Map<String, Object> map1446 = new HashMap<>();
 			map1446.put("fromDepId", depFatherId);
+			map1446.put("depFatherIdNotEqual", depFatherId);
 			map1446.put("status",0);
 			Integer stockAmount16 = gbDepGoodsStockService.queryGoodsStockCount(map1446);
 			if(stockAmount16 > 0){
 				//正在出库，门店未收货的金额
 				Map<String, Object> map4 = new HashMap<>();
 				map4.put("fromDepId",depFatherId);
+				map4.put("depFatherIdNotEqual",depFatherId);
 				map4.put("status", 0);
 				Double workingTotal =  gbDepGoodsStockService.queryDepGoodsSubtotal(map4);
 				formatwaitOutSubtotal = String.format("%.2f", workingTotal);

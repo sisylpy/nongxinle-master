@@ -1,6 +1,5 @@
 package com.nongxinle.service.impl;
 
-import com.nongxinle.entity.NxCustomerUserEntity;
 import com.nongxinle.entity.NxRestrauntEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,11 +69,7 @@ public class NxCommunityUserServiceImpl implements NxCommunityUserService {
 		return nxCommunityUserDao.queryCommunityRoleUsers(map);
     }
 
-    @Override
-    public List<NxRestrauntEntity> queryDeliveryRestrauntsByDriverId(Map<String, Object> map){
 
-		return nxCommunityUserDao.queryDeliveryRestrauntsByDriverId(map);
-    }
 
     @Override
     public List<NxCommunityUserEntity> getAdmainUserByComId(Integer comId) {
@@ -86,6 +81,12 @@ public class NxCommunityUserServiceImpl implements NxCommunityUserService {
     public NxCommunityUserEntity queryUserByPhone(String nxCouWxPhone) {
 
 		return nxCommunityUserDao.queryUserByPhone(nxCouWxPhone);
+    }
+
+    @Override
+    public List<NxRestrauntEntity> queryDeliveryRestrauntsByDriverId(Map<String, Object> map4) {
+
+		return nxCommunityUserDao.queryDeliveryRestrauntsByDriverId(map4);
     }
 
 

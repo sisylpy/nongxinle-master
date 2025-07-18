@@ -13,18 +13,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.nongxinle.entity.*;
-import com.nongxinle.service.GbDepartmentOrdersService;
-import com.nongxinle.service.GbDistributerWeightTotalService;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
+import com.nongxinle.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.service.GbDistributerWeightGoodsService;
-import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.*;
+import static com.nongxinle.utils.GbTypeUtils.getGbOrderStatusNew;
 
 
 @RestController
@@ -36,6 +33,10 @@ public class GbDistributerWeightGoodsController {
 	private GbDepartmentOrdersService gbDepartmentOrdersService;
 	@Autowired
 	private GbDistributerWeightTotalService gbDisWeightTotalService;
+	@Autowired
+	private GbDepartmentGoodsStockService gbDepartmentGoodsStockService;
+	@Autowired
+	private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
 
 
 
@@ -93,6 +94,7 @@ public class GbDistributerWeightGoodsController {
 		map.put("depId", depId);
 		map.put("status",  0);
 		map.put("isSelf",  0);
+		System.out.println("mapapapappaappapapa" + map);
 		List<GbDistributerGoodsShelfEntity> shelfEntities = gbDisWeightGoodsService.queryShelfGoodsToWeightByParams(map);
 
 		Map<String, Object> map3 = new HashMap<>();
@@ -157,15 +159,102 @@ public class GbDistributerWeightGoodsController {
 		List<GbDepartmentOrdersEntity> ordersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
 		if(ordersEntities.size() > 0){
 			for (GbDepartmentOrdersEntity order : ordersEntities) {
-				order.setGbDoBuyStatus(getGbOrderStatusNew());
-				order.setGbDoWeightGoodsId(null);
-				gbDepartmentOrdersService.update(order);
+				if(order.getGbDoStatus() < 3){
+					order.setGbDoBuyStatus(getGbOrderStatusNew());
+					order.setGbDoStatus(getGbOrderStatusNew());
+					order.setGbDoWeightGoodsId(null);
+					order.setGbDoWeight("0");
+					order.setGbDoSubtotal("0");
+					gbDepartmentOrdersService.update(order);
+
+					Map<String, Object> mapS = new HashMap<>();
+					mapS.put("orderId", order.getGbDepartmentOrdersId());
+					List<GbDepartmentGoodsStockEntity> departmentGoodsStockEntities = gbDepartmentGoodsStockService.queryDepStockListByParams(mapS);
+					if(departmentGoodsStockEntities.size() > 0){
+						for(GbDepartmentGoodsStockEntity stockEntity: departmentGoodsStockEntities){
+
+							//修改出库部门数据
+							Integer gbDgsGbGoodsStockId = stockEntity.getGbDgsGbGoodsStockId();
+							GbDepartmentGoodsStockEntity outStockEntity = gbDepartmentGoodsStockService.queryObject(gbDgsGbGoodsStockId);
+							BigDecimal outStockRestWeight = new BigDecimal(outStockEntity.getGbDgsRestWeight());
+							BigDecimal outStockRestSubtotal = new BigDecimal(outStockEntity.getGbDgsRestSubtotal());
+							BigDecimal newWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+							BigDecimal newSubtotal = new BigDecimal(stockEntity.getGbDgsSubtotal());
+							BigDecimal outTotalRestWeight = outStockRestWeight.add(newWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+							BigDecimal outTotalRestSubtotal = outStockRestSubtotal.add(newSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
+							outStockEntity.setGbDgsRestWeight(outTotalRestWeight.toString());
+							outStockEntity.setGbDgsRestSubtotal(outTotalRestSubtotal.toString());
+
+							//
+							if (outStockEntity.getGbDgsRestWeightShowStandard() != null) {
+								Integer gbDgsGbDepDisGoodsId = outStockEntity.getGbDgsGbDepDisGoodsId();
+								GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(gbDgsGbDepDisGoodsId);
+								BigDecimal gbDdgShowStandardScale = new BigDecimal(departmentDisGoodsEntity.getGbDdgShowStandardScale());
+								BigDecimal newShowStandardWeight = outTotalRestWeight.divide(gbDdgShowStandardScale, 1, BigDecimal.ROUND_HALF_UP);
+								outStockEntity.setGbDgsRestWeightShowStandard(newShowStandardWeight.toString());
+								outStockEntity.setGbDgsRestWeightShowStandardName(departmentDisGoodsEntity.getGbDdgShowStandardName());
+							}
+							gbDepartmentGoodsStockService.update(outStockEntity);
+
+							System.out.println("outstocenene" + outStockEntity.getGbDgsGbDepDisGoodsId());
+							updateDepDisGoods(stockEntity, outStockEntity.getGbDgsGbDepDisGoodsId(), "add");
+
+
+							//删除自己
+							gbDepartmentGoodsStockService.delete(stockEntity.getGbDepartmentGoodsStockId());
+
+							gbDepartmentGoodsStockService.delete(stockEntity.getGbDepartmentGoodsStockId());
+						}
+					}
+				}else{
+					order.setGbDoWeightGoodsId(null);
+					gbDepartmentOrdersService.update(order);
+				}
 			}
 		}
 		gbDisWeightGoodsService.delete(id);
 
 		return R.ok();
 	}
+
+
+
+	private void updateDepDisGoods(GbDepartmentGoodsStockEntity stockEntity, Integer depDisGoodsId, String what) {
+		System.out.println("updateDepDisGoodsupdateDepDisGoods" + what);
+		BigDecimal stockSubtotal = new BigDecimal(stockEntity.getGbDgsSubtotal());
+		BigDecimal stockWeight = new BigDecimal(stockEntity.getGbDgsWeight());
+		System.out.println("sotoscksubd;dldl" + stockWeight);
+		System.out.println("sotoscksubd;dldl" + stockSubtotal);
+		BigDecimal subTotal = new BigDecimal(0);
+		BigDecimal weight = new BigDecimal(0);
+		GbDepartmentDisGoodsEntity depDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(depDisGoodsId);
+		System.out.println("depgoeoidididiid" + depDisGoodsEntity.getGbDepartmentDisGoodsId());
+		if (what.equals("add")) {
+			subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).add(stockSubtotal);
+			weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).add(stockWeight);
+			System.out.println("adddddd" + subTotal + "weight" + weight);
+		}
+		if (what.equals("subtract")) {
+			subTotal = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalSubtotal()).subtract(stockSubtotal);
+			weight = new BigDecimal(depDisGoodsEntity.getGbDdgStockTotalWeight()).subtract(stockWeight);
+
+		}
+		System.out.println("zahuishsihsis" + subTotal);
+		if (new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale()).compareTo(new BigDecimal(0)) == 1) {
+			BigDecimal showScale = new BigDecimal(depDisGoodsEntity.getGbDdgShowStandardScale());
+			BigDecimal standardWeight = weight.divide(showScale, 1, BigDecimal.ROUND_HALF_UP);
+			depDisGoodsEntity.setGbDdgShowStandardWeight(standardWeight.toString());
+		}
+		System.out.println("suttootototo-------" + subTotal + "weithht=====" + weight);
+		depDisGoodsEntity.setGbDdgStockTotalSubtotal(subTotal.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+		depDisGoodsEntity.setGbDdgStockTotalWeight(weight.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+		depDisGoodsEntity.setGbDdgInventoryDate(formatWhatDay(0));
+		depDisGoodsEntity.setGbDdgInventoryFullTime(formatWhatFullTime(0));
+
+		gbDepartmentDisGoodsService.update(depDisGoodsEntity);
+
+	}
+
 
 
 

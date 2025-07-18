@@ -75,4 +75,8 @@ public interface SysUserService {
 	SysUserEntity queryNxUserByUserName(String userName);
 
     void justUpdate(SysUserEntity sysUserEntity);
+
+    SysUserEntity queryUserByDisId(Integer disId);
+
+    SysUserEntity printerUserLogin(Map<String, Object> map);
 }

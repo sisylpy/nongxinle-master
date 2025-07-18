@@ -1,5 +1,6 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.entity.NxCommunityGoodsEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -56,5 +57,18 @@ public class NxCustomerUserGoodsServiceImpl implements NxCustomerUserGoodsServic
     public List<NxCustomerUserGoodsEntity> queryUserGoods(Map<String, Object> map) {
         return nxCustomerUserGoodsDao.queryUserGoods(map);
     }
+
+    @Override
+    public NxCustomerUserGoodsEntity queryUserGoodsByParams(Map<String, Object> map) {
+
+		return nxCustomerUserGoodsDao.queryUserGoodsByParams(map);
+    }
+
+    @Override
+    public List<NxCommunityGoodsEntity> userQueryCommGoods(Map<String, Object> map) {
+
+		return nxCustomerUserGoodsDao.userQueryCommGoods(map);
+    }
+
 
 }

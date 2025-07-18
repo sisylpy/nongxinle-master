@@ -47,5 +47,5 @@ public interface GbDepartmentGoodsStockRecordService {
 
     Double queryGoodsStockRecordWeightTotal(Map<String, Object> map1);
 
-    List<GbDepartmentGoodsStockRecordEntity> queryDepGoodsStockRecordDetailByParams(Map<String, Object> map);
+//    List<GbDepartmentGoodsStockRecordEntity> queryDepGoodsStockRecordDetailByParams(Map<String, Object> map);
 }

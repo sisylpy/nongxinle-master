@@ -131,6 +131,85 @@ public class NxGoodsServiceImpl implements NxGoodsService {
 		return nxGoodsDao.querySecondLevelMaxId();
     }
 
+    @Override
+    public int queryMaxSortByFatherId(Integer nxDfgNxGoodsId) {
+
+		return nxGoodsDao.queryMaxSortByFatherId(nxDfgNxGoodsId);
+    }
+
+    @Override
+    public int queryMaxIdByGrandId(Integer nxDfgNxGoodsId) {
+
+		return nxGoodsDao.queryMaxIdByGrandId(nxDfgNxGoodsId);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryQuickSearchNxGoodsWithNxDis(Map<String, Object> map) {
+
+		return nxGoodsDao.queryQuickSearchNxGoodsWithNxDis(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryShelfQuickSearchNxGoodsWithNxDis(Map<String, Object> map) {
+
+		return nxGoodsDao.queryShelfQuickSearchNxGoodsWithNxDis(map);
+    }
+
+	@Override
+	public List<NxGoodsEntity> queryGbDepNxGrandGoodsByGreatId(Map<String, Object> map) {
+
+		return nxGoodsDao.queryGbDepNxGrandGoodsByGreatId(map);
+	}
+
+    @Override
+    public List<NxGoodsEntity> queryGbDepNxGrandGoodsByGreatIdAll(Map<String, Object> map) {
+
+		return nxGoodsDao.queryGbDepNxGrandGoodsByGreatIdAll(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map) {
+
+		return nxGoodsDao.queryDisGoodsQuickSearchStrWithDepOrders(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryDisGoodsEqualSearchStrWithDepOrders(Map<String, Object> map) {
+
+		return nxGoodsDao.queryDisGoodsEqualSearchStrWithDepOrders(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryDisGoodsQuickSearchPyWithDepOrders(Map<String, Object> map) {
+
+		return nxGoodsDao.queryDisGoodsQuickSearchPyWithDepOrders(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryListWithFatherIdDeep(Map<String, Object> map) {
+
+		return nxGoodsDao.queryListWithFatherIdDeep(map);
+    }
+
+    @Override
+    public List<NxGoodsEntity> queryNumberGoods() {
+
+		return nxGoodsDao.queryNumberGoods();
+    }
+
+    @Override
+    public int queryTotalByParams(Map<String, Object> mapCount) {
+
+		return nxGoodsDao.queryTotalByParams(mapCount);
+    }
+
+    @Override
+    public List<Integer> queryOnlyGoodsIds(Map<String, Object> map) {
+
+		return nxGoodsDao.queryOnlyGoodsIds(map);
+    }
+
+
 //    @Override
 //    public List<NxGoodsEntity> queryCataNxDistribterWithPeisong(Map<String, Object> map) {
 //

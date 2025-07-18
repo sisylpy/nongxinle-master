@@ -62,4 +62,16 @@ public class NxCommunityCommunityAdsenseServiceImpl implements NxCommunityAdsens
         return nxCommunityAdsenseDao.queryAdsenseByNxCommunityId(communityId);
     }
 
+    @Override
+    public List<NxCommunityAdsenseEntity> queryAdsenseByParams(Map<String, Object> map) {
+
+		return nxCommunityAdsenseDao.queryAdsenseByParams(map);
+    }
+
+    @Override
+    public NxCommunityAdsenseEntity queryGoodsAdsenseByParams(Map<String, Object> map) {
+
+		return nxCommunityAdsenseDao.queryGoodsAdsenseByParams(map);
+    }
+
 }

@@ -27,6 +27,8 @@ public class NxAliasEntity implements Serializable {
 	 *  别名名称
 	 */
 	private String nxAliasName;
+	private String nxAliasPy;
+	private String nxAliasPinyin;
 	/**
 	 *  别名商品id
 	 */

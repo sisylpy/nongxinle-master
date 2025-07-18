@@ -16,4 +16,6 @@ import java.util.Map;
 public interface GbReportDao extends BaseDao<GbReportEntity> {
 
     List<GbReportEntity> queryReportList(Map<String, Object> map);
+
+    List<GbReportEntity> queryDepReportList(Map<String, Object> map1);
 }

@@ -40,6 +40,8 @@ public class GbReportController {
     @Autowired
     private GbDepartmentService gbDepartmentService;
     @Autowired
+    private GbDistributerService gbDistributerService;
+    @Autowired
     private GbDistributerFatherGoodsService fatherGoodsService;
     @Autowired
     private GbDepartmentGoodsDailyService gbDepGoodsDailyService;
@@ -54,7 +56,11 @@ public class GbReportController {
     @Autowired
     private GbDistributerPurchaseGoodsService gbDistributerPurchaseGoodsService;
     @Autowired
+    private GbDistributerPurchaseBatchService gbDistributerPurchaseBatchService;
+    @Autowired
     private GbDepartmentGoodsStockReduceService gbDepartmentStockReduceService;
+    @Autowired
+    private GbDepartmentBillService gbDepartmentBillService;
 
 
     @RequestMapping(value = "/delteReport/{id}")
@@ -71,6 +77,7 @@ public class GbReportController {
         gbReportService.save(reportEntity);
         return R.ok();
     }
+
 
     @RequestMapping(value = "/getDisUserReports")
     @ResponseBody
@@ -129,6 +136,7 @@ public class GbReportController {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
                 map.put("fromDepId", report.getGbRepIds());
+                map.put("depFatherIdNotEqual", report.getGbRepIds());
                 map.put("purDepId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
@@ -144,6 +152,7 @@ public class GbReportController {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
                 map.put("fromDepId", report.getGbRepIds());
+                map.put("depFatherIdNotEqual", report.getGbRepIds());
                 map.put("purDepId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
@@ -187,6 +196,7 @@ public class GbReportController {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
                 map.put("fromDepId", report.getGbRepIds());
+                map.put("depFatherIdNotEqual", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
 //                map.put("notEqualStockId", -1);
@@ -202,6 +212,7 @@ public class GbReportController {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
                 map.put("fromDepId", report.getGbRepIds());
+                map.put("depFatherIdNotEqual", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 map.put("stockId", -1);
@@ -300,11 +311,24 @@ public class GbReportController {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
                 map.put("depFatherId", report.getGbRepIds());
-                map.put("startDate", report.getGbRepStartDate());
-                map.put("stopDate", report.getGbRepStopDate());
+//                map.put("startDate", report.getGbRepStartDate());
+//                map.put("stopDate", report.getGbRepStopDate());
                 Map<String, Object> stringObjectMap = aaaDepStockTotalNow(map);
                 GbDepartmentEntity departmentEntity = gbDepartmentService.queryObject(Integer.valueOf(report.getGbRepIds()));
                 stringObjectMap.put("name", departmentEntity.getGbDepartmentName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "库存商品统计");
+                resultList.add(stringObjectMap);
+            }
+            if (gbRepType.equals("disStockNow")) {
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+//                map.put("startDate", report.getGbRepStartDate());
+//                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepStockTotalNow(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
                 stringObjectMap.put("report", report);
                 stringObjectMap.put("type", "库存商品统计");
                 resultList.add(stringObjectMap);
@@ -322,7 +346,75 @@ public class GbReportController {
                 stringObjectMap.put("type", "门店成本统计");
                 resultList.add(stringObjectMap);
             }
+            if (gbRepType.equals("disCost")) {
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepCost(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "门店成本统计");
+                resultList.add(stringObjectMap);
+            }
+            if (gbRepType.equals("disPurGoods")) {
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepPurGoods(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "采购商品统计");
+                resultList.add(stringObjectMap);
+            }
 
+            if (gbRepType.equals("disPurSupplier")) {
+                System.out.println("disPurSupplierdisPurSupplier");
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepPurGoodsSupplier(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "采购供货商统计");
+                resultList.add(stringObjectMap);
+            }
+            if (gbRepType.equals("disPurNxDistributer")) {
+                System.out.println("disPurNxDistributer");
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("nxDisId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepPurGoodsNxdistributer(map);
+                NxDistributerEntity gbDistributerEntity = nxDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getNxDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "京京采购统计");
+                resultList.add(stringObjectMap);
+            }
+
+            if (gbRepType.equals("disLoss")) {
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepLoss(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "商品损耗");
+                resultList.add(stringObjectMap);
+            }
             if (gbRepType.equals("depLoss")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
@@ -336,6 +428,20 @@ public class GbReportController {
                 stringObjectMap.put("type", "商品损耗");
                 resultList.add(stringObjectMap);
             }
+            if (gbRepType.equals("disWaste")) {
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepWaste(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "商品废弃");
+                resultList.add(stringObjectMap);
+            }
+
             if (gbRepType.equals("depWaste")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
@@ -347,6 +453,20 @@ public class GbReportController {
                 stringObjectMap.put("name", departmentEntity.getGbDepartmentName());
                 stringObjectMap.put("report", report);
                 stringObjectMap.put("type", "商品废弃");
+                resultList.add(stringObjectMap);
+            }
+
+            if (gbRepType.equals("disReturn")) {
+                //获取表数据
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", report.getGbRepIds());
+                map.put("startDate", report.getGbRepStartDate());
+                map.put("stopDate", report.getGbRepStopDate());
+                Map<String, Object> stringObjectMap = aaaDepReturn(map);
+                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(Integer.valueOf(report.getGbRepIds()));
+                stringObjectMap.put("name", gbDistributerEntity.getGbDistributerName());
+                stringObjectMap.put("report", report);
+                stringObjectMap.put("type", "商品退货");
                 resultList.add(stringObjectMap);
             }
             if (gbRepType.equals("depReturn")) {
@@ -367,7 +487,7 @@ public class GbReportController {
             if (gbRepType.equals("goodsSales")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsFatherId", report.getGbRepIds());
+                map.put("disGoodsGrandId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 Map<String, Object> stringObjectMap = aaaGoodsSalesTotal(map);
@@ -381,7 +501,7 @@ public class GbReportController {
             if (gbRepType.equals("goodsProfit")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsFatherId", report.getGbRepIds());
+                map.put("disGoodsGrandId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 Map<String, Object> stringObjectMap = aaaGoodsProfitTotal(map);
@@ -395,7 +515,7 @@ public class GbReportController {
             if (gbRepType.equals("goodsCost")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsFatherId", report.getGbRepIds());
+                map.put("disGoodsGrandId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 Map<String, Object> stringObjectMap = aaaGoodsCostTotal(map);
@@ -410,7 +530,7 @@ public class GbReportController {
             if (gbRepType.equals("goodsFresh")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsFatherId", report.getGbRepIds());
+                map.put("disGoodsGrandId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 Map<String, Object> stringObjectMap = aaaGoodsFreshTotal(map);
@@ -424,7 +544,7 @@ public class GbReportController {
             if (gbRepType.equals("goodsPrice")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsFatherId", report.getGbRepIds());
+                map.put("disGoodsGrandId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 System.out.println("zahuidhsishisdifas" + map);
@@ -440,7 +560,7 @@ public class GbReportController {
             if (gbRepType.equals("goodsByDepartment")) {
                 //获取表数据
                 Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsFatherId", report.getGbRepIds());
+                map.put("disGoodsGrandId", report.getGbRepIds());
                 map.put("startDate", report.getGbRepStartDate());
                 map.put("stopDate", report.getGbRepStopDate());
                 System.out.println("zahuidhsishisdifas" + map);
@@ -457,6 +577,7 @@ public class GbReportController {
         return R.ok().put("data", resultList);
 
     }
+
 
     //
 
@@ -487,12 +608,13 @@ public class GbReportController {
 
             }
 
-            BigDecimal add = new BigDecimal(doutbleProduce).add(new BigDecimal(doutbleLoss)).add(new BigDecimal(doutbleWaste));
-            System.out.println("abdbdbf" + add);
-
+            BigDecimal add = new BigDecimal(doutbleProduce).add(new BigDecimal(doutbleLoss)).add(new BigDecimal(doutbleWaste)).add(new BigDecimal(doutbleReturn));
             mapResult.put("totalDepCost", add.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
             mapResult.put("totalLoss", new BigDecimal(doutbleReturn).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-            BigDecimal multiply = new BigDecimal(doutbleReturn).divide(add, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            BigDecimal multiply = new BigDecimal(0);
+            if (add.compareTo(BigDecimal.ZERO) > 0) {
+                multiply = new BigDecimal(doutbleReturn).divide(add, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            }
             mapResult.put("percent", multiply.setScale(2, BigDecimal.ROUND_HALF_UP).toString());
             mapResult.put("lossTotal", departmentDisGoodsEntities.size());
             mapResult.put("code", 0);
@@ -627,34 +749,34 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
                     double grandDoubleCost = 0;
                     double grandDoubleCostV = 0;
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        Integer gbDistributerFatherGoodsId = father.getGbDistributerFatherGoodsId();
-                        map.put("disGoodsFatherId", gbDistributerFatherGoodsId);
-                        map.put("payType", null);
-                        System.out.println("ifnifahthhtnullllll" + map);
-                        Integer integerFather = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
-                        Double fatherDoubleCost = 0.0;
-                        Double fatherDoubleCostV = 0.0;
-                        if (integerFather > 0) {
-                            System.out.println("-------3--3--3--3---3--");
-                            fatherDoubleCost = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(map);
-                            fatherDoubleCostV = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
-                            System.out.println("ziahsuidufidfiasfadsfas afdf afa");
-                        }
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    Integer gbDistributerFatherGoodsId = grandFather.getGbDistributerFatherGoodsId();
+                    map.put("disGoodsGrandId", gbDistributerFatherGoodsId);
+                    map.put("payType", null);
+                    System.out.println("ifnifahthhtnullllll" + map);
+                    Integer integerFather = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                    Double fatherDoubleCost = 0.0;
+                    Double fatherDoubleCostV = 0.0;
+                    if (integerFather > 0) {
+                        System.out.println("-------3--3--3--3---3--");
+                        fatherDoubleCost = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(map);
+                        fatherDoubleCostV = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+                        System.out.println("ziahsuidufidfiasfadsfas afdf afa");
+//                        }
                         grandDoubleCostV = grandDoubleCostV + fatherDoubleCostV;
                         greatGrandTotalCostV = greatGrandTotalCostV + fatherDoubleCostV;
                         grandDoubleCost = grandDoubleCost + fatherDoubleCost;
                         greatGrandTotalCost = greatGrandTotalCost + fatherDoubleCost;
 
-                        father.setFatherCostWeightString(new BigDecimal(fatherDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        father.setFatherCostSubtotalString(new BigDecimal(fatherDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        resultFatherGoodsList.add(father);
+//                        father.setFatherCostWeightString(new BigDecimal(fatherDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                        father.setFatherCostSubtotalString(new BigDecimal(fatherDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                        resultFatherGoodsList.add(father);
 
                     }
                     grandFather.setFatherCostWeightString(new BigDecimal(grandDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     grandFather.setFatherCostSubtotalString(new BigDecimal(grandDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
+                    resultFatherGoodsList.add(grandFather);
 
                 }
                 greatGrandFather.setFatherCostWeightString(new BigDecimal(greatGrandTotalCostV).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
@@ -697,6 +819,7 @@ public class GbReportController {
         Double aDoubleZero = 0.0;
         Double aDoubleOne = 0.0;
         Double aDoubleZeroTotalWeight = 0.0;
+        System.out.println("mapapappapapa" + map);
         Integer integer0 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
         if (integer0 > 0) {
             aDoubleZeroTotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
@@ -732,33 +855,33 @@ public class GbReportController {
                     double grandDoubleCost = 0;
                     double grandDoubleCostV = 0;
                     List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        Integer gbDistributerFatherGoodsId = father.getGbDistributerFatherGoodsId();
-                        map.put("disGoodsFatherId", gbDistributerFatherGoodsId);
-                        map.put("payType", null);
-                        System.out.println("fathieieiie" + map);
-                        Integer integerFather = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
-                        Double fatherDoubleCost = 0.0;
-                        Double fatherDoubleCostV = 0.0;
-                        if (integerFather > 0) {
-                            fatherDoubleCost = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(map);
-                            fatherDoubleCostV = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
-                        }
-
-                        grandDoubleCostV = grandDoubleCostV + fatherDoubleCostV;
-                        greatGrandTotalCostV = greatGrandTotalCostV + fatherDoubleCostV;
-                        grandDoubleCost = grandDoubleCost + fatherDoubleCost;
-                        greatGrandTotalCost = greatGrandTotalCost + fatherDoubleCost;
-                        father.setFatherCostWeightString(new BigDecimal(fatherDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        father.setFatherCostSubtotalString(new BigDecimal(fatherDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        resultFatherGoodsList.add(father);
-
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    Integer gbDistributerFatherGoodsId = grandFather.getGbDistributerFatherGoodsId();
+                    map.put("disGoodsGrandId", gbDistributerFatherGoodsId);
+                    map.put("payType", null);
+                    System.out.println("fathieieiie" + map);
+                    Integer integerFather = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                    Double fatherDoubleCost = 0.0;
+                    Double fatherDoubleCostV = 0.0;
+                    if (integerFather > 0) {
+                        fatherDoubleCost = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(map);
+                        fatherDoubleCostV = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
                     }
+
+                    grandDoubleCostV = grandDoubleCostV + fatherDoubleCostV;
+                    greatGrandTotalCostV = greatGrandTotalCostV + fatherDoubleCostV;
+                    grandDoubleCost = grandDoubleCost + fatherDoubleCost;
+                    greatGrandTotalCost = greatGrandTotalCost + fatherDoubleCost;
+//                        father.setFatherCostWeightString(new BigDecimal(fatherDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                        father.setFatherCostSubtotalString(new BigDecimal(fatherDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                        resultFatherGoodsList.add(father);
+
+//                    }
                     grandFather.setFatherRestWeightTotalString(new BigDecimal(grandDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     grandFather.setFatherRestTotalString(new BigDecimal(grandDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     grandFather.setFatherCostWeightString(new BigDecimal(grandDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                     grandFather.setFatherCostSubtotalString(new BigDecimal(grandDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
+                    resultFatherGoodsList.add(grandFather);
 
                 }
                 greatGrandFather.setFatherRestWeightTotalString(new BigDecimal(greatGrandTotalRestV).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
@@ -769,8 +892,6 @@ public class GbReportController {
 
                 doutbleCost = doutbleCost + greatGrandTotalCost;
                 doutbleCostV = doutbleCostV + greatGrandTotalCostV;
-//                doutbleRest = doutbleRest + greatGrandTotalRest;
-//                doutbleRestV = doutbleRestV + greatGrandTotalRestV;
 
             }
             //
@@ -797,84 +918,84 @@ public class GbReportController {
 
         map.put("dayuStatus", -1);
 
-        System.out.println("depcosoostot" + map);
-        double doutbleSubtotal = gbDepGoodsStockService.queryDepGoodsSubtotal(map);
-        double doutbleLossV = 0;
-        double doutbleWasteV = 0;
-        double doutbleProduceV = 0;
-        double doutbleReturnV = 0;
+        Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map);
+        if (stockCount > 0) {
 
-        map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-        Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-        if (integerProduce > 0) {
-            doutbleProduceV = gbDepartmentStockReduceService.queryReduceProduceTotal(map);
-        } else {
-            doutbleProduceV = 0;
-        }
-        map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-        Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-        if (integerLoss > 0) {
-            doutbleLossV = gbDepartmentStockReduceService.queryReduceLossTotal(map);
-        } else {
-            doutbleLossV = 0;
-        }
-        map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-        Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-        if (integerWaste > 0) {
-            doutbleWasteV = gbDepartmentStockReduceService.queryReduceWasteTotal(map);
-        } else {
-            doutbleWasteV = 0;
-        }
-        map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-        Integer integerReturn = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-        if (integerReturn > 0) {
-            doutbleReturnV = gbDepartmentStockReduceService.queryReduceReturnTotal(map);
-        } else {
-            doutbleReturnV = 0;
-        }
-        double costTotal = doutbleProduceV + doutbleLossV + doutbleWasteV;
-        double doutbleRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(map);
+            System.out.println("depcosoostot" + map);
+            double doutbleSubtotal = gbDepGoodsStockService.queryDepGoodsSubtotal(map);
+            double doutbleLossV = 0;
+            double doutbleWasteV = 0;
+            double doutbleProduceV = 0;
+            double doutbleReturnV = 0;
 
-
-        Object startDdate = map.get("startDate");
-        Object stopDate = map.get("stopDate");
-        Integer howManyDaysInPeriod = getHowManyDaysInPeriod((String) stopDate, (String) startDdate);
-
-        double v = costTotal / (howManyDaysInPeriod + 1);
-        mapResult.put("perCost", new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalSubtotal", new BigDecimal(doutbleSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalCost", new BigDecimal(costTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalProduceSubtotal", new BigDecimal(doutbleProduceV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalReturnSubtotal", new BigDecimal(doutbleReturnV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalLossSubtotal", new BigDecimal(doutbleLossV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalWasteSubtotal", new BigDecimal(doutbleWasteV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-        mapResult.put("totalRestSubtotal", new BigDecimal(doutbleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+            Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+            if (integerProduce > 0) {
+                doutbleProduceV = gbDepartmentStockReduceService.queryReduceProduceTotal(map);
+            } else {
+                doutbleProduceV = 0;
+            }
+            map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+            Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+            if (integerLoss > 0) {
+                doutbleLossV = gbDepartmentStockReduceService.queryReduceLossTotal(map);
+            } else {
+                doutbleLossV = 0;
+            }
+            map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+            Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+            if (integerWaste > 0) {
+                doutbleWasteV = gbDepartmentStockReduceService.queryReduceWasteTotal(map);
+            } else {
+                doutbleWasteV = 0;
+            }
+            map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+            Integer integerReturn = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+            if (integerReturn > 0) {
+                doutbleReturnV = gbDepartmentStockReduceService.queryReduceReturnTotal(map);
+            } else {
+                doutbleReturnV = 0;
+            }
+            double costTotal = doutbleProduceV + doutbleLossV + doutbleWasteV;
+            double doutbleRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(map);
 
 
-//        TreeSet<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = new TreeSet<>();
-        List<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = new ArrayList<>();
-        List<GbDistributerFatherGoodsEntity> resultFatherGoodsList = new ArrayList<>();
-        Integer integer = gbDepGoodsStockService.queryGoodsStockCount(map);
+            Object startDdate = map.get("startDate");
+            Object stopDate = map.get("stopDate");
+            Integer howManyDaysInPeriod = getHowManyDaysInPeriod((String) stopDate, (String) startDdate);
 
-        if (integer > 0) {
+            double v = costTotal / (howManyDaysInPeriod + 1);
+            mapResult.put("perCost", new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalSubtotal", new BigDecimal(doutbleSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalCost", new BigDecimal(costTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalProduceSubtotal", new BigDecimal(doutbleProduceV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalReturnSubtotal", new BigDecimal(doutbleReturnV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalLossSubtotal", new BigDecimal(doutbleLossV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalWasteSubtotal", new BigDecimal(doutbleWasteV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalRestSubtotal", new BigDecimal(doutbleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-            greatGrandFatherGoods = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
-            for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandFatherGoods) {
-                double greatGrandTotalCost = 0;
-                double greatGrandTotalCostV = 0;
-                double greatGrandTotalRest = 0;
-                double greatGrandTotalRestV = 0;
-                List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
-                for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
-                    double grandDoubleCost = 0;
-                    double grandDoubleCostV = 0;
-                    double grandDoubleRest = 0;
-                    double grandDoubleRestV = 0;
+            List<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = new ArrayList<>();
+            List<GbDistributerFatherGoodsEntity> resultFatherGoodsList = new ArrayList<>();
+            System.out.println("44444depdididiid" + map);
+            Integer integer = gbDepGoodsStockService.queryGoodsStockCount(map);
 
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        Integer gbDistributerFatherGoodsId = father.getGbDistributerFatherGoodsId();
-                        map.put("disGoodsFatherId", gbDistributerFatherGoodsId);
+            if (integer > 0) {
+
+                greatGrandFatherGoods = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
+                for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandFatherGoods) {
+                    double greatGrandTotalCost = 0;
+                    double greatGrandTotalCostV = 0;
+                    double greatGrandTotalRest = 0;
+                    double greatGrandTotalRestV = 0;
+                    List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
+                    for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
+                        double grandDoubleCost = 0;
+                        double grandDoubleCostV = 0;
+                        double grandDoubleRest = 0;
+                        double grandDoubleRestV = 0;
+
+                        Integer gbDistributerFatherGoodsId = grandFather.getGbDistributerFatherGoodsId();
+                        map.put("disGoodsGrandId", gbDistributerFatherGoodsId);
                         Double doutbleProduceWeightDep = 0.0;
                         Double doutbleProduceVDep = 0.0;
                         Double doutbleLossWeightDep = 0.0;
@@ -922,50 +1043,267 @@ public class GbReportController {
                         greatGrandTotalCost = greatGrandTotalCost + fatherDoubleCost;
                         greatGrandTotalRest = greatGrandTotalRest + fatherDoubleRest;
 
-                        father.setFatherCostWeightString(new BigDecimal(fatherDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        father.setFatherCostSubtotalString(new BigDecimal(fatherDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        father.setFatherRestWeightTotalString(new BigDecimal(fatherDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        father.setFatherRestTotalString(new BigDecimal(fatherDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        grandFather.setFatherCostWeightString(new BigDecimal(grandDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        grandFather.setFatherCostSubtotalString(new BigDecimal(grandDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        BigDecimal decimal = new BigDecimal(0);
+                        if(costTotal > 0){
+                            decimal = new BigDecimal(grandDoubleCostV).divide(new BigDecimal(costTotal), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP);
+                        }
 
-//                        resultFatherGoodsList.add(father);
-
-                    }
-                    grandFather.setFatherCostWeightString(new BigDecimal(grandDoubleCost).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                    grandFather.setFatherCostSubtotalString(new BigDecimal(grandDoubleCostV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                    BigDecimal decimal = new BigDecimal(grandDoubleCostV).divide(new BigDecimal(costTotal), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP);
-                    grandFather.setFatherCostSubtotalPercentString(decimal.toString());
-                    System.out.println("dkafdaksf;asfas" + decimal);
-                    grandFather.setFatherRestWeightTotalString(new BigDecimal(grandDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                    grandFather.setFatherRestTotalString(new BigDecimal(grandDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        grandFather.setFatherCostSubtotalPercentString(decimal.toString());
+                        System.out.println("dkafdaksf;asfas" + decimal);
+                        grandFather.setFatherRestWeightTotalString(new BigDecimal(grandDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        grandFather.setFatherRestTotalString(new BigDecimal(grandDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
                         resultFatherGoodsList.add(grandFather);
 
+                    }
+                    greatGrandFather.setFatherCostWeightString(new BigDecimal(greatGrandTotalCostV).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+                    greatGrandFather.setFatherCostSubtotalString(new BigDecimal(greatGrandTotalCost).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+                    BigDecimal decimal = new BigDecimal(0);
+                    if(costTotal > 0){
+                        decimal = new BigDecimal(greatGrandTotalCost).divide(new BigDecimal(costTotal), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP);
+                    }
+                    greatGrandFather.setFatherCostSubtotalPercentString(decimal.toString());
+                    greatGrandFather.setFatherRestWeightTotalString(new BigDecimal(greatGrandTotalRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    greatGrandFather.setFatherRestTotalString(new BigDecimal(greatGrandTotalRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
                 }
-                greatGrandFather.setFatherCostWeightString(new BigDecimal(greatGrandTotalCostV).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-                greatGrandFather.setFatherCostSubtotalString(new BigDecimal(greatGrandTotalCost).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-                BigDecimal decimal = new BigDecimal(greatGrandTotalCost).divide(new BigDecimal(costTotal), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP);
 
-                greatGrandFather.setFatherCostSubtotalPercentString(decimal.toString());
-                greatGrandFather.setFatherRestWeightTotalString(new BigDecimal(greatGrandTotalRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                greatGrandFather.setFatherRestTotalString(new BigDecimal(greatGrandTotalRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
+                mapResult.put("arr", resultFatherGoodsList);
+                mapResult.put("code", 0);
+            } else {
+                mapResult.put("code", -1);
             }
 
+        } else {
+            mapResult.put("code", -1);
+        }
 
-            mapResult.put("arr", resultFatherGoodsList);
+
+        return mapResult;
+    }
+
+
+    private Map<String, Object> aaaDepPurGoods(Map<String, Object> map) {
+        Map<String, Object> mapResult = new HashMap<>();
+
+        map.put("dayuStatus", 1);
+        Integer stockCount = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+        if (stockCount > 0) {
+            double totalSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            System.out.println("depcosoostot" + map);
+            map.put("purchaseType", 2);
+            Integer stockCountTwo = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+            double selfSubtotal =  0.0;
+            if(stockCountTwo > 0){
+                selfSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            }
+
+            map.put("purchaseType", 21);
+            Integer stockCountTwenty = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+            double supplierSubtotal =  0.0;
+            if(stockCountTwenty > 0){
+                supplierSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            }
+            map.put("purchaseType", 5);
+            Integer stockCountThirty = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+            double appSubtotal =  0.0;
+            if(stockCountThirty > 0){
+                appSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            }
+
+            Object startDdate = map.get("startDate");
+            Object stopDate = map.get("stopDate");
+            Integer howManyDaysInPeriod = getHowManyDaysInPeriod((String) stopDate, (String) startDdate);
+
+            double v = totalSubtotal / (howManyDaysInPeriod + 1);
+            mapResult.put("perCost", new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalSubtotal", new BigDecimal(totalSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalSelfSubtotal", new BigDecimal(selfSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalSupplierSubtotal", new BigDecimal(supplierSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalAppSubtotal", new BigDecimal(appSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            System.out.println("44444depdididiid" + map);
+            map.put("purchaseType", null);
+            System.out.println("putuututututuutut" + map);
+            List<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = gbDistributerPurchaseGoodsService.queryGreatGrandGoodsByDisGoods(map);
+
+            System.out.println("greagafaisiiziiiz" + greatGrandFatherGoods.size());
+            for (GbDistributerFatherGoodsEntity greatGrandFather : greatGrandFatherGoods) {
+                System.out.println("greagafaisiiziiiz" + greatGrandFather.getGbDfgFatherGoodsName());
+                List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
+                double greatGrandSelfTotal = 0;
+                double greatGrandSupplierTotal = 0;
+                double greatGrandAppTotal = 0;
+//                for (GbDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
+                    double grandSelfTotal = 0;
+                    double grandSupplierTotal = 0;
+                    double grandAppTotal = 0;
+                    Integer gbDistributerFatherGoodsId = greatGrandFather.getGbDistributerFatherGoodsId();
+                    map.put("disGoodsGrandId", gbDistributerFatherGoodsId);
+                    map.put("purchaseType", 2);
+                    System.out.println("coprororo2222Ggoodosossoso" + map);
+                    Integer integerProduceDep = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                    if (integerProduceDep > 0) {
+                        grandSelfTotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+                    }
+                    map.put("purchaseType", 21);
+                    System.out.println("coprororo12121" + map);
+                    Integer integerProduceSupp = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                    if (integerProduceSupp > 0) {
+                        grandSupplierTotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+                    }
+                map.put("purchaseType", 5);
+                System.out.println("coprororo12121" + map);
+                Integer integerProduceApp = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                if (integerProduceApp > 0) {
+                    grandAppTotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+                }
+                    System.out.println("greatGrandSelfTotalgreatGrandSelfTotal" + greatGrandSelfTotal);
+                    greatGrandSelfTotal = greatGrandSelfTotal + grandSelfTotal;
+                    greatGrandSupplierTotal = greatGrandSupplierTotal + grandSupplierTotal;
+                    greatGrandAppTotal = greatGrandAppTotal + grandAppTotal;
+//                }
+                greatGrandFather.setPurchaseSelfSubTotal(new BigDecimal(greatGrandSelfTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+                greatGrandFather.setPurchaseSupplierSubTotal(new BigDecimal(greatGrandSupplierTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+                greatGrandFather.setPurchaseSubTotal(new BigDecimal(greatGrandAppTotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+            }
+
+            mapResult.put("arr", greatGrandFatherGoods);
             mapResult.put("code", 0);
         } else {
             mapResult.put("code", -1);
         }
 
+
         return mapResult;
     }
 
+    //
+
+
+    private Map<String, Object> aaaDepPurGoodsNxdistributer(Map<String, Object> map) {
+        Map<String, Object> mapResult = new HashMap<>();
+
+        map.put("dayuStatus", 1);
+        Integer stockCount = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+        if (stockCount > 0) {
+            double totalSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            System.out.println("totootot" + totalSubtotal);
+            Object startDdate = map.get("startDate");
+            Object stopDate = map.get("stopDate");
+            Integer howManyDaysInPeriod = getHowManyDaysInPeriod((String) stopDate, (String) startDdate);
+
+            double v = totalSubtotal / (howManyDaysInPeriod + 1);
+            mapResult.put("perCost", new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalSubtotal", new BigDecimal(totalSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDistributerPurchaseGoodsService.queryGreatGrandGoodsByDisGoods(map);
+            if(fatherGoodsEntities.size() > 0){
+                for(GbDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
+                    map.put("disGoodsGrandId", fatherGoodsEntity.getGbDistributerFatherGoodsId());
+                    map.put("dayuStatus", 1);
+                    Integer stockCountFather = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                    Double aDouble = 0.0;
+                    if(stockCountFather > 0){
+                       aDouble = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+                    }
+
+
+                    System.out.println("abdbdbd" + aDouble + totalSubtotal );
+
+                    BigDecimal divide = new BigDecimal(aDouble).divide(new BigDecimal(totalSubtotal),1,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                    fatherGoodsEntity.setFatherStockSubtotalString (String.format("%.1f", aDouble));
+                    fatherGoodsEntity.setFatherCostSubtotalPercentString(divide.toString());
+                }
+            }
+            mapResult.put("arr", fatherGoodsEntities);
+            mapResult.put("code", 0);
+        } else {
+            mapResult.put("code", -1);
+        }
+
+
+        return mapResult;
+    }
+
+
+    private Map<String, Object> aaaDepPurGoodsSupplier(Map<String, Object> map) {
+        Map<String, Object> mapResult = new HashMap<>();
+
+        map.put("dayuStatus", 1);
+        Integer stockCount = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+        if (stockCount > 0) {
+//            double totalSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            System.out.println("depcosoostotsuppppooliiieieiriri" + map);
+//            map.put("purchaseType", 2);
+//            Integer stockCountTwo = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+//            double selfSubtotal = 0.0;
+//            if(stockCountTwo > 0){
+//                selfSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+//            }
+
+            map.put("purchaseType", 21);
+            System.out.println("suplieriirpurrr" + map);
+            Integer stockCountTwenty = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+            double supplierSubtotal = 0.0;
+            if(stockCountTwenty > 0){
+                supplierSubtotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
+            }
+
+            Object startDdate = map.get("startDate");
+            Object stopDate = map.get("stopDate");
+            Integer howManyDaysInPeriod = getHowManyDaysInPeriod((String) stopDate, (String) startDdate);
+
+            double v = supplierSubtotal / (howManyDaysInPeriod + 1);
+            mapResult.put("perCost", new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            mapResult.put("totalSubtotal", new BigDecimal(supplierSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//            mapResult.put("totalSelfSubtotal", new BigDecimal(selfSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//            mapResult.put("totalSupplierSubtotal", new BigDecimal(supplierSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+            System.out.println("44444depdididiid" + map);
+            map.put("purchaseType", null);
+            System.out.println("putuututututuutut" + map);
+            List<NxJrdhSupplierEntity> supplierEntities = gbDistributerPurchaseBatchService.querySupplierList(map);
+
+            for (NxJrdhSupplierEntity supplierEntity : supplierEntities) {
+                double supplierTotal = 0;
+                double supplierTotalUnPay = 0;
+                Integer nxJrdhSupplierId = supplierEntity.getNxJrdhSupplierId();
+                Map<String, Object> mapS = new HashMap<>();
+                mapS.put("supplierId", nxJrdhSupplierId);
+                mapS.put("payType", 1);
+                mapS.put("status", 4);
+                Integer integer = gbDistributerPurchaseBatchService.queryDisPurchaseBatchCount(mapS);
+                if(integer > 0){
+                     supplierTotal = gbDistributerPurchaseBatchService.querySupplierUnSettleSubtotal(mapS);
+                }
+
+                mapS.put("status", null);
+                mapS.put("equalStatus", 4);
+                mapS.put("payType", null);
+                Integer integer2 = gbDistributerPurchaseBatchService.queryDisPurchaseBatchCount(mapS);
+                if(integer2 > 0){
+                     supplierTotalUnPay = gbDistributerPurchaseBatchService.querySupplierUnSettleSubtotal(mapS);
+                }
+                supplierEntity.setUnPayTotal(new BigDecimal(supplierTotal).setScale(1,BigDecimal.ROUND_HALF_UP).toString());
+                supplierEntity.setHavePayTotal(new BigDecimal(supplierTotalUnPay).setScale(1,BigDecimal.ROUND_HALF_UP).toString());
+            }
+
+            mapResult.put("arr", supplierEntities);
+            mapResult.put("code", 0);
+        } else {
+            mapResult.put("code", -1);
+        }
+
+
+        return mapResult;
+    }
 
     private Map<String, Object> aaaDepStockTotalNow(Map<String, Object> map) {
         Map<String, Object> mapResult = new HashMap<>();
 
         map.put("dayuStatus", -1);
         map.put("restWeight", 0);
+        System.out.println("sotodiididnaoodosoaaaDepStockTotalNow" + map);
 //        TreeSet<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = new TreeSet<>();
         List<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = new ArrayList<>();
         List<GbDistributerFatherGoodsEntity> resultFatherGoodsList = new ArrayList<>();
@@ -985,24 +1323,25 @@ public class GbReportController {
                     double grandDoubleRest = 0;
                     double grandDoubleRestV = 0;
                     List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grandFather.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        Integer gbDistributerFatherGoodsId = father.getGbDistributerFatherGoodsId();
-                        map.put("disGoodsFatherId", gbDistributerFatherGoodsId);
-                        Double fatherDoubleRest = gbDepGoodsStockService.queryDepStockRestWeightTotal(map);
-                        Double fatherDoubleRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(map);
-                        grandDoubleRestV = grandDoubleRestV + fatherDoubleRestV;
-                        greatGrandTotalRestV = greatGrandTotalRestV + fatherDoubleRestV;
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    Integer gbDistributerFatherGoodsId = grandFather.getGbDistributerFatherGoodsId();
+                    map.put("disGoodsGrandId", gbDistributerFatherGoodsId);
+                    Double fatherDoubleRest = gbDepGoodsStockService.queryDepStockRestWeightTotal(map);
+                    Double fatherDoubleRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(map);
+                    grandDoubleRestV = grandDoubleRestV + fatherDoubleRestV;
+                    greatGrandTotalRestV = greatGrandTotalRestV + fatherDoubleRestV;
 
-                        grandDoubleRest = grandDoubleRest + fatherDoubleRest;
-                        greatGrandTotalRest = greatGrandTotalRest + fatherDoubleRest;
-                        father.setFatherRestTotalString(new BigDecimal(fatherDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        father.setFatherRestWeightTotalString(new BigDecimal(fatherDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    grandDoubleRest = grandDoubleRest + fatherDoubleRest;
+                    greatGrandTotalRest = greatGrandTotalRest + fatherDoubleRest;
+//                        father.setFatherRestTotalString(new BigDecimal(fatherDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                        father.setFatherRestWeightTotalString(new BigDecimal(fatherDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        resultFatherGoodsList.add(father);
+//                        resultFatherGoodsList.add(father);
 
-                    }
-                    grandFather.setFatherRestWeightTotalString(new BigDecimal(grandDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                    grandFather.setFatherRestTotalString(new BigDecimal(grandDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+//                    }
+                    grandFather.setFatherRestWeightTotalString(new BigDecimal(grandDoubleRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    grandFather.setFatherRestTotalString(new BigDecimal(grandDoubleRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    resultFatherGoodsList.add(grandFather);
                 }
                 greatGrandFather.setFatherRestWeightTotalString(new BigDecimal(greatGrandTotalRestV).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
                 greatGrandFather.setFatherRestTotalString(new BigDecimal(greatGrandTotalRest).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
@@ -1153,6 +1492,7 @@ public class GbReportController {
                 Integer gbDistributerGoodsId = goods.getGbDistributerGoodsId();
                 map.put("disGoodsId", gbDistributerGoodsId);
                 map.put("produce", 0);
+                map.put("clear", 1);
                 Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
                 if (integer > 0) {
                     double v = gbDepGoodsDailyService.queryDepGoodsFreshRate(map);
@@ -1160,13 +1500,17 @@ public class GbReportController {
                     totalF = totalF + v1;
                     totalCount = totalCount + 1;
                 }
+
             }
-            averTotal = totalF / totalCount;
+            if (totalCount > 0) {
+                averTotal = totalF / totalCount;
+            }
+
         }
 
         //time
         String time = "-:-";
-        map.put("clear", 1);
+//        map.put("clear", 1);
         Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
         if (integer > 0) {
             int clearHour = gbDepGoodsDailyService.queryDepGoodsDailyClearHour(map);
@@ -1186,9 +1530,10 @@ public class GbReportController {
             time = hourF + ":" + minString;
         }
 
-        if (distributerGoodsEntities.size() > 0 && integer > 0) {
+        if (distributerGoodsEntities.size() == 0 || integer == 0) {
             mapResult.put("code", -1);
         } else {
+            System.out.println("zahusisisisi" + averTotal);
             mapResult.put("totalGoods", totalCount);
             mapResult.put("totalRate", new BigDecimal(averTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
             mapResult.put("totalFinish", integer);
@@ -1857,18 +2202,42 @@ public class GbReportController {
             if (reportEntity.getGbRepType().equals("depStockNow")) {
                 wb = toCreatDepStockNowForm(reportEntity);
             }
+            if (reportEntity.getGbRepType().equals("disStockNow")) {
+                wb = toCreatDisStockNowForm(reportEntity);
+            }
 
             if (reportEntity.getGbRepType().equals("depCost")) {
                 wb = toCreatDepCostForm(reportEntity);
             }
+            if (reportEntity.getGbRepType().equals("disCost")) {
+                wb = toCreatDisCostForm(reportEntity);
+            }
+            if (reportEntity.getGbRepType().equals("disPurGoods")) {
+                wb = toCreatDepPurGoodsForm(reportEntity);
+            }
+            if (reportEntity.getGbRepType().equals("disPurSupplier")) {
+                wb = toCreatDepPurSupplierForm(reportEntity);
+            }
+            if (reportEntity.getGbRepType().equals("disPurNxDistributer")) {
+                wb = toCreatDepPurNxDistributerForm(reportEntity);
+            }
             if (reportEntity.getGbRepType().equals("depLoss")) {
                 wb = toCreatDepLossForm(reportEntity);
+            }
+            if (reportEntity.getGbRepType().equals("disLoss")) {
+                wb = toCreatDisLossForm(reportEntity);
+            }
+            if (reportEntity.getGbRepType().equals("disWaste")) {
+                wb = toCreatDisWasteForm(reportEntity);
             }
             if (reportEntity.getGbRepType().equals("depWaste")) {
                 wb = toCreatDepWasteForm(reportEntity);
             }
             if (reportEntity.getGbRepType().equals("depReturn")) {
                 wb = toCreatDepReturnForm(reportEntity);
+            }
+            if (reportEntity.getGbRepType().equals("disReturn")) {
+                wb = toCreatDisReturnForm(reportEntity);
             }
 
             if (reportEntity.getGbRepType().equals("goodsSales")) {
@@ -1907,7 +2276,7 @@ public class GbReportController {
         Map<String, Object> map = new HashMap<>();
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
-        map.put("disGoodsFatherId", reportEntity.getGbRepIds());
+        map.put("disGoodsGrandId", reportEntity.getGbRepIds());
         System.out.println("mapamapapapExcelleleel" + map);
         TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
 
@@ -2033,7 +2402,7 @@ public class GbReportController {
                         row1.createCell(9).setCellValue("平均每日剩余数量");
                         row1.createCell(10).setCellValue("平均沽清时间");
 
-                        map.put("disGoodsFatherId", fatherGoodsEntity.getGbDistributerFatherGoodsId());
+                        map.put("disGoodsGrandId", fatherGoodsEntity.getGbDistributerFatherGoodsId());
                         TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
                         //设置表体
                         HSSFRow goodsRow = null;
@@ -2178,267 +2547,267 @@ public class GbReportController {
         Map<String, Object> map = new HashMap<>();
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
-        map.put("disGoodsFatherId", reportEntity.getGbRepIds());
+        map.put("disGoodsGrandId", reportEntity.getGbRepIds());
         List<GbDistributerFatherGoodsEntity> greatGrandGoodsEntities = gbDepGoodsDailyService.queryDepDailyGoodsFatherTypeByParams(map);
         for (GbDistributerFatherGoodsEntity greatGrand : greatGrandGoodsEntities) {
 
             List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrand.getFatherGoodsEntities();
 
             for (GbDistributerFatherGoodsEntity grand : grandGoodsEntities) {
-                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                for (GbDistributerFatherGoodsEntity fatherGoodsEntity : fatherGoodsEntities) {
-                    if (fatherGoodsEntities.size() > 0) {
-                        HSSFSheet sheet = wb.createSheet(fatherGoodsEntity.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("总采购金额");
-                        row1.createCell(6).setCellValue("总制作成本");
-                        row1.createCell(7).setCellValue("总损耗成本");
-                        row1.createCell(8).setCellValue("总废弃成本");
-                        row1.createCell(9).setCellValue("总退货金额");
-                        row1.createCell(10).setCellValue("总库存金额");
+//                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                for (GbDistributerFatherGoodsEntity fatherGoodsEntity : fatherGoodsEntities) {
+//                    if (fatherGoodsEntities.size() > 0) {
+                HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                //设置表头
+                HSSFRow row1 = sheet.createRow(0);
+                row1.createCell(0).setCellValue("序号");
+                row1.createCell(1).setCellValue("商品名称");
+                row1.createCell(2).setCellValue("规格");
+                row1.createCell(3).setCellValue("品牌");
+                row1.createCell(4).setCellValue("详细");
+                row1.createCell(5).setCellValue("总采购金额");
+                row1.createCell(6).setCellValue("总制作成本");
+                row1.createCell(7).setCellValue("总损耗成本");
+                row1.createCell(8).setCellValue("总废弃成本");
+                row1.createCell(9).setCellValue("总退货金额");
+                row1.createCell(10).setCellValue("总库存金额");
 
-                        map.put("disGoodsFatherId", fatherGoodsEntity.getGbDistributerFatherGoodsId());
-                        TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (GbDistributerGoodsEntity ckGoodsEntity : distributerGoodsEntities) {
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
+                //设置表体
+                HSSFRow goodsRow = null;
+                for (GbDistributerGoodsEntity ckGoodsEntity : distributerGoodsEntities) {
+                    goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                    goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                    goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                    goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                    goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                    goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            map.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            Double doutbleProduceWeightM = 0.0;
-                            Double doutbleLossWeightM = 0.0;
-                            Double doutbleWasteWeightM = 0.0;
-                            Double doutbleReturnWeightM = 0.0;
-                            double totalWeightM = 0.0;
-                            double restWeightM = 0.0;
-
-
-                            Integer integerM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
-                            if (integerM > 0) {
-
-                                Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
-                                if (integer2 > 0) {
-                                    totalWeightM = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
-                                }
-                                goodsRow.createCell(5).setCellValue(new BigDecimal(totalWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-                                Integer integerLossM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
-                                if (integerLossM > 0) {
-                                    doutbleLossWeightM = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(map);
-                                }
-                                goodsRow.createCell(7).setCellValue(new BigDecimal(doutbleLossWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-                                Integer integerWasteM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
-                                if (integerWasteM > 0) {
-                                    doutbleWasteWeightM = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(map);
-                                }
-                                goodsRow.createCell(8).setCellValue(new BigDecimal(doutbleWasteWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-                                Integer integerReturnM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
-                                if (integerReturnM > 0) {
-                                    doutbleReturnWeightM = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(map);
-                                }
-                                goodsRow.createCell(9).setCellValue(new BigDecimal(doutbleReturnWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                Integer integer1 = gbDepGoodsStockService.queryGoodsStockCount(map);
-                                if (integer1 > 0) {
-                                    restWeightM = gbDepGoodsStockService.queryDepStockRestSubtotal(map);
-                                }
-                                goodsRow.createCell(10).setCellValue(new BigDecimal(restWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+                    map.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                    Double doutbleProduceWeightM = 0.0;
+                    Double doutbleLossWeightM = 0.0;
+                    Double doutbleWasteWeightM = 0.0;
+                    Double doutbleReturnWeightM = 0.0;
+                    double totalWeightM = 0.0;
+                    double restWeightM = 0.0;
 
 
-                                map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-                                map.put("depType", getGbDepartmentTypeMendian());
-                                Integer integerProduceM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
-                                if (integerProduceM > 0) {
-                                    doutbleProduceWeightM = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(map);
-                                }
-                                goodsRow.createCell(6).setCellValue(doutbleProduceWeightM);
+                    Integer integerM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+                    if (integerM > 0) {
 
-                            }
-
+                        Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(map);
+                        if (integer2 > 0) {
+                            totalWeightM = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(map);
                         }
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(totalWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
 
-
-                        HSSFSheet sheet2 = wb.createSheet(fatherGoodsEntity.getGbDfgFatherGoodsName() + "明细");
-                        //设置表头
-                        HSSFRow row2 = sheet2.createRow(0);
-                        row2.createCell(0).setCellValue("序号");
-                        row2.createCell(1).setCellValue("商品名称");
-                        row2.createCell(2).setCellValue("规格");
-                        row2.createCell(3).setCellValue("品牌");
-                        row2.createCell(4).setCellValue("详细");
-                        row2.createCell(5).setCellValue("总采购金额");
-                        row2.createCell(6).setCellValue("总制作成本");
-                        row2.createCell(7).setCellValue("总损耗成本");
-                        row2.createCell(8).setCellValue("总废弃成本");
-                        row2.createCell(9).setCellValue("总退货金额");
-                        row2.createCell(10).setCellValue("总库存金额");
-                        row2.createCell(11).setCellValue("部门");
-                        row2.createCell(12).setCellValue("部门制作成本");
-                        row2.createCell(13).setCellValue("部门损耗成本");
-                        row2.createCell(14).setCellValue("部门废弃成本");
-                        row2.createCell(15).setCellValue("部门退货金额");
-                        row2.createCell(16).setCellValue("部门库存金额");
-                        HSSFRow goodsRow2 = null;
-                        int m = 1;
-
-                        for (GbDistributerGoodsEntity distributerGoodsEntity : distributerGoodsEntities) {
-
-                            goodsRow2 = sheet2.createRow(sheet2.getLastRowNum() + 1);
-                            goodsRow2.createCell(0).setCellValue(m);
-                            m = m + 1;
-                            goodsRow2.createCell(1).setCellValue(distributerGoodsEntity.getGbDgGoodsName());
-                            goodsRow2.createCell(2).setCellValue(distributerGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow2.createCell(3).setCellValue(distributerGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow2.createCell(4).setCellValue(distributerGoodsEntity.getGbDgGoodsDetail());
-
-
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("disGoodsId", distributerGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            Double doutbleProduceWeight = 0.0;
-                            Double doutbleLossWeight = 0.0;
-                            Double doutbleWasteWeight = 0.0;
-                            Double doutbleReturnWeight = 0.0;
-                            double totalWeight = 0.0;
-                            double restWeight = 0.0;
-                            Integer integerG = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                            if (integerG > 0) {
-
-                                Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
-                                if (integer2 > 0) {
-                                    totalWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
-                                }
-                                goodsRow2.createCell(5).setCellValue(new BigDecimal(totalWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-                                Integer integerLossDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                                if (integerLossDep > 0) {
-                                    doutbleLossWeight = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
-                                }
-                                goodsRow2.createCell(7).setCellValue(new BigDecimal(doutbleLossWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-                                Integer integerWasteDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                                if (integerWasteDep > 0) {
-                                    doutbleWasteWeight = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
-                                }
-                                goodsRow2.createCell(8).setCellValue(new BigDecimal(doutbleWasteWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-                                Integer integerReturnDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                                if (integerReturnDep > 0) {
-                                    doutbleReturnWeight = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
-                                }
-                                goodsRow2.createCell(9).setCellValue(new BigDecimal(doutbleReturnWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-
-                                Integer integer1 = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
-                                if (integer1 > 0) {
-                                    restWeight = gbDepGoodsStockService.queryDepStockRestSubtotal(disGoodsMap);
-                                }
-                                goodsRow2.createCell(10).setCellValue(new BigDecimal(restWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                            }
-
-                            TreeSet<GbDepartmentEntity> departmentEntities = gbDepGoodsDailyService.queryWhichDepsHasProduceDepGoodsDaily(disGoodsMap);
-
-                            disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-                            disGoodsMap.put("depType", getGbDepartmentTypeMendian());
-                            Integer integerProduceDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                            if (integerProduceDep > 0) {
-                                doutbleProduceWeight= gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
-                            }
-                            goodsRow2.createCell(6).setCellValue(doutbleProduceWeight);
-
-                            System.out.println("depdsssss" + departmentEntities.size());
-                            HSSFRow goodsRow3 = null;
-                            for (GbDepartmentEntity departmentEntity : departmentEntities) {
-                                goodsRow3 = sheet2.createRow(sheet2.getLastRowNum() + 1);
-                                Integer gbDgdGbDepartmentId = departmentEntity.getGbDepartmentId();
-                                GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(gbDgdGbDepartmentId);
-
-                                Map<String, Object> disGoodsMapDep = new HashMap<>();
-                                disGoodsMapDep.put("disGoodsId", distributerGoodsEntity.getGbDistributerGoodsId());
-                                disGoodsMapDep.put("startDate", reportEntity.getGbRepStartDate());
-                                disGoodsMapDep.put("stopDate", reportEntity.getGbRepStopDate());
-                                goodsRow3.createCell(11).setCellValue(gbDepartmentEntity.getGbDepartmentName());
-                                disGoodsMapDep.put("depFatherId", gbDgdGbDepartmentId);
-                                Integer integerd = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
-                                Double doutbleProduceWeightDep = 0.0;
-                                Double doutbleLossWeightDep = 0.0;
-                                Double doutbleWasteWeightDep = 0.0;
-                                Double doutbleReturnWeightDep = 0.0;
-                                double restWeightDep = 0.0;
-                                if (integerd > 0) {
-
-                                    disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-                                    System.out.println("disgoododdooddoddododoodood----" + disGoodsMapDep);
-
-                                    Integer integerLossDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
-                                    if (integerLossDep > 0) {
-                                        doutbleLossWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMapDep);
-                                    }
-                                    goodsRow3.createCell(13).setCellValue(new BigDecimal(doutbleLossWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                    disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-                                    Integer integerWasteDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
-                                    if (integerWasteDep > 0) {
-                                        doutbleWasteWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMapDep);
-                                    }
-                                    goodsRow3.createCell(14).setCellValue(new BigDecimal(doutbleWasteWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                    disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-                                    Integer integerReturnDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
-                                    if (integerReturnDep > 0) {
-                                        doutbleReturnWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMapDep);
-                                    }
-                                    goodsRow3.createCell(15).setCellValue(new BigDecimal(doutbleReturnWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                    Integer integer1 = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMapDep);
-                                    if (integer1 > 0) {
-                                        restWeightDep = gbDepGoodsStockService.queryDepStockRestSubtotal(disGoodsMapDep);
-                                    }
-                                    goodsRow3.createCell(16).setCellValue(new BigDecimal(restWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                    disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-                                    disGoodsMapDep.put("depType", getGbDepartmentTypeMendian());
-                                    Integer integerProduceDe = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
-                                    if (integerProduceDe > 0) {
-                                        doutbleProduceWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMapDep);
-                                    }
-                                    goodsRow3.createCell(12).setCellValue(doutbleProduceWeightDep);
-
-                                }
-
-                            }
-
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                        Integer integerLossM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+                        if (integerLossM > 0) {
+                            doutbleLossWeightM = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(map);
                         }
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(doutbleLossWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
 
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                        Integer integerWasteM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+                        if (integerWasteM > 0) {
+                            doutbleWasteWeightM = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(map);
+                        }
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(doutbleWasteWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+                        Integer integerReturnM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+                        if (integerReturnM > 0) {
+                            doutbleReturnWeightM = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(map);
+                        }
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(doutbleReturnWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Integer integer1 = gbDepGoodsStockService.queryGoodsStockCount(map);
+                        if (integer1 > 0) {
+                            restWeightM = gbDepGoodsStockService.queryDepStockRestSubtotal(map);
+                        }
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(restWeightM).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                        map.put("depType", getGbDepartmentTypeMendian());
+                        Integer integerProduceM = gbDepGoodsDailyService.queryDepGoodsDailyCount(map);
+                        if (integerProduceM > 0) {
+                            doutbleProduceWeightM = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(map);
+                        }
+                        goodsRow.createCell(6).setCellValue(doutbleProduceWeightM);
 
                     }
+
                 }
 
+
+                HSSFSheet sheet2 = wb.createSheet(grand.getGbDfgFatherGoodsName() + "明细");
+                //设置表头
+                HSSFRow row2 = sheet2.createRow(0);
+                row2.createCell(0).setCellValue("序号");
+                row2.createCell(1).setCellValue("商品名称");
+                row2.createCell(2).setCellValue("规格");
+                row2.createCell(3).setCellValue("品牌");
+                row2.createCell(4).setCellValue("详细");
+                row2.createCell(5).setCellValue("总采购金额");
+                row2.createCell(6).setCellValue("总制作成本");
+                row2.createCell(7).setCellValue("总损耗成本");
+                row2.createCell(8).setCellValue("总废弃成本");
+                row2.createCell(9).setCellValue("总退货金额");
+                row2.createCell(10).setCellValue("总库存金额");
+                row2.createCell(11).setCellValue("部门");
+                row2.createCell(12).setCellValue("部门制作成本");
+                row2.createCell(13).setCellValue("部门损耗成本");
+                row2.createCell(14).setCellValue("部门废弃成本");
+                row2.createCell(15).setCellValue("部门退货金额");
+                row2.createCell(16).setCellValue("部门库存金额");
+                HSSFRow goodsRow2 = null;
+                int m = 1;
+
+                for (GbDistributerGoodsEntity distributerGoodsEntity : distributerGoodsEntities) {
+
+                    goodsRow2 = sheet2.createRow(sheet2.getLastRowNum() + 1);
+                    goodsRow2.createCell(0).setCellValue(m);
+                    m = m + 1;
+                    goodsRow2.createCell(1).setCellValue(distributerGoodsEntity.getGbDgGoodsName());
+                    goodsRow2.createCell(2).setCellValue(distributerGoodsEntity.getGbDgGoodsStandardname());
+                    goodsRow2.createCell(3).setCellValue(distributerGoodsEntity.getGbDgGoodsBrand());
+                    goodsRow2.createCell(4).setCellValue(distributerGoodsEntity.getGbDgGoodsDetail());
+
+
+                    Map<String, Object> disGoodsMap = new HashMap<>();
+                    disGoodsMap.put("disGoodsId", distributerGoodsEntity.getGbDistributerGoodsId());
+                    disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                    disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                    Double doutbleProduceWeight = 0.0;
+                    Double doutbleLossWeight = 0.0;
+                    Double doutbleWasteWeight = 0.0;
+                    Double doutbleReturnWeight = 0.0;
+                    double totalWeight = 0.0;
+                    double restWeight = 0.0;
+                    Integer integerG = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                    if (integerG > 0) {
+
+                        Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                        if (integer2 > 0) {
+                            totalWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                        }
+                        goodsRow2.createCell(5).setCellValue(new BigDecimal(totalWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                        Integer integerLossDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                        if (integerLossDep > 0) {
+                            doutbleLossWeight = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        }
+                        goodsRow2.createCell(7).setCellValue(new BigDecimal(doutbleLossWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                        Integer integerWasteDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                        if (integerWasteDep > 0) {
+                            doutbleWasteWeight = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        }
+                        goodsRow2.createCell(8).setCellValue(new BigDecimal(doutbleWasteWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+                        Integer integerReturnDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                        if (integerReturnDep > 0) {
+                            doutbleReturnWeight = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
+                        }
+                        goodsRow2.createCell(9).setCellValue(new BigDecimal(doutbleReturnWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        Integer integer1 = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
+                        if (integer1 > 0) {
+                            restWeight = gbDepGoodsStockService.queryDepStockRestSubtotal(disGoodsMap);
+                        }
+                        goodsRow2.createCell(10).setCellValue(new BigDecimal(restWeight).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                    }
+
+                    TreeSet<GbDepartmentEntity> departmentEntities = gbDepGoodsDailyService.queryWhichDepsHasProduceDepGoodsDaily(disGoodsMap);
+
+                    disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                    disGoodsMap.put("depType", getGbDepartmentTypeMendian());
+                    Integer integerProduceDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                    if (integerProduceDep > 0) {
+                        doutbleProduceWeight = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                    }
+                    goodsRow2.createCell(6).setCellValue(doutbleProduceWeight);
+
+                    System.out.println("depdsssss" + departmentEntities.size());
+                    HSSFRow goodsRow3 = null;
+                    for (GbDepartmentEntity departmentEntity : departmentEntities) {
+                        goodsRow3 = sheet2.createRow(sheet2.getLastRowNum() + 1);
+                        Integer gbDgdGbDepartmentId = departmentEntity.getGbDepartmentId();
+                        GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(gbDgdGbDepartmentId);
+
+                        Map<String, Object> disGoodsMapDep = new HashMap<>();
+                        disGoodsMapDep.put("disGoodsId", distributerGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMapDep.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMapDep.put("stopDate", reportEntity.getGbRepStopDate());
+                        goodsRow3.createCell(11).setCellValue(gbDepartmentEntity.getGbDepartmentName());
+                        disGoodsMapDep.put("depFatherId", gbDgdGbDepartmentId);
+                        Integer integerd = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
+                        Double doutbleProduceWeightDep = 0.0;
+                        Double doutbleLossWeightDep = 0.0;
+                        Double doutbleWasteWeightDep = 0.0;
+                        Double doutbleReturnWeightDep = 0.0;
+                        double restWeightDep = 0.0;
+                        if (integerd > 0) {
+
+                            disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                            System.out.println("disgoododdooddoddododoodood----" + disGoodsMapDep);
+
+                            Integer integerLossDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
+                            if (integerLossDep > 0) {
+                                doutbleLossWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMapDep);
+                            }
+                            goodsRow3.createCell(13).setCellValue(new BigDecimal(doutbleLossWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                            disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                            Integer integerWasteDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
+                            if (integerWasteDep > 0) {
+                                doutbleWasteWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMapDep);
+                            }
+                            goodsRow3.createCell(14).setCellValue(new BigDecimal(doutbleWasteWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                            disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+                            Integer integerReturnDep = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
+                            if (integerReturnDep > 0) {
+                                doutbleReturnWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMapDep);
+                            }
+                            goodsRow3.createCell(15).setCellValue(new BigDecimal(doutbleReturnWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                            Integer integer1 = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMapDep);
+                            if (integer1 > 0) {
+                                restWeightDep = gbDepGoodsStockService.queryDepStockRestSubtotal(disGoodsMapDep);
+                            }
+                            goodsRow3.createCell(16).setCellValue(new BigDecimal(restWeightDep).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                            disGoodsMapDep.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                            disGoodsMapDep.put("depType", getGbDepartmentTypeMendian());
+                            Integer integerProduceDe = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMapDep);
+                            if (integerProduceDe > 0) {
+                                doutbleProduceWeightDep = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMapDep);
+                            }
+                            goodsRow3.createCell(12).setCellValue(doutbleProduceWeightDep);
+
+                        }
+
+                    }
+
+                }
+
+
             }
-
-
         }
+
+//            }
+
+
+//        }
 
 
         return wb;
@@ -2458,160 +2827,160 @@ public class GbReportController {
             List<GbDistributerFatherGoodsEntity> grandGoodsEntities = greatGrand.getFatherGoodsEntities();
 
             for (GbDistributerFatherGoodsEntity grand : grandGoodsEntities) {
-                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                for (GbDistributerFatherGoodsEntity fatherGoodsEntity : fatherGoodsEntities) {
+//                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                for (GbDistributerFatherGoodsEntity fatherGoodsEntity : fatherGoodsEntities) {
 
-                    System.out.println("fahhhg-namemememmememefatherGoodsEntity-=======" + fatherGoodsEntity.getGbDfgFatherGoodsName());
+//                    System.out.println("fahhhg-namemememmememefatherGoodsEntity-=======" + fatherGoodsEntity.getGbDfgFatherGoodsName());
 //                    GbDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsService.queryObject(fatherGoods.getGbDistributerFatherGoodsId());
 
-                    if (fatherGoodsEntities.size() > 0) {
-                        HSSFSheet sheet = wb.createSheet(fatherGoodsEntity.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("天数");
-                        row1.createCell(6).setCellValue("平均日鲜率(%)");
-                        row1.createCell(7).setCellValue("最高日鲜率");
-                        row1.createCell(8).setCellValue("最低日鲜率");
-                        row1.createCell(9).setCellValue("平均每日剩余数量");
-                        row1.createCell(10).setCellValue("平均沽清时间");
+                if (grandGoodsEntities.size() > 0) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("天数");
+                    row1.createCell(6).setCellValue("平均日鲜率(%)");
+                    row1.createCell(7).setCellValue("最高日鲜率");
+                    row1.createCell(8).setCellValue("最低日鲜率");
+                    row1.createCell(9).setCellValue("平均每日剩余数量");
+                    row1.createCell(10).setCellValue("平均沽清时间");
 
-                        map.put("disGoodsFatherId", fatherGoodsEntity.getGbDistributerFatherGoodsId());
-                        TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (GbDistributerGoodsEntity ckGoodsEntity : distributerGoodsEntities) {
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                            if (integer > 0) {
-                                double freshRate = gbDepGoodsDailyService.queryDepGoodsFreshRate(disGoodsMap);
-                                int clearHour = gbDepGoodsDailyService.queryDepGoodsDailyClearHour(disGoodsMap);
-                                int clearMinute = gbDepGoodsDailyService.queryDepGoodsDailyClearMinute(disGoodsMap);
-                                String time = "";
-                                int hourTF = clearHour * 60;
-                                int totalMinuteF = (hourTF + clearMinute) / integer;
-                                int hourF = totalMinuteF / 60;
-                                int minTF = totalMinuteF % 60;
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (GbDistributerGoodsEntity ckGoodsEntity : distributerGoodsEntities) {
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                        if (integer > 0) {
+                            double freshRate = gbDepGoodsDailyService.queryDepGoodsFreshRate(disGoodsMap);
+                            int clearHour = gbDepGoodsDailyService.queryDepGoodsDailyClearHour(disGoodsMap);
+                            int clearMinute = gbDepGoodsDailyService.queryDepGoodsDailyClearMinute(disGoodsMap);
+                            String time = "";
+                            int hourTF = clearHour * 60;
+                            int totalMinuteF = (hourTF + clearMinute) / integer;
+                            int hourF = totalMinuteF / 60;
+                            int minTF = totalMinuteF % 60;
 
-                                String minString = "";
-                                if (minTF < 10) {
-                                    minString = "0" + minTF;
-                                } else {
-                                    minString = Integer.toString(minTF);
-                                }
-                                time = hourF + ":" + minString;
-
-                                goodsRow.createCell(5).setCellValue(integer);
-                                BigDecimal divide = new BigDecimal(freshRate).divide(new BigDecimal(integer), 2, BigDecimal.ROUND_HALF_UP);
-                                System.out.println("abc" + freshRate);
-                                System.out.println("deff" + integer);
-                                System.out.println("reeeee" + divide);
-                                double highestFreshRate = gbDepGoodsDailyService.queryDepGoodsDailyHighestFreshRate(disGoodsMap);
-                                double lowestFreshRate = gbDepGoodsDailyService.queryDepGoodsDailyLowestFreshRate(disGoodsMap);
-
-                                goodsRow.createCell(6).setCellValue(divide.setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-                                goodsRow.createCell(7).setCellValue(new BigDecimal(highestFreshRate).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-                                goodsRow.createCell(8).setCellValue(new BigDecimal(lowestFreshRate).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
-
-                                Double restWeight = gbDepGoodsStockService.queryDepGoodsRestWeightTotal(disGoodsMap);
-
-                                System.out.println("rererereree" + restWeight);
-                                BigDecimal divide1 = new BigDecimal(restWeight).divide(new BigDecimal(integer), 2, BigDecimal.ROUND_HALF_UP);
-                                goodsRow.createCell(9).setCellValue(divide1.toString());
-                                goodsRow.createCell(10).setCellValue(time);
-
+                            String minString = "";
+                            if (minTF < 10) {
+                                minString = "0" + minTF;
+                            } else {
+                                minString = Integer.toString(minTF);
                             }
+                            time = hourF + ":" + minString;
+
+                            goodsRow.createCell(5).setCellValue(integer);
+                            BigDecimal divide = new BigDecimal(freshRate).divide(new BigDecimal(integer), 2, BigDecimal.ROUND_HALF_UP);
+                            System.out.println("abc" + freshRate);
+                            System.out.println("deff" + integer);
+                            System.out.println("reeeee" + divide);
+                            double highestFreshRate = gbDepGoodsDailyService.queryDepGoodsDailyHighestFreshRate(disGoodsMap);
+                            double lowestFreshRate = gbDepGoodsDailyService.queryDepGoodsDailyLowestFreshRate(disGoodsMap);
+
+                            goodsRow.createCell(6).setCellValue(divide.setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+                            goodsRow.createCell(7).setCellValue(new BigDecimal(highestFreshRate).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+                            goodsRow.createCell(8).setCellValue(new BigDecimal(lowestFreshRate).setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+                            Double restWeight = gbDepGoodsStockService.queryDepGoodsRestWeightTotal(disGoodsMap);
+
+                            System.out.println("rererereree" + restWeight);
+                            BigDecimal divide1 = new BigDecimal(restWeight).divide(new BigDecimal(integer), 2, BigDecimal.ROUND_HALF_UP);
+                            goodsRow.createCell(9).setCellValue(divide1.toString());
+                            goodsRow.createCell(10).setCellValue(time);
 
                         }
-
-
-                        HSSFSheet sheet2 = wb.createSheet(fatherGoodsEntity.getGbDfgFatherGoodsName() + "明细");
-                        //设置表头
-                        HSSFRow row2 = sheet2.createRow(0);
-                        row2.createCell(0).setCellValue("序号");
-                        row2.createCell(1).setCellValue("商品名称");
-                        row2.createCell(2).setCellValue("规格");
-                        row2.createCell(3).setCellValue("品牌");
-                        row2.createCell(4).setCellValue("详细");
-                        row2.createCell(5).setCellValue("日期");
-                        row2.createCell(6).setCellValue("店铺");
-                        row2.createCell(7).setCellValue("日鲜率");
-                        row2.createCell(8).setCellValue("剩余数量");
-                        row2.createCell(9).setCellValue("沽清时间");
-                        HSSFRow goodsRow2 = null;
-                        int m = 1;
-
-                        for (GbDistributerGoodsEntity distributerGoodsEntity : distributerGoodsEntities) {
-
-                            goodsRow2 = sheet2.createRow(sheet2.getLastRowNum() + 1);
-                            goodsRow2.createCell(0).setCellValue(m);
-                            m = m + 1;
-                            goodsRow2.createCell(1).setCellValue(distributerGoodsEntity.getGbDgGoodsName());
-                            goodsRow2.createCell(2).setCellValue(distributerGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow2.createCell(3).setCellValue(distributerGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow2.createCell(4).setCellValue(distributerGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-
-                            Integer howManyDaysInPeriod = 0;
-                            if (!reportEntity.getGbRepStartDate().equals(reportEntity.getGbRepStopDate())) {
-                                howManyDaysInPeriod = getHowManyDaysInPeriod(reportEntity.getGbRepStopDate(), reportEntity.getGbRepStartDate());
-                            }
-                            System.out.println("hoammdmmd" + howManyDaysInPeriod);
-                            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
-                                String whichDay = "";
-                                if (i == 0) {
-                                    whichDay = reportEntity.getGbRepStartDate();
-                                } else {
-                                    whichDay = afterWhatDay(reportEntity.getGbRepStartDate(), i);
-                                }
-
-                                Map<String, Object> disGoodsMap = new HashMap<>();
-                                disGoodsMap.put("date", whichDay);
-                                disGoodsMap.put("disGoodsId", distributerGoodsEntity.getGbDistributerGoodsId());
-                                double highInteger = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
-                                if (highInteger > 0) {
-                                    List<GbDepartmentGoodsDailyEntity> departmentGoodsDailyEntities = gbDepGoodsDailyService.queryDepGoodsDailyListByParams(disGoodsMap);
-
-                                    HSSFRow goodsRow3 = null;
-                                    for (GbDepartmentGoodsDailyEntity dailyEntity : departmentGoodsDailyEntities) {
-                                        goodsRow3 = sheet2.createRow(sheet2.getLastRowNum() + 1);
-                                        goodsRow3.createCell(5).setCellValue(whichDay);
-                                        Integer gbDgdGbDepartmentId = dailyEntity.getGbDgdGbDepartmentId();
-                                        GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(gbDgdGbDepartmentId);
-
-                                        goodsRow3.createCell(6).setCellValue(gbDepartmentEntity.getGbDepartmentName());
-                                        goodsRow3.createCell(7).setCellValue(dailyEntity.getGbDgdFreshRate() + "%");
-                                        goodsRow3.createCell(8).setCellValue(dailyEntity.getGbDgdRestWeight() + distributerGoodsEntity.getGbDgGoodsStandardname());
-                                        goodsRow3.createCell(9).setCellValue(dailyEntity.getGbDgdSellClearHour() + ":" + dailyEntity.getGbDgdSellClearMinute());
-                                    }
-
-                                }
-
-                            }
-                        }
-
 
                     }
-                }
 
+
+                    HSSFSheet sheet2 = wb.createSheet(grand.getGbDfgFatherGoodsName() + "明细");
+                    //设置表头
+                    HSSFRow row2 = sheet2.createRow(0);
+                    row2.createCell(0).setCellValue("序号");
+                    row2.createCell(1).setCellValue("商品名称");
+                    row2.createCell(2).setCellValue("规格");
+                    row2.createCell(3).setCellValue("品牌");
+                    row2.createCell(4).setCellValue("详细");
+                    row2.createCell(5).setCellValue("日期");
+                    row2.createCell(6).setCellValue("店铺");
+                    row2.createCell(7).setCellValue("日鲜率");
+                    row2.createCell(8).setCellValue("剩余数量");
+                    row2.createCell(9).setCellValue("沽清时间");
+                    HSSFRow goodsRow2 = null;
+                    int m = 1;
+
+                    for (GbDistributerGoodsEntity distributerGoodsEntity : distributerGoodsEntities) {
+
+                        goodsRow2 = sheet2.createRow(sheet2.getLastRowNum() + 1);
+                        goodsRow2.createCell(0).setCellValue(m);
+                        m = m + 1;
+                        goodsRow2.createCell(1).setCellValue(distributerGoodsEntity.getGbDgGoodsName());
+                        goodsRow2.createCell(2).setCellValue(distributerGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow2.createCell(3).setCellValue(distributerGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow2.createCell(4).setCellValue(distributerGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+
+                        Integer howManyDaysInPeriod = 0;
+                        if (!reportEntity.getGbRepStartDate().equals(reportEntity.getGbRepStopDate())) {
+                            howManyDaysInPeriod = getHowManyDaysInPeriod(reportEntity.getGbRepStopDate(), reportEntity.getGbRepStartDate());
+                        }
+                        System.out.println("hoammdmmd" + howManyDaysInPeriod);
+                        for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
+                            String whichDay = "";
+                            if (i == 0) {
+                                whichDay = reportEntity.getGbRepStartDate();
+                            } else {
+                                whichDay = afterWhatDay(reportEntity.getGbRepStartDate(), i);
+                            }
+
+                            Map<String, Object> disGoodsMap = new HashMap<>();
+                            disGoodsMap.put("date", whichDay);
+                            disGoodsMap.put("disGoodsId", distributerGoodsEntity.getGbDistributerGoodsId());
+                            double highInteger = gbDepGoodsDailyService.queryDepGoodsDailyCount(disGoodsMap);
+                            if (highInteger > 0) {
+                                List<GbDepartmentGoodsDailyEntity> departmentGoodsDailyEntities = gbDepGoodsDailyService.queryDepGoodsDailyListByParams(disGoodsMap);
+
+                                HSSFRow goodsRow3 = null;
+                                for (GbDepartmentGoodsDailyEntity dailyEntity : departmentGoodsDailyEntities) {
+                                    goodsRow3 = sheet2.createRow(sheet2.getLastRowNum() + 1);
+                                    goodsRow3.createCell(5).setCellValue(whichDay);
+                                    Integer gbDgdGbDepartmentId = dailyEntity.getGbDgdGbDepartmentId();
+                                    GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(gbDgdGbDepartmentId);
+
+                                    goodsRow3.createCell(6).setCellValue(gbDepartmentEntity.getGbDepartmentName());
+                                    goodsRow3.createCell(7).setCellValue(dailyEntity.getGbDgdFreshRate() + "%");
+                                    goodsRow3.createCell(8).setCellValue(dailyEntity.getGbDgdRestWeight() + distributerGoodsEntity.getGbDgGoodsStandardname());
+                                    goodsRow3.createCell(9).setCellValue(dailyEntity.getGbDgdSellClearHour() + ":" + dailyEntity.getGbDgdSellClearMinute());
+                                }
+
+                            }
+
+                        }
+                    }
+
+
+                }
             }
 
-
         }
+
+
+//        }
 
 
         return wb;
@@ -2623,7 +2992,7 @@ public class GbReportController {
         Map<String, Object> map = new HashMap<>();
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
-        map.put("disGoodsFatherId", reportEntity.getGbRepIds());
+        map.put("disGoodsGrandId", reportEntity.getGbRepIds());
         map.put("controlFresh", 1);
         TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
 
@@ -3110,7 +3479,7 @@ public class GbReportController {
         Map<String, Object> map = new HashMap<>();
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
-        map.put("disGoodsFatherId", reportEntity.getGbRepIds());
+        map.put("disGoodsGrandId", reportEntity.getGbRepIds());
         System.out.println("mapamapapapExcelleleel" + map);
         List<GbDistributerGoodsEntity> distributerGoodsEntities = gbDistributerGoodsPriceService.queryTreeSetDisGoods(map);
 
@@ -3274,7 +3643,7 @@ public class GbReportController {
         Map<String, Object> map = new HashMap<>();
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
-        map.put("disGoodsFatherId", reportEntity.getGbRepIds());
+        map.put("disGoodsGrandId", reportEntity.getGbRepIds());
         System.out.println("mapamapapapExcelleleel" + map);
         TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
 
@@ -3359,7 +3728,7 @@ public class GbReportController {
         Map<String, Object> map = new HashMap<>();
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
-        map.put("disGoodsFatherId", reportEntity.getGbRepIds());
+        map.put("disGoodsGrandId", reportEntity.getGbRepIds());
         System.out.println("mapamapapapExcelleleel" + map);//
         TreeSet<GbDistributerGoodsEntity> distributerGoodsEntities = gbDepGoodsDailyService.queryDisGoodsTreesetByParams(map);
 
@@ -3458,62 +3827,62 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("退货成本");
-                        row1.createCell(6).setCellValue("废弃成本");
-                        row1.createCell(7).setCellValue("销售成本");
-                        row1.createCell(8).setCellValue("损耗成本");
-                        row1.createCell(9).setCellValue("总成本");
-                        row1.createCell(10).setCellValue("零售总金额");
-                        row1.createCell(11).setCellValue("利润总额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("退货成本");
+                    row1.createCell(6).setCellValue("废弃成本");
+                    row1.createCell(7).setCellValue("销售成本");
+                    row1.createCell(8).setCellValue("损耗成本");
+                    row1.createCell(9).setCellValue("总成本");
+                    row1.createCell(10).setCellValue("零售总金额");
+                    row1.createCell(11).setCellValue("利润总额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 //                            disGoodsMap.put("loss", 0);
-                            Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
-                            Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
-                            Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
-                            Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
-                            Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
-                            Double aDoubleRR = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
-                            double total = aDoubleRP + aDoubleRL + aDoubleRW;
+                        Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                        Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        Double aDoubleRR = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
+                        double total = aDoubleRP + aDoubleRL + aDoubleRW;
 
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(11).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -3522,6 +3891,90 @@ public class GbReportController {
 
         return wb;
     }
+
+
+
+    private HSSFWorkbook toCreatDisReturnForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", Integer.valueOf(reportEntity.getGbRepIds()));
+        map.put("return", 0);
+        System.out.println("mapamapapapExcelleleel" + map);
+        List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsDailyService.queryDepDailyGoodsFatherTypeByParams(map);
+
+        if (distributerFatherGoodsEntities.size() > 0) {
+            for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
+                for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("退货成本");
+                    row1.createCell(6).setCellValue("废弃成本");
+                    row1.createCell(7).setCellValue("销售成本");
+                    row1.createCell(8).setCellValue("损耗成本");
+                    row1.createCell(9).setCellValue("总成本");
+                    row1.createCell(10).setCellValue("零售总金额");
+                    row1.createCell(11).setCellValue("利润总额");
+
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+//                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+//                            disGoodsMap.put("loss", 0);
+                        Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                        Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        Double aDoubleRR = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
+                        double total = aDoubleRP + aDoubleRL + aDoubleRW;
+
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                    }
+//                    }
+
+                }
+            }
+
+        }
+
+        return wb;
+    }
+
+
 
     private HSSFWorkbook toCreatDepWasteForm(GbReportEntity reportEntity) {
         HSSFWorkbook wb = new HSSFWorkbook();
@@ -3539,59 +3992,213 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("废弃成本");
-                        row1.createCell(6).setCellValue("销售成本");
-                        row1.createCell(7).setCellValue("损耗成本");
-                        row1.createCell(8).setCellValue("总成本");
-                        row1.createCell(9).setCellValue("零售总金额");
-                        row1.createCell(10).setCellValue("利润总额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("废弃成本");
+                    row1.createCell(6).setCellValue("销售成本");
+                    row1.createCell(7).setCellValue("损耗成本");
+                    row1.createCell(8).setCellValue("总成本");
+                    row1.createCell(9).setCellValue("零售总金额");
+                    row1.createCell(10).setCellValue("利润总额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 //                            disGoodsMap.put("loss", 0);
-                            Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
-                            Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
-                            Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
-                            Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
-                            Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
-                            double total = aDoubleRP + aDoubleRL + aDoubleRW;
+                        Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                        Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        double total = aDoubleRP + aDoubleRL + aDoubleRW;
 
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
+
+                }
+            }
+
+        }
+
+        return wb;
+    }
+
+    private HSSFWorkbook toCreatDisWasteForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", Integer.valueOf(reportEntity.getGbRepIds()));
+        map.put("waste", 0);
+        System.out.println("mapamapapapExcelleleel" + map);
+        List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsDailyService.queryDepDailyGoodsFatherTypeByParams(map);
+
+        if (distributerFatherGoodsEntities.size() > 0) {
+            for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
+                for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("废弃成本");
+                    row1.createCell(6).setCellValue("销售成本");
+                    row1.createCell(7).setCellValue("损耗成本");
+                    row1.createCell(8).setCellValue("总成本");
+                    row1.createCell(9).setCellValue("零售总金额");
+                    row1.createCell(10).setCellValue("利润总额");
+
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+//                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+//                            disGoodsMap.put("loss", 0);
+                        Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                        Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        double total = aDoubleRP + aDoubleRL + aDoubleRW;
+
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                    }
+//                    }
+
+                }
+            }
+
+        }
+
+        return wb;
+    }
+
+    private HSSFWorkbook toCreatDisLossForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", Integer.valueOf(reportEntity.getGbRepIds()));
+        map.put("loss", 0);
+        System.out.println("mapamapapapExcelleleel" + map);
+        List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsDailyService.queryDepDailyGoodsFatherTypeByParams(map);
+
+        if (distributerFatherGoodsEntities.size() > 0) {
+            for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
+                for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("损耗成本");
+                    row1.createCell(6).setCellValue("销售成本");
+                    row1.createCell(7).setCellValue("废弃成本");
+                    row1.createCell(8).setCellValue("总成本");
+                    row1.createCell(9).setCellValue("零售总金额");
+                    row1.createCell(10).setCellValue("利润总额");
+
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+//                        disGoodsMap.put("depFatherId", );
+//                            disGoodsMap.put("loss", 0);
+                        Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                        Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        double total = aDoubleRP + aDoubleRL + aDoubleRW;
+
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                    }
+//                    }
 
                 }
             }
@@ -3617,59 +4224,59 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("损耗成本");
-                        row1.createCell(6).setCellValue("销售成本");
-                        row1.createCell(7).setCellValue("废弃成本");
-                        row1.createCell(8).setCellValue("总成本");
-                        row1.createCell(9).setCellValue("零售总金额");
-                        row1.createCell(10).setCellValue("利润总额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("损耗成本");
+                    row1.createCell(6).setCellValue("销售成本");
+                    row1.createCell(7).setCellValue("废弃成本");
+                    row1.createCell(8).setCellValue("总成本");
+                    row1.createCell(9).setCellValue("零售总金额");
+                    row1.createCell(10).setCellValue("利润总额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 //                            disGoodsMap.put("loss", 0);
-                            Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
-                            Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
-                            Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
-                            Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
-                            Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
-                            double total = aDoubleRP + aDoubleRL + aDoubleRW;
+                        Double aDoubleRL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        Double aDoubleRP = gbDepGoodsDailyService.queryDepGoodsDailyProduceSubtotal(disGoodsMap);
+                        Double aDoubleRW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        Double aDoublePro = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        Double aDoubleRS = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        double total = aDoubleRP + aDoubleRL + aDoubleRW;
 
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleRL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoublePro).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -3696,53 +4303,53 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("成本总量");
-                        row1.createCell(6).setCellValue("成本总金额");
-                        row1.createCell(7).setCellValue("库存总量");
-                        row1.createCell(8).setCellValue("库存总金额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("成本总量");
+                    row1.createCell(6).setCellValue("成本总金额");
+                    row1.createCell(7).setCellValue("库存总量");
+                    row1.createCell(8).setCellValue("库存总金额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("nxDisId", nxDistributerEntity.getNxDistributerId());
-                            Double aDoubleR = gbDepGoodsStockService.queryDepStockWeightTotal(disGoodsMap);
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsSubtotal(disGoodsMap);
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("nxDisId", nxDistributerEntity.getNxDistributerId());
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockWeightTotal(disGoodsMap);
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsSubtotal(disGoodsMap);
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
 
-                            Double aDoubleS = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleST = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleS = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleST = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -3760,6 +4367,7 @@ public class GbReportController {
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
         map.put("fromDepId", departmentEntity.getGbDepartmentId());
+        map.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
 //        map.put("stockId", -1);
         System.out.println("purrururmap" + map);
         List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
@@ -3769,57 +4377,58 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("采购总量");
-                        row1.createCell(6).setCellValue("采购总金额");
-                        row1.createCell(7).setCellValue("平均单价");
-                        row1.createCell(8).setCellValue("最高单价");
-                        row1.createCell(9).setCellValue("最低单价");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("采购总量");
+                    row1.createCell(6).setCellValue("采购总金额");
+                    row1.createCell(7).setCellValue("平均单价");
+                    row1.createCell(8).setCellValue("最高单价");
+                    row1.createCell(9).setCellValue("最低单价");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("fromDepId", departmentEntity.getGbDepartmentId());
-                            Integer integer = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
-                            if (integer > 0) {
-                                goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                                goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                                goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                                goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                                goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                                goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                                Double aDoubleR = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
-                                goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                                Double aDoubleRT = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
-                                goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                                double v = aDoubleRT / aDoubleR;
-                                goodsRow.createCell(7).setCellValue(new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("fromDepId", departmentEntity.getGbDepartmentId());
+                        disGoodsMap.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
+                        Integer integer = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
+                        if (integer > 0) {
+                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                            Double aDoubleR = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                            Double aDoubleRT = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                            double v = aDoubleRT / aDoubleR;
+                            goodsRow.createCell(7).setCellValue(new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                                String s = gbDistributerPurchaseGoodsService.queryPurGoodsMaxPrice(disGoodsMap);
-                                goodsRow.createCell(8).setCellValue(new BigDecimal(s).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                                String aDoubleST = gbDistributerPurchaseGoodsService.queryPurGoodsMinPrice(disGoodsMap);
-                                goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            }
+                            String s = gbDistributerPurchaseGoodsService.queryPurGoodsMaxPrice(disGoodsMap);
+                            goodsRow.createCell(8).setCellValue(new BigDecimal(s).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                            String aDoubleST = gbDistributerPurchaseGoodsService.queryPurGoodsMinPrice(disGoodsMap);
+                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
                         }
+
+//                        }
                     }
 
                 }
@@ -3837,6 +4446,7 @@ public class GbReportController {
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
         map.put("fromDepId", departmentEntity.getGbDepartmentId());
+        map.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
         map.put("notEqualStockId", -1);
         List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
 
@@ -3845,57 +4455,57 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("采购总量");
-                        row1.createCell(6).setCellValue("采购总金额");
-                        row1.createCell(7).setCellValue("平均单价");
-                        row1.createCell(8).setCellValue("最高单价");
-                        row1.createCell(9).setCellValue("最低单价");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("采购总量");
+                    row1.createCell(6).setCellValue("采购总金额");
+                    row1.createCell(7).setCellValue("平均单价");
+                    row1.createCell(8).setCellValue("最高单价");
+                    row1.createCell(9).setCellValue("最低单价");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
-                            Integer integer = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
-                            if (integer > 0) {
-                                goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                                goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                                goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                                goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                                goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                                goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                                Double aDoubleR = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
-                                goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                                Double aDoubleRT = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
-                                goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                                double v = aDoubleRT / aDoubleR;
-                                goodsRow.createCell(7).setCellValue(new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        Integer integer = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
+                        if (integer > 0) {
+                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                            Double aDoubleR = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                            Double aDoubleRT = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                            double v = aDoubleRT / aDoubleR;
+                            goodsRow.createCell(7).setCellValue(new BigDecimal(v).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                                String s = gbDistributerPurchaseGoodsService.queryPurGoodsMaxPrice(disGoodsMap);
-                                goodsRow.createCell(8).setCellValue(new BigDecimal(s).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                                String aDoubleST = gbDistributerPurchaseGoodsService.queryPurGoodsMinPrice(disGoodsMap);
-                                goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            }
+                            String s = gbDistributerPurchaseGoodsService.queryPurGoodsMaxPrice(disGoodsMap);
+                            goodsRow.createCell(8).setCellValue(new BigDecimal(s).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                            String aDoubleST = gbDistributerPurchaseGoodsService.queryPurGoodsMinPrice(disGoodsMap);
+                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
                         }
+
+//                        }
                     }
 
                 }
@@ -3906,6 +4516,539 @@ public class GbReportController {
         return wb;
     }
 
+
+    //
+
+    private HSSFWorkbook toCreatDepPurNxDistributerForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("nxDisId", reportEntity.getGbRepIds());
+        System.out.println("addfkajfdasf" + map);
+        List<NxDistributerEntity> nxDistributerEntities = gbDepartmentBillService.queryNxDistributer(map);
+
+        if (nxDistributerEntities.size() > 0) {
+            for (NxDistributerEntity nxDistributerEntity : nxDistributerEntities) {
+                HSSFSheet sheet = wb.createSheet(nxDistributerEntity.getNxDistributerName());
+                //设置表头
+                HSSFRow row1 = sheet.createRow(0);
+                row1.createCell(0).setCellValue("序号");
+                row1.createCell(1).setCellValue("商品名称");
+                row1.createCell(2).setCellValue("规格");
+                row1.createCell(3).setCellValue("品牌");
+                row1.createCell(4).setCellValue("详细");
+                row1.createCell(5).setCellValue("京京总额");
+                row1.createCell(6).setCellValue("京京数量");
+                row1.createCell(7).setCellValue("京京单价");
+                row1.createCell(8).setCellValue("京京退货总额");
+                row1.createCell(9).setCellValue("京京退货数量");
+                row1.createCell(10).setCellValue("京京退货单价");
+                map.put("nxDisId", nxDistributerEntity.getNxDistributerId());
+
+                System.out.println("pruurururururuururu" + map);
+                TreeSet<GbDistributerGoodsEntity> goodsEntities = gbDistributerPurchaseGoodsService.queryDisTreeGoods(map);
+                System.out.println("trrrrrr" + goodsEntities);
+                //设置表体
+                HSSFRow goodsRow = null;
+                for (GbDistributerGoodsEntity ckGoodsEntity : goodsEntities) {
+                    goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                    goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                    goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                    goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                    goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                    goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    goodsRow.createCell(5).setCellValue("京京总额");
+                    goodsRow.createCell(6).setCellValue("京京数量");
+                    goodsRow.createCell(7).setCellValue("京京单价");
+                    goodsRow.createCell(8).setCellValue("京京退货总额");
+                    goodsRow.createCell(9).setCellValue("京京退货数量");
+                    goodsRow.createCell(10).setCellValue("京京退货单价");
+                    //5 totalWeight
+                    Map<String, Object> disGoodsMap = new HashMap<>();
+                    disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                    disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                    disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                    disGoodsMap.put("dayuStatus", 1);
+                    disGoodsMap.put("buySubtotal", 0);
+                    Double aDoubleSupplier = 0.0;
+                    Double aDoubleSupplierTui = 0.0;
+                    Double aDoubleSupplieWeight = 0.0;
+                    Double aDoubleSupplieWeightTui = 0.0;
+                    Double aDoubleSuppliePerPrice = 0.0;
+                    Double aDoubleSuppliePerPriceTui = 0.0;
+                    System.out.println("mdidiidididiididid" + disGoodsMap);
+                    Integer integerProduce = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                    if (integerProduce > 0) {
+//                        disGoodsMap.put("purchaseType", 21);
+                        Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                        if (integer2 > 0) {
+                            aDoubleSupplier = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            aDoubleSupplieWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            aDoubleSuppliePerPrice = aDoubleSupplier / aDoubleSupplieWeight;
+                        }
+
+                        disGoodsMap.put("buySubtotal", null);
+                        disGoodsMap.put("xiaoyuBuySubtotal", 0);
+                        System.out.println("xiaoyususuussu" + disGoodsMap);
+                        Integer integer2Tui = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                        if (integer2Tui > 0) {
+                            aDoubleSupplierTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            double absoluteValue = Math.abs(aDoubleSupplierTui); // 取绝对值
+                            aDoubleSupplieWeightTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            aDoubleSuppliePerPriceTui = absoluteValue / aDoubleSupplieWeightTui;
+                        }
+                    }
+                    goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleSupplier).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleSupplieWeight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleSuppliePerPrice).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleSupplierTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleSupplieWeightTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleSuppliePerPriceTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                }
+
+            }
+        }
+
+        return wb;
+    }
+
+
+    private HSSFWorkbook toCreatDepPurSupplierForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", reportEntity.getGbRepIds());
+        System.out.println("addfkajfdasf" + map);
+        List<NxJrdhSupplierEntity> supplierEntities = gbDistributerPurchaseBatchService.querySupplierList(map);
+
+        if (supplierEntities.size() > 0) {
+            for (NxJrdhSupplierEntity supplierEntity : supplierEntities) {
+                    HSSFSheet sheet = wb.createSheet(supplierEntity.getNxJrdhsSupplierName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("订货总额");
+                    row1.createCell(6).setCellValue("订货数量");
+                    row1.createCell(7).setCellValue("订货单价");
+                row1.createCell(8).setCellValue("退货总额");
+                row1.createCell(9).setCellValue("退货数量");
+                row1.createCell(10).setCellValue("退货单价");
+                    map.put("supplierId", supplierEntity.getNxJrdhSupplierId());
+
+                    System.out.println("pruurururururuururu" + map);
+                    TreeSet<GbDistributerGoodsEntity> goodsEntities = gbDistributerPurchaseGoodsService.queryDisTreeGoods(map);
+                    System.out.println("trrrrrr" + goodsEntities);
+                //设置表体
+                HSSFRow goodsRow = null;
+                for (GbDistributerGoodsEntity ckGoodsEntity : goodsEntities) {
+                    goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                    goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                    goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                    goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                    goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                    goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    goodsRow.createCell(5).setCellValue("订货总额");
+                    goodsRow.createCell(6).setCellValue("订货数量");
+                    goodsRow.createCell(7).setCellValue("订货单价");
+                    goodsRow.createCell(8).setCellValue("退货总额");
+                    goodsRow.createCell(9).setCellValue("退货数量");
+                    goodsRow.createCell(10).setCellValue("退货单价");
+                    //5 totalWeight
+                    Map<String, Object> disGoodsMap = new HashMap<>();
+                    disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                    disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                    disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                    disGoodsMap.put("dayuStatus", 1);
+                    disGoodsMap.put("buySubtotal", 0);
+                    Double aDoubleSupplier = 0.0;
+                    Double aDoubleSupplierTui = 0.0;
+                    Double aDoubleSupplieWeight = 0.0;
+                    Double aDoubleSupplieWeightTui = 0.0;
+                    Double aDoubleSuppliePerPrice = 0.0;
+                    Double aDoubleSuppliePerPriceTui = 0.0;
+                    System.out.println("mdidiidididiididid" + disGoodsMap);
+                    Integer integerProduce = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                    if (integerProduce > 0) {
+                        disGoodsMap.put("purchaseType", 21);
+                        Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                        if (integer2 > 0) {
+                            aDoubleSupplier = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            aDoubleSupplieWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            aDoubleSuppliePerPrice = aDoubleSupplier / aDoubleSupplieWeight;
+                        }
+
+                        disGoodsMap.put("buySubtotal", null);
+                        disGoodsMap.put("xiaoyuBuySubtotal", 0);
+                        System.out.println("xiaoyususuussu" + disGoodsMap);
+                        Integer integer2Tui = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                        if (integer2Tui > 0) {
+                            aDoubleSupplierTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            double absoluteValue = Math.abs(aDoubleSupplierTui); // 取绝对值
+                            aDoubleSupplieWeightTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            aDoubleSuppliePerPriceTui = absoluteValue / aDoubleSupplieWeightTui;
+                        }
+                    }
+                    goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleSupplier).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleSupplieWeight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleSuppliePerPrice).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleSupplierTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleSupplieWeightTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleSuppliePerPriceTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                }
+
+            }
+        }
+
+        return wb;
+    }
+    private HSSFWorkbook toCreatDepPurGoodsForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", reportEntity.getGbRepIds());
+//        map.put("buySubtotal", 0);
+        System.out.println("addfkajfdasf" + map);
+        List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDistributerPurchaseGoodsService.queryGreatGrandPurGoodsDetail(map);
+
+        if (distributerFatherGoodsEntities.size() > 0) {
+            for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
+                for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("总金额");
+                    row1.createCell(6).setCellValue("总数量");
+                    row1.createCell(7).setCellValue("总单价");
+                    row1.createCell(8).setCellValue("京京总额");
+                    row1.createCell(9).setCellValue("京京数量");
+                    row1.createCell(10).setCellValue("京京单价");
+                    row1.createCell(11).setCellValue("供货商总额");
+                    row1.createCell(12).setCellValue("供货商数量");
+                    row1.createCell(13).setCellValue("供货商单价");
+                    row1.createCell(14).setCellValue("自采总额");
+                    row1.createCell(15).setCellValue("自采数量");
+                    row1.createCell(16).setCellValue("自采单价");
+                    row1.createCell(17).setCellValue("京京退货总额");
+                    row1.createCell(18).setCellValue("京京退货数量");
+                    row1.createCell(19).setCellValue("京京退货单价");
+                    row1.createCell(20).setCellValue("供货商退货总额");
+                    row1.createCell(21).setCellValue("供货商退货数量");
+                    row1.createCell(22).setCellValue("供货商退货单价");
+                    row1.createCell(23).setCellValue("自采退货总额");
+                    row1.createCell(24).setCellValue("自采退货数量");
+                    row1.createCell(25).setCellValue("自采退货单价");
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    System.out.println("pruurururururuururu" + map);
+                    TreeSet<GbDistributerGoodsEntity> goodsEntities = gbDistributerPurchaseGoodsService.queryDisTreeGoods(map);
+                    System.out.println("trrrrrr" + goodsEntities);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (GbDistributerGoodsEntity ckGoodsEntity : goodsEntities) {
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        goodsRow.createCell(5).setCellValue("总金额");
+                        goodsRow.createCell(6).setCellValue("总数量");
+                        goodsRow.createCell(7).setCellValue("总单价");
+
+                        goodsRow.createCell(8).setCellValue("京京总额");
+                        goodsRow.createCell(9).setCellValue("京京数量");
+                        goodsRow.createCell(10).setCellValue("京京单价");
+
+                        goodsRow.createCell(11).setCellValue("供货商总额");
+                        goodsRow.createCell(12).setCellValue("供货商数量");
+                        goodsRow.createCell(13).setCellValue("供货商单价");
+                        goodsRow.createCell(14).setCellValue("自采总额");
+                        goodsRow.createCell(15).setCellValue("自采数量");
+                        goodsRow.createCell(16).setCellValue("自采单价");
+
+                        goodsRow.createCell(17).setCellValue("京京退货总额");
+                        goodsRow.createCell(18).setCellValue("京京退货数量");
+                        goodsRow.createCell(19).setCellValue("京京退货单价");
+
+                        goodsRow.createCell(20).setCellValue("供货商退货总额");
+                        goodsRow.createCell(21).setCellValue("供货商退货数量");
+                        goodsRow.createCell(22).setCellValue("供货商退货单价");
+
+                        goodsRow.createCell(23).setCellValue("自采退货总额");
+                        goodsRow.createCell(24).setCellValue("自采退货数量");
+                        goodsRow.createCell(25).setCellValue("自采退货单价");
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("dayuStatus", 1);
+                        disGoodsMap.put("buySubtotal", 0);
+                        Double aDoubleTotal = 0.0;
+                        Double aDoubleWeight = 0.0;
+                        Double aDoublePerPrice = 0.0;
+                        Double aDoubleSelf = 0.0;
+                        Double aDoubleSelfTui = 0.0;
+                        Double aDoubleSelfWeight = 0.0;
+                        Double aDoubleSelfWeightTui = 0.0;
+                        Double aDoubleSelfPerPrice = 0.0;
+                        Double aDoubleSelfPerPriceTui = 0.0;
+                        Double aDoubleApp = 0.0;
+                        Double aDoubleSupplier = 0.0;
+                        Double aDoubleSupplierTui = 0.0;
+                        Double aDoubleAppTui = 0.0;
+                        Double aDoubleAppWeight = 0.0;
+                        Double aDoubleSupplieWeight = 0.0;
+                        Double aDoubleAppWeightTui = 0.0;
+                        Double aDoubleSupplieWeightTui = 0.0;
+                        Double aDoubleAppPerPrice = 0.0;
+                        Double aDoubleSuppliePerPrice = 0.0;
+                        Double aDoubleAppPerPriceTui = 0.0;
+                        Double aDoubleSuppliePerPriceTui = 0.0;
+                        System.out.println("mdidiidididiididid" + disGoodsMap);
+                        Integer integerProduce = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                        if (integerProduce > 0) {
+                            aDoubleTotal = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                            aDoubleWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                            aDoublePerPrice = aDoubleTotal / aDoubleWeight;
+
+
+                            disGoodsMap.put("purchaseType", 5);
+                            Integer integer1 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                            if (integer1 > 0) {
+                                aDoubleApp = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                                aDoubleAppWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                                aDoubleAppPerPrice = aDoubleApp / aDoubleAppWeight;
+                            }
+
+                            disGoodsMap.put("purchaseType", 2);
+                            Integer integer = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                            if (integer > 0) {
+                                aDoubleSelf = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                                aDoubleSelfWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                                aDoubleSelfPerPrice = aDoubleSelf / aDoubleSelfWeight;
+                            }
+
+                            disGoodsMap.put("purchaseType", 21);
+                            Integer integer2 = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                            if (integer2 > 0) {
+                                aDoubleSupplier = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                                aDoubleSupplieWeight = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                                aDoubleSuppliePerPrice = aDoubleSupplier / aDoubleSupplieWeight;
+                            }
+
+
+
+                            disGoodsMap.put("buySubtotal", null);
+                            disGoodsMap.put("purchaseType", 2);
+                            disGoodsMap.put("xiaoyuBuySubtotal", 0);
+                            System.out.println("tututiit" +disGoodsMap);
+                            Integer integerTui = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                            if (integerTui > 0) {
+                                aDoubleSelfTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                                double absoluteValue = Math.abs(aDoubleSelfTui); // 取绝对值
+
+                                aDoubleSelfWeightTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                                aDoubleSelfPerPriceTui = absoluteValue / aDoubleSelfWeightTui;
+                            }
+
+                            disGoodsMap.put("purchaseType", 21);
+                            System.out.println("tututiit" +disGoodsMap);
+                            Integer integerSupTui = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                            if (integerSupTui > 0) {
+                                aDoubleSupplierTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                                double absoluteValue = Math.abs(aDoubleSupplierTui); // 取绝对值
+                                aDoubleSupplieWeightTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                                aDoubleSuppliePerPriceTui = absoluteValue / aDoubleSupplieWeightTui;
+                            }
+
+                            disGoodsMap.put("purchaseType", 5);
+                            System.out.println("tututiit" +disGoodsMap);
+                            Integer integerAppTui = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMap);
+                            if (integerAppTui > 0) {
+                                aDoubleAppTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMap);
+                                double absoluteValue = Math.abs(aDoubleSupplierTui); // 取绝对值
+                                aDoubleAppWeightTui = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMap);
+                                aDoubleAppPerPriceTui = absoluteValue / aDoubleSupplieWeightTui;
+                            }
+
+                        }
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleWeight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoublePerPrice).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleApp).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleAppWeight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleAppPerPrice).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleSupplier).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(12).setCellValue(new BigDecimal(aDoubleSupplieWeight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleSuppliePerPrice).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        goodsRow.createCell(14).setCellValue(new BigDecimal(aDoubleSelf).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(15).setCellValue(new BigDecimal(aDoubleSelfWeight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(16).setCellValue(new BigDecimal(aDoubleSelfPerPrice).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        goodsRow.createCell(17).setCellValue(new BigDecimal(aDoubleAppTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(18).setCellValue(new BigDecimal(aDoubleAppWeightTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(19).setCellValue(new BigDecimal(aDoubleAppPerPriceTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        goodsRow.createCell(20).setCellValue(new BigDecimal(aDoubleSupplierTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(21).setCellValue(new BigDecimal(aDoubleSupplieWeightTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(22).setCellValue(new BigDecimal(aDoubleSuppliePerPriceTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        goodsRow.createCell(23).setCellValue(new BigDecimal(aDoubleSelfTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(24).setCellValue(new BigDecimal(aDoubleSelfWeightTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(25).setCellValue(new BigDecimal(aDoubleSelfPerPriceTui).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                    }
+                }
+            }
+
+        }
+
+        return wb;
+    }
+
+
+
+    private HSSFWorkbook toCreatDisCostForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", Integer.valueOf(reportEntity.getGbRepIds()));
+        List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
+
+        if (distributerFatherGoodsEntities.size() > 0) {
+            for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
+                for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("成本数量");
+                    row1.createCell(6).setCellValue("销售数量");
+                    row1.createCell(7).setCellValue("损耗数量");
+                    row1.createCell(8).setCellValue("废弃数量");
+                    row1.createCell(9).setCellValue("退货数量");
+                    row1.createCell(10).setCellValue("总成本");
+                    row1.createCell(11).setCellValue("销售成本");
+                    row1.createCell(12).setCellValue("损耗成本");
+                    row1.createCell(13).setCellValue("废弃成本");
+                    row1.createCell(14).setCellValue("退货成本");
+                    row1.createCell(15).setCellValue("库存数量");
+                    row1.createCell(16).setCellValue("库存成本");
+
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+//                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+
+                        Double aDoubleRT = 0.0;
+                        Double aDoubleRTV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                        Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerProduce > 0) {
+                            aDoubleRT = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(disGoodsMap);
+                            aDoubleRTV = gbDepartmentStockReduceService.queryReduceProduceTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleRTV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleS = 0.0;
+                        Double aDoubleSV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                        Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerLoss > 0) {
+                            aDoubleS = gbDepartmentStockReduceService.queryReduceLossWeightTotal(disGoodsMap);
+                            aDoubleSV = gbDepartmentStockReduceService.queryReduceLossTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(12).setCellValue(new BigDecimal(aDoubleSV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleST = 0.0;
+                        Double aDoubleSTV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                        Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerWaste > 0) {
+                            aDoubleST = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(disGoodsMap);
+                            aDoubleSTV = gbDepartmentStockReduceService.queryReduceWasteTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleSTV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleRTW = 0.0;
+                        Double aDoubleRTWV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+                        Integer integerReturn = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerReturn > 0) {
+                            aDoubleRTW = gbDepartmentStockReduceService.queryReduceReturnWeightTotal(disGoodsMap);
+                            aDoubleRTWV = gbDepartmentStockReduceService.queryReduceReturnTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRTW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(14).setCellValue(new BigDecimal(aDoubleRTWV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        double aDoubleRV = aDoubleRTV + aDoubleSV + aDoubleSTV;
+                        double aDoubleR = aDoubleRT + aDoubleS + aDoubleST;
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleRV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleRRest = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(15).setCellValue(new BigDecimal(aDoubleRRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleRRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(16).setCellValue(new BigDecimal(aDoubleRRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                    }
+//                    }
+
+                }
+            }
+
+        }
+
+        return wb;
+    }
     private HSSFWorkbook toCreatDepCostForm(GbReportEntity reportEntity) {
         HSSFWorkbook wb = new HSSFWorkbook();
         GbDepartmentEntity departmentEntity = gbDepartmentService.queryDepInfoGb(Integer.valueOf(reportEntity.getGbRepIds()));
@@ -3920,105 +5063,105 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("成本数量");
-                        row1.createCell(6).setCellValue("销售数量");
-                        row1.createCell(7).setCellValue("损耗数量");
-                        row1.createCell(8).setCellValue("废弃数量");
-                        row1.createCell(9).setCellValue("退货数量");
-                        row1.createCell(10).setCellValue("总成本");
-                        row1.createCell(11).setCellValue("销售成本");
-                        row1.createCell(12).setCellValue("损耗成本");
-                        row1.createCell(13).setCellValue("废弃成本");
-                        row1.createCell(14).setCellValue("退货成本");
-                        row1.createCell(15).setCellValue("库存数量");
-                        row1.createCell(16).setCellValue("库存成本");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("成本数量");
+                    row1.createCell(6).setCellValue("销售数量");
+                    row1.createCell(7).setCellValue("损耗数量");
+                    row1.createCell(8).setCellValue("废弃数量");
+                    row1.createCell(9).setCellValue("退货数量");
+                    row1.createCell(10).setCellValue("总成本");
+                    row1.createCell(11).setCellValue("销售成本");
+                    row1.createCell(12).setCellValue("损耗成本");
+                    row1.createCell(13).setCellValue("废弃成本");
+                    row1.createCell(14).setCellValue("退货成本");
+                    row1.createCell(15).setCellValue("库存数量");
+                    row1.createCell(16).setCellValue("库存成本");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 
-                            Double aDoubleRT = 0.0;
-                            Double aDoubleRTV = 0.0;
-                            disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-                            Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
-                            if (integerProduce > 0) {
-                                aDoubleRT = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(disGoodsMap);
-                                aDoubleRTV = gbDepartmentStockReduceService.queryReduceProduceTotal(disGoodsMap);
-                            }
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleRTV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleS = 0.0;
-                            Double aDoubleSV = 0.0;
-                            disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-                            Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
-                            if (integerLoss > 0) {
-                                aDoubleS = gbDepartmentStockReduceService.queryReduceLossWeightTotal(disGoodsMap);
-                                aDoubleSV = gbDepartmentStockReduceService.queryReduceLossTotal(disGoodsMap);
-                            }
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(12).setCellValue(new BigDecimal(aDoubleSV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleST = 0.0;
-                            Double aDoubleSTV = 0.0;
-                            disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-                            Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
-                            if (integerWaste > 0) {
-                                aDoubleST = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(disGoodsMap);
-                                aDoubleSTV = gbDepartmentStockReduceService.queryReduceWasteTotal(disGoodsMap);
-                            }
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleSTV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleRTW = 0.0;
-                            Double aDoubleRTWV = 0.0;
-                            disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-                            Integer integerReturn = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
-                            if (integerReturn > 0) {
-                                aDoubleRTW = gbDepartmentStockReduceService.queryReduceReturnWeightTotal(disGoodsMap);
-                                aDoubleRTWV = gbDepartmentStockReduceService.queryReduceReturnTotal(disGoodsMap);
-                            }
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRTW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(14).setCellValue(new BigDecimal(aDoubleRTWV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            double aDoubleRV = aDoubleRTV + aDoubleSV + aDoubleSTV;
-                            double aDoubleR = aDoubleRT + aDoubleS + aDoubleST;
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleRV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleRRest = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(15).setCellValue(new BigDecimal(aDoubleRRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleRRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
-                            goodsRow.createCell(16).setCellValue(new BigDecimal(aDoubleRRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
+                        Double aDoubleRT = 0.0;
+                        Double aDoubleRTV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                        Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerProduce > 0) {
+                            aDoubleRT = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(disGoodsMap);
+                            aDoubleRTV = gbDepartmentStockReduceService.queryReduceProduceTotal(disGoodsMap);
                         }
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleRTV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleS = 0.0;
+                        Double aDoubleSV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                        Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerLoss > 0) {
+                            aDoubleS = gbDepartmentStockReduceService.queryReduceLossWeightTotal(disGoodsMap);
+                            aDoubleSV = gbDepartmentStockReduceService.queryReduceLossTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(12).setCellValue(new BigDecimal(aDoubleSV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleST = 0.0;
+                        Double aDoubleSTV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                        Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerWaste > 0) {
+                            aDoubleST = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(disGoodsMap);
+                            aDoubleSTV = gbDepartmentStockReduceService.queryReduceWasteTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleST).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleSTV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleRTW = 0.0;
+                        Double aDoubleRTWV = 0.0;
+                        disGoodsMap.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+                        Integer integerReturn = gbDepartmentStockReduceService.queryReduceTypeCount(disGoodsMap);
+                        if (integerReturn > 0) {
+                            aDoubleRTW = gbDepartmentStockReduceService.queryReduceReturnWeightTotal(disGoodsMap);
+                            aDoubleRTWV = gbDepartmentStockReduceService.queryReduceReturnTotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRTW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(14).setCellValue(new BigDecimal(aDoubleRTWV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        double aDoubleRV = aDoubleRTV + aDoubleSV + aDoubleSTV;
+                        double aDoubleR = aDoubleRT + aDoubleS + aDoubleST;
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleRV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleRRest = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(15).setCellValue(new BigDecimal(aDoubleRRest).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleRRestV = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(16).setCellValue(new BigDecimal(aDoubleRRestV).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
                     }
+//                    }
 
                 }
             }
@@ -4027,6 +5170,72 @@ public class GbReportController {
 
         return wb;
     }
+
+    private HSSFWorkbook toCreatDisStockNowForm(GbReportEntity reportEntity) {
+        HSSFWorkbook wb = new HSSFWorkbook();
+//        GbDepartmentEntity departmentEntity = gbDepartmentService.queryDepInfoGb(Integer.valueOf(reportEntity.getGbRepIds()));
+        Map<String, Object> map = new HashMap<>();
+        map.put("startDate", reportEntity.getGbRepStartDate());
+        map.put("stopDate", reportEntity.getGbRepStopDate());
+        map.put("disId", Integer.valueOf(reportEntity.getGbRepIds()));
+        map.put("restWeight", 0);
+        System.out.println("mapamapapapExcelleleel" + map);
+        List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
+
+        if (distributerFatherGoodsEntities.size() > 0) {
+            for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
+                for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
+                    HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
+                    //设置表头
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("库存总量");
+                    row1.createCell(6).setCellValue("库存总金额");
+
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+//                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        disGoodsMap.put("restWeight", 0);
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                    }
+//                    }
+
+                }
+            }
+
+        }
+
+        return wb;
+    }
+
 
     private HSSFWorkbook toCreatDepStockNowForm(GbReportEntity reportEntity) {
         HSSFWorkbook wb = new HSSFWorkbook();
@@ -4044,46 +5253,46 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("库存总量");
-                        row1.createCell(6).setCellValue("库存总金额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("库存总量");
+                    row1.createCell(6).setCellValue("库存总金额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
-                            disGoodsMap.put("restWeight", 0);
-                            Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        disGoodsMap.put("restWeight", 0);
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -4110,47 +5319,47 @@ public class GbReportController {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
 
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("库存总量");
-                        row1.createCell(6).setCellValue("库存总金额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("库存总量");
+                    row1.createCell(6).setCellValue("库存总金额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        System.out.println("sisiisissizesizes========" + goodsEntities.size());
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    System.out.println("sisiisissizesizes========" + goodsEntities.size());
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
 
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 
-                            Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleRT = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleRT).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -4217,84 +5426,84 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("净利润");
-                        row1.createCell(6).setCellValue("净利润百分比");
-                        row1.createCell(7).setCellValue("销售利润");
-                        row1.createCell(8).setCellValue("销售利润百分比");
-                        row1.createCell(9).setCellValue("损耗金额");
-                        row1.createCell(10).setCellValue("损耗百分比");
-                        row1.createCell(11).setCellValue("废弃金额");
-                        row1.createCell(12).setCellValue("废弃百分比");
-                        row1.createCell(13).setCellValue("库存金额");
-                        row1.createCell(14).setCellValue("总成本");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+//                        System.out.println("roororor---------------------" + father.getGbDfgFatherGoodsName());
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("净利润");
+                    row1.createCell(6).setCellValue("净利润百分比");
+                    row1.createCell(7).setCellValue("销售利润");
+                    row1.createCell(8).setCellValue("销售利润百分比");
+                    row1.createCell(9).setCellValue("损耗金额");
+                    row1.createCell(10).setCellValue("损耗百分比");
+                    row1.createCell(11).setCellValue("废弃金额");
+                    row1.createCell(12).setCellValue("废弃百分比");
+                    row1.createCell(13).setCellValue("库存金额");
+                    row1.createCell(14).setCellValue("总成本");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 
-                            //00Cost
-                            Double aDouble = gbDepGoodsDailyService.queryDepGoodsDailySubtotal(disGoodsMap); //送货金额
-                            double aDoubleRe = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap); //退货金额
-                            BigDecimal costTotal = new BigDecimal(aDouble).subtract(new BigDecimal(aDoubleRe));
+                        //00Cost
+                        Double aDouble = gbDepGoodsDailyService.queryDepGoodsDailySubtotal(disGoodsMap); //送货金额
+                        double aDoubleRe = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap); //退货金额
+                        BigDecimal costTotal = new BigDecimal(aDouble).subtract(new BigDecimal(aDoubleRe));
 
-                            //6 净利润
-                            Double aDoubleProfit = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleProfit).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            BigDecimal divideP = new BigDecimal(aDoubleProfit).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-                            goodsRow.createCell(6).setCellValue(divideP.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
+                        //6 净利润
+                        Double aDoubleProfit = gbDepGoodsDailyService.queryDepGoodsDailySalesProfitSubtotal(disGoodsMap);
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleProfit).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        BigDecimal divideP = new BigDecimal(aDoubleProfit).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                        goodsRow.createCell(6).setCellValue(divideP.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
 
-                            //7 销售利润
-                            Double aDoubleP = gbDepGoodsDailyService.queryDepGoodsDailyProfitSubtotal(disGoodsMap);
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            BigDecimal divideS = new BigDecimal(aDoubleProfit).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-                            goodsRow.createCell(8).setCellValue(divideS.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
+                        //7 销售利润
+                        Double aDoubleP = gbDepGoodsDailyService.queryDepGoodsDailyProfitSubtotal(disGoodsMap);
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        BigDecimal divideS = new BigDecimal(aDoubleProfit).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                        goodsRow.createCell(8).setCellValue(divideS.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
 
-                            //损耗金额
-                            Double aDoubleL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            BigDecimal divideL = new BigDecimal(aDoubleL).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-                            goodsRow.createCell(10).setCellValue(divideL.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
+                        //损耗金额
+                        Double aDoubleL = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        BigDecimal divideL = new BigDecimal(aDoubleL).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                        goodsRow.createCell(10).setCellValue(divideL.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
 
-                            //废弃金额
-                            Double aDoubleW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
-                            goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            BigDecimal divideW = new BigDecimal(aDoubleW).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-                            goodsRow.createCell(12).setCellValue(divideW.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
+                        //废弃金额
+                        Double aDoubleW = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        BigDecimal divideW = new BigDecimal(aDoubleW).divide(costTotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                        goodsRow.createCell(12).setCellValue(divideW.setScale(2, BigDecimal.ROUND_HALF_UP).toString() + "%");
 
-                            //库存金额
-                            double aDoubleR = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
-                            goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        //库存金额
+                        double aDoubleR = gbDepGoodsStockService.queryDepGoodsRestTotal(disGoodsMap);
+                        goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            //总成本
-                            goodsRow.createCell(14).setCellValue(costTotal.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        //总成本
+                        goodsRow.createCell(14).setCellValue(costTotal.setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -4320,75 +5529,75 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("总数量");
-                        row1.createCell(6).setCellValue("销售总量");
-                        row1.createCell(7).setCellValue("损耗总量");
-                        row1.createCell(8).setCellValue("废弃总量");
-                        row1.createCell(9).setCellValue("库存总量");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("总数量");
+                    row1.createCell(6).setCellValue("销售总量");
+                    row1.createCell(7).setCellValue("损耗总量");
+                    row1.createCell(8).setCellValue("废弃总量");
+                    row1.createCell(9).setCellValue("库存总量");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        System.out.println("sisiisissizesizes========" + goodsEntities.size());
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("nxDisId", gbRepIds);
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    System.out.println("sisiisissizesizes========" + goodsEntities.size());
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("nxDisId", gbRepIds);
 
-                            //6 totalWeight
-                            Double aDoubleP = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-                            Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-                            if (integerProduce > 0) {
-                                aDoubleP = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(map);
-                            }
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleL = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-                            Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-                            if (integerLoss > 0) {
-                                aDoubleL = gbDepartmentStockReduceService.queryReduceLossWeightTotal(map);
-                            }
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleW = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-                            Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-                            if (integerWaste > 0) {
-                                aDoubleW = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(map);
-                            }
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-
-                            Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            double aDouble = aDoubleP + aDoubleW + aDoubleL + aDoubleR;
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
+                        //6 totalWeight
+                        Double aDoubleP = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                        Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+                        if (integerProduce > 0) {
+                            aDoubleP = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(map);
                         }
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleL = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                        Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+                        if (integerLoss > 0) {
+                            aDoubleL = gbDepartmentStockReduceService.queryReduceLossWeightTotal(map);
+                        }
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleW = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                        Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+                        if (integerWaste > 0) {
+                            aDoubleW = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(map);
+                        }
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        double aDouble = aDoubleP + aDoubleW + aDoubleL + aDoubleR;
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
                     }
+//                    }
 
                 }
             }
@@ -4428,7 +5637,7 @@ public class GbReportController {
 //                        row1.createCell(8).setCellValue("废弃金额");
 //                        row1.createCell(9).setCellValue("库存金额");
 //
-//                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
+//                        map.put("disGoodsGrandId", father.getGbDistributerFatherGoodsId());
 //                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
 //                        System.out.println("sisiisissizesizes========" + goodsEntities.size());
 //                        //设置表体
@@ -4483,6 +5692,7 @@ public class GbReportController {
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
         map.put("fromDepId", departmentEntity.getGbDepartmentId());
+        map.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
         map.put("stockId", -1);
         List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
         if (distributerFatherGoodsEntities.size() > 0) {
@@ -4490,87 +5700,88 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("总数量");
-                        row1.createCell(6).setCellValue("销售总量");
-                        row1.createCell(7).setCellValue("损耗总量");
-                        row1.createCell(8).setCellValue("废弃总量");
-                        row1.createCell(9).setCellValue("退货总量");
-                        row1.createCell(10).setCellValue("库存总量");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("总数量");
+                    row1.createCell(6).setCellValue("销售总量");
+                    row1.createCell(7).setCellValue("损耗总量");
+                    row1.createCell(8).setCellValue("废弃总量");
+                    row1.createCell(9).setCellValue("退货总量");
+                    row1.createCell(10).setCellValue("库存总量");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        System.out.println("sisiisissizesizes========" + goodsEntities.size());
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("fromDepId", departmentEntity.getGbDepartmentId());
-                            disGoodsMap.put("stockId", -1);
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    System.out.println("sisiisissizesizes========" + goodsEntities.size());
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("fromDepId", departmentEntity.getGbDepartmentId());
+                        disGoodsMap.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
+                        disGoodsMap.put("stockId", -1);
 
-                            //6 totalWeight
-                            Double aDoubleP = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
-                            Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-                            if (integerProduce > 0) {
-                                aDoubleP = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(map);
-                            }
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleL = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
-                            Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-                            if (integerLoss > 0) {
-                                aDoubleL = gbDepartmentStockReduceService.queryReduceLossWeightTotal(map);
-                            }
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleW = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
-                            Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map);
-                            if (integerWaste > 0) {
-                                aDoubleW = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(map);
-                            }
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            Double aDoubleRET = 0.0;
-                            map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
-                            System.out.println("tuihguodmap" + map);
-                            Integer integerReturn = gbDepGoodsStockService.queryGoodsStockCount(map);
-                            if (integerReturn > 0) {
-                                aDoubleRET = gbDepGoodsStockService.queryDepStockReturnWeightTotal(map);
-                            }
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRET).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-
-                            Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            double aDouble = gbDepGoodsStockService.queryDepStockWeightTotal(disGoodsMap);
-
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
+                        //6 totalWeight
+                        Double aDoubleP = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeProduce());
+                        Integer integerProduce = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+                        if (integerProduce > 0) {
+                            aDoubleP = gbDepartmentStockReduceService.queryReduceProduceWeightTotal(map);
                         }
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleL = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeLoss());
+                        Integer integerLoss = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+                        if (integerLoss > 0) {
+                            aDoubleL = gbDepartmentStockReduceService.queryReduceLossWeightTotal(map);
+                        }
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleW = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeWaste());
+                        Integer integerWaste = gbDepartmentStockReduceService.queryReduceTypeCount(map);
+                        if (integerWaste > 0) {
+                            aDoubleW = gbDepartmentStockReduceService.queryReduceWasteWeightTotal(map);
+                        }
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        Double aDoubleRET = 0.0;
+                        map.put("equalType", getGbDepartGoodsStockReduceTypeReturn());
+                        System.out.println("tuihguodmap" + map);
+                        Integer integerReturn = gbDepGoodsStockService.queryGoodsStockCount(map);
+                        if (integerReturn > 0) {
+                            aDoubleRET = gbDepGoodsStockService.queryDepStockReturnWeightTotal(map);
+                        }
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleRET).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        double aDouble = gbDepGoodsStockService.queryDepStockWeightTotal(disGoodsMap);
+
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
                     }
+//                    }
 
                 }
             }
@@ -4587,95 +5798,97 @@ public class GbReportController {
         map.put("startDate", reportEntity.getGbRepStartDate());
         map.put("stopDate", reportEntity.getGbRepStopDate());
         map.put("fromDepId", departmentEntity.getGbDepartmentId());
+        map.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
         List<GbDistributerFatherGoodsEntity> distributerFatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map);
         if (distributerFatherGoodsEntities.size() > 0) {
             for (GbDistributerFatherGoodsEntity greatGrandFather : distributerFatherGoodsEntities) {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("进货数量");
-                        row1.createCell(6).setCellValue("进货金额");
-                        row1.createCell(7).setCellValue("出货数量");
-                        row1.createCell(8).setCellValue("出货金额");
-                        row1.createCell(9).setCellValue("库存数量");
-                        row1.createCell(10).setCellValue("库存金额");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("进货数量");
+                    row1.createCell(6).setCellValue("进货金额");
+                    row1.createCell(7).setCellValue("出货数量");
+                    row1.createCell(8).setCellValue("出货金额");
+                    row1.createCell(9).setCellValue("库存数量");
+                    row1.createCell(10).setCellValue("库存金额");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMapP = new HashMap<>();
-                            disGoodsMapP.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMapP.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMapP.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMapP.put("depId", departmentEntity.getGbDepartmentId());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMapP = new HashMap<>();
+                        disGoodsMapP.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMapP.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMapP.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMapP.put("depId", departmentEntity.getGbDepartmentId());
 
-                            //5 pur
-                            Double aDoubleP = 0.0;
-                            Double aDoublePS = 0.0;
-                            Integer integers = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMapP);
-                            if (integers > 0) {
-                                aDoubleP = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMapP);
-                                aDoublePS = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMapP);
-                            }
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoublePS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-
-                            //6 totalWeight
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("fromDepId", departmentEntity.getGbDepartmentId());
-                            Double aDoubleW = 0.0;
-                            Double aDoubleSub = 0.0;
-                            Integer integer = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
-                            if (integer > 0) {
-                                aDoubleW = gbDepGoodsStockService.queryDepStockWeightTotal(disGoodsMap);
-                                aDoubleSub = gbDepGoodsStockService.queryDepStockSubtotal(disGoodsMap);
-                            }
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleSub).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMapSt = new HashMap<>();
-                            disGoodsMapSt.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMapSt.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMapSt.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMapSt.put("depFatherId", departmentEntity.getGbDepartmentId());
-                            Double aDoubleWS = 0.0;
-                            Double aDoubleSubS = 0.0;
-                            Integer integerS = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMapSt);
-                            if (integerS > 0) {
-                                aDoubleWS = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMapSt);
-                                aDoubleSubS = gbDepGoodsStockService.queryDepStockRestSubtotal(disGoodsMapSt);
-                            }
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleWS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleSubS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-
+                        //5 pur
+                        Double aDoubleP = 0.0;
+                        Double aDoublePS = 0.0;
+                        Integer integers = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(disGoodsMapP);
+                        if (integers > 0) {
+                            aDoubleP = gbDistributerPurchaseGoodsService.queryPurchaseGoodsWeightTotal(disGoodsMapP);
+                            aDoublePS = gbDistributerPurchaseGoodsService.queryPurchaseGoodsSubTotal(disGoodsMapP);
                         }
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoublePS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
+                        //6 totalWeight
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("fromDepId", departmentEntity.getGbDepartmentId());
+                        disGoodsMap.put("depFatherIdNotEqual", departmentEntity.getGbDepartmentId());
+                        Double aDoubleW = 0.0;
+                        Double aDoubleSub = 0.0;
+                        Integer integer = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMap);
+                        if (integer > 0) {
+                            aDoubleW = gbDepGoodsStockService.queryDepStockWeightTotal(disGoodsMap);
+                            aDoubleSub = gbDepGoodsStockService.queryDepStockSubtotal(disGoodsMap);
+                        }
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleSub).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMapSt = new HashMap<>();
+                        disGoodsMapSt.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMapSt.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMapSt.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMapSt.put("depFatherId", departmentEntity.getGbDepartmentId());
+                        Double aDoubleWS = 0.0;
+                        Double aDoubleSubS = 0.0;
+                        Integer integerS = gbDepGoodsStockService.queryGoodsStockCount(disGoodsMapSt);
+                        if (integerS > 0) {
+                            aDoubleWS = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMapSt);
+                            aDoubleSubS = gbDepGoodsStockService.queryDepStockRestSubtotal(disGoodsMapSt);
+                        }
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleWS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleSubS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+
+
                     }
+//                    }
 
                 }
             }
@@ -4826,72 +6039,72 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("入库数量");
-                        row1.createCell(6).setCellValue("销售数量");
-                        row1.createCell(7).setCellValue("销售额");
-                        row1.createCell(8).setCellValue("损耗数量");
-                        row1.createCell(9).setCellValue("损耗成本");
-                        row1.createCell(10).setCellValue("废弃数量");
-                        row1.createCell(11).setCellValue("废弃成本");
-                        row1.createCell(12).setCellValue("退货数量");
-                        row1.createCell(13).setCellValue("退货成本");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("入库数量");
+                    row1.createCell(6).setCellValue("销售数量");
+                    row1.createCell(7).setCellValue("销售额");
+                    row1.createCell(8).setCellValue("损耗数量");
+                    row1.createCell(9).setCellValue("损耗成本");
+                    row1.createCell(10).setCellValue("废弃数量");
+                    row1.createCell(11).setCellValue("废弃成本");
+                    row1.createCell(12).setCellValue("退货数量");
+                    row1.createCell(13).setCellValue("退货成本");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        TreeSet<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepGoodsDailyService.queryDepDisGoodsTreeByParams(map);
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    TreeSet<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepGoodsDailyService.queryDepDisGoodsTreeByParams(map);
 
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        int count = 0;
-                        for (GbDepartmentDisGoodsEntity departmentDisGoodsEntity : departmentDisGoodsEntities) {
-                            System.out.println("-----=====--------" + departmentDisGoodsEntity.getGbDistributerGoodsEntity());
-                            count = count + 1;
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            System.out.println(" nanfdmafdnaf " + departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsName());
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsDetail());
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    int count = 0;
+                    for (GbDepartmentDisGoodsEntity departmentDisGoodsEntity : departmentDisGoodsEntities) {
+                        System.out.println("-----=====--------" + departmentDisGoodsEntity.getGbDistributerGoodsEntity());
+                        count = count + 1;
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        System.out.println(" nanfdmafdnaf " + departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsName());
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(departmentDisGoodsEntity.getGbDistributerGoodsEntity().getGbDgGoodsDetail());
 
-                            disGoodsMap.put("disGoodsId", departmentDisGoodsEntity.getGbDdgDisGoodsId());
-                            //5 totalWeight
-                            Double weight = gbDepGoodsDailyService.queryDepGoodsDailyWeight(disGoodsMap);
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(weight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        disGoodsMap.put("disGoodsId", departmentDisGoodsEntity.getGbDdgDisGoodsId());
+                        //5 totalWeight
+                        Double weight = gbDepGoodsDailyService.queryDepGoodsDailyWeight(disGoodsMap);
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(weight).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            //6 totalWeight
-                            Double weightP = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(disGoodsMap);
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(weightP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        //6 totalWeight
+                        Double weightP = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(disGoodsMap);
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(weightP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleP = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleP = gbDepGoodsDailyService.queryDepGoodsDailySalesSubtotal(disGoodsMap);
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleL = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(disGoodsMap);
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleL = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(disGoodsMap);
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleLS = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleLS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleLS = gbDepGoodsDailyService.queryDepGoodsDailyLossSubtotal(disGoodsMap);
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleLS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleW = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(disGoodsMap);
-                            goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleLWS = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
-                            goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleLWS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleW = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(disGoodsMap);
+                        goodsRow.createCell(10).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleLWS = gbDepGoodsDailyService.queryDepGoodsDailyWasteSubtotal(disGoodsMap);
+                        goodsRow.createCell(11).setCellValue(new BigDecimal(aDoubleLWS).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleR = gbDepGoodsDailyService.queryDepGoodsDailyReturnWeight(disGoodsMap);
-                            goodsRow.createCell(12).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            Double aDoubleLWRW = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
-                            goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleLWRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleR = gbDepGoodsDailyService.queryDepGoodsDailyReturnWeight(disGoodsMap);
+                        goodsRow.createCell(12).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleLWRW = gbDepGoodsDailyService.queryDepGoodsDailyReturnSubtotal(disGoodsMap);
+                        goodsRow.createCell(13).setCellValue(new BigDecimal(aDoubleLWRW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }
@@ -4914,59 +6127,59 @@ public class GbReportController {
                 for (GbDistributerFatherGoodsEntity grand : greatGrandFather.getFatherGoodsEntities()) {
                     HSSFSheet sheet = wb.createSheet(grand.getGbDfgFatherGoodsName());
                     //设置表头
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
-                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
-                        //设置表头
-                        HSSFRow row1 = sheet.createRow(0);
-                        row1.createCell(0).setCellValue("序号");
-                        row1.createCell(1).setCellValue("商品名称");
-                        row1.createCell(2).setCellValue("规格");
-                        row1.createCell(3).setCellValue("品牌");
-                        row1.createCell(4).setCellValue("详细");
-                        row1.createCell(5).setCellValue("总数量");
-                        row1.createCell(6).setCellValue("销售总量");
-                        row1.createCell(7).setCellValue("损耗总量");
-                        row1.createCell(8).setCellValue("废弃总量");
-                        row1.createCell(9).setCellValue("剩余总量");
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = grand.getFatherGoodsEntities();
+//                    for (GbDistributerFatherGoodsEntity father : fatherGoodsEntities) {
+                    //设置表头
+                    HSSFRow row1 = sheet.createRow(0);
+                    row1.createCell(0).setCellValue("序号");
+                    row1.createCell(1).setCellValue("商品名称");
+                    row1.createCell(2).setCellValue("规格");
+                    row1.createCell(3).setCellValue("品牌");
+                    row1.createCell(4).setCellValue("详细");
+                    row1.createCell(5).setCellValue("总数量");
+                    row1.createCell(6).setCellValue("销售总量");
+                    row1.createCell(7).setCellValue("损耗总量");
+                    row1.createCell(8).setCellValue("废弃总量");
+                    row1.createCell(9).setCellValue("剩余总量");
 
-                        map.put("disGoodsFatherId", father.getGbDistributerFatherGoodsId());
-                        List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
-                        System.out.println("sisiisissizesizes========" + goodsEntities.size());
-                        //设置表体
-                        HSSFRow goodsRow = null;
-                        for (int i = 0; i < goodsEntities.size(); i++) {
-                            GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
-                            goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
-                            goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
-                            goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
-                            goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
-                            goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
-                            goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
-                            //5 totalWeight
-                            Map<String, Object> disGoodsMap = new HashMap<>();
-                            disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
-                            disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
-                            disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
-                            disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
+                    map.put("disGoodsGrandId", grand.getGbDistributerFatherGoodsId());
+                    List<GbDistributerGoodsEntity> goodsEntities = gbDepGoodsStockService.queryDisGoodsStockByParams(map);
+                    System.out.println("sisiisissizesizes========" + goodsEntities.size());
+                    //设置表体
+                    HSSFRow goodsRow = null;
+                    for (int i = 0; i < goodsEntities.size(); i++) {
+                        GbDistributerGoodsEntity ckGoodsEntity = goodsEntities.get(i);
+                        goodsRow = sheet.createRow(sheet.getLastRowNum() + 1);
+                        goodsRow.createCell(0).setCellValue(sheet.getLastRowNum());
+                        goodsRow.createCell(1).setCellValue(ckGoodsEntity.getGbDgGoodsName());
+                        goodsRow.createCell(2).setCellValue(ckGoodsEntity.getGbDgGoodsStandardname());
+                        goodsRow.createCell(3).setCellValue(ckGoodsEntity.getGbDgGoodsBrand());
+                        goodsRow.createCell(4).setCellValue(ckGoodsEntity.getGbDgGoodsDetail());
+                        //5 totalWeight
+                        Map<String, Object> disGoodsMap = new HashMap<>();
+                        disGoodsMap.put("startDate", reportEntity.getGbRepStartDate());
+                        disGoodsMap.put("stopDate", reportEntity.getGbRepStopDate());
+                        disGoodsMap.put("disGoodsId", ckGoodsEntity.getGbDistributerGoodsId());
+                        disGoodsMap.put("depFatherId", departmentEntity.getGbDepartmentId());
 
-                            //6 totalWeight
-                            Double aDoubleP = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(disGoodsMap);
-                            goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        //6 totalWeight
+                        Double aDoubleP = gbDepGoodsDailyService.queryDepGoodsDailyProduceWeight(disGoodsMap);
+                        goodsRow.createCell(6).setCellValue(new BigDecimal(aDoubleP).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleL = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(disGoodsMap);
-                            goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleL = gbDepGoodsDailyService.queryDepGoodsDailyLossWeight(disGoodsMap);
+                        goodsRow.createCell(7).setCellValue(new BigDecimal(aDoubleL).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleW = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(disGoodsMap);
-                            goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleW = gbDepGoodsDailyService.queryDepGoodsDailyWasteWeight(disGoodsMap);
+                        goodsRow.createCell(8).setCellValue(new BigDecimal(aDoubleW).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            double aDouble = aDoubleP + aDoubleW + aDoubleL;
-                            goodsRow.createCell(5).setCellValue(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        double aDouble = aDoubleP + aDoubleW + aDoubleL;
+                        goodsRow.createCell(5).setCellValue(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                            Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
-                            goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                        Double aDoubleR = gbDepGoodsStockService.queryDepStockRestWeightTotal(disGoodsMap);
+                        goodsRow.createCell(9).setCellValue(new BigDecimal(aDoubleR).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 
-                        }
                     }
+//                    }
 
                 }
             }

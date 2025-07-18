@@ -85,6 +85,7 @@
 
 	<resultMap id="orderDepartment" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
 		<result property="gbDepartmentName" column="gb_department_name"/>
 		<result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
@@ -100,6 +101,11 @@
 
 	<resultMap id="orders" type="GbDepartmentOrdersEntity">
 		<id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
+        <result property="gbDoToDepartmentId" column="gb_DO_to_department_id"/>
 		<result property="gbDoSellingPrice" column="gb_DO_selling_price"/>
 		<result property="gbDoSellingSubtotal" column="gb_DO_selling_subtotal"/>
 		<result property="gbDoNxGoodsId" column="gb_DO_nx_goods_id"/>
@@ -185,6 +191,11 @@
 
 	<resultMap id="disGoodsWithWeight" type="GbDistributerGoodsEntity">
 		<id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+		<result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+		<result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+		<result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+		<result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
 		<result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
 		<result property="gbDgGoodsSonsSort" column="gb_dg_goods_sons_sort"/>
@@ -197,6 +208,7 @@
 		<result property="gbDgPullOff" column="gb_dg_pull_off"/>
 		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
 		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
 		<result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
 		<result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -230,9 +242,16 @@
 
 	<resultMap id="depGoods" type="GbDepartmentDisGoodsEntity">
         <id property="gbDepartmentDisGoodsId" column="gb_department_dis_goods_id"/>
+		<result property="gbDdgOrderGoodsName" column="gb_DDG_order_goods_name"/>
+		<result property="gbDdgOrderPriceLevel" column="gb_DDG_order_price_level"/>
+		<result property="gbDdgOrderGoodsName" column="gb_DDG_order_goods_name"/>
+		<result property="gbDdgOrderPriceLevel" column="gb_DDG_order_price_level"/>
+		<result property="gbDdgPrintStandard" column="gb_DDG_print_standard"/>
         <result property="gbDdgGbDisId" column="gb_DDG_gb_dis_id"/>
 		<result property="gbDdgDisGoodsId" column="gb_DDG_dis_goods_id"/>
 		<result property="gbDdgDisGoodsFatherId" column="gb_DDG_dis_goods_father_id"/>
+         <result property="gbDdgDisGoodsGrandId" column="gb_DDG_dis_goods_grand_id"/>
+        <result property="gbDdgDisGoodsGreatId" column="gb_DDG_dis_goods_great_id"/>
 		<result property="gbDdgDepGoodsName" column="gb_DDG_dep_goods_name"/>
 		<result property="gbDdgDepGoodsStandardname" column="gb_DDG_dep_goods_standardname"/>
 		<result property="gbDdgGoodsType" column="gb_DDG_goods_type"/>

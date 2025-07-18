@@ -35,11 +35,8 @@
         order by gb_dfg_father_goods_sort
     </select>
     <select id="queryHasDisFathersFather" resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">
-        select *
-        from gb_distributer_father_goods
-        where gb_dfg_distributer_id = #{disId}
-          and gb_dfg_father_goods_name like #{fathersFatherName}
-          and gb_dfg_father_goods_level = #{goodsLevel}
+        select * from gb_distributer_father_goods where gb_dfg_distributer_id = #{disId}
+                                                    and gb_dfg_father_goods_name like  #{fathersFatherName}
     </select>
 
     <resultMap id="fatherDisGoods" type="GbDistributerFatherGoodsEntity">
@@ -89,6 +86,8 @@
         <result property="gbDfgFatherGoodsName" column="greatGrand_gb_dfg_father_goods_name"/>
         <result property="gbDfgFatherGoodsColor" column="greatGrand_gb_dfg_father_goods_color"/>
         <result property="gbDfgFatherGoodsSort" column="greatGrand_gb_dfg_father_goods_sort"/>
+        <result property="gbDfgFatherGoodsImg" column="greatGrand_gb_dfg_father_goods_img"/>
+        <result property="gbDfgFatherGoodsImgLarge" column="greatGrand_gb_dfg_father_goods_img_large"/>
         <result property="gbDfgNxGoodsId" column="greatGrand_gb_dfg_nx_goods_id"/>
         <collection property="fatherGoodsEntities" resultMap="grandDisGoodsWithGoods"/>
     </resultMap>
@@ -134,7 +133,11 @@
         order by greatGrand.gb_dfg_father_goods_sort, grand.gb_dfg_father_goods_sort, father.gb_dfg_father_goods_sort
     </select>
     <resultMap id="depOrders" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_order_id"/>
+        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
+        <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
+        <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
+        <result property="gbDoNxGoodsGrandId" column="gb_do_nx_goods_grand_id"/>
         <result property="gbDoStatus" column="gb_DO_status"/>
         <result property="gbDoDisGoodsId" column="gb_DO_dis_goods_id"/>
         <result property="gbDoBillId" column="gb_DO_bill_id"/>
@@ -150,7 +153,11 @@
 
     <resultMap id="nxDis" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerManager" column="nx_distributer_manager"/>
         <result property="nxDistributerAddress" column="nx_distributer_address"/>
         <result property="nxDistributerPhone" column="nx_distributer_phone"/>
@@ -160,6 +167,7 @@
 
     <resultMap id="dep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentPrintSet" column="gb_department_print_set"/>
         <result property="gbDepartmentType" column="gb_department_type"/>
@@ -185,6 +193,14 @@
 
     <resultMap id="nxDisGoods" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -236,6 +252,12 @@
     </resultMap>
     <resultMap id="gbDisGoodsWithOrders" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
+		<result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
+		<result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
+		<result property="gbDgNxFatherImgLarge" column="gb_dg_nx_father_img_large"/>
+		<result property="gbDgNxGoodsFatherImg" column="gb_dg_nx_goods_father_img"/>
+		<result property="gbDgNxDistributerGoodsPrice" column="gb_dg_nx_distributer_goods_price"/>
+        <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
         <result property="gbDgGoodsType" column="gb_dg_goods_type"/>
         <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
         <result property="gbDgGoodsIsHidden" column="gb_dg_goods_is_hidden"/>
@@ -249,6 +271,7 @@
         <result property="gbDgPullOff" column="gb_dg_pull_off"/>
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
+		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
         <result property="gbDgNxDistributerId" column="gb_dg_nx_distributer_id"/>
         <result property="gbDgNxDistributerGoodsId" column="gb_dg_nx_distributer_goods_id"/>
         <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -282,8 +305,7 @@
         <result property="gbDfgFatherGoodsSort" column="gb_dfg_father_goods_sort"/>
         <collection property="gbDistributerGoodsEntities" resultMap="gbDisGoodsWithOrders"/>
     </resultMap>
-    <select id="queryDisStockOrdersFatherGoods"
-            resultMap="gbFatherGoods">
+    <select id="queryDisStockOrdersFatherGoods" resultMap="gbFatherGoods">
         select * from gb_department_orders as dor
         left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = dor.gb_DO_dis_goods_id
         left join gb_distributer_father_goods as gdfg on gdg.gb_dg_dfg_goods_father_id =
@@ -304,12 +326,32 @@
         order by gdfg.gb_dfg_goods_father_sort
 
     </select>
-    <select id="queryDisFathersGoodsByParamsGb"
-            resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">
-        select * from gb_distributer_father_goods
+
+    <select id="queryDisFathersGoodsByParamsGb" resultMap="fatherDisGoodsWithGoods">
+        select * ,
+        father.gb_distributer_father_goods_id 'father_gb_distributer_father_goods_id',
+        father.gb_dfg_fathers_father_id 'father_gb_dfg_fathers_father_id',
+        father.gb_dfg_father_goods_name 'father_gb_dfg_father_goods_name',
+        father.gb_dfg_goods_amount 'father_gb_dfg_goods_amount',
+        father.gb_dfg_father_goods_color 'father_gb_dfg_father_goods_color',
+        father.gb_dfg_nx_goods_id 'father_gb_dfg_nx_goods_id',
+        father.gb_dfg_father_goods_img 'father_gb_dfg_father_goods_img',
+        father.gb_dfg_father_goods_img_large             'father_gb_dfg_father_goods_img_large',
+        father.gb_dfg_father_goods_sort 'father_gb_dfg_father_goods_sort'
+        from gb_distributer_father_goods as father
+        left join gb_distributer_goods as gdg on gdg.gb_dg_dfg_goods_father_id = father.gb_distributer_father_goods_id
         <where>
             <if test="fathersFatherId != null">
                 and gb_dfg_fathers_father_id = #{fathersFatherId}
+            </if>
+            <if test="nxGoodsIdNotEqual != null">
+                and gb_dg_nx_goods_id != #{nxGoodsIdNotEqual}
+            </if>
+            <if test="nxFatherId != null">
+                and gb_dg_nx_father_id = #{nxFatherId}
+            </if>
+            <if test="nxGreatGrandFatherId != null">
+                and gb_dg_nx_great_grand_id = #{nxGreatGrandFatherId}
             </if>
             <if test="disId != null">
                 and gb_dfg_distributer_id = #{disId}
@@ -317,9 +359,24 @@
             <if test="goodsLevel != null">
                 and gb_dfg_father_goods_level =#{goodsLevel}
             </if>
-            <if test="nxGoodsId != null">
+            <if test="nxGoodsId != null and nxGoodsId != -1">
                 and gb_dfg_nx_goods_id = #{nxGoodsId}
             </if>
+
+            <if test="nxGoodsId != null and nxGoodsId == -1">
+                and gb_dfg_nx_goods_id is null
+            </if>
+
+            <if test="price != null">
+                and gdg.gb_dg_control_price = #{price}
+            </if>
+            <if test="fresh != null">
+                and gdg.gb_dg_control_fresh = #{fresh}
+            </if>
+            <if test="isSelf != null">
+                and gdg.gb_dg_is_self_control = #{isSelf}
+            </if>
+
         </where>
         order by gb_dfg_father_goods_sort
 
@@ -341,12 +398,15 @@
         grand.gb_dfg_father_goods_name 'grand_gb_dfg_father_goods_name',
         grand.gb_dfg_nx_goods_id 'grand_gb_dfg_nx_goods_id',
         grand.gb_dfg_father_goods_img 'grand_gb_dfg_father_goods_img',
+        grand.gb_dfg_father_goods_img_large 'grand_gb_dfg_father_goods_img_large',
         grand.gb_dfg_father_goods_sort 'grand_gb_dfg_father_goods_sort',
         greatGrand.gb_distributer_father_goods_id 'greatGrand_gb_distributer_father_goods_id',
         greatGrand.gb_dfg_fathers_father_id 'greatGrand_gb_dfg_fathers_father_id',
         greatGrand.gb_dfg_father_goods_name 'greatGrand_gb_dfg_father_goods_name',
         greatGrand.gb_dfg_nx_goods_id 'greatGrand_gb_dfg_nx_goods_id',
         greatGrand.gb_dfg_father_goods_color 'greatGrand_gb_dfg_father_goods_color',
+        greatGrand.gb_dfg_father_goods_img 'greatGrand_gb_dfg_father_goods_img',
+        greatGrand.gb_dfg_father_goods_img_large 'greatGrand_gb_dfg_father_goods_img_large',
         greatGrand.gb_dfg_father_goods_sort 'greatGrand_gb_dfg_father_goods_sort'
         from gb_distributer_father_goods as father
         left join gb_distributer_father_goods as grand
@@ -399,6 +459,12 @@
             <if test="color != null">
                 and gb_dfg_father_goods_color = #{color}
             </if>
+            <if test="level != null">
+                and gb_dfg_father_goods_level = #{level}
+            </if>
+            <if test="nxGoodsId != null and nxGoodsId == 0">
+                and gb_dfg_nx_goods_id is null
+            </if>
 
         </where>
     </select>
@@ -406,6 +472,74 @@
             resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">
     select * from nongxinle.gb_distributer_father_goods where gb_dfg_nx_goods_id = #{nxGoodsId}
 
+    </select>
+
+    <select id="queryDisGoodsCataLinshi" resultMap="disGoodsCata">
+        select
+            grand.gb_distributer_father_goods_id 'grand_gb_distributer_father_goods_id',
+            grand.gb_dfg_fathers_father_id 'grand_gb_dfg_fathers_father_id',
+            grand.gb_dfg_father_goods_name 'grand_gb_dfg_father_goods_name',
+            grand.gb_dfg_nx_goods_id 'grand_gb_dfg_nx_goods_id',
+            grand.gb_dfg_father_goods_img 'grand_gb_dfg_father_goods_img',
+            grand.gb_dfg_father_goods_sort 'grand_gb_dfg_father_goods_sort',
+            greatGrand.gb_distributer_father_goods_id 'greatGrand_gb_distributer_father_goods_id',
+            greatGrand.gb_dfg_distributer_id 'greatGrand_gb_dfg_distributer_id',
+            greatGrand.gb_dfg_fathers_father_id 'greatGrand_gb_dfg_fathers_father_id',
+            greatGrand.gb_dfg_father_goods_name 'greatGrand_gb_dfg_father_goods_name',
+            greatGrand.gb_dfg_nx_goods_id 'greatGrand_gb_dfg_nx_goods_id',
+            greatGrand.gb_dfg_father_goods_color 'greatGrand_gb_dfg_father_goods_color'
+
+        from gb_distributer_father_goods as greatGrand
+                 left join gb_distributer_father_goods as grand
+                           on greatGrand.gb_distributer_father_goods_id = grand.gb_dfg_fathers_father_id
+                 left join gb_distributer_father_goods as father
+                           on grand.gb_distributer_father_goods_id = father.gb_dfg_fathers_father_id
+
+        where greatGrand.gb_dfg_distributer_id = #{disId}
+          and greatGrand.gb_dfg_father_goods_level = 0 and greatGrand.gb_dfg_nx_goods_id is null
+        order by greatGrand.gb_dfg_father_goods_sort , grand.gb_dfg_father_goods_sort
+    </select>
+    <select id="queryDisGoodsCataLinshiFatherGoods"
+            resultType="com.nongxinle.entity.GbDistributerFatherGoodsEntity">
+        select * from gb_distributer_father_goods
+        <where>
+        <if test="disId != null">
+            gb_dfg_distributer_id  = #{disId}
+        </if>
+        <if test="fathersFatherId != null">
+            and gb_dfg_fathers_father_id  = #{fathersFatherId}
+        </if>
+
+        <if test="goodsLevel != null">
+            and gb_dfg_father_goods_level = #{goodsLevel}
+        </if>
+        <if test="dayuSort != null">
+            and gb_dfg_father_goods_sort &gt;= #{dayuSort}
+        </if>
+            <if test="nxGoodsId != null and nxGoodsId != -1">
+                and nx_dfg_nx_goods_id = #{nxGoodsId}
+            </if>
+
+        <if test="nxGoodsId != null and nxGoodsId == -1 ">
+            and gb_dfg_nx_goods_id is null
+        </if>
+
+        </where>
+        order by gb_dfg_father_goods_sort
+    </select>
+    <select id="queryGbFatherGoodsMaxSort" resultType="java.lang.Integer">
+        select MAX(gb_dfg_father_goods_sort) from gb_distributer_father_goods
+        <where>
+            <if test="disId != null">
+               and gb_dfg_distributer_id  = #{disId}
+            </if>
+            <if test="level != null">
+                and gb_dfg_father_goods_level = #{level}
+            </if>
+            <if test="fathersFatherId != null">
+                and gb_dfg_fathers_father_id  = #{fathersFatherId}
+            </if>
+        </where>
     </select>
 
 

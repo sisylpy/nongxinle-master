@@ -88,16 +88,40 @@ public class NxCommunityFatherGoodsServiceImpl implements NxCommunityFatherGoods
 		return nxCommunityFatherGoodsDao.queryComFathersGoodsByParams(map);
     }
 
-    @Override
-    public List<NxCommunityFatherGoodsEntity> queryFatherWithGoods(Map<String, Object> map) {
+//    @Override
+//    public List<NxCommunityFatherGoodsEntity> queryFatherWithGoods(Map<String, Object> map) {
+//
+//		return nxCommunityFatherGoodsDao.queryFatherWithGoods(map);
+//    }
+//
+//    @Override
+//    public List<NxCommunityFatherGoodsEntity> queryFatherWithGoodsPindan(Map<String, Object> map) {
+//
+//		return nxCommunityFatherGoodsDao.queryFatherWithGoodsPindan(map);
+//    }
 
-		return nxCommunityFatherGoodsDao.queryFatherWithGoods(map);
+    @Override
+    public List<NxCommunityFatherGoodsEntity> queryGrandGoodsWithOrders(Map<String, Object> map) {
+
+		return nxCommunityFatherGoodsDao.queryGrandGoodsWithOrders(map);
+    }
+
+//    @Override
+//    public List<NxCommunityFatherGoodsEntity> queryGrandGoodsWithOrdersPindan(Map<String, Object> map) {
+//
+//		return nxCommunityFatherGoodsDao.queryGrandGoodsWithOrdersPindan(map);
+//    }
+
+    @Override
+    public List<NxCommunityFatherGoodsEntity> queryGrandGoodsAdmin(Map<String, Object> map) {
+
+		return nxCommunityFatherGoodsDao.queryGrandGoodsAdmin(map);
     }
 
     @Override
-    public List<NxCommunityFatherGoodsEntity> queryFatherWithGoodsPindan(Map<String, Object> map) {
+    public List<NxCommunityFatherGoodsEntity> queryGrandGoodsWithOrdersDesk(Map<String, Object> map) {
 
-		return nxCommunityFatherGoodsDao.queryFatherWithGoodsPindan(map);
+		return nxCommunityFatherGoodsDao.queryGrandGoodsWithOrdersDesk(map);
     }
 
 }

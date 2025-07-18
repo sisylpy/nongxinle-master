@@ -9,7 +9,13 @@ package com.nongxinle.dao;
 
 import com.nongxinle.entity.SysCityMarketEntity;
 
+import java.util.List;
+import java.util.Map;
+
 
 public interface SysCityMarketDao extends BaseDao<SysCityMarketEntity> {
-	
+
+    List<SysCityMarketEntity> queryMarketByParams(Map<String, Object> map);
+
+    List<SysCityMarketEntity> queryMarketNxDisByParams(Map<String, Object> map);
 }

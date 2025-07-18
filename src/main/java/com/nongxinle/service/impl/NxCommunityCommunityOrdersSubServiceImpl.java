@@ -2,6 +2,7 @@ package com.nongxinle.service.impl;
 
 import com.nongxinle.entity.NxCommunityOrdersEntity;
 import com.nongxinle.entity.NxCommunityOrdersSubEntity;
+import com.nongxinle.entity.NxCommunityPrintOrdersSubEntity;
 import com.nongxinle.service.NxCommunityOrdersSubService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -69,7 +70,34 @@ public class NxCommunityCommunityOrdersSubServiceImpl implements NxCommunityOrde
 		return nxCommunityOrdersSubDao.querySubOrdersByParams(map);
 	}
 
+    @Override
+    public List<NxCommunityPrintOrdersSubEntity> queryPrintSubOrders(Map<String, Object> map) {
 
+		return nxCommunityOrdersSubDao.queryPrintSubOrders(map);
+    }
+
+    @Override
+    public NxCommunityOrdersSubEntity queryChangeSubOrderByParams(Map<String, Object> map) {
+
+		return nxCommunityOrdersSubDao.queryChangeSubOrderByParams(map);
+    }
+
+    @Override
+    public int querySubOrderTotalHuaxianQuantity(Map<String, Object> mapT) {
+
+		return nxCommunityOrdersSubDao.querySubOrderTotalHuaxianQuantity(mapT);
+    }
+
+	@Override
+	public int querySubOrderCount(Map<String, Object> mapT) {
+		return nxCommunityOrdersSubDao.querySubOrderCount(mapT);
+	}
+
+    @Override
+    public double queryHuaxianTotal(Map<String, Object> map) {
+
+		return nxCommunityOrdersSubDao.queryHuaxianTotal(map);
+    }
 
 
 }

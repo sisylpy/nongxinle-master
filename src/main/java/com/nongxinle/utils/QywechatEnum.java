@@ -7,13 +7,16 @@ import lombok.Setter;
 public enum QywechatEnum {
 
     JXPP("测试", Constant.SuiteID, Constant.TOKEN, Constant.EncodingAESKey),
+    JXPPCUSTOMER("测试KF", Constant.CorpID, Constant.TOKENCUSTOMER, Constant.EncodingAESKeyCustomer),
+    JXPPCUSTOMERBACK("测试KF", Constant.SuiteIDCUSTOMER, Constant.TOKENCUSTOMER, Constant.EncodingAESKeyCustomer),
     JXPPRX("测试", Constant.CorpID, Constant.TOKENRX, Constant.EncodingAESKeyRx),
     JXPPSX("测试", Constant.CorpID, Constant.TOKENSX, Constant.EncodingAESKeySx),
     DJ("测试", Constant.CorpID, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJPOST("测试", Constant.SUITEIDDj, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJAPP("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj),
-    DJAPPPOST("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj);
-
+    DJAPPPOST("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj),
+    DJAPPDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh),
+    DJAPPPOSTDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh);
 
     /**
      * 应用名

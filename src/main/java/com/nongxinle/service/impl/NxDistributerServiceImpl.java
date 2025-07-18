@@ -1,7 +1,6 @@
 package com.nongxinle.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.nongxinle.dao.NxDistributerUserDao;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +14,7 @@ import java.util.Map;
 import com.nongxinle.dao.NxDistributerDao;
 
 import static com.nongxinle.utils.DateUtils.*;
+import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisUserAdmin;
 
 
 @Service("nxDistributerService")
@@ -53,6 +53,10 @@ public class NxDistributerServiceImpl implements NxDistributerService {
     public Integer saveNewNxDistributerWrok(NxDistributerEntity distributerEntity, JSONObject jsonObject) {
 
 		//1.保存distributer
+		distributerEntity.setNxDistributerBuyQuantity("0");
+		distributerEntity.setNxDistributerShelfQuantity(0);
+		distributerEntity.setNxDistributerSysCityId(5);
+		distributerEntity.setNxDistributerSysMarketId(1);
 		nxDistributerDao.save(distributerEntity);
 
 
@@ -66,17 +70,17 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 		nxDistributerUserService.save(nxDistributerUserEntity);
 
 		//4 保存Sys用户
-//		SysUserEntity sysUser = new SysUserEntity();
-//		List<Long> ids = new ArrayList<>();
-//		long a = 6L; //
-//		ids.add(a);
-//		sysUser.setUsername(distributerEntity.getNxDistributerPhone());
-//		sysUser.setUserDisUserId(nxDistributerUserEntity.getNxDistributerUserId());
-//		sysUser.setPassword("1");
-//		sysUser.setUserDisId(distributerId);
-//		sysUser.setStatus(1);
-//		sysUser.setRoleIdList(ids);
-//		sysUserService.save(sysUser);
+		SysUserEntity sysUser = new SysUserEntity();
+		List<Long> ids = new ArrayList<>();
+		long a = 6L; //
+		ids.add(a);
+		sysUser.setUsername(distributerEntity.getNxDistributerPhone());
+		sysUser.setUserDisUserId(nxDistributerUserEntity.getNxDistributerUserId());
+		sysUser.setPassword("1");
+		sysUser.setUserDisId(distributerId);
+		sysUser.setStatus(1);
+		sysUser.setRoleIdList(ids);
+		sysUserService.save(sysUser);
 
 
 		//serviceCity
@@ -107,84 +111,9 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 		nxDistributerUserEntity.setNxDiuQyCorpUserId(userEntity.getQyNxDisCorpUserId());
 		nxDistributerUserService.update(nxDistributerUserEntity);
 
-//postDisGoods
-		if(distributerEntity.getNxDistributerBusinessTypeId() == 1){
-			postNewDisGoodsAndDisFatherGoods(distributerEntity);
-		}
-		return nxDistributerUserEntity.getNxDistributerUserId();
+//		postNewDisGoodsAndDisFatherGoods(distributerEntity);
 
-    }
-
-    @Override
-    public List<NxDistributerEntity> queryNxDisCustomerBySellerOpenId(String openId) {
-
-		return nxDistributerDao.queryNxDisCustomerBySellerOpenId(openId);
-    }
-
-    @Override
-    public NxDistributerEntity queryNxDisInfo(Integer id) {
-
-		return nxDistributerDao.queryNxDisInfo(id);
-    }
-
-    @Override
-    public List<NxDistributerEntity> queryAllTypeOne() {
-
-		return nxDistributerDao.queryAllTypeOne();
-    }
-
-
-
-    @Override
-	public void save(NxDistributerEntity nxDistributer){
-		nxDistributerDao.save(nxDistributer);
-	}
-
-	@Override
-	public Integer saveNewNxDistributer(NxDistributerEntity distributerEntity) {
-		//1.保存distributer
-		nxDistributerDao.save(distributerEntity);
-
-
-		//3，保存Dis用户
-		Integer distributerId = distributerEntity.getNxDistributerId();
-		NxDistributerUserEntity nxDistributerUserEntity = distributerEntity.getNxDistributerUserEntity();
-		nxDistributerUserEntity.setNxDiuDistributerId(distributerId);
-		nxDistributerUserEntity.setNxDiuPrintDeviceId("-1");
-		nxDistributerUserEntity.setNxDiuPrintBillDeviceId("-1");
-		nxDistributerUserEntity.setNxDiuLoginTimes(0);
-		nxDistributerUserService.save(nxDistributerUserEntity);
-
-		//4 保存Sys用户
-		SysUserEntity sysUser = new SysUserEntity();
-		List<Long> ids = new ArrayList<>();
-		long a = 34L; //
-		ids.add(a);
-		sysUser.setUsername(distributerEntity.getNxDistributerPhone());
-		sysUser.setUserDisUserId(nxDistributerUserEntity.getNxDistributerUserId());
-		sysUser.setPassword("1");
-		sysUser.setUserDisId(distributerId);
-		sysUser.setStatus(1);
-		sysUser.setRoleIdList(ids);
-		sysUserService.save(sysUser);
-
-		//serviceCity
-		List<NxDistributerServiceCityEntity> nxDistributerServiceCityEntities = distributerEntity.getNxDistributerServiceCityEntities();
-		for (NxDistributerServiceCityEntity city : nxDistributerServiceCityEntities) {
-			city.setNxDsDisId(distributerEntity.getNxDistributerId());
-			nxDistributerServiceCityService.save(city);
-		}
-
-		//postDisGoods
-		if(distributerEntity.getNxDistributerBusinessTypeId() > 0){
-//			postNewDisGoodsAndDisFatherGoods(distributerEntity);
-		}
-
-		return nxDistributerUserEntity.getNxDistributerUserId();
-	}
-
-
-	private void postNewDisGoodsAndDisFatherGoods(NxDistributerEntity distributerEntity){
+		//linshi
 		Integer nxDistributerId = distributerEntity.getNxDistributerId();
 
 		NxDistributerFatherGoodsEntity greatGrand = new NxDistributerFatherGoodsEntity();
@@ -215,16 +144,136 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 		NxDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsEntities.get(0);
 		distributerEntity.setLinshiFather(fatherGoodsEntity);
 
+		if(distributerEntity.getIsSelected()){
+			System.out.println("xiaziaiiaiiaiaii");
+			postNewDisGoodsAndDisFatherGoods(distributerEntity);
+		}
 
-		//postGoods
+		return nxDistributerUserEntity.getNxDistributerUserId();
 
-//		if(distributerEntity.getNxDistributerBusinessTypeId() == 2){
-//			saveDisGoods(nxDistributerId);
-//		}else{
-//			saveDisGoodsOLdSon(nxDistributerId);
+    }
+
+    @Override
+    public List<NxDistributerEntity> queryNxDisCustomerBySellerOpenId(String openId) {
+
+		return nxDistributerDao.queryNxDisCustomerBySellerOpenId(openId);
+    }
+
+    @Override
+    public NxDistributerEntity queryNxDisInfo(Integer id) {
+
+		return nxDistributerDao.queryNxDisInfo(id);
+    }
+
+    @Override
+    public List<NxDistributerEntity> queryAllTypeOne() {
+
+		return nxDistributerDao.queryAllTypeOne();
+    }
+
+    @Override
+    public void delteNxDis(Integer id) {
+        nxDistributerDao.delete(id);
+    }
+
+
+    @Override
+	public void save(NxDistributerEntity nxDistributer){
+		nxDistributer.setNxDistributerSysCityId(5);
+		nxDistributer.setNxDistributerSysMarketId(1);
+		nxDistributerDao.save(nxDistributer);
+	}
+
+	@Override
+	public Integer saveNewNxDistributer(NxDistributerEntity distributerEntity) {
+		//1.保存distributer
+
+		distributerEntity.setNxDistributerShelfQuantity(0);
+		distributerEntity.setNxDistributerAppId("wx58ba279bc3d04c4a");
+		distributerEntity.setNxDistributerPayUrl("MyWxJjdhPayConfig");
+		distributerEntity.setNxDistributerSysCityId(5);
+		distributerEntity.setNxDistributerSysMarketId(1);
+		nxDistributerDao.save(distributerEntity);
+
+		//3，保存Dis用户
+		Integer distributerId = distributerEntity.getNxDistributerId();
+		NxDistributerUserEntity nxDistributerUserEntity = distributerEntity.getNxDistributerUserEntity();
+		nxDistributerUserEntity.setNxDiuDistributerId(distributerId);
+		nxDistributerUserEntity.setNxDiuPrintDeviceId("-1");
+		nxDistributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+		nxDistributerUserEntity.setNxDiuUrlChange(0);
+		nxDistributerUserEntity.setNxDiuLoginTimes(0);
+		nxDistributerUserEntity.setNxDiuAdmin(getNxDisUserAdmin());
+		nxDistributerUserService.save(nxDistributerUserEntity);
+
+		//4 保存Sys用户
+		SysUserEntity sysUser = new SysUserEntity();
+		List<Long> ids = new ArrayList<>();
+		long a = 34L; //
+		ids.add(a);
+		sysUser.setUsername(distributerEntity.getNxDistributerPhone());
+		sysUser.setUserDisUserId(nxDistributerUserEntity.getNxDistributerUserId());
+		sysUser.setPassword("1");
+		sysUser.setUserDisId(distributerId);
+		sysUser.setStatus(1);
+		sysUser.setRoleIdList(ids);
+		sysUserService.save(sysUser);
+
+		//serviceCity
+//		List<NxDistributerServiceCityEntity> nxDistributerServiceCityEntities = distributerEntity.getNxDistributerServiceCityEntities();
+//		for (NxDistributerServiceCityEntity city : nxDistributerServiceCityEntities) {
+//			city.setNxDsDisId(distributerEntity.getNxDistributerId());
+//			nxDistributerServiceCityService.save(city);
 //		}
 
-		saveDisGoodsOLdSon(nxDistributerId);
+
+		//linshi
+		Integer nxDistributerId = distributerEntity.getNxDistributerId();
+
+		NxDistributerFatherGoodsEntity greatGrand = new NxDistributerFatherGoodsEntity();
+		greatGrand.setNxDfgDistributerId(nxDistributerId);
+		greatGrand.setNxDfgFatherGoodsLevel(0);
+		greatGrand.setNxDfgFatherGoodsImg("goodsImage/logo.jpg");
+		greatGrand.setNxDfgFatherGoodsName("临时添加");
+		dgfService.save(greatGrand);
+
+
+		NxDistributerFatherGoodsEntity grand = new NxDistributerFatherGoodsEntity();
+		grand.setNxDfgDistributerId(nxDistributerId);
+		grand.setNxDfgFatherGoodsLevel(1);
+		grand.setNxDfgFatherGoodsName("临时添加");
+		grand.setNxDfgGoodsAmount(0);
+		grand.setNxDfgFathersFatherId(greatGrand.getNxDistributerFatherGoodsId());
+
+		dgfService.save(grand);
+		NxDistributerFatherGoodsEntity father = new NxDistributerFatherGoodsEntity();
+		father.setNxDfgDistributerId(nxDistributerId);
+		father.setNxDfgFatherGoodsLevel(2);
+		father.setNxDfgFatherGoodsName("临时添加");
+		father.setNxDfgGoodsAmount(0);
+		father.setNxDfgFathersFatherId(grand.getNxDistributerFatherGoodsId());
+		dgfService.save(father);
+
+		List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = dgfService.queryDisGoodsCataLinshi(nxDistributerId);
+		NxDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsEntities.get(0);
+		distributerEntity.setLinshiFather(fatherGoodsEntity);
+
+//		if(distributerEntity.getIsSelected()){
+//			System.out.println("xiaziaiiaiiaiaii");
+//			postNewDisGoodsAndDisFatherGoods(distributerEntity);
+//		}
+
+		return nxDistributerUserEntity.getNxDistributerUserId();
+	}
+
+
+	private void postNewDisGoodsAndDisFatherGoods(NxDistributerEntity distributerEntity){
+		Integer nxDistributerId = distributerEntity.getNxDistributerId();
+		//postGoods
+		if(distributerEntity.getNxDistributerType() > 0){
+			saveDisGoodsOLdSon(nxDistributerId);
+		}
+
 	}
 
 
@@ -249,7 +298,7 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 			cgnGoods.setNxDgGoodsPinyin(nxGoodsEntity.getNxGoodsPinyin());
 			cgnGoods.setNxDgGoodsPy(nxGoodsEntity.getNxGoodsPy());
 			cgnGoods.setNxDgPullOff(0);
-			cgnGoods.setNxDgGoodsStatus(0);
+			cgnGoods.setNxDgGoodsStatus(1);
 			cgnGoods.setNxDgNxFatherId(nxGoodsEntity.getNxGoodsFatherId());
 			cgnGoods.setNxDgNxFatherName(nxGoodsEntity.getFatherGoods().getNxGoodsName());
 			cgnGoods.setNxDgNxFatherImg(nxGoodsEntity.getFatherGoods().getNxGoodsFile());
@@ -262,7 +311,7 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 			cgnGoods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
 			cgnGoods.setNxDgGoodsSort(nxGoodsEntity.getNxGoodsSort());
 			cgnGoods.setNxDgGoodsSonsSort(nxGoodsEntity.getNxGoodsSonsSort());
-			cgnGoods.setNxDgPurchaseAuto(-1);
+			cgnGoods.setNxDgPurchaseAuto(1);
 			cgnGoods.setNxDgGoodsIsHidden(0);
 
 			//queryGrandFatherId
@@ -442,7 +491,7 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 		   cgnGoods.setNxDgGoodsPinyin(nxGoodsEntity.getNxGoodsPinyin());
 		   cgnGoods.setNxDgGoodsPy(nxGoodsEntity.getNxGoodsPy());
 		   cgnGoods.setNxDgPullOff(0);
-		   cgnGoods.setNxDgGoodsStatus(0);
+		   cgnGoods.setNxDgGoodsStatus(1);
 		   cgnGoods.setNxDgNxFatherId(nxGoodsEntity.getNxGoodsFatherId());
 		   cgnGoods.setNxDgNxFatherName(nxGoodsEntity.getFatherGoods().getNxGoodsName());
 		   cgnGoods.setNxDgNxFatherImg(nxGoodsEntity.getFatherGoods().getNxGoodsFile());
@@ -455,7 +504,7 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 		   cgnGoods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
 		   cgnGoods.setNxDgGoodsSort(nxGoodsEntity.getNxGoodsSort());
 		   cgnGoods.setNxDgGoodsSonsSort(nxGoodsEntity.getNxGoodsSonsSort());
-		   cgnGoods.setNxDgPurchaseAuto(-1);
+		   cgnGoods.setNxDgPurchaseAuto(1);
 		   cgnGoods.setNxDgGoodsIsHidden(0);
 
 		   //queryGrandFatherId

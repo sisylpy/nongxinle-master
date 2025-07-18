@@ -29,4 +29,6 @@ public interface SysBusinessTypeService {
 	void deleteBatch(Integer[] sysBusinessTypeIds);
 
     List<SysBusinessTypeEntity> queryTypeNxDistribterWithPeisong(Map<String, Object> map);
+
+    List<SysBusinessTypeEntity> querySysListByParams(Map<String, Object> map);
 }

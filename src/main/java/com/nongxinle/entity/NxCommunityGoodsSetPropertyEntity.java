@@ -37,6 +37,10 @@ public class NxCommunityGoodsSetPropertyEntity implements Serializable {
 	 */
 	private Integer nxCgspCgGoodsId;
 
+	private Integer nxCgspLimitAmount;
+
+	private Integer nxCgspOrderAmount = 0;
+
 
 	private List<NxCommunityGoodsSetItemEntity> nxCommunityGoodsSetItemEntities;
 

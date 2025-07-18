@@ -46,4 +46,5 @@ public interface GbDepartmentUserService {
 
     GbDepartmentUserEntity queryDepUserInfoGb(Integer userId);
 
+    GbDepartmentUserEntity queryDepUsersByOpenIdAndAdmin(Map<String, Object> map);
 }

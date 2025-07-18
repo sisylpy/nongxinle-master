@@ -24,7 +24,7 @@ public interface NxDistributerGbDistributerService  {
 
     void save (NxDistributerGbDistributerEntity nxDistributerGbDistributerEntity);
 
-    List<NxDistributerEntity> queryGbDistributerNxDistribtuer(Integer gbDepId);
+    List<NxDistributerGbDistributerEntity> queryGbDistributerNxDistribtuer(Integer gbDepId);
 
     void update(NxDistributerGbDistributerEntity nxDistributerGbDistributerEntity);
 
@@ -32,4 +32,5 @@ public interface NxDistributerGbDistributerService  {
 
     List<NxDistributerEntity> queryGbDistributerNxDistribtuerGoods(Map<String, Object> map);
 
+    List<GbDistributerEntity> queryGbDistributerByParams(Map<String, Object> map);
 }

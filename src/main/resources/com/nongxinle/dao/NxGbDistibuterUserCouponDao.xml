@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxGbDistibuterUserCouponDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxGbDistibuterUserCouponEntity">
+		select * from nx_gb_distibuter_user_coupon where nx_gb_distributer_user_coupon_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxGbDistibuterUserCouponEntity">
+		select * from nx_gb_distibuter_user_coupon 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_gb_distibuter_user_coupon 
+	</select>
+
+	<resultMap id="nxCoupon" type="NxDistributerCouponEntity">
+		<id property="nxDistributerCouponId" column="nx_distributer_coupon_id"/>
+		<result property="nxDcStartWhichDay" column="nx_dc_start_which_day"/>
+		<result property="nxDcStopWhichDay" column="nx_dc_stop_which_day"/>
+		<result property="nxDcCityId" column="nx_dc_city_id"/>
+		<result property="nxDcDistributerId" column="nx_dc_distributer_id"/>
+		<result property="nxDcDownCount" column="nx_dc_down_count"/>
+		<result property="nxDcPrice" column="nx_dc_price"/>
+		<result property="nxDcPricePercent" column="nx_dc_price_percent"/>
+		<result property="nxDcPriceGreatGrandId" column="nx_dc_price_great_grand_id"/>
+		<result property="nxDcStartDate" column="nx_dc_start_date"/>
+		<result property="nxDcStartTime" column="nx_dc_start_time"/>
+		<result property="nxDcStatus" column="nx_dc_status"/>
+		<result property="nxDcSubtotalPrice" column="nx_dc_subtotal_price"/>
+		<result property="nxDistributerCouponName" column="nx_distributer_coupon_name"/>
+		<result property="nxDcWords" column="nx_dc_words"/>
+		<result property="nxDcType" column="nx_dc_type"/>
+		<result property="nxDcStopDate" column="nx_dc_stop_date"/>
+		<result property="nxDcStopTime" column="nx_dc_stop_time"/>
+	</resultMap>
+
+	<resultMap id="disCoupon" type="NxGbDistibuterUserCouponEntity">
+		<id property="nxGbDistributerUserCouponId" column="nx_gb_distributer_user_coupon_id"/>
+		<result property="nxGducCouponId" column="nx_gduc_coupon_id"/>
+		<result property="nxGducGbDistributerId" column="nx_gduc_gb_distributer_id"/>
+		<result property="nxGducStartDate" column="nx_gduc_start_date"/>
+		<result property="nxGducStopDate" column="nx_gduc_stop_date"/>
+		<result property="nxGducStartTimeZone" column="nx_gduc_start_time_zone"/>
+		<result property="nxGducStopTimeZone" column="nx_gduc_stop_time_zone"/>
+		<association property="nxDistributerCouponEntity" resultMap="nxCoupon"/>
+	</resultMap>
+
+	<select id="queryGbCouponListByParams" resultMap="disCoupon">
+		select * from nx_gb_distibuter_user_coupon as ngduc
+		left join nx_distributer_coupon as ndc on ndc.nx_distributer_coupon_id = ngduc.nx_gduc_coupon_id
+		<where>
+			<if test="gbDisId != null">
+				and nx_gduc_gb_distibtuer_id = #{gbDisId}
+			</if>
+			<if test="couponId != null">
+				and nx_gduc_coupon_id = #{couponId}
+			</if>
+			<if test="equalStatus != null">
+				and nx_gduc_status = #{equalStatus}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxGbDistibuterUserCouponEntity">
+		insert into nx_gb_distibuter_user_coupon
+		(
+			`nx_gb_distributer_user_coupon_id`, 
+			`nx_gduc_coupon_id`, 
+			`nx_gduc_gb_distibtuer_user_id`, 
+			`nx_gduc_share_user_id`, 
+			`nx_gduc_nx_distributer_id`, 
+			`nx_gduc_status`, 
+			`nx_gduc_type`, 
+			`nx_gduc_use_order_id`, 
+			`nx_gduc_from_share_user_id`, 
+			`nx_gduc_share_time`,
+			`nx_gduc_gb_distibtuer_id`,
+			`nx_gduc_start_date`,
+			`nx_gduc_stop_date`,
+			`nx_gduc_start_time_zone`,
+			`nx_gduc_stop_time_zone`
+		)
+		values
+		(
+			#{nxGbDistributerUserCouponId}, 
+			#{nxGducCouponId}, 
+			#{nxGducGbDistibtuerUserId}, 
+			#{nxGducShareUserId}, 
+			#{nxGducNxDistributerId}, 
+			#{nxGducStatus}, 
+			#{nxGducType}, 
+			#{nxGducUseOrderId}, 
+			#{nxGducFromShareUserId}, 
+			#{nxGducShareTime},
+			#{nxGducGbDistributerId},
+			#{nxGducStartDate},
+			#{nxGducStopDate},
+			#{nxGducStartTimeZone},
+			#{nxGducStopTimeZone}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxGbDistibuterUserCouponEntity">
+		update nx_gb_distibuter_user_coupon 
+		<set>
+			<if test="nxGducCouponId != null">`nx_gduc_coupon_id` = #{nxGducCouponId}, </if>
+			<if test="nxGducGbDistibtuerUserId != null">`nx_gduc_gb_distibtuer_user_id` = #{nxGducGbDistibtuerUserId}, </if>
+			<if test="nxGducShareUserId != null">`nx_gduc_share_user_id` = #{nxGducShareUserId}, </if>
+			<if test="nxGducNxDistributerId != null">`nx_gduc_nx_distributer_id` = #{nxGducNxDistributerId}, </if>
+			<if test="nxGducStatus != null">`nx_gduc_status` = #{nxGducStatus}, </if>
+			<if test="nxGducType != null">`nx_gduc_type` = #{nxGducType}, </if>
+			<if test="nxGducUseOrderId != null">`nx_gduc_use_order_id` = #{nxGducUseOrderId}, </if>
+			<if test="nxGducFromShareUserId != null">`nx_gduc_from_share_user_id` = #{nxGducFromShareUserId}, </if>
+			<if test="nxGducGbDistributerId != null">`nx_gduc_gb_distibtuer_id` = #{nxGducGbDistributerId}, </if>
+			<if test="nxGducStartDate != null">`nx_gduc_start_date` = #{nxGducStartDate}, </if>
+			<if test="nxGducStopDate != null">`nx_gduc_stop_date` = #{nxGducStopDate}, </if>
+			<if test="nxGducStartTimeZone != null">`nx_gduc_start_time_zone` = #{nxGducStartTimeZone}, </if>
+			<if test="nxGducStopTimeZone != null">`nx_gduc_stop_time_zone` = #{nxGducStopTimeZone}, </if>
+			<if test="nxGducShareTime != null">`nx_gduc_share_time` = #{nxGducShareTime}</if>
+		</set>
+		where nx_gb_distributer_user_coupon_id = #{nxGbDistributerUserCouponId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_gb_distibuter_user_coupon where nx_gb_distributer_user_coupon_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_gb_distibuter_user_coupon where nx_gb_distributer_user_coupon_id in 
+		<foreach item="nxGbDistributerUserCouponId" collection="array" open="(" separator="," close=")">
+			#{nxGbDistributerUserCouponId}
+		</foreach>
+	</delete>
+
+</mapper>

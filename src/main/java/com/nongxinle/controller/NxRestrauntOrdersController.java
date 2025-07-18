@@ -1506,146 +1506,146 @@ public class NxRestrauntOrdersController {
     }
 
 
-    @ResponseBody
-    @RequestMapping("/saveResOrder")
-    public R saveResOrder(@RequestBody NxRestrauntOrdersEntity nxRestrauntOrdersEntity) {
-        Integer nxDepOrderId = 0;
-        //rank
-        Integer nxRoComGoodsFatherId = nxRestrauntOrdersEntity.getNxRoComGoodsFatherId();
-        NxCommunityFatherGoodsEntity fatherGoodsEntity = nxCommunityFatherGoodsService.queryObject(nxRoComGoodsFatherId);
-        NxCommunityFatherGoodsEntity grandGoodsEntity = nxCommunityFatherGoodsService.queryObject(fatherGoodsEntity.getNxCfgFathersFatherId());
-        Integer nxCfgOrderRank = grandGoodsEntity.getNxCfgOrderRank();
-        nxRestrauntOrdersEntity.setNxRoOrderRank(nxCfgOrderRank);
-        //printTimes
-        nxRestrauntOrdersEntity.setNxRoPrintTimes(0);
-
-        //add purchaseGoods
-        Integer comGoodsId = nxRestrauntOrdersEntity.getNxRoComGoodsId();
-        NxCommunityGoodsEntity communityGoodsEntity = cgService.queryObject(comGoodsId);
+//    @ResponseBody
+//    @RequestMapping("/saveResOrder")
+//    public R saveResOrder(@RequestBody NxRestrauntOrdersEntity nxRestrauntOrdersEntity) {
+//        Integer nxDepOrderId = 0;
+//        //rank
+//        Integer nxRoComGoodsFatherId = nxRestrauntOrdersEntity.getNxRoComGoodsFatherId();
+//        NxCommunityFatherGoodsEntity fatherGoodsEntity = nxCommunityFatherGoodsService.queryObject(nxRoComGoodsFatherId);
+//        NxCommunityFatherGoodsEntity grandGoodsEntity = nxCommunityFatherGoodsService.queryObject(fatherGoodsEntity.getNxCfgFathersFatherId());
+//        Integer nxCfgOrderRank = grandGoodsEntity.getNxCfgOrderRank();
+//        nxRestrauntOrdersEntity.setNxRoOrderRank(nxCfgOrderRank);
+//        //printTimes
+//        nxRestrauntOrdersEntity.setNxRoPrintTimes(0);
 //
-        Integer nxCgGoodsType = communityGoodsEntity.getNxCgGoodsType();
-        nxRestrauntOrdersEntity.setNxRoPurchaseGoodsId(-1);
-        //需要采购的订单
-        if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPERICAI()) || nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPESUPPLIER())) {
-            //查询是否有采购的同一个商品
-            Map<String, Object> map = new HashMap<>();
-            map.put("comGoodsId", comGoodsId);
-            map.put("equalStatus", 0);
-            List<NxCommunityPurchaseGoodsEntity> goodsEntities = nxComPurchaseGoodsService.queryPurchaseForComGoods(map);
-            if (goodsEntities.size() == 0) {
-                //是个新采购商品
-                NxCommunityPurchaseGoodsEntity comPurchaseGoodsEntity = new NxCommunityPurchaseGoodsEntity();
-                comPurchaseGoodsEntity.setNxCpgComGoodsFatherId(nxRestrauntOrdersEntity.getNxRoComGoodsFatherId());
-                comPurchaseGoodsEntity.setNxCpgComGoodsId(nxRestrauntOrdersEntity.getNxRoComGoodsId());
-                comPurchaseGoodsEntity.setNxCpgCommunityId(nxRestrauntOrdersEntity.getNxRoCommunityId());
-                comPurchaseGoodsEntity.setNxCpgApplyDate(formatWhatDay(0));
-                comPurchaseGoodsEntity.setNxCpgStatus(0);
-                comPurchaseGoodsEntity.setNxCpgOrdersAmount(1);
-                comPurchaseGoodsEntity.setNxCpgStandard(nxRestrauntOrdersEntity.getNxRoStandard());
-                comPurchaseGoodsEntity.setNxCpgQuantity(nxRestrauntOrdersEntity.getNxRoQuantity());
-                comPurchaseGoodsEntity.setNxCpgPurchaseType(getGbOrderTypeJiCai());
-                nxComPurchaseGoodsService.save(comPurchaseGoodsEntity);
-                Integer gbDistributerPurchaseGoodsId = comPurchaseGoodsEntity.getNxCommunityPurchaseGoodsId();
-                nxRestrauntOrdersEntity.setNxRoPurchaseGoodsId(gbDistributerPurchaseGoodsId);
-                nxRestrauntOrdersEntity.setNxRoBuyStatus(0);
-
-            } else {
-                //给老采购商品添加新订单
-                NxCommunityPurchaseGoodsEntity gbDisPurGoodsEntity = goodsEntities.get(0);
-                Integer gbDistributerPurchaseGoodsId = gbDisPurGoodsEntity.getNxCommunityPurchaseGoodsId();
-                nxRestrauntOrdersEntity.setNxRoPurchaseGoodsId(gbDistributerPurchaseGoodsId);
-                nxRestrauntOrdersEntity.setNxRoBuyStatus(0);
-                //采购商品订单数量更新
-                Integer gbDpgOrdersAmount = gbDisPurGoodsEntity.getNxCpgOrdersAmount();
-                gbDisPurGoodsEntity.setNxCpgOrdersAmount(gbDpgOrdersAmount + 1);
-                BigDecimal purQuantity = new BigDecimal(gbDisPurGoodsEntity.getNxCpgQuantity());
-                BigDecimal orderQuantity = new BigDecimal(nxRestrauntOrdersEntity.getNxRoQuantity());
-                BigDecimal add = purQuantity.add(orderQuantity).setScale(2, BigDecimal.ROUND_HALF_UP);
-                gbDisPurGoodsEntity.setNxCpgQuantity(add.toString());
-                nxComPurchaseGoodsService.update(gbDisPurGoodsEntity);
-            }
-            System.out.println("zidongddidid" +  nxCgGoodsType);
-            //判断是否是自动订货商品，代替采购员发送purchaseBatch
-
-            if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPESUPPLIER())) {
-                Integer nxCgDistributerId = communityGoodsEntity.getNxCgDistributerId();
-                Integer nxCgDistributerGoodsId = communityGoodsEntity.getNxCgDistributerGoodsId();
-                Map<String, Object> mapData = autoAddPurchaseBatch(nxRestrauntOrdersEntity, communityGoodsEntity);
-                Integer purUserId = (Integer) mapData.get("purUserId");
-                nxRestrauntOrdersEntity.setNxRoPurchaseUserId(purUserId);
-                nxRestrauntOrdersEntity.setNxRoComDistributerId(nxCgDistributerId);
-                nxRestrauntOrdersEntity.setNxRoComDistributerGoodsId(nxCgDistributerGoodsId);
-                nxRestrauntOrdersEntity.setNxRoCostPrice(communityGoodsEntity.getNxCgBuyingPrice());
-            }
-
-        }
-
-
-        //判断是否是配送商，自动生成配送供货商NxDistributer一个订单
-        if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPENXDISTRIBUTER())) {
-            System.out.println("nxdisorreerer==" + nxCgGoodsType);
-            Integer nxDoDistributerId = nxRestrauntOrdersEntity.getNxRoCommunityId();
-            Integer gbDoNxDistributerGoodsId = nxRestrauntOrdersEntity.getNxRoComDistributerGoodsId();
-            String gbDoQuantity = nxRestrauntOrdersEntity.getNxRoQuantity();
-            String gbDoStandard = nxRestrauntOrdersEntity.getNxRoStandard();
-            String gbDoRemark = nxRestrauntOrdersEntity.getNxRoRemark();
-            String gbDoApplyDate = nxRestrauntOrdersEntity.getNxRoApplyDate();
-            //
-            String gbDoArriveOnlyDate = nxRestrauntOrdersEntity.getNxRoArriveOnlyDate();
-            Integer gbDoArriveWeeksYear = nxRestrauntOrdersEntity.getNxRoArriveWeeksYear();
-            String gbDoApplyFullTime = nxRestrauntOrdersEntity.getNxRoApplyFullTime();
-            String gbDoApplyArriveDate = nxRestrauntOrdersEntity.getNxRoArriveDate();
-            Integer nxRoRestrauntId = nxRestrauntOrdersEntity.getNxRoRestrauntId();
-            Integer nxRoCommunityId = nxRestrauntOrdersEntity.getNxRoCommunityId();
-            Integer nxRoRestrauntFatherId = nxRestrauntOrdersEntity.getNxRoRestrauntFatherId();
-            NxDistributerGoodsEntity nxDistributerGoodsEntity1 = nxDistributerGoodsService.queryObject(gbDoNxDistributerGoodsId);
-            Integer nxDgDfgGoodsFatherId = nxDistributerGoodsEntity1.getNxDgDfgGoodsFatherId();
-            //
-            NxDepartmentOrdersEntity ordersEntity = new NxDepartmentOrdersEntity();
-            ordersEntity.setNxDoDistributerId(nxDoDistributerId);
-            ordersEntity.setNxDoDisGoodsId(gbDoNxDistributerGoodsId);
-            ordersEntity.setNxDoQuantity(gbDoQuantity);
-            ordersEntity.setNxDoStandard(gbDoStandard);
-            ordersEntity.setNxDoRemark(gbDoRemark);
-            ordersEntity.setNxDoApplyDate(gbDoApplyDate);
-            ordersEntity.setNxDoArriveOnlyDate(gbDoArriveOnlyDate);
-            ordersEntity.setNxDoArriveWeeksYear(gbDoArriveWeeksYear);
-            ordersEntity.setNxDoApplyFullTime(gbDoApplyFullTime);
-            ordersEntity.setNxDoApplyOnlyTime(formatWhatTime(0));
-            ordersEntity.setNxDoArriveDate(gbDoApplyArriveDate);
-            ordersEntity.setNxDoNxCommunityId(nxRoCommunityId);
-            ordersEntity.setNxDoNxCommRestrauntId(nxRoRestrauntId);
-            ordersEntity.setNxDoNxCommRestrauntFatherId(nxRoRestrauntFatherId);
-            ordersEntity.setNxDoDepartmentId(-1);
-            ordersEntity.setNxDoDepartmentFatherId(-1);
-            ordersEntity.setNxDoGbDepartmentId(-1);
-            ordersEntity.setNxDoGbDepartmentFatherId(-1);
-            ordersEntity.setNxDoDisGoodsFatherId(nxDgDfgGoodsFatherId);
-            ordersEntity.setNxDoDepDisGoodsId(-1);
-            ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-            ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
-            ordersEntity.setNxDoPrice(communityGoodsEntity.getNxCgBuyingPrice());
-
-            nxDepartmentOrdersService.save(ordersEntity);
-            nxDepOrderId = ordersEntity.getNxDepartmentOrdersId();
-            Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
-            nxRestrauntOrdersEntity.setNxRoComDistributerOrderId(nxDepartmentOrdersId);
-            nxRestrauntOrdersEntity.setNxRoCostPrice(communityGoodsEntity.getNxCgBuyingPrice());
-
-        }
-
-        nxRestrauntOrdersService.save(nxRestrauntOrdersEntity);
-
-
-
-        if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPENXDISTRIBUTER())) {
-            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(nxDepOrderId);
-            ordersEntity.setNxDoNxRestrauntOrderId(nxRestrauntOrdersEntity.getNxRestrauntOrdersId());
-            ordersEntity.setNxDoGbDepartmentOrderId(-1);
-            nxDepartmentOrdersService.update(ordersEntity);
-        }
-        return R.ok().put("data", nxRestrauntOrdersService.queryObject(nxRestrauntOrdersEntity.getNxRestrauntOrdersId()));
-    }
+//        //add purchaseGoods
+//        Integer comGoodsId = nxRestrauntOrdersEntity.getNxRoComGoodsId();
+//        NxCommunityGoodsEntity communityGoodsEntity = cgService.queryObject(comGoodsId);
+////
+//        Integer nxCgGoodsType = communityGoodsEntity.getNxCgGoodsType();
+//        nxRestrauntOrdersEntity.setNxRoPurchaseGoodsId(-1);
+//        //需要采购的订单
+//        if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPERICAI()) || nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPESUPPLIER())) {
+//            //查询是否有采购的同一个商品
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("comGoodsId", comGoodsId);
+//            map.put("equalStatus", 0);
+//            List<NxCommunityPurchaseGoodsEntity> goodsEntities = nxComPurchaseGoodsService.queryPurchaseForComGoods(map);
+//            if (goodsEntities.size() == 0) {
+//                //是个新采购商品
+//                NxCommunityPurchaseGoodsEntity comPurchaseGoodsEntity = new NxCommunityPurchaseGoodsEntity();
+//                comPurchaseGoodsEntity.setNxCpgComGoodsFatherId(nxRestrauntOrdersEntity.getNxRoComGoodsFatherId());
+//                comPurchaseGoodsEntity.setNxCpgComGoodsId(nxRestrauntOrdersEntity.getNxRoComGoodsId());
+//                comPurchaseGoodsEntity.setNxCpgCommunityId(nxRestrauntOrdersEntity.getNxRoCommunityId());
+//                comPurchaseGoodsEntity.setNxCpgApplyDate(formatWhatDay(0));
+//                comPurchaseGoodsEntity.setNxCpgStatus(0);
+//                comPurchaseGoodsEntity.setNxCpgOrdersAmount(1);
+//                comPurchaseGoodsEntity.setNxCpgStandard(nxRestrauntOrdersEntity.getNxRoStandard());
+//                comPurchaseGoodsEntity.setNxCpgQuantity(nxRestrauntOrdersEntity.getNxRoQuantity());
+//                comPurchaseGoodsEntity.setNxCpgPurchaseType(getGbOrderTypeJiCai());
+//                nxComPurchaseGoodsService.save(comPurchaseGoodsEntity);
+//                Integer gbDistributerPurchaseGoodsId = comPurchaseGoodsEntity.getNxCommunityPurchaseGoodsId();
+//                nxRestrauntOrdersEntity.setNxRoPurchaseGoodsId(gbDistributerPurchaseGoodsId);
+//                nxRestrauntOrdersEntity.setNxRoBuyStatus(0);
+//
+//            } else {
+//                //给老采购商品添加新订单
+//                NxCommunityPurchaseGoodsEntity gbDisPurGoodsEntity = goodsEntities.get(0);
+//                Integer gbDistributerPurchaseGoodsId = gbDisPurGoodsEntity.getNxCommunityPurchaseGoodsId();
+//                nxRestrauntOrdersEntity.setNxRoPurchaseGoodsId(gbDistributerPurchaseGoodsId);
+//                nxRestrauntOrdersEntity.setNxRoBuyStatus(0);
+//                //采购商品订单数量更新
+//                Integer gbDpgOrdersAmount = gbDisPurGoodsEntity.getNxCpgOrdersAmount();
+//                gbDisPurGoodsEntity.setNxCpgOrdersAmount(gbDpgOrdersAmount + 1);
+//                BigDecimal purQuantity = new BigDecimal(gbDisPurGoodsEntity.getNxCpgQuantity());
+//                BigDecimal orderQuantity = new BigDecimal(nxRestrauntOrdersEntity.getNxRoQuantity());
+//                BigDecimal add = purQuantity.add(orderQuantity).setScale(2, BigDecimal.ROUND_HALF_UP);
+//                gbDisPurGoodsEntity.setNxCpgQuantity(add.toString());
+//                nxComPurchaseGoodsService.update(gbDisPurGoodsEntity);
+//            }
+//            System.out.println("zidongddidid" +  nxCgGoodsType);
+//            //判断是否是自动订货商品，代替采购员发送purchaseBatch
+//
+//            if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPESUPPLIER())) {
+//                Integer nxCgDistributerId = communityGoodsEntity.getNxCgDistributerId();
+//                Integer nxCgDistributerGoodsId = communityGoodsEntity.getNxCgDistributerGoodsId();
+//                Map<String, Object> mapData = autoAddPurchaseBatch(nxRestrauntOrdersEntity, communityGoodsEntity);
+//                Integer purUserId = (Integer) mapData.get("purUserId");
+//                nxRestrauntOrdersEntity.setNxRoPurchaseUserId(purUserId);
+//                nxRestrauntOrdersEntity.setNxRoComDistributerId(nxCgDistributerId);
+//                nxRestrauntOrdersEntity.setNxRoComDistributerGoodsId(nxCgDistributerGoodsId);
+//                nxRestrauntOrdersEntity.setNxRoCostPrice(communityGoodsEntity.getNxCgBuyingPrice());
+//            }
+//
+//        }
+//
+//
+//        //判断是否是配送商，自动生成配送供货商NxDistributer一个订单
+//        if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPENXDISTRIBUTER())) {
+//            System.out.println("nxdisorreerer==" + nxCgGoodsType);
+//            Integer nxDoDistributerId = nxRestrauntOrdersEntity.getNxRoCommunityId();
+//            Integer gbDoNxDistributerGoodsId = nxRestrauntOrdersEntity.getNxRoComDistributerGoodsId();
+//            String gbDoQuantity = nxRestrauntOrdersEntity.getNxRoQuantity();
+//            String gbDoStandard = nxRestrauntOrdersEntity.getNxRoStandard();
+//            String gbDoRemark = nxRestrauntOrdersEntity.getNxRoRemark();
+//            String gbDoApplyDate = nxRestrauntOrdersEntity.getNxRoApplyDate();
+//            //
+//            String gbDoArriveOnlyDate = nxRestrauntOrdersEntity.getNxRoArriveOnlyDate();
+//            Integer gbDoArriveWeeksYear = nxRestrauntOrdersEntity.getNxRoArriveWeeksYear();
+//            String gbDoApplyFullTime = nxRestrauntOrdersEntity.getNxRoApplyFullTime();
+//            String gbDoApplyArriveDate = nxRestrauntOrdersEntity.getNxRoArriveDate();
+//            Integer nxRoRestrauntId = nxRestrauntOrdersEntity.getNxRoRestrauntId();
+//            Integer nxRoCommunityId = nxRestrauntOrdersEntity.getNxRoCommunityId();
+//            Integer nxRoRestrauntFatherId = nxRestrauntOrdersEntity.getNxRoRestrauntFatherId();
+//            NxDistributerGoodsEntity nxDistributerGoodsEntity1 = nxDistributerGoodsService.queryObject(gbDoNxDistributerGoodsId);
+//            Integer nxDgDfgGoodsFatherId = nxDistributerGoodsEntity1.getNxDgDfgGoodsFatherId();
+//            //
+//            NxDepartmentOrdersEntity ordersEntity = new NxDepartmentOrdersEntity();
+//            ordersEntity.setNxDoDistributerId(nxDoDistributerId);
+//            ordersEntity.setNxDoDisGoodsId(gbDoNxDistributerGoodsId);
+//            ordersEntity.setNxDoQuantity(gbDoQuantity);
+//            ordersEntity.setNxDoStandard(gbDoStandard);
+//            ordersEntity.setNxDoRemark(gbDoRemark);
+//            ordersEntity.setNxDoApplyDate(gbDoApplyDate);
+//            ordersEntity.setNxDoArriveOnlyDate(gbDoArriveOnlyDate);
+//            ordersEntity.setNxDoArriveWeeksYear(gbDoArriveWeeksYear);
+//            ordersEntity.setNxDoApplyFullTime(gbDoApplyFullTime);
+//            ordersEntity.setNxDoApplyOnlyTime(formatWhatTime(0));
+//            ordersEntity.setNxDoArriveDate(gbDoApplyArriveDate);
+//            ordersEntity.setNxDoNxCommunityId(nxRoCommunityId);
+//            ordersEntity.setNxDoNxCommRestrauntId(nxRoRestrauntId);
+//            ordersEntity.setNxDoNxCommRestrauntFatherId(nxRoRestrauntFatherId);
+//            ordersEntity.setNxDoDepartmentId(-1);
+//            ordersEntity.setNxDoDepartmentFatherId(-1);
+//            ordersEntity.setNxDoGbDepartmentId(-1);
+//            ordersEntity.setNxDoGbDepartmentFatherId(-1);
+//            ordersEntity.setNxDoDisGoodsFatherId(nxDgDfgGoodsFatherId);
+//            ordersEntity.setNxDoDepDisGoodsId(-1);
+//            ordersEntity.setNxDoArriveWhatDay(getWeek(0));
+//            ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
+//            ordersEntity.setNxDoPrice(communityGoodsEntity.getNxCgBuyingPrice());
+//
+//            nxDepartmentOrdersService.save(ordersEntity);
+//            nxDepOrderId = ordersEntity.getNxDepartmentOrdersId();
+//            Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+//            nxRestrauntOrdersEntity.setNxRoComDistributerOrderId(nxDepartmentOrdersId);
+//            nxRestrauntOrdersEntity.setNxRoCostPrice(communityGoodsEntity.getNxCgBuyingPrice());
+//
+//        }
+//
+//        nxRestrauntOrdersService.save(nxRestrauntOrdersEntity);
+//
+//
+//
+//        if (nxCgGoodsType.equals(getNXCOMMUNITYGOODSTYPENXDISTRIBUTER())) {
+//            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(nxDepOrderId);
+//            ordersEntity.setNxDoNxRestrauntOrderId(nxRestrauntOrdersEntity.getNxRestrauntOrdersId());
+//            ordersEntity.setNxDoGbDepartmentOrderId(-1);
+//            nxDepartmentOrdersService.update(ordersEntity);
+//        }
+//        return R.ok().put("data", nxRestrauntOrdersService.queryObject(nxRestrauntOrdersEntity.getNxRestrauntOrdersId()));
+//    }
 
     private Map<String, Object> autoAddPurchaseBatch(NxRestrauntOrdersEntity ordersEntity, NxCommunityGoodsEntity goodsEntity) {
         Map<String, Object> mapData = new HashMap<>();
@@ -1655,12 +1655,8 @@ public class NxRestrauntOrdersController {
         NxCommunitySupplierEntity communitySupplierEntity = nxCommunitySupplierService.queryObject(gbDgGbSupplierId);
         Integer gbDsSupplierUserId = communitySupplierEntity.getNxCsJrdhSupplierUserId();
         Integer gbDsPurUserId = communitySupplierEntity.getNxCsJrdhPurUserId();
-        Integer gbDsGbDepartmentId1 = communitySupplierEntity.getNxCsNxCommunityId();
-        System.out.println("autotottototootot" + gbDsPurUserId + "gbDgGbSupplierIdgbDgGbSupplierId=" + gbDgGbSupplierId);
-
         Map<String, Object> map = new HashMap<>();
         mapData.put("purUserId", gbDsPurUserId);
-
         map.put("supplierId", gbDgGbSupplierId);
         map.put("status", 1);
         List<NxCommunityPurchaseBatchEntity> entities = nxComPurchaseBatchService.queryComPurchaseBatchByParams(map);

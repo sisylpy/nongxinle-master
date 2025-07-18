@@ -11,7 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.nongxinle.entity.GbDistributerGoodsEntity;
+import com.nongxinle.entity.NxDistributerGoodsEntity;
 import com.nongxinle.entity.NxDistributerStandardEntity;
+import com.nongxinle.service.GbDistributerGoodsService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,8 @@ import com.nongxinle.utils.R;
 public class GbDistributerStandardController {
 	@Autowired
 	private GbDistributerStandardService gbDisStandardService;
+	@Autowired
+	private GbDistributerGoodsService gbDistributerGoodsService;
 	
 	@RequestMapping(value = "/saveGbStandard", method = RequestMethod.POST)
 	@ResponseBody
@@ -42,8 +47,13 @@ public class GbDistributerStandardController {
 	@RequestMapping(value = "/gbDisDeleteStandard/{id}")
 	@ResponseBody
 	public R gbDisDeleteStandard(@PathVariable Integer id) {
+		GbDistributerStandardEntity gbDistributerStandardEntity = gbDisStandardService.queryObject(id);
+		Integer gbDsDisGoodsId = gbDistributerStandardEntity.getGbDsDisGoodsId();
 		gbDisStandardService.delete(id);
-		return R.ok();
+		Map<String, Object> map = new HashMap<>();
+		map.put("disGoodsId", gbDsDisGoodsId);
+		GbDistributerGoodsEntity goodsEntity = gbDistributerGoodsService.queryDisGoodsWithDepDisGoods(map);
+		return R.ok().put("data",goodsEntity);
 	}
 
 	/**

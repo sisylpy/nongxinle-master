@@ -36,10 +36,10 @@ import java.util.Map;
 @Service
 public class WeChatService {
 
-   @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
+//   @Bean
+//    public RestTemplate restTemplate() {
+//        return new RestTemplate();
+//    }
 
     @Autowired
     private RestTemplate restTemplate;

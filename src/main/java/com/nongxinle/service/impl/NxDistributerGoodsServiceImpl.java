@@ -240,6 +240,107 @@ public class NxDistributerGoodsServiceImpl implements NxDistributerGoodsService 
 	    return nxDistributerGoodsDao.queryDisGoodsDetailWithLinshi(doDisGoodsId);
     }
 
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisGoodsWithGbGoodsByParams(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryDisGoodsWithGbGoodsByParams(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisShelfGoodsQuickSearchStr(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryDisShelfGoodsQuickSearchStr(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsShelfGoodsEntity> queryDisShelfGoods(Map<String, Object> map) {
+
+	  return   nxDistributerGoodsDao.queryDisShelfGoods(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisLinshiGoodsQuickSearchStr(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryDisLinshiGoodsQuickSearchStr(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisNxGoodsQuickSearchStrByGrandId(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryDisNxGoodsQuickSearchStrByGrandId(map);
+    }
+
+    @Override
+    public List<NxDistributerEntity> queryYishangByGoods(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryYishangByGoods(map);
+    }
+
+    @Override
+    public List<NxDistributerEntity> queryLinshiGoodsForNx() {
+
+	    return nxDistributerGoodsDao.queryLinshiGoodsForNx();
+    }
+
+    @Override
+    public int queryLinshiGoodsAcount(Integer nxDistributerId) {
+
+	    return  nxDistributerGoodsDao.queryLinshiGoodsAcount(nxDistributerId);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryGbDisDisGrandGoodsByGreatId(Map<String, Object> map) {
+
+	    return  nxDistributerGoodsDao.queryGbDisDisGrandGoodsByGreatId(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithGbDepOrders(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryDisGoodsQuickSearchStrWithGbDepOrders(map);
+    }
+
+    @Override
+    public int queryNxGoodsSonsSortByParams(Map<String, Object> mapF) {
+
+	    return nxDistributerGoodsDao.queryNxGoodsSonsSortByParams(mapF);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatIdAllGb(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryNxDepDisGrandGoodsByGreatIdAllGb(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisGoodsByLikeName(Map<String, Object> mapOne) {
+
+	    return  nxDistributerGoodsDao.queryDisGoodsByLikeName(mapOne);
+    }
+
+    @Override
+    public NxDistributerGoodsEntity querySameGoodsWithOrders(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.querySameGoodsWithOrders(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisGoodsByNameLikePinyin(Map<String, Object> mapTwo) {
+
+	    return nxDistributerGoodsDao.queryDisGoodsByNameLikePinyin(mapTwo);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisGoodsByAliasLike(Map<String, Object> mapA) {
+
+	    return nxDistributerGoodsDao.queryDisGoodsByAliasLike(mapA);
+    }
+
+    @Override
+    public List<Integer> queryOnlyDepGoodsIds(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryOnlyDepGoodsIds(map);
+    }
 
 
 //    @Override

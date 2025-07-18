@@ -29,7 +29,7 @@ import static com.nongxinle.utils.DateUtils.formatWhatDay;
 import static com.nongxinle.utils.DateUtils.formatWhatFullTime;
 import static com.nongxinle.utils.GbTypeUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.getGbDepUserAdminWindowdinghuo;
-import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisUserPurchase;
+import static com.nongxinle.utils.NxDistributerTypeUtils.*;
 
 
 @RestController
@@ -42,6 +42,11 @@ public class NxDistributerUserController {
     @Autowired
     private QyNxDisCorpService qyNxDisCorpService;
 
+
+
+    @RequestMapping(value = "/i7948FzJJ6.txt")
+    @ResponseBody
+    public String nxStaffRegister() { return "bb7a0c73e61112c45ebd6ad3743bb05e"; }
 
     @RequestMapping(value = "/changeDisUser/{userId}")
     @ResponseBody
@@ -210,13 +215,10 @@ public class NxDistributerUserController {
                 return R.error(-1, "请向管理员索要注册邀请");
             }
 
-
         } else {
             return R.error(-1, "请进行注册");
         }
     }
-
-
 
 
 
@@ -334,10 +336,10 @@ public class NxDistributerUserController {
     }
 
     
-    @RequestMapping(value = "/i7948FzJJ6.txt")
-    @ResponseBody
-    public String nxStaffRegister() { return "bb7a0c73e61112c45ebd6ad3743bb05e"; }
-
+//    @RequestMapping(value = "/i7948FzJJ6.txt")
+//    @ResponseBody
+//    public String nxStaffRegister() { return "bb7a0c73e61112c45ebd6ad3743bb05e"; }
+//
 
 
     @RequestMapping(value = "/getDisUserInfo/{userId}")
@@ -380,8 +382,50 @@ public class NxDistributerUserController {
     @ResponseBody
     public R getDisUsers(@PathVariable Integer disId) {
 
-        List<NxDistributerUserEntity> oneUserEntities = nxDistributerUserService.getAllUserByDisId(disId);
-        return R.ok().put("data", oneUserEntities);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("admin",  getNxDisUserAdmin());
+        List<NxDistributerUserEntity> zeroList = nxDistributerUserService.getAdminUserByParams(map);
+        map.put("admin",  getNxDisUserStaff());
+        List<NxDistributerUserEntity> oneList = nxDistributerUserService.getAdminUserByParams(map);
+        zeroList.addAll(oneList);
+
+        map.put("admin",  getNxDisUserWeighter());
+        List<NxDistributerUserEntity> weighter = nxDistributerUserService.getAdminUserByParams(map);
+
+        map.put("admin",  getNxDisUserKufng());
+        List<NxDistributerUserEntity> kufang = nxDistributerUserService.getAdminUserByParams(map);
+        map.put("admin",  getNxDisUserDriver());
+        List<NxDistributerUserEntity> diriver = nxDistributerUserService.getAdminUserByParams(map);
+
+        Map<String, Object> mapRe = new HashMap<>();
+        mapRe.put("zero", zeroList);
+        mapRe.put("one",  weighter);
+        mapRe.put("two",  kufang);
+        mapRe.put("three",  diriver);
+
+        return R.ok().put("data", mapRe);
+    }
+
+    @RequestMapping(value = "/updateDisUserAdmin", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateDisUserAdmin (@RequestBody NxDistributerUserEntity user) {
+        if(user.getNxDiuAdmin() == 1){
+            Map<String, Object> map = new HashMap<>();
+            map.put("disId", user.getNxDiuDistributerId());
+            map.put("admin", 0);
+            List<NxDistributerUserEntity> userEntities = nxDistributerUserService.queryRoleNxDisRoleUserList(map);
+            if(userEntities.size() < 2){
+                return R.error(-1,"必须有一个超级管理员");
+            }else{
+                nxDistributerUserService.update(user);
+                return R.ok();
+            }
+        }else{
+            nxDistributerUserService.update(user);
+            return R.ok();
+        }
     }
 
     @RequestMapping(value = "/deleteDisUser/{userId}")
@@ -391,6 +435,24 @@ public class NxDistributerUserController {
         return R.ok();
     }
 
+
+    @RequestMapping(value = "/disAndroidLoginWork/{phone}")
+    @ResponseBody
+    public R disAndroidLoginWork(@PathVariable  String phone) {
+        System.out.println("ohoneee" + phone);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByPhone(phone);
+        if (distributerUser != null) {
+            Integer nxDistributerUserId = distributerUser.getNxDistributerUserId();
+            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
+
+            System.out.println("mapapapappa" + stringObjectMap);
+            return R.ok().put("data", stringObjectMap);
+        } else {
+            return R.error(-1, "用户不存在");
+        }
+    }
 
     @RequestMapping(value = "/disLoginWork", method = RequestMethod.POST)
     @ResponseBody
@@ -544,10 +606,154 @@ public class NxDistributerUserController {
         }
     }
 
+    @RequestMapping(value = "/printDisLogin", method = RequestMethod.POST)
+    @ResponseBody
+    public R printDisLogin(String sessionId,  String code) {
+        System.out.println("cosisisidi" +sessionId + "coe==" + code);
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAppID() + "&secret=" +
+                myAPPIDConfig.getTexiansongScreat() + "&js_code=" + code +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+        if (distributerUser != null) {
+            Integer nxDistributerUserId = distributerUser.getNxDistributerUserId();
+            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
+            distributerUser.setNxDiuLoginTimes( distributerUser.getNxDiuLoginTimes() + 1);
+            System.out.println("timememmemssss" + distributerUser.getNxDiuLoginTimes());
+            nxDistributerUserService.update(distributerUser);
+            // 生成唯一的 sessionId（可以用 UUID）
+//            String sessionId = UUID.randomUUID().toString();  // 生成一个唯一的 sessionId
+
+//            storeSession(sessionId, distributerUser);
+            distributerUser.setNxDiuWxPhone(sessionId);
+            nxDistributerUserService.update(distributerUser);
+            return R.ok().put("data", stringObjectMap).put("sessionId", sessionId);
+
+        } else {
+            return R.error(-1, "用户不存在");
+        }
+    }
+
+    @RequestMapping(value = "/checkLoginStatus/{sessionId}")
+    @ResponseBody
+    public R checkLoginStatus(@PathVariable String sessionId) {
+        // 根据 openId 查询用户是否登录
+        NxDistributerUserEntity user = nxDistributerUserService.queryUserByPhone(sessionId);
+
+        if (user != null) {
+            return R.ok().put("loggedIn", true).put("user", user);
+        } else {
+            return R.ok().put("loggedIn", false);
+        }
+    }
+
+    @RequestMapping(value = "/disLoginKf", method = RequestMethod.POST)
+    @ResponseBody
+    public R disLoginKf(@RequestBody NxDistributerUserEntity distributerUserEntity) {
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getShanghuoAppID() + "&secret=" +
+                myAPPIDConfig.getShanghuoScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+        if (distributerUser != null) {
+            Integer nxDistributerUserId = distributerUser.getNxDistributerUserId();
+            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
+            distributerUser.setNxDiuLoginTimes( distributerUser.getNxDiuLoginTimes() + 1);
+            System.out.println("timememmemssss" + distributerUser.getNxDiuLoginTimes());
+            nxDistributerUserService.update(distributerUser);
+            return R.ok().put("data", stringObjectMap);
+        } else {
+            return R.error(-1, "用户不存在");
+        }
+    }
+
+    @RequestMapping(value = "/disLoginAdmin", method = RequestMethod.POST)
+    @ResponseBody
+    public R disLoginAdmin(@RequestBody NxDistributerUserEntity distributerUserEntity) {
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAdminAppID() + "&secret=" +
+                myAPPIDConfig.getTexiansongAdminScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+        if (distributerUser != null) {
+            Integer nxDistributerUserId = distributerUser.getNxDistributerUserId();
+            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
+            distributerUser.setNxDiuLoginTimes( distributerUser.getNxDiuLoginTimes() + 1);
+            System.out.println("timememmemssss" + distributerUser.getNxDiuLoginTimes());
+            nxDistributerUserService.update(distributerUser);
+            return R.ok().put("data", stringObjectMap);
+        } else {
+            return R.error(-1, "用户不存在");
+        }
+    }
+
+
 
     /**
      * 批发商新管理者注册
-     * @param distributerUserEntity 批发商用户
+     * @param distributerUserEntity 批发商用户disUserSave
+     * @return 批发商
+     */
+    @RequestMapping(value = "/disUserSaveAdmin", method = RequestMethod.POST)
+    @ResponseBody
+    public R disUserSaveAdmin(@RequestBody NxDistributerUserEntity distributerUserEntity) {
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAdminAppID() + "&secret=" +
+                myAPPIDConfig.getTexiansongAdminScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+        if (distributerUser != null) {
+            return R.error(-1, "用户已存在，请直接登陆");
+        } else {
+
+            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+            distributerUserEntity.setNxDiuLoginTimes(0);
+            distributerUserEntity.setNxDiuWxOpenId(openid);
+            distributerUserEntity.setNxDiuAdmin(getNxDisUserKufng());
+            nxDistributerUserService.save(distributerUserEntity);
+            Integer nxDistributerUserId = distributerUserEntity.getNxDistributerUserId();
+            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
+            return R.ok().put("data", stringObjectMap);
+        }
+    }
+
+
+    /**
+     * 批发商新管理者注册
+     * @param distributerUserEntity 批发商用户disUserSave
      * @return 批发商
      */
     @RequestMapping(value = "/disUserSave", method = RequestMethod.POST)
@@ -713,7 +919,8 @@ public class NxDistributerUserController {
                                                @RequestParam("userName") String userName,
                                                @RequestParam("code") String code,
                                                @RequestParam("disId") Integer disId,
-                                               HttpSession session) {
+                                               @RequestParam("admin") Integer admin,
+                                 HttpSession session) {
 
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAppID() + "&secret=" +
@@ -746,6 +953,7 @@ public class NxDistributerUserController {
             distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
             distributerUserEntity.setNxDiuWxNickName(userName);
             distributerUserEntity.setNxDiuDistributerId(disId);
+            distributerUserEntity.setNxDiuAdmin(admin);
             nxDistributerUserService.save(distributerUserEntity);
 
             return R.ok();
@@ -755,15 +963,71 @@ public class NxDistributerUserController {
 
     }
 
-    @RequestMapping(value = "/disLoginOld", method = RequestMethod.POST)
-    @ResponseBody
-    public R disLoginOld(@RequestBody NxDistributerUserEntity distributerUserEntity) {
 
-        System.out.println("osososoosodddod");
+//    @RequestMapping(value = "/disUserSaveWithFileAdmin",produces = "text/html;charset=UTF-8")
+//    @ResponseBody
+//    public R disUserSaveWithFileAdmin(@RequestParam("file") MultipartFile file,
+//                                 @RequestParam("userName") String userName,
+//                                 @RequestParam("code") String code,
+//                                 @RequestParam("disId") Integer disId,
+//                                 @RequestParam("admin") Integer admin,
+//                                 HttpSession session) {
+//
+//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAdminAppID() + "&secret=" +
+//                myAPPIDConfig.getTexiansongAdminScreat() + "&js_code=" + code +  "&grant_type=authorization_code";
+//        // 发送请求，返回Json字符串
+//        String str = WeChatUtil.httpRequest(url, "GET", null);
+//        // 转成Json对象 获取openid
+//        JSONObject jsonObject = JSONObject.parseObject(str);
+//
+//        // 我们需要的openid，在一个小程序中，openid是唯一的
+//        String openid = jsonObject.get("openid").toString();
+//        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+//        if (distributerUser != null) {
+//            return R.error(-1, "用户已存在，请直接登陆");
+//        } else {
+//            NxDistributerUserEntity distributerUserEntity = new NxDistributerUserEntity();
+//            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+//            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+//            distributerUserEntity.setNxDiuLoginTimes(0);
+//            distributerUserEntity.setNxDiuWxOpenId(openid);
+//            String newUploadName = "uploadImage";
+//            String realPath = UploadFile.upload(session, newUploadName, file);
+//
+//            String filename = file.getOriginalFilename();
+//            String filePath = newUploadName + "/" + filename;
+//            distributerUserEntity.setNxDiuWxAvartraUrl(filePath);
+//            distributerUserEntity.setNxDiuUrlChange(1);
+//            distributerUserEntity.setNxDiuWxOpenId(openid);
+//            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+//            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+//            distributerUserEntity.setNxDiuWxNickName(userName);
+//            distributerUserEntity.setNxDiuDistributerId(disId);
+//            distributerUserEntity.setNxDiuAdmin(admin);
+//            nxDistributerUserService.save(distributerUserEntity);
+//
+//            return R.ok();
+//        }
+//
+//    }
+
+    /**
+     * 门店管理端，采购端，库房端注册用户
+     * @param
+     * @return 用户
+     */
+    @RequestMapping(value = "/disKfUserSaveWithFile",produces = "text/html;charset=UTF-8")
+    @ResponseBody
+    public R disKfUserSaveWithFile(@RequestParam("file") MultipartFile file,
+                                 @RequestParam("userName") String userName,
+                                 @RequestParam("code") String code,
+                                 @RequestParam("disId") Integer disId,
+                                 HttpSession session) {
+
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiansuocaigouguanliduanAppId() + "&secret=" +
-                myAPPIDConfig.getLiansuocaigouguanliduanScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
-                "&grant_type=authorization_code";
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getShanghuoAppID() + "&secret=" +
+                myAPPIDConfig.getShanghuoScreat() + "&js_code=" + code +  "&grant_type=authorization_code";
         // 发送请求，返回Json字符串
         String str = WeChatUtil.httpRequest(url, "GET", null);
         // 转成Json对象 获取openid
@@ -773,15 +1037,62 @@ public class NxDistributerUserController {
         String openid = jsonObject.get("openid").toString();
         NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
         if (distributerUser != null) {
-            Integer nxDistributerUserId = distributerUser.getNxDistributerUserId();
-            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
-            distributerUser.setNxDiuLoginTimes( distributerUser.getNxDiuLoginTimes() + 1);
-            nxDistributerUserService.update(distributerUser);
-            return R.ok().put("data", stringObjectMap);
+            return R.error(-1, "用户已存在，请直接登陆");
         } else {
-            return R.error(-1, "用户不存在");
+            NxDistributerUserEntity distributerUserEntity = new NxDistributerUserEntity();
+            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+            distributerUserEntity.setNxDiuLoginTimes(0);
+            distributerUserEntity.setNxDiuWxOpenId(openid);
+            String newUploadName = "uploadImage";
+            String realPath = UploadFile.upload(session, newUploadName, file);
+
+            String filename = file.getOriginalFilename();
+            String filePath = newUploadName + "/" + filename;
+            distributerUserEntity.setNxDiuWxAvartraUrl(filePath);
+            distributerUserEntity.setNxDiuUrlChange(1);
+            distributerUserEntity.setNxDiuWxOpenId(openid);
+            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+            distributerUserEntity.setNxDiuWxNickName(userName);
+            distributerUserEntity.setNxDiuDistributerId(disId);
+            distributerUserEntity.setNxDiuAdmin(getNxDisUserWeighter());
+            nxDistributerUserService.save(distributerUserEntity);
+
+            return R.ok();
         }
+
+
+
     }
+
+//    @RequestMapping(value = "/disLoginOld", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R disLoginOld(@RequestBody NxDistributerUserEntity distributerUserEntity) {
+//
+//        System.out.println("osososoosodddod");
+//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiansuocaigouguanliduanAppId() + "&secret=" +
+//                myAPPIDConfig.getLiansuocaigouguanliduanScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
+//                "&grant_type=authorization_code";
+//        // 发送请求，返回Json字符串
+//        String str = WeChatUtil.httpRequest(url, "GET", null);
+//        // 转成Json对象 获取openid
+//        JSONObject jsonObject = JSONObject.parseObject(str);
+//
+//        // 我们需要的openid，在一个小程序中，openid是唯一的
+//        String openid = jsonObject.get("openid").toString();
+//        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+//        if (distributerUser != null) {
+//            Integer nxDistributerUserId = distributerUser.getNxDistributerUserId();
+//            Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(nxDistributerUserId);
+//            distributerUser.setNxDiuLoginTimes( distributerUser.getNxDiuLoginTimes() + 1);
+//            nxDistributerUserService.update(distributerUser);
+//            return R.ok().put("data", stringObjectMap);
+//        } else {
+//            return R.error(-1, "用户不存在");
+//        }
+//    }
 
     @RequestMapping(value = "/updateDisUserDeviceId", method = RequestMethod.POST)
     @ResponseBody

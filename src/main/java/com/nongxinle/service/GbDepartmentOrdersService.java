@@ -74,8 +74,6 @@ public interface GbDepartmentOrdersService {
 
     List<GbDistributerGoodsShelfEntity> disGetUnPlanPurchaseApplysStock(Map<String, Object> map);
 
-    List<GbDistributerFatherGoodsEntity> disGetPrintedPurGoodsApply(Map<String, Object> map);
-
     Integer queryOrdersDisGoodsAcount(Map<String, Object> map);
 
     List<GbDepartmentOrdersEntity> queryPeisongOrdersByParams(Map<String, Object> map);
@@ -83,4 +81,16 @@ public interface GbDepartmentOrdersService {
     Double queryGbOrdersSubtotal(Map<String, Object> map3d);
 
     GbDepartmentOrdersEntity queryReturnOrderByReduceId(Integer gbDepartmentGoodsStockReduceId);
+
+    List<GbDistributerFatherGoodsEntity> queryGreatGrandForJrdh(Map<String, Object> mapDep);
+
+    List<NxJrdhSupplierEntity> querySupplierByOrdersParams(Map<String, Object> mapDep);
+
+    GbDepartmentOrdersEntity selectLastOrder(Map<String, Object> params);
+
+    List<Integer> selectFrequentGoods(Map<String, Object> freqParams);
+
+    List<DailyUsage> selectDailyUsage(Map<String, Object> map);
+
+    List<GbDistributerFatherGoodsEntity> queryGrandGoodsOrder(Map<String, Object> map1);
 }

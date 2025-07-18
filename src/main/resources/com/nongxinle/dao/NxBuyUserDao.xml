@@ -20,7 +20,11 @@
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
 		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
 		<result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
 		<result property="nxDistributerManager" column="nx_distributer_manager"/>
 		<result property="nxDistributerAddress" column="nx_distributer_address"/>
 		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
@@ -38,6 +42,7 @@
 	</resultMap>
 	<resultMap id="disUser" type="NxDistributerUserEntity">
 		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
 		<result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
 		<result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -83,6 +88,10 @@
 	</resultMap>
 	<resultMap id="dep" type="NxDepartmentEntity">
 		<id property="nxDepartmentId" column="nx_department_id"/>
+		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
+		<result property="nxDepartmentLat" column="nx_department_lat"/>
+		<result property="nxDepartmentLng" column="nx_department_lng"/>
+		<result property="nxDepartmentPickName" column="nx_department_pick_name"/>
 		<result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
 		<result property="nxDepartmentPrintName" column="nx_department_print_name"/>
 		<result property="nxDepartmentType" column="nx_department_type"/>
@@ -93,8 +102,9 @@
 	</resultMap>
 	<resultMap id="depsOrders" type="NxDepartmentOrdersEntity">
 		 <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
-        <result property="nxDoExpcetPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
         <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
         <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
 		<result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -146,6 +156,14 @@
 
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+		<result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
         <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
         <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
         <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
@@ -197,6 +215,7 @@
 
 	<resultMap id="purchaseGoods" type="NxDistributerPurchaseGoodsEntity">
 		<id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
+		<result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
 		<result property="nxDpgQuantity" column="nx_DPG_quantity"/>
 		<result property="nxDpgStandard" column="nx_DPG_standard"/>
 		<result property="nxDpgBuyQuantity" column="nx_DPG_buy_quantity"/>
@@ -271,6 +290,7 @@
 				   ds.nx_department_father_id 'nx_department_father_id',
 				   ds.nx_department_is_group_dep 'nx_department_is_group_dep',
 				   df.nx_department_id 'dd_nx_department_id',
+               df.nx_department_pick_name 'dd_nx_department_pick_name',
 				   df.nx_department_name 'dd_nx_department_name',
 				   df.nx_department_attr_name 'dd_nx_department_attr_name',
 				   purGbDs.gb_department_id 'purGbDs_gb_department_id',
@@ -285,7 +305,7 @@
 			left join nx_distributer_purchase_goods as dpg on dpg.nx_DPG_batch_id = dpb.nx_distributer_purchase_batch_id
 				left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dpg.nx_DPG_dis_goods_id
 			    left join nongxinle.nx_distributer_user as ndu on ndu.nx_distributer_user_id = dpb.nx_DPB_pur_user_id
-				left join nx_department_orders as dor on dor.nx_DO_purchase_goods_id = dpg.nx_distributer_purchase_goods_id
+				left join nx_department_order_history as dor on dor.nx_DO_purchase_goods_id = dpg.nx_distributer_purchase_goods_id
 				left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
 				left join nx_department as df on df.nx_department_id =   ds.nx_department_father_id
 			left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = dpb.nx_DPB_buy_user_id

@@ -10,6 +10,7 @@ package com.nongxinle.dao;
 import com.nongxinle.entity.GbDepartmentEntity;
 import com.nongxinle.entity.GbDistributerEntity;
 import com.nongxinle.entity.GbDistributerPurchaseBatchEntity;
+import com.nongxinle.entity.NxJrdhSupplierEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -38,4 +39,8 @@ public interface GbDistributerPurchaseBatchDao extends BaseDao<GbDistributerPurc
     List<GbDistributerEntity> queryGbDistributerBySellerId(String sellId);
 
     GbDistributerPurchaseBatchEntity queryBatchItemByParams(Map<String, Object> mapB);
+
+    List<NxJrdhSupplierEntity> querySupplierList(Map<String, Object> map);
+
+    List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatchInfo(Map<String, Object> map);
 }

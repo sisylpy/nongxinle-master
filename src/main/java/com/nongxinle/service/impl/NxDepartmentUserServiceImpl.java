@@ -78,6 +78,17 @@ public class NxDepartmentUserServiceImpl implements NxDepartmentUserService {
 	    return nxDepartmentUserDao.queryAllUsersByDepFatherId(depId);
     }
 
+	@Override
+	public NxDepartmentUserEntity queryDepUserInfo(Map<String, Object> map) {
+		return nxDepartmentUserDao.queryDepUserInfo(map);
+	}
+
+    @Override
+    public NxDepartmentUserEntity queryDepUserByMachineId(String id) {
+
+		return nxDepartmentUserDao.queryDepUserByMachineId(id);
+    }
+
 
 //	@Override
 //	public List<NxDepartmentUserEntity> queryList(Map<String, Object> map){

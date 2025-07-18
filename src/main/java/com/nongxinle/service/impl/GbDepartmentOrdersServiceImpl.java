@@ -166,11 +166,7 @@ public class GbDepartmentOrdersServiceImpl implements GbDepartmentOrdersService 
 		return gbDepartmentOrdersDao.disGetUnPlanPurchaseApplysStock(map);
     }
 
-    @Override
-    public List<GbDistributerFatherGoodsEntity> disGetPrintedPurGoodsApply(Map<String, Object> map) {
 
-		return gbDepartmentOrdersDao.disGetPrintedPurGoodsApply(map);
-    }
 
     @Override
     public Integer queryOrdersDisGoodsAcount(Map<String, Object> map) {
@@ -194,6 +190,42 @@ public class GbDepartmentOrdersServiceImpl implements GbDepartmentOrdersService 
     public GbDepartmentOrdersEntity queryReturnOrderByReduceId(Integer gbDepartmentGoodsStockReduceId) {
 
 	    return gbDepartmentOrdersDao.queryReturnOrderByReduceId(gbDepartmentGoodsStockReduceId);
+    }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryGreatGrandForJrdh(Map<String, Object> mapDep) {
+
+	    return gbDepartmentOrdersDao.queryGreatGrandForJrdh(mapDep);
+    }
+
+    @Override
+    public List<NxJrdhSupplierEntity> querySupplierByOrdersParams(Map<String, Object> mapDep) {
+
+	    return gbDepartmentOrdersDao.querySupplierByOrdersParams(mapDep);
+    }
+
+    @Override
+    public GbDepartmentOrdersEntity selectLastOrder(Map<String, Object> params) {
+
+	    return gbDepartmentOrdersDao.selectLastOrder(params);
+    }
+
+    @Override
+    public List<Integer> selectFrequentGoods(Map<String, Object> freqParams) {
+
+	    return gbDepartmentOrdersDao.selectFrequentGoods(freqParams);
+    }
+
+    @Override
+    public List<DailyUsage> selectDailyUsage(Map<String, Object> map) {
+
+	    return gbDepartmentOrdersDao.selectDailyUsage(map);
+    }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryGrandGoodsOrder(Map<String, Object> map1) {
+
+	    return gbDepartmentOrdersDao.queryGrandGoodsOrder(map1);
     }
 
 

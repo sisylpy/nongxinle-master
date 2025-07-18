@@ -7,22 +7,16 @@ package com.nongxinle.dao;
  * @date 06-24 11:45
  */
 
-import com.nongxinle.entity.GbDepartmentEntity;
-import com.nongxinle.entity.GbDistributerFatherGoodsEntity;
-import com.nongxinle.entity.GbDistributerPurchaseGoodsEntity;
-import com.nongxinle.entity.NxDistributerEntity;
+import com.nongxinle.entity.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 
 public interface GbDistributerPurchaseGoodsDao extends BaseDao<GbDistributerPurchaseGoodsEntity> {
 
     List<GbDistributerFatherGoodsEntity> queryDisPurchaseGoods(Map<String, Object> map);
-
-//    /////////////////
-
-//    List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByUUID(String uuid);
 
     List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByGoodsId(Map<String, Object> map);
 
@@ -61,4 +55,21 @@ public interface GbDistributerPurchaseGoodsDao extends BaseDao<GbDistributerPurc
     String queryPurGoodsMinPrice(Map<String, Object> map);
 
     GbDistributerPurchaseGoodsEntity queryPurGoodsWithOrders(Integer id);
+
+    List<GbDistributerFatherGoodsEntity> queryGreatGrandPurGoodsDetail(Map<String, Object> map);
+
+    int queryGbPurchaseOrderAmount(Map<String, Object> map1);
+
+    GbDistributerPurchaseGoodsEntity queryBuyingPurGoods(Map<String, Object> map);
+
+    List<GbDistributerFatherGoodsEntity> queryGreatGrandGoodsByDisGoods(Map<String, Object> map1);
+
+    TreeSet<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map);
+
+    List<GbDistributerFatherGoodsEntity> queryGrandPurchaseGoods(Map<String, Object> map4);
+
+    String queryPurchaseGoodsWeight(Map<String, Object> mapDay);
+
+
+    GbDistributerPurchaseGoodsEntity queryLastestItem(Map<String, Object> map);
 }

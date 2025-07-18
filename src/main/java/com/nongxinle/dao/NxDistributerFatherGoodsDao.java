@@ -12,6 +12,8 @@ import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
 import com.nongxinle.entity.NxDistributerGoodsEntity;
 import com.nongxinle.entity.NxGoodsEntity;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +28,7 @@ public interface NxDistributerFatherGoodsDao extends BaseDao<NxDistributerFather
 
     List<NxDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map);
 
-    List<NxDistributerFatherGoodsEntity> queryDisGoodsCataWithGoods(Map<String, Object> map);
+//    List<NxDistributerFatherGoodsEntity> queryDisGoodsCataWithGoods(Map<String, Object> map);
 
     List<NxDistributerFatherGoodsEntity> queryDisGreatGrandList(Integer disId);
 
@@ -38,9 +40,12 @@ public interface NxDistributerFatherGoodsDao extends BaseDao<NxDistributerFather
 
     List<NxDistributerFatherGoodsEntity> queryDisGoodsCataLinshi(Integer nxDistributerId);
 
-    List<NxDistributerFatherGoodsEntity> queryFatherGoodsWithDisGoods(Map<String, Object> map1);
+    int queryMaxSortByFatherId(Integer fatherId);
+
+    List<NxDistributerFatherGoodsEntity> queryDisGreatGrandListWithType(Map<String, Object> mapG);
 
 
-//    List<NxDistributerFatherGoodsEntity> queryHasGreatGrandGoods(Map<String, Object> map3);
+    List<NxDistributerFatherGoodsEntity> queryListByIds(List<Integer> integers);
 
+    List<NxDistributerFatherGoodsEntity> queryListByFatherId(Integer id);
 }

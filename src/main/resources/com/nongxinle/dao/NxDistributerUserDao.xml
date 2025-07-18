@@ -60,19 +60,66 @@
         <result property="nxJrdhUrlChange" column="buy_user_nx_jrdh_url_change"/>
         <result property="nxJrdhAdmin" column="buy_user_nx_jrdh_admin"/>
     </resultMap>
+    <resultMap id="orderPay" type="NxDistributerPayEntity">
+        <id property="nxDistributerPayId" column="nx_distributer_pay_id"/>
+        <result property="nxNdpPaySubtotal" column="nx_ndp_pay_subtotal"/>
+        <result property="nxNdpPayTime" column="nx_ndp_pay_time"/>
+        <result property="nxNdpFromTime" column="nx_ndp_from_time"/>
+        <result property="nxNdpStopTime" column="nx_ndp_stop_time"/>
+        <result property="nxNdpPayTime" column="nx_ndp_pay_time"/>
+        <result property="nxNdpType" column="nx_ndp_type"/>
+        <result property="nxNdpNxNewDisId" column="nx_ndp_nx_new_dis_id"/>
+        <result property="nxNdpBuyQuantity" column="nx_ndp_buy_quantity"/>
+    </resultMap>
+
+    <resultMap id="liuliangPay" type="NxDistributerPayEntity">
+        <id property="nxDistributerPayId" column="llNdp_nx_distributer_pay_id"/>
+        <result property="nxNdpPaySubtotal" column="llNdp_nx_ndp_pay_subtotal"/>
+        <result property="nxNdpPayTime" column="llNdp_nx_ndp_pay_time"/>
+        <result property="nxNdpFromTime" column="llNdp_nx_ndp_from_time"/>
+        <result property="nxNdpStopTime" column="llNdp_nx_ndp_stop_time"/>
+        <result property="nxNdpPayTime" column="llNdp_nx_ndp_pay_time"/>
+        <result property="nxNdpType" column="llNdp_nx_ndp_type"/>
+        <result property="nxNdpNxNewDisId" column="llNdp_nx_ndp_nx_dep_father_id"/>
+        <result property="nxNdpBuyQuantity" column="llNdp_nx_ndp_buy_quantity"/>
+    </resultMap>
+
+    <resultMap id="machinePay" type="NxDistributerPayEntity">
+        <id property="nxDistributerPayId" column="machineNdp_nx_distributer_pay_id"/>
+        <result property="nxNdpPaySubtotal" column="machineNdp_nx_ndp_pay_subtotal"/>
+        <result property="nxNdpPayTime" column="machineNdp_nx_ndp_pay_time"/>
+        <result property="nxNdpFromTime" column="machineNdp_nx_ndp_from_time"/>
+        <result property="nxNdpStopTime" column="machineNdp_nx_ndp_stop_time"/>
+        <result property="nxNdpPayTime" column="machineNdp_nx_ndp_pay_time"/>
+        <result property="nxNdpType" column="machineNdp_nx_ndp_type"/>
+        <result property="nxNdpNxNewDisId" column="machineNdp_nx_ndp_nx_dep_father_id"/>
+        <result property="nxNdpBuyQuantity" column="machineNdp_nx_ndp_buy_quantity"/>
+    </resultMap>
+
     <resultMap id="distributer" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerLan" column="nx_distributer_lan"/>
+        <result property="nxDistributerLun" column="nx_distributer_lun"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerAppId" column="nx_distributer_app_id"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+	    <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerImg" column="nx_distributer_img"/>
         <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerPhone" column="nx_distributer_phone"/>
         <result property="nxDistributerAddress" column="nx_distributer_address"/>
         <result property="nxDistributerManager" column="nx_distributer_manager"/>
         <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distributer_buy_quantity"/>
 		<association property="sysBusinessTypeEntity" resultMap="sysBusinessType"/>
         <association property="nxDisBuyerUser" resultMap="jrdhUser"/>
         <collection property="nxDistributerServiceCityEntities" resultMap="serviceCity"/>
-    </resultMap>
+        <collection property="orderPayList" resultMap="orderPay"/>
+        <collection property="liuliangPayList" resultMap="liuliangPay"/>
+        <collection property="machinePayList" resultMap="machinePay"/>
+     </resultMap>
 
     <resultMap id="qyCorpUser" type="QyNxDisCorpUserEntity">
         <id property="qyNxDisCorpUserId" column="qy_nx_dis_corp_user_id"/>
@@ -86,6 +133,7 @@
 
     <resultMap id="disUser" type="NxDistributerUserEntity">
          <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
         <result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
         <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -113,9 +161,32 @@
         where nx_DIU_distributer_id = #{disId}
     </select>
 
+<!--,
+               llNdp.nx_distributer_pay_id 'llNdp_nx_distributer_pay_id',
+               llNdp.nx_ndp_type 'llNdp_nx_ndp_type',
+               llNdp.nx_ndp_nx_dis_id 'llNdp_nx_ndp_nx_dis_id',
+               llNdp.nx_ndp_buy_quantity 'llNdp_nx_ndp_buy_quantity',
+               llNdp.nx_ndp_nx_new_dis_id 'llNdp_nx_ndp_nx_dep_father_id',
+               llNdp.nx_ndp_from_time 'llNdp_nx_ndp_from_time',
+               llNdp.nx_ndp_pay_subtotal 'llNdp_nx_ndp_pay_subtotal',
+               llNdp.nx_ndp_pay_time 'llNdp_nx_ndp_pay_time',
+               llNdp.nx_ndp_status 'llNdp_nx_ndp_status',
+               llNdp.nx_ndp_stop_time 'llNdp_nx_ndp_stop_time',
+
+               machineNdp.nx_distributer_pay_id 'machineNdp_nx_distributer_pay_id',
+               machineNdp.nx_ndp_type 'machineNdp_nx_ndp_type',
+               machineNdp.nx_ndp_nx_dis_id 'machineNdp_nx_ndp_nx_dis_id',
+               machineNdp.nx_ndp_buy_quantity 'machineNdp_nx_ndp_buy_quantity',
+               machineNdp.nx_ndp_nx_new_dis_id 'machineNdp_nx_ndp_nx_dep_father_id',
+               machineNdp.nx_ndp_from_time 'machineNdp_nx_ndp_from_time',
+               machineNdp.nx_ndp_pay_subtotal 'machineNdp_nx_ndp_pay_subtotal',
+               machineNdp.nx_ndp_pay_time 'machineNdp_nx_ndp_pay_time',
+               machineNdp.nx_ndp_status 'machineNdp_nx_ndp_status',
+               machineNdp.nx_ndp_stop_time 'machineNdp_nx_ndp_stop_time'-->
 
     <select id="queryUserInfo" resultMap="disUser">
         select *
+
         from nx_distributer_user as u
                  left join nx_distributer as nd on u.nx_DIU_distributer_id = nd.nx_distributer_id
                  left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
@@ -150,14 +221,16 @@
 
     </select>
     <select id="getAllDisUsers" resultType="com.nongxinle.entity.NxDistributerUserEntity">
-        select * from nongxinle.nx_distributer_user;
+        select * from nx_distributer_user;
     </select>
     <select id="queryRoleNxDisRoleUserList" resultType="com.nongxinle.entity.NxDistributerUserEntity">
-        select * from nongxinle.nx_distributer_user as ndu
-#         left join nx_distributer_user_role as ndur on ndur.nx_DUR_user_id = ndu.nx_distributer_user_id
+        select * from nx_distributer_user as ndu
         <where>
             <if test="disId != null">
                 and nx_DIU_distributer_id = #{disId}
+            </if>
+            <if test="admin != null">
+                and nx_DIU_admin = #{admin}
             </if>
             <if test="roleId != null">
                 and ndur.nx_DUR_role_id = #{roleId}
@@ -187,6 +260,11 @@
             </if>
         </where>
     </select>
+    <select id="queryUserByPhone" resultMap="disUser">
+        select * from nx_distributer_user as ndu
+        left join nx_distributer as nd on nd.nx_distributer_id = ndu.nx_DIU_distributer_id
+        where  nx_DIU_wx_phone = #{nxDiuWxPhone}
+    </select>
 
     <insert id="save" parameterType="com.nongxinle.entity.NxDistributerUserEntity"
             useGeneratedKeys="true" keyProperty="nxDistributerUserId">
@@ -202,7 +280,8 @@
          `nx_DIU_print_bill_device_id`,
          `nx_DIU_url_change`,
          `nx_DIU_qy_corp_user_id`,
-         `nx_DIU_login_times`
+         `nx_DIU_login_times`,
+         `nx_DIU_login_phone`
         )
         values (#{nxDistributerUserId},
                 #{nxDiuWxAvartraUrl},
@@ -215,7 +294,8 @@
                 #{nxDiuPrintBillDeviceId},
                 #{nxDiuUrlChange},
                 #{nxDiuQyCorpUserId},
-                #{nxDiuLoginTimes}
+                #{nxDiuLoginTimes},
+                #{nxDiuLoginPhone}
                 )
     </insert>
 
@@ -232,6 +312,7 @@
             <if test="nxDiuUrlChange != null">`nx_DIU_url_change` = #{nxDiuUrlChange},</if>
             <if test="nxDiuQyCorpUserId != null">`nx_DIU_qy_corp_user_id` = #{nxDiuQyCorpUserId},</if>
             <if test="nxDiuLoginTimes != null">`nx_DIU_login_times` = #{nxDiuLoginTimes},</if>
+            <if test="nxDiuLoginPhone != null">`nx_DIU_login_phone` = #{nxDiuLoginPhone},</if>
             <if test="nxDiuDistributerId != null">`nx_DIU_distributer_id` = #{nxDiuDistributerId}</if>
         </set>
         where nx_distributer_user_id = #{nxDistributerUserId}

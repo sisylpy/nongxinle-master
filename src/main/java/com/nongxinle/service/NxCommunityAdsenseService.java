@@ -1,7 +1,7 @@
 package com.nongxinle.service;
 
 /**
- * 
+ *
  *
  * @author lpy
  * @date 05-26 16:23
@@ -31,4 +31,8 @@ public interface NxCommunityAdsenseService {
     List<NxCommunityAdsenseEntity> getListByCommunityId(Integer communityId);
 
 	List<NxCommunityAdsenseEntity> queryAdsenseByNxCommunityId(Integer communityId);
+
+    List<NxCommunityAdsenseEntity> queryAdsenseByParams(Map<String, Object> map);
+
+    NxCommunityAdsenseEntity queryGoodsAdsenseByParams(Map<String, Object> map);
 }

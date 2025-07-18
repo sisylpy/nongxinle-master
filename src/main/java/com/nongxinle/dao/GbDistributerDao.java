@@ -28,4 +28,5 @@ public interface GbDistributerDao extends BaseDao<GbDistributerEntity> {
     void kaitongGbDis(Integer id);
 
     List<GbDistributerEntity> queryGbDisCustomerBySellerOpenId(String openId);
+
 }

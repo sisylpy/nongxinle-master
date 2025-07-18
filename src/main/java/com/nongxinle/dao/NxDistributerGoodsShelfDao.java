@@ -23,4 +23,8 @@ public interface NxDistributerGoodsShelfDao extends BaseDao<NxDistributerGoodsSh
     List<NxDistributerFatherGoodsEntity> queryDisPlanShelfPurchaseApplys(Map<String, Object> map);
 
     List<NxDistributerGoodsShelfEntity> queryShelfWithDetailByParams(Map<String, Object> map);
+
+    List<NxDistributerGoodsShelfEntity> queryStockShelf(Map<String, Object> params);
+
+    List<NxDistributerGoodsShelfEntity> queryShelfList(Map<String, Object> params);
 }

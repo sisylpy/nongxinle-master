@@ -45,44 +45,44 @@ public class WxSendController {
 
         NxCommunityOrdersEntity ordersEntity = nxCommunityOrdersService.queryObject(nxOrdersId);
 
-        Integer nxOrdersUserId = ordersEntity.getNxCoUserId();
-        System.out.println( "enennenetyytyty" +ordersEntity);
-        String token = getToken();
-        String cuWxOpenId= nxCustomerUserService.queryOpenId(nxOrdersUserId);
-
-        Map<String,Object> param = new HashMap<>();
-        param.put("touser",cuWxOpenId);
-        param.put("template_id","n42fBcXAZM1ol0OXB0TbDNDTK1hFISOUFmg0Fj9");
-        param.put("page","/pages/index/index");
-        param.put("miniprogram_state","developer");
-
-        String nxOrdersAmount = ordersEntity.getNxCoAmount().toString();
-        String nxOrdersDate = ordersEntity.getNxCoDate();
-        String  nxOrdersId1 = ordersEntity.getNxCommunityOrdersId().toString();
-
-
-        Map<String,Object> data = new HashMap<>();
-        data.put("character_string1", new Value(nxOrdersId1));
-        data.put("amount2", new Value(nxOrdersAmount));
-        data.put("date3",new Value(nxOrdersDate));
-        data.put("phrase5",new Value("待支付"));
-        data.put("thing4",new Value("您的订单将于4小时失效"));
-        param.put("data",data);
-        // 注意检查参数的格式，很容易出现问题
-        System.out.println("param:" + JSON.toJSONString(param));
-
-        String url = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=" + token;
-        Map result = HttpUtils.post(url, param);
-        System.out.println("result=" + result);
-
-        if(result.get("errcode").equals(0)){
-            Map<String, Object> map = new HashMap<>();
-            map.put("nxOrdersId", nxOrdersId);
-            map.put("nxOrdersStatus",3);
-            map.put("nxOrdersPaymentStatus", 1);
-            map.put("nxOrdersPaymentSendTime", formatWhatDayTime(0));
-            nxCommunityOrdersService.updatePaymentStatus(map);
-        }
+//        Integer nxOrdersUserId = ordersEntity.getNxCoUserId();
+//        System.out.println( "enennenetyytyty" +ordersEntity);
+//        String token = getToken();
+//        String cuWxOpenId= nxCustomerUserService.queryOpenId(nxOrdersUserId);
+//
+//        Map<String,Object> param = new HashMap<>();
+//        param.put("touser",cuWxOpenId);
+//        param.put("template_id","n42fBcXAZM1ol0OXB0TbDNDTK1hFISOUFmg0Fj9");
+//        param.put("page","/pages/index/index");
+//        param.put("miniprogram_state","developer");
+//
+//        String nxOrdersAmount = ordersEntity.getNxCoAmount().toString();
+//        String nxOrdersDate = ordersEntity.getNxCoDate();
+//        String  nxOrdersId1 = ordersEntity.getNxCommunityOrdersId().toString();
+//
+//
+//        Map<String,Object> data = new HashMap<>();
+//        data.put("character_string1", new Value(nxOrdersId1));
+//        data.put("amount2", new Value(nxOrdersAmount));
+//        data.put("date3",new Value(nxOrdersDate));
+//        data.put("phrase5",new Value("待支付"));
+//        data.put("thing4",new Value("您的订单将于4小时失效"));
+//        param.put("data",data);
+//        // 注意检查参数的格式，很容易出现问题
+//        System.out.println("param:" + JSON.toJSONString(param));
+//
+//        String url = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=" + token;
+//        Map result = HttpUtils.post(url, param);
+//        System.out.println("result=" + result);
+//
+//        if(result.get("errcode").equals(0)){
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("nxOrdersId", nxOrdersId);
+//            map.put("nxOrdersStatus",3);
+//            map.put("nxOrdersPaymentStatus", 1);
+//            map.put("nxOrdersPaymentSendTime", formatWhatDayTime(0));
+//            nxCommunityOrdersService.updatePaymentStatus(map);
+//        }
         return R.ok();
     }
 

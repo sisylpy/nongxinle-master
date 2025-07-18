@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityDeskDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityDeskEntity">
+		select * from nx_community_desk where nx_community_desk_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCommunityDeskEntity">
+		select * from nx_community_desk 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_community_desk 
+	</select>
+    <select id="queryComDeskByParams" resultType="com.nongxinle.entity.NxCommunityDeskEntity">
+		select * from nx_community_desk
+		<where>
+			<if test="commId != null">
+				and nx_cd_community_id = #{commId}
+			</if>
+			<if test="type != null">
+				and nx_cd_type = #{type}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="subOrders" type="NxCommunityOrdersSubEntity">
+		 <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+        <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
+        <result property="nxCosDeskId" column="nx_COS_desk_id"/>
+		<result property="nxCosServiceType" column="nx_COS_service_type"/>
+		<result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
+		<result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
+		<result property="nxCosCucId" column="nx_COS_cuc_id"/>
+		<result property="nxCosHuaxianSubtotal" column="nx_cos_huaxian_subtotal"/>
+		<result property="nxCosStatus" column="nx_cos_status"/>
+		<result property="nxCosRemark" column="nx_COS_remark"/>
+		<result property="nxCosType" column="nx_COS_type"/>
+		<result property="nxCosService" column="nx_COS_service"/>
+		<result property="nxCosServiceDate" column="nx_COS_service_date"/>
+		<result property="nxCosServiceTime" column="nx_COS_service_time"/>
+		<result property="nxCosGoodsIndex" column="nx_COS_goods_index"/>
+		<result property="nxCosType" column="nx_COS_type"/>
+		<result property="nxCosHuaxianDifferentPrice" column="nx_COS_huaxian_different_price"/>
+		<result property="nxCosHuaxianPrice" column="nx_COS_huaxian_price"/>
+		<result property="nxCosPrice" column="nx_COS_price"/>
+		<result property="nxCosQuantity" column="nx_COS_quantity"/>
+		<result property="nxCosStandard" column="nx_COS_standard"/>
+		<result property="nxCosSubtotal" column="nx_COS_subtotal"/>
+		<result property="nxCosRemark" column="nx_COS_remark"/>
+		<result property="nxCosCommunityGoodsFatherId" column="nx_COS_community_goods_father_id"/>
+		<result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
+		<result property="nxCosPurchaseUserId" column="nx_COS_purchase_usr_id"/>
+	</resultMap>
+
+	<resultMap id="deskWithOrders" type="NxCommunityDeskEntity">
+		<id property="nxCommunityDeskId" column="nx_community_desk_id"/>
+		<result property="nxCdAreaId" column="nx_cd_area_id"/>
+		<result property="nxCdChairNum" column="nx_cd_chair_num"/>
+		<result property="nxCdCommunityId" column="nx_cd_community_id"/>
+		<result property="nxCdStatus" column="nx_cd_status"/>
+		<result property="nxCommunityDeskName" column="nx_community_desk_name"/>
+		<collection property="ordersSubEntities" resultMap="subOrders"/>
+	</resultMap>
+	<select id="queryDeskWithOrders" resultMap="deskWithOrders">
+		select * from nx_community_desk as ncd
+		left join nx_community_orders_sub as ncos on ncos.nx_COS_desk_id = ncd.nx_community_desk_id
+		and ncos.nx_COS_status &lt; #{status} and ncos.nx_COS_desk_id = #{deskId}
+		<where>
+			<if test="deskId != null">
+				and nx_community_desk_id = #{deskId}
+			</if>
+		</where>
+	</select>
+
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityDeskEntity">
+		insert into nx_community_desk
+		(
+			`nx_community_desk_id`, 
+			`nx_community_desk_name`, 
+			`nx_cd_area_id`, 
+			`nx_cd_chair_num`, 
+			`nx_cd_community_id`, 
+			`nx_cd_type`, 
+			`nx_cd_status`
+		)
+		values
+		(
+			#{nxCommunityDeskId}, 
+			#{nxCommunityDeskName}, 
+			#{nxCdAreaId}, 
+			#{nxCdChairNum}, 
+			#{nxCdCommunityId}, 
+			#{nxCdType}, 
+			#{nxCdStatus}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCommunityDeskEntity">
+		update nx_community_desk 
+		<set>
+			<if test="nxCommunityDeskName != null">`nx_community_desk_name` = #{nxCommunityDeskName}, </if>
+			<if test="nxCdAreaId != null">`nx_cd_area_id` = #{nxCdAreaId}, </if>
+			<if test="nxCdChairNum != null">`nx_cd_chair_num` = #{nxCdChairNum}, </if>
+			<if test="nxCdCommunityId != null">`nx_cd_community_id` = #{nxCdCommunityId}, </if>
+			<if test="nxCdType != null">`nx_cd_type` = #{nxCdType}, </if>
+			<if test="nxCdStatus != null">`nx_cd_status` = #{nxCdStatus}</if>
+		</set>
+		where nx_community_desk_id = #{nxCommunityDeskId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_community_desk where nx_community_desk_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_community_desk where nx_community_desk_id in 
+		<foreach item="nxCommunityDeskId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityDeskId}
+		</foreach>
+	</delete>
+
+</mapper>

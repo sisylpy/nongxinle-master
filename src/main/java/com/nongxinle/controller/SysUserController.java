@@ -30,7 +30,55 @@ public class SysUserController extends AbstractController {
 	private SysUserService sysUserService;
 	@Autowired
 	private SysUserRoleService sysUserRoleService;
-	
+
+
+
+//	@RequestMapping(value = "/printerUserLogin", method = RequestMethod.POST)
+//	@ResponseBody
+//	public R printerUserLogin (String phone, String password) {
+//		System.out.println("passsore" + password);
+//		password = new Sha256Hash(password).toHex();
+//		 Map<String, Object> map = new HashMap<>();
+//		 map.put("passWord", password);
+//		 map.put("userName", phone);
+//		System.out.println("mappss" + map);
+//		 SysUserEntity sysUserEntity =  sysUserService.printerUserLogin(map);
+//		System.out.println("suysyys" + sysUserEntity);
+//		 if(sysUserEntity != null){
+//			 return R.ok().put("data", sysUserEntity);
+//		 }else{
+//			 return R.error(-1,"用户名或密码错误");
+//		 }
+//	}
+
+	@RequestMapping("/updatePassword")
+	public R updatePassword(Integer disId, String newPassword){
+		if(StringUtils.isBlank(newPassword)){
+			return R.error("新密码不为能空");
+		}
+
+		//sha256加密
+//		password = new Sha256Hash(password).toHex();
+		//sha256加密
+		newPassword = new Sha256Hash(newPassword).toHex();
+
+		SysUserEntity sysUserEntity =   sysUserService.queryUserByDisId(disId);
+		sysUserEntity.setPassword(newPassword);
+		sysUserService.update(sysUserEntity);
+
+		return R.ok();
+	}
+
+
+
+	@RequestMapping(value = "/disGetWebUser/{disId}")
+	@ResponseBody
+	public R disGetWebUser(@PathVariable Integer disId) {
+		System.out.println("idisiisisiusuus" + disId);
+	   SysUserEntity sysUserEntity =   sysUserService.queryUserByDisId(disId);
+	    return R.ok().put("data", sysUserEntity);
+	}
+
 	/**
 	 * 所有用户列表
 	 */
@@ -40,16 +88,16 @@ public class SysUserController extends AbstractController {
 		Map<String, Object> map = new HashMap<>();
 		map.put("offset", (page - 1) * limit);
 		map.put("limit", limit);
-		
+
 		//查询列表数据
 		List<SysUserEntity> userList = sysUserService.queryList(map);
 		int total = sysUserService.queryTotal(map);
-		
+
 		PageUtils pageUtil = new PageUtils(userList, total, limit, page);
-		
+
 		return R.ok().put("page", pageUtil);
 	}
-	
+
 	/**
 	 * 获取登录的用户信息
 	 */
@@ -80,7 +128,7 @@ public class SysUserController extends AbstractController {
 		map.put("disUser", sysUserEntity);
 		return R.ok().put("data", map);
 	}
-	
+
 	/**
 	 * 修改登录用户密码
 	 */
@@ -89,21 +137,21 @@ public class SysUserController extends AbstractController {
 		if(StringUtils.isBlank(newPassword)){
 			return R.error("新密码不为能空");
 		}
-		
+
 		//sha256加密
 		password = new Sha256Hash(password).toHex();
 		//sha256加密
 		newPassword = new Sha256Hash(newPassword).toHex();
-				
+
 		//更新密码
 		int count = sysUserService.updatePassword(getUserId(), password, newPassword);
 		if(count == 0){
 			return R.error("原密码不正确");
 		}
-		
+
 		//退出
 		ShiroUtils.logout();
-		
+
 		return R.ok();
 	}
 
@@ -131,11 +179,11 @@ public class SysUserController extends AbstractController {
 		System.out.println("userIduserIduserId" + userId);
 
 		SysUserEntity user = sysUserService.queryObject(userId);
-		
+
 		//获取用户所属的角色列表
 		List<Long> roleIdList = sysUserRoleService.queryRoleIdList(userId);
 		user.setRoleIdList(roleIdList);
-		
+
 		return R.ok().put("user", user);
 	}
 
@@ -144,7 +192,7 @@ public class SysUserController extends AbstractController {
 
 		return R.ok().put("user", getUser());
 	}
-	
+
 	/**
 	 * 保存用户
 	 */
@@ -157,12 +205,12 @@ public class SysUserController extends AbstractController {
 		if(StringUtils.isBlank(user.getPassword())){
 			return R.error("密码不能为空");
 		}
-		
+
 		sysUserService.save(user);
-		
+
 		return R.ok();
 	}
-	
+
 	/**
 	 * 修改用户
 	 */
@@ -172,12 +220,12 @@ public class SysUserController extends AbstractController {
 		if(StringUtils.isBlank(user.getUsername())){
 			return R.error("用户名不能为空");
 		}
-		
+
 		sysUserService.update(user);
-		
+
 		return R.ok();
 	}
-	
+
 	/**
 	 * 删除用户
 	 */
@@ -187,13 +235,13 @@ public class SysUserController extends AbstractController {
 		if(ArrayUtils.contains(userIds, 1L)){
 			return R.error("系统管理员不能删除");
 		}
-		
+
 		if(ArrayUtils.contains(userIds, getUserId())){
 			return R.error("当前用户不能删除");
 		}
-		
+
 		sysUserService.deleteBatch(userIds);
-		
+
 		return R.ok();
 	}
 }

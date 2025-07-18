@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,7 @@ public class NxECommerceEntity implements Serializable {
 	 *  
 	 */
 	private Integer nxECommerceId;
+	private Integer nxECommerceGbDisId;
 	/**
 	 *  
 	 */
@@ -31,5 +33,10 @@ public class NxECommerceEntity implements Serializable {
 	 *  
 	 */
 	private String nxECommerceImg;
+
+
+	private List<NxECommerceCommunityEntity> nxECommerceCommunityEntities;
+	private NxECommerceCommunityEntity nxECommerceCommunityEntity;
+
 
 }

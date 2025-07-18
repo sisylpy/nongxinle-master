@@ -125,4 +125,20 @@ public interface GbDepartmentGoodsStockService {
     Double queryDepStockSubtotal(Map<String, Object> mapDisGoods);
 
     List<GbDepartmentEntity> queryStockDepWithFatherGoods(Map<String, Object> map0);
+
+    Double queryDepGoodsWasteTotal(Map<String, Object> map0);
+
+    int queryGoodsStockStars(Map<String, Object> map1);
+
+    Integer queryGoodsStarsTimes(Map<String, Object> map);
+
+    List<GbDepartmentGoodsStockEntity> queryGoodsStockWithTodayReduceList(Map<String, Object> mapDisGoods);
+
+    Double queryDepStockProduceWeightTotal(Map<String, Object> mapS);
+
+    Double queryDepStockLossWeightTotal(Map<String, Object> mapS);
+
+    Double queryDepGoodsWasteWeightTotal(Map<String, Object> mapS);
+
+    List<GbDepartmentGoodsStockEntity> queryGoodsStockByParamsWithDetail(Map<String, Object> map);
 }

@@ -52,11 +52,14 @@ public class NxDepartmentUserEntity implements Serializable {
 	private Integer nxDuLoginTimes;
 
 	private String nxDuJoinDate;
+	private String nxDuLoginCode;
 
 	private Integer nxDuDistributerId;
 
 	private Integer nxDuUrlChange;
 
 	private Integer nxDuDepartmentFatherId;
+
+	private NxDepartmentEntity departmentEntity;
 
 }

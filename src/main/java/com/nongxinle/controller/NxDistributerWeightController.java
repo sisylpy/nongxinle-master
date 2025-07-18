@@ -62,9 +62,10 @@ public class NxDistributerWeightController {
 		for (String orderId : split) {
 			NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(Integer.valueOf(orderId));
 			ordersEntity.setNxDoWeightId(nxDistributerWeightId);
-			if(ordersEntity.getNxDoPurchaseStatus() < getNxDepOrderBuyStatusIsPurchase()){
-				ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusIsPurchase());
-			}
+//			if(ordersEntity.getNxDoPurchaseStatus() < getNxDepOrderBuyStatusIsPurchase()){
+//
+//				ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusIsPurchase());
+//			}
 			nxDepartmentOrdersService.update(ordersEntity);
 			if(ordersEntity.getNxDoGbDepartmentOrderId() != null){
 				//更新gbDepOrder
@@ -177,6 +178,8 @@ public class NxDistributerWeightController {
 		map4.put("weightStatusEqual", 0);
 		map4.put("orderStatus", 3);
 		map4.put("status", 4);
+		map4.put("dayuPurStatus", 1);
+		map4.put("purStatus", 3);
 		Integer isPrintCount = nxDisPurchaseGoodsService.queryPurOrderCount(map4);
 		map4.put("weightStatusEqual", 1);
 		Integer isPrintHaveWeightCount = nxDisPurchaseGoodsService.queryPurOrderCount(map4);
@@ -222,10 +225,10 @@ public class NxDistributerWeightController {
 		mapW.put("disId", disId);
 		mapW.put("weightType", type); //出库单 == 3
 		mapW.put("status", 2);
-		mapW.put("hasWeight", -1);
+//		mapW.put("hasWeight", -1);
 		Integer count = nxDepartmentOrdersService.queryDepOrdersAcount(mapW);
 
-		mapW.put("hasWeight", 1);
+		mapW.put("dayuStatus", 2);
 		Integer count1 = nxDepartmentOrdersService.queryDepOrdersAcount(mapW);
 		Map<String, Object> map = new HashMap<>();
 		map.put("arr", distributerWeightEntities);

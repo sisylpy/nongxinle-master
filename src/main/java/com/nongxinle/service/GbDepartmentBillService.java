@@ -1,13 +1,14 @@
 package com.nongxinle.service;
 
 /**
- * 
+ *
  *
  * @author lpy
  * @date 09-20 15:11
  */
 
 import com.nongxinle.entity.GbDepartmentBillEntity;
+import com.nongxinle.entity.NxDistributerEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -51,4 +52,9 @@ public interface GbDepartmentBillService {
 //    List<GbDepartmentBillEntity> queryDepartBillListByTradeNo(String ordersSn);
 
     GbDepartmentBillEntity queryDepartBillByTsxTradeNo(String nxDbTradeNo);
+
+    List<GbDepartmentBillEntity> queryBillFromWhichDepartment(Map<String, Object> map4);
+
+
+	List<NxDistributerEntity> queryNxDistributer(Map<String, Object> map4);
 }

@@ -54,6 +54,7 @@ public class NxDistributerUserEntity implements Serializable {
 	private String nxDiuPrintDeviceId;
 
 	private String nxDiuPrintBillDeviceId;
+	private String nxDiuLoginPhone;
 
 	private Integer nxDiuUrlChange;
 

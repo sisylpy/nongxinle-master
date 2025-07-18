@@ -9,6 +9,7 @@ package com.nongxinle.service;
 
 import com.nongxinle.entity.NxCommunityEntity;
 import com.nongxinle.entity.NxECommerceCommunityEntity;
+import com.nongxinle.entity.NxECommerceEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -31,4 +32,6 @@ public interface NxECommerceCommunityService {
 
 //	/////
     List<NxCommunityEntity> queryCommunityByCommerceId(Integer commerceId);
+
+	NxECommerceCommunityEntity queryByCommunityId(Integer communityId);
 }

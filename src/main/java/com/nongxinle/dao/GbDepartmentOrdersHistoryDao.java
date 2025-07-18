@@ -7,6 +7,7 @@ package com.nongxinle.dao;
  * @date 06-30 10:14
  */
 
+import com.nongxinle.entity.DailyUsage;
 import com.nongxinle.entity.GbDepartmentOrdersHistoryEntity;
 import com.nongxinle.entity.NxDepartmentOrdersHistoryEntity;
 
@@ -19,4 +20,10 @@ public interface GbDepartmentOrdersHistoryDao extends BaseDao<GbDepartmentOrders
     List<GbDepartmentOrdersHistoryEntity> queryGbDepHistoryOrdersByParams(Map<String, Object> map1);
 
     List<GbDepartmentOrdersHistoryEntity> queryDepHistoryOrdersByParamsGb(Map<String, Object> map1);
+
+    List<Integer> selectFrequentGoods(Map<String, Object> freqParams);
+
+    List<DailyUsage> selectDailyUsage(Map<String, Object> map);
+
+    GbDepartmentOrdersHistoryEntity selectLastOrder(Map<String, Object> lastParams);
 }

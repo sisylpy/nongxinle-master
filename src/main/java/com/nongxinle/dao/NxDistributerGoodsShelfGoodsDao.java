@@ -15,5 +15,10 @@ import java.util.Map;
 
 public interface NxDistributerGoodsShelfGoodsDao extends BaseDao<NxDistributerGoodsShelfGoodsEntity> {
 
-    List<NxDistributerGoodsShelfGoodsEntity> queryShelfGoodsByParams(Map<String, Object> map);
+    List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsByParams(Map<String, Object> map);
+
+    int queryShelfGoodsCount(Map<String, Object> map);
+
+    List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsWithOrders(Map<String, Object> pageParams);
+
 }

@@ -6,6 +6,8 @@ import com.nongxinle.entity.NxGoodsEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,11 +67,11 @@ public class NxDistributerFatherGoodsServiceImpl implements NxDistributerFatherG
 		return nxDistributerFatherGoodsDao.queryDisAll(map);
     }
 
-    @Override
-    public List<NxDistributerFatherGoodsEntity> queryDisGoodsCataWithGoods(Map<String, Object> map) {
-
-		return nxDistributerFatherGoodsDao.queryDisGoodsCataWithGoods(map);
-    }
+//    @Override
+//    public List<NxDistributerFatherGoodsEntity> queryDisGoodsCataWithGoods(Map<String, Object> map) {
+//
+//		return nxDistributerFatherGoodsDao.queryDisGoodsCataWithGoods(map);
+//    }
 
     @Override
     public List<NxDistributerFatherGoodsEntity> queryDisGreatGrandList(Integer disId) {
@@ -102,10 +104,29 @@ public class NxDistributerFatherGoodsServiceImpl implements NxDistributerFatherG
 		return nxDistributerFatherGoodsDao.queryDisGoodsCataLinshi(nxDistributerId);
     }
 
-    @Override
-    public List<NxDistributerFatherGoodsEntity> queryFatherGoodsWithDisGoods(Map<String, Object> map1) {
 
-		return nxDistributerFatherGoodsDao.queryFatherGoodsWithDisGoods(map1);
+    @Override
+    public int queryMaxSortByFatherId(Integer fatherId) {
+
+		return nxDistributerFatherGoodsDao.queryMaxSortByFatherId(fatherId);
+    }
+
+    @Override
+    public List<NxDistributerFatherGoodsEntity> queryDisGreatGrandListWithType(Map<String, Object> mapG) {
+
+		return nxDistributerFatherGoodsDao.queryDisGreatGrandListWithType(mapG);
+    }
+
+
+    @Override
+    public List<NxDistributerFatherGoodsEntity> queryListByIds(List<Integer> integers) {
+
+		return nxDistributerFatherGoodsDao.queryListByIds(integers);
+    }
+
+    @Override
+    public List<NxDistributerFatherGoodsEntity> queryListByFatherId(Integer id) {
+        return nxDistributerFatherGoodsDao.queryListByFatherId(id);
     }
 
 

@@ -30,8 +30,8 @@ public class TaskJobService extends TimerTask {
             for (GbDistributerEntity dis : gbDistributerEntities) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("disId", dis.getGbDistributerId());
-                map.put("depType", getGbDepartmentTypeMendian());
                 map.put("date", formatWhatDay(-1));
+                map.put("status", 0);
                 System.out.println("TaskMapappapapap" + map);
                 TreeSet<GbDepartmentEntity> departmentEntities = gbDepartmentGoodsDailyService.queryWhichDepsHasProduceDepGoodsDailyNew(map);
                 System.out.println("deng" + departmentEntities.size());
@@ -52,6 +52,7 @@ public class TaskJobService extends TimerTask {
         Map<String, Object> map = new HashMap<>();
         map.put("depId", depId);
         map.put("date", formatWhatDay(-1));
+        map.put("status", 0);
         Integer integer = gbDepartmentGoodsDailyService.queryDepGoodsDailyCount(map);
         if(integer > 0){
             TreeSet<GbDepartmentDisGoodsEntity> gbDistributerGoodsEntities = gbDepartmentGoodsDailyService.queryDepDisGoodsTreeByParams(map);
@@ -60,17 +61,18 @@ public class TaskJobService extends TimerTask {
                     Map<String, Object> map1 = new HashMap<>();
                     map1.put("depGoodsId", goods.getGbDepartmentDisGoodsId());
                     map1.put("date", formatWhatDay(-1));
+                    map1.put("status", 0);
                     System.out.println("beforoemaapappapapaa" + map1);
                     Integer integer1 = gbDepartmentGoodsDailyService.queryDepGoodsDailyCount(map1);
-                    if(integer1 > 0){
+                    if(integer1 >  0 ){
                         GbDepartmentGoodsDailyEntity dailyEntity = gbDepartmentGoodsDailyService.queryDepGoodsDailyItem(map1);
                         GbDepartmentGoodsDailyEntity newDailyEntity = new GbDepartmentGoodsDailyEntity();
                         newDailyEntity.setGbDgdGbDistributerId(dailyEntity.getGbDgdGbDistributerId());
                         newDailyEntity.setGbDgdGbDepartmentId(depId);
                         newDailyEntity.setGbDgdGbDepartmentFatherId(depId);
                         newDailyEntity.setGbDgdGbDisGoodsId(goods.getGbDdgDisGoodsId());
-                        System.out.println("faieiieiieieididid" + goods.getGbDdgDisGoodsFatherId());
                         newDailyEntity.setGbDgdGbDisGoodsFatherId(goods.getGbDdgDisGoodsFatherId());
+                        newDailyEntity.setGbDgdGbDisGoodsGrandId(goods.getGbDdgDisGoodsGrandId());
                         newDailyEntity.setGbDgdGbDepDisGoodsId(goods.getGbDepartmentDisGoodsId());
                         newDailyEntity.setGbDgdFullTime(formatFullTime());
                         newDailyEntity.setGbDgdTaskTime(formatFullTime());
@@ -108,6 +110,7 @@ public class TaskJobService extends TimerTask {
                             newDailyEntity.setGbDgdFreshRate("100");
                         }
                         System.out.println("saveE");
+                        newDailyEntity.setGbDgdStatus(0);
                         gbDepartmentGoodsDailyService.save(newDailyEntity);
                     }
                 }

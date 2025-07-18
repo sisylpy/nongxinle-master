@@ -5,6 +5,7 @@ import com.nongxinle.entity.NxDepartmentOrdersEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -100,6 +101,85 @@ public class NxDepartmentBillServiceImpl implements NxDepartmentBillService {
     public NxDepartmentBillEntity queryDepartBillByTradeNo(String ordersSn) {
 
 	    return nxDepartmentBillDao.queryDepartBillByTradeNo(ordersSn);
+    }
+
+    @Override
+    public NxDepartmentBillEntity queryDepartBillByJustTradeNo(String gbDbTradeNo) {
+
+        return nxDepartmentBillDao.queryDepartBillByJustTradeNo(gbDbTradeNo);
+    }
+
+    @Override
+    public int queryBillsCount(Map<String, Object> mapB) {
+
+	    return nxDepartmentBillDao.queryBillsCount(mapB);
+    }
+
+    @Override
+    public double queryReturnSubtotalByBillId(Integer billId) {
+
+	    return nxDepartmentBillDao.queryReturnSubtotalByBillId(billId);
+    }
+
+    @Override
+    public List<NxDepartmentBillEntity> queryBindMap(Map<String, Object> map) {
+
+	    return nxDepartmentBillDao.queryBindMap(map);
+
+    }
+
+    @Override
+    public double querySubtoalBindMap(Map<String, Object> map1) {
+        return  nxDepartmentBillDao.querySubtoalBindMap(map1);
+    }
+
+    @Override
+    public int queryCountBindMap(Map<String, Object> params) {
+
+	    return nxDepartmentBillDao.queryCountBindMap(params);
+    }
+
+    @Override
+    public List<NxDepartmentBillEntity> queryReturnBill(Map<String, Object> map) {
+
+	    return nxDepartmentBillDao.queryReturnBill(map);
+    }
+
+    @Override
+    public NxDepartmentBillEntity queryItemByGbDepBillId(Integer gbDepartmentBillId) {
+
+	    return nxDepartmentBillDao.queryItemByGbDepBillId(gbDepartmentBillId);
+    }
+
+
+    @Override
+    public Map<String, Object> getBillStats(Integer disId) {
+        Map<String, Object> stats = new HashMap<>();
+
+        // 1. 获取未支付账单统计
+        Map<String, Object> mapB = new HashMap<>();
+        mapB.put("disId", disId);
+        mapB.put("settleType", 0);
+        mapB.put("equalStatus", 0);
+        int unPayCount = nxDepartmentBillDao.queryBillsCount(mapB);
+        stats.put("unPayCount", unPayCount);
+
+        // 2. 获取退货账单
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("equalStatus", -1);
+        List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillDao.queryReturnBill(map);
+        stats.put("returnList", billEntityList);
+
+        // 3. 获取国标账单统计
+        Map<String, Object> mapGb = new HashMap<>();
+        mapGb.put("disId", disId);
+        mapGb.put("gbDepFatherIdNotEqual", -1);
+        mapGb.put("status", 3);
+        int unPayGbBills = nxDepartmentBillDao.queryBillsCount(mapGb);
+        stats.put("unPayGbBills", unPayGbBills);
+
+        return stats;
     }
 
 

@@ -16,19 +16,20 @@ import com.nongxinle.dao.NxDepartmentDao;
 
 import static com.nongxinle.utils.DateUtils.formatWhatDate;
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
+import static com.nongxinle.utils.PinYin4jUtils.hanziToPinyin;
 
 
 @Service("nxDepartmentService")
 public class NxDepartmentServiceImpl implements NxDepartmentService {
 	@Autowired
 	private NxDepartmentDao nxDepartmentDao;
-
 	@Autowired
 	private NxDepartmentUserService nxDepartmentUserService;
-
-
 	@Autowired
 	private NxDistributerDepartmentService nxDistributerDepartmentService;
+	@Autowired
+	private NxDistributerService nxDistributerService;
+
 
 
 	@Override
@@ -41,10 +42,12 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 	@Override
 	public Map<String, Object> queryDepAndUserInfo(Integer nxDepartmentUserId) {
 		//订货群信息
-		NxDepartmentUserEntity nxDepartmentUserEntity = nxDepartmentUserService.queryObject(nxDepartmentUserId);
+		Map<String, Object> mapU = new HashMap<>();
+		mapU.put("userId", nxDepartmentUserId);
+		NxDepartmentUserEntity nxDepartmentUserEntity = nxDepartmentUserService.queryDepUserInfo(mapU);
 		//用户信息
 		Integer nxDuDepartmentId = nxDepartmentUserEntity.getNxDuDepartmentId();
-		NxDepartmentEntity nxDepartmentEntity = nxDepartmentDao.queryDepInfo(nxDuDepartmentId);
+		NxDepartmentEntity nxDepartmentEntity = nxDepartmentDao.queryUserDepInfo(nxDuDepartmentId);
 		//返回
 		Map<String, Object> map = new HashMap<>();
 		map.put("userInfo", nxDepartmentUserEntity);
@@ -57,6 +60,15 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 	public Integer saveNewDepartment(NxDepartmentEntity dep) {
 
 		//1.保存餐馆
+
+		dep.setNxDepartmentOrderTotal(0);
+		dep.setNxDepartmentJoinDate(formatWhatDay(0));
+		String s = hanziToPinyin(dep.getNxDepartmentName());
+		dep.setNxDepartmentPinyin(s);
+		Integer nxDepartmentDisId = dep.getNxDepartmentDisId();
+		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
+		dep.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
+
 		nxDepartmentDao.save(dep);
 
 //		//2，保存用户
@@ -76,6 +88,10 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 				subDep.setNxDepartmentDisId(dep.getNxDepartmentDisId());
 				subDep.setNxDepartmentAttrName(subDep.getNxDepartmentName());
 				subDep.setNxDepartmentDisId(dep.getNxDepartmentDisId());
+				subDep.setNxDepartmentOrderTotal(0);
+				subDep.setNxDepartmentJoinDate(formatWhatDay(0));
+				String ss = hanziToPinyin(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentPinyin(ss);
 				nxDepartmentDao.save(subDep);
 			}
 		}
@@ -92,8 +108,16 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 
 
 	@Override
-	public void saveJustDepartment(NxDepartmentEntity nxDepartmentEntity) {
+	public NxDepartmentEntity saveJustDepartment(NxDepartmentEntity nxDepartmentEntity) {
+		nxDepartmentEntity.setNxDepartmentJoinDate(formatWhatDay(0));
+		nxDepartmentEntity.setNxDepartmentOrderTotal(0);
+		String s = hanziToPinyin(nxDepartmentEntity.getNxDepartmentName());
+		nxDepartmentEntity.setNxDepartmentPinyin(s);
+		Integer nxDepartmentDisId = nxDepartmentEntity.getNxDepartmentDisId();
+		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
+        nxDepartmentEntity.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
 		nxDepartmentDao.save(nxDepartmentEntity);
+		return nxDepartmentEntity;
 	}
 
 	@Override
@@ -109,6 +133,13 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 
 	@Override
 	public void save(NxDepartmentEntity nxDepartment){
+		nxDepartment.setNxDepartmentOrderTotal(0);
+		nxDepartment.setNxDepartmentJoinDate(formatWhatDay(0));
+		String s = hanziToPinyin(nxDepartment.getNxDepartmentName());
+		nxDepartment.setNxDepartmentPinyin(s);
+		Integer nxDepartmentDisId = nxDepartment.getNxDepartmentDisId();
+		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
+		nxDepartment.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
 		nxDepartmentDao.save(nxDepartment);
 		Integer nxDepartmentId = nxDepartment.getNxDepartmentId();
 		Integer nxDepUserId = nxDepartment.getNxDepUserId();
@@ -126,6 +157,14 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 	@Override
 	public Integer saveNewChainDepartment(NxDepartmentEntity dep) {
 //1.保存餐馆
+
+		dep.setNxDepartmentOrderTotal(0);
+		dep.setNxDepartmentJoinDate(formatWhatDay(0));
+		String s = hanziToPinyin(dep.getNxDepartmentName());
+		dep.setNxDepartmentPinyin(s);
+		Integer nxDepartmentDisId = dep.getNxDepartmentDisId();
+		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
+		dep.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
 		nxDepartmentDao.save(dep);
 
 //		//2，保存用户
@@ -147,6 +186,11 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 				subDep.setNxDepartmentWorkingStatus(0);
 				subDep.setNxDepartmentType("分店");
 				subDep.setNxDepartmentAttrName(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentOrderTotal(0);
+				subDep.setNxDepartmentJoinDate(formatWhatDay(0));
+				String ss = hanziToPinyin(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentPinyin(ss);
+				subDep.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
 				nxDepartmentDao.save(subDep);
 				if(subDep.getNxDepartmentEntities().size() > 0){
 					for (NxDepartmentEntity grandSubDep: subDep.getNxDepartmentEntities()) {
@@ -155,6 +199,11 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 						grandSubDep.setNxDepartmentSettleType(dep.getNxDepartmentSettleType());
 						grandSubDep.setNxDepartmentDisId(subDep.getNxDepartmentDisId());
 						grandSubDep.setNxDepartmentWorkingStatus(0);
+						grandSubDep.setNxDepartmentOrderTotal(0);
+						grandSubDep.setNxDepartmentJoinDate(formatWhatDay(0));
+						String sdd = hanziToPinyin(grandSubDep.getNxDepartmentName());
+						grandSubDep.setNxDepartmentPinyin(sdd);
+						grandSubDep.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
 						nxDepartmentDao.save(grandSubDep);
 					}
 				}
@@ -162,7 +211,7 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 		}
 
 		//3, 保存订货群的批发商
-		Integer nxDepartmentDisId = dep.getNxDepartmentDisId();
+//		Integer nxDepartmentDisId = dep.getNxDepartmentDisId();
 		NxDistributerDepartmentEntity entity = new NxDistributerDepartmentEntity();
 		entity.setNxDdDistributerId(nxDepartmentDisId);
 		entity.setNxDdDepartmentId(nxDepartmentId);
@@ -228,6 +277,31 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
     public List<NxDepartmentEntity> queryDepartmentListByParams(Map<String, Object> map) {
 
 		return nxDepartmentDao.queryDepartmentListByParams(map);
+    }
+
+    @Override
+    public NxDepartmentEntity queryDepInfoAll(Integer nxDepartmentId) {
+
+		return nxDepartmentDao.queryDepInfoAll(nxDepartmentId);
+    }
+
+    @Override
+    public Map<String, Object> queryDepAndUserInfoAll(Integer nxDepartmentUserId) {
+
+		//订货群信息
+		Map<String, Object> mapU = new HashMap<>();
+		mapU.put("userId", nxDepartmentUserId);
+		NxDepartmentUserEntity nxDepartmentUserEntity = nxDepartmentUserService.queryDepUserInfo(mapU);
+		//用户信息
+		Integer nxDuDepartmentId = nxDepartmentUserEntity.getNxDuDepartmentId();
+		System.out.println("getdidididndiallll");
+		NxDepartmentEntity nxDepartmentEntity = nxDepartmentDao.queryDepInfoAll(nxDuDepartmentId);
+		System.out.println("depnanaamemmemememe" + nxDepartmentEntity.getNxDepartmentName());
+		//返回
+		Map<String, Object> map = new HashMap<>();
+		map.put("userInfo", nxDepartmentUserEntity);
+		map.put("depInfo", nxDepartmentEntity);
+		return  map;
     }
 
 

@@ -27,4 +27,8 @@ public interface SysCityMarketService {
 	void delete(Integer sysCityMarketId);
 	
 	void deleteBatch(Integer[] sysCityMarketIds);
+
+    List<SysCityMarketEntity> queryMarketByParams(Map<String, Object> map);
+
+    List<SysCityMarketEntity> queryMarketNxDisByParams(Map<String, Object> map);
 }

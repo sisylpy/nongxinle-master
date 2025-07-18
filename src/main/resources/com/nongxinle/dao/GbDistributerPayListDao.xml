@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDistributerPayListDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.GbDistributerPayListEntity">
+		select * from gb_distributer_pay_list where gb_distributer_pay_list_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.GbDistributerPayListEntity">
+		select * from gb_distributer_pay_list 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from gb_distributer_pay_list 
+	</select>
+	<select id="queryDisPayListSubtotal" resultType="java.lang.Double">
+		select COUNT(gb_ndpl_pay_subtotal) from gb_distributer_pay_list
+		<where>
+			<if test="disId != null">
+				and gb_ndpl_gb_dis_id = #{disId}
+			</if>
+			<if test="disId != null">
+				and gb_ndpl_gb_dis_id = #{disId}
+			</if>
+			<if test="date != null">
+				and gb_ndpl_pay_date = #{date}
+			</if>
+			<if test="type != null">
+				and gb_ndpl_type = #{type}
+			</if>
+
+
+		</where>
+	</select>
+
+	<select id="queryDisPayListCount" resultType="java.lang.Integer">
+		select COUNT(*) from gb_distributer_pay_list
+		<where>
+			<if test="disId != null">
+				and gb_ndpl_gb_dis_id = #{disId}
+			</if>
+			<if test="disId != null">
+				and gb_ndpl_gb_dis_id = #{disId}
+			</if>
+			<if test="date != null">
+				and gb_ndpl_pay_date = #{date}
+			</if>
+			<if test="type != null">
+				and gb_ndpl_type = #{type}
+			</if>
+
+
+		</where>
+	</select>
+
+
+	<resultMap id="fatherDepartment" type="GbDepartmentEntity">
+		<id property="gbDepartmentId" column="dd_gb_department_id"/>
+		<result property="gbDepartmentName" column="dd_gb_department_name"/>
+		<result property="gbDepartmentAttrName" column="dd_gb_department_attr_name"/>
+		<result property="gbDepartmentType" column="dd_gb_department_type"/>
+		<result property="gbDepartmentSettleType" column="dd_gb_department_settle_type"/>
+		<result property="gbDepartmentFilePath" column="dd_gb_department_file_path"/>
+		<result property="gbDepartmentFatherId" column="dd_gb_department_father_id"/>
+		<result property="gbDepartmentIsGroupDep" column="dd_gb_department_is_group_dep"/>
+	</resultMap>
+
+
+	<resultMap id="jrdhUser" type="NxJrdhUserEntity">
+		<id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+		<result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+		<result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+		<result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+		<result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+		<result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+		<result property="nxJrdhCommPurchaserUserId" column="nx_jrdh_nx_comm_purchaser_user_id"/>
+		<result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+		<result property="nxJrdhGbDistributerId" column="nx_jrdh_gb_distributer_id"/>
+		<result property="nxJrdhGbDepartmentId" column="nx_jrdh_gb_department_id"/>
+		<result property="nxJrdhAdmin" column="nx_jrdh_admin"/>
+		<result property="nxJrdhDeviceId" column="nx_jrdh_device_id"/>
+		<result property="nxJrdhDevicePrintId" column="nx_jrdh_device_print_id"/>
+	</resultMap>
+	<resultMap id="supplier" type="NxJrdhSupplierEntity">
+		<id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+		<result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
+		<result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
+		<result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
+		<result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
+		<result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
+		<result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+		<association property="jrdhUserEntity" resultMap="jrdhUser"/>
+	</resultMap>
+
+	<resultMap id="payDetail" type="GbDistributerPayListEntity">
+		<id property="gbDistributerPayListId"  column="gb_distributer_pay_list_id"/>
+		<result property="gbNdplPayDate" column="gb_ndpl_pay_date"/>
+		<result property="gbNdplPayTime" column="gb_ndpl_pay_time"/>
+		<result property="gbNdplStatus" column="gb_ndpl_status"/>
+		<result property="gbNdplPaySubtotal" column="gb_ndpl_pay_subtotal"/>
+		<result property="gbNdplType" column="gb_ndpl_type"/>
+		<result property="gbNdplRestPoints" column="gb_ndpl_rest_points"/>
+		<association property="nxJrdhSupplierEntity" resultMap="supplier"/>
+	</resultMap>
+
+	<select id="queryPayListListByParams" resultMap="payDetail">
+		select *
+		from gb_distributer_pay_list as ndpl
+		left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = ndpl.gb_ndpl_nx_supplier_id
+		 left join nx_jrdh_user as nju on nju.nx_jrdh_user_id = njs.nx_jrdhs_user_id
+		<where>
+			<if test="disId != null">
+				and gb_ndpl_gb_dis_id = #{disId}
+			</if>
+
+		</where>
+		order by gb_distributer_pay_list_id DESC
+		limit #{offset}, #{limit}
+
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDistributerPayListEntity">
+		insert into gb_distributer_pay_list
+		(
+			`gb_distributer_pay_list_id`, 
+			`gb_ndpl_gb_dis_id`, 
+			`gb_ndpl_pay_subtotal`, 
+			`gb_ndpl_pay_time`, 
+			`gb_ndpl_type`, 
+			`gb_ndpl_status`, 
+			`gb_ndpl_pay_date`, 
+			`gb_ndpl_gb_pb_id`, 
+			`gb_ndpl_pay_month`, 
+			`gb_ndpl_pay_year`, 
+			`gb_ndpl_rest_points`, 
+			`gb_ndpl_nx_supplier_id`
+		)
+		values
+		(
+			#{gbDistributerPayListId}, 
+			#{gbNdplGbDisId}, 
+			#{gbNdplPaySubtotal}, 
+			#{gbNdplPayTime}, 
+			#{gbNdplType}, 
+			#{gbNdplStatus}, 
+			#{gbNdplPayDate}, 
+			#{gbNdplGbPbId}, 
+			#{gbNdplPayMonth}, 
+			#{gbNdplPayYear}, 
+			#{gbNdplRestPoints}, 
+			#{gbNdplNxSupplierId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.GbDistributerPayListEntity">
+		update gb_distributer_pay_list 
+		<set>
+			<if test="gbNdplGbDisId != null">`gb_ndpl_gb_dis_id` = #{gbNdplGbDisId}, </if>
+			<if test="gbNdplPaySubtotal != null">`gb_ndpl_pay_subtotal` = #{gbNdplPaySubtotal}, </if>
+			<if test="gbNdplPayTime != null">`gb_ndpl_pay_time` = #{gbNdplPayTime}, </if>
+			<if test="gbNdplType != null">`gb_ndpl_type` = #{gbNdplType}, </if>
+			<if test="gbNdplStatus != null">`gb_ndpl_status` = #{gbNdplStatus}, </if>
+			<if test="gbNdplPayDate != null">`gb_ndpl_pay_date` = #{gbNdplPayDate}, </if>
+			<if test="gbNdplGbPbId != null">`gb_ndpl_gb_pb_id` = #{gbNdplGbPbId}, </if>
+			<if test="gbNdplPayMonth != null">`gb_ndpl_pay_month` = #{gbNdplPayMonth}, </if>
+			<if test="gbNdplPayYear != null">`gb_ndpl_pay_year` = #{gbNdplPayYear}, </if>
+			<if test="gbNdplRestPoints != null">`gb_ndpl_rest_points` = #{gbNdplRestPoints}, </if>
+			<if test="gbNdplNxSupplierId != null">`gb_ndpl_nx_supplier_id` = #{gbNdplNxSupplierId}</if>
+		</set>
+		where gb_distributer_pay_list_id = #{gbDistributerPayListId}
+	</update>
+	
+	<delete id="delete">
+		delete from gb_distributer_pay_list where gb_distributer_pay_list_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from gb_distributer_pay_list where gb_distributer_pay_list_id in 
+		<foreach item="gbDistributerPayListId" collection="array" open="(" separator="," close=")">
+			#{gbDistributerPayListId}
+		</foreach>
+	</delete>
+
+</mapper>

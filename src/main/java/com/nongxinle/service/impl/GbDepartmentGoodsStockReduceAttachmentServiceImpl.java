@@ -1,5 +1,6 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.entity.GbDistributerPurchaseGoodsEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,5 +52,17 @@ public class GbDepartmentGoodsStockReduceAttachmentServiceImpl implements GbDepa
 	public void deleteBatch(Integer[] gbDepartmentGoodsStockReduceAttachIds){
 		gbDepartmentGoodsStockReduceAttachmentDao.deleteBatch(gbDepartmentGoodsStockReduceAttachIds);
 	}
-	
+
+    @Override
+    public List<GbDistributerPurchaseGoodsEntity> queryStarsPurGoodsByParams(Map<String, Object> map) {
+
+		return  gbDepartmentGoodsStockReduceAttachmentDao.queryStarsPurGoodsByParams(map);
+    }
+
+    @Override
+    public GbDepartmentGoodsStockReduceAttachmentEntity queryItemByRdId(Integer returnId) {
+
+		return gbDepartmentGoodsStockReduceAttachmentDao.queryItemByRdId(returnId);
+    }
+
 }

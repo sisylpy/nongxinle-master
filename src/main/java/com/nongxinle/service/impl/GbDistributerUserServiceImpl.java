@@ -40,7 +40,7 @@ public class GbDistributerUserServiceImpl implements GbDistributerUserService {
 	@Override
 	public Integer save(GbDistributerUserEntity gbDistributerUser){
 		gbDistributerUserDao.save(gbDistributerUser);
-
+		System.out.println("ususususus" + gbDistributerUser);
 		return gbDistributerUser.getGbDistributerUserId();
 	}
 	

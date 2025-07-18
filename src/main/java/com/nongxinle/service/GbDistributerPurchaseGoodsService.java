@@ -7,13 +7,13 @@ package com.nongxinle.service;
  * @date 06-24 11:45
  */
 
-import com.nongxinle.entity.GbDepartmentEntity;
 import com.nongxinle.entity.GbDistributerFatherGoodsEntity;
+import com.nongxinle.entity.GbDistributerGoodsEntity;
 import com.nongxinle.entity.GbDistributerPurchaseGoodsEntity;
-import com.nongxinle.entity.NxDistributerEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 public interface GbDistributerPurchaseGoodsService {
 
@@ -80,4 +80,19 @@ public interface GbDistributerPurchaseGoodsService {
 	String queryPurGoodsMinPrice(Map<String, Object> map);
 
     GbDistributerPurchaseGoodsEntity queryPurGoodsWithOrders(Integer id);
+
+    List<GbDistributerFatherGoodsEntity> queryGreatGrandPurGoodsDetail(Map<String, Object> map);
+
+    int queryGbPurchaseOrderAmount(Map<String, Object> map1);
+
+    GbDistributerPurchaseGoodsEntity queryBuyingPurGoods(Map<String, Object> map);
+
+    List<GbDistributerFatherGoodsEntity> queryGreatGrandGoodsByDisGoods(Map<String, Object> map1);
+
+	TreeSet<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map);
+
+    List<GbDistributerFatherGoodsEntity> queryGrandPurchaseGoods(Map<String, Object> map4);
+
+    String queryPurchaseGoodsWeight(Map<String, Object> mapDay);
+
 }

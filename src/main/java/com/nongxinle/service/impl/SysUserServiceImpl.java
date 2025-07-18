@@ -119,4 +119,17 @@ public class SysUserServiceImpl implements SysUserService {
 	public void justUpdate(SysUserEntity sysUserEntity) {
 		sysUserDao.update(sysUserEntity);
 	}
+
+    @Override
+    public SysUserEntity queryUserByDisId(Integer disId) {
+
+		return sysUserDao.queryUserByDisId(disId);
+    }
+
+
+	@Override
+	public SysUserEntity printerUserLogin(Map<String, Object> map) {
+
+		return sysUserDao.printerUserLogin(map);
+	}
 }

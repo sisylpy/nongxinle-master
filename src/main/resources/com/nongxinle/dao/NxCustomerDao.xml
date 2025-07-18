@@ -19,17 +19,22 @@
 	</select>
 
 	<resultMap id="customerUser" type="NxCustomerUserEntity">
-		<id property="nxCuUserId" column="nx_cu_user_id"/>
-		<result property="nxCuWxNickName" column="nx_cu_wx_nick_name"/>
-		<result property="nxCuWxAvatarUrl" column="nx_cu_wx_avatar_url"/>
-		<result property="nxCuWxGender" column="nx_cu_wx_gender"/>
-		<result property="nxCuJoinDate" column="nx_cu_join_date"/>
-		<result property="nxCuOrderAmount" column="nx_cu_order_amount"/>
-		<result property="nxCuOrderTimes" column="nx_cu_order_times"/>
+		<id property="nxCuUserId" column="nx_CU_user_id"/>
+		<result property="nxCuCommerceId" column="nx_CU_commerce_id"/>
+		<result property="nxCuOrderTimes" column="nx_CU_order_times"/>
+		<result property="nxCuOrderTimes" column="nx_CU_order_times"/>
+		<result property="nxCuWxGender" column="nx_CU_wx_gender"/>
+		<result property="nxCuWxPhoneNumber" column="nx_CU_wx_phone_number"/>
+		<result property="nxCuCommunityId" column="nx_CU_community_id"/>
+		<result property="nxCuWxOpenId" column="nx_CU_wx_open_id"/>
+		<result property="nxCuWxAvatarUrl" column="nx_CU_wx_avatra_url"/>
+		<result property="nxCuCustomerId" column="nx_CU_customer_id"/>
+
 	</resultMap>
 
 	<resultMap id="customers" type="NxCustomerEntity">
-		<id property="nxCustomerId" column="nx_cusotmer_id"/>
+		<id property="nxCustomerId" column="nx_customer_id"/>
+		<result property="nxCustomerCommerceId" column="nx_customer_commerce_id"/>
 		<result property="nxCustomerName" column="nx_customer_name"/>
 		<result property="nxCustomerAddress" column="nx_customer_address"/>
 		<result property="nxCustomerPhone" column="nx_customer_phone"/>
@@ -49,7 +54,33 @@
 		select count(*) from nx_customer where nx_customer_community_id = #{nxCommunityId}
 	</select>
 
-	<insert id="save" parameterType="com.nongxinle.entity.NxCustomerEntity"
+	<resultMap id="commerce" type="NxECommerceEntity">
+		<id property="nxECommerceId" column="nx_e_commerce_id"/>
+		<result property="nxECommerceName" column="nx_e_commerce_name"/>
+		<result property="nxECommerceGbDisId" column="nx_e_commerce_gb_dis_id"/>
+		<result property="nxECommerceImg" column="nx_e_commerce_img"/>
+	</resultMap>
+
+	<resultMap id="customerWithCommunity" type="NxCustomerEntity">
+		<id property="nxCustomerId" column="nx_customer_id"/>
+		<result property="nxCustomerCommerceId" column="nx_customer_commerce_id"/>
+		<result property="nxCustomerName" column="nx_customer_name"/>
+		<result property="nxCustomerAddress" column="nx_customer_address"/>
+		<result property="nxCustomerPhone" column="nx_customer_phone"/>
+		<result property="nxCustomerCommunityId" column="nx_customer_community_id"/>
+		<result property="nxCustomerCardWasteDate" column="nx_customer_card_waste_date"/>
+		<result property="nxCustomerType" column="nx_customer_type"/>
+		<association property="nxECommerceEntity" resultMap="commerce"/>
+	</resultMap>
+
+    <select id="querycustomerDetail" resultMap="customerWithCommunity">
+		select * from nx_customer  as cs
+		left join nx_e_commerce as nec on nec.nx_e_commerce_id = cs.nx_customer_commerce_id
+
+         where cs.nx_customer_id = #{nxCuCustomerId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCustomerEntity"
 			useGeneratedKeys="true"  keyProperty="nxCustomerId">
 		insert into nx_customer
 		(
@@ -69,7 +100,8 @@
 		 	`nx_customer_order_amount`,
 		 	`nx_customer_order_times`,
 		 	`nx_customer_detail_address`,
-		 	`nx_customer_card_waste_date`
+		 	`nx_customer_card_waste_date`,
+		 	`nx_customer_commerce_id`
 
 		)
 		values
@@ -90,7 +122,8 @@
 		 	#{nxCustomerOrderAmount},
 		 	#{nxCustomerOrderTimes},
 		 	#{nxCustomerDetailAddress},
-		 	#{nxCustomerCardWasteDate}
+		 	#{nxCustomerCardWasteDate},
+		 	#{nxCustomerCommerceId}
 		)
 	</insert>
 	 
@@ -112,6 +145,7 @@
 			<if test="nxCustomerOrderTimes != null">`nx_customer_order_times` = #{nxCustomerOrderTimes}, </if>
 			<if test="nxCustomerDetailAddress != null">`nx_customer_detail_address` = #{nxCustomerDetailAddress}, </if>
 			<if test="nxCustomerCardWasteDate != null">`nx_customer_card_waste_date` = #{nxCustomerCardWasteDate}, </if>
+			<if test="nxCustomerCommerceId != null">`nx_customer_commerce_id` = #{nxCustomerCommerceId}, </if>
 			<if test="nxCustomerDisId != null">`nx_customer_dis_id` = #{nxCustomerDisId}</if>
 		</set>
 		where nx_customer_id = #{nxCustomerId}

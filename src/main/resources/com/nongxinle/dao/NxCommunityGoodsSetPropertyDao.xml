@@ -33,14 +33,16 @@
 			`nx_community_goods_set_property_id`, 
 			`nx_cgsp_name`, 
 			`nx_cgsp_sort`, 
-			`nx_cgsp_cg_goods_id`
+			`nx_cgsp_cg_goods_id`,
+			`nx_cgsp_limit_amount`
 		)
 		values
 		(
 			#{nxCommunityGoodsSetPropertyId}, 
 			#{nxCgspName}, 
 			#{nxCgspSort}, 
-			#{nxCgspCgGoodsId}
+			#{nxCgspCgGoodsId},
+			#{nxCgspLimitAmount}
 		)
 	</insert>
 	 
@@ -49,6 +51,7 @@
 		<set>
 			<if test="nxCgspName != null">`nx_cgsp_name` = #{nxCgspName}, </if>
 			<if test="nxCgspSort != null">`nx_cgsp_sort` = #{nxCgspSort}, </if>
+			<if test="nxCgspLimitAmount != null">`nx_cgsp_limit_amount` = #{nxCgspLimitAmount}, </if>
 			<if test="nxCgspCgGoodsId != null">`nx_cgsp_cg_goods_id` = #{nxCgspCgGoodsId}</if>
 		</set>
 		where nx_community_goods_set_property_id = #{nxCommunityGoodsSetPropertyId}

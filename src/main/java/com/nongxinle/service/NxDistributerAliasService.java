@@ -27,4 +27,6 @@ public interface NxDistributerAliasService {
 	void delete(Integer nxDistributerAliasId);
 	
 	void deleteBatch(Integer[] nxDistributerAliasIds);
+
+    List<NxDistributerAliasEntity> queryAliasByParmas(Map<String, Object> map);
 }

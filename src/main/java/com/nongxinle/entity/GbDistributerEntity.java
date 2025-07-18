@@ -52,6 +52,10 @@ public class GbDistributerEntity implements Serializable {
 	 *  
 	 */
 	private String gbDistributerAddress;
+	private String gbDepartmentLatitude;
+	private String gbDepartmentLongitude;
+	private String gbDistributerPrintName;
+	private String gbDistributerPickName;
 	/**
 	 *  
 	 */
@@ -63,6 +67,22 @@ public class GbDistributerEntity implements Serializable {
 	private String gbDistributerSettleFullTime;
 	private String gbDistributerSettleTimes;
 	private Integer gbDistributerTimeQuantum;
+	private String gbDistributerBuyQuantity;
+
+	private  Integer hasNotPriceCount;
+	private  Integer hasPriceCount;
+	private  Integer gbDistributerSysCityId;
+	private  int orderDepCount;
+	private  String disSubtotal;
+	private  int goodsCount;
+	private  int outStockCount;
+	private  int orderGoodsCount;
+	private  int orderCount;
+	private  int linshiCout;
+	private  int gbDistributerNxDisId;
+	private NxDistributerEntity nxDistributerEntity;
+
+
 
 	private GbDistributerUserEntity gbDistributerUserEntity;
 
@@ -79,6 +99,9 @@ public class GbDistributerEntity implements Serializable {
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
 	private GbDistributerGoodsEntity linshiDisGoods;
 	private GbDepartmentEntity appSupplierDepartment;
+
+	private GbDepartmentUserEntity singleDepartmentUser;
+	private GbDistributerFatherGoodsEntity linshiFather;
 
 	private NxJrdhUserEntity nxDisBuyerUser;
 	private NxJrdhUserEntity sellerUser;

@@ -51,7 +51,7 @@ public class NxDistributerGbDistributerServiceImpl implements NxDistributerGbDis
     }
 
     @Override
-    public List<NxDistributerEntity> queryGbDistributerNxDistribtuer(Integer gbDepId) {
+    public List<NxDistributerGbDistributerEntity> queryGbDistributerNxDistribtuer(Integer gbDepId) {
 
 
         return nxDistributerGbDistributerDao.queryGbDistributerNxDistribtuer(gbDepId);
@@ -71,5 +71,11 @@ public class NxDistributerGbDistributerServiceImpl implements NxDistributerGbDis
     public List<NxDistributerEntity> queryGbDistributerNxDistribtuerGoods(Map<String, Object> map) {
 
         return nxDistributerGbDistributerDao.queryGbDistributerNxDistribtuerGoods(map);
+    }
+
+    @Override
+    public List<GbDistributerEntity> queryGbDistributerByParams(Map<String, Object> map) {
+
+        return nxDistributerGbDistributerDao.queryGbDistributerByParams(map);
     }
 }

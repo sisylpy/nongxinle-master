@@ -33,6 +33,14 @@
     </resultMap>
     <resultMap id="gbDis" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
+        <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
+		<result property="gbDistributerLan" column="gb_distributer_lan"/>
+		<result property="gbDistributerLun" column="gb_distributer_lun"/>
+		<result property="gbDistributerSysCityId" column="gb_distributer_sys_city_id"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+        <result property="gbDistributerBuyQuantity" column="gb_distributer_buy_quantity"/>
+		<result property="gbDistributerPrintName" column="gb_distributer_print_name"/>
         <result property="gbDistributerBusinessType" column="gb_distributer_business_type"/>
         <result property="gbDistributerName" column="gb_distributer_name"/>
         <result property="gbDistributerManager" column="gb_distributer_manager"/>
@@ -49,6 +57,7 @@
     </resultMap>
     <resultMap id="nxDisUser" type="NxDistributerUserEntity">
          <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
         <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
         <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
@@ -60,7 +69,11 @@
     </resultMap>
     <resultMap id="nxDis" type="NxDistributerEntity">
         <id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
+	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerManager" column="nx_distributer_manager"/>
         <result property="nxDistributerAddress" column="nx_distributer_address"/>
         <result property="nxDistributerPhone" column="nx_distributer_phone"/>
@@ -79,6 +92,8 @@
 <!--    </resultMap>-->
     <resultMap id="judhSupplier" type="NxJrdhSupplierEntity">
         <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+		<result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+		<result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
         <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
         <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
         <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>

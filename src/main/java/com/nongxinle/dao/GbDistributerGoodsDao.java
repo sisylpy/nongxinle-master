@@ -65,5 +65,23 @@ public interface GbDistributerGoodsDao extends BaseDao<GbDistributerGoodsEntity>
 
     List<GbDistributerEntity> queryGbDisByNxGoodsId(Integer nxGoodsId);
 
-    GbDistributerGoodsEntity queryLinshiGoods(Integer lsGoodsId);
+    GbDistributerGoodsEntity queryGbGoodsByNxGoodsId(Integer lsGoodsId);
+
+    List<GbDepartmentEntity> queryOutDepsByFatherId(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> querySupplierGoodsByGreatIdGb(Map<String, Object> map);
+
+    int queryLinshiGoodsAcount(Integer gbDistributerId);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByName(Map<String, Object> mapZero);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByLikeName(Map<String, Object> mapOne);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByNamePinyin(Map<String, Object> mapTwo);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByAlias(Map<String, Object> mapA);
+
+    List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map);
+
+    GbDistributerGoodsEntity queryDisGoodsDetail(Integer nxDdgDisGoodsId);
 }

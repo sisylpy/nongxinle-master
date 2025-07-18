@@ -21,5 +21,7 @@ public interface NxJrdhSupplierDao extends BaseDao<NxJrdhSupplierEntity> {
 
     List<NxJrdhSupplierEntity> queryJrdhSupplerWithDisByUserId(Map<String, Object> mapS);
 
-    NxJrdhSupplierEntity querySupplierByUserId(Integer sellerId);
+    List<NxJrdhSupplierEntity> querySupplierByUserId(Integer sellerId);
+
+    int queryJrdhSupplierCount(Map<String, Object> map);
 }

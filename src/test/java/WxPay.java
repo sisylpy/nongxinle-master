@@ -6,20 +6,8 @@
  */
 
 
-
-import com.alibaba.fastjson.JSONObject;
-import com.nongxinle.entity.QyNxDisCorpEntity;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.springframework.util.ObjectUtils;
 
-import java.io.*;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;

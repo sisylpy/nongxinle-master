@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerUserCardDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxCustomerUserCardEntity">
+		select * from nx_customer_user_card where nx_customer_user_card_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxCustomerUserCardEntity">
+		select * from nx_customer_user_card 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_customer_user_card 
+	</select>
+
+	<resultMap id="goods" type="NxCommunityGoodsEntity">
+		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
+		<result property="nxCgPromotionType" column="nx_cg_promotion_type"/>
+		<result property="nxCgPromotionAmount" column="nx_cg_promotion_amount"/>
+		<result property="nxCgPromotionPrice" column="nx_cg_promotion_price"/>
+		<result property="nxCgPromotionType" column="nx_cg_promotion_type"/>
+		<result property="nxCgPromotionAmount" column="nx_cg_promotion_amount"/>
+		<result property="nxCgPromotionPrice" column="nx_cg_promotion_price"/>
+		<result property="nxCgAdsenseStartTimeZone" column="nx_cg_adsense_start_time_zone"/>
+		<result property="nxCgAdsenseStopTimeZone" column="nx_cg_adsense_stop_time_zone"/>
+		<result property="nxCgAdsenseStartTime" column="nx_cg_adsense_start_time"/>
+		<result property="nxCgAdsenseStopTime" column="nx_cg_adsense_stop_time"/>
+		<result property="nxCgAdsenseStockQuantity" column="nx_cg_adsense_stock_quantity"/>
+		<result property="nxCgAdsenseRestQuantity" column="nx_cg_adsense_rest_quantity"/>
+        <result property="nxCgIsOpenAdsense" column="nx_cg_is_open_adsense"/>
+		<result property="nxCgSellType" column="nx_cg_sell_type"/>
+		<result property="nxCgCardId" column="nx_cg_card_id"/>
+		<result property="nxCgStartTime" column="nx_cg_start_time"/>
+		<result property="nxCgStartTimeZone" column="nx_cg_start_time_zone"/>
+		<result property="nxCgStopTime" column="nx_cg_stop_time"/>
+	</resultMap>
+
+	<resultMap id="goodsCard" type="NxCommunityCardEntity">
+		<id property="nxCommunityCardId" column="nx_community_card_id"/>
+		<result property="nxCommunityCardName" column="nx_community_card_name"/>
+		<result property="nxCcEffectiveDays" column="nx_cc_effective_days"/>
+		<result property="nxCcFilePath" column="nx_cc_file_path"/>
+		<result property="nxCcPrice" column="nx_cc_price"/>
+		<result property="nxCcWords" column="nx_cc_words"/>
+		 <collection property="nxCommunityGoodsEntityList" resultMap="goods"/>
+	</resultMap>
+	<resultMap id="userCard" type="NxCustomerUserCardEntity">
+		<id property="nxCustomerUserCardId" column="nx_customer_user_card_id"/>
+		<result property="nxCucaIsSelected" column="nx_cuca_is_selected"/>
+		<result property="nxCucaCardId" column="nx_cuca_card_id"/>
+		<result property="nxCucaCustomerUserId" column="nx_cuca_customer_user_id"/>
+		<result property="nxCucaStartDate" column="nx_cuca_start_date"/>
+		<result property="nxCucaStopDate" column="nx_cuca_stop_date"/>
+		<result property="nxCucaStatus" column="nx_cuca_status"/>
+		<result property="nxCucaType" column="nx_cuca_type"/>
+		<result property="nxCucaCommunityId" column="nx_cuca_community_id"/>
+		<association property="nxCommunityCardEntity" resultMap="goodsCard"/>
+	</resultMap>
+    <select id="queryUserCardByParams" resultMap="userCard">
+		select * from nx_customer_user_card as ncuc
+		left join nx_community_card as ncc  on ncc.nx_community_card_id = ncuc.nx_cuca_card_id
+			<where>
+				<if test="userId != null">
+					and nx_cuca_customer_user_id = #{userId}
+				</if>
+				<if test="orderId != null">
+					and nx_cuca_com_order_id = #{orderId}
+				</if>
+				<if test="cardId != null">
+					and nx_cuca_card_id = #{cardId}
+				</if>
+				<if test="status != null">
+					and nx_cuca_status = #{status}
+				</if>
+				<if test="type != null">
+					and nx_cuca_type = #{type}
+				</if>
+				<if test="isSelected != null">
+					and nx_cuca_is_selected = #{isSelected}
+				</if>
+				<if test="stopTime != null">
+					and nx_cuca_stop_date &gt;= #{stopTime}
+				</if>
+				<if test="xiaoyuStopTime != null">
+					and nx_cuca_stop_date &lt; #{xiaoyuStopTime}
+				</if>
+
+			</where>
+	</select>
+	<select id="queryUserGoodsCard" resultMap="userCard">
+
+		select * from nx_customer_user_card as ncuc
+		left join nx_community_card as ncc  on ncc.nx_community_card_id = ncuc.nx_cuca_card_id
+		left join nx_community_goods as ncg  on ncg.nx_cg_card_id = ncc.nx_community_card_id
+		<where>
+			<if test="goodsId != null">
+				and ncg.nx_community_goods_id = #{goodsId}
+			</if>
+			<if test="isSelected != null">
+				and nx_cuca_is_selected = #{isSelected}
+			</if>
+			<if test="userId != null">
+				and nx_cuca_customer_user_id = #{userId}
+			</if>
+			<if test="orderId != null">
+				and nx_cuca_com_order_id = #{orderId}
+			</if>
+			<if test="cardId != null">
+				and nx_cuca_card_id = #{cardId}
+			</if>
+			<if test="status != null">
+				and nx_cuca_status = #{status}
+			</if>
+			<if test="type != null">
+				and nx_cuca_type = #{type}
+			</if>
+			<if test="stopTime != null">
+				and nx_cuca_stop_date &gt;= #{stopTime}
+			</if>
+			<if test="dayuStopTime != null">
+				and nx_cuca_stop_date &lt;= #{stopTime}
+			</if>
+		</where>
+	</select>
+	<select id="queryUserCardCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_customer_user_card as ncuc
+		<where>
+			<if test="goodsId != null">
+				and ncg.nx_community_goods_id = #{goodsId}
+			</if>
+			<if test="userId != null">
+				and nx_cuca_customer_user_id = #{userId}
+			</if>
+			<if test="orderId != null">
+				and nx_cuca_com_order_id = #{orderId}
+			</if>
+			<if test="cardId != null">
+				and nx_cuca_card_id = #{cardId}
+			</if>
+			<if test="status != null">
+				and nx_cuca_status = #{status}
+			</if>
+			<if test="type != null">
+				and nx_cuca_type = #{type}
+			</if>
+			<if test="stopTime != null">
+				and nx_cuca_stop_date &gt;= #{stopTime}
+			</if>
+
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserCardEntity">
+		insert into nx_customer_user_card
+		(
+			`nx_customer_user_card_id`, 
+			`nx_cuca_card_id`, 
+			`nx_cuca_customer_user_id`, 
+			`nx_cuca_community_id`, 
+			`nx_cuca_status`, 
+			`nx_cuca_type`, 
+			`nx_cuca_start_date`, 
+			`nx_cuca_stop_date`,
+			`nx_cuca_com_order_id`,
+			`nx_cuca_is_selected`,
+			`nx_cuca_com_splicing_order_id`
+		)
+		values
+		(
+			#{nxCustomerUserCardId}, 
+			#{nxCucaCardId}, 
+			#{nxCucaCustomerUserId}, 
+			#{nxCucaCommunityId}, 
+			#{nxCucaStatus}, 
+			#{nxCucaType}, 
+			#{nxCucaStartDate}, 
+			#{nxCucaStopDate},
+			#{nxCucaComOrderId},
+			#{nxCucaIsSelected},
+			#{nxCucaComSplicingOrderId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxCustomerUserCardEntity">
+		update nx_customer_user_card 
+		<set>
+			<if test="nxCucaCardId != null">`nx_cuca_card_id` = #{nxCucaCardId}, </if>
+			<if test="nxCucaCustomerUserId != null">`nx_cuca_customer_user_id` = #{nxCucaCustomerUserId}, </if>
+			<if test="nxCucaCommunityId != null">`nx_cuca_community_id` = #{nxCucaCommunityId}, </if>
+			<if test="nxCucaStatus != null">`nx_cuca_status` = #{nxCucaStatus}, </if>
+			<if test="nxCucaType != null">`nx_cuca_type` = #{nxCucaType}, </if>
+			<if test="nxCucaStartDate != null">`nx_cuca_start_date` = #{nxCucaStartDate}, </if>
+			<if test="nxCucaComOrderId != null">`nx_cuca_com_order_id` = #{nxCucaComOrderId}, </if>
+			<if test="nxCucaIsSelected != -99">`nx_cuca_is_selected` = #{nxCucaIsSelected}, </if>
+			<if test="nxCucaComSplicingOrderId != null">`nx_cuca_com_splicing_order_id` = #{nxCucaComSplicingOrderId}, </if>
+			<if test="nxCucaStopDate != null">`nx_cuca_stop_date` = #{nxCucaStopDate}</if>
+		</set>
+		where nx_customer_user_card_id = #{nxCustomerUserCardId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_customer_user_card where nx_customer_user_card_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_customer_user_card where nx_customer_user_card_id in 
+		<foreach item="nxCustomerUserCardId" collection="array" open="(" separator="," close=")">
+			#{nxCustomerUserCardId}
+		</foreach>
+	</delete>
+
+</mapper>

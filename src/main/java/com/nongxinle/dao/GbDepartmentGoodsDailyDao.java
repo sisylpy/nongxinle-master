@@ -79,4 +79,8 @@ public interface GbDepartmentGoodsDailyDao extends BaseDao<GbDepartmentGoodsDail
     List<GbDepartmentGoodsDailyEntity> queryDepGoodsDailyListWithGoodsByParams(Map<String, Object> mapSearch);
 
     List<GbDepartmentGoodsDailyEntity> queryDepGoodsDailyListWithReduceByParams(Map<String, Object> mapSearch);
+
+    List<GbDistributerFatherGoodsEntity> queryFatherGoodsByParams(Map<String, Object> mapSearch);
+
+    TreeSet<GbDistributerGoodsEntity> queryDisGoodsWithBusinessDep(Map<String, Object> mapSearch);
 }

@@ -9,6 +9,7 @@ package com.nongxinle.dao;
 
 import com.nongxinle.entity.NxCommunityEntity;
 import com.nongxinle.entity.NxECommerceCommunityEntity;
+import com.nongxinle.entity.NxECommerceEntity;
 
 import java.util.List;
 
@@ -16,4 +17,6 @@ import java.util.List;
 public interface NxECommerceCommunityDao extends BaseDao<NxECommerceCommunityEntity> {
 
     List<NxCommunityEntity> queryCommunityByCommerceId(Integer commerceId);
+
+    NxECommerceCommunityEntity queryByCommunityId(Integer communityId);
 }

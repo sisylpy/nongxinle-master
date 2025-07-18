@@ -57,10 +57,7 @@ public class NxCustomerUserServiceImpl implements NxCustomerUserService {
 		nxCustomerUserDao.deleteBatch(custUserIds);
 	}
 
-    @Override
-    public String queryOpenId(Integer nxOrdersUserId) {
-        return nxCustomerUserDao.queryOpenId(nxOrdersUserId);
-    }
+
 
     @Override
     public NxCustomerUserEntity queryUserByOpenId(String openid) {
@@ -71,15 +68,47 @@ public class NxCustomerUserServiceImpl implements NxCustomerUserService {
     @Override
     public Map<String, Object> queryCustomerUserInfo(Integer gbDepartmentUserId) {
 
-		NxCustomerUserEntity userEntity = nxCustomerUserDao.queryObject(gbDepartmentUserId);
+		NxCustomerUserEntity userEntity = nxCustomerUserDao.queryUserWithAddress(gbDepartmentUserId);
+		System.out.println("dkfjdkf;lkafa;lfdas===" + userEntity.getMainAddress());
+
 		Integer nxCuCustomerId = userEntity.getNxCuCustomerId();
-		NxCustomerEntity nxCustomerEntity = nxCustomerService.queryObject(nxCuCustomerId);
+		System.out.println("ududud");
+		NxCustomerEntity nxCustomerEntity = nxCustomerService.querycustomerDetail(nxCuCustomerId);
 
 		Map<String, Object> map = new HashMap<>();
 		map.put("userInfo",userEntity );
 		map.put("customerInfo", nxCustomerEntity);
 
 		return map;
+    }
+
+    @Override
+    public List<NxCustomerUserEntity> queryCustomerByParams(Map<String, Object> map) {
+
+		return nxCustomerUserDao.queryCustomerByParams(map);
+    }
+
+    @Override
+    public Integer queryCustomerUserCount(Map<String, Object> map) {
+
+		return  nxCustomerUserDao.queryCustomerUserCount(map);
+    }
+
+    @Override
+    public Integer queryCommerceCustomerUserCount(Map<String, Object> map) {
+
+		return nxCustomerUserDao.queryCommerceCustomerUserCount(map);
+    }
+
+	@Override
+	public NxCustomerUserEntity queryUserWithAddress(Integer orderUserId) {
+		return nxCustomerUserDao.queryUserWithAddress(orderUserId);
+	}
+
+    @Override
+    public NxCustomerUserEntity queryUserByOpenIdAndCommerceId(Map<String, Object> mapU) {
+
+		return nxCustomerUserDao.queryUserByOpenIdAndCommerceId(mapU);
     }
 
 }

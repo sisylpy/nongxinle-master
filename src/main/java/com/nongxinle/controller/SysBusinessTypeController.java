@@ -27,5 +27,15 @@ public class SysBusinessTypeController {
 	@Autowired
 	private SysBusinessTypeService sysBusinessTypeService;
 
+
+	@RequestMapping(value = "/getSysTypeList/{type}")
+	@ResponseBody
+	public R getSysTypeList(@PathVariable Integer type) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("type", type);
+	    List<SysBusinessTypeEntity>  sysBusinessTypeEntities =  sysBusinessTypeService.querySysListByParams(map);
+	    return R.ok().put("data", sysBusinessTypeEntities);
+	}
+
 	
 }

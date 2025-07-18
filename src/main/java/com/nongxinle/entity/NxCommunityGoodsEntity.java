@@ -41,6 +41,7 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	 *  商品状态
 	 */
 	private Integer nxCgGoodsStatus;
+	private Integer nxCgIsOpenAdsense;
 
 	/**
 	 *  是否称重
@@ -77,6 +78,7 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	 * image
 	 */
 	private String nxCgNxFatherImg;
+	private String nxCgNxGoodsTopFilePath;
 	private Integer nxCgNxGrandId;
 	private String nxCgNxGrandName;
 	private Integer nxCgNxGreatGrandId;
@@ -96,6 +98,8 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 
 	private Integer nxCgBuyStatus;
 	private Integer nxCgSetSubNumber;
+	private Integer nxCgSetSubLimitNumber;
+	private Integer nxCgGoodsSort;
 
 	private Integer nxCgDistributerId;
 	private Integer nxCgDistributerGoodsId;
@@ -125,7 +129,10 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	private String nxCgGoodsThreePriceExchangeDate;
 	private String nxCgBuyingPriceExchange;
 	private String nxCgBuyingPriceExchangeDate;
+	private String nxCgPrintSn;
 	private Integer nxCgIsSetMenu;
+	private Integer nxCgCardId;
+	private Integer nxCgPromotionType;
 
 
 	////////
@@ -134,9 +141,7 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	/**
 	 * 订货规格组
 	 */
-	private List<NxStandardEntity> dgStandardList;
 
-	private NxGoodsEntity nxGoodsEntity;
 
 	private Boolean isSelected = false;
 	private Boolean nxCgPrintSelected = true;
@@ -154,10 +159,27 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 
 
 	private NxCommunityEntity nxCommunityEntity;
-	private NxRestrauntComGoodsEntity nxRestrauntComGoodsEntity;
 
-	private NxDistributerEntity nxDistributerEntity;
-	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+	private String couponStartDate;
+	private String couponStartTime;
+	private String couponStopDate;
+	private String couponStopTime;
+	private String nxCgStartTime;
+	private String nxCgStartTimeZone;
+	private String nxCgStopTimeZone;
+	private String nxCgStopTime;
+	private String nxCgAdsenseStartTime;
+	private String nxCgAdsenseStopTime;
+	private String nxCgAdsenseStartTimeZone;
+	private String nxCgAdsenseStopTimeZone;
+	private Integer nxCgAdsenseStockQuantity;
+	private Integer nxCgAdsenseRestQuantity;
+	private Integer nxCgPromotionAmount;
+	private Integer nxCgServiceType;
+	private String nxCgPromotionPrice;
+	private String nxCgPromotionWords;
+
+	private NxCommunityCardEntity nxCommunityCardEntity;
 
 	private List<NxCommunityStandardEntity> nxCommunityStandardEntities;
 	private List<NxAliasEntity> nxAliasEntities;
@@ -168,15 +190,6 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	private List<NxCommunityOrdersSubEntity> itemSubEntities;
 	private NxCommunityOrdersSubEntity ordersSubEntity;
 	private NxCommunityOrdersSubEntity memberOrdersSubEntity;
-
-	private List<NxRestrauntOrdersEntity> nxRestrauntOrdersEntities;
-
-	private NxRestrauntOrdersEntity nxRestrauntOrdersEntity;
-	private List<NxRestrauntEntity> nxRestrauntEntities;
-
-	private NxResComGoodsDailyEntity nxResComGoodsDailyEntity;
-
-	private NxCommunitySupplierEntity nxCommunitySupplierEntity;
 
 	private List<NxCommunityGoodsSetItemEntity> nxCommunityGoodsSetItemEntities;
 
@@ -216,21 +229,18 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 				Objects.equals(nxCgGoodsStock, that.nxCgGoodsStock) &&
 				Objects.equals(nxCgGoodsPinyin, that.nxCgGoodsPinyin) &&
 				Objects.equals(nxCgGoodsPy, that.nxCgGoodsPy) &&
-				Objects.equals(dgStandardList, that.dgStandardList) &&
-				Objects.equals(nxGoodsEntity, that.nxGoodsEntity) &&
 				Objects.equals(isSelected, that.isSelected) &&
 				Objects.equals(nxCgNxGrandId, that.nxCgNxGrandId) &&
 				Objects.equals(nxCgNxGrandName, that.nxCgNxGrandName) &&
 				Objects.equals(nxCgNxGreatGrandId, that.nxCgNxGreatGrandId) &&
 				Objects.equals(nxCgNxGreatGrandName, that.nxCgNxGreatGrandName) &&
 				Objects.equals(nxCommunityEntity, that.nxCommunityEntity) &&
-				Objects.equals(nxDistributerEntity, that.nxDistributerEntity) &&
 				Objects.equals(nxCommunityStandardEntities, that.nxCommunityStandardEntities);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(nxCommunityGoodsId, nxCgCommerceId, nxCgCommunityId, nxCgGoodsStatus, nxCgGoodsIsWeight, nxCgGoodsPrice, nxCgGoodsPriceDecimal, nxCgNxGoodsFilePath, nxCgGoodsStandardType, nxCgCfgGoodsFatherId, nxCgNxGoodsId, nxCgNxFatherId, nxCgNxFatherImg, nxCgGoodsTotalHits, nxCgPurchaseQuantity, nxCgGoodsBuyType, nxCgBuyPurchaseUserId, nxCgBuyAppId, nxCgBuyStatus, nxCgDistributerId, nxCgBuyingPrice, nxCgGoodsType, nxCgGoodsName, nxCgGoodsDetail, nxCgGoodsStandardname, nxCgGoodsStock, nxCgGoodsPinyin, nxCgGoodsPy, dgStandardList, nxGoodsEntity, isSelected, nxCgNxGrandId, nxCgNxGrandName, nxCgNxGreatGrandId, nxCgNxGreatGrandName, nxCommunityEntity, nxDistributerEntity, nxCommunityStandardEntities);
+		return Objects.hash(nxCommunityGoodsId, nxCgCommerceId, nxCgCommunityId, nxCgGoodsStatus, nxCgGoodsIsWeight, nxCgGoodsPrice, nxCgGoodsPriceDecimal, nxCgNxGoodsFilePath, nxCgGoodsStandardType, nxCgCfgGoodsFatherId, nxCgNxGoodsId, nxCgNxFatherId, nxCgNxFatherImg, nxCgGoodsTotalHits, nxCgPurchaseQuantity, nxCgGoodsBuyType, nxCgBuyPurchaseUserId, nxCgBuyAppId, nxCgBuyStatus, nxCgDistributerId, nxCgBuyingPrice, nxCgGoodsType, nxCgGoodsName, nxCgGoodsDetail, nxCgGoodsStandardname, nxCgGoodsStock, nxCgGoodsPinyin, nxCgGoodsPy,  isSelected, nxCgNxGrandId, nxCgNxGrandName, nxCgNxGreatGrandId, nxCgNxGreatGrandName, nxCommunityEntity, nxCommunityStandardEntities);
 	}
 
 	@Override

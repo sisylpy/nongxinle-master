@@ -60,7 +60,7 @@
 		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
 		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
 		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
-		<association property="nxGoodsEntity" resultMap="nxGoods"/>
+<!--		<association property="nxGoodsEntity" resultMap="nxGoods"/>-->
 	</resultMap>
 
 	<resultMap id="item" type="NxOrderTemplateItemEntity">
