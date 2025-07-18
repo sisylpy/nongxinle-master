@@ -69,4 +69,7 @@ src/main/webapp/goodsImage/
 src/main/webapp/uploadImage/
 src/main/webapp/userImage/
 src/main/webapp/foodImage/
-src/main/webapp/numberRecord/ 
+src/main/webapp/numberRecord/
+
+# SQL files (too large for GitHub)
+*.sql 
