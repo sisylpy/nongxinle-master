@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerGoodsLinshiDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
+		select * from nx_distributer_goods_linshi where nx_distributer_goods_ls_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
+		select * from nx_distributer_goods_linshi 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_goods_linshi 
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
+		insert into nx_distributer_goods_linshi
+		(
+			`nx_distributer_goods_ls_id`, 
+			`nx_dg_dfg_goods_father_ls_id`, 
+			`nx_dg_distributer_ls_id`, 
+			`nx_dg_goods_ls_status`, 
+			`nx_dg_goods_name`, 
+			`nx_dg_goods_detail`, 
+			`nx_dg_goods_standardname`, 
+			`nx_dg_goods_pinyin`, 
+			`nx_dg_goods_py`, 
+			`nx_dg_nx_goods_id`, 
+			`nx_dg_goods_brand`, 
+			`nx_dg_goods_place`, 
+			`nx_dg_to_nx_dis_goods_id`
+		)
+		values
+		(
+			#{nxDistributerGoodsLsId}, 
+			#{nxDgDfgGoodsFatherLsId}, 
+			#{nxDgDistributerLsId}, 
+			#{nxDgGoodsLsStatus}, 
+			#{nxDgGoodsName}, 
+			#{nxDgGoodsDetail}, 
+			#{nxDgGoodsStandardname}, 
+			#{nxDgGoodsPinyin}, 
+			#{nxDgGoodsPy}, 
+			#{nxDgNxGoodsId}, 
+			#{nxDgGoodsBrand}, 
+			#{nxDgGoodsPlace}, 
+			#{nxDgToNxDisGoodsId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
+		update nx_distributer_goods_linshi 
+		<set>
+			<if test="nxDgDfgGoodsFatherLsId != null">`nx_dg_dfg_goods_father_ls_id` = #{nxDgDfgGoodsFatherLsId}, </if>
+			<if test="nxDgDistributerLsId != null">`nx_dg_distributer_ls_id` = #{nxDgDistributerLsId}, </if>
+			<if test="nxDgGoodsLsStatus != null">`nx_dg_goods_ls_status` = #{nxDgGoodsLsStatus}, </if>
+			<if test="nxDgGoodsName != null">`nx_dg_goods_name` = #{nxDgGoodsName}, </if>
+			<if test="nxDgGoodsDetail != null">`nx_dg_goods_detail` = #{nxDgGoodsDetail}, </if>
+			<if test="nxDgGoodsStandardname != null">`nx_dg_goods_standardname` = #{nxDgGoodsStandardname}, </if>
+			<if test="nxDgGoodsPinyin != null">`nx_dg_goods_pinyin` = #{nxDgGoodsPinyin}, </if>
+			<if test="nxDgGoodsPy != null">`nx_dg_goods_py` = #{nxDgGoodsPy}, </if>
+			<if test="nxDgNxGoodsId != null">`nx_dg_nx_goods_id` = #{nxDgNxGoodsId}, </if>
+			<if test="nxDgGoodsBrand != null">`nx_dg_goods_brand` = #{nxDgGoodsBrand}, </if>
+			<if test="nxDgGoodsPlace != null">`nx_dg_goods_place` = #{nxDgGoodsPlace}, </if>
+			<if test="nxDgToNxDisGoodsId != null">`nx_dg_to_nx_dis_goods_id` = #{nxDgToNxDisGoodsId}</if>
+		</set>
+		where nx_distributer_goods_ls_id = #{nxDistributerGoodsLsId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_goods_linshi where nx_distributer_goods_ls_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_goods_linshi where nx_distributer_goods_ls_id in 
+		<foreach item="nxDistributerGoodsLsId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerGoodsLsId}
+		</foreach>
+	</delete>
+
+</mapper>
