@@ -231,19 +231,33 @@ public class WXBizMsgCrypt {
          * @param postData 密文，对应POST请求的数据
          */
         // 验证安全签名
-        System.out.println("toeken======" + token);
-        System.out.println("getTimestamp=====" + qywechatInfo.getTimestamp());
-        System.out.println("getNonce=====" + qywechatInfo.getNonce());
-        System.out.println("encrypt=====" + encrypt[1].toString());
+        System.out.println("========== 签名验证四件套（原始值） ==========");
+        System.out.println("token=[\"" + token + "\"]");
+        System.out.println("timestamp=[\"" + qywechatInfo.getTimestamp() + "\"]");
+        System.out.println("nonce=[\"" + qywechatInfo.getNonce() + "\"]");
+        System.out.println("encrypt=[\"" + encrypt[1].toString() + "\"]");
+        System.out.println("encrypt长度=" + encrypt[1].toString().length());
+        System.out.println("encrypt是否包含+号=" + encrypt[1].toString().contains("+"));
+        System.out.println("encrypt是否包含空格=" + encrypt[1].toString().contains(" "));
+        System.out.println("微信传来的msg_signature=[\"" + qywechatInfo.getMsgSignature() + "\"]");
+        System.out.println("===========================================");
         String signature = SHA1.getSHA1(token, qywechatInfo.getTimestamp(), qywechatInfo.getNonce(), encrypt[1].toString());
 
         // 和URL中的签名比较是否相等
-         System.out.println("第三方校验签名：" + signature);
+        System.out.println("========== 签名验证结果对比 ==========");
+        System.out.println("我方计算的签名=[\"" + signature + "\"]");
+        System.out.println("微信传来的签名=[\"" + qywechatInfo.getMsgSignature() + "\"]");
+        System.out.println("签名是否匹配=" + signature.equals(qywechatInfo.getMsgSignature()));
+        System.out.println("===========================================");
 
         if (!signature.equals(qywechatInfo.getMsgSignature())) {
-            System.out.println("signature=====" + signature + "qywechatInfo.getMsgSignature()=========：" + qywechatInfo.getMsgSignature());
+            System.err.println("❌ 签名验证失败！");
+            System.err.println("   我方计算：" + signature);
+            System.err.println("   微信传来：" + qywechatInfo.getMsgSignature());
             throw new AesException(AesException.ValidateSignatureError);
         }
+        
+        System.out.println("✅ 签名验证成功！");
 
         // 解
         System.out.println("encryptencryptwhatisthis--------------------------" + encrypt);

@@ -7,6 +7,7 @@
         select *
         from nx_distributer_user as du
                  left join nx_distributer as d on d.nx_distributer_id = du.nx_DIU_distributer_id
+                 left join sys_city_market as scm on scm.sys_city_market_id = d.nx_distributer_sys_market_id
         where nx_distributer_user_id = #{value}
     </select>
 
@@ -96,8 +97,29 @@
         <result property="nxNdpBuyQuantity" column="machineNdp_nx_ndp_buy_quantity"/>
     </resultMap>
 
+    <resultMap id="market" type="SysCityMarketEntity">
+        <id property="sysCityMarketId" column="sys_city_market_id"/>
+        <result property="sysCmMarketName" column="sys_cm_market_name"/>
+        <result property="sysCmCityId" column="sys_cm_city_id"/>
+        <result property="sysCmRegisterGiftPoints" column="sys_cm_register_gift_points"/>
+        <result property="sysCmPointsPerYuan" column="sys_cm_points_per_yuan"/>
+        <result property="sysCmSelfPrintEnabled" column="sys_cm_self_print_enabled"/>
+        <result property="sysCmManagerPhone" column="sys_cm_manager_phone"/>
+        <result property="sysCmAreaCoordinates" column="sys_cm_area_coordinates"/>
+        <result property="sysCmCenterLatitude" column="sys_cm_center_latitude"/>
+        <result property="sysCmCenterLongitude" column="sys_cm_center_longitude"/>
+        <result property="sysCmDeliveryRadius" column="sys_cm_delivery_radius"/>
+        <result property="sysCmPayConfigClass" column="sys_cm_pay_config_class"/>
+        <result property="sysCmMiniAppId" column="sys_cm_mini_app_id"/>
+    </resultMap>
+
     <resultMap id="distributer" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerSysMarketId" column="nx_distributer_sys_market_id"/>
         <result property="nxDistributerLan" column="nx_distributer_lan"/>
         <result property="nxDistributerLun" column="nx_distributer_lun"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
@@ -114,6 +136,7 @@
         <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
         <result property="nxDistributerBuyQuantity" column="nx_distributer_buy_quantity"/>
 		<association property="sysBusinessTypeEntity" resultMap="sysBusinessType"/>
+        <association property="sysCityMarketEntity" resultMap="market"/>
         <association property="nxDisBuyerUser" resultMap="jrdhUser"/>
         <collection property="nxDistributerServiceCityEntities" resultMap="serviceCity"/>
         <collection property="orderPayList" resultMap="orderPay"/>
@@ -153,10 +176,10 @@
     <select id="queryUser" resultMap="disUser">
         select *
         from nx_distributer_user as du
-#                  left join nx_distributer_user_role as r on du.nx_distributer_user_id = r.nx_DUR_user_id
                  left join nx_distributer as nd on nd.nx_distributer_id = du.nx_DIU_distributer_id
                  left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
                  left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
+                 left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
                  left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
         where nx_DIU_distributer_id = #{disId}
     </select>
@@ -193,6 +216,7 @@
                  left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
 				 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
                  left join qy_nx_dis_corp_user as qndcu on qndcu.qy_nx_dis_corp_user_id = u.nx_DIU_qy_corp_user_id
+                 left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
 		where nx_distributer_user_id = #{nxDistributerUserId}
     </select>
 
@@ -202,6 +226,7 @@
                  left join nx_distributer as nd on nd.nx_distributer_id = du.nx_DIU_distributer_id
                  left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
                  left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
+                 left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
 				 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
 		where nx_DIU_wx_open_id = #{openid}
     </select>
@@ -216,6 +241,7 @@
                  left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
                  left join sys_city as sc on sc.sys_city_id = ndsc.nx_ds_city_id
 				 left join sys_business_type as sbt on sbt.sys_business_type_id = nd.nx_distributer_business_type_id
+            left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
         left join nx_jrdh_user as nju on nju.nx_jrdh_nx_distributer_id = nd.nx_distributer_id
 		where nx_distributer_id = #{diuDistributerId}
 
@@ -263,6 +289,7 @@
     <select id="queryUserByPhone" resultMap="disUser">
         select * from nx_distributer_user as ndu
         left join nx_distributer as nd on nd.nx_distributer_id = ndu.nx_DIU_distributer_id
+        left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
         where  nx_DIU_wx_phone = #{nxDiuWxPhone}
     </select>
 

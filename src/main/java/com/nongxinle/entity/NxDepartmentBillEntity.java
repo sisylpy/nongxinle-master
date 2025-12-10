@@ -69,6 +69,14 @@ public class NxDepartmentBillEntity implements Serializable {
 	private Integer nxDbNxCommunityId;
 	private Integer nxDbNxRestrauntId;
     private String nxUserOpenId;
+	/**
+	 * 支付积分
+	 */
+	private String nxDbPayPoints;
+	/**
+	 * 支付现金
+	 */
+	private String nxDbPayCash;
 	private NxDistributerEntity distributerEntity;
 	private String[] nxOrderIds;
 

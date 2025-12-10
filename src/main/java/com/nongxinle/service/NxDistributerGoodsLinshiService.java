@@ -27,4 +27,8 @@ public interface NxDistributerGoodsLinshiService {
 	void delete(Integer nxDistributerGoodsLsId);
 	
 	void deleteBatch(Integer[] nxDistributerGoodsLsIds);
+
+    List<NxDistributerGoodsLinshiEntity> disGetLinshiGoodsList(Map<String, Object> map);
+
+	int disGetLinshiGoodsTotal(Map<String, Object> map);
 }

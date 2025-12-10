@@ -155,9 +155,11 @@
 	</resultMap>
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
-		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
-		<result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
 		<result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
 		<result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
 		<result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>

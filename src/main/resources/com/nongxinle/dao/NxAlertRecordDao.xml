@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxAlertRecordDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxAlertRecordEntity">
+        SELECT * FROM nx_machine_alert_record WHERE nx_ar_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxAlertRecordEntity">
+        SELECT * FROM nx_machine_alert_record
+        <where>
+            <if test="deviceId != null">
+                AND nx_ar_device_id = #{deviceId}
+            </if>
+            <if test="managerId != null">
+                AND nx_ar_manager_id = #{managerId}
+            </if>
+            <if test="isCleared != null">
+                AND nx_ar_is_cleared = #{isCleared}
+            </if>
+            <if test="isRead != null">
+                AND nx_ar_is_read = #{isRead}
+            </if>
+        </where>
+        ORDER BY nx_ar_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_alert_record
+        <where>
+            <if test="deviceId != null">
+                AND nx_ar_device_id = #{deviceId}
+            </if>
+            <if test="managerId != null">
+                AND nx_ar_manager_id = #{managerId}
+            </if>
+            <if test="isCleared != null">
+                AND nx_ar_is_cleared = #{isCleared}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据设备ID查询 -->
+    <select id="queryByDeviceId" resultType="com.nongxinle.entity.NxAlertRecordEntity">
+        SELECT * FROM nx_machine_alert_record
+        WHERE nx_ar_device_id = #{deviceId}
+        <if test="isCleared != null">
+            AND nx_ar_is_cleared = #{isCleared}
+        </if>
+        ORDER BY nx_ar_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 根据管理员ID查询 -->
+    <resultMap id="alertRecordWithDevice" type="com.nongxinle.entity.NxAlertRecordEntity">
+        <id property="nxArId" column="nx_ar_id"/>
+        <result property="nxArDeviceId" column="nx_ar_device_id"/>
+        <result property="nxArManagerId" column="nx_ar_manager_id"/>
+        <result property="nxArAlertLevel" column="nx_ar_alert_level"/>
+        <result property="nxArPaperCount" column="nx_ar_paper_count"/>
+        <result property="nxArMessage" column="nx_ar_message"/>
+        <result property="nxArSendStatus" column="nx_ar_send_status"/>
+        <result property="nxArSendTime" column="nx_ar_send_time"/>
+        <result property="nxArIsCleared" column="nx_ar_is_cleared"/>
+        <result property="nxArClearTime" column="nx_ar_clear_time"/>
+        <result property="nxArIsRead" column="nx_ar_is_read"/>
+        <result property="nxArReadTime" column="nx_ar_read_time"/>
+        <result property="nxArCreateTime" column="nx_ar_create_time"/>
+        <association property="nxPrinterDeviceEntity" javaType="com.nongxinle.entity.NxPrinterDeviceEntity">
+            <id property="nxPdId" column="nx_pd_id"/>
+            <result property="nxPdDeviceNo" column="nx_pd_device_no"/>
+            <result property="nxPdDeviceName" column="nx_pd_device_name"/>
+            <result property="nxPdLocation" column="nx_pd_location"/>
+        </association>
+    </resultMap>
+
+    <select id="queryByManagerId" resultMap="alertRecordWithDevice">
+        SELECT ar.*, pd.nx_pd_id, pd.nx_pd_device_no, pd.nx_pd_device_name, pd.nx_pd_location
+        FROM nx_machine_alert_record ar
+        LEFT JOIN nx_machine_printer_device pd ON ar.nx_ar_device_id = pd.nx_pd_id
+        WHERE ar.nx_ar_manager_id = #{managerId}
+        <if test="isCleared != null">
+            AND ar.nx_ar_is_cleared = #{isCleared}
+        </if>
+        <if test="isRead != null">
+            AND ar.nx_ar_is_read = #{isRead}
+        </if>
+        ORDER BY ar.nx_ar_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 查询未清除的提醒记录（防重复） -->
+    <select id="queryUnclearedRecord" resultType="com.nongxinle.entity.NxAlertRecordEntity">
+        SELECT * FROM nx_machine_alert_record
+        WHERE nx_ar_device_id = #{deviceId}
+          AND nx_ar_alert_level = #{alertLevel}
+          AND nx_ar_is_cleared = nx_machine_paper_refill_record
+        ORDER BY nx_ar_create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 清除设备的提醒记录 -->
+    <update id="clearRecordsByDeviceId">
+        UPDATE nx_machine_alert_record
+        SET nx_ar_is_cleared = 1,
+            nx_ar_clear_time = NOW()
+        WHERE nx_ar_device_id = #{deviceId}
+          AND nx_ar_is_cleared = nx_machine_paper_refill_record
+    </update>
+
+    <!-- 标记为已读 -->
+    <update id="markAsRead">
+        UPDATE nx_machine_alert_record
+        SET nx_ar_is_read = 1,
+            nx_ar_read_time = NOW()
+        WHERE nx_ar_id = #{recordId}
+    </update>
+
+    <!-- 查询未读消息数量 -->
+    <select id="queryUnreadCount" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_alert_record
+        WHERE nx_ar_manager_id = #{managerId}
+          AND nx_ar_is_read = nx_machine_paper_refill_record
+    </select>
+
+    <!-- 更新发送状态 -->
+    <update id="updateSendStatus">
+        UPDATE nx_machine_alert_record
+        SET nx_ar_send_status = #{sendStatus},
+            nx_ar_send_time = NOW()
+        WHERE nx_ar_id = #{recordId}
+    </update>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxAlertRecordEntity" useGeneratedKeys="true" keyProperty="nxArId">
+        INSERT INTO nx_machine_alert_record
+        (
+            nx_ar_device_id,
+            nx_ar_manager_id,
+            nx_ar_alert_level,
+            nx_ar_paper_count,
+            nx_ar_message,
+            nx_ar_send_status,
+            nx_ar_is_cleared,
+            nx_ar_is_read,
+            nx_ar_create_time
+        )
+        VALUES
+        (
+            #{nxArDeviceId},
+            #{nxArManagerId},
+            #{nxArAlertLevel},
+            #{nxArPaperCount},
+            #{nxArMessage},
+            #{nxArSendStatus},
+            nx_machine_paper_refill_record,
+            nx_machine_paper_refill_record,
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxAlertRecordEntity">
+        UPDATE nx_machine_alert_record
+        <set>
+            <if test="nxArSendStatus != null">nx_ar_send_status = #{nxArSendStatus},</if>
+            <if test="nxArIsCleared != null">nx_ar_is_cleared = #{nxArIsCleared},</if>
+            <if test="nxArIsRead != null">nx_ar_is_read = #{nxArIsRead},</if>
+        </set>
+        WHERE nx_ar_id = #{nxArId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_alert_record WHERE nx_ar_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_alert_record WHERE nx_ar_id IN
+        <foreach item="nxArId" collection="array" open="(" separator="," close=")">
+            #{nxArId}
+        </foreach>
+    </delete>
+
+</mapper>
+

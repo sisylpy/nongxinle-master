@@ -128,6 +128,10 @@ public class Constant {
     public static final String SUITEIDDjDh = "dk79f21376ebff6142";//?
     public static final String EncodingAESKeyDjDh = "nuDCoPYgx4DcJjbZmjE6iHqAKP6f5nwGC7aFUFOamht";
     public static final String CORPIDDjTRSDH = "ww8bb9f761c253a58d";//?
+    
+    //    会话存档（MsgAudit）
+    public static final String TOKEN_MSGAUDIT = "Sg3d1Bp1tBkvEJeT0A3F9H4IFWNWzY";
+    public static final String EncodingAESKey_MSGAUDIT = "pFkjhhUR8IVMkfWLs6VftVgbSe1U6GsVH1lWqAR5aTc";
 //    public static final String MOBANID = "dk79f21376ebff6142";
 
 

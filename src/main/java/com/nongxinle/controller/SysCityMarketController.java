@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.itextpdf.styledxmlparser.jsoup.select.Evaluator;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +39,8 @@ public class SysCityMarketController {
 		if(cityId != -1){
 			map.put("cityId", cityId);
 		}
+
+		System.out.println("whwhhwhwhw" + map);
 
 		List<SysCityMarketEntity> marketEntities =  sysCityMarketService.queryMarketByParams(map);
 	    return R.ok().put("data", marketEntities);

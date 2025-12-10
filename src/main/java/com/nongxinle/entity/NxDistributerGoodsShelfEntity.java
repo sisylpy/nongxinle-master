@@ -36,9 +36,25 @@ public class NxDistributerGoodsShelfEntity implements Serializable {
 	 *  批发商id
 	 */
 	private Integer nxDistributerGoodsShelfDisId;
+	/**
+	 *  负责员工ID
+	 */
+	private Integer nxDistributerGoodsShelfUserId;
 	private Boolean isSelected = false;
 
 	private List<NxDistributerGoodsShelfGoodsEntity> nxDisGoodsShelfGoodsEntities;
+	/**
+	 * 负责员工信息
+	 */
+	private NxDistributerUserEntity responsibleUser;
+	/**
+	 * 货架商品数量
+	 */
+	private Integer goodsCount;
+	/**
+	 * 是否有商品（用于前端判断）
+	 */
+	private Boolean hasGoods;
 
 
 

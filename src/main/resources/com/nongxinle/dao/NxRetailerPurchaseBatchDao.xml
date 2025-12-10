@@ -71,7 +71,6 @@
 	</resultMap>
 	<resultMap id="jrdhBuyUser" type="NxJrdhUserEntity">
 		<id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
-
 		<result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
 		<result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
 		<result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>

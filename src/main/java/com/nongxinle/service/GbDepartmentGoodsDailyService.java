@@ -94,7 +94,12 @@ public interface GbDepartmentGoodsDailyService {
 
     List<GbDepartmentGoodsDailyEntity> queryDepGoodsDailyListWithReduceByParams(Map<String, Object> mapSearch);
 
-    List<GbDistributerFatherGoodsEntity> queryFatherGoodsByParams(Map<String, Object> mapSearch);
-
 	TreeSet<GbDistributerGoodsEntity> queryDisGoodsWithBusinessDep(Map<String, Object> mapSearch);
+
+	TreeSet<GbDistributerGoodsEntity> queryDisGoodsTreeByParams(Map<String, Object> map);
+
+    TreeSet<GbDistributerFatherGoodsEntity> queryDepDailyGoodsFatherTypeByParamsTree(Map<String, Object> mapDep);
+
+    Double queryDepGoodsDailyRestSubtotal(Map<String, Object> mapDaily);
+
 }

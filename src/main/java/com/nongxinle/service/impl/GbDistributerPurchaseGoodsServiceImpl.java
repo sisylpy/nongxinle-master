@@ -14,25 +14,9 @@ import com.nongxinle.service.GbDistributerPurchaseGoodsService;
 
 @Service("gbDistributerPurchaseGoodsService")
 public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurchaseGoodsService {
-	@Autowired
+
+    @Autowired
 	private com.nongxinle.dao.GbDistributerPurchaseGoodsDao gbDistributerPurchaseGoodsDao;
-
-
-	@Override
-	public List<GbDistributerFatherGoodsEntity> queryDisPurchaseGoods(Map<String, Object> map) {
-
-		return gbDistributerPurchaseGoodsDao.queryDisPurchaseGoods(map);
-	}
-
-
-
-
-//	//////////////
-
-
-
-
-
 
 	@Override
 	public GbDistributerPurchaseGoodsEntity queryObject(Integer nxDistributerPurchaseGoods){
@@ -71,57 +55,10 @@ public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurch
 
 
 
-//    @Override
-//    public List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByUUID(String uuid) {
-//
-//		return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsByUUID(uuid);
-//    }
-
-    @Override
-    public List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByGoodsId(Map<String, Object> map) {
-
-		return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsByGoodsId(map);
-    }
-
-    @Override
-    public List<GbDistributerPurchaseGoodsEntity> purUserGetPurchaseGoods(Integer purUserId) {
-
-		return gbDistributerPurchaseGoodsDao.queryPurUserPurchaseGoods(purUserId);
-    }
-
-    @Override
-    public List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByBatchId(Integer purchaseBatchId) {
-
-		return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsByBatchId(purchaseBatchId);
-    }
-
-	@Override
-	public List<GbDistributerPurchaseGoodsEntity> queryForDisGoods(Map<String, Object> map2) {
-		return  gbDistributerPurchaseGoodsDao.queryForDisGoods(map2);
-	}
-
-    @Override
-    public List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByParams(Map<String, Object> map2) {
-
-		return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsByParams(map2);
-    }
-
-    @Override
-    public int queryPurchaseGoodsTotal(Map<String, Object> map2) {
-
-		return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsTotal(map2);
-    }
-
     @Override
     public List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsWithDetailByParams(Map<String, Object> map) {
 
 		return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsWithDetailByParams(map);
-    }
-
-    @Override
-    public List<GbDistributerFatherGoodsEntity> queryStockPurchaseGoods(Map<String, Object> map4) {
-
-		return gbDistributerPurchaseGoodsDao.queryStockPurchaseGoods(map4);
     }
 
     @Override
@@ -148,11 +85,6 @@ public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurch
 		return gbDistributerPurchaseGoodsDao.queryPurchaseInventoryGoodsSubTotal(map);
     }
 
-    @Override
-    public List<GbDistributerPurchaseGoodsEntity> queryPurchaseInventoryGoodsList(Map<String, Object> map) {
-
-		return gbDistributerPurchaseGoodsDao.queryPurchaseInventoryGoodsList(map);
-    }
 
     @Override
     public Double queryPurchaseGoodsWeightTotal(Map<String, Object> map1) {
@@ -167,9 +99,9 @@ public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurch
     }
 
     @Override
-    public List<GbDistributerFatherGoodsEntity> queryDisPurchaseGoodsForNxDis(Map<String, Object> map4) {
+    public List<GbDistributerFatherGoodsEntity> queryGbFatherDisPurchaseGoods(Map<String, Object> map4) {
 
-		return gbDistributerPurchaseGoodsDao.queryDisPurchaseGoodsForNxDis(map4);
+		return gbDistributerPurchaseGoodsDao.queryGbFatherDisPurchaseGoods(map4);
     }
 
     @Override
@@ -191,39 +123,16 @@ public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurch
     }
 
     @Override
-    public List<GbDistributerFatherGoodsEntity> queryGreatGrandPurGoodsDetail(Map<String, Object> map) {
-
-		return gbDistributerPurchaseGoodsDao.queryGreatGrandPurGoodsDetail(map);
-    }
-
-    @Override
     public int queryGbPurchaseOrderAmount(Map<String, Object> map1) {
 
 		return gbDistributerPurchaseGoodsDao.queryGbPurchaseOrderAmount(map1);
     }
 
-    @Override
-    public GbDistributerPurchaseGoodsEntity queryBuyingPurGoods(Map<String, Object> map) {
-
-	    return gbDistributerPurchaseGoodsDao.queryBuyingPurGoods(map);
-    }
 
     @Override
-    public List<GbDistributerFatherGoodsEntity> queryGreatGrandGoodsByDisGoods(Map<String, Object> map1) {
-
-	    return gbDistributerPurchaseGoodsDao.queryGreatGrandGoodsByDisGoods(map1);
-    }
-
-    @Override
-    public TreeSet<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map) {
+    public List<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map) {
 
 	    return gbDistributerPurchaseGoodsDao.queryDisTreeGoods(map);
-    }
-
-    @Override
-    public List<GbDistributerFatherGoodsEntity> queryGrandPurchaseGoods(Map<String, Object> map4) {
-
-	    return gbDistributerPurchaseGoodsDao.queryGrandPurchaseGoods(map4);
     }
 
     @Override
@@ -232,6 +141,119 @@ public class GbDistributerPurchaseGoodsServiceImpl implements GbDistributerPurch
 	    return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsWeight(mapDay);
     }
 
+    @Override
+    public int queryPurchaseGoodsOrderCount(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsOrderCount(map);
+    }
+
+    @Override
+    public Integer queryGbDisGoods(Map<String, Object> queryMap) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGbDisGoods(queryMap);
+    }
+
+
+    @Override
+    public List<NxJrdhSupplierEntity> queryDisPurGoodsSupplierList(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryDisPurGoodsSupplierList(map);
+    }
+
+    @Override
+    public List<GbDistributerPurchaseGoodsEntity> querySimplePurGoods(Map<String, Object> map4) {
+
+	    return gbDistributerPurchaseGoodsDao.querySimplePurGoods(map4);
+    }
+
+    @Override
+    public List<GbDistributerPurchaseGoodsEntity> queryOnlyPurGoods(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryOnlyPurGoods(map);
+    }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryGrandGoodsByDisGoods(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGrandGoodsByDisGoods(map);
+    }
+
+    @Override
+    public List<GbDepartmentUserEntity> queryPurUserList(Map<String, Object> map) {
+        return gbDistributerPurchaseGoodsDao.queryPurUserList(map);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryGbPurchaseGoodsTopTimes(Map<String, Object> map) {
+        return gbDistributerPurchaseGoodsDao.queryGbPurchaseGoodsTopTimes(map);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryGbPurchaseGoodsTopSubtotal(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGbPurchaseGoodsTopSubtotal(map);
+    }
+
+    @Override
+    public TreeSet<GbDistributerFatherGoodsEntity> queryPurchaseGreatGrand(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryPurchaseGreatGrand(map);
+    }
+
+    @Override
+    public double queryGbPurchaseSubtotalTopSubtotal(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGbPurchaseSubtotalTopSubtotal(map);
+    }
+
+    @Override
+    public Integer queryGbDisGoodsTreeCount(Map<String, Object> queryMap) {
+        System.out.println("Service层开始执行queryGbDisGoodsTreeCount，参数: " + queryMap);
+        try {
+            Integer result = gbDistributerPurchaseGoodsDao.queryGbDisGoodsTreeCount(queryMap);
+            System.out.println("Service层queryGbDisGoodsTreeCount执行完成，结果: " + result);
+            return result;
+        } catch (Exception e) {
+            System.out.println("Service层queryGbDisGoodsTreeCount异常: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryGbPurchaseGoodsTopPriceFluctuation(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGbPurchaseGoodsTopPriceFluctuation(map);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryDisTreeGoodsWithPurList(Map<String, Object> queryMap) {
+
+	    return gbDistributerPurchaseGoodsDao.queryDisTreeGoodsWithPurList(queryMap);
+    }
+
+    @Override
+    public List<Map<String, Object>> debugQueryGoodsPriceData(Map<String, Object> map) {
+        return gbDistributerPurchaseGoodsDao.debugQueryGoodsPriceData(map);
+    }
+
+    @Override
+    public int queryGbGoodsCount(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryGbGoodsCount(map);
+    }
+
+    @Override
+    public GbDistributerPurchaseGoodsEntity queryPurchaseGoodsLastItem(Map<String, Object> mapG) {
+
+	    return gbDistributerPurchaseGoodsDao.queryPurchaseGoodsLastItem(mapG);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryReturnDisTreeGoodsWithPurList(Map<String, Object> map) {
+
+	    return gbDistributerPurchaseGoodsDao.queryReturnDisTreeGoodsWithPurList(map);
+    }
 
 
 }

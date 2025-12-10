@@ -82,4 +82,14 @@ public class NxDistributerPayServiceImpl implements NxDistributerPayService {
 		return nxDistributerPayDao.queryUnPayByParams(mapP);
     }
 
+    @Override
+    public List<NxDistributerPayEntity> queryRechargeByParams(Map<String, Object> params) {
+        return nxDistributerPayDao.queryRechargeByParams(params);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryRechargeByMarketId(Map<String, Object> params) {
+        return nxDistributerPayDao.queryRechargeByMarketId(params);
+    }
+
 }

@@ -278,11 +278,11 @@ public class GbDistributerGoodsShelfController {
 		map22.put("buyStatus", 1);
 		map22.put("dayuStatus", -1);
 		map22.put("status", 3);
-		map22.put("isSelf", 0);
-		map22.put("isNotSelf", 1);
+//		map22.put("isSelf", 0);
+//		map22.put("isNotSelf", 1);
 		Integer amount2 = gbDepartmentOrdersService.queryTotalByParams(map22);
 
-		map22.put("isSelf", 1);
+//		map22.put("isSelf", 1);
 		Integer amount3 = gbDepartmentOrdersService.queryTotalByParams(map22);
 		Map<String, Object> map2 = new HashMap<>();
 		map2.put("arr",shelfEntities );

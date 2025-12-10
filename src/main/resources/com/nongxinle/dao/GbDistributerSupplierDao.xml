@@ -143,6 +143,7 @@
 		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
 		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
 		<result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
 		<result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
 		<result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>

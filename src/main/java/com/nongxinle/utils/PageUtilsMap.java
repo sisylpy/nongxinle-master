@@ -1,6 +1,5 @@
 package com.nongxinle.utils;
 
-import org.omg.CORBA.OBJ_ADAPTER;
 
 import java.io.Serializable;
 import java.util.List;

@@ -16,7 +16,7 @@ import java.util.Map;
 public interface GbDistributerFatherGoodsDao extends BaseDao<GbDistributerFatherGoodsEntity> {
 
 
-    List<GbDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map);
+//    List<GbDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map);
 
     List<GbDistributerFatherGoodsEntity> querySubFatherGoods(Integer goodsId);
 
@@ -40,4 +40,6 @@ public interface GbDistributerFatherGoodsDao extends BaseDao<GbDistributerFather
     GbDistributerFatherGoodsEntity queryDisGoodsCataLinshiFatherGoods(Map<String, Object> map);
 
     int queryGbFatherGoodsMaxSort(Map<String, Object> map5);
+
+    List<GbDistributerFatherGoodsEntity> queryDisGoodsCataWithFilter(Map<String, Object> mapG);
 }

@@ -38,4 +38,13 @@ public interface NxDistributerService {
 
 
     void delteNxDis(Integer id);
+
+    NxDistributerEntity queryDistributerInfo(Integer disId);
+
+    /**
+     * 根据市场ID查询配送商列表
+     * @param marketId 市场ID
+     * @return 配送商列表
+     */
+    List<NxDistributerEntity> queryByMarketId(Integer marketId);
 }

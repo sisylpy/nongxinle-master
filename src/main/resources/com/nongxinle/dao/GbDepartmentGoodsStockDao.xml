@@ -58,6 +58,16 @@
         <result property="gbDgsGbPurGoodsId" column="from_gb_dgs_gb_pur_goods_id"/>
         <result property="gbDgsGbPriceGoodsId" column="from_gb_dgs_gb_price_goods_id"/>
     </resultMap>
+    <resultMap id="fatherDepartment" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="df_gb_department_id"/>
+        <result property="gbDepartmentName" column="df_gb_department_name"/>
+        <result property="gbDepartmentType" column="df_gb_department_type"/>
+        <result property="gbDepartmentSettleType" column="df_gb_department_settle_type"/>
+        <result property="gbDepartmentFilePath" column="df_gb_department_file_path"/>
+        <result property="gbDepartmentFatherId" column="df_gb_department_father_id"/>
+        <result property="gbDepartmentIsGroupDep" column="df_gb_department_is_group_dep"/>
+    </resultMap>
+
     <resultMap id="gbDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
         <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
@@ -66,7 +76,8 @@
         <result property="gbDepartmentName" column="gb_department_name"/>
         <result property="gbDepartmentLevel" column="gb_department_level"/>
         <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
-    </resultMap>
+        <association property="fatherGbDepartmentEntity" resultMap="fatherDepartment"/>
+     </resultMap>
     <resultMap id="fatherDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="orderFatherDep_gb_department_id"/>
         <result property="gbDepartmentName" column="orderFatherDep_gb_department_name"/>
@@ -82,7 +93,8 @@
     </resultMap>
 
     <resultMap id="applys" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -141,7 +153,7 @@
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
         <association property="gbDepartmentUserEntity" resultMap="orderUser"/>
         <association property="pickerUserEntity" resultMap="pickerUser"/>
-        <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="gbDistributerGoodsEntity" resultMap="justDisGoods"/>
         <association property="receiveUserEntity" resultMap="receUser"/>
         <association property="orderDepartment" resultMap="orderDep"/>
         <collection property="goodsStockEntityList" resultMap="depStock"/>
@@ -175,7 +187,8 @@
     </resultMap>
 
     <resultMap id="depStock" type="GbDepartmentGoodsStockEntity">
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
         <result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -194,7 +207,8 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
-        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -203,8 +217,12 @@
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsGbFromDepartmentId" column="gb_dgs_gb_from_department_id"/>
@@ -235,18 +253,141 @@
         <result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_goods_id"/>
         <result property="gbDgsGbPriceSubtotal" column="gb_dgs_gb_price_subtotal"/>
         <result property="gbDgsOutFullTime" column="gb_dgs_out_full_time"/>
-        <!--        <association property="fromDepStockEntity" resultMap="fromDepStock"/>-->
         <association property="gbDepartmentEntity" resultMap="gbDep"/>
-        <!--        <association property="stockUserEntity" resultMap="stockUser"/>-->
-        <!--        <association property="gbDepartmentOrdersEntity" resultMap="applys"/>-->
-        <!--        <association property="gbDistributerGoodsEntity" resultMap="disGoodsDetail"/>-->
-        <!--        <association property="nxDistributerEntity" resultMap="nxdis"/>-->
-        <!--        <association property="nxJrdhSupplierEntity" resultMap="jsdhSupplier"/>-->
-        <!--        <collection property="goodsStockReduceEntityList" resultMap="reduce"/>-->
+        </resultMap>
+
+    <resultMap id="purDepUser" type="GbDepartmentUserEntity">
+        <id property="gbDepartmentUserId" column="purUser_gb_department_user_id"/>
+        <result property="gbDuLoginTimes" column="purUser_gb_DU_login_times"/>
+        <result property="gbDuCustomerService" column="purUser_gb_DU_customer_service"/>
+        <result property="gbDuWxNickName" column="purUser_gb_DU_wx_nick_name"/>
+        <result property="gbDuWxAvartraUrl" column="purUser_gb_DU_wx_avartra_url"/>
+        <result property="gbDuUrlChange" column="purUser_gb_DU_url_change"/>
+        <result property="gbDuPrintDeviceId" column="purUser_gb_DU_print_device_id"/>
+        <result property="gbDuPrintBillDeviceId" column="purUser_gb_DU_print_bill_device_id"/>
     </resultMap>
 
+    <resultMap id="depDaily" type="GbDepartmentGoodsDailyEntity">
+        <id property="gbDepartmentGoodsDailyId" column="gb_department_goods_daily_id"/>
+        <result property="gbDgdStatus" column="gb_dgd_status"/>
+        <result property="gbDgdStatus" column="gb_dgd_status"/>
+        <result property="gbDgdGbDepDisGoodsId" column="gb_dgd_gb_dep_dis_goods_id"/>
+        <result property="gbDgdGbDepartmentId" column="bg_dgd_gb_department_id"/>
+        <result property="gbDgdLastProduceWeight" column="gb_dgd_last_produce_weight"/>
+        <result property="gbDgdFreshRate" column="gb_dgd_fresh_rate"/>
+        <result property="gbDgdLastWeight" column="gb_dgd_last_weight"/>
+        <result property="gbDgdAfterProfitSubtotal" column="gb_dgd_after_profit_subtotal"/>
+        <result property="gbDgdProfitSubtotal" column="gb_dgd_profit_subtotal"/>
+        <result property="gbDgdProduceWeight" column="gb_dgd_produce_weight"/>
+        <result property="gbDgdProduceSubtotal" column="gb_dgd_produce_subtotal"/>
+        <result property="gbDgdWasteWeight" column="gb_dgd_waste_weight"/>
+        <result property="gbDgdWasteSubtotal" column="gb_dgd_waste_subtotal"/>
+        <result property="gbDgdLossWeight" column="gb_dgd_loss_weight"/>
+        <result property="gbDgdLossSubtotal" column="gb_dgd_loss_subtotal"/>
+        <result property="gbDgdDate" column="gb_dgd_date"/>
+        <result property="gbDgdFullTime" column="gb_dgd_full_time"/>
+        <result property="gbDgdGbDepartmentId" column="gb_dgd_gb_department_id"/>
+        <result property="gbDgdGbDepartmentFatherId" column="gb_dgd_gb_department_father_id"/>
+        <result property="gbDgdGbDisGoodsId" column="gb_dgd_gb_dis_goods_id"/>
+        <result property="gbDgdMonth" column="gb_dgd_month"/>
+        <result property="gbDgdWeek" column="gb_dgd_week"/>
+        <result property="gbDgdGbDistributerId" column="gb_dgd_gb_distributer_id"/>
+        <result property="gbDgdReturnWeight" column="gb_dgd_return_weight"/>
+        <result property="gbDgdReturnSubtotal" column="gb_dgd_return_subtotal"/>
+        <result property="gbDgdRestWeight" column="gb_dgd_rest_weight"/>
+        <result property="gbDgdDay" column="gb_dgd_day"/>
+        <result property="gbDgdWeight" column="gb_dgd_weight"/>
+        <result property="gbDgdSubtotal" column="gb_dgd_subtotal"/>
+        <collection property="wasteReduceList" resultMap="reduce"/>
+    </resultMap>
+
+    <resultMap id="reduceDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="reduceDep_gb_department_id"/>
+        <result property="gbDepartmentName" column="reduceDep_gb_department_name"/>
+        <result property="gbDepartmentType" column="reduceDep_gb_department_type"/>
+        <result property="gbDepartmentAttrName" column="reduceDep_gb_department_attr_name"/>
+        <result property="gbDepartmentFatherId" column="reduceDep_gb_department_father_id"/>
+        <association property="departmentGoodsDailyEntity" resultMap="depDaily"/>
+    </resultMap>
+
+
+    <resultMap id="supplier" type="NxJrdhSupplierEntity">
+        <id property="nxJrdhSupplierId" column="nx_jrdh_supplier_id"/>
+        <result property="nxJrdhsSysCityId" column="nx_jrdhs_sys_city_id"/>
+        <result property="nxJrdhsSysMarketId" column="nx_jrdhs_sys_market_id"/>
+        <result property="nxJrdhsNxDistributerId" column="nx_jrdhs_nx_distributer_id"/>
+        <result property="nxJrdhsGbDistributerId" column="nx_jrdhs_gb_distributer_id"/>
+        <result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
+        <result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
+        <result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+    </resultMap>
+
+    <resultMap id="purDep" type="GbDepartmentEntity">
+        <id property="gbDepartmentId" column="pur_gb_department_id"/>
+        <result property="gbDepartmentName" column="pur_gb_department_name"/>
+    </resultMap>
+    <resultMap id="purGoodsWork" type="GbDistributerPurchaseGoodsEntity">
+         <id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
+        <result property="gbDpgOrdersWeightAmount" column="gb_DPG_orders_weight_amount"/>
+        <result property="gbDpgStockFinishDate" column="gb_DPG_stock_finish_date"/>
+        <result property="gbDpgSupplierFinishDate" column="gb_DPG_supplier_finish_date"/>
+        <result property="gbDpgDisGoodsGreatId" column="gb_DPG_dis_goods_great_id"/>
+        <result property="gbDpgDisGoodsGrandId" column="gb_DPG_dis_goods_grand_id"/>
+        <result property="gbDpgPurchaseNxSupplierId" column="gb_DPG_purchase_nx_supplier_id"/>
+        <result property="gbDpgOrdersBillAmount" column="gb_DPG_orders_bill_amount"/>
+        <result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
+        <result property="gbDpgOrdersFinishAmount" column="gb_DPG_orders_finish_amount"/>
+        <result property="gbDpgWeightId" column="gb_DPG_weight_id"/>
+        <result property="gbDpgDisGoodsId" column="gb_DPG_dis_goods_id"/>
+        <result property="gbDpgDisGoodsFatherId" column="gb_DPG_dis_goods_father_id"/>
+        <result property="gbDpgQuantity" column="gb_DPG_quantity"/>
+        <result property="gbDpgStandard" column="gb_DPG_standard"/>
+        <result property="gbDpgPurUserId" column="gb_DPG_pur_user_id"/>
+        <result property="gbDpgStatus" column="gb_DPG_status"/>
+        <result property="gbDpgBuyPrice" column="gb_DPG_buy_price"/>
+        <result property="gbDpgBuyScalePrice" column="gb_Dpg_buy_scale_price"/>
+        <result property="gbDpgBuyScaleQuantity" column="gb_Dpg_buy_scale_quantity"/>
+        <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
+        <result property="gbDpgBuyQuantity" column="gb_DPG_buy_quantity"/>
+        <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgOrdersAmount" column="gb_DPG_orders_amount"/>
+        <result property="gbDpgTypeAddUserId" column="gb_DPG_type_add_user_id"/>
+        <result property="gbDpgInputType" column="gb_DPG_input_type"/>
+        <result property="gbDpgTime" column="gb_DPG_time"/>
+        <result property="gbDpgDistributerId" column="gb_DPG_distributer_id"/>
+        <result property="gbDpgInputType" column="gb_DPG_input_type"/>
+        <result property="gbDpgPurchaseType" column="gb_DPG_purchase_type"/>
+        <result property="gbDpgPayType" column="gb_DPG_pay_type"/>
+        <result property="gbDpgPurchaseFullTime" column="gb_DPG_purchase_full_time"/>
+        <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
+        <result property="gbDpgPurchaseMonth" column="gb_DPG_purchase_month"/>
+        <result property="gbDpgPurchaseDate" column="gb_DPG_purchase_date"/>
+        <result property="gbDpgPurchaseYear" column="gb_DPG_purchase_year"/>
+        <result property="gbDpgDisGoodsPriceId" column="gb_DPG_dis_goods_price_id"/>
+        <result property="gbDpgPurUserId" column="gb_DPG_pur_user_id"/>
+        <result property="gbDpgPurchaseDepartmentId" column="gb_DPG_purchase_department_id"/>
+        <result property="gbDpgPurchaseWeek" column="gb_DPG_purchase_week"/>
+        <result property="gbDpgPurchaseWeekYear" column="gb_DPG_purchase_week_year"/>
+        <result property="gbDpgBatchId" column="gb_DPG_batch_id"/>
+        <result property="gbDpgBuyScaleQuantity" column="gb_DPG_buy_scale_quantity"/>
+        <result property="gbDpgBuyScale" column="gb_DPG_buy_scale"/>
+        <result property="gbDpgBuyScalePrice" column="gb_DPG_buy_scale_price"/>
+        <result property="gbDpgBuyPriceReason" column="gb_DPG_buy_price_reason"/>
+        <result property="gbDpgWarnFullTime" column="gb_DPG_warn_full_time"/>
+        <result property="gbDpgWasteFullTime" column="gb_DPG_waste_full_time"/>
+        <association property="gbDistributerGoodsEntity" resultMap="justDisGoods"/>
+         <association property="purchaseDepartmentEntity" resultMap="purDep"/>
+        <association property="purchaseDepartmentUser" resultMap="purDepUser"/>
+        <association property="nxJrdhSupplierEntity" resultMap="supplier"/>
+        <collection property="gbDepartmentGoodsStockEntities" resultMap="stockWithReduce"/>
+    </resultMap>
+
+
     <resultMap id="depStockWithDetail" type="GbDepartmentGoodsStockEntity">
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+        <result property="gbDgsWasteFullTime" column="gb_dgs_waste_full_time"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
         <result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -265,7 +406,8 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
-        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -274,8 +416,12 @@
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsGbFromDepartmentId" column="gb_dgs_gb_from_department_id"/>
@@ -306,12 +452,13 @@
         <result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_goods_id"/>
         <result property="gbDgsGbPriceSubtotal" column="gb_dgs_gb_price_subtotal"/>
         <result property="gbDgsOutFullTime" column="gb_dgs_out_full_time"/>
-<!--        <association property="fromDepStockEntity" resultMap="fromDepStock"/>-->
         <association property="gbDepartmentEntity" resultMap="gbDep"/>
-<!--        <association property="stockUserEntity" resultMap="stockUser"/>-->
-        <association property="gbDepartmentOrdersEntity" resultMap="applys"/>
-    </resultMap>
-    <resultMap id="disGoods" type="GbDistributerGoodsEntity">
+        <association property="purchaseGoodsEntity" resultMap="purGoodsWork"/>
+ <!--        <association property="gbDepartmentOrdersEntity" resultMap="applys"/>-->
+        <collection property="goodsStockReduceEntityList" resultMap="reduce"/>
+     </resultMap>
+
+    <resultMap id="justDisGoods" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
         <result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
         <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
@@ -332,6 +479,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
         <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+        <result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -350,10 +498,10 @@
         <result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
-        <collection property="gbDepartmentGoodsStockEntities" resultMap="depStock"/>
     </resultMap>
 
-    <resultMap id="disGoodsDetail" type="GbDistributerGoodsEntity">
+
+    <resultMap id="disGoodsWithStockDetail" type="GbDistributerGoodsEntity">
         <id property="gbDistributerGoodsId" column="gb_distributer_goods_id"/>
         <result property="gbDgQuantityDays" column="gb_dg_quantity_days"/>
         <result property="gbDgNxFatherImg" column="gb_dg_nx_father_img"/>
@@ -374,6 +522,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
         <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+        <result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -382,6 +531,7 @@
         <result property="gbDgFreshWarnHour" column="gb_dg_fresh_warn_hour"/>
         <result property="gbDgFreshWasteHour" column="gb_dg_fresh_waste_hour"/>
         <result property="gbDgGoodsInventoryType" column="gb_dg_goods_inventory_type"/>
+        <result property="gbDgGoodsType" column="gb_dg_goods_type"/>
         <result property="gbDgIsFranchisePrice" column="gb_dg_is_franchise_price"/>
         <result property="gbDgFranchisePriceOne" column="gb_dg_franchise_price_one"/>
         <result property="gbDgFranchisePriceOneUpdate" column="gb_dg_franchise_price_one_update"/>
@@ -391,11 +541,16 @@
         <result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
+        <result property="goodsStockTotal" column="goodsStockTotal"/>
+        <result property="goodsStockWeightTotal" column="goodsStockWeightTotal"/>
+        <result property="goodsWasteTotal" column="goodsWasteTotal"/>
+        <collection property="wastePurGoodsEntities" resultMap="purGoodsWork"/>
+         <collection property="gbDepartmentGoodsStockEntities" resultMap="depStockWithDetail"/>
     </resultMap>
+
 
     <select id="queryGoodsStockByParams" resultMap="depStock">
         select * ,
-
 
         fromgdgs.gb_department_goods_stock_id 'from_gb_department_goods_stock_id',
         fromgdgs.gb_dgs_gb_department_order_id 'from_gb_dgs_gb_department_order_id',
@@ -448,7 +603,9 @@
         # left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = gdgs.gb_dgs_nx_supplier_id
 
         <where>
-
+            <if test="purGoodsId != null">
+                and gdgs.gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="disId != null">
                 and gdgs.gb_dgs_gb_distributer_id = #{disId}
             </if>
@@ -480,6 +637,9 @@
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
             </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
+            </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
             </if>
@@ -506,6 +666,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
 
             <if test="depGoodsId != null">
@@ -570,15 +733,85 @@
 
     </select>
 
-    <select id="queryDisGoodsStockByParams" resultMap="disGoods">
-        select * from gb_distributer_goods as dg
+    <select id="queryDisGoodsStockByParams" resultMap="disGoodsWithStockDetail">
+
+#         新增加gb_DGS_rest_weight计算商品的废弃数量总计goodsWasteTotal,
+<!--<if test="nowTimeWaste != null">-->
+<!--        and gdgs.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}-->
+<!--        AND gdgs.gb_dgs_waste_time_quantum_name IS NOT NULL-->
+<!--        AND TRIM(gdgs.gb_dgs_waste_time_quantum_name) != ''-->
+<!--    </if>-->
+        select DISTINCT dg.*,
+        reduce.*,
+        gdgs.*,
+        gdgs.*,
+        pur.*,
+        gd.*,
+        purUser.*,
+        supplier.*,
+        purUser.gb_department_user_id 'purUser_gb_department_user_id',
+        purUser.gb_DU_wx_nick_name 'purUser_gb_DU_wx_nick_name',
+        purUser.gb_DU_department_id 'purUser_gb_DU_department_id',
+        (SELECT ROUND(SUM(gdgs2.gb_DGS_rest_subtotal), 1) 
+         FROM gb_department_goods_stock gdgs2 
+         WHERE gdgs2.gb_dgs_gb_dis_goods_id = dg.gb_distributer_goods_id
+         AND gdgs2.gb_DGS_rest_weight &gt; 0
+         <if test="startDate != null">
+             AND gdgs2.gb_dgs_date &gt;= #{startDate}
+         </if>
+         <if test="stopDate != null">
+             AND gdgs2.gb_dgs_date &lt;= #{stopDate}
+         </if>
+         <if test="date != null">
+             AND gdgs2.gb_dgs_date = #{date}
+         </if>
+         ) as 'goodsStockTotal',
+        (SELECT ROUND(SUM(gdgs2.gb_DGS_rest_weight), 1) 
+         FROM gb_department_goods_stock gdgs2 
+         WHERE gdgs2.gb_dgs_gb_dis_goods_id = dg.gb_distributer_goods_id
+         AND gdgs2.gb_DGS_rest_weight &gt; 0
+         <if test="startDate != null">
+             AND gdgs2.gb_dgs_date &gt;= #{startDate}
+         </if>
+         <if test="stopDate != null">
+             AND gdgs2.gb_dgs_date &lt;= #{stopDate}
+         </if>
+         <if test="date != null">
+             AND gdgs2.gb_dgs_date = #{date}
+         </if>
+         ) as 'goodsStockWeightTotal',
+        (SELECT ROUND(SUM(gdgs2.gb_DGS_rest_subtotal), 1)
+         FROM gb_department_goods_stock gdgs2 
+         WHERE gdgs2.gb_dgs_gb_dis_goods_id = dg.gb_distributer_goods_id
+         AND gdgs2.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}
+         AND gdgs2.gb_dgs_waste_time_quantum_name IS NOT NULL
+         AND TRIM(gdgs2.gb_dgs_waste_time_quantum_name) != ''
+         <if test="startDate != null">
+             AND gdgs2.gb_dgs_date &gt;= #{startDate}
+         </if>
+         <if test="stopDate != null">
+             AND gdgs2.gb_dgs_date &lt;= #{stopDate}
+         </if>
+         <if test="date != null">
+             AND gdgs2.gb_dgs_date = #{date}
+         </if>
+         ) as 'goodsWasteTotal'
+
+        from gb_distributer_goods as dg
         left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_dis_goods_id = dg.gb_distributer_goods_id
-        left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
+        left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_id
+        left join gb_department_goods_stock_reduce as reduce on reduce.gb_dgsr_gb_goods_stock_id = gdgs.gb_department_goods_stock_id
+        left join gb_distributer_purchase_goods as pur on pur.gb_distributer_purchase_goods_id = gdgs.gb_dgs_gb_pur_goods_id
+        left join gb_department_user as purUser on purUser.gb_department_user_id = pur.gb_DPG_pur_user_id
+        left join nx_jrdh_supplier as supplier on supplier.nx_jrdh_supplier_id = pur.gb_DPG_purchase_nx_supplier_id
+
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
-
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="startDate != null">
                 and gb_dgs_date &gt;= #{startDate}
             </if>
@@ -605,6 +838,9 @@
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
             </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
+            </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
             </if>
@@ -626,6 +862,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="depFatherId != null">
                 and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
@@ -660,131 +899,23 @@
                     #{id}
                 </foreach>
             </if>
-
         </where>
 
+        <if test="orderByRest != null">
+            ORDER BY CAST(gdgs.gb_dgs_rest_subtotal AS DECIMAL(10,2)) DESC, gdgs.gb_dgs_date DESC
+        </if>
+        <if test="orderByGoodsStockTotal != null">
+            ORDER BY CAST(goodsStockTotal AS DECIMAL(10,2)) DESC, gdgs.gb_dgs_date DESC
+        </if>
+        <if test="orderByRest == null and orderByGoodsStockTotal == null">
+            ORDER BY gdgs.gb_dgs_date DESC
+        </if>
+
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
     </select>
-    <select id="queryDisGoodsStockDetailByParams" resultMap="depStock">
-        select * ,
-        fromgdgs.gb_department_goods_stock_id 'from_gb_department_goods_stock_id',
-        fromgdgs.gb_dgs_gb_department_order_id 'from_gb_dgs_gb_department_order_id',
-        fromgdgs.gb_dgs_gb_dis_goods_id 'from_gb_dgs_gb_dis_goods_id',
-        fromgdgs.gb_dgs_gb_distributer_id 'from_gb_dgs_gb_distributer_id',
-        fromgdgs.gb_dgs_waste_full_time 'from_gb_dgs_waste_full_time',
-        fromgdgs.gb_dgs_waste_time_quantum_name 'from_gb_dgs_waste_time_quantum_name',
-        fromgdgs.gb_dgs_warn_full_time 'from_gb_dgs_warn_full_time',
-        fromgdgs.gb_dgs_warn_time_quantum_name 'from_gb_dgs_warn_time_quantum_name',
-        fromgdgs.gb_dgs_gb_department_id 'from_gb_dgs_gb_department_id',
-        fromgdgs.gb_dgs_price 'from_gb_dgs_price',
-        fromgdgs.gb_dgs_weight 'from_gb_dgs_weight',
-        fromgdgs.gb_dgs_price 'from_gb_dgs_price',
-        fromgdgs.gb_dgs_subtotal 'from_gb_dgs_subtotal',
-        fromgdgs.gb_dgs_rest_weight 'from_gb_dgs_rest_weight',
-        fromgdgs.gb_dgs_rest_subtotal 'from_gb_dgs_rest_subtotal',
-        fromgdgs.gb_dgs_status 'from_gb_dgs_status',
-        fromgdgs.gb_dgs_gb_goods_stock_id 'from_gb_dgs_gb_goods_stock_id',
-        fromgdgs.gb_dgs_receive_user_id 'from_gb_dgs_receive_user_id',
-        fromgdgs.gb_dgs_date 'from_gb_dgs_date'
 
-        from gb_department_goods_stock as gdgs
-        left join gb_distributer_goods as dg on gdgs.gb_dgs_gb_dis_goods_id = dg.gb_distributer_goods_id
-        left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_id
-        left join gb_department_goods_stock as fromgdgs on fromgdgs.gb_department_goods_stock_id =
-        gdgs.gb_dgs_gb_goods_stock_id
-        <where>
-            <if test="disId != null">
-                and gb_dgs_gb_distributer_id = #{disId}
-            </if>
-            <if test="startTime != null">
-                and gdgs.gb_dgs_full_time &gt;= #{startTime}
-            </if>
-            <if test="stopTime != null">
-                and gdgs.gb_dgs_full_time &lt; #{stopTime}
-            </if>
-            <if test="startDate != null">
-                and gdgs.gb_dgs_date &gt;= #{startDate}
-            </if>
-
-            <if test="stopDate != null">
-                and gdgs.gb_dgs_date &lt;= #{stopDate}
-            </if>
-            <if test="notDayuStopDate != null">
-                and gdgs.gb_dgs_date &lt;= #{notDayuStopDate}
-            </if>
-            <if test="dayuStatus != null">
-                gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="toDepId != null">
-                gdgs.gb_dgs_gb_department_id = #{toDepId}
-            </if>
-
-            <if test="fromDepId != null">
-                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
-            </if>
-            <if test="notEqualStockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}
-            </if>
-            <if test="stockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}
-            </if>
-            <if test="nxDisId != null">
-                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
-            </if>
-            <if test="supplierId != null">
-                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
-            </if>
-            <if test="depFatherIdNotEqual != null">
-                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
-            </if>
-
-            <if test="date != null">
-                and gdgs.gb_dgs_date = #{date}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="week != null">
-                and gdgs.gb_dgs_inventory_week &lt;= #{week}
-            </if>
-            <if test="month != null">
-                and gdgs.gb_dgs_inventory_month &lt;= #{month}
-            </if>
-            <if test="depFatherId != null">
-                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
-            <if test="depId != null">
-                and gdgs.gb_dgs_gb_department_id = #{depId}
-            </if>
-            <if test="depGoodsId != null">
-                and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
-            <if test="disGoodsId != null">
-                and gdgs.gb_dgs_gb_dis_goods_id = #{disGoodsId}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="dayuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
-            </if>
-            <if test="xiaoyuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
-            </if>
-            <if test="depFatherIds != null">
-                and gdgs.gb_dgs_gb_department_father_id in
-                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </if>
-            <if test="restWeight != null">
-                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
-            </if>
-
-        </where>
-    </select>
     <resultMap id="fatherGoodsWithDep" type="GbDistributerFatherGoodsEntity">
         <id property="gbDistributerFatherGoodsId" column="gb_distributer_father_goods_id"/>
         <result property="gbDfgFathersFatherId" column="gb_dfg_fathers_father_id"/>
@@ -824,115 +955,124 @@
         <result property="gbDdgOrderRemark" column="gb_DDG_order_remark"/>
         <result property="gbDdgOrderStandard" column="gb_DDG_order_standard"/>
         <result property="gbDdgOrderWeight" column="gb_DDG_order_weight"/>
-        <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="gbDistributerGoodsEntity" resultMap="justDisGoods"/>
         <collection property="gbDepartmentGoodsStockEntities" resultMap="depStock"/>
     </resultMap>
 
-    <select id="queryDepGoodsStockByParams" resultMap="fatherGoodsWithDep">
-        select * from gb_department_goods_stock as gdgs
-        left join gb_department_dis_goods as ddg on ddg.gb_department_dis_goods_id = gdgs.gb_dgs_gb_dep_dis_goods_id
-        left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = ddg.gb_DDG_dis_goods_id
-        left join gb_distributer_father_goods as gdfg on gdfg.gb_distributer_father_goods_id =
-        dg.gb_dg_dfg_goods_father_id
-        left join gb_department_goods_stock_reduce as gdgsr on gdgsr.gb_dgsr_gb_goods_stock_id =
-        gdgs.gb_department_goods_stock_id
-        and gdgsr.gb_dgsr_type = 3
-        <where>
-            <if test="disId != null">
-                and gdgs.gb_dgs_gb_distributer_id = #{disId}
-            </if>
-            <if test="startTime != null">
-                and gdgs.gb_dgs_full_time &gt;= #{startTime}
-            </if>
-            <if test="stopTime != null">
-                and gdgs.gb_dgs_full_time &lt; #{stopTime}
-            </if>
-            <if test="startDate != null">
-                and gdgs.gb_dgs_date &gt;= #{startDate}
-            </if>
+<!--    <select id="queryDepGoodsStockByParams" resultMap="fatherGoodsWithDep">-->
+<!--        select * from gb_department_goods_stock as gdgs-->
+<!--        left join gb_department_dis_goods as ddg on ddg.gb_department_dis_goods_id = gdgs.gb_dgs_gb_dep_dis_goods_id-->
+<!--        left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = ddg.gb_DDG_dis_goods_id-->
+<!--        left join gb_distributer_father_goods as gdfg on gdfg.gb_distributer_father_goods_id =-->
+<!--        dg.gb_dg_dfg_goods_father_id-->
+<!--        left join gb_department_goods_stock_reduce as gdgsr on gdgsr.gb_dgsr_gb_goods_stock_id =-->
+<!--        gdgs.gb_department_goods_stock_id-->
+<!--        and gdgsr.gb_dgsr_type = 3-->
+<!--        <where>-->
+<!--            <if test="disId != null">-->
+<!--                and gdgs.gb_dgs_gb_distributer_id = #{disId}-->
+<!--            </if>-->
+<!--            <if test="purGoodsId != null">-->
+<!--                and gdgs.gb_dgs_gb_pur_goods_id = #{purGoodsId}-->
+<!--            </if>-->
+<!--            <if test="startTime != null">-->
+<!--                and gdgs.gb_dgs_full_time &gt;= #{startTime}-->
+<!--            </if>-->
+<!--            <if test="stopTime != null">-->
+<!--                and gdgs.gb_dgs_full_time &lt; #{stopTime}-->
+<!--            </if>-->
+<!--            <if test="startDate != null">-->
+<!--                and gdgs.gb_dgs_date &gt;= #{startDate}-->
+<!--            </if>-->
 
-            <if test="stopDate != null">
-                and gdgs.gb_dgs_date &lt;= #{stopDate}
-            </if>
-            <if test="notDayuStopDate != null">
-                and gdgs.gb_dgs_date &lt;= #{notDayuStopDate}
-            </if>
-            <if test="inventoryDate != null">
-                and gdgs.gb_dgs_inventory_date &lt;= #{inventoryDate}
-            </if>
-            <if test="inventoryDateEqual != null">
-                and gdgs.gb_dgs_inventory_date = #{inventoryDateEqual}
-            </if>
+<!--            <if test="stopDate != null">-->
+<!--                and gdgs.gb_dgs_date &lt;= #{stopDate}-->
+<!--            </if>-->
+<!--            <if test="notDayuStopDate != null">-->
+<!--                and gdgs.gb_dgs_date &lt;= #{notDayuStopDate}-->
+<!--            </if>-->
+<!--            <if test="inventoryDate != null">-->
+<!--                and gdgs.gb_dgs_inventory_date &lt;= #{inventoryDate}-->
+<!--            </if>-->
+<!--            <if test="inventoryDateEqual != null">-->
+<!--                and gdgs.gb_dgs_inventory_date = #{inventoryDateEqual}-->
+<!--            </if>-->
 
 
-            <if test="dayuStatus != null">
-                and gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="toDepId != null">
-                and gdgs.gb_dgs_gb_department_id = #{toDepId}
-            </if>
-            <if test="depId != null">
-                and gdgs.gb_DGS_gb_department_id = #{depId}
-            </if>
-            <if test="fromDepId != null">
-                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
-            </if>
-            <if test="notEqualStockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}
-            </if>
-            <if test="stockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}
-            </if>
-            <if test="nxDisId != null">
-                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
-            </if>
-            <if test="supplierId != null">
-                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
-            </if>
-            <if test="depFatherIdNotEqual != null">
-                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
-            </if>
-            <if test="depGoodsId != null">
-                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
-            <if test="restWeight != null">
-                and gdgs.gb_DGS_rest_weight &gt; #{restWeight}
-            </if>
-            <if test="inventoryType != null">
-                and dg.gb_dg_goods_inventory_type = #{inventoryType}
-            </if>
-            <if test="date != null">
-                and gdgs.gb_dgs_date = #{date}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="equalWeek != null">
-                and gdgs.gb_dgs_inventory_week = #{equalWeek}
-            </if>
-            <if test="equalMonth != null">
-                and gdgs.gb_dgs_inventory_month = #{equalMonth}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="dayuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
-            </if>
-            <if test="xiaoyuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
-            </if>
-            <if test="depFatherIds != null">
-                and gdgs.gb_dgs_gb_department_father_id in
-                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </if>
-        </where>
-    </select>
+<!--            <if test="dayuStatus != null">-->
+<!--                and gdgs.gb_dgs_status &gt; #{dayuStatus}-->
+<!--            </if>-->
+<!--            <if test="toDepId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_id = #{toDepId}-->
+<!--            </if>-->
+<!--            <if test="depId != null">-->
+<!--                and gdgs.gb_DGS_gb_department_id = #{depId}-->
+<!--            </if>-->
+<!--            <if test="fromDepId != null">-->
+<!--                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}-->
+<!--            </if>-->
+<!--            <if test="notEqualStockId != null">-->
+<!--                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}-->
+<!--            </if>-->
+<!--            <if test="stockId != null">-->
+<!--                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}-->
+<!--            </if>-->
+<!--            <if test="nxDisId != null">-->
+<!--                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}-->
+<!--            </if>-->
+<!--            <if test="supplierId != null">-->
+<!--                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}-->
+<!--            </if>-->
+<!--            <if test="purUserId != null">-->
+<!--                and gdgs.gb_dgs_pur_user_id = #{purUserId}-->
+<!--            </if>-->
+<!--            <if test="depFatherIdNotEqual != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}-->
+<!--            </if>-->
+<!--            <if test="depGoodsId != null">-->
+<!--                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}-->
+<!--            </if>-->
+<!--            <if test="restWeight != null">-->
+<!--                and gdgs.gb_DGS_rest_weight &gt; #{restWeight}-->
+<!--            </if>-->
+<!--            <if test="inventoryType != null">-->
+<!--                and dg.gb_dg_goods_inventory_type = #{inventoryType}-->
+<!--            </if>-->
+<!--            <if test="date != null">-->
+<!--                and gdgs.gb_dgs_date = #{date}-->
+<!--            </if>-->
+<!--            <if test="outDate != null">-->
+<!--                and gdgs.gb_dgs_out_date = #{outDate}-->
+<!--            </if>-->
+<!--            <if test="equalWeek != null">-->
+<!--                and gdgs.gb_dgs_inventory_week = #{equalWeek}-->
+<!--            </if>-->
+<!--            <if test="equalMonth != null">-->
+<!--                and gdgs.gb_dgs_inventory_month = #{equalMonth}-->
+<!--            </if>-->
+<!--            <if test="disGoodsFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGrandId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGreatId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}-->
+<!--            </if>-->
+<!--            <if test="dayuPriceSubtotal != null">-->
+<!--                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}-->
+<!--            </if>-->
+<!--            <if test="xiaoyuPriceSubtotal != null">-->
+<!--                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}-->
+<!--            </if>-->
+<!--            <if test="depFatherIds != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id in-->
+<!--                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">-->
+<!--                    #{id}-->
+<!--                </foreach>-->
+<!--            </if>-->
+<!--        </where>-->
+<!--    </select>-->
 
 
     <resultMap id="fatherGoods" type="GbDistributerFatherGoodsEntity">
@@ -941,7 +1081,7 @@
         <result property="gbDfgFatherGoodsName" column="gb_dfg_father_goods_name"/>
         <result property="gbDfgFatherGoodsColor" column="gb_dfg_father_goods_color"/>
         <result property="gbDfgFatherGoodsSort" column="gb_dfg_father_goods_sort"/>
-        <collection property="gbDistributerGoodsEntities" resultMap="disGoods"/>
+        <collection property="gbDistributerGoodsEntities" resultMap="justDisGoods"/>
     </resultMap>
     <resultMap id="fatherGoodsWithStock" type="GbDistributerFatherGoodsEntity">
         <id property="gbDistributerFatherGoodsId" column="gb_distributer_father_goods_id"/>
@@ -951,93 +1091,7 @@
         <collection property="gbDepartmentGoodsStockEntities" resultMap="stockWithDisGoods"/>
     </resultMap>
 
-    <select id="getDepartmentDisGoodsStock" resultMap="fatherGoods">
-        select * from gb_department_goods_stock as gdgs
-        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
-        left join gb_distributer_father_goods as gdgf on gdgf.gb_distributer_father_goods_id =
-        gdgs.gb_dgs_gb_dis_goods_father_id
 
-        <where>
-            <if test="disId != null">
-                and gdgs.gb_dgs_gb_distributer_id = #{disId}
-            </if>
-            <if test="startTime != null">
-                and gdgs.gb_dgs_full_time &gt;= #{startTime}
-            </if>
-            <if test="stopTime != null">
-                and gdgs.gb_dgs_full_time &lt; #{stopTime}
-            </if>
-            <if test="startDate != null">
-                and gdgs.gb_dgs_date &gt;= #{startDate}
-            </if>
-
-            <if test="stopDate != null">
-                and gdgs.gb_dgs_date &lt;= #{stopDate}
-            </if>
-            <if test="date != null">
-                and gdgs.gb_dgs_date = #{date}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="depId != null">
-                and gdgs.gb_dgs_gb_department_id = #{depId}
-            </if>
-            <if test="fromDepId != null">
-                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
-            </if>
-            <if test="notEqualStockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}
-            </if>
-            <if test="stockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}
-            </if>
-            <if test="nxDisId != null">
-                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
-            </if>
-            <if test="supplierId != null">
-                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
-            </if>
-            <if test="depFatherIdNotEqual != null">
-                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
-            </if>
-            <if test="depGoodsId != null">
-                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
-            <if test="depFatherId != null">
-                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
-
-            <if test="depId != null">
-                and gdgs.gb_dgs_gb_department_id = #{depId}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="restWeight != null">
-                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
-            </if>
-            <if test="dayuStatus != null">
-                and gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="dayuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
-            </if>
-            <if test="xiaoyuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
-            </if>
-            <if test="depFatherIds != null">
-                and gdgs.gb_dgs_gb_department_father_id in
-                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </if>
-
-        </where>
-    </select>
 
     <select id="queryGoodsStockCount" resultType="java.lang.Integer">
         select count(*) from gb_department_goods_stock as gdgs
@@ -1056,6 +1110,9 @@
 
             <if test="disId != null">
                 and gdgs.gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gdgs.gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="restWeight != null">
                 and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
@@ -1084,6 +1141,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -1130,6 +1190,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
 
             <if test="depGoodsId != null">
                 and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
@@ -1166,7 +1229,7 @@
     </select>
 
     <select id="queryDepGoodsRestTotal" resultType="java.lang.Double">
-        select sum(gb_dgs_rest_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gb_dgs_rest_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
 
@@ -1181,13 +1244,15 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
-            <if test="disGoodsGrandId != null">
-                and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
-
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="fromDepId != null">
                 and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
             </if>
@@ -1202,6 +1267,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -1278,7 +1346,6 @@
         <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
         <result property="gbDepartmentLevel" column="gb_department_level"/>
         <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
-        <collection property="gbDepartmentGoodsStockEntities" resultMap="depStock"/>
     </resultMap>
 
     <select id="queryDepGoodsTreeDepartments" resultMap="dep">
@@ -1287,20 +1354,26 @@
 
         <where>
             <if test="disId != null">
-                and gb_dgs_gb_distributer_id = #{disId}
+                and gdgs.gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gdgs.gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="depType != null">
                 and gd.gb_department_type = #{depType}
             </if>
 
             <if test="disGoodsId != null">
-                and gb_dgs_gb_dis_goods_id = #{disGoodsId}
+                and gdgs.gb_dgs_gb_dis_goods_id = #{disGoodsId}
             </if>
             <if test="disGoodsFatherId != null">
                 and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="fromDepId != null">
                 and gb_dgs_gb_from_department_id = #{fromDepId}
@@ -1316,6 +1389,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
@@ -1380,8 +1456,8 @@
     </select>
 
     <resultMap id="stockWithDisGoods" type="GbDepartmentGoodsStockEntity">
-
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
         <result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -1396,7 +1472,8 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
-        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -1405,8 +1482,12 @@
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsStatus" column="gb_dgs_status"/>
@@ -1435,24 +1516,22 @@
         <result property="gbDgsGbPurGoodsId" column="gb_dgs_gb_pur_goods_id"/>
         <result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_subtotal"/>
         <result property="gbDgsGbPriceSubtotal" column="gb_dgs_gb_price_subtotal"/>
-        <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="gbDistributerGoodsEntity" resultMap="justDisGoods"/>
     </resultMap>
-    <select id="queryStockListByParams" resultMap="stockWithDisGoods">
-        select *
-        from gb_department_goods_stock as gdgs
-                 left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
-        where gb_dgs_gb_department_father_id = #{depFatherId}
-    </select>
+
+
 
     <select id="queryDepGoodsSubtotal" resultType="java.lang.Double">
-        select sum(gb_dgs_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gb_dgs_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
 
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
-
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="disGoodsId != null">
                 and gb_dgs_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1461,6 +1540,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="fromDepId != null">
                 and gb_dgs_gb_from_department_id = #{fromDepId}
@@ -1476,6 +1558,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
@@ -1568,7 +1653,8 @@
         </where>
     </select>
     <resultMap id="stockOrder" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -1629,7 +1715,8 @@
     </resultMap>
 
     <resultMap id="shelfStock" type="GbDepartmentGoodsStockEntity">
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
         <result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -1644,7 +1731,9 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
-        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -1653,8 +1742,12 @@
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsStatus" column="gb_dgs_status"/>
@@ -1707,6 +1800,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
         <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+        <result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -1752,6 +1846,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="fromDepId != null">
                 and gb_dgs_gb_from_department_id = #{fromDepId}
             </if>
@@ -1766,6 +1863,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -1799,6 +1899,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="dayuPriceSubtotal != null">
                 and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
@@ -1897,146 +2000,157 @@
         <result property="gbDfgFathersFatherId" column="ndfgGreatGrand_gb_dfg_fathers_father_id"/>
         <result property="gbDfgFatherGoodsName" column="ndfgGreatGrand_gb_dfg_father_goods_name"/>
         <result property="gbDfgFatherGoodsColor" column="ndfgGreatGrand_gb_dfg_father_goods_color"/>
+        <result property="gbDfgFatherGoodsImg" column="ndfgGreatGrand_gb_dfg_father_goods_img"/>
+        <result property="gbDfgFatherGoodsImgLarge" column="ndfgGreatGrand_gb_dfg_father_goods_img_large"/>
         <result property="gbDfgFatherGoodsSort" column="ndfgGreatGrand_gb_dfg_father_goods_sort"/>
         <collection property="fatherGoodsEntities" resultMap="grandGoods"/>
     </resultMap>
 
 
-    <select id="queryDepStockDisFatherGoodsFather" resultMap="greatGrandGoods">
-        select * ,
-        ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
-        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
-        ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',
-        ndfgGrant.gb_dfg_father_goods_sort 'ndfgGrant_gb_dfg_father_goods_sort',
-        ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',
-        ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',
-        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
-        ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name',
-        ndfgGreatGrand.gb_dfg_father_goods_sort 'ndfgGreatGrand_gb_dfg_father_goods_sort'
-        from gb_department_goods_stock as gdgs
-        # left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
-        left join gb_distributer_father_goods as ndfg on ndfg.gb_distributer_father_goods_id =
-        gdgs.gb_dgs_gb_dis_goods_father_id
-        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =
-        ndfg.gb_dfg_fathers_father_id
-        left join gb_distributer_father_goods as ndfgGreatGrand on
-        ndfgGreatGrand.gb_distributer_father_goods_id = ndfgGrant.gb_dfg_fathers_father_id
-        left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
+<!--    <select id="queryDepStockDisFatherGoodsFather" resultMap="greatGrandGoods">-->
+<!--        select * ,-->
+<!--        ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',-->
+<!--        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',-->
+<!--        ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',-->
+<!--        ndfgGrant.gb_dfg_father_goods_sort 'ndfgGrant_gb_dfg_father_goods_sort',-->
+<!--        ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',-->
+<!--        ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',-->
+<!--        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',-->
+<!--        ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name',-->
+<!--        ndfgGreatGrand.gb_dfg_father_goods_sort 'ndfgGreatGrand_gb_dfg_father_goods_sort'-->
+<!--        from gb_department_goods_stock as gdgs-->
+<!--        # left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id-->
+<!--        left join gb_distributer_father_goods as ndfg on ndfg.gb_distributer_father_goods_id =-->
+<!--        gdgs.gb_dgs_gb_dis_goods_father_id-->
+<!--        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =-->
+<!--        ndfg.gb_dfg_fathers_father_id-->
+<!--        left join gb_distributer_father_goods as ndfgGreatGrand on-->
+<!--        ndfgGreatGrand.gb_distributer_father_goods_id = ndfgGrant.gb_dfg_fathers_father_id-->
+<!--        left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id-->
 
-        <where>
+<!--        <where>-->
 
-            <if test="disId != null">
-                and gdgs.gb_dgs_gb_distributer_id = #{disId}
-            </if>
-            <if test="depFatherId != null">
-                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
-            <if test="depId != null">
-                and gdgs.gb_dgs_gb_department_id = #{depId}
-            </if>
-            <if test="restWeight != null">
-                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
-            </if>
-            <if test="dayuStatus != null">
-                and gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="settleId != null and settleId == -1">
-                and gdgs.gb_dgs_dep_settle_id is null
-            </if>
+<!--            <if test="disId != null">-->
+<!--                and gdgs.gb_dgs_gb_distributer_id = #{disId}-->
+<!--            </if>-->
+<!--            <if test="purGoodsId != null">-->
+<!--                and gdgs.gb_dgs_gb_pur_goods_id = #{purGoodsId}-->
+<!--            </if>-->
+<!--            <if test="depFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}-->
+<!--            </if>-->
+<!--            <if test="depId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_id = #{depId}-->
+<!--            </if>-->
+<!--            <if test="restWeight != null">-->
+<!--                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}-->
+<!--            </if>-->
+<!--            <if test="dayuStatus != null">-->
+<!--                and gdgs.gb_dgs_status &gt; #{dayuStatus}-->
+<!--            </if>-->
+<!--            <if test="settleId != null and settleId == -1">-->
+<!--                and gdgs.gb_dgs_dep_settle_id is null-->
+<!--            </if>-->
 
-            <if test="disGoodsId != null">
-                and gdgs.gb_dgs_gb_dis_goods_id = #{disGoodsId}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="startTime != null">
-                and gdgs.gb_dgs_full_time &gt;= #{startTime}
-            </if>
-            <if test="stopTime != null">
-                and gdgs.gb_dgs_full_time &lt; #{stopTime}
-            </if>
-            <if test="xiaoyuStopTime != null">
-                and gb_dgs_full_time &lt; #{xiaoyuStopTime}
-            </if>
-            <if test="startDate != null">
-                and gdgs.gb_dgs_date &gt;= #{startDate}
-            </if>
-            <if test="stopDate != null">
-                and gdgs.gb_dgs_date &lt;= #{stopDate}
-            </if>
+<!--            <if test="disGoodsId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_id = #{disGoodsId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGrandId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGreatId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}-->
+<!--            </if>-->
+<!--            <if test="startTime != null">-->
+<!--                and gdgs.gb_dgs_full_time &gt;= #{startTime}-->
+<!--            </if>-->
+<!--            <if test="stopTime != null">-->
+<!--                and gdgs.gb_dgs_full_time &lt; #{stopTime}-->
+<!--            </if>-->
+<!--            <if test="xiaoyuStopTime != null">-->
+<!--                and gb_dgs_full_time &lt; #{xiaoyuStopTime}-->
+<!--            </if>-->
+<!--            <if test="startDate != null">-->
+<!--                and gdgs.gb_dgs_date &gt;= #{startDate}-->
+<!--            </if>-->
+<!--            <if test="stopDate != null">-->
+<!--                and gdgs.gb_dgs_date &lt;= #{stopDate}-->
+<!--            </if>-->
 
-            <if test="inventoryDate != null">
-                and gdgs.gb_dgs_inventory_date &lt;= #{inventoryDate}
-            </if>
+<!--            <if test="inventoryDate != null">-->
+<!--                and gdgs.gb_dgs_inventory_date &lt;= #{inventoryDate}-->
+<!--            </if>-->
 
-            <if test="date != null">
-                and gdgs.gb_dgs_date = #{date}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="status != null">
-                and gdgs.gb_dgs_status &lt; #{status}
-            </if>
+<!--            <if test="date != null">-->
+<!--                and gdgs.gb_dgs_date = #{date}-->
+<!--            </if>-->
+<!--            <if test="outDate != null">-->
+<!--                and gdgs.gb_dgs_out_date = #{outDate}-->
+<!--            </if>-->
+<!--            <if test="status != null">-->
+<!--                and gdgs.gb_dgs_status &lt; #{status}-->
+<!--            </if>-->
 
-            <if test="fromDepId != null">
-                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
-            </if>
-            <if test="notEqualStockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}
-            </if>
-            <if test="stockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}
-            </if>
-            <if test="nxDisId != null">
-                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
-            </if>
-            <if test="supplierId != null">
-                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
-            </if>
-            <if test="depFatherIdNotEqual != null">
-                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
-            </if>
-            <if test="depGoodsId != null">
-                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
+<!--            <if test="fromDepId != null">-->
+<!--                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}-->
+<!--            </if>-->
+<!--            <if test="notEqualStockId != null">-->
+<!--                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}-->
+<!--            </if>-->
+<!--            <if test="stockId != null">-->
+<!--                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}-->
+<!--            </if>-->
+<!--            <if test="nxDisId != null">-->
+<!--                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}-->
+<!--            </if>-->
+<!--            <if test="supplierId != null">-->
+<!--                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}-->
+<!--            </if>-->
+<!--            <if test="purUserId != null">-->
+<!--                and gdgs.gb_dgs_pur_user_id = #{purUserId}-->
+<!--            </if>-->
+<!--            <if test="depFatherIdNotEqual != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}-->
+<!--            </if>-->
+<!--            <if test="depGoodsId != null">-->
+<!--                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}-->
+<!--            </if>-->
 
-            <if test="depId != null">
-                and gdgs.gb_dgs_gb_department_id = #{depId}
-            </if>
-            <if test="depFatherId != null">
-                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
+<!--            <if test="depId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_id = #{depId}-->
+<!--            </if>-->
+<!--            <if test="depFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}-->
+<!--            </if>-->
 
-            <if test="depType != null">
-                and gd.gb_department_type = #{depType}
-            </if>
-            <if test="orderDepType != null">
-                and gd.gb_department_type = #{orderDepType}
-            </if>
-            <if test="dayuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
-            </if>
-            <if test="xiaoyuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
-            </if>
+<!--            <if test="depType != null">-->
+<!--                and gd.gb_department_type = #{depType}-->
+<!--            </if>-->
+<!--            <if test="orderDepType != null">-->
+<!--                and gd.gb_department_type = #{orderDepType}-->
+<!--            </if>-->
+<!--            <if test="dayuPriceSubtotal != null">-->
+<!--                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}-->
+<!--            </if>-->
+<!--            <if test="xiaoyuPriceSubtotal != null">-->
+<!--                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}-->
+<!--            </if>-->
 
-            <if test="depFatherIds != null">
-                and gdgs.gb_dgs_gb_department_father_id in
-                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </if>
+<!--            <if test="depFatherIds != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id in-->
+<!--                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">-->
+<!--                    #{id}-->
+<!--                </foreach>-->
+<!--            </if>-->
 
-        </where>
-        order by
-        ndfgGreatGrand.gb_dfg_father_goods_sort,ndfgGrant.gb_dfg_father_goods_sort,ndfg.gb_dfg_father_goods_sort
+<!--        </where>-->
+<!--        order by-->
+<!--        ndfgGreatGrand.gb_dfg_father_goods_sort,ndfgGrant.gb_dfg_father_goods_sort,ndfg.gb_dfg_father_goods_sort-->
 
-    </select>
+<!--    </select>-->
 
 
     <resultMap id="depUser" type="GbDepartmentUserEntity">
@@ -2053,9 +2167,12 @@
         <result property="gbDuWxAvartraUrl" column="return_gb_DU_wx_avartra_url"/>
         <result property="gbDuUrlChange" column="return_gb_DU_url_change"/>
     </resultMap>
+
     <resultMap id="reduce" type="GbDepartmentGoodsStockReduceEntity">
         <id property="gbDepartmentGoodsStockReduceId" column="gb_department_goods_stock_reduce_id"/>
+		<result property="gbDgsrGbPurchaseDate" column="gb_dgsr_gb_purchase_date"/>
         <result property="gbDgsrStockNxSupplierId" column="gb_dgsr_stock_nx_supplier_id"/>
+        <result property="gbDgsrGbGoodsStockId" column="gb_dgsr_gb_goods_stock_id"/>
         <result property="gbDgsrStockNxDistribtuerId" column="gb_dgsr_stock_nx_distributer_id"/>
         <result property="gbDgsrProfitSubtotal" column="gb_dgsr_profit_subtotal"/>
         <result property="gbDgsrGbGoodsStockId" column="gb_dgsr_gb_goods_stock_id"/>
@@ -2075,16 +2192,21 @@
         <result property="gbDgsrGbDisGoodsId" column="gb_dgsr_gb_dis_goods_id"/>
         <result property="gbDgsrGbDisGoodsFatherId" column="gb_dgsr_gb_dis_goods_father_id"/>
         <result property="gbDgsrGbDisGoodsGrandId" column="gb_dgsr_gb_dis_goods_grand_id"/>
+		<result property="gbDgsrGbDisGoodsGreatId" column="gb_dgsr_gb_dis_goods_great_id"/>
         <result property="gbDgsrMonth" column="gb_dgsr_month"/>
         <result property="gbDgsrWeek" column="gb_dgsr_week"/>
         <result property="gbDgsrGbDistributerId" column="gb_dgsr_gb_distributer_id"/>
         <result property="gbDgsrReturnWeight" column="gb_dgsr_return_weight"/>
         <result property="gbDgsrReturnSubtotal" column="gb_dgsr_return_subtotal"/>
-        <association property="gbDepartmentUserEntity" resultMap="depUser"/>
+<!--        <association property="gbDepartmentUserEntity" resultMap="depUser"/>-->
     </resultMap>
 
     <resultMap id="nxdis" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
         <result property="nxDistributerType" column="nx_distributer_type"/>
@@ -2187,7 +2309,8 @@
         <result property="gbDgsrReturnSubtotal" column="return_gb_dgsr_return_subtotal"/>
     </resultMap>
     <resultMap id="stockWithReduce" type="GbDepartmentGoodsStockEntity">
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
         <result property="gbDgsGbDepartmentOrderId" column="gb_dgs_gb_department_order_id"/>
         <result property="gbDgsCostRate" column="gb_dgs_cost_reate"/>
         <result property="gbDgsAfterProfitSubtotal" column="gb_dgs_after_profit_subtotal"/>
@@ -2209,15 +2332,20 @@
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
-        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsPrice" column="gb_dgs_price"/>
         <result property="gbDgsWeight" column="gb_dgs_weight"/>
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
         <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
@@ -2242,7 +2370,8 @@
         <result property="gbDgsGbPurGoodsId" column="gb_dgs_gb_pur_goods_id"/>
         <result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_subtotal"/>
         <result property="gbDgsGbPriceSubtotal" column="gb_dgs_gb_price_subtotal"/>
-        <association property="nxDistributerEntity" resultMap="nxdis"/>
+        <association property="gbDepartmentEntity" resultMap="dep"/>
+         <association property="nxDistributerEntity" resultMap="nxdis"/>
         <association property="nxJrdhSupplierEntity" resultMap="jsdhSupplier"/>
         <association property="starReduce" resultMap="starReduce"/>
         <association property="returnReduceEntity" resultMap="returnReduce"/>
@@ -2264,13 +2393,14 @@
         returnReduce.gb_dgsr_return_weight 'return_gb_dgsr_return_weight',
         returnReduce.gb_dgsr_status 'return_gb_dgsr_status'
         from gb_department_goods_stock as gdgs
+        left join gb_department as dep on dep.gb_department_id = gdgs.gb_dgs_gb_department_id
         left join gb_department_goods_stock_reduce as gdgsr on gdgsr.gb_dgsr_gb_goods_stock_id =
         gdgs.gb_department_goods_stock_id
-        left join nongxinle.gb_department_goods_stock_reduce as starReduce on starReduce.gb_dgsr_gb_goods_stock_id
+        left join gb_department_goods_stock_reduce as starReduce on starReduce.gb_dgsr_gb_goods_stock_id
         = gdgs.gb_department_goods_stock_id and starReduce.gb_dgsr_type = 5
-        left join nongxinle.gb_department_goods_stock_reduce as returnReduce on returnReduce.gb_dgsr_gb_goods_stock_id
+        left join gb_department_goods_stock_reduce as returnReduce on returnReduce.gb_dgsr_gb_goods_stock_id
         = gdgs.gb_department_goods_stock_id and returnReduce.gb_dgsr_type = 4 and returnReduce.gb_dgsr_status = -1
-        left join nongxinle.gb_department_goods_stock_reduce_attachment as att on att.gb_dgsra_gb_dgsr_id
+        left join gb_department_goods_stock_reduce_attachment as att on att.gb_dgsra_gb_dgsr_id
         = starReduce.gb_department_goods_stock_reduce_id
         left join gb_department_dis_goods as gddg on gddg.gb_department_dis_goods_id = gdgs.gb_dgs_gb_dep_dis_goods_id
         left join nx_distributer as nd on nd.nx_distributer_id = gdgs.gb_dgs_nx_distributer_id
@@ -2293,6 +2423,9 @@
 
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -2324,6 +2457,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -2341,6 +2477,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -2368,6 +2507,9 @@
             <if test="restWeight != null">
                 and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
             </if>
+            <if test="equalRestWeight != null">
+                and gdgs.gb_dgs_rest_weight = #{equalRestWeight}
+            </if>
 
 
         </where>
@@ -2375,7 +2517,7 @@
     </select>
 
     <select id="queryDepGoodsRestWeightTotal" resultType="java.lang.Double">
-        select SUM(gb_dgs_rest_weight) from gb_department_goods_stock as gdgs
+        select ROUND(SUM(gb_dgs_rest_weight), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
@@ -2408,6 +2550,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -2425,6 +2570,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -2460,7 +2608,7 @@
         </where>
     </select>
     <select id="queryGoodsStockTimeStamp" resultType="java.lang.Long">
-        select SUM(gdgs.gb_dgs_time_stamp) from gb_department_goods_stock as gdgs
+        select ROUND(SUM(gdgs.gb_dgs_time_stamp), 1) from gb_department_goods_stock as gdgs
 
         <where>
             <if test="disGoodsFatherId != null">
@@ -2469,8 +2617,14 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -2495,6 +2649,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
@@ -2540,11 +2697,14 @@
         </where>
     </select>
     <select id="queryDepGoodsSellingSubtotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_selling_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_selling_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -2573,6 +2733,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -2590,6 +2753,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -2622,92 +2788,100 @@
         </where>
     </select>
 
-    <select id="queryGoodsStockReduceByParams" resultMap="stockWithReduce">
-        select * from gb_department_goods_stock as gdgs
-        left join gb_department_goods_stock_reduce as gdgsr on gdgs.gb_department_goods_stock_id =
-        gdgsr.gb_dgsr_gb_goods_stock_id
-        left join gb_department_user as reduce_user on reduce_user.gb_department_user_id = gdgsr.gb_dgsr_do_user_id
+<!--    <select id="queryGoodsStockReduceByParams" resultMap="stockWithReduce">-->
+<!--        select * from gb_department_goods_stock as gdgs-->
+<!--        left join gb_department_goods_stock_reduce as gdgsr on gdgs.gb_department_goods_stock_id =-->
+<!--        gdgsr.gb_dgsr_gb_goods_stock_id-->
+<!--        left join gb_department_user as reduce_user on reduce_user.gb_department_user_id = gdgsr.gb_dgsr_do_user_id-->
 
-        <where>
-            <if test="equalType != null">
-                and gdgsr.gb_dgsr_type = #{equalType}
-            </if>
-            <if test="reduceDate != null">
-                and gdgsr.gb_dgsr_date = #{reduceDate}
-            </if>
-            <if test="fromDepId != null">
-                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
-            </if>
-            <if test="notEqualStockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}
-            </if>
-            <if test="stockId != null">
-                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}
-            </if>
-            <if test="nxDisId != null">
-                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
-            </if>
-            <if test="supplierId != null">
-                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
-            </if>
-            <if test="depFatherIdNotEqual != null">
-                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
-            </if>
-            <if test="depId != null">
-                and gdgs.gb_dgs_gb_department_id = #{depId}
-            </if>
-            <if test="depFatherId != null">
-                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
-            <if test="status != null">
-                and gdgs.gb_dgs_status &lt; #{status}
-            </if>
-            <if test="dayuStatus != null">
-                and gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="disGoodsId != null">
-                and gdgs.gb_dgs_gb_dis_goods_id = #{disGoodsId}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="depGoodsId != null">
-                and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
+<!--        <where>-->
+<!--            <if test="equalType != null">-->
+<!--                and gdgsr.gb_dgsr_type = #{equalType}-->
+<!--            </if>-->
+<!--            <if test="reduceDate != null">-->
+<!--                and gdgsr.gb_dgsr_date = #{reduceDate}-->
+<!--            </if>-->
+<!--            <if test="fromDepId != null">-->
+<!--                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}-->
+<!--            </if>-->
+<!--            <if test="notEqualStockId != null">-->
+<!--                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}-->
+<!--            </if>-->
+<!--            <if test="stockId != null">-->
+<!--                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}-->
+<!--            </if>-->
+<!--            <if test="nxDisId != null">-->
+<!--                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}-->
+<!--            </if>-->
+<!--            <if test="supplierId != null">-->
+<!--                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}-->
+<!--            </if>-->
+<!--            <if test="purUserId != null">-->
+<!--                and gdgs.gb_dgs_pur_user_id = #{purUserId}-->
+<!--            </if>-->
+<!--            <if test="depFatherIdNotEqual != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}-->
+<!--            </if>-->
+<!--            <if test="depId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_id = #{depId}-->
+<!--            </if>-->
+<!--            <if test="depFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}-->
+<!--            </if>-->
+<!--            <if test="status != null">-->
+<!--                and gdgs.gb_dgs_status &lt; #{status}-->
+<!--            </if>-->
+<!--            <if test="dayuStatus != null">-->
+<!--                and gdgs.gb_dgs_status &gt; #{dayuStatus}-->
+<!--            </if>-->
+<!--            <if test="disGoodsId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_id = #{disGoodsId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGrandId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGreatId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}-->
+<!--            </if>-->
+<!--            <if test="depGoodsId != null">-->
+<!--                and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}-->
+<!--            </if>-->
 
-            <if test="loss != null and loss == 1">
-                and gdgs.gb_dgs_loss_weight > 0
-            </if>
-            <if test="startDate != null">
-                and gdgsr.gb_dgsr_date &gt;= #{startDate}
-            </if>
-            <if test="stopDate != null">
-                and gdgsr.gb_dgsr_date &lt;= #{stopDate}
-            </if>
-            <if test="dayuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
-            </if>
-            <if test="xiaoyuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="depFatherIds != null">
-                and gdgs.gb_dgs_gb_department_father_id in
-                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </if>
-            <if test="restWeight != null">
-                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
-            </if>
-        </where>
-        order by gdgs.gb_dgs_full_time DESC, gdgsr.gb_dgsr_full_time DESC
-    </select>
+<!--            <if test="loss != null and loss == 1">-->
+<!--                and gdgs.gb_dgs_loss_weight > 0-->
+<!--            </if>-->
+<!--            <if test="startDate != null">-->
+<!--                and gdgsr.gb_dgsr_date &gt;= #{startDate}-->
+<!--            </if>-->
+<!--            <if test="stopDate != null">-->
+<!--                and gdgsr.gb_dgsr_date &lt;= #{stopDate}-->
+<!--            </if>-->
+<!--            <if test="dayuPriceSubtotal != null">-->
+<!--                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}-->
+<!--            </if>-->
+<!--            <if test="xiaoyuPriceSubtotal != null">-->
+<!--                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}-->
+<!--            </if>-->
+<!--            <if test="outDate != null">-->
+<!--                and gdgs.gb_dgs_out_date = #{outDate}-->
+<!--            </if>-->
+<!--            <if test="depFatherIds != null">-->
+<!--                and gdgs.gb_dgs_gb_department_father_id in-->
+<!--                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">-->
+<!--                    #{id}-->
+<!--                </foreach>-->
+<!--            </if>-->
+<!--            <if test="restWeight != null">-->
+<!--                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}-->
+<!--            </if>-->
+<!--        </where>-->
+<!--        order by gdgs.gb_dgs_full_time DESC, gdgsr.gb_dgsr_full_time DESC-->
+<!--    </select>-->
+
+
     <select id="queryDepStockTreeFatherGoodsByParams" resultMap="greatGrandGoods">
         select * ,
         ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
@@ -2715,6 +2889,9 @@
         ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',
         ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',
         ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',
+        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
+        ndfgGreatGrand.gb_dfg_father_goods_img 'ndfgGreatGrand_gb_dfg_father_goods_img',
+        ndfgGreatGrand.gb_dfg_father_goods_img_large 'ndfgGreatGrand_gb_dfg_father_goods_img_large',
         ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
         ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name'
         from gb_department_goods_stock as gdgs
@@ -2730,6 +2907,9 @@
         <where>
             <if test="disId != null">
                 and gdgs.gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="depFatherId != null">
                 and gdgs.gb_dgs_gb_department_father_id = #{depFatherId}
@@ -2758,6 +2938,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="startTime != null">
                 and gdgs.gb_dgs_full_time &gt;= #{startTime}
@@ -2807,6 +2990,9 @@
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
             </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
+            </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
             </if>
@@ -2845,11 +3031,14 @@
 
     </select>
     <select id="queryStockSellingPriceTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_selling_price) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_selling_price), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -2878,6 +3067,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -2895,6 +3087,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -2931,11 +3126,14 @@
         </where>
     </select>
     <select id="queryStockPriceTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_price) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_price), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -2964,6 +3162,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -2981,6 +3182,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3020,7 +3224,7 @@
 
 
     <select id="queryDepStockWeightTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_weight) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_weight), 1) from gb_department_goods_stock as gdgs
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
@@ -3029,6 +3233,9 @@
             </if>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3060,6 +3267,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3080,6 +3290,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3116,11 +3329,14 @@
         </where>
     </select>
     <select id="queryDepStockLossWeightTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_loss_weight) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_loss_weight), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3149,6 +3365,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3166,6 +3385,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3204,11 +3426,14 @@
         </where>
     </select>
     <select id="queryDepStockWasteWeightTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_waste_weight) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_waste_weight), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3237,6 +3462,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3254,6 +3482,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3292,7 +3523,7 @@
         </where>
     </select>
     <select id="queryDepStockRestWeightTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_rest_weight) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_rest_weight), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="purGoodsId != null">
@@ -3331,8 +3562,8 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
-            <if test="disGoodsGrandId != null">
-                and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
@@ -3351,6 +3582,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
 
             <if test="depFatherIdNotEqual != null">
@@ -3399,6 +3633,8 @@
         <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
         <association property="gbDepartmentDisGoodsEntity" resultMap="depGoods"/>
     </resultMap>
+
+
     <select id="queryWhichDepHasStock" resultMap="depWithDepGoods">
         select * from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_id
@@ -3406,6 +3642,9 @@
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3434,6 +3673,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3451,6 +3693,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
 
             <if test="depFatherIdNotEqual != null">
@@ -3492,11 +3737,14 @@
         </where>
     </select>
     <select id="queryStockCostRateTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_cost_rate) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_cost_rate), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3525,6 +3773,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3542,6 +3793,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3577,11 +3831,14 @@
         </where>
     </select>
     <select id="queryGoodsPriceTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_gb_price_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_gb_price_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3610,6 +3867,10 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3627,6 +3888,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3662,11 +3926,14 @@
         </where>
     </select>
     <select id="queryGoodsPriceScale" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_gb_price_subtotal_scale) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_gb_price_subtotal_scale), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -3695,6 +3962,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3712,6 +3982,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3755,6 +4028,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
             </if>
@@ -3782,6 +4058,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3799,6 +4078,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3841,6 +4123,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
             </if>
@@ -3868,6 +4153,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3888,6 +4176,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -3931,6 +4222,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
             </if>
@@ -3961,6 +4255,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -3978,6 +4275,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4014,11 +4314,14 @@
         </where>
     </select>
     <select id="queryDepStockProfitSubtotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_profit_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_profit_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -4047,6 +4350,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4064,6 +4370,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4100,11 +4409,14 @@
         </where>
     </select>
     <select id="queryDepStockAfterProfitSubtotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_after_profit_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_after_profit_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -4133,6 +4445,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4150,6 +4465,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4185,12 +4503,16 @@
             </if>
         </where>
     </select>
+
     <select id="queryDepStockProduceSellingSubtotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_produce_selling_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_produce_selling_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -4219,6 +4541,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4236,6 +4561,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4278,6 +4606,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="orderId != null">
                 and gdgs.gb_dgs_gb_department_order_id = #{orderId}
             </if>
@@ -4308,6 +4639,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4325,6 +4659,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4360,17 +4697,22 @@
             </if>
         </where>
     </select>
+
     <select id="queryReturnStockItemByOrderId" resultType="com.nongxinle.entity.GbDepartmentGoodsStockEntity">
         select *
         from gb_department_goods_stock
         where gb_dgs_gb_department_order_id = #{gbDepartmentOrdersId}
     </select>
+
     <select id="queryDepStockReturnSubtotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_return_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_return_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -4399,6 +4741,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4416,6 +4761,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4452,11 +4800,14 @@
         </where>
     </select>
     <select id="queryDepStockReturnWeightTotal" resultType="java.lang.Double">
-        select sum(gdgs.gb_dgs_return_weight) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gdgs.gb_dgs_return_weight), 1) from gb_department_goods_stock as gdgs
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -4485,6 +4836,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4502,6 +4856,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4559,6 +4916,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
         <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+        <result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -4577,9 +4935,10 @@
         <result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
-        <association property="gbDepartmentDisGoodsEntity" resultMap="depGoods"/>
         <collection property="gbDepartmentGoodsStockEntities" resultMap="depStock"/>
     </resultMap>
+
+
     <select id="queryDisGoodsWithFromDepGoods" resultMap="disGoodsWithDepGoods">
         select * from gb_department_goods_stock as gdgs
         left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
@@ -4588,6 +4947,9 @@
         <where>
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
@@ -4616,6 +4978,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4633,6 +4998,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4669,6 +5037,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="date != null">
                 and gb_dgs_date = #{date}
             </if>
@@ -4696,6 +5067,9 @@
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
             <if test="depGoodsId != null">
                 and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
             </if>
@@ -4714,6 +5088,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -4751,130 +5128,10 @@
     </select>
 
 
-    <resultMap id="depWithGreatGoods" type="GbDepartmentEntity">
-        <id property="gbDepartmentId" column="gb_department_id"/>
-        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
-        <result property="gbDepartmentNamePy" column="gb_department_name_py"/>
-        <result property="gbDepartmentType" column="gb_department_type"/>
-        <result property="gbDepartmentName" column="gb_department_name"/>
-        <result property="gbDepartmentAttrName" column="gb_department_attr_name"/>
-        <result property="gbDepartmentDisId" column="gb_department_dis_id"/>
-        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
-        <result property="gbDepartmentIsGroupDep" column="gb_department_is_group_dep"/>
-        <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
-        <result property="gbDepartmentFatherId" column="gb_department_father_id"/>
-        <result property="gbDepartmentSettleType" column="gb_department_settle_type"/>
-        <result property="gbDepartmentType" column="gb_department_type"/>
-        <result property="gbDepartmentLevel" column="gb_department_level"/>
-        <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
-        <collection property="fatherGoodsEntities" resultMap="greatGrandGoodsWithStock"/>
 
-    </resultMap>
-    <select id="queryStockDepWithFatherGoods" resultMap="depWithGreatGoods">
-        select * ,
-        ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',
-        ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',
-        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
-        ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name',
-        ndfgGreatGrand.gb_dfg_father_goods_sort 'ndfgGreatGrand_gb_dfg_father_goods_sort',
-        ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
-        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
-        ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name'
-        from gb_department_goods_stock as gdgs
-        left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
-        left join gb_distributer_father_goods as gdfg on gdfg.gb_distributer_father_goods_id =
-        gdgs.gb_dgs_gb_dis_goods_father_id
-        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =
-        gdfg.gb_dfg_fathers_father_id
-        left join gb_distributer_father_goods as ndfgGreatGrand on ndfgGreatGrand.gb_distributer_father_goods_id =
-        ndfgGrant.gb_dfg_fathers_father_id
-        <where>
-            <if test="disId != null">
-                and gb_dgs_gb_distributer_id = #{disId}
-            </if>
-            <if test="date != null">
-                and gb_dgs_date = #{date}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="time != null">
-                and gb_dgs_full_time &gt;= #{startDate}
-            </if>
-            <if test="equalStatus != null">
-                and gb_dgs_status = #{equalStatus}
-            </if>
-            <if test="dayuStatus != null">
-                and gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="depFatherId != null">
-                and gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
-            <if test="disGoodsId != null">
-                and gb_dgs_gb_dis_goods_id = #{disGoodsId}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="depGoodsId != null">
-                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
-            <if test="fromDepId != null">
-                and gb_dgs_gb_from_department_id = #{fromDepId}
-            </if>
-            <if test="notEqualStockId != null">
-                and gb_dgs_gb_goods_stock_id != #{notEqualStockId}
-            </if>
-            <if test="stockId != null">
-                and gb_dgs_gb_goods_stock_id = #{stockId}
-            </if>
 
-            <if test="nxDisId != null">
-                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
-            </if>
-            <if test="supplierId != null">
-                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
-            </if>
-            <if test="depFatherIdNotEqual != null">
-                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
-            </if>
-
-            <if test="startDate != null">
-                and gb_dgs_date &gt;= #{startDate}
-            </if>
-            <if test="stopDate != null">
-                and gb_dgs_date &lt;= #{stopDate}
-            </if>
-
-            <if test="depType != null">
-                and gd.gb_department_type = #{depType}
-            </if>
-            <if test="orderDepType != null">
-                and gd.gb_department_type = #{orderDepType}
-            </if>
-            <if test="dayuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
-            </if>
-            <if test="xiaoyuPriceSubtotal != null">
-                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
-            </if>
-            <if test="depFatherIds != null">
-                and gdgs.gb_dgs_gb_department_father_id in
-                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </if>
-            <if test="restWeight != null">
-                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
-            </if>
-        </where>
-
-    </select>
     <select id="queryDepGoodsWasteTotal" resultType="java.lang.Double">
-        select sum(gb_dgs_rest_subtotal) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gb_dgs_rest_subtotal), 1) from gb_department_goods_stock as gdgs
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_father_id
 
@@ -4882,12 +5139,17 @@
             <if test="disGoodsId != null">
                 and gb_dgs_gb_dis_goods_id = #{disGoodsId}
             </if>
-
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
             <if test="disGoodsFatherId != null">
                 and gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="nowTimeWaste != null">
                 and gdgs.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}
@@ -4913,6 +5175,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
 
             <if test="depFatherIdNotEqual != null">
@@ -4984,11 +5249,14 @@
 
 
     <select id="queryGoodsStockStars" resultType="java.lang.Integer">
-        select sum(gb_dgs_stars) from gb_department_goods_stock as gdgs
+        select ROUND(sum(gb_dgs_stars), 1) from gb_department_goods_stock as gdgs
 
         <where>
             <if test="disGoodsId != null">
                 and gb_dgs_gb_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
 
             <if test="disGoodsFatherId != null">
@@ -4996,6 +5264,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="nowTimeWaste != null">
                 and gdgs.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}
@@ -5020,6 +5291,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
 
             <if test="depFatherIdNotEqual != null">
@@ -5097,12 +5371,18 @@
             <if test="starsLevel != null">
                 and gb_dgs_stars = #{starsLevel}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
 
             <if test="disGoodsFatherId != null">
                 and gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="nowTimeWaste != null">
                 and gdgs.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}
@@ -5128,6 +5408,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
 
             <if test="depFatherIdNotEqual != null">
@@ -5198,83 +5481,89 @@
     </select>
 
 
-    <select id="queryGoodsStockWithTodayReduceList" resultMap="stockWithReduce">
-        select * from gb_department_goods_stock as gdgs
-        left join gb_department_goods_stock_reduce as gdgsr on gdgsr.gb_dgsr_gb_goods_stock_id =
-        gdgs.gb_department_goods_stock_id
-        left join nx_distributer as nd on nd.nx_distributer_id = gdgs.gb_dgs_nx_distributer_id
-        left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = gdgs.gb_dgs_nx_supplier_id
-        <where>
+<!--    <select id="queryGoodsStockWithTodayReduceList" resultMap="stockWithReduce">-->
+<!--        select * from gb_department_goods_stock as gdgs-->
+<!--        left join gb_department_goods_stock_reduce as gdgsr on gdgsr.gb_dgsr_gb_goods_stock_id =-->
+<!--        gdgs.gb_department_goods_stock_id-->
+<!--        left join nx_distributer as nd on nd.nx_distributer_id = gdgs.gb_dgs_nx_distributer_id-->
+<!--        left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = gdgs.gb_dgs_nx_supplier_id-->
+<!--        <where>-->
 
-            <if test="reduceType != null">
-                and gdgsr.gb_dgsr_type = #{reduceType}
-            </if>
-            <if test="reduceDate != null">
-                and gdgsr.gb_dgsr_date = #{reduceDate}
-            </if>
-            <if test="reduceDepId != null">
-                and gdgsr.gb_dgsr_gb_department_id = #{reduceDepId}
-            </if>
-            <if test="reduceGoodsId != null">
-                and gdgsr.gb_dgsr_gb_dis_goods_id = #{reduceGoodsId}
-            </if>
+<!--            <if test="reduceType != null">-->
+<!--                and gdgsr.gb_dgsr_type = #{reduceType}-->
+<!--            </if>-->
+<!--            <if test="reduceDate != null">-->
+<!--                and gdgsr.gb_dgsr_date = #{reduceDate}-->
+<!--            </if>-->
+<!--            <if test="reduceDepId != null">-->
+<!--                and gdgsr.gb_dgsr_gb_department_id = #{reduceDepId}-->
+<!--            </if>-->
+<!--            <if test="reduceGoodsId != null">-->
+<!--                and gdgsr.gb_dgsr_gb_dis_goods_id = #{reduceGoodsId}-->
+<!--            </if>-->
 
-            <if test="disId != null">
-                and gb_dgs_gb_distributer_id = #{disId}
-            </if>
-            <if test="startDate != null">
-                and gb_dgs_date &gt;= #{startDate}
-            </if>
-            <if test="stopDate != null">
-                and gb_dgs_date &lt;= #{stopDate}
-            </if>
-            <if test="date != null">
-                and gb_dgs_date = #{date}
-            </if>
-            <if test="dgsrDate != null">
-                and gb_dgsr_date = #{dgsrDate}
-            </if>
-            <if test="outDate != null">
-                and gdgs.gb_dgs_out_date = #{outDate}
-            </if>
-            <if test="time != null">
-                and gb_dgs_full_time &gt;= #{startDate}
-            </if>
-            <if test="dayuStatus != null">
-                and gdgs.gb_dgs_status &gt; #{dayuStatus}
-            </if>
-            <if test="depFatherId != null">
-                and gb_dgs_gb_department_father_id = #{depFatherId}
-            </if>
-            <if test="disGoodsId != null">
-                and gb_dgs_gb_dis_goods_id = #{disGoodsId}
-            </if>
-            <if test="disGoodsFatherId != null">
-                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
-            </if>
-            <if test="disGoodsGrandId != null">
-                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
-            </if>
-            <if test="depGoodsId != null">
-                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
-            </if>
-
-
-            <if test="equalRestWeight != null">
-                and gdgs.gb_dgs_rest_weight = #{equalRestWeight}
-            </if>
+<!--            <if test="disId != null">-->
+<!--                and gb_dgs_gb_distributer_id = #{disId}-->
+<!--            </if>-->
+<!--            <if test="startDate != null">-->
+<!--                and gb_dgs_date &gt;= #{startDate}-->
+<!--            </if>-->
+<!--            <if test="stopDate != null">-->
+<!--                and gb_dgs_date &lt;= #{stopDate}-->
+<!--            </if>-->
+<!--            <if test="date != null">-->
+<!--                and gb_dgs_date = #{date}-->
+<!--            </if>-->
+<!--            <if test="dgsrDate != null">-->
+<!--                and gb_dgsr_date = #{dgsrDate}-->
+<!--            </if>-->
+<!--            <if test="outDate != null">-->
+<!--                and gdgs.gb_dgs_out_date = #{outDate}-->
+<!--            </if>-->
+<!--            <if test="time != null">-->
+<!--                and gb_dgs_full_time &gt;= #{startDate}-->
+<!--            </if>-->
+<!--            <if test="dayuStatus != null">-->
+<!--                and gdgs.gb_dgs_status &gt; #{dayuStatus}-->
+<!--            </if>-->
+<!--            <if test="depFatherId != null">-->
+<!--                and gb_dgs_gb_department_father_id = #{depFatherId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsId != null">-->
+<!--                and gb_dgs_gb_dis_goods_id = #{disGoodsId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsFatherId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGrandId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}-->
+<!--            </if>-->
+<!--            <if test="disGoodsGreatId != null">-->
+<!--                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}-->
+<!--            </if>-->
+<!--            <if test="depGoodsId != null">-->
+<!--                and gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}-->
+<!--            </if>-->
 
 
-        </where>
-        order by gdgs.gb_dgs_full_time DESC
+<!--            <if test="equalRestWeight != null">-->
+<!--                and gdgs.gb_dgs_rest_weight = #{equalRestWeight}-->
+<!--            </if>-->
 
 
-    </select>
+<!--        </where>-->
+<!--        order by gdgs.gb_dgs_full_time DESC-->
+
+
+<!--    </select>-->
     <select id="queryDepStockProduceWeightTotal" resultType="java.lang.Double">
-        select SUM(gb_dgs_produce_weight) from gb_department_goods_stock as gdgs
+        select ROUND(SUM(gb_dgs_produce_weight), 1) from gb_department_goods_stock as gdgs
         <where>
             <if test="disGoodsId != null">
                 and gb_dgs_gb_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="starsLevel != null">
                 and gb_dgs_stars = #{starsLevel}
@@ -5285,6 +5574,9 @@
             </if>
             <if test="disGoodsGrandId != null">
                 and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
             </if>
             <if test="nowTimeWaste != null">
                 and gdgs.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}
@@ -5311,6 +5603,9 @@
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
             </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
+            </if>
 
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
@@ -5331,9 +5626,11 @@
             <if test="inventoryType != null">
                 and dg.gb_dg_goods_inventory_type = #{inventoryType}
             </if>
-
             <if test="depGoodsId != null">
                 and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
+            </if>
+            <if test="purGoodsId != null">
+                and gdgs.gb_dgs_gb_pur_goods_id = #{purGoodsId}
             </if>
             <if test="restWeight != null">
                 and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
@@ -5381,7 +5678,7 @@
 
 
     <select id="queryDepGoodsWasteWeightTotal" resultType="java.lang.Double">
-        select SUM(gb_dgs_waste_weight) from gb_department_goods_stock as gdgs
+        select ROUND(SUM(gb_dgs_waste_weight), 1) from gb_department_goods_stock as gdgs
         <where>
             <if test="disGoodsId != null">
                 and gb_dgs_gb_dis_goods_id = #{disGoodsId}
@@ -5404,6 +5701,9 @@
             <if test="disId != null">
                 and gb_dgs_gb_distributer_id = #{disId}
             </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
 
             <if test="fromDepId != null">
                 and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
@@ -5419,6 +5719,9 @@
             </if>
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
             </if>
 
             <if test="depFatherIdNotEqual != null">
@@ -5492,7 +5795,7 @@
     <select id="queryGoodsLatestWeight"
             parameterType="map"
             resultType="java.lang.Double">
-        SELECT SUM(t.gb_dgs_weight) AS totalWaste
+        SELECT ROUND(SUM(t.gb_dgs_weight), 1) AS totalWaste
         FROM (
         SELECT
         gb_dgs_weight,
@@ -5524,7 +5827,7 @@
 
 
     <select id="queryGoodsLatestWasteWeight" resultType="java.lang.Double">
-        SELECT SUM(t.gb_dgs_waste_weight) AS totalWaste
+        SELECT ROUND(SUM(t.gb_dgs_waste_weight), 1) AS totalWaste
         FROM (
         SELECT
         gb_dgs_waste_weight,
@@ -5555,38 +5858,6 @@
 
 
     </select>
-<!-- #
-        # fromgdgs.gb_department_goods_stock_id 'from_gb_department_goods_stock_id',
-        # fromgdgs.gb_dgs_gb_department_order_id 'from_gb_dgs_gb_department_order_id',
-        # fromgdgs.gb_dgs_gb_dis_goods_id 'from_gb_dgs_gb_dis_goods_id',
-        # fromgdgs.gb_dgs_gb_dis_goods_father_id 'from_gb_dgs_gb_dis_goods_father_id',
-        # fromgdgs.gb_dgs_gb_distributer_id 'from_gb_dgs_gb_distributer_id',
-        # fromgdgs.gb_dgs_waste_full_time 'from_gb_dgs_waste_full_time',
-        # fromgdgs.gb_dgs_waste_time_quantum_name 'from_gb_dgs_waste_time_quantum_name',
-        # fromgdgs.gb_dgs_warn_full_time 'from_gb_dgs_warn_full_time',
-        # fromgdgs.gb_dgs_warn_time_quantum_name 'from_gb_dgs_warn_time_quantum_name',
-        # fromgdgs.gb_dgs_gb_department_id 'from_gb_dgs_gb_department_id',
-        # fromgdgs.gb_dgs_price 'from_gb_dgs_price',
-        # fromgdgs.gb_dgs_weight 'from_gb_dgs_weight',
-        # fromgdgs.gb_dgs_price 'from_gb_dgs_price',
-        # fromgdgs.gb_dgs_subtotal 'from_gb_dgs_subtotal',
-        # fromgdgs.gb_dgs_rest_weight 'from_gb_dgs_rest_weight',
-        # fromgdgs.gb_dgs_rest_subtotal 'from_gb_dgs_rest_subtotal',
-        # fromgdgs.gb_dgs_status 'from_gb_dgs_status',
-        # fromgdgs.gb_dgs_gb_goods_stock_id 'from_gb_dgs_gb_goods_stock_id',
-        # fromgdgs.gb_dgs_receive_user_id 'from_gb_dgs_receive_user_id',
-        # fromgdgs.gb_dgs_date 'from_gb_dgs_date',
-        # fromgdgs.gb_dgs_gb_dep_dis_goods_id 'from_gb_dgs_gb_dep_dis_goods_id',
-        # fromgdgs.gb_dgs_selling_price 'from_gb_dgs_selling_price',
-        # fromgdgs.gb_dgs_selling_subtotal 'from_gb_dgs_selling_subtotal',
-        # orderDep.gb_department_id 'orderDep_gb_department_id',
-        # orderDep.gb_department_name 'orderDep_gb_department_name',
-        # orderDep.gb_department_type 'orderDep_gb_department_type',
-        # orderDep.gb_department_father_id 'orderDep_gb_department_father_id' ,
-        # orderFatherDep.gb_department_id 'orderFatherDep_gb_department_id',
-        # orderFatherDep.gb_department_type 'orderFatherDep_gb_department_type',
-        # orderFatherDep.gb_department_name 'orderFatherDep_gb_department_name'
--->
 
     <select id="queryGoodsStockByParamsWithDetail" resultMap="depStockWithDetail">
         select * ,
@@ -5619,11 +5890,25 @@
         orderDep.gb_department_father_id 'orderDep_gb_department_father_id' ,
         orderFatherDep.gb_department_id 'orderFatherDep_gb_department_id',
         orderFatherDep.gb_department_type 'orderFatherDep_gb_department_type',
-        orderFatherDep.gb_department_name 'orderFatherDep_gb_department_name'
+        orderFatherDep.gb_department_name 'orderFatherDep_gb_department_name',
+        df.gb_department_id 'df_gb_department_id',
+        df.gb_department_name 'df_gb_department_name',
+
+        purUser.gb_department_user_id 'purUser_gb_department_user_id',
+        purUser.gb_DU_wx_nick_name 'purUser_gb_DU_wx_nick_name',
+        purUser.gb_DU_department_id 'purUser_gb_DU_department_id'
+
         from gb_department_goods_stock as gdgs
+         left join gb_department as gd on gd.gb_department_id = gdgs.gb_dgs_gb_department_id
+        left join gb_department as df on df.gb_department_id = gd.gb_department_father_id
         left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgs.gb_dgs_gb_dis_goods_id
         left join gb_department_goods_stock as fromgdgs on fromgdgs.gb_department_goods_stock_id =
         gdgs.gb_dgs_gb_goods_stock_id
+
+        left join gb_distributer_purchase_goods as pur on pur.gb_distributer_purchase_goods_id = gdgs.gb_dgs_gb_pur_goods_id
+        left join gb_department_user as purUser on purUser.gb_department_user_id = pur.gb_DPG_pur_user_id
+        left join nx_jrdh_supplier as supplier on supplier.nx_jrdh_supplier_id = pur.gb_DPG_purchase_nx_supplier_id
+
         left join gb_department_orders as dor on dor.gb_department_orders_id = gdgs.gb_dgs_gb_department_order_id
         left join gb_department as orderDep on orderDep.gb_department_id = dor.gb_DO_department_id
         left join gb_department as orderFatherDep on orderFatherDep.gb_department_id = dor.gb_DO_department_father_id
@@ -5661,6 +5946,9 @@
             <if test="supplierId != null">
                 and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
             </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
+            </if>
             <if test="depFatherIdNotEqual != null">
                 and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
             </if>
@@ -5688,6 +5976,9 @@
             <if test="disGoodsGrandId != null">
                 and gdgs.gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgs.gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
 
             <if test="depGoodsId != null">
                 and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
@@ -5714,7 +6005,6 @@
             <if test="stopDate != null">
                 and gdgs.gb_dgs_date &lt;= #{stopDate}
             </if>
-
 
             <if test="outDate != null">
                 and gdgs.gb_dgs_out_date = #{outDate}
@@ -5749,10 +6039,132 @@
             </if>
 
         </where>
-        order by  gdgs.gb_dgs_full_time
+        order by CAST(gdgs.gb_dgs_rest_subtotal AS DECIMAL(10,2))
 
 
     </select>
+    <select id="queryDisStockGoodsCount" resultType="java.lang.Integer">
+        select count(DISTINCT gb_dgs_gb_dis_goods_id)
+                   from gb_department_goods_stock as gdgs
+
+        <where>
+
+            <if test="disGoodsId != null">
+                and gb_dgs_gb_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="starsLevel != null">
+                and gb_dgs_stars = #{starsLevel}
+            </if>
+
+            <if test="disGoodsFatherId != null">
+                and gb_dgs_gb_dis_goods_father_id = #{disGoodsFatherId}
+            </if>
+            <if test="disGoodsGrandId != null">
+                and gb_dgs_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gb_dgs_gb_dis_goods_great_id = #{disGoodsGreatId}
+            </if>
+            <if test="nowTimeWaste != null">
+                and gdgs.gb_dgs_waste_time_quantum_name &lt; #{nowTimeWaste}
+                AND gdgs.gb_dgs_waste_time_quantum_name IS NOT NULL
+                AND TRIM(gdgs.gb_dgs_waste_time_quantum_name) != ''
+            </if>
+            <if test="disId != null">
+                and gb_dgs_gb_distributer_id = #{disId}
+            </if>
+            <if test="purGoodsId != null">
+                and gb_dgs_gb_pur_goods_id = #{purGoodsId}
+            </if>
+
+            <if test="fromDepId != null">
+                and gdgs.gb_dgs_gb_from_department_id = #{fromDepId}
+            </if>
+            <if test="notEqualStockId != null">
+                and gdgs.gb_dgs_gb_goods_stock_id != #{notEqualStockId}
+            </if>
+            <if test="stockId != null">
+                and gdgs.gb_dgs_gb_goods_stock_id = #{stockId}
+            </if>
+            <if test="nxDisId != null">
+                and gdgs.gb_dgs_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="supplierId != null">
+                and gdgs.gb_dgs_nx_supplier_id = #{supplierId}
+            </if>
+            <if test="purUserId != null">
+                and gdgs.gb_dgs_pur_user_id = #{purUserId}
+            </if>
+
+            <if test="depFatherIdNotEqual != null">
+                and gdgs.gb_dgs_gb_department_father_id != #{depFatherIdNotEqual}
+            </if>
+
+            <if test="depId != null">
+                and gb_dgs_gb_department_id = #{depId}
+            </if>
+            <if test="depFatherId != null">
+                and gb_dgs_gb_department_father_id = #{depFatherId}
+            </if>
+            <if test="status != null">
+                and gb_dgs_status &lt; #{status}
+            </if>
+            <if test="dayuStatus != null">
+                and gb_dgs_status &gt; #{dayuStatus}
+            </if>
+            <if test="inventoryType != null">
+                and dg.gb_dg_goods_inventory_type = #{inventoryType}
+            </if>
+
+            <if test="depGoodsId != null">
+                and gdgs.gb_dgs_gb_dep_dis_goods_id = #{depGoodsId}
+            </if>
+            <if test="restWeight != null">
+                and gdgs.gb_dgs_rest_weight &gt; #{restWeight}
+            </if>
+
+            <if test="date != null">
+                and gb_dgs_date = #{date}
+            </if>
+            <if test="outDate != null">
+                and gdgs.gb_dgs_out_date = #{outDate}
+            </if>
+            <if test="startDate != null">
+                and gb_dgs_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and gb_dgs_date &lt;= #{stopDate}
+            </if>
+            <if test="freshTime != null">
+                and gb_dgs_waste_full_time &lt;= #{freshTime}
+            </if>
+            <if test="dayuFreshTime != null">
+                and gb_dgs_waste_full_time &gt; #{dayuFreshTime}
+            </if>
+            <if test="depType != null">
+                and gd.gb_department_type = #{depType}
+            </if>
+            <if test="orderDepType != null">
+                and gd.gb_department_type = #{orderDepType}
+            </if>
+            <if test="dayuPriceSubtotal != null">
+                and gdgs.gb_dgs_gb_price_subtotal &gt; #{dayuPriceSubtotal}
+            </if>
+            <if test="xiaoyuPriceSubtotal != null">
+                and gdgs.gb_dgs_gb_price_subtotal &lt; #{xiaoyuPriceSubtotal}
+            </if>
+            <if test="depFatherIds != null">
+                and gdgs.gb_dgs_gb_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+
 
 
     <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentGoodsStockEntity" useGeneratedKeys="true"
@@ -5786,6 +6198,7 @@
          `gb_dgs_inventory_year`,
          `gb_dgs_gb_dis_goods_father_id`,
          `gb_dgs_gb_dis_goods_grand_id`,
+         `gb_dgs_gb_dis_goods_great_id`,
          `gb_dgs_full_time`,
          `gb_dgs_warn_full_time`,
          `gb_dgs_waste_full_time`,
@@ -5822,7 +6235,10 @@
          `gb_dgs_nx_distributer_id`,
          `gb_dgs_nx_supplier_id`,
          `gb_dgs_produce_selling_subtotal`,
-         `gb_dgs_stars`)
+         `gb_dgs_stars`,
+         `gb_dgs_pur_user_id`
+
+         )
         values (#{gbDepartmentGoodsStockId},
                 #{gbDgsGbDistributerId},
                 #{gbDgsGbDepartmentId},
@@ -5851,6 +6267,7 @@
                 #{gbDgsInventoryYear},
                 #{gbDgsGbDisGoodsFatherId},
                 #{gbDgsGbDisGoodsGrandId},
+                #{gbDgsGbDisGoodsGreatId},
                 #{gbDgsFullTime},
                 #{gbDgsWarnFullTime},
                 #{gbDgsWasteFullTime},
@@ -5887,7 +6304,9 @@
                 #{gbDgsNxDistributerId},
                 #{gbDgsNxSupplierId},
                 #{gbDgsProduceSellingSubtotal},
-                #{gbDgsStars})
+                #{gbDgsStars},
+                #{gbDgsPurUserId}
+                )
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.GbDepartmentGoodsStockEntity">
@@ -5902,6 +6321,7 @@
             <if test="gbDgsGbDisGoodsFatherId != null">`gb_dgs_gb_dis_goods_father_id` = #{gbDgsGbDisGoodsFatherId},
             </if>
             <if test="gbDgsGbDisGoodsGrandId != null">`gb_dgs_gb_dis_goods_grand_id` = #{gbDgsGbDisGoodsGrandId},</if>
+            <if test="gbDgsGbDisGoodsGreatId != null">`gb_dgs_gb_dis_goods_great_id` = #{gbDgsGbDisGoodsGreatId},</if>
             <if test="gbDgsGbDepDisGoodsId != null">`gb_dgs_gb_dep_dis_goods_id` = #{gbDgsGbDepDisGoodsId},</if>
             <if test="gbDgsGbDepartmentOrderId != null">`gb_dgs_gb_department_order_id` = #{gbDgsGbDepartmentOrderId},
             </if>
@@ -5969,6 +6389,7 @@
             <if test="gbDgsNxDistributerId != null">`gb_dgs_nx_distributer_id` = #{gbDgsNxDistributerId},</if>
             <if test="gbDgsNxSupplierId != null">`gb_dgs_nx_supplier_id` = #{gbDgsNxSupplierId},</if>
             <if test="gbDgsStars != null">`gb_dgs_stars` = #{gbDgsStars},</if>
+            <if test="gbDgsPurUserId != null">`gb_dgs_pur_user_id` = #{gbDgsPurUserId},</if>
             <if test="gbDgsProduceSellingSubtotal != null">`gb_dgs_produce_selling_subtotal` =
                 #{gbDgsProduceSellingSubtotal},
             </if>

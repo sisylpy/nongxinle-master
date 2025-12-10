@@ -31,4 +31,6 @@ public interface GbDistributerPayListService {
     List<GbDistributerPayListEntity> queryPayListListByParams(Map<String, Object> map);
 
 	int queryDisPayListCount(Map<String, Object> mapCount);
+
+    int queryDisRecordSecondsTotal(Map<String, Object> map);
 }

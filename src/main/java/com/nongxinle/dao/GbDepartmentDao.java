@@ -39,4 +39,6 @@ public interface GbDepartmentDao extends BaseDao<GbDepartmentEntity> {
     int queryDepHasOrdersCount(Map<String, Object> mapDis);
 
     GbDepartmentEntity querySelfDepInfoGb(Integer gbDuDepartmentId);
+
+    List<GbDepartmentEntity> queryDepsByDisId(Map<String, Object> map);
 }

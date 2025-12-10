@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxAlertThresholdDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxAlertThresholdEntity">
+        SELECT * FROM nx_machine_alert_threshold WHERE nx_at_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxAlertThresholdEntity">
+        SELECT * FROM nx_machine_alert_threshold
+        <where>
+            <if test="deviceId != null">
+                AND nx_at_device_id = #{deviceId}
+            </if>
+            <if test="enable != null">
+                AND nx_at_enable = #{enable}
+            </if>
+        </where>
+        ORDER BY nx_at_level ASC
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_alert_threshold
+        <where>
+            <if test="deviceId != null">
+                AND nx_at_device_id = #{deviceId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据设备ID查询阈值配置 -->
+    <select id="queryByDeviceId" resultType="com.nongxinle.entity.NxAlertThresholdEntity">
+        SELECT * FROM nx_machine_alert_threshold
+        WHERE nx_at_device_id = #{deviceId}
+        ORDER BY nx_at_level ASC
+    </select>
+
+    <!-- 根据设备ID和级别查询 -->
+    <select id="queryByDeviceIdAndLevel" resultType="com.nongxinle.entity.NxAlertThresholdEntity">
+        SELECT * FROM nx_machine_alert_threshold
+        WHERE nx_at_device_id = #{deviceId}
+          AND nx_at_level = #{level}
+    </select>
+
+    <!-- 查询触发的阈值配置 -->
+    <select id="queryTriggeredThresholds" resultType="com.nongxinle.entity.NxAlertThresholdEntity">
+        SELECT * FROM nx_machine_alert_threshold
+        WHERE nx_at_device_id = #{deviceId}
+          AND nx_at_threshold >= #{paperCount}
+          AND nx_at_enable = 1
+        ORDER BY nx_at_level DESC
+    </select>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxAlertThresholdEntity" useGeneratedKeys="true" keyProperty="nxAtId">
+        INSERT INTO nx_machine_alert_threshold
+        (
+            nx_at_device_id,
+            nx_at_level,
+            nx_at_threshold,
+            nx_at_message,
+            nx_at_enable,
+            nx_at_create_time
+        )
+        VALUES
+        (
+            #{nxAtDeviceId},
+            #{nxAtLevel},
+            #{nxAtThreshold},
+            #{nxAtMessage},
+            #{nxAtEnable},
+            NOW()
+        )
+    </insert>
+
+    <!-- 批量新增 -->
+    <insert id="saveBatchThresholds" parameterType="java.util.List">
+        INSERT INTO nx_machine_alert_threshold
+        (nx_at_device_id, nx_at_level, nx_at_threshold, nx_at_message, nx_at_enable, nx_at_create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.nxAtDeviceId}, #{item.nxAtLevel}, #{item.nxAtThreshold}, #{item.nxAtMessage}, #{item.nxAtEnable}, NOW())
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxAlertThresholdEntity">
+        UPDATE nx_machine_alert_threshold
+        <set>
+            <if test="nxAtThreshold != null">nx_at_threshold = #{nxAtThreshold},</if>
+            <if test="nxAtMessage != null">nx_at_message = #{nxAtMessage},</if>
+            <if test="nxAtEnable != null">nx_at_enable = #{nxAtEnable},</if>
+        </set>
+        WHERE nx_at_id = #{nxAtId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_alert_threshold WHERE nx_at_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_alert_threshold WHERE nx_at_id IN
+        <foreach item="nxAtId" collection="array" open="(" separator="," close=")">
+            #{nxAtId}
+        </foreach>
+    </delete>
+
+</mapper>
+

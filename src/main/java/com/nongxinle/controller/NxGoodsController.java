@@ -119,7 +119,7 @@ public class NxGoodsController {
         }
 
         mapD.put("depId",depId);
-        mapD.put("pull", 0);
+//        mapD.put("pull", 0);
         mapD.put("date", formatWhatDay(0));
         System.out.println("deppddpdpdpmapDmapD" + mapD);
         TreeSet<GbDepartmentDisGoodsEntity> disGoodsEntityTreeSet = gbDepDisGoodsService.queryDepDisGoodsQuickSearchStrGb(mapD);
@@ -148,19 +148,19 @@ public class NxGoodsController {
     }
 
 
-    @RequestMapping(value = "/gbDepGetNxFatherGoodsByGrandId", method = RequestMethod.POST)
-    @ResponseBody
-    public R gbDepGetNxFatherGoodsByGrandId(Integer depId, Integer fatherId, Integer disId) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("gbDepId", depId);
-        map.put("grandId", fatherId);
-        map.put("isHidden", 0);
-        map.put("gbDisId", disId);
-        System.out.println("whatissiisisi" + map);
-        List<NxGoodsEntity> distributerGoodsEntities = nxGoodsService.queryGbDepNxGrandGoodsByGreatIdAll(map);
-
-        return R.ok().put("data", distributerGoodsEntities);
-    }
+//    @RequestMapping(value = "/gbDepGetNxFatherGoodsByGrandId", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R gbDepGetNxFatherGoodsByGrandId(Integer depId, Integer fatherId, Integer disId) {
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("gbDepId", depId);
+//        map.put("grandId", fatherId);
+//        map.put("isHidden", 0);
+//        map.put("gbDisId", disId);
+//        System.out.println("whatissiisisi" + map);
+//        List<NxGoodsEntity> distributerGoodsEntities = nxGoodsService.queryGbDepNxGrandGoodsByGreatIdAll(map);
+//
+//        return R.ok().put("data", distributerGoodsEntities);
+//    }
 
 
     @RequestMapping(value = "/gbDepGetNxFatherGoods", method = RequestMethod.POST)
@@ -446,6 +446,9 @@ public class NxGoodsController {
         map.put("standardWeight", standardWeight);
         map.put("place", place);
         map.put("sort", goods.getNxGoodsSort());
+        map.put("unitName", goods.getNxGoodsCartonUnit());
+        map.put("items", goods.getNxGoodsItemsPerCarton());
+
         System.out.println("smamdmdmmddmmdm" + map);
         List<NxGoodsEntity> goodsEntities = nxGoodsService.queryIfHasSameGoods(map);
         if (goodsEntities.size() > 0) {
@@ -488,6 +491,8 @@ public class NxGoodsController {
                     disGoods.setNxDgGoodsSort(goods.getNxGoodsSort());
                     disGoods.setNxDgGoodsSonsSort(goods.getNxGoodsSonsSort());
                     disGoods.setNxDgGoodsIsHidden(goods.getNxGoodsIsHidden());
+                    disGoods.setNxDgCartonUnit(goods.getNxGoodsCartonUnit());
+                    disGoods.setNxDgItemsPerCarton(goods.getNxGoodsItemsPerCarton());
                     nxDistributerGoodsService.update(disGoods);
                     Map<String, Object> mapDG = new HashMap<>();
                     mapDG.put("disGoodsId", disGoods.getNxDistributerGoodsId());
@@ -591,9 +596,36 @@ public class NxGoodsController {
             goods.setNxGoodsPinyin(pinyin);
             goods.setNxGoodsPy(headPinyin);
             goods.setNxGoodsLevel(3);
+            
+            // 确保设置 grandId 和 greatGrandId（必须存在）
             Integer nxGoodsGrandId = goods.getNxGoodsGrandId();
+            if (nxGoodsGrandId == null && nxGoodsFatherId != null) {
+                // 如果 grandId 为空，从父级商品获取其父级ID作为 grandId
+                NxGoodsEntity fatherEntity = nxGoodsService.queryObject(nxGoodsFatherId);
+                if (fatherEntity == null) {
+                    throw new RuntimeException("父级商品不存在，无法获取 grandId，fatherId: " + nxGoodsFatherId);
+                }
+                if (fatherEntity.getNxGoodsFatherId() == null) {
+                    throw new RuntimeException("父级商品的父级ID为空，无法获取 grandId，fatherId: " + nxGoodsFatherId);
+                }
+                nxGoodsGrandId = fatherEntity.getNxGoodsFatherId();
+                goods.setNxGoodsGrandId(nxGoodsGrandId);
+            }
+            
+            if (nxGoodsGrandId == null) {
+                throw new RuntimeException("无法获取 grandId，请确保商品有父级ID或直接提供 grandId");
+            }
+            
+            // 从 grandEntity 获取 greatGrandId
             NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxGoodsGrandId);
+            if (nxGoodsEntity == null) {
+                throw new RuntimeException("祖父级商品不存在，无法获取 greatGrandId，grandId: " + nxGoodsGrandId);
+            }
+            if (nxGoodsEntity.getNxGoodsFatherId() == null) {
+                throw new RuntimeException("祖父级商品的父级ID为空，无法获取 greatGrandId，grandId: " + nxGoodsGrandId);
+            }
             goods.setNxGoodsGreatGrandId(nxGoodsEntity.getNxGoodsFatherId());
+            
             goods.setNxGoodsFile("goodsImage/logo.jpg");
             System.out.println("savnemxgoods " + goods);
             nxGoodsService.save(goods);
@@ -791,11 +823,50 @@ public class NxGoodsController {
 
         map.put("pinyinStr", pinyinString);
         System.out.println("mapSearchchdhdhdh" + map);
-//        List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.queryDisShelfGoodsQuickSearchStr(map);
-
+        
+        // 1. 查询系统商品中，配送商已下载但未上架的商品
         List<NxGoodsEntity> goodsEntities = nxGoodsService.queryShelfQuickSearchNxGoodsWithNxDis(map);
-        if(goodsEntities.size() < 100){
-            return R.ok().put("data", goodsEntities);
+        
+        // 2. 查询配送商商品中，不在货架的商品
+        Map<String, Object> disGoodsMap = new HashMap<>();
+        disGoodsMap.put("searchStr", searchStr);
+        disGoodsMap.put("searchPinyin", pinyinString);
+        disGoodsMap.put("disId", disId);
+        List<NxDistributerGoodsEntity> disGoodsEntities = nxDistributerGoodsService.queryUnShelfDisGoodsQuickSearchStr(disGoodsMap);
+        
+        // 3. 去重：排除已有对应系统商品的配送商商品
+        Set<Integer> existingNxGoodsIds = new HashSet<>();
+        for (NxGoodsEntity goods : goodsEntities) {
+            if (goods.getNxGoodsId() != null) {
+                existingNxGoodsIds.add(goods.getNxGoodsId());
+            }
+        }
+        
+        // 过滤出没有对应系统商品的配送商商品
+        List<NxDistributerGoodsEntity> filteredDisGoodsEntities = new ArrayList<>();
+        for (NxDistributerGoodsEntity disGoods : disGoodsEntities) {
+            if (disGoods.getNxDgNxGoodsId() == null || !existingNxGoodsIds.contains(disGoods.getNxDgNxGoodsId())) {
+                filteredDisGoodsEntities.add(disGoods);
+            }
+        }
+        
+        // 4. 查询已上架的货架商品
+        Map<String, Object> shelfGoodsMap = new HashMap<>();
+        shelfGoodsMap.put("searchStr", searchStr);
+        shelfGoodsMap.put("searchPinyin", pinyinString);
+        shelfGoodsMap.put("disId", disId);
+        List<NxDistributerGoodsEntity> shelfGoodsEntities = nxDistributerGoodsService.queryDisShelfGoodsQuickSearchStr(shelfGoodsMap);
+        
+        // 5. 使用 Map 分别返回系统商品、配送商商品和已上架商品
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("nxGoods", goodsEntities);
+        resultMap.put("nxDisGoods", filteredDisGoodsEntities);
+        resultMap.put("nxShelfGoods", shelfGoodsEntities);
+        
+        System.out.println("mappreee" + resultMap);
+        int totalSize = goodsEntities.size() + filteredDisGoodsEntities.size() + shelfGoodsEntities.size();
+        if(totalSize < 100){
+            return R.ok().put("data", resultMap);
         }else{
             return R.error(-1,"请继续输入搜索关键词");
         }

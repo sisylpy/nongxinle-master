@@ -19,7 +19,11 @@
 	</select>
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -87,7 +91,10 @@
 		<result property="nxDepartmentAttrName" column="dd_nx_department_attr_name"/>
 	</resultMap>
 	<resultMap id="dep" type="NxDepartmentEntity">
-		<id property="nxDepartmentId" column="nx_department_id"/>
+		 <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -156,7 +163,10 @@
 
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -256,7 +266,10 @@
 	</resultMap>
 
 	<resultMap id="purBatch" type="NxDistributerPurchaseBatchEntity">
-		<id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
+		 <id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
+        <result property="nxDpbNxDepartmentFatherId" column="nx_DPB_nx_department_father_id"/>
+		<result property="nxDpbPasteContent" column="nx_DPB_paste_content"/>
+		<result property="nxDpbPasteContent" column="nx_DPB_paste_content"/>
         <result property="nxDpbNeedDate" column="nx_DPB_need_date"/>
 		<result property="nxDpbSupplierId" column="nx_DPB_supplier_id"/>
 		<result property="nxDpbSupplierId" column="nx_DPB_supplier_id"/>

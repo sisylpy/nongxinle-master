@@ -37,6 +37,7 @@ public interface NxDepartmentOrdersHistoryDao extends BaseDao<NxDepartmentOrders
     List<AvgDaily> selectAvgDaily(Map<String, Object> map);
 
 
+
 //    NxDepartmentOrdersHistoryEntity selectLastOrder(Map<String, Object> lastParams);
 
 }

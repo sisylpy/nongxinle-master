@@ -90,4 +90,12 @@ public interface GbDistributerGoodsService {
     List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map);
 
     GbDistributerGoodsEntity queryDisGoodsDetail(Integer nxDdgDisGoodsId);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByNameLikePinyin(Map<String, Object> mapTwo);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByAliasLike(Map<String, Object> mapTwo);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
+
+    void getStockTotal(GbDistributerGoodsEntity distributerGoodsEntity);
 }

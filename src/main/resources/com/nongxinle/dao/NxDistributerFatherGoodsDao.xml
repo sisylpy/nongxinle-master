@@ -69,7 +69,10 @@
 
 	<resultMap id="typeGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -91,6 +94,7 @@
 		<result property="nxDfgFatherGoodsColor" column="father_nx_dfg_father_goods_color"/>
 		<result property="nxDfgNxGoodsId" column="father_nx_dfg_nx_goods_id"/>
 		<result property="nxDfgFatherGoodsSort" column="father_nx_dfg_father_goods_sort"/>
+		<result property="goodsCount" column="father_goods_count"/>
 		<collection property="nxDistributerGoodsEntities" resultMap="typeGoods"/>
 	</resultMap>
 
@@ -104,6 +108,7 @@
 		<result property="nxDfgFatherGoodsSort" column="greatGrand_nx_dfg_father_goods_sort"/>
 		<result property="nxDfgDistributerId" column="greatGrand_nx_dfg_distributer_id"/>
 		<result property="nxDfgFatherGoodsImg" column="greatGrand_nx_dfg_father_goods_img"/>
+		<result property="goodsCount" column="greatGrand_goods_count"/>
 		<collection property="fatherGoodsEntities" resultMap="fatherDisGoodsWithType"/>
 	</resultMap>
 
@@ -112,6 +117,12 @@
 	<select id="queryHasDisFathersFather" resultType="com.nongxinle.entity.NxDistributerFatherGoodsEntity">
 		select * from nx_distributer_father_goods where nx_dfg_distributer_id = #{disId}
 		and nx_dfg_father_goods_name like  #{fathersFatherName}
+		<if test="fatherGoodsLevel != null">
+			and nx_dfg_father_goods_level = #{fatherGoodsLevel}
+		</if>
+		<if test="nxGoodsId != null">
+			and nx_dfg_nx_goods_id = #{nxGoodsId}
+		</if>
 	</select>
 
 
@@ -313,22 +324,84 @@
 			   father.nx_dfg_father_goods_img 'father_nx_dfg_father_goods_img',
 			   father.nx_dfg_father_goods_img_large 'father_nx_dfg_father_goods_img_large',
 			   father.nx_dfg_father_goods_sort 'father_nx_dfg_father_goods_sort',
+			   COALESCE(father_count.cnt, 0) AS 'father_goods_count',
 			   greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_distributer_father_goods_id',
 			   greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
 			   greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
 			   greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
 			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color',
 			   greatGrand.nx_dfg_father_goods_img 'greatGrand_nx_dfg_father_goods_img',
-			   greatGrand.nx_dfg_father_goods_sort 'greatGrand_nx_dfg_father_goods_sort'
+			   greatGrand.nx_dfg_father_goods_sort 'greatGrand_nx_dfg_father_goods_sort',
+			   COALESCE(greatGrand_count.cnt, 0) AS 'greatGrand_goods_count'
 		from nx_distributer_father_goods as greatGrand
 				 left join nx_distributer_father_goods as father on father.nx_dfg_fathers_father_id = greatGrand.nx_distributer_father_goods_id
 				left join nx_distributer_goods as ndg on ndg.nx_dg_dfg_goods_grand_id = father.nx_distributer_father_goods_id
+				-- 优化：使用LEFT JOIN替代子查询计算father的商品数量
+				LEFT JOIN (
+					SELECT 
+						nx_dg_dfg_goods_grand_id,
+						COUNT(DISTINCT nx_distributer_goods_id) AS cnt
+					FROM nx_distributer_goods
+					WHERE nx_dg_goods_is_hidden = 0
+						<if test="disId != null">
+							AND nx_dg_distributer_id = #{disId}
+						</if>
+						<if test="goodsType != null">
+							AND nx_dg_purchase_auto = #{goodsType}
+						</if>
+						<if test="hasSupplier != null and hasSupplier == 1">
+							AND nx_dg_supplier_id IS NOT NULL AND nx_dg_supplier_id &gt; 0
+						</if>
+						<if test="hasCartonUnit != null and hasCartonUnit == 1">
+							AND nx_dg_carton_unit IS NOT NULL AND TRIM(nx_dg_carton_unit) != ''
+						</if>
+						<if test="hasCartonUnit != null and hasCartonUnit == 0">
+							AND (nx_dg_carton_unit IS NULL OR TRIM(nx_dg_carton_unit) = '')
+						</if>
+					GROUP BY nx_dg_dfg_goods_grand_id
+				) AS father_count ON father_count.nx_dg_dfg_goods_grand_id = father.nx_distributer_father_goods_id
+				-- 优化：使用LEFT JOIN替代子查询计算greatGrand的商品数量
+				LEFT JOIN (
+					SELECT 
+						COALESCE(father_count.nx_dfg_fathers_father_id, goods_count.nx_dg_nx_great_grand_id) AS great_grand_id,
+						COUNT(DISTINCT goods_count.nx_distributer_goods_id) AS cnt
+					FROM nx_distributer_goods AS goods_count
+					LEFT JOIN nx_distributer_father_goods AS father_count 
+						ON goods_count.nx_dg_dfg_goods_grand_id = father_count.nx_distributer_father_goods_id
+					WHERE goods_count.nx_dg_goods_is_hidden = 0
+						AND (father_count.nx_dfg_fathers_father_id IS NOT NULL OR goods_count.nx_dg_nx_great_grand_id IS NOT NULL)
+						<if test="disId != null">
+							AND goods_count.nx_dg_distributer_id = #{disId}
+						</if>
+						<if test="goodsType != null">
+							AND goods_count.nx_dg_purchase_auto = #{goodsType}
+						</if>
+						<if test="hasSupplier != null and hasSupplier == 1">
+							AND goods_count.nx_dg_supplier_id IS NOT NULL AND goods_count.nx_dg_supplier_id &gt; 0
+						</if>
+						<if test="hasCartonUnit != null and hasCartonUnit == 1">
+							AND goods_count.nx_dg_carton_unit IS NOT NULL AND TRIM(goods_count.nx_dg_carton_unit) != ''
+						</if>
+						<if test="hasCartonUnit != null and hasCartonUnit == 0">
+							AND (goods_count.nx_dg_carton_unit IS NULL OR TRIM(goods_count.nx_dg_carton_unit) = '')
+						</if>
+					GROUP BY COALESCE(father_count.nx_dfg_fathers_father_id, goods_count.nx_dg_nx_great_grand_id)
+				) AS greatGrand_count ON greatGrand_count.great_grand_id = greatGrand.nx_distributer_father_goods_id
 			<where>
 				<if test="disId != null">
 					and greatGrand.nx_dfg_distributer_id = #{disId} and greatGrand.nx_dfg_father_goods_level = 0
 				</if>
 				<if test="goodsType != null">
 					and ndg.nx_dg_purchase_auto = #{goodsType}
+				</if>
+				<if test="hasSupplier != null and hasSupplier == 1">
+					and ndg.nx_dg_supplier_id is not null and ndg.nx_dg_supplier_id &gt; 0
+				</if>
+				<if test="hasCartonUnit != null and hasCartonUnit == 1">
+					and ndg.nx_dg_carton_unit is not null and TRIM(ndg.nx_dg_carton_unit) != ''
+				</if>
+				<if test="hasCartonUnit != null and hasCartonUnit == 0">
+					and (ndg.nx_dg_carton_unit is null or TRIM(ndg.nx_dg_carton_unit) = '')
 				</if>
 
 			</where>

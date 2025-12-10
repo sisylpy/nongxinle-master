@@ -19,7 +19,11 @@
 	</select>
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -33,7 +37,10 @@
 	</resultMap>
 
 	<resultMap id="gbDis" type="GbDistributerEntity">
-<id property="gbDistributerId" column="gb_distributer_id"/>
+        <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
 		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>

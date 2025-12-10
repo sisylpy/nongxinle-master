@@ -84,4 +84,10 @@ public interface GbDistributerGoodsDao extends BaseDao<GbDistributerGoodsEntity>
     List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map);
 
     GbDistributerGoodsEntity queryDisGoodsDetail(Integer nxDdgDisGoodsId);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByNameLikePinyin(Map<String, Object> mapTwo);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsByAliasLike(Map<String, Object> mapTwo);
+
+    List<GbDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
 }

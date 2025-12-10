@@ -10,12 +10,14 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 
-@Setter@Getter@ToString
+@Setter@Getter
+@ToString
 
 public class GbDistributerPurchaseGoodsEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -33,6 +35,7 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
 	 */
 	private Integer gbDpgDisGoodsFatherId;
 	private Integer gbDpgDisGoodsGrandId;
+	private Integer gbDpgDisGoodsGreatId;
 	/**
 	 *  采购数量
 	 */
@@ -45,9 +48,9 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
 	 *  采购状态
 	 */
 	private Integer gbDpgStatus;
-	/**
-	 *  采购批发商id
-	 */
+//	/**
+//	 *  采购批发商id
+//	 */
 	private Integer gbDpgDistributerId;
 	/**
 	 *  采购方式
@@ -98,6 +101,7 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
     private Integer gbDpgWeightId;
     private Integer gbDpgOrdersFinishAmount;
     private Integer gbDpgOrdersBillAmount;
+    private Integer gbDpgOrdersWeightAmount;
 
     private String  gbDpgStockRestWeight;
     private String  gbDpgStockProduceWeight;
@@ -105,24 +109,34 @@ public class GbDistributerPurchaseGoodsEntity implements Serializable {
     private String  gbDpgStockWasteWeight;
     private String  gbDpgStockRestWeightTotal;
     private String  gbDpgStockReturnWeightTotal;
+    private String  gbDpgSupplierFinishDate;
+    private String  gbDpgStockFinishDate;
 
+	@JsonIgnore
     private GbDistributerGoodsPriceEntity gbDistributerGoodsPriceEntity;
+	@JsonIgnore
     private NxDistributerEntity nxDistributerEntity;
+	@JsonIgnore
     private NxJrdhSupplierEntity nxJrdhSupplierEntity;
-
-	private NxGoodsPriceEntity nxGoodsPriceEntity;
-
+//	@JsonIgnore
+//	private NxGoodsPriceEntity nxGoodsPriceEntity;
+//	@JsonIgnore
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
+	@JsonIgnore
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;
-
+	@JsonIgnore
 	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
-
-	private GbDistributerUserEntity gbDistributerUserEntity;
+//	@JsonIgnore
+//	private GbDistributerUserEntity gbDistributerUserEntity;
+	@JsonIgnore
 	private GbDepartmentEntity purchaseDepartmentEntity;
+	@JsonIgnore
 	private GbDepartmentUserEntity purchaseDepartmentUser;
-	private GbDistributerPurchaseBatchEntity gbDisPurchaseBatchEntity;
+//	@JsonIgnore
+//	private GbDistributerPurchaseBatchEntity gbDisPurchaseBatchEntity;
+	@JsonIgnore
 	private List<GbDepartmentEntity> wasteDepartmentEntities;
-
+	@JsonIgnore
 	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
 
 

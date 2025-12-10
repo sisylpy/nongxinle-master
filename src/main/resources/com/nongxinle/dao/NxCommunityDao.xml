@@ -75,11 +75,11 @@
 	<select id="queryCommunityListByUserPoint" resultType="com.nongxinle.entity.NxCommunityEntity">
 		SELECT * ,
 		ST_AsText(nx_community_location) AS location,
-		ST_Distance_Sphere(nx_community_location, ST_GeomFromText('POINT(116.3883 39.9289)')) AS distance
+		ST_Distance_Sphere(nx_community_location, ST_GeomFromText(CONCAT('POINT(', #{nxCuaLng}, ' ', #{nxCuaLat}, ')'))) AS distance
 		FROM
 		nx_community
 		WHERE
-		ST_Distance_Sphere(nx_community_location, ST_GeomFromText('POINT(116.3883 39.9289)')) &lt; 100000;
+		ST_Distance_Sphere(nx_community_location, ST_GeomFromText(CONCAT('POINT(', #{nxCuaLng}, ' ', #{nxCuaLat}, ')'))) &lt; 100000;
 	</select>
 
 

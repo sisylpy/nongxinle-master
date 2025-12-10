@@ -14,7 +14,6 @@ import com.github.wxpay.sdk.WXPay;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.*;
-import com.sun.codemodel.internal.JForEach;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -223,7 +222,7 @@ public class GbDistributerSupplierPaymentController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("batchId", batchEntity.getGbDistributerPurchaseBatchId());
                 System.out.println("whwhwhwhhwhw" + map);
-                List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntities = gbDPGoodsService.queryPurchaseGoodsByParams(map);
+                List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntities = gbDPGoodsService.queryOnlyPurGoods(map);
                 if(purchaseGoodsEntities.size() > 0){
                     for(GbDistributerPurchaseGoodsEntity purchaseGoodsEntity: purchaseGoodsEntities){
                         Map<String, Object> mapO = new HashMap<>();

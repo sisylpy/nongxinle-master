@@ -294,6 +294,8 @@ public class NxDepartmentDisGoodsController {
         return R.ok().put("data", mapR);
     }
 
+    
+
 
     @RequestMapping(value = "/depGetDepGoodsByIds", method = RequestMethod.POST)
     @ResponseBody

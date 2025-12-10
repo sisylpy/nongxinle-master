@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDeviceManagerDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDeviceManagerEntity">
+        SELECT * FROM nx_machine_device_manager WHERE nx_dm_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDeviceManagerEntity">
+        SELECT * FROM nx_machine_device_manager
+        <where>
+            <if test="deviceId != null">
+                AND nx_dm_device_id = #{deviceId}
+            </if>
+            <if test="managerId != null">
+                AND nx_dm_manager_id = #{managerId}
+            </if>
+            <if test="enable != null">
+                AND nx_dm_enable = #{enable}
+            </if>
+        </where>
+        ORDER BY nx_dm_is_primary DESC, nx_dm_create_time DESC
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_device_manager
+        <where>
+            <if test="deviceId != null">
+                AND nx_dm_device_id = #{deviceId}
+            </if>
+            <if test="managerId != null">
+                AND nx_dm_manager_id = #{managerId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据设备ID查询责任人列表 -->
+    <resultMap id="deviceManagerWithManager" type="com.nongxinle.entity.NxDeviceManagerEntity">
+        <id property="nxDmId" column="nx_dm_id"/>
+        <result property="nxDmDeviceId" column="nx_dm_device_id"/>
+        <result property="nxDmManagerId" column="nx_dm_manager_id"/>
+        <result property="nxDmNotifyLevel" column="nx_dm_notify_level"/>
+        <result property="nxDmIsPrimary" column="nx_dm_is_primary"/>
+        <result property="nxDmEnable" column="nx_dm_enable"/>
+        <result property="nxDmCreateTime" column="nx_dm_create_time"/>
+        <association property="nxMarketManagerEntity" javaType="com.nongxinle.entity.NxMarketManagerEntity">
+            <id property="nxMmId" column="nx_mm_id"/>
+            <result property="nxMmWxOpenid" column="nx_mm_wx_openid"/>
+            <result property="nxMmWxNickname" column="nx_mm_wx_nickname"/>
+            <result property="nxMmName" column="nx_mm_name"/>
+            <result property="nxMmPhone" column="nx_mm_phone"/>
+        </association>
+    </resultMap>
+
+    <select id="queryByDeviceId" resultMap="deviceManagerWithManager">
+        SELECT dm.*, mm.nx_mm_id, mm.nx_mm_wx_openid, mm.nx_mm_wx_nickname, mm.nx_mm_name, mm.nx_mm_phone
+        FROM nx_machine_device_manager dm
+        LEFT JOIN nx_machine_market_manager mm ON dm.nx_dm_manager_id = mm.nx_mm_id
+        WHERE dm.nx_dm_device_id = #{deviceId}
+          AND dm.nx_dm_enable = 1
+        ORDER BY dm.nx_dm_is_primary DESC, dm.nx_dm_create_time DESC
+    </select>
+
+    <!-- 根据管理员ID查询负责的设备列表 -->
+    <resultMap id="deviceManagerWithDevice" type="com.nongxinle.entity.NxDeviceManagerEntity">
+        <id property="nxDmId" column="nx_dm_id"/>
+        <result property="nxDmDeviceId" column="nx_dm_device_id"/>
+        <result property="nxDmManagerId" column="nx_dm_manager_id"/>
+        <result property="nxDmNotifyLevel" column="nx_dm_notify_level"/>
+        <result property="nxDmIsPrimary" column="nx_dm_is_primary"/>
+        <result property="nxDmEnable" column="nx_dm_enable"/>
+        <result property="nxDmCreateTime" column="nx_dm_create_time"/>
+        <association property="nxPrinterDeviceEntity" javaType="com.nongxinle.entity.NxPrinterDeviceEntity">
+            <id property="nxPdId" column="nx_pd_id"/>
+            <result property="nxPdDeviceNo" column="nx_pd_device_no"/>
+            <result property="nxPdDeviceName" column="nx_pd_device_name"/>
+            <result property="nxPdLocation" column="nx_pd_location"/>
+            <result property="nxPdPaperCount" column="nx_pd_paper_count"/>
+            <result property="nxPdStatus" column="nx_pd_status"/>
+        </association>
+    </resultMap>
+
+    <select id="queryByManagerId" resultMap="deviceManagerWithDevice">
+        SELECT dm.*, pd.nx_pd_id, pd.nx_pd_device_no, pd.nx_pd_device_name, 
+               pd.nx_pd_location, pd.nx_pd_paper_count, pd.nx_pd_status
+        FROM nx_machine_device_manager dm
+        LEFT JOIN nx_machine_printer_device pd ON dm.nx_dm_device_id = pd.nx_pd_id
+        WHERE dm.nx_dm_manager_id = #{managerId}
+          AND dm.nx_dm_enable = 1
+        ORDER BY pd.nx_pd_device_name ASC
+    </select>
+
+    <!-- 查询需要通知的责任人 -->
+    <select id="queryNotifyManagers" resultMap="deviceManagerWithManager">
+        SELECT dm.*, mm.nx_mm_id, mm.nx_mm_wx_openid, mm.nx_mm_wx_nickname, 
+               mm.nx_mm_name, mm.nx_mm_phone, mm.nx_mm_subscribe_status
+        FROM nx_machine_device_manager dm
+        LEFT JOIN nx_machine_market_manager mm ON dm.nx_dm_manager_id = mm.nx_mm_id
+        WHERE dm.nx_dm_device_id = #{deviceId}
+          AND dm.nx_dm_enable = 1
+          AND mm.nx_mm_status = 1
+          AND (dm.nx_dm_is_primary = 1 OR dm.nx_dm_notify_level &lt;= #{alertLevel})
+        ORDER BY dm.nx_dm_is_primary DESC
+    </select>
+
+    <!-- 检查绑定关系 -->
+    <select id="queryByDeviceAndManager" resultType="com.nongxinle.entity.NxDeviceManagerEntity">
+        SELECT * FROM nx_machine_device_manager
+        WHERE nx_dm_device_id = #{deviceId}
+          AND nx_dm_manager_id = #{managerId}
+    </select>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxDeviceManagerEntity" useGeneratedKeys="true" keyProperty="nxDmId">
+        INSERT INTO nx_machine_device_manager
+        (
+            nx_dm_device_id,
+            nx_dm_manager_id,
+            nx_dm_notify_level,
+            nx_dm_is_primary,
+            nx_dm_enable,
+            nx_dm_create_time
+        )
+        VALUES
+        (
+            #{nxDmDeviceId},
+            #{nxDmManagerId},
+            #{nxDmNotifyLevel},
+            #{nxDmIsPrimary},
+            #{nxDmEnable},
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxDeviceManagerEntity">
+        UPDATE nx_machine_device_manager
+        <set>
+            <if test="nxDmNotifyLevel != null">nx_dm_notify_level = #{nxDmNotifyLevel},</if>
+            <if test="nxDmIsPrimary != null">nx_dm_is_primary = #{nxDmIsPrimary},</if>
+            <if test="nxDmEnable != null">nx_dm_enable = #{nxDmEnable},</if>
+        </set>
+        WHERE nx_dm_id = #{nxDmId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_device_manager WHERE nx_dm_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_device_manager WHERE nx_dm_id IN
+        <foreach item="nxDmId" collection="array" open="(" separator="," close=")">
+            #{nxDmId}
+        </foreach>
+    </delete>
+
+</mapper>
+

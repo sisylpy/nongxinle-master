@@ -7,6 +7,15 @@ package com.nongxinle.utils;
 public class NxDistributerTypeUtils {
 
 
+
+    public final static Integer NX_DIS_BUSINESS_TRY = 0; //管理员
+    public final static Integer NX_DIS_BUSINESS_SMALL = 1; //管理员
+    public final static Integer NX_DIS_BUSINESS_SHELF = 2; //管理员
+    public final static Integer NX_DIS_BUSINESS_KEFU = 3; //管理员
+    public final static Integer NX_DIS_BUSINESS_HUGE = 4; //管理员
+
+
+
     public final static Integer NX_DIS_USER_ADMIN = 0; //管理员
     public final static Integer NX_DIS_USER_STAFF = 1; //文员
     public final static Integer NX_DIS_USER_KUFNG = 2; //库房管理员
@@ -20,6 +29,8 @@ public class NxDistributerTypeUtils {
     public final static Integer NX_DEP_ORDER_FINISH_PURCHASE = 3; //订单完成采购
     public final static Integer NX_DEP_ORDER_FINISH_OUT = 4; //订单完成分拣
 
+
+    public final static Integer NX_ORDER_STATUS_GOUWU = -1;  //购物车订单
     public final static Integer NX_ORDER_STATUS_NEW = 0;  //新订单
     public final static Integer NX_ORDER_STATUS_PROCUREMENT = 1;  //有重量
     public final static Integer NX_ORDER_STATUS_HAS_FINISHED = 2;  //
@@ -115,6 +126,9 @@ public class NxDistributerTypeUtils {
         return NX_DEP_ORDER_FINISH_OUT;
     }
 
+    public static Integer getNxOrderStatusGouwu() {
+        return NX_ORDER_STATUS_GOUWU;
+    }
     public static Integer getNxOrderStatusNew() {
         return NX_ORDER_STATUS_NEW;
     }

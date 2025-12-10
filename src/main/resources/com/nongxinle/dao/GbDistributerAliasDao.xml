@@ -26,13 +26,19 @@
 		(
 			`gb_distributer_alias_id`, 
 			`gb_DA_dis_goods_id`, 
-			`gb_DA_alias_name`
+			`gb_DA_alias_name`,
+			`gb_DA_gb_alias_id`,
+			`gb_DA_alias_pinyin`,
+			`gb_DA_alias_py`
 		)
 		values
 		(
 			#{gbDistributerAliasId}, 
 			#{gbDaDisGoodsId}, 
-			#{gbDaAliasName}
+			#{gbDaAliasName},
+			#{gbDaGbAliasId},
+			#{gbDaAliasPinyin},
+			#{gbDaAliasPy}
 		)
 	</insert>
 	 
@@ -40,6 +46,9 @@
 		update gb_distributer_alias 
 		<set>
 			<if test="gbDaDisGoodsId != null">`gb_DA_dis_goods_id` = #{gbDaDisGoodsId}, </if>
+			<if test="gbDaGbAliasId != null">`gb_DA_gb_alias_id` = #{gbDaGbAliasId}, </if>
+			<if test="gbDaAliasPinyin != null">`gb_DA_alias_pinyin` = #{gbDaAliasPinyin}, </if>
+			<if test="gb_DA_alias_py != null">`gb_DA_alias_py` = #{gb_DA_alias_py}, </if>
 			<if test="gbDaAliasName != null">`gb_DA_alias_name` = #{gbDaAliasName}</if>
 		</set>
 		where gb_distributer_alias_id = #{gbDistributerAliasId}

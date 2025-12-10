@@ -82,4 +82,10 @@ public interface GbDepartmentOrdersDao extends BaseDao<GbDepartmentOrdersEntity>
     List<GbDepartmentOrdersEntity> queryDisHistoryOrdersByParamsForAi(Map<String, Object> params);
 
     List<GbDistributerFatherGoodsEntity> queryGrandGoodsOrder(Map<String, Object> map1);
+
+    List<GbDepartmentOrdersEntity> queryDepWeightOrderSearch(Map<String, Object> map);
+
+    double queryOrderWeightTotalByPurGoodsId(Integer gbDoPurchaseGoodsId);
+
+    double queryOrderWeightTotalByParams(Map<String, Object> map);
 }

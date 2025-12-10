@@ -61,11 +61,19 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	 *  部门订单重量
 	 */
 	private String nxDoWeight;
+	/**
+	 *  部门订单Kg重量（用于将斤的重量转换为Kg）
+	 */
+	private String nxDoWeightKg;
 
 	/**
 	 *  部门订单商品单价
 	 */
 	private String nxDoPrice;
+	/**
+	 *  部门订单商品Kg单价（用于将斤的单价转换为Kg）
+	 */
+	private String nxDoPriceKg;
 	/**
 	 *  部门订单申请商品小计
 	 */
@@ -163,6 +171,7 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private String nxDoProfitScale;
 	private String nxDoCostPriceUpdate;
 	private String nxDoCostPriceLevel;
+	private Integer outShelfId;
 	private NxDistributerUserEntity pickUserEntity;
 
 

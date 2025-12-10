@@ -18,4 +18,6 @@ public interface GbDistributerPayListDao extends BaseDao<GbDistributerPayListEnt
     List<GbDistributerPayListEntity> queryPayListListByParams(Map<String, Object> map);
 
     int queryDisPayListCount(Map<String, Object> mapCount);
+
+    int queryDisRecordSecondsTotal(Map<String, Object> map);
 }

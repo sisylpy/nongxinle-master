@@ -9,6 +9,7 @@ package com.nongxinle.entity;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -98,6 +99,11 @@ public class NxJrdhSupplierEntity implements Serializable {
 
 	private String unPayTotal = "0.0";
 	private String havePayTotal = "0.0";
+
+	List<NxDistributerCouponEntity> couponEntities;
+	List<NxGbDistibuterUserCouponEntity> myCouponEntities;
+	List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntities;
+	private Map<String,Object> itemData;
 
 
 }

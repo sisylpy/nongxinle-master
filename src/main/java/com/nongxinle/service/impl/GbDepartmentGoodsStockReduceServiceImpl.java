@@ -179,5 +179,47 @@ public class GbDepartmentGoodsStockReduceServiceImpl implements GbDepartmentGood
 	    return gbDepartmentGoodsStockReduceDao.queryPurGoodsForCost(map);
     }
 
+    @Override
+    public List<GbDistributerGoodsEntity> queryStockProduceSubtotalTopTimes(Map<String, Object> map) {
+
+	    return gbDepartmentGoodsStockReduceDao.queryStockProduceSubtotalTopTimes(map);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryStockLossSubtotalTopTimes(Map<String, Object> map) {
+
+	    return gbDepartmentGoodsStockReduceDao.queryStockLossSubtotalTopTimes(map);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryStockWasteSubtotalTopTimes(Map<String, Object> map) {
+
+	    return gbDepartmentGoodsStockReduceDao.queryStockWasteSubtotalTopTimes(map);
+    }
+
+    @Override
+    public List<Map<String, Object>> queryGbPurchaseGoodsTopDay(Map<String, Object> map) {
+
+	    return gbDepartmentGoodsStockReduceDao.queryGbPurchaseGoodsTopDay(map);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryGoodsStockRecordListByParams(Map<String, Object> map0) {
+
+	    return gbDepartmentGoodsStockReduceDao.queryGoodsStockRecordListByParams(map0);
+    }
+
+    @Override
+    public List<GbDistributerGoodsEntity> queryGoodsStockRecordTreeWithDetailV2(Map<String, Object> map0) {
+
+        return gbDepartmentGoodsStockReduceDao.queryGoodsStockRecordTreeWithDetailV2(map0);
+    }
+
+    @Override
+    public Integer queryReduceGoodsTotalCount(Map<String, Object> map0) {
+
+	    return gbDepartmentGoodsStockReduceDao.queryReduceGoodsTotalCount(map0);
+    }
+
 
 }

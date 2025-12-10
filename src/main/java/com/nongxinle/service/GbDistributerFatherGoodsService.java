@@ -28,7 +28,7 @@ public interface GbDistributerFatherGoodsService {
 	
 	void deleteBatch(Integer[] gbDistributerFatherGoodsIds);
 
-    List<GbDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map);
+//    List<GbDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map);
 
     List<GbDistributerFatherGoodsEntity> querySubFatherGoods(Integer goodsId);
 
@@ -52,4 +52,6 @@ public interface GbDistributerFatherGoodsService {
     GbDistributerFatherGoodsEntity queryDisGoodsCataLinshiFatherGoods(Map<String, Object> map);
 
     int queryGbFatherGoodsMaxSort(Map<String, Object> map5);
+
+    List<GbDistributerFatherGoodsEntity> queryDisGoodsCataWithFilter(Map<String, Object> mapG);
 }

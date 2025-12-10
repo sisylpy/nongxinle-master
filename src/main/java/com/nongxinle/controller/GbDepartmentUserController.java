@@ -57,7 +57,7 @@ public class GbDepartmentUserController {
     @RequestMapping(value = "/whichJrdhUserLoginGbJj", method = RequestMethod.POST)
     @ResponseBody
     public R whichJrdhUserLoginGbJj(String code, Integer gbDisId, Integer batchId,
-                                  Integer gbDepId, Integer purUserId) {
+                                  Integer gbDepId, Integer buyUserId) {
         System.out.println("whiciciiicic");
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
         String maimaiAppID = myAPPIDConfig.getTexiansongCaigouAppId();
@@ -68,54 +68,56 @@ public class GbDepartmentUserController {
         String str = WeChatUtil.httpRequest(url, "GET", null);
         JSONObject jsonObject = JSONObject.parseObject(str);
         String openId = jsonObject.get("openid").toString();
-        if (openId != null) {
+        if (openId != null && !openId.trim().isEmpty()) {
             Map<String, Object> mapB = new HashMap<>();
             mapB.put("batchId", batchId);
             GbDistributerPurchaseBatchEntity batchEntity = gbDisPurchaseBatchService.queryBatchItemByParams(mapB);
-            if(batchEntity != null){
+            Map<String, Object> map = new HashMap<>();
+            GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(gbDisId);
 
-                GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(gbDisId);
-                Map<String, Object> map = new HashMap<>();
-                map.put("disInfo", gbDistributerEntity);
+            map.put("disInfo", gbDistributerEntity);
 
-                //首先判断是不是dis 用户
-                Map<String, Object> mapUser = new HashMap<>();
-                mapUser.put("openId", openId);
-                mapUser.put("admin", 2);
-                GbDepartmentUserEntity caigouUser = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(mapUser);
-                if (caigouUser != null) {
-                    map.put("userInfo", caigouUser);
-                    map.put("buyUser", true);
-                    map.put("supplierInfo", null);
+            //首先判断是不是dis 用户
+            Map<String, Object> mapUser = new HashMap<>();
+            mapUser.put("openId", openId);
+            mapUser.put("admin", 2);
+            GbDepartmentUserEntity caigouUser = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(mapUser);
+            if (caigouUser != null) {
+                map.put("userInfo", caigouUser);
+                map.put("buyUser", true);
+                map.put("supplierInfo", null);
+                map.put("code", 1);
+            } else {
+                Map<String, Object> mapUserSell = new HashMap<>();
+                mapUserSell.put("openId", openId);
+                mapUserSell.put("admin", 3);
+                NxJrdhUserEntity jrdhUserEntitySell = nxJrdhUserService.queryJrdhUserById(mapUserSell);
+                if (jrdhUserEntitySell != null) {
+                    Map<String, Object> mapS = new HashMap<>();
+                    mapS.put("gbDisId", gbDisId);
+                    mapS.put("userId", jrdhUserEntitySell.getNxJrdhUserId());
+                    NxJrdhSupplierEntity nxJrdhSupplierEntity = nxJrdhSupplierService.querySellUserSupplier(mapS);
+                    if (nxJrdhSupplierEntity == null) {
+                        NxJrdhSupplierEntity supplierEntity = saveJrdhSupplerGb(jrdhUserEntitySell, gbDisId, gbDepId, buyUserId);
+                        map.put("supplierInfo", supplierEntity);
+                    } else {
+                        map.put("supplierInfo", nxJrdhSupplierEntity);
+                    }
+                    map.put("buyUser", false);
+                    map.put("userInfo", jrdhUserEntitySell);
                     map.put("code", 1);
                 } else {
-                    Map<String, Object> mapUserSell = new HashMap<>();
-                    mapUserSell.put("openId", openId);
-                    mapUserSell.put("admin", 3);
-                    NxJrdhUserEntity jrdhUserEntitySell = nxJrdhUserService.queryJrdhUserById(mapUserSell);
-                    if (jrdhUserEntitySell != null) {
-                        Map<String, Object> mapS = new HashMap<>();
-                        mapS.put("gbDisId", gbDisId);
-                        mapS.put("userId", jrdhUserEntitySell.getNxJrdhUserId());
-                        NxJrdhSupplierEntity nxJrdhSupplierEntity = nxJrdhSupplierService.querySellUserSupplier(mapS);
-                        if (nxJrdhSupplierEntity == null) {
-                            GbDistributerPurchaseBatchEntity gbPurchaseBatchEntity = gbDisPurchaseBatchService.queryObject(batchId);
-                            NxJrdhSupplierEntity supplierEntity = saveJrdhSupplerGb(jrdhUserEntitySell, gbDisId, gbPurchaseBatchEntity.getGbDpbBuyUserId(), gbDepId, purUserId);
-                            map.put("supplierInfo", supplierEntity);
-                        } else {
-                            map.put("supplierInfo", nxJrdhSupplierEntity);
-                        }
-                        map.put("buyUser", false);
-                        map.put("userInfo", jrdhUserEntitySell);
-                        map.put("code", 1);
-                    } else {
-                        map.put("code", -1);
-                        return R.ok().put("data", map);
-                    }
+                    map.put("code", -1);
+                    return R.ok().put("data", map);
                 }
+            }
+            if(batchEntity != null){
+                map.put("batch", batchEntity);
                 return R.ok().put("data", map);
             }else{
-                return R.error(-1,"meiyou");
+
+                map.put("batch", -1);
+                return R.ok().put("data", map);
             }
 
         } else {
@@ -124,8 +126,8 @@ public class GbDepartmentUserController {
     }
 
 
-    private NxJrdhSupplierEntity saveJrdhSupplerGb(NxJrdhUserEntity jrdhUserEntity, Integer gbDisId, Integer buyerUserId,
-                                                   Integer gbDepId, Integer purUserId) {
+    private NxJrdhSupplierEntity saveJrdhSupplerGb(NxJrdhUserEntity jrdhUserEntity, Integer gbDisId,
+                                                   Integer gbDepId, Integer buyUserId) {
         NxJrdhSupplierEntity supplierEntity = new NxJrdhSupplierEntity();
         supplierEntity.setNxJrdhsUserId(jrdhUserEntity.getNxJrdhUserId());
         supplierEntity.setNxJrdhsGbDistributerId(gbDisId);
@@ -133,8 +135,7 @@ public class GbDepartmentUserController {
         supplierEntity.setNxJrdhsNxCommunityId(-1);
         supplierEntity.setNxJrdhsNxPurUserId(-1);
         supplierEntity.setNxJrdhsCommPurUserId(-1);
-        supplierEntity.setNxJrdhsNxJrdhBuyUserId(buyerUserId);
-        supplierEntity.setNxJrdhsGbPurUserId(purUserId);
+        supplierEntity.setNxJrdhsNxJrdhBuyUserId(buyUserId);
         supplierEntity.setNxJrdhsGbDepartmentId(gbDepId);
         supplierEntity.setNxJrdhsNxDistributerId(-1);
         supplierEntity.setNxJrdhsStatus(0);
@@ -159,8 +160,10 @@ public class GbDepartmentUserController {
         System.out.println("aaa" + disId + userName + depFatherId + depId + code);
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
 
-        String orderAppID = myAPPIDConfig.getJingjingOrderAppID();
-        String orderScreat = myAPPIDConfig.getJingjingOrderScreat();
+//        String orderAppID = myAPPIDConfig.getJingjingOrderAppID();
+        String orderAppID = myAPPIDConfig.getTexiansongCaigouAppId();
+//        String orderScreat = myAPPIDConfig.getJingjingOrderScreat();
+        String orderScreat = myAPPIDConfig.getTexiansongCaigouScreat();
 
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + orderAppID + "&secret=" + orderScreat + "&js_code=" + code + "&grant_type=authorization_code";
         // 发送请求，返回Json字符串
@@ -171,8 +174,12 @@ public class GbDepartmentUserController {
         // 我们需要的openid，在一个小程序中，openid是唯一的
         String openid = jsonObject.get("openid").toString();
         System.out.println("opeidiididid" + openid);
-        GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUserByOpenId(openid);
-        if (depUserEntities != null) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("openId", openid);
+        map.put("admin", 2);
+        GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(map);
+        NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryWhichUserByOpenId(openid);
+        if (depUserEntities != null && nxJrdhUserEntity == null) {
             return R.error(-1, "请直接登陆");
         } else {
             GbDepartmentUserEntity gbDepartmentUserEntity = new GbDepartmentUserEntity();
@@ -554,7 +561,7 @@ public class GbDepartmentUserController {
         JSONObject jsonObject = JSONObject.parseObject(str);
         // 我们需要的openid，在一个小程序中，openid是唯一的
         String openId = jsonObject.get("openid").toString();
-        if (openId != null) {
+        if (openId != null && !openId.trim().isEmpty()) {
             GbDepartmentUserEntity depUserEntity = gbDepartmentUserService.queryDepUserByOpenId(openId);
             if (depUserEntity != null) {
                 Integer gbDepartmentUserId = depUserEntity.getGbDepartmentUserId();
@@ -834,7 +841,7 @@ public class GbDepartmentUserController {
         GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryObject(depId);
         gbDepartmentService.update(gbDepartmentEntity);
 
-        return R.ok();
+        return R.ok().put("data", gbDepartmentUserEntity);
 
     }
 
@@ -879,7 +886,7 @@ public class GbDepartmentUserController {
                                          @RequestParam("disId") Integer disId,
                                          HttpSession session) {
 
-        System.out.println("ddfafduaufuda" + userName);
+        System.out.println("ddfafduaufudaffff" + userName);
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
 
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongCaigouAppId() +
@@ -896,10 +903,11 @@ public class GbDepartmentUserController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("openId", openid);
-        map.put("admin", 2);
+        map.put("admin", admin);
         GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(map);
+        NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryWhichUserByOpenId(openid);
 
-        if (depUserEntities == null) {
+        if (depUserEntities == null && nxJrdhUserEntity == null) {
 
             //1,上传图片
             String newUploadName = "uploadImage";
@@ -925,6 +933,7 @@ public class GbDepartmentUserController {
             Map<String, Object> mapRe = new HashMap<>();
             mapRe.put("disInfo", gbDistributerService.queryDistributerInfo(disId));
             mapRe.put("depUserInfo", gbDepartmentUserService.queryDepUserByOpenId(openid));
+            mapRe.put("depInfo", gbDepartmentService.queryDepInfoGb(depId));
             return R.ok().put("data", mapRe);
 
         } else {
@@ -932,6 +941,7 @@ public class GbDepartmentUserController {
         }
 
     }
+
 
     /**
      * PURCHASE,
@@ -1391,23 +1401,11 @@ public class GbDepartmentUserController {
         Map<String, Object> map = new HashMap<>();
         map.put("depId", depId);
         map.put("admin", admin);
+        System.out.println("");
         List<GbDepartmentUserEntity> userEntities = gbDepartmentUserService.queryDepUsersByDepIdAndAdmin(map);
         return R.ok().put("data", userEntities);
     }
 
-    /**
-     * PURCHASE，DISTRIBUTE
-     * 获取群用户
-     *
-     * @param depId 群id
-     * @return 用户列表
-     */
-    @RequestMapping(value = "/getDepUsersByFatherIdGb/{depId}")
-    @ResponseBody
-    public R getDepUsersByFatherIdGb(@PathVariable Integer depId) {
-        List<GbDepartmentUserEntity> userEntities = gbDepartmentUserService.queryAllUsersByDepId(depId);
-        return R.ok().put("data", userEntities);
-    }
 
 
     /**
@@ -1435,14 +1433,12 @@ public class GbDepartmentUserController {
             if (ordersEntities.size() > 0) {
                 return R.error(-1, "还有未完成采购，不能删除");
             } else {
-
-//                gbDepartmentUserEntity.setGbDuDepartmentId(-1);
+//                gbDepartmentUserEntity.setGbDuDepartmentId();
 //                gbDepartmentUserEntity.setGbDuDepartmentFatherId(-1);
 //                gbDepartmentUserEntity.setGbDuDistributerId(-1);
 //                gbDepartmentUserEntity.setGbDuAdmin(-1);
-//                gbDepartmentUserEntity.setGbDuWxOpenId("-1");
-//                gbDepartmentUserService.update(gbDepartmentUserEntity);
-                gbDepartmentUserService.delete(gbDepartmentUserEntity.getGbDepartmentUserId());
+                gbDepartmentUserEntity.setGbDuWxOpenId("-1");
+                gbDepartmentUserService.update(gbDepartmentUserEntity);
                 return R.ok();
             }
         } else if (gbDuAdmin.equals(getGbDepUserAdminMendiandinghuoyuan())) {
@@ -1458,9 +1454,8 @@ public class GbDepartmentUserController {
 //                gbDepartmentUserEntity.setGbDuDepartmentFatherId(-1);
 //                gbDepartmentUserEntity.setGbDuDistributerId(-1);
 //                gbDepartmentUserEntity.setGbDuAdmin(-1);
-//                gbDepartmentUserEntity.setGbDuWxOpenId("-1");
-//                gbDepartmentUserService.update(gbDepartmentUserEntity);
-                gbDepartmentUserService.delete(gbDepartmentUserEntity.getGbDepartmentUserId());
+                gbDepartmentUserEntity.setGbDuWxOpenId("-1");
+                gbDepartmentUserService.update(gbDepartmentUserEntity);
                 return R.ok();
             }
 
@@ -1477,20 +1472,18 @@ public class GbDepartmentUserController {
 //                gbDepartmentUserEntity.setGbDuDepartmentFatherId(-1);
 //                gbDepartmentUserEntity.setGbDuDistributerId(-1);
 //                gbDepartmentUserEntity.setGbDuAdmin(-1);
-//                gbDepartmentUserEntity.setGbDuWxOpenId("-1");
-//                gbDepartmentUserService.update(gbDepartmentUserEntity);
-                gbDepartmentUserService.delete(gbDepartmentUserEntity.getGbDepartmentUserId());
+                gbDepartmentUserEntity.setGbDuWxOpenId("-1");
+                gbDepartmentUserService.update(gbDepartmentUserEntity);
                 return R.ok();
             }
 
         } else {
-//            gbDepartmentUserEntity.setGbDuDepartmentId(-1);
-//            gbDepartmentUserEntity.setGbDuDepartmentFatherId(-1);
-//            gbDepartmentUserEntity.setGbDuDistributerId(-1);
-//            gbDepartmentUserEntity.setGbDuAdmin(-1);
-//            gbDepartmentUserEntity.setGbDuWxOpenId("-1");
-//            gbDepartmentUserService.update(gbDepartmentUserEntity);
-            gbDepartmentUserService.delete(gbDepartmentUserEntity.getGbDepartmentUserId());
+            gbDepartmentUserEntity.setGbDuDepartmentId(-1);
+            gbDepartmentUserEntity.setGbDuDepartmentFatherId(-1);
+            gbDepartmentUserEntity.setGbDuDistributerId(-1);
+            gbDepartmentUserEntity.setGbDuAdmin(-1);
+            gbDepartmentUserEntity.setGbDuWxOpenId("-1");
+            gbDepartmentUserService.update(gbDepartmentUserEntity);
             return R.ok();
         }
     }

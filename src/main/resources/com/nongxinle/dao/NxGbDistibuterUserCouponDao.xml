@@ -63,6 +63,9 @@
 			<if test="equalStatus != null">
 				and nx_gduc_status = #{equalStatus}
 			</if>
+			<if test="nxDisId != null">
+				and nx_gduc_nx_distributer_id = #{nxDisId}
+			</if>
 		</where>
 	</select>
 

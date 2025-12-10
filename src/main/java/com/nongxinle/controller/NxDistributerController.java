@@ -78,64 +78,64 @@ public class NxDistributerController {
 	}
 
 
-	@RequestMapping(value = "/searchYishangGoods", method = RequestMethod.POST)
-	@ResponseBody
-	public R searchYishangGoods (String searchStr, Integer disId) {
+//	@RequestMapping(value = "/searchYishangGoods", method = RequestMethod.POST)
+//	@ResponseBody
+//	public R searchYishangGoods (String searchStr, Integer disId) {
+//
+//		List<Map<String, Object>> result  = new ArrayList<>();
+//
+//		Map<String, Object> map = new HashMap<>();
+//		String pinyinString = searchStr;
+//		for (int i = 0; i < searchStr.length(); i++) {
+//			String str = searchStr.substring(i, i + 1);
+//			if (str.matches("[\u4E00-\u9FFF]")) {
+//				pinyinString = hanziToPinyin(searchStr);
+//			}
+//		}
+//		map.put("searchStr", searchStr);
+//		map.put("searchPinyin", pinyinString);
+//		System.out.println("nxmapapapappa" + map);
+//		List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
+//		if(nxGoodsEntities.size() > 0){
+//			for(NxGoodsEntity nxGoodsEntity: nxGoodsEntities){
+//				Map<String, Object> mapDis = new HashMap<>();
+//				mapDis.put("nxGoodsId", nxGoodsEntity.getNxGoodsId());
+//				List<NxDistributerEntity> nxDistributerEntities =  dgService.queryYishangByGoods(mapDis);
+//				Map<String, Object> mapGoods = new HashMap<>();
+//				mapGoods.put("sons", nxGoodsEntity);
+//				mapGoods.put("arr",  nxDistributerEntities);
+//
+//				result.add(mapGoods);
+//			}
+//		}
+//		return R.ok().put("data", result);
+//	}
 
-		List<Map<String, Object>> result  = new ArrayList<>();
-
-		Map<String, Object> map = new HashMap<>();
-		String pinyinString = searchStr;
-		for (int i = 0; i < searchStr.length(); i++) {
-			String str = searchStr.substring(i, i + 1);
-			if (str.matches("[\u4E00-\u9FFF]")) {
-				pinyinString = hanziToPinyin(searchStr);
-			}
-		}
-		map.put("searchStr", searchStr);
-		map.put("searchPinyin", pinyinString);
-		System.out.println("nxmapapapappa" + map);
-		List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
-		if(nxGoodsEntities.size() > 0){
-			for(NxGoodsEntity nxGoodsEntity: nxGoodsEntities){
-				Map<String, Object> mapDis = new HashMap<>();
-				mapDis.put("nxGoodsId", nxGoodsEntity.getNxGoodsId());
-				List<NxDistributerEntity> nxDistributerEntities =  dgService.queryYishangByGoods(mapDis);
-				Map<String, Object> mapGoods = new HashMap<>();
-				mapGoods.put("sons", nxGoodsEntity);
-				mapGoods.put("arr",  nxDistributerEntities);
-
-				result.add(mapGoods);
-			}
-		}
-		return R.ok().put("data", result);
-	}
 
 
-
-	@RequestMapping(value = "/searchYishangGoodsByNxGoods", method = RequestMethod.POST)
-	@ResponseBody
-	public R searchYishangGoodsByNxGoods (Integer nxGoodsId, Integer disId) {
-
-		List<Map<String, Object>> result  = new ArrayList<>();
-
-		Map<String, Object> map = new HashMap<>();
-		map.put("nxGoodsId",nxGoodsId);
-		System.out.println("nxmapapapappa" + map);
-		List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
-		if(nxGoodsEntities.size() > 0){
-			for(NxGoodsEntity nxGoodsEntity: nxGoodsEntities){
-				Map<String, Object> mapDis = new HashMap<>();
-				mapDis.put("nxGoodsId", nxGoodsEntity.getNxGoodsId());
-				List<NxDistributerEntity> nxDistributerEntities =  dgService.queryYishangByGoods(mapDis);
-				Map<String, Object> mapGoods = new HashMap<>();
-				mapGoods.put("sons", nxGoodsEntity);
-				mapGoods.put("arr",  nxDistributerEntities);
-				result.add(mapGoods);
-			}
-		}
-		return R.ok().put("data", result);
-	}
+//	@RequestMapping(value = "/searchYishangGoodsByNxGoods", method = RequestMethod.POST)
+//	@ResponseBody
+//	public R searchYishangGoodsByNxGoods (Integer nxGoodsId, Integer disId) {
+//
+//		List<Map<String, Object>> result  = new ArrayList<>();
+//
+//		Map<String, Object> map = new HashMap<>();
+//		map.put("nxGoodsId",nxGoodsId);
+//		System.out.println("nxmapapapappa" + map);
+//		List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
+//		if(nxGoodsEntities.size() > 0){
+//			for(NxGoodsEntity nxGoodsEntity: nxGoodsEntities){
+//				Map<String, Object> mapDis = new HashMap<>();
+//				mapDis.put("nxGoodsId", nxGoodsEntity.getNxGoodsId());
+//				List<NxDistributerEntity> nxDistributerEntities =  dgService.queryYishangByGoods(mapDis);
+//				Map<String, Object> mapGoods = new HashMap<>();
+//				mapGoods.put("sons", nxGoodsEntity);
+//				mapGoods.put("arr",  nxDistributerEntities);
+//				result.add(mapGoods);
+//			}
+//		}
+//		return R.ok().put("data", result);
+//	}
 
 
 	@RequestMapping(value = "/i7948FzJJ6.txt")
@@ -285,7 +285,7 @@ public class NxDistributerController {
 			distributerEntity.setNxDistributerPhone(phone.toString());
 			distributerEntity.setNxDistributerImg("uploadImage/r.jpg");
 			if(marketId != 1){
-				distributerEntity.setNxDistributerBuyQuantity("1000");
+				distributerEntity.setNxDistributerBuyQuantity("0");
 			}else{
 				distributerEntity.setNxDistributerBuyQuantity("0");
 			}
@@ -372,18 +372,9 @@ public class NxDistributerController {
 			NxDistributerEntity distributerEntity = new NxDistributerEntity();
 			distributerEntity.setNxDistributerName(disName);
 			distributerEntity.setNxDistributerAddress(address);
-			distributerEntity.setNxDistributerType(1);
-			distributerEntity.setNxDistributerBusinessTypeId(marketId);
+			distributerEntity.setNxDistributerSysMarketId(marketId);
 			distributerEntity.setNxDistributerPhone(phone);
 			distributerEntity.setNxDistributerImg("uploadImage/r.jpg");
-			if(marketId != 1){
-				distributerEntity.setNxDistributerBuyQuantity("100");
-			}else{
-				distributerEntity.setNxDistributerBuyQuantity("50");
-			}
-
-			SysCityMarketEntity sysCityMarketEntity = sysCityMarketService.queryObject(marketId);
-			distributerEntity.setNxDistributerMarketName(sysCityMarketEntity.getSysCmMarketName());
 
 			NxDistributerUserEntity distributerUserEntity = new NxDistributerUserEntity();
 			distributerUserEntity.setNxDiuPrintDeviceId("-1");
@@ -402,7 +393,6 @@ public class NxDistributerController {
 			distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
 			distributerUserEntity.setNxDiuWxNickName(userName);
 			distributerUserEntity.setNxDiuAdmin(0);
-
 			distributerEntity.setNxDistributerUserEntity(distributerUserEntity);
 
 			Integer userId =  nxDistributerService.saveNewNxDistributer(distributerEntity);
@@ -452,7 +442,7 @@ public class NxDistributerController {
 			distributerEntity.setNxDistributerBusinessTypeId(marketId);
 			distributerEntity.setNxDistributerPhone(phone);
 			distributerEntity.setNxDistributerImg("uploadImage/r.jpg");
-			distributerEntity.setNxDistributerBuyQuantity("50");
+			distributerEntity.setNxDistributerBuyQuantity("0");
 
 			SysCityMarketEntity sysCityMarketEntity = sysCityMarketService.queryObject(marketId);
 			distributerEntity.setNxDistributerMarketName(sysCityMarketEntity.getSysCmMarketName());

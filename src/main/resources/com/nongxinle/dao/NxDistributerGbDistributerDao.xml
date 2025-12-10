@@ -6,7 +6,10 @@
 
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -58,7 +61,11 @@
 		<result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
 	</resultMap>
 	<resultMap id="nxDistributerWithGoods" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -90,6 +97,8 @@
 	</resultMap>
 	<resultMap id="gbDistributer" type="GbDistributerEntity">
 <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
 		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -126,7 +135,11 @@
 		<result property="gbDepartmentLevel" column="gb_department_level"/>
 	</resultMap>
 	<resultMap id="nxDistributer" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -241,11 +254,11 @@
 				<if test="nxDisId != null">
 					and dgd.nx_DGD_nx_distributer_id = #{nxDisId}
 				</if>
-				<if test="isSupplierId != null and isSupplierId == -1">
-					and dgd.nx_DGD_nx_supplier_id = -1
+				<if test="isSupplierId != null and isSupplierId == 1">
+					and dgd.nx_DGD_nx_supplier_id  != -1 and dgd.nx_DGD_nx_supplier_id is not null
 				</if>
-				<if test="isSupplierId != null and isSupplierId == 0">
-					and dgd.nx_DGD_nx_supplier_id != -1
+				<if test="isSupplierId != null and isSupplierId == -1">
+					and dgd.nx_DGD_nx_supplier_id is null
 				</if>
 			</where>
 	</select>

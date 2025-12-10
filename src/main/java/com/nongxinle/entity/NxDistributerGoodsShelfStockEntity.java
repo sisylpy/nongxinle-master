@@ -8,10 +8,12 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.bouncycastle.est.LimitedSource;
 
 
 @Setter@Getter@ToString
@@ -40,13 +42,21 @@ public class NxDistributerGoodsShelfStockEntity implements Serializable {
 	 */
 	private String nxDgssWeight;
 	/**
-	 *  批次单价
+	 *  批次单价（最小单位单价）
 	 */
 	private String nxDgssPrice;
 	/**
-	 *  销售单价
+	 *  外包装采购单价（按箱/按件等）
+	 */
+	private String nxDgssPriceCarton;
+	/**
+	 *  销售单价（最小单位建议零售价）
 	 */
 	private String nxDgssSellingPrice;
+	/**
+	 *  外包装建议零售价（按箱/按件等）
+	 */
+	private String nxDgssSellingPriceCarton;
 	/**
 	 *  批次成本
 	 */
@@ -193,5 +203,42 @@ public class NxDistributerGoodsShelfStockEntity implements Serializable {
 	private String nxDgssProduceSellingSubtotal;
 	private Integer nxDgssNxShelfGoodsId;
 	private String nxDgssInventoryWeight;
+	/**
+	 *  部门父ID
+	 */
+	private Integer nxDgssNxDepartmentFatherId;
+	/**
+	 *  库存图片
+	 */
+	private String nxDgssStockImage;
+	/**
+	 *  库存说明
+	 */
+	private String nxDgssStockRemark;
+	/**
+	 *  返还积分（库存确认后返还给部门的积分）
+	 */
+	private String nxDgssReturnPoints;
+	/**
+	 *  返还积分时间（精确到分钟）
+	 */
+	private String nxDgssReturnPointsTime;
+	/**
+	 *  部门积分（关联查询返回，用于显示）
+	 */
+	private String departmentPoints;
+	/**
+	 *  部门等待积分（关联查询返回，用于显示）
+	 */
+	private String departmentWaitingPoints;
+	/**
+	 *  积分返还时间（关联查询返回，用于显示）
+	 */
+	private String pointsReturnTime;
+
+	private List<NxDistributerGoodsShelfStockReduceEntity> reduceEntityList;
+
+	// 采购商品对象（该库存批次对应的采购商品）
+	private NxDistributerPurchaseGoodsEntity nxDistributerPurchaseGoodsEntity;
 
 }

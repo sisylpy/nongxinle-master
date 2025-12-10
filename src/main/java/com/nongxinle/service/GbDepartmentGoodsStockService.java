@@ -34,16 +34,11 @@ public interface GbDepartmentGoodsStockService {
 
     List<GbDistributerGoodsEntity> queryDisGoodsStockByParams(Map<String, Object> map);
 
-	List<GbDistributerGoodsEntity> queryDisGoodsStockDetailByParams(Map<String, Object> map);
-
-    List<GbDistributerFatherGoodsEntity> queryDepGoodsStockByParams(Map<String, Object> map);
-
 
     Integer queryGoodsStockCount(Map<String, Object> map14);
 
     Double queryDepGoodsRestTotal(Map<String, Object> map5);
 
-    List<GbDepartmentGoodsStockEntity> queryStockListByParams(Integer depFatherId);
 
     Double queryDepGoodsSubtotal(Map<String, Object> map4);
 
@@ -54,7 +49,7 @@ public interface GbDepartmentGoodsStockService {
 
 	GbDepartmentGoodsStockEntity queryMaxFullTimeForDayStock(Map<String, Object> map);
 
-    List<GbDistributerFatherGoodsEntity> queryDepStockDisFatherGoodsFather(Map<String, Object> map);
+//    List<GbDistributerFatherGoodsEntity> queryDepStockDisFatherGoodsFather(Map<String, Object> map);
 
 //	Double queryGoodsStockWeightTotal(Map<String, Object> map1);
 
@@ -64,23 +59,18 @@ public interface GbDepartmentGoodsStockService {
 
 	long queryGoodsStockTimeStamp(Map<String, Object> map0);
 
-    List<GbDepartmentGoodsStockEntity> queryGoodsStockReduceByParams(Map<String, Object> map);
+//    List<GbDepartmentGoodsStockEntity> queryGoodsStockReduceByParams(Map<String, Object> map);
 
-//    TreeSet<GbDistributerFatherGoodsEntity> queryDepStockTreeFatherGoodsByParams(Map<String, Object> map);
     List<GbDistributerFatherGoodsEntity> queryDepStockTreeFatherGoodsByParams(Map<String, Object> map);
-
 
     Double queryStockSellingPriceTotal(Map<String, Object> map);
 
     Double queryStockPriceTotal(Map<String, Object> map);
 
-//    Double queryDepStockProduceWeightTotal(Map<String, Object> map);
 
     Double queryDepStockWeightTotal(Map<String, Object> map);
 
-//    Double queryDepStockLossWeightTotal(Map<String, Object> map);
 
-//    Double queryDepStockWasteWeightTotal(Map<String, Object> map);
 
     Double queryDepStockRestWeightTotal(Map<String, Object> map);
 
@@ -124,15 +114,13 @@ public interface GbDepartmentGoodsStockService {
 
     Double queryDepStockSubtotal(Map<String, Object> mapDisGoods);
 
-    List<GbDepartmentEntity> queryStockDepWithFatherGoods(Map<String, Object> map0);
-
     Double queryDepGoodsWasteTotal(Map<String, Object> map0);
 
     int queryGoodsStockStars(Map<String, Object> map1);
 
     Integer queryGoodsStarsTimes(Map<String, Object> map);
 
-    List<GbDepartmentGoodsStockEntity> queryGoodsStockWithTodayReduceList(Map<String, Object> mapDisGoods);
+//    List<GbDepartmentGoodsStockEntity> queryGoodsStockWithTodayReduceList(Map<String, Object> mapDisGoods);
 
     Double queryDepStockProduceWeightTotal(Map<String, Object> mapS);
 
@@ -141,4 +129,7 @@ public interface GbDepartmentGoodsStockService {
     Double queryDepGoodsWasteWeightTotal(Map<String, Object> mapS);
 
     List<GbDepartmentGoodsStockEntity> queryGoodsStockByParamsWithDetail(Map<String, Object> map);
+
+    Integer queryDisStockGoodsCount(Map<String, Object> map);
+
 }

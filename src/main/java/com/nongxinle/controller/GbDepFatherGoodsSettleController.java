@@ -17,7 +17,6 @@ import com.nongxinle.entity.GbDepFatherGoodsSettleEntity;
 import com.nongxinle.service.GbDepFatherGoodsSettleService;
 import com.nongxinle.utils.R;
 
-import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeJiameng;
 import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeMendian;
 
 

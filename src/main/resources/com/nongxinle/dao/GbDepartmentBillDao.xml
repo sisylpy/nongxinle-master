@@ -73,6 +73,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgGoodsPrice" column="gb_dg_goods_price"/>
         <result property="gbDgGoodsLowestPrice" column="gb_dg_goods_lowest_price"/>
         <result property="gbDgGoodsHighestPrice" column="gb_dg_goods_highest_price"/>
@@ -95,7 +96,8 @@
 
     <resultMap id="depStock" type="com.nongxinle.entity.GbDepartmentGoodsStockEntity">
 
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
 		<result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -113,15 +115,26 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
 		<result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+
 		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsPrice" column="gb_dgs_price"/>
         <result property="gbDgsWeight" column="gb_dgs_weight"/>
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsStatus" column="gb_dgs_status"/>
@@ -202,7 +215,8 @@
     </resultMap>
 
     <resultMap id="applys" type="com.nongxinle.entity.GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -832,7 +846,8 @@
         </where>
     </select>
     <resultMap id="applysWithStock" type="com.nongxinle.entity.GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -982,7 +997,11 @@
         select * from nongxinle.gb_department_bill where gb_DB_trade_no = #{nxDbTradeNo}
     </select>
     <resultMap id="nxDis" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
         <result property="nxDistributerType" column="nx_distributer_type"/>

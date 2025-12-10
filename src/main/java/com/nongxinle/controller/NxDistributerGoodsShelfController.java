@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.nongxinle.entity.*;
+import com.nongxinle.service.NxDistributerGoodsService;
 import com.nongxinle.service.NxDistributerGoodsShelfGoodsService;
 import com.nongxinle.service.NxDistributerService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -21,19 +22,40 @@ import org.springframework.web.bind.annotation.*;
 import com.nongxinle.service.NxDistributerGoodsShelfService;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @RestController
 @RequestMapping("api/nxdistributergoodsshelf")
 public class NxDistributerGoodsShelfController {
+	private static final Logger logger = LoggerFactory.getLogger(NxDistributerGoodsShelfController.class);
 	@Autowired
 	private NxDistributerGoodsShelfService nxDisGoodsShelfService;
 	@Autowired
 	private NxDistributerGoodsShelfGoodsService nxDisGoodsShelfGoodsService;
 	@Autowired
 	private NxDistributerService nxDistributerService;
+	@Autowired
+	private NxDistributerGoodsService dgService;
 
 
+
+
+	@RequestMapping(value = "/disGetShelfList/{disId}")
+	@ResponseBody
+	public R disGetShelfList(@PathVariable Integer disId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("disId", disId);
+		List<NxDistributerGoodsShelfEntity> nxDistributerGoodsShelfEntities = nxDisGoodsShelfService.queryShelfList(map);
+//  // 查询总数
+		        int total = dgService.queryDisUnshelfGoodsTotal(map);
+		Map<String, Object> mapRe = new HashMap<>();
+		mapRe.put("shelfArr", nxDistributerGoodsShelfEntities);
+		mapRe.put("unShelfTotalCount", total);
+
+		return R.ok().put("data", mapRe);
+	}
 
 
 	@RequestMapping(value = "/disGetToPlanPurchaseShelfGoods", method = RequestMethod.POST)
@@ -70,17 +92,42 @@ public class NxDistributerGoodsShelfController {
 		return R.ok();
 	}
 
+
 	@RequestMapping(value = "/getShelfGoods/{shelfId}")
 	@ResponseBody
-	public R getShelfGoods(@PathVariable Integer shelfId) {
+	public R getShelfGoods(@PathVariable Integer shelfId, Integer page, Integer limit) {
+		// 设置默认分页参数
+		if (page == null || page < 1) {
+			page = 1;
+		}
+		if (limit == null || limit < 1) {
+			limit = 15;
+		}
+
+		// 计算偏移量
+		int offset = (page - 1) * limit;
+
+		// 构建查询参数
 		Map<String, Object> map = new HashMap<>();
 		map.put("shelfId", shelfId);
-//		NxDistributerGoodsShelfEntity shelfEntity =  nxDisGoodsShelfService.queryShelfGoodsByParams(map);
+		map.put("status", 3);
+		map.put("offset", offset);
+		map.put("limit", limit);
+
+		logger.info("[getShelfGoods] 查询参数: shelfId={}, page={}, limit={}", shelfId, page, limit);
+
+		// 查询总数
+		int total = nxDisGoodsShelfGoodsService.queryShelfForGoodsCount(map);
+		// 查询分页数据
 		List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities = nxDisGoodsShelfGoodsService.queryShelfForGoodsByParams(map);
-//		List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities = nxDisGoodsShelfGoodsService.queryShelfForGoodsWithOrders(map);
-		return R.ok().put("data",nxDistributerGoodsShelfGoodsEntities);
+
+		// 使用 PageUtils 返回分页结果
+		PageUtils pageUtil = new PageUtils(nxDistributerGoodsShelfGoodsEntities, total, limit, page);
+		return R.ok().put("page", pageUtil);
 	}
 
+
+	
 	@RequestMapping(value = "/disGetShelfs/{disId}")
 	@ResponseBody
 	public R disGetShelfs(@PathVariable Integer disId) {
@@ -118,6 +165,7 @@ public class NxDistributerGoodsShelfController {
 	@RequestMapping(value = "/saveNewShelf", method = RequestMethod.POST)
 	@ResponseBody
 	public R saveNewShelf (@RequestBody NxDistributerGoodsShelfEntity shelf) {
+		shelf.setGoodsCount(0);
 	    nxDisGoodsShelfService.save(shelf);
 		Integer nxDistributerGoodsShelfDisId = shelf.getNxDistributerGoodsShelfDisId();
 		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDistributerGoodsShelfDisId);
@@ -148,6 +196,29 @@ public class NxDistributerGoodsShelfController {
 		}
 
 	}
+
+	@RequestMapping(value = "/setShelfUser", method = RequestMethod.POST)
+	@ResponseBody
+	public R setShelfUser(Integer shelfId, Integer userId) {
+		NxDistributerGoodsShelfEntity shelfEntity = nxDisGoodsShelfService.queryObject(shelfId);
+		shelfEntity.setNxDistributerGoodsShelfUserId(userId);
+		nxDisGoodsShelfService.update(shelfEntity);
+		return R.ok().put("data", shelfEntity);
+	}
+
+	@RequestMapping(value = "/getShelfsByUserId/{userId}")
+	@ResponseBody
+	public R getShelfsByUserId(@PathVariable Integer userId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("userId", userId);
+		List<NxDistributerGoodsShelfEntity> shelfEntities = nxDisGoodsShelfService.queryShelfByParams(map);
+		return R.ok().put("data", shelfEntities);
+	}
+
+
+	
+
+
 
 
 

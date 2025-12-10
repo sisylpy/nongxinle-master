@@ -45,6 +45,7 @@ public class GbDepartmentGoodsDailyEntity implements Serializable {
 	 */
 	private Integer gbDgdGbDisGoodsFatherId;
 	private Integer gbDgdGbDisGoodsGrandId;
+	private Integer gbDgdGbDisGoodsGreatGrandId;
 	/**
 	 *  
 	 */
@@ -58,6 +59,7 @@ public class GbDepartmentGoodsDailyEntity implements Serializable {
 	 *  执行废弃用户
 	 */
 	private String gbDgdRestWeight;
+	private String gbDgdRestSubtotal;
 	/**
 	 *  执行废弃用户
 	 */
@@ -133,6 +135,7 @@ public class GbDepartmentGoodsDailyEntity implements Serializable {
 	private String gbDgdSellClearHour;
 	private String gbDgdSellClearMinute;
 	private String gbDgdLastWeight;
+	private String gbDgdLastSubtotal;
 	private String gbDgdFreshRate;
 	private String gbDgdTaskTime;
 	private String gbDgdLastProduceWeight;

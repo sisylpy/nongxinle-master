@@ -17,7 +17,7 @@ import com.nongxinle.entity.*;
 import com.nongxinle.service.GbDistributerPurchaseBatchService;
 import com.nongxinle.service.GbDistributerSupplierService;
 import com.nongxinle.utils.*;
-import org.omg.PortableInterceptor.INACTIVE;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -133,7 +133,7 @@ public class GbDistributerSupplierUserController {
 		JSONObject jsonObject = JSONObject.parseObject(str);
 		// 我们需要的openid，在一个小程序中，openid是唯一的
 		String openId = jsonObject.get("openid").toString();
-		if (openId != null) {
+		if (openId != null && !openId.trim().isEmpty()) {
 			Map<String, Object> mapAdmin = new HashMap<>();
 			mapAdmin.put("openId", openId);
 			mapAdmin.put("supplierId", 1);
@@ -294,7 +294,7 @@ public class GbDistributerSupplierUserController {
 		JSONObject jsonObject = JSONObject.parseObject(str);
 		// 我们需要的openid，在一个小程序中，openid是唯一的
 		String openId = jsonObject.get("openid").toString();
-		if (openId != null) {
+		if (openId != null && !openId.trim().isEmpty()) {
 			Map<String, Object> mapAdmin = new HashMap<>();
 			mapAdmin.put("openId", openId);
 			System.out.println("mapdppdpdpd" + mapAdmin);

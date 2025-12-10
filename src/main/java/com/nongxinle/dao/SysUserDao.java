@@ -40,5 +40,5 @@ public interface SysUserDao extends BaseDao<SysUserEntity> {
 
     SysUserEntity queryUserByDisId(Integer disId);
 
-    SysUserEntity printerUserLogin(Map<String, Object> map);
+	SysUserEntity printerUserLogin(Map<String, Object> map);
 }

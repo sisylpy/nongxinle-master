@@ -9,6 +9,7 @@ package com.nongxinle.entity;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 
@@ -58,6 +59,14 @@ public class NxDistributerFatherGoodsEntity implements Serializable , Comparable
 	private String fatherProfitScaleString;
 	private String fatherWeightTotalString;
 	private String fatherSubtotalTotalString;
+	
+	// 库存统计相关字段
+	private Double fatherStockTotal;
+	private String fatherStockTotalString;
+	private String fatherStockTotalPercent;
+	private Double fatherStockMany;
+	private String fatherStockManyString;
+	
 	/**
 	 *  
 	 */
@@ -87,6 +96,18 @@ public class NxDistributerFatherGoodsEntity implements Serializable , Comparable
 	int stockOrderCount;
 
 	List<NxDistributerGoodsEntity> oldestGrandSons;
+
+	private Map<String, Object> dailyData;
+
+	/**
+	 * 子商品数量（统计该类别下的商品数量）
+	 */
+	private Integer goodsCount;
+
+	/**
+	 * 是否有商品（用于前端判断）
+	 */
+	private Boolean hasGoods;
 
 
 

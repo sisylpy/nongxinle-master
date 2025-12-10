@@ -84,9 +84,9 @@ public class NxCommunityServiceImpl implements NxCommunityService {
     }
 
     @Override
-    public List<NxCommunityEntity> queryCommunityListByUserPoint(String nxCuaLocation) {
+    public List<NxCommunityEntity> queryCommunityListByUserPoint(String nxCuaLat, String nxCuaLng) {
 
-		return nxCommunityDao.queryCommunityListByUserPoint(nxCuaLocation);
+		return nxCommunityDao.queryCommunityListByUserPoint(nxCuaLat, nxCuaLng);
     }
 
 

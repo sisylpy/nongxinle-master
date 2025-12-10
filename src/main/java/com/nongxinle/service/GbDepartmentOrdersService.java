@@ -93,4 +93,10 @@ public interface GbDepartmentOrdersService {
     List<DailyUsage> selectDailyUsage(Map<String, Object> map);
 
     List<GbDistributerFatherGoodsEntity> queryGrandGoodsOrder(Map<String, Object> map1);
+
+    List<GbDepartmentOrdersEntity> queryDepWeightOrderSearch(Map<String, Object> map);
+
+    double queryOrderWeightTotalByPurGoodsId(Integer gbDoPurchaseGoodsId);
+
+    double queryOrderWeightTotalByParams(Map<String, Object> map);
 }

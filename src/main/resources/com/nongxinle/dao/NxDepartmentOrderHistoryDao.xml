@@ -73,7 +73,9 @@
 
 
     <resultMap id="gbOrder" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -140,7 +142,9 @@
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
@@ -213,7 +217,9 @@
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
@@ -617,8 +623,12 @@
         <association property="sellerUserEntity" resultMap="jrdhSellUser"/>
     </resultMap>
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
         <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -736,7 +746,10 @@
     </resultMap>
 
     <resultMap id="orderDepartment" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
         <result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
         <result property="nxDepartmentLat" column="nx_department_lat"/>
         <result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -781,7 +794,9 @@
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
@@ -807,8 +822,12 @@
 
 
     <resultMap id="disGoodsWithApplys" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
         <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -896,7 +915,9 @@
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
@@ -1555,6 +1576,35 @@
         </if>
     </select>
 
+
+    <!-- 查询部门历史商品单价 -->
+    <select id="queryDepGoodsHistoryPrice" resultType="java.util.Map">
+        SELECT
+        nd.nx_department_name AS departName,
+        ndo.nx_DO_quantity AS nxDoQuantity,
+        ndo.nx_DO_standard AS nxDoStandard,
+        ndo.nx_DO_print_standard AS printStandard,
+        ndo.nx_DO_weight AS nxDoWeight,
+        COALESCE(ndo.nx_DO_price, nddg.nx_DDG_order_price) AS nxDoPrice,
+        ndo.nx_DO_remark AS nxDoRemark,
+        ndo.nx_DO_apply_date AS orderDate,
+        ndu.nx_DU_wx_nick_name AS orderUserName
+        FROM nx_department_order_history AS ndo
+        LEFT JOIN nx_department AS nd ON nd.nx_department_id = ndo.nx_DO_department_id
+        LEFT JOIN nx_department_user AS ndu ON ndu.nx_department_user_id = ndo.nx_DO_order_user_id
+        LEFT JOIN nx_department_dis_goods AS nddg ON nddg.nx_department_dis_goods_id = ndo.nx_DO_dep_dis_goods_id
+        <where>
+            <if test="depFatherId != null">
+                AND ndo.nx_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="goodsId != null">
+                AND ndo.nx_DO_dis_goods_id = #{goodsId}
+            </if>
+        </where>
+        ORDER BY ndo.nx_DO_apply_date DESC
+    </select>
+
+
     <!-- 分页查询常订商品 -->
     <select id="selectFrequentGoodsWithPage" resultType="java.lang.Integer">
         SELECT DISTINCT h.nx_DO_dis_goods_id
@@ -1607,7 +1657,9 @@
          `nx_DO_standard`,
          `nx_DO_remark`,
          `nx_DO_weight`,
+         `nx_DO_weight_kg`,
          `nx_DO_price`,
+         `nx_DO_price_kg`,
          `nx_DO_subtotal`,
          `nx_DO_department_id`,
          `nx_DO_department_father_id`,
@@ -1667,7 +1719,9 @@
                 #{nxDoStandard},
                 #{nxDoRemark},
                 #{nxDoWeight},
+                #{nxDoWeightKg},
                 #{nxDoPrice},
+                #{nxDoPriceKg},
                 #{nxDoSubtotal},
                 #{nxDoDepartmentId},
                 #{nxDoDepartmentFatherId},
@@ -1731,7 +1785,9 @@
             <if test="nxDoStandard != null">`nx_DO_standard` = #{nxDoStandard},</if>
             <if test="nxDoRemark != null">`nx_DO_remark` = #{nxDoRemark},</if>
             <if test="nxDoWeight != null">`nx_DO_weight` = #{nxDoWeight},</if>
+            <if test="nxDoWeightKg != null">`nx_DO_weight_kg` = #{nxDoWeightKg},</if>
             <if test="nxDoPrice != null">`nx_DO_price` = #{nxDoPrice},</if>
+            <if test="nxDoPriceKg != null">`nx_DO_price_kg` = #{nxDoPriceKg},</if>
             <if test="nxDoSubtotal != null">`nx_DO_subtotal` = #{nxDoSubtotal},</if>
             <if test="nxDoDepartmentId != null">`nx_DO_department_id` = #{nxDoDepartmentId},</if>
             <if test="nxDoDepartmentFatherId != null">`nx_DO_department_father_id` = #{nxDoDepartmentFatherId},</if>

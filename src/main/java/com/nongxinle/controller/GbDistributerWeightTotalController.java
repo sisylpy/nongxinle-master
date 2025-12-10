@@ -97,7 +97,7 @@ public class GbDistributerWeightTotalController {
                     order.setGbDoWeightTotalId(null);
                 }
             }
-            List<GbDistributerPurchaseGoodsEntity> purchaseGoodsByParams = purchaseGoodsService.queryPurchaseGoodsByParams(map);
+            List<GbDistributerPurchaseGoodsEntity> purchaseGoodsByParams = purchaseGoodsService.queryOnlyPurGoods(map);
             if(purchaseGoodsByParams.size() > 0){
                 for (GbDistributerPurchaseGoodsEntity purchaseGoodsEntity: purchaseGoodsByParams){
                     Integer gbDpgDisGoodsPriceId = purchaseGoodsEntity.getGbDpgDisGoodsPriceId();
@@ -130,9 +130,6 @@ public class GbDistributerWeightTotalController {
 
             gbDisWeightTotalService.delete(id);
         }
-
-
-
 
         return R.ok();
     }
@@ -238,9 +235,7 @@ public class GbDistributerWeightTotalController {
                 //判断是否有保鲜时间参数
                 GbDistributerGoodsEntity gbDisGoodsEntity = gbDistributerGoodsService.queryObject(purchaseGoodsEntity.getGbDpgDisGoodsId());
                 if (gbDisGoodsEntity.getGbDgControlFresh() != null && gbDisGoodsEntity.getGbDgControlFresh() == 1) {
-                    int warnHour = Integer.parseInt(gbDisGoodsEntity.getGbDgFreshWarnHour());
                     int wasteHour = Integer.parseInt(gbDisGoodsEntity.getGbDgFreshWasteHour());
-                    purchaseGoodsEntity.setGbDpgWarnFullTime(formatWhatFullTime(warnHour));
                     purchaseGoodsEntity.setGbDpgWasteFullTime(formatWhatFullTime(wasteHour));
                 }
                 purchaseGoodsService.update(purchaseGoodsEntity);

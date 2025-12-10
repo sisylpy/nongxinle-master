@@ -10,9 +10,7 @@ import java.util.*;
 
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
-import com.nongxinle.utils.PageUtilsMap;
 import com.nongxinle.utils.UploadFile;
-import com.sun.xml.internal.xsom.XSUnionSimpleType;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -89,6 +87,72 @@ public class GbDistributerGoodsController {
     private NxJrdhSupplierService jrdhSupplierService;
     @Autowired
     private NxJrdhUserService nxJrdhUserService;
+    @Autowired
+    private GbDistributerPayListService payListService;
+
+
+    @RequestMapping(value = "/addAutoOrderGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R addAutoOrderGoods(Integer supplierId, Integer goodsId) {
+        GbDistributerGoodsEntity gbDistributerGoodsEntity = gbDgService.queryObject(goodsId);
+
+        gbDistributerGoodsEntity.setGbDgGbSupplierId(supplierId);
+        if(supplierId == -1){
+            gbDistributerGoodsEntity.setGbDgGoodsType(2);
+        }else{
+            gbDistributerGoodsEntity.setGbDgGoodsType(21);
+        }
+        gbDgService.update(gbDistributerGoodsEntity);
+        return R.ok().put("data", gbDistributerGoodsEntity);
+    }
+
+
+    @RequestMapping(value = "/queryDisGoodsByQuickSearchWithDepId", method = RequestMethod.POST)
+    @ResponseBody
+    public R queryDisGoodsByQuickSearchWithDepId(String searchStr, Integer disId, Integer depId) {
+        System.out.println(searchStr);
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("depId", depId);
+        map.put("searchStr", searchStr);
+//        map.put("isHidden", 0);
+
+
+        List<NxDistributerGoodsEntity> all = new ArrayList<>();
+
+        String pinyinString = searchStr;
+        for (int i = 0; i < searchStr.length(); i++) {
+            String str = searchStr.substring(i, i + 1);
+            if (str.matches("[\u4E00-\u9FFF]")) {
+                pinyinString = hanziToPinyin(searchStr);
+            }
+        }
+        map.put("searchPinyin", pinyinString);
+        System.out.println("sttuutnxdididisisiisisisisiisisi" + map);
+        List<GbDistributerGoodsEntity> goodsEntities = gbDgService.queryDisGoodsQuickSearchStrWithDepOrders(map);
+        System.out.println("goennennenssss" + goodsEntities.size());
+        if (goodsEntities.size() < 100) {
+            Map<String, Object> mapR = new HashMap<>();
+            if (goodsEntities.size() == 0) {
+                List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
+                if (nxGoodsEntities.size() < 100) {
+                    if (nxGoodsEntities.size() == 0) {
+                        mapR.put("nxArr", -2);
+                    } else {
+                        mapR.put("nxArr", nxGoodsEntities);
+                    }
+                }
+            } else {
+                mapR.put("nxArr", -1);
+                mapR.put("disArr", goodsEntities);
+            }
+            return R.ok().put("data", mapR);
+        } else {
+            return R.error(-1, "jixu");
+        }
+
+    }
+
 
     @RequestMapping(value = "/getLinshiAll")
     @ResponseBody
@@ -128,6 +192,10 @@ public class GbDistributerGoodsController {
         System.out.println("fathhff" + fatherGoodsEntity.getGbDfgFatherGoodsName());
         goods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
         goods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+
+        GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+        goods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
         String goodsName = goods.getGbDgGoodsName();
         String pinyin = hanziToPinyin(goodsName);
         String headPinyin = getHeadStringByString(goodsName, false, null);
@@ -154,6 +222,7 @@ public class GbDistributerGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(goods.getGbDgDfgGoodsGreatId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
@@ -172,37 +241,9 @@ public class GbDistributerGoodsController {
         disGoodsEntity.setGbDdgPrintStandard(goods.getGbDgGoodsStandardname());
         gbDepDisGoodsService.save(disGoodsEntity);
 
-        //saveDepGoods
-        GbDepartmentDisGoodsEntity disGoodsEntityDep = new GbDepartmentDisGoodsEntity();
-        disGoodsEntityDep.setGbDdgDepGoodsName(goods.getGbDgGoodsName());
-        disGoodsEntityDep.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
-        disGoodsEntityDep.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
-        disGoodsEntityDep.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
-        disGoodsEntityDep.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
-        disGoodsEntityDep.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
-        disGoodsEntityDep.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
-        disGoodsEntityDep.setGbDdgDepartmentId(goods.getGbDgGoodsSonsSort());
-        disGoodsEntityDep.setGbDdgDepartmentFatherId(goods.getGbDgGoodsSort()); //借用字段
-        disGoodsEntityDep.setGbDdgGbDepartmentId(goods.getGbDgGbDepartmentId()); //借用字段
-        disGoodsEntityDep.setGbDdgGoodsType(goods.getGbDgGoodsType());
-        disGoodsEntityDep.setGbDdgStockTotalWeight("0.0");
-        disGoodsEntityDep.setGbDdgStockTotalSubtotal("0.0");
-        disGoodsEntityDep.setGbDdgShowStandardId(-1);
-        disGoodsEntityDep.setGbDdgShowStandardName(goods.getGbDgGoodsStandardname());
-        disGoodsEntityDep.setGbDdgShowStandardScale("-1");
-        disGoodsEntityDep.setGbDdgGbDisId(goods.getGbDgDistributerId());
-        disGoodsEntityDep.setGbDdgOrderStandard(goods.getGbDgGoodsStandardname());
-        disGoodsEntityDep.setGbDdgNxDistributerId(-1);
-        disGoodsEntityDep.setGbDdgNxDistributerGoodsId(-1);
-        disGoodsEntity.setGbDdgPrintStandard(goods.getGbDgGoodsStandardname());
-        gbDepDisGoodsService.save(disGoodsEntityDep);
-
-        goods.setGbDepartmentDisGoodsEntity(disGoodsEntityDep);
 
         return R.ok().put("data", goods);
     }
-
-
 
 
     @ResponseBody
@@ -239,6 +280,11 @@ public class GbDistributerGoodsController {
         System.out.println("fathhff" + fatherGoodsEntity.getGbDfgFatherGoodsName());
         goods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
         goods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+
+        GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+        goods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
+
         goods.setGbDgGoodsType(2);
         goods.setGbDgGbDepartmentId(toDepId);
         goods.setGbDgDistributerId(disId);
@@ -266,6 +312,7 @@ public class GbDistributerGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
@@ -288,6 +335,7 @@ public class GbDistributerGoodsController {
         disGoodsEntityDep.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
         disGoodsEntityDep.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
         disGoodsEntityDep.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
+        disGoodsEntityDep.setGbDdgDisGoodsGreatId(goods.getGbDgDfgGoodsGreatId());
         disGoodsEntityDep.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
         disGoodsEntityDep.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
         disGoodsEntityDep.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
@@ -324,15 +372,12 @@ public class GbDistributerGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
-
         disGoodsEntity.setGbDdgDisGoodsGreatId(greatFatherGoodsId);
         disGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
-
         disGoodsEntity.setGbDdgDepartmentId(gbNewGoods.getGbDgGbDepartmentId());
         disGoodsEntity.setGbDdgDepartmentFatherId(gbNewGoods.getGbDgGbDepartmentId());
-
         disGoodsEntity.setGbDdgGbDepartmentId(gbNewGoods.getGbDgGbDepartmentId());
         disGoodsEntity.setGbDdgGbDisId(gbNewGoods.getGbDgDistributerId());
         disGoodsEntity.setGbDdgGoodsType(gbNewGoods.getGbDgGoodsType());
@@ -349,15 +394,19 @@ public class GbDistributerGoodsController {
 
         //添加部门商品
         GbDepartmentDisGoodsEntity mendianDisGoodsEntity = new GbDepartmentDisGoodsEntity();
-        mendianDisGoodsEntity.setGbDdgDepGoodsName(gbNewGoods.getGbDgGoodsName());
+
+        String gbDoGoodsName = gbDepartmentOrders.getGbDoGoodsName();
+        mendianDisGoodsEntity.setGbDdgDepGoodsName(gbDoGoodsName);
         mendianDisGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         mendianDisGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
         mendianDisGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
         mendianDisGoodsEntity.setGbDdgDisGoodsGreatId(greatFatherGoodsId);
-        mendianDisGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
-        mendianDisGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
-        mendianDisGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
 
+        String pinyin = hanziToPinyin(gbDoGoodsName);
+        String headPinyin = getHeadStringByString(gbDoGoodsName, false, null);
+        mendianDisGoodsEntity.setGbDdgDepGoodsPinyin(pinyin);
+        mendianDisGoodsEntity.setGbDdgDepGoodsPy(headPinyin);
+        mendianDisGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
         mendianDisGoodsEntity.setGbDdgDepartmentId(gbDepartmentOrders.getGbDoDepartmentId());
         mendianDisGoodsEntity.setGbDdgDepartmentFatherId(gbDepartmentOrders.getGbDoDepartmentFatherId());
 
@@ -382,30 +431,29 @@ public class GbDistributerGoodsController {
         gbDepartmentOrders.setGbDoApplyDate(formatWhatDay(0));
         gbDepartmentOrders.setGbDoApplyFullTime(formatWhatYearDayTime(0));
         gbDepartmentOrders.setGbDoApplyOnlyTime(formatWhatTime(0));
-        gbDepartmentOrders.setGbDoArriveOnlyDate(formatWhatDayTime(0));
+        gbDepartmentOrders.setGbDoArriveOnlyDate(formatWhatDate(0));
         gbDepartmentOrders.setGbDoArriveWeeksYear(getWeekOfYear(0));
         gbDepartmentOrders.setGbDoGoodsType(2);
         gbDepartmentOrders.setGbDoOrderType(2);
         gbDepartmentOrders.setGbDoDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         Integer gbDgDfgGoodsFatherId = gbNewGoods.getGbDgDfgGoodsFatherId();
+
         GbDistributerFatherGoodsEntity fatherGoodsEntity = dgfService.queryObject(gbDgDfgGoodsFatherId);
-        gbDepartmentOrders.setGbDoDisGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
-        gbDepartmentOrders.setGbDoDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
-        gbDepartmentOrders.setGbDoNxDistributerGoodsId(-1);
-        gbDepartmentOrders.setGbDoNxDistributerId(-1);
-        gbDepartmentOrders.setGbDoDepDisGoodsId(mendianDisGoodsEntity.getGbDepartmentDisGoodsId());
-
-
-        gbDepartmentOrders.setGbDoDisGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
-        gbDepartmentOrders.setGbDoDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
-
         Integer gbDfgFathersFatherId = fatherGoodsEntity.getGbDfgFathersFatherId();
         GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(gbDfgFathersFatherId);
         Integer greatFatherId = grandFather.getGbDfgFathersFatherId();
         GbDistributerFatherGoodsEntity greatFather = dgfService.queryObject(greatFatherId);
+        System.out.println("greattttt" + greatFather);
+        System.out.println("greattttt" + greatFather.getGbDfgNxGoodsId());
+        gbDepartmentOrders.setGbDoDisGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
+        gbDepartmentOrders.setGbDoDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+        gbDepartmentOrders.setGbDoDisGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+        gbDepartmentOrders.setGbDoNxDistributerGoodsId(-1);
+        gbDepartmentOrders.setGbDoNxDistributerId(-1);
+        gbDepartmentOrders.setGbDoDepDisGoodsId(mendianDisGoodsEntity.getGbDepartmentDisGoodsId());
+
         gbDepartmentOrders.setGbDoNxGoodsGrandId(grandFather.getGbDfgNxGoodsId());
         gbDepartmentOrders.setGbDoNxGoodsGreatId(greatFather.getGbDfgNxGoodsId());
-
 
         depOrdersService.save(gbDepartmentOrders);
 
@@ -413,12 +461,14 @@ public class GbDistributerGoodsController {
         GbDistributerPurchaseGoodsEntity gbPurchaseGoodsEntity = new GbDistributerPurchaseGoodsEntity();
         gbPurchaseGoodsEntity.setGbDpgDisGoodsFatherId(gbDepartmentOrders.getGbDoDisGoodsFatherId());
         gbPurchaseGoodsEntity.setGbDpgDisGoodsGrandId(gbDepartmentOrders.getGbDoDisGoodsGrandId());
+        gbPurchaseGoodsEntity.setGbDpgDisGoodsGreatId(gbDepartmentOrders.getGbDoDisGoodsGreatId());
         gbPurchaseGoodsEntity.setGbDpgDisGoodsId(gbDepartmentOrders.getGbDoDisGoodsId());
         gbPurchaseGoodsEntity.setGbDpgDistributerId(gbDepartmentOrders.getGbDoDistributerId());
         gbPurchaseGoodsEntity.setGbDpgApplyDate(formatWhatDay(0));
         gbPurchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusNew());
         gbPurchaseGoodsEntity.setGbDpgOrdersAmount(1);
         gbPurchaseGoodsEntity.setGbDpgOrdersFinishAmount(0);
+        gbPurchaseGoodsEntity.setGbDpgOrdersWeightAmount(0);
         gbPurchaseGoodsEntity.setGbDpgOrdersBillAmount(0);
         gbPurchaseGoodsEntity.setGbDpgStandard(gbDepartmentOrders.getGbDoStandard());
         gbPurchaseGoodsEntity.setGbDpgQuantity(gbDepartmentOrders.getGbDoQuantity());
@@ -428,6 +478,11 @@ public class GbDistributerGoodsController {
         gbPurchaseGoodsEntity.setGbDpgPurchaseType(2);
         gbPurchaseGoodsEntity.setGbDpgPurchaseNxDistributerId(-1);
         gbPurchaseGoodsEntity.setGbDpgPurchaseNxSupplierId(-1);
+        //standard Same
+        if(gbNewGoods.getGbDgGoodsStandardname().equals(gbDepartmentOrders.getGbDoStandard())){
+            gbDepartmentOrders.setGbDoWeight(gbDepartmentOrders.getGbDoQuantity());
+            gbPurchaseGoodsEntity.setGbDpgBuyQuantity(gbDepartmentOrders.getGbDoQuantity());
+        }
         gbDisPurchaseGoodsService.save(gbPurchaseGoodsEntity);
         Integer gbDistributerPurchaseGoodsId = gbPurchaseGoodsEntity.getGbDistributerPurchaseGoodsId();
         gbDepartmentOrders.setGbDoPurchaseGoodsId(gbDistributerPurchaseGoodsId);
@@ -436,8 +491,6 @@ public class GbDistributerGoodsController {
         List<GbDistributerStandardEntity> standardEntityList = gbDistributerStandardService.queryDisStandardByDisGoodsIdGb(gbDistributerGoodsId);
         gbNewGoods.setGbDistributerStandardEntities(standardEntityList);
         gbDepartmentOrders.setGbDistributerGoodsEntity(gbNewGoods);
-
-        gbDepartmentOrders.setGbDepartmentDisGoodsEntity(disGoodsEntity);
 
         return R.ok().put("data", gbDepartmentOrders);
     }
@@ -461,15 +514,14 @@ public class GbDistributerGoodsController {
         gbDepartmentOrders.setGbDoApplyDate(formatWhatDay(0));
         gbDepartmentOrders.setGbDoApplyFullTime(formatWhatYearDayTime(0));
         gbDepartmentOrders.setGbDoApplyOnlyTime(formatWhatTime(0));
-        gbDepartmentOrders.setGbDoArriveOnlyDate(formatWhatDayTime(0));
+        gbDepartmentOrders.setGbDoArriveOnlyDate(formatWhatDate(0));
         gbDepartmentOrders.setGbDoArriveWeeksYear(getWeekOfYear(0));
         gbDepartmentOrders.setGbDoGoodsType(2);
         gbDepartmentOrders.setGbDoOrderType(5);
         gbDepartmentOrders.setGbDoDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         Integer gbDgDfgGoodsFatherId = gbNewGoods.getGbDgDfgGoodsFatherId();
+
         GbDistributerFatherGoodsEntity fatherGoodsEntity = dgfService.queryObject(gbDgDfgGoodsFatherId);
-        gbDepartmentOrders.setGbDoDisGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
-        gbDepartmentOrders.setGbDoDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
 
         Integer nxDoDistributerId = gbDepartmentOrders.getGbDoNxDistributerId();
         Map<String, Object> map = new HashMap<>();
@@ -483,6 +535,7 @@ public class GbDistributerGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(gbNewGoods.getGbDgDfgGoodsGreatId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
@@ -507,6 +560,7 @@ public class GbDistributerGoodsController {
         mendianDisGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         mendianDisGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
         mendianDisGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(gbNewGoods.getGbDgDfgGoodsGreatId());
         mendianDisGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
         mendianDisGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
         mendianDisGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
@@ -531,13 +585,15 @@ public class GbDistributerGoodsController {
 
         // add purchaseGoods
 
-        gbDepartmentOrders.setGbDoDisGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
-        gbDepartmentOrders.setGbDoDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
-
         Integer gbDfgFathersFatherId = fatherGoodsEntity.getGbDfgFathersFatherId();
         GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(gbDfgFathersFatherId);
-        Integer greatFatherId = grandFather.getGbDfgFathersFatherId();
+        Integer greatFatherId = grandFather.getGbDistributerFatherGoodsId();
         GbDistributerFatherGoodsEntity greatFather = dgfService.queryObject(greatFatherId);
+
+        gbDepartmentOrders.setGbDoDisGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
+        gbDepartmentOrders.setGbDoDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+        gbDepartmentOrders.setGbDoDisGoodsGreatId(greatFatherId);
+
         gbDepartmentOrders.setGbDoNxGoodsGrandId(grandFather.getGbDfgNxGoodsId());
         gbDepartmentOrders.setGbDoNxGoodsGreatId(greatFather.getGbDfgNxGoodsId());
 
@@ -549,12 +605,14 @@ public class GbDistributerGoodsController {
         GbDistributerPurchaseGoodsEntity gbPurchaseGoodsEntity = new GbDistributerPurchaseGoodsEntity();
         gbPurchaseGoodsEntity.setGbDpgDisGoodsFatherId(gbDepartmentOrders.getGbDoDisGoodsFatherId());
         gbPurchaseGoodsEntity.setGbDpgDisGoodsGrandId(gbDepartmentOrders.getGbDoDisGoodsGrandId());
+        gbPurchaseGoodsEntity.setGbDpgDisGoodsGreatId(gbDepartmentOrders.getGbDoDisGoodsGreatId());
         gbPurchaseGoodsEntity.setGbDpgDisGoodsId(gbDepartmentOrders.getGbDoDisGoodsId());
         gbPurchaseGoodsEntity.setGbDpgDistributerId(gbDepartmentOrders.getGbDoDistributerId());
         gbPurchaseGoodsEntity.setGbDpgApplyDate(formatWhatDay(0));
         gbPurchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusProcurement());
         gbPurchaseGoodsEntity.setGbDpgOrdersAmount(1);
         gbPurchaseGoodsEntity.setGbDpgOrdersFinishAmount(0);
+        gbPurchaseGoodsEntity.setGbDpgOrdersWeightAmount(0);
         gbPurchaseGoodsEntity.setGbDpgOrdersBillAmount(0);
         gbPurchaseGoodsEntity.setGbDpgStandard(gbDepartmentOrders.getGbDoStandard());
         gbPurchaseGoodsEntity.setGbDpgQuantity(gbDepartmentOrders.getGbDoQuantity());
@@ -569,12 +627,12 @@ public class GbDistributerGoodsController {
         Integer gbDistributerPurchaseGoodsId = gbPurchaseGoodsEntity.getGbDistributerPurchaseGoodsId();
         gbDepartmentOrders.setGbDoPurchaseGoodsId(gbDistributerPurchaseGoodsId);
         depOrdersService.update(gbDepartmentOrders);
-        gbDepartmentOrders.setGbDepartmentDisGoodsEntity(disGoodsEntity);
+//        gbDepartmentOrders.setGbDepartmentDisGoodsEntity(disGoodsEntity);
 
         gbDepartmentOrders.setGbDoApplyDate(formatWhatDay(0));
         gbDepartmentOrders.setGbDoApplyFullTime(formatWhatYearDayTime(0));
         gbDepartmentOrders.setGbDoApplyOnlyTime(formatWhatTime(0));
-        gbDepartmentOrders.setGbDoArriveOnlyDate(formatWhatDayTime(0));
+        gbDepartmentOrders.setGbDoArriveOnlyDate(formatWhatDate(0));
         gbDepartmentOrders.setGbDoArriveWeeksYear(getWeekOfYear(0));
         gbDepartmentOrders.setGbDoNxDistributerGoodsId(nxDistributerGoodsEntity.getNxDistributerGoodsId());
         String gbDoApplyArriveDate = gbDepartmentOrders.getGbDoApplyArriveDate();
@@ -635,12 +693,12 @@ public class GbDistributerGoodsController {
             BigDecimal buyingPrice = new BigDecimal(0);
             String update = "";
             String buyingPriceLevel = "";
-            if(gbDepartmentOrders.getGbDoCostPriceLevel() == 1){
+            if (gbDepartmentOrders.getGbDoCostPriceLevel() == 1) {
                 willPrice = new BigDecimal(nxDistributerGoodsEntity.getNxDgWillPriceOne());
                 buyingPrice = new BigDecimal(nxDistributerGoodsEntity.getNxDgBuyingPriceOne());
-                 update = nxDistributerGoodsEntity.getNxDgBuyingPriceOneUpdate();
+                update = nxDistributerGoodsEntity.getNxDgBuyingPriceOneUpdate();
                 buyingPriceLevel = "1";
-            }else if(gbDepartmentOrders.getGbDoCostPriceLevel() == 2){
+            } else if (gbDepartmentOrders.getGbDoCostPriceLevel() == 2) {
                 willPrice = new BigDecimal(nxDistributerGoodsEntity.getNxDgWillPriceTwo());
                 buyingPrice = new BigDecimal(nxDistributerGoodsEntity.getNxDgBuyingPriceTwo());
                 update = nxDistributerGoodsEntity.getNxDgBuyingPriceTwoUpdate();
@@ -669,7 +727,7 @@ public class GbDistributerGoodsController {
             ordersEntity.setNxDoCostPrice("0");
         }
 
-        
+
         ordersEntity.setNxDoStatus(getNxOrderStatusNew());
         nxDepartmentOrdersService.saveForGb(ordersEntity);
         Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
@@ -723,8 +781,6 @@ public class GbDistributerGoodsController {
             resultPurGoods.setNxDpgDisGoodsFatherId(disGoods.getNxDgDfgGoodsFatherId());
             resultPurGoods.setNxDpgDisGoodsGrandId(disGoods.getNxDgDfgGoodsGrandId());
             resultPurGoods.setNxDpgDistributerId(disGoods.getNxDgDistributerId());
-            resultPurGoods.setNxDpgApplyDate(formatWhatDay(0));
-//            resultPurGoods.setNxDpgCostLevel(disGoods.getNxDgBuyingPriceIsGrade());
             resultPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
             resultPurGoods.setNxDpgApplyDate(formatWhatYearDayTime(0));
             resultPurGoods.setNxDpgOrdersAmount(1);
@@ -751,7 +807,7 @@ public class GbDistributerGoodsController {
 
         //给autoBatch更新gbDepartmentOrderid
         System.out.println("suplieridid" + disGoods.getNxDgGoodsName() + disGoods.getNxDgSupplierId());
-        if (disGoods.getNxDgSupplierId() != null ) {
+        if (disGoods.getNxDgSupplierId() != null) {
             //
             Map<String, Object> mapBatch = new HashMap<>();
             Integer gbDgGbSupplierId = disGoods.getNxDgSupplierId();
@@ -804,7 +860,7 @@ public class GbDistributerGoodsController {
             pathBuilder.append("?batchId=").append(batchEntity.getNxDistributerPurchaseBatchId());
             pathBuilder.append("&retName=").append(nxDistributerService.queryObject(batchEntity.getNxDpbDistributerId()).getNxDistributerName());
             pathBuilder.append("&disId=").append(batchEntity.getNxDpbDistributerId());
-            pathBuilder.append("&buyerUserId=").append(batchEntity.getNxDpbBuyUserId());
+            pathBuilder.append("&buyUserId=").append(batchEntity.getNxDpbBuyUserId());
             pathBuilder.append("&purUserId=").append(batchEntity.getNxDpbPurUserId());
             pathBuilder.append("&fromBuyer=1");
             String path = pathBuilder.toString();
@@ -945,7 +1001,7 @@ public class GbDistributerGoodsController {
 //                pathBuilder.append("?batchId=").append(noticeBatch.getNxDistributerPurchaseBatchId());
 //                pathBuilder.append("&retName=").append(distributerEntity.getNxDistributerName());
 //                pathBuilder.append("&disId=").append(noticeBatch.getNxDpbDistributerId());
-//                pathBuilder.append("&buyerUserId=").append(noticeBatch.getNxDpbBuyUserId());
+//                pathBuilder.append("&buyUserId=").append(noticeBatch.getNxDpbBuyUserId());
 //                pathBuilder.append("&purUserId=").append(noticeBatch.getNxDpbPurUserId());
 //                pathBuilder.append("&fromBuyer=1");
 //                String path = pathBuilder.toString();
@@ -1059,9 +1115,13 @@ public class GbDistributerGoodsController {
     public R disExchangeDisGoodsGb(Integer lsGoodsId, Integer nxGoodsId, Integer disId) {
 
         GbDistributerGoodsEntity nxDistributerGoodsEntity = gbDgService.queryObject(nxGoodsId);
+        GbDistributerGoodsEntity linshiGoods = gbDgService.queryObject(lsGoodsId);
+
 
         Integer nxDgDfgGoodsFatherId = nxDistributerGoodsEntity.getGbDgDfgGoodsFatherId();
         Integer nxDgDfgGoodsGrandId = nxDistributerGoodsEntity.getGbDgDfgGoodsGrandId();
+        Integer nxDgDfgGoodsGreatId = nxDistributerGoodsEntity.getGbDgDfgGoodsGreatId();
+
         Integer nxDgNxGoodsId = nxDistributerGoodsEntity.getGbDgNxGoodsId();
         Integer nxDgNxFatherId = nxDistributerGoodsEntity.getGbDgNxFatherId();
 
@@ -1073,9 +1133,12 @@ public class GbDistributerGoodsController {
                 ordersEntity.setGbDoDisGoodsId(nxGoodsId);
                 ordersEntity.setGbDoDisGoodsFatherId(nxDgDfgGoodsFatherId);
                 ordersEntity.setGbDoDisGoodsGrandId(nxDgDfgGoodsGrandId);
+                ordersEntity.setGbDoDisGoodsGreatId(nxDgDfgGoodsGreatId);
+
                 ordersEntity.setGbDoNxGoodsId(nxDgNxGoodsId);
                 ordersEntity.setGbDoNxGoodsFatherId(nxDgNxFatherId);
                 depOrdersService.update(ordersEntity);
+
             }
 
             List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepDisGoodsService.queryGbDepDisGoodsByParams(map);
@@ -1085,11 +1148,13 @@ public class GbDistributerGoodsController {
                     depGoodsEntity.setGbDdgDisGoodsId(nxGoodsId);
                     depGoodsEntity.setGbDdgDisGoodsFatherId(nxDgDfgGoodsFatherId);
                     depGoodsEntity.setGbDdgDisGoodsGrandId(nxDgDfgGoodsGrandId);
+                    depGoodsEntity.setGbDdgDisGoodsGreatId(nxDgDfgGoodsGreatId);
                     gbDepDisGoodsService.update(depGoodsEntity);
+
                 }
             }
 
-            GbDistributerGoodsEntity linshiGoods = gbDgService.queryObject(lsGoodsId);
+
             Map<String, Object> mapNx = new HashMap<>();
             mapNx.put("disGoodsId", nxGoodsId);
             int same = 0;
@@ -1118,25 +1183,25 @@ public class GbDistributerGoodsController {
             }
 
 
-            List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntities = gbDisPurchaseGoodsService.queryPurchaseGoodsByParams(map);
+            List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntities = gbDisPurchaseGoodsService.queryOnlyPurGoods(map);
             if (purchaseGoodsEntities.size() > 0) {
                 for (GbDistributerPurchaseGoodsEntity purchaseGoodsEntity : purchaseGoodsEntities) {
                     purchaseGoodsEntity.setGbDpgDisGoodsId(nxGoodsId);
                     purchaseGoodsEntity.setGbDpgDisGoodsFatherId(nxDgDfgGoodsFatherId);
                     purchaseGoodsEntity.setGbDpgDisGoodsGrandId(nxDgDfgGoodsGrandId);
+                    purchaseGoodsEntity.setGbDpgDisGoodsGreatId(nxDgDfgGoodsGreatId);
                     System.out.println("purgogogoooogoggo" + purchaseGoodsEntity.getGbDistributerPurchaseGoodsId());
                     gbDisPurchaseGoodsService.update(purchaseGoodsEntity);
                 }
             }
 
             List<GbDepartmentGoodsStockEntity> departmentGoodsStockEntities = gbDepGoodsStockService.queryGoodsStockByParams(map);
-
             if (departmentGoodsStockEntities.size() > 0) {
                 for (GbDepartmentGoodsStockEntity stockEntity : departmentGoodsStockEntities) {
                     stockEntity.setGbDgsGbDisGoodsId(nxGoodsId);
                     stockEntity.setGbDgsGbDisGoodsFatherId(nxDgDfgGoodsFatherId);
                     stockEntity.setGbDgsGbDisGoodsGrandId(nxDgDfgGoodsGrandId);
-//                    System.out.println("sotckckckkkckkckc" + stockEntity.getGbDepartmentGoodsStockId());
+                    stockEntity.setGbDgsGbDisGoodsGreatId(nxDistributerGoodsEntity.getGbDgDfgGoodsGreatId());
                     gbDepGoodsStockService.update(stockEntity);
                 }
             }
@@ -1146,7 +1211,7 @@ public class GbDistributerGoodsController {
                     reduceEntity.setGbDgsrGbDisGoodsId(nxGoodsId);
                     reduceEntity.setGbDgsrGbDisGoodsFatherId(nxDgDfgGoodsFatherId);
                     reduceEntity.setGbDgsrGbDisGoodsGrandId(nxDgDfgGoodsGrandId);
-//                    System.out.println("reducccddididiidd" + reduceEntity.getGbDepartmentGoodsStockReduceId());
+                    reduceEntity.setGbDgsrGbDisGoodsGreatId(nxDgDfgGoodsGreatId);
                     gbDepGoodsStockReduceService.update(reduceEntity);
                 }
             }
@@ -1158,6 +1223,8 @@ public class GbDistributerGoodsController {
                     dailyEntity.setGbDgdGbDisGoodsId(nxGoodsId);
                     dailyEntity.setGbDgdGbDisGoodsFatherId(nxDgDfgGoodsFatherId);
                     dailyEntity.setGbDgdGbDisGoodsGrandId(nxDgDfgGoodsGrandId);
+                    GbDistributerFatherGoodsEntity fatherGoodsEntity = dgfService.queryObject(nxDgDfgGoodsGrandId);
+                    dailyEntity.setGbDgdGbDisGoodsGreatGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
                     System.out.println("dailsisss" + dailyEntity.getGbDepartmentGoodsDailyId());
                     gbDepGoodsDailyService.update(dailyEntity);
                 }
@@ -1165,7 +1232,6 @@ public class GbDistributerGoodsController {
         }
 
 
-        GbDistributerGoodsEntity linshiGoods = gbDgService.queryObject(lsGoodsId);
         nxDistributerGoodsEntity.setGbDgNxDistributerId(linshiGoods.getGbDgNxDistributerId());
         nxDistributerGoodsEntity.setGbDgNxDistributerGoodsId(linshiGoods.getGbDgNxDistributerGoodsId());
         nxDistributerGoodsEntity.setGbDgGbSupplierId(linshiGoods.getGbDgGbSupplierId());
@@ -1176,7 +1242,39 @@ public class GbDistributerGoodsController {
         nxDistributerGoodsEntity.setGbDgFreshWasteHour(linshiGoods.getGbDgFreshWasteHour());
         gbDgService.update(nxDistributerGoodsEntity);
 
+        GbDistributerAliasEntity aliasEntity = new GbDistributerAliasEntity();
+        aliasEntity.setGbDaAliasName(linshiGoods.getGbDgGoodsName());
+        aliasEntity.setGbDaDisGoodsId(nxDistributerGoodsEntity.getGbDistributerGoodsId());
+        gbDistributerAliasService.save(aliasEntity);
+
         gbDgService.delete(lsGoodsId);
+
+
+        System.out.println("mapppapap" + map);
+        GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(disId);
+        GbDistributerPayListEntity payListEntity = new GbDistributerPayListEntity();
+        payListEntity.setGbNdplPaySubtotal("10");
+        payListEntity.setGbNdplPayTime(formatFullTime());
+        payListEntity.setGbNdplPayDate(formatWhatDay(0));
+        payListEntity.setGbNdplPayMonth(formatWhatMonth(0));
+        payListEntity.setGbNdplPayYear(formatWhatYear(0));
+        payListEntity.setGbNdplStatus(0);
+        payListEntity.setGbNdplType(getGbDisPayGoodsAdd());
+        payListEntity.setGbNdplRestPoints(gbDistributerEntity.getGbDistributerBuyQuantity());
+        payListEntity.setGbNdplGbDisId(disId);
+        payListEntity.setGbNdplNxSupplierId(-1);
+        payListEntity.setGbNdplGbPbId(-1);
+        payListEntity.setGbNdplGbDisId(nxGoodsId);
+        payListService.save(payListEntity);
+
+        BigDecimal decimal = new BigDecimal(gbDistributerEntity.getGbDistributerBuyQuantity());
+        System.out.println("decimdall========" + decimal);
+        BigDecimal decimal1 = new BigDecimal(10);
+        System.out.println("nxdkkddkdk00" + gbDistributerEntity.getGbDistributerBuyQuantity());
+        BigDecimal add = decimal.subtract(decimal1);
+        gbDistributerEntity.setGbDistributerBuyQuantity(add.toString());
+        System.out.println("nxdkkddkdk11" + gbDistributerEntity.getGbDistributerBuyQuantity());
+        gbDistributerService.update(gbDistributerEntity);
 
         return R.ok();
     }
@@ -1510,6 +1608,7 @@ public class GbDistributerGoodsController {
                     disGoodsEntity.setGbDdgDisGoodsId(gbGoods.getGbDistributerGoodsId());
                     disGoodsEntity.setGbDdgDisGoodsFatherId(gbGoods.getGbDgDfgGoodsFatherId());
                     disGoodsEntity.setGbDdgDisGoodsGrandId(gbGoods.getGbDgDfgGoodsGrandId());
+                    disGoodsEntity.setGbDdgDisGoodsGreatId(gbGoods.getGbDgDfgGoodsGreatId());
                     disGoodsEntity.setGbDdgDepGoodsPinyin(gbGoods.getGbDgGoodsPinyin());
                     disGoodsEntity.setGbDdgDepGoodsPy(gbGoods.getGbDgGoodsPy());
                     disGoodsEntity.setGbDdgDepGoodsStandardname(gbGoods.getGbDgGoodsStandardname());
@@ -1536,7 +1635,7 @@ public class GbDistributerGoodsController {
         //判断是否是nxDistributer商品
         Integer nxGoodsId = gbGoods.getGbDgNxGoodsId();
         System.out.println("nxgoidisisisi" + gbGoods.getGbDgNxGoodsId());
-        if (nxGoodsId != -1 && gbGoods.getGbDgGoodsType() == 5) {
+        if (nxGoodsId != null && nxGoodsId != -1 && gbGoods.getGbDgGoodsType() == 5) {
             System.out.println("-1--1-1-1--1--1-1-1-1--1-1--1-1-1-");
 //            Integer gbDgNxGoodsId = gbGoods.getGbDgNxGoodsId();
             Integer gbDgNxDistributerId = gbGoods.getGbDgNxDistributerId();
@@ -1746,6 +1845,7 @@ public class GbDistributerGoodsController {
             disGoodsEntity.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
             disGoodsEntity.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
             disGoodsEntity.setGbDdgDisGoodsGrandId(disGoods.getGbDgDfgGoodsGrandId());
+            disGoodsEntity.setGbDdgDisGoodsGreatId(disGoods.getGbDgDfgGoodsGreatId());
             disGoodsEntity.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
             disGoodsEntity.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
             disGoodsEntity.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
@@ -1807,6 +1907,7 @@ public class GbDistributerGoodsController {
                         disGoodsEntityDep.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
                         disGoodsEntityDep.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
                         disGoodsEntityDep.setGbDdgDisGoodsGrandId(disGoods.getGbDgDfgGoodsGrandId());
+                        disGoodsEntityDep.setGbDdgDisGoodsGreatId(disGoods.getGbDgDfgGoodsGreatId());
                         disGoodsEntityDep.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
                         disGoodsEntityDep.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
                         disGoodsEntityDep.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
@@ -1833,6 +1934,7 @@ public class GbDistributerGoodsController {
     }
 
     //
+
 
     /**
      * 添加批发商商品
@@ -1864,82 +1966,47 @@ public class GbDistributerGoodsController {
             map.put("type", 2);
             List<GbDepartmentEntity> gbDepartmentEntityList = gbDepartmentService.queryDepByDepType(map);
             if (gbDepartmentEntityList.size() > 0) {
+                cgnGoods.setGbDgGoodsType(1);
                 cgnGoods.setGbDgGbDepartmentId(gbDepartmentEntityList.get(0).getGbDepartmentId());
             }
 
 
             GbDistributerGoodsEntity disGoods = saveDisGoods(cgnGoods);
-
-            //addStockDepDisGoods
-//            Integer gbDgGoodsType = disGoods.getGbDgGoodsType();
-//            System.out.println("goodstype" + gbDgGoodsType);
-//            if (gbDgGoodsType.equals(getGbDisGoodsTypeChuku()) || gbDgGoodsType.equals(getGbDisGoodsTypeKitchen()) || gbDgGoodsType.equals(getGbDisGoodsTypeAppSupplier())) {
-////添加部门商品
-//                GbDepartmentDisGoodsEntity disGoodsEntity = new GbDepartmentDisGoodsEntity();
-//                disGoodsEntity.setGbDdgDepGoodsName(disGoods.getGbDgGoodsName());
-//                disGoodsEntity.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
-//                disGoodsEntity.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
-//                disGoodsEntity.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
-//                disGoodsEntity.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
-//                disGoodsEntity.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
-//                disGoodsEntity.setGbDdgDepartmentId(disGoods.getGbDgGbDepartmentId());
-//                disGoodsEntity.setGbDdgDepartmentFatherId(disGoods.getGbDgGbDepartmentId());
-//                disGoodsEntity.setGbDdgGbDepartmentId(disGoods.getGbDgGbDepartmentId());
-//                disGoodsEntity.setGbDdgGbDisId(disGoods.getGbDgDistributerId());
-//                disGoodsEntity.setGbDdgGoodsType(disGoods.getGbDgGoodsType());
-//                disGoodsEntity.setGbDdgStockTotalWeight("0.0");
-//                disGoodsEntity.setGbDdgStockTotalSubtotal("0.0");
-//                disGoodsEntity.setGbDdgShowStandardId(-1);
-//                disGoodsEntity.setGbDdgShowStandardName(disGoods.getGbDgGoodsStandardname());
-//                disGoodsEntity.setGbDdgShowStandardScale("-1");
-//                disGoodsEntity.setGbDdgShowStandardWeight(null);
-//                disGoodsEntity.setGbDdgNxDistributerGoodsId(GbDgNxGoodsId);
-//                gbDepDisGoodsService.save(disGoodsEntity);
-//            }
+//            GbDepartmentDisGoodsEntity disGoodsEntity = new GbDepartmentDisGoodsEntity();
+//            disGoodsEntity.setGbDdgDepGoodsName(disGoods.getGbDgGoodsName());
+//            disGoodsEntity.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
+//            disGoodsEntity.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
+//            disGoodsEntity.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
+//            disGoodsEntity.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
+//            disGoodsEntity.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
+//            disGoodsEntity.setGbDdgDepartmentId(disGoods.getGbDgGbDepartmentId());
+//            disGoodsEntity.setGbDdgDepartmentFatherId(disGoods.getGbDgGbDepartmentId());
+//            disGoodsEntity.setGbDdgGbDepartmentId(disGoods.getGbDgGbDepartmentId());
+//            disGoodsEntity.setGbDdgGbDisId(disGoods.getGbDgDistributerId());
+//            disGoodsEntity.setGbDdgGoodsType(disGoods.getGbDgGoodsType());
+//            disGoodsEntity.setGbDdgStockTotalWeight("0.0");
+//            disGoodsEntity.setGbDdgStockTotalSubtotal("0.0");
+//            disGoodsEntity.setGbDdgShowStandardId(-1);
+//            disGoodsEntity.setGbDdgShowStandardName(disGoods.getGbDgGoodsStandardname());
+//            disGoodsEntity.setGbDdgShowStandardScale("-1");
+//            disGoodsEntity.setGbDdgShowStandardWeight(null);
+//            disGoodsEntity.setGbDdgNxDistributerGoodsId(GbDgNxGoodsId);
+//            disGoodsEntity.setGbDdgDisGoodsGrandId(disGoodsEntity.getGbDdgDisGoodsGrandId());
+//            disGoodsEntity.setGbDdgDisGoodsGreatId(disGoodsEntity.getGbDdgDisGoodsGreatId());
+//
+//            gbDepDisGoodsService.save(disGoodsEntity);
 
             //2.2
             Integer nxCgGoodsId = cgnGoods.getGbDistributerGoodsId();
-//            List<NxAliasEntity> aliasEntities = cgnGoods.;
-//            if (aliasEntities.size() > 0) {
-//                for (NxAliasEntity aliasEntity : aliasEntities) {
-//                    GbDistributerAliasEntity disAlias = new GbDistributerAliasEntity();
-//                    disAlias.setGbDaDisGoodsId(nxCgGoodsId);
-//                    disAlias.setGbDaAliasName(aliasEntity.getNxAliasName());
-//                    disAliasService.save(disAlias);
-//                }
-//            }
-
-            //添加给门店
-            //如果是餐饮商品，自动给门店添加部门商品
-//            if (disGoods.getGbDgGoodsType() < 20) {
-//                Map<String, Object> map = new HashMap<>();
-//                map.put("disId", disGoods.getGbDgDistributerId());
-//                map.put("type", getGbDepartmentTypeMendian());
-//                List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(map);
-//                if (departmentEntities.size() > 0) {
-//                    for (GbDepartmentEntity dep : departmentEntities) {
-//                        GbDepartmentDisGoodsEntity disGoodsEntityDep = new GbDepartmentDisGoodsEntity();
-//                        disGoodsEntityDep.setGbDdgDepGoodsName(disGoods.getGbDgGoodsName());
-//                        disGoodsEntityDep.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
-//                        disGoodsEntityDep.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
-//                        disGoodsEntityDep.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
-//                        disGoodsEntityDep.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
-//                        disGoodsEntityDep.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
-//                        disGoodsEntityDep.setGbDdgDepartmentId(dep.getGbDepartmentId());
-//                        disGoodsEntityDep.setGbDdgDepartmentFatherId(dep.getGbDepartmentId());
-//                        disGoodsEntityDep.setGbDdgGbDepartmentId(disGoods.getGbDgGbDepartmentId());
-//                        disGoodsEntityDep.setGbDdgGbDisId(disGoods.getGbDgDistributerId());
-//                        disGoodsEntityDep.setGbDdgGoodsType(disGoods.getGbDgGoodsType());
-//                        disGoodsEntityDep.setGbDdgStockTotalWeight("0.0");
-//                        disGoodsEntityDep.setGbDdgStockTotalSubtotal("0.0");
-//                        disGoodsEntityDep.setGbDdgShowStandardId(-1);
-//                        disGoodsEntityDep.setGbDdgShowStandardName(disGoods.getGbDgGoodsStandardname());
-//                        disGoodsEntityDep.setGbDdgShowStandardScale("-1");
-//                        disGoodsEntityDep.setGbDdgShowStandardWeight(null);
-//                        gbDepDisGoodsService.save(disGoodsEntityDep);
-//                    }
-//                }
-//            }
+            List<NxAliasEntity> aliasEntities = cgnGoods.getNxAliasEntities();
+            if (aliasEntities.size() > 0) {
+                for (NxAliasEntity aliasEntity : aliasEntities) {
+                    GbDistributerAliasEntity disAlias = new GbDistributerAliasEntity();
+                    disAlias.setGbDaDisGoodsId(nxCgGoodsId);
+                    disAlias.setGbDaAliasName(aliasEntity.getNxAliasName());
+                    gbDistributerAliasService.save(disAlias);
+                }
+            }
 
             return R.ok().put("data", disGoods);
         }
@@ -1987,6 +2054,9 @@ public class GbDistributerGoodsController {
             //2，保存disId商品
             cgnGoods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
             cgnGoods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+            GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+            cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
             //1 ，先保存disGoods
             gbDgService.save(cgnGoods);
             //
@@ -2008,6 +2078,11 @@ public class GbDistributerGoodsController {
             Integer distributerFatherGoodsId = dgf.getGbDistributerFatherGoodsId();
             cgnGoods.setGbDgDfgGoodsFatherId(distributerFatherGoodsId);
             cgnGoods.setGbDgDfgGoodsGrandId(dgf.getGbDfgFathersFatherId());
+
+            GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(dgf.getGbDfgFathersFatherId());
+            cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
+
             gbDgService.save(cgnGoods);
             //继续查询是否有GrandFather
             String fatherName = cgnGoods.getGbDgNxGrandName();
@@ -2054,6 +2129,7 @@ public class GbDistributerGoodsController {
 
         Integer nxDgNxGoodsId = cgnGoods.getGbDgNxGoodsId();
         NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxDgNxGoodsId);
+
         cgnGoods.setGbDgGoodsName(nxGoodsEntity.getNxGoodsName());
         cgnGoods.setGbDgNxFatherImg(nxGoodsEntity.getNxGoodsFile());
         cgnGoods.setGbDgGoodsStandardname(nxGoodsEntity.getNxGoodsStandardname());
@@ -2078,6 +2154,14 @@ public class GbDistributerGoodsController {
         cgnGoods.setGbDgIsFranchisePrice(0);
         cgnGoods.setGbDgIsSelfControl(0);
         cgnGoods.setGbDgGoodsIsHidden(0);
+        cgnGoods.setGbDgGoodsType(2);
+        cgnGoods.setGbDgGoodsIsWeight(0);
+        cgnGoods.setGbDgNxDistributerId(-1);
+        cgnGoods.setGbDgNxDistributerGoodsId(-1);
+        cgnGoods.setGbDgGoodsInventoryType(1);
+        cgnGoods.setGbDgGbSupplierId(-1);
+        cgnGoods.setGbDgNxDistributerGoodsPrice("0.1");
+        cgnGoods.setGbDgQuantityDays(nxGoodsEntity.getNxGoodsQuantityDays());
 
 
         //queryGrandFatherId
@@ -2088,53 +2172,52 @@ public class GbDistributerGoodsController {
         cgnGoods.setGbDgNxGrandName(grandEntity.getNxGoodsName());
 
         //queryGreatGrandFatherId
-        Integer greatGrandFatherId = grandEntity.getNxGoodsFatherId();
-        if (greatGrandFatherId.equals(1)) {
+        Integer nxGreatGrandFatherId = grandEntity.getNxGoodsFatherId();
+        if (nxGreatGrandFatherId.equals(1)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#20afb8");
         }
-        if (greatGrandFatherId.equals(2)) {
+        if (nxGreatGrandFatherId.equals(2)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#f5c832");
         }
-        if (greatGrandFatherId.equals(3)) {
+        if (nxGreatGrandFatherId.equals(3)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#3cc36e");
         }
-        if (greatGrandFatherId.equals(4)) {
+        if (nxGreatGrandFatherId.equals(4)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#f09628");
         }
-        if (greatGrandFatherId.equals(5)) {
+        if (nxGreatGrandFatherId.equals(5)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#1ebaee");
         }
-        if (greatGrandFatherId.equals(6)) {
+        if (nxGreatGrandFatherId.equals(6)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#f05a32");
         }
-        if (greatGrandFatherId.equals(7)) {
+        if (nxGreatGrandFatherId.equals(7)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#c0a6dd");
         }
-        if (greatGrandFatherId.equals(8)) {
+        if (nxGreatGrandFatherId.equals(8)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#969696");
         }
-        if (greatGrandFatherId.equals(9)) {
+        if (nxGreatGrandFatherId.equals(9)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#318666");
         }
-        if (greatGrandFatherId.equals(10)) {
+        if (nxGreatGrandFatherId.equals(10)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#026bc2");
         }
-        if (greatGrandFatherId.equals(11)) {
+        if (nxGreatGrandFatherId.equals(11)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#06eb6d");
         }
-        if (greatGrandFatherId.equals(12)) {
+        if (nxGreatGrandFatherId.equals(12)) {
             cgnGoods.setGbDgNxGoodsFatherColor("#0690eb");
         }
 
-        cgnGoods.setGbDgNxGreatGrandId(greatGrandFatherId);
-        cgnGoods.setGbDgNxGreatGrandName(nxGoodsService.queryObject(greatGrandFatherId).getNxGoodsName());
+        cgnGoods.setGbDgNxGreatGrandId(nxGreatGrandFatherId);
+        cgnGoods.setGbDgNxGreatGrandName(nxGoodsService.queryObject(nxGreatGrandFatherId).getNxGoodsName());
 
         Integer GbDgDistributerId = cgnGoods.getGbDgDistributerId();
 
         // 3， 查询父类
         Integer GbDgNxFatherId = cgnGoods.getGbDgNxFatherId();
         Map<String, Object> map11 = new HashMap<>();
-//        map11.put("nxGoodsId", GbDgNxFatherId);
         map11.put("disId", GbDgDistributerId);
         map11.put("nxFatherId", GbDgNxFatherId);
         System.out.println("faehrhrhehehemap" + map11);
@@ -2146,6 +2229,7 @@ public class GbDistributerGoodsController {
             GbDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsEntities.get(0);
             Integer nxDgDfgGoodsFatherId1 = disGoodsEntity.getGbDgDfgGoodsFatherId();
             Integer nxDgDfgGoodsGrandId = disGoodsEntity.getGbDgDfgGoodsGrandId();
+            Integer nxDgDfgGoodsGreatId = disGoodsEntity.getGbDgDfgGoodsGreatId();
 
             GbDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = dgfService.queryObject(nxDgDfgGoodsFatherId1);
             Integer nxDfgGoodsAmount = nxDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
@@ -2156,6 +2240,8 @@ public class GbDistributerGoodsController {
             Integer nxDgDfgGoodsFatherId = disGoodsEntity.getGbDgDfgGoodsFatherId();
             cgnGoods.setGbDgDfgGoodsFatherId(nxDgDfgGoodsFatherId);
             cgnGoods.setGbDgDfgGoodsGrandId(nxDgDfgGoodsGrandId);
+            cgnGoods.setGbDgDfgGoodsGreatId(nxDgDfgGoodsGreatId);
+
             System.out.println("cngnndg" + cgnGoods.getGbDgDfgGoodsGrandId());
             //1 ，先保存disGoods
             gbDgService.save(cgnGoods);
@@ -2174,15 +2260,19 @@ public class GbDistributerGoodsController {
             dgf.setGbDfgNxGoodsId(cgnGoods.getGbDgNxFatherId());
             dgf.setGbDfgFatherGoodsImg(cgnGoods.getGbDgNxFatherImg());
             dgf.setGbDfgFatherGoodsImgLarge(cgnGoods.getGbDgNxFatherImgLarge());
-//            Integer gbDgNxFatherId = cgnGoods.getGbDgNxFatherId();
-//            NxGoodsEntity nxGoodsEntity1 = nxGoodsService.queryObject(gbDgNxFatherId);
             dgf.setGbDfgFatherGoodsSort(nxGoodsEntity.getFatherGoods().getNxGoodsSort());
             dgf.setGbDfgNxGoodsId(cgnGoods.getGbDgNxFatherId());
             dgfService.save(dgf);
             //更新disGoods的fatherGoodsId
             Integer distributerFatherGoodsId = dgf.getGbDistributerFatherGoodsId();
             cgnGoods.setGbDgDfgGoodsFatherId(distributerFatherGoodsId);
-            cgnGoods.setGbDgDfgGoodsGrandId(dgf.getGbDfgFathersFatherId());
+
+            //todo
+//            cgnGoods.setGbDgDfgGoodsGrandId(dgf.getGbDfgFathersFatherId());
+////
+//            GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(dgf.getGbDfgFathersFatherId());
+//            cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
             System.out.println("zizin" + dgf.getGbDfgFathersFatherId());
             gbDgService.save(cgnGoods);
             //继续查询是否有GrandFather
@@ -2191,8 +2281,6 @@ public class GbDistributerGoodsController {
             Map<String, Object> map2 = new HashMap<>();
             map2.put("disId", GbDgDistributerId);
             map2.put("fathersFatherName", grandName);
-//            map2.put("nxGoodsId", cgnGoods.getGbDgNxGrandId());
-//            map2.put("goodsLevel", 1);
             List<GbDistributerFatherGoodsEntity> grandGoodsFather = dgfService.queryHasDisFathersFather(map2);
             if (grandGoodsFather.size() > 0) {
                 GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity = grandGoodsFather.get(0);
@@ -2201,13 +2289,13 @@ public class GbDistributerGoodsController {
                 dgf.setGbDfgFathersFatherId(gbDistributerFatherGoodsEntity.getGbDistributerFatherGoodsId());
                 dgfService.update(dgf);
 
-                //更新disGoods的fatherGoodsId
-//                Integer distributerFatherGoodsId = dgf.getGbDistributerFatherGoodsId();
-                Integer nxDfgFathersFatherId = dgf.getGbDfgFathersFatherId();
-                cgnGoods.setGbDgDfgGoodsFatherId(distributerFatherGoodsId);
+                Integer nxDfgFathersFatherId = gbDistributerFatherGoodsEntity.getGbDistributerFatherGoodsId();
                 cgnGoods.setGbDgDfgGoodsGrandId(nxDfgFathersFatherId);
-                System.out.println("zizin" + dgf.getGbDfgFathersFatherId());
+                GbDistributerFatherGoodsEntity great = dgfService.queryObject(nxDfgFathersFatherId);
+                cgnGoods.setGbDgDfgGoodsGreatId(great.getGbDfgFathersFatherId());
                 gbDgService.update(cgnGoods);
+
+
 
             } else {
                 //tianjiaGrand
@@ -2225,27 +2313,17 @@ public class GbDistributerGoodsController {
                 System.out.println("nxgoodsnxgoods====" + nxGrand.getNxGoodsId() + "sort==" + nxGrand.getNxGoodsSort());
                 grand.setGbDfgFatherGoodsSort(nxGrand.getNxGoodsSort());
                 dgfService.save(grand);
-                dgf.setGbDfgFathersFatherId(grand.getGbDistributerFatherGoodsId());
 
+                dgf.setGbDfgFathersFatherId(grand.getGbDistributerFatherGoodsId());
                 dgfService.update(dgf);
 
-//                Integer distributerFatherGoodsId = dgf.getNxDistributerFatherGoodsId();
-                Integer nxDfgFathersFatherId = dgf.getGbDfgFathersFatherId();
-                cgnGoods.setGbDgDfgGoodsFatherId(distributerFatherGoodsId);
-                cgnGoods.setGbDgDfgGoodsGrandId(nxDfgFathersFatherId);
                 cgnGoods.setGbDgDfgGoodsGrandId(grand.getGbDistributerFatherGoodsId());
                 gbDgService.update(cgnGoods);
-
 
                 //查询是否有greatGrand
                 Map<String, Object> map3 = new HashMap<>();
                 map3.put("disId", GbDgDistributerId);
-//                map3.put("nxGoodsId", cgnGoods.getGbDgNxGreatGrandId());
-//                map3.put("goodsLevel", 0);
-//                List<GbDistributerFatherGoodsEntity> greatGrandGoodsFather = dgfService.queryHasDisFathersFather(map3);
-//                map3.put("disId", nxDgDistributerId);
                 String greatGrandName = cgnGoods.getGbDgNxGreatGrandName();
-
                 map3.put("fathersFatherName", greatGrandName);
                 List<GbDistributerFatherGoodsEntity> greatGrandGoodsFather = dgfService.queryHasDisFathersFather(map3);
 
@@ -2256,8 +2334,10 @@ public class GbDistributerGoodsController {
                     Integer gbDfgGoodsAmount = grand.getGbDfgGoodsAmount();
                     grand.setGbDfgGoodsAmount(gbDfgGoodsAmount + 1);
                     dgfService.update(grand);
-//                    cgnGoods.setGbDgDfgGoodsGrandId(grand.getGbDistributerFatherGoodsId());
-//                    gbDgService.update(cgnGoods);
+
+                    cgnGoods.setGbDgDfgGoodsGreatId(disFatherId);
+                    gbDgService.update(cgnGoods);
+
                 } else {
                     GbDistributerFatherGoodsEntity greatGrand = new GbDistributerFatherGoodsEntity();
                     NxGoodsEntity greatGrandEntity = nxGoodsService.queryObject(cgnGoods.getGbDgNxGreatGrandId());
@@ -2277,6 +2357,9 @@ public class GbDistributerGoodsController {
 
                     grand.setGbDfgFathersFatherId(greatGrand.getGbDistributerFatherGoodsId());
                     dgfService.update(grand);
+
+                    cgnGoods.setGbDgDfgGoodsGreatId(greatGrand.getGbDistributerFatherGoodsId());
+                    gbDgService.update(cgnGoods);
                 }
             }
         }
@@ -2415,7 +2498,7 @@ public class GbDistributerGoodsController {
         map2.put("disGoodsId", disGoodsId);
         map2.put("startDate", formatWhatDay(-2));
 
-        List<GbDistributerPurchaseGoodsEntity> goodsEntities = gbDisPurchaseGoodsService.queryPurchaseGoodsByParams(map2);
+        List<GbDistributerPurchaseGoodsEntity> goodsEntities = gbDisPurchaseGoodsService.queryOnlyPurGoods(map2);
 
 
         //客户
@@ -2497,7 +2580,7 @@ public class GbDistributerGoodsController {
         map2.put("startDate", formatWhatDay(-2));
 //        map2.put("equalStatus", 3);
         System.out.println("purgooddd" + map2);
-        List<GbDistributerPurchaseGoodsEntity> goodsEntities = gbDisPurchaseGoodsService.queryPurchaseGoodsByParams(map2);
+        List<GbDistributerPurchaseGoodsEntity> goodsEntities = gbDisPurchaseGoodsService.queryOnlyPurGoods(map2);
 
         //客户
         Map<String, Object> map41 = new HashMap<>();
@@ -2609,12 +2692,24 @@ public class GbDistributerGoodsController {
                 String pinyin = hanziToPinyin(searchStr);
                 map.put("searchStr", searchStr);
                 map.put("searchPinyin", pinyin);
+
+                System.out.println("hahhaizizizi" + map);
             } else {
                 map.put("searchPinyin", searchStr);
+                System.out.println("searchPinyinsearchPinyin" + map);
             }
         }
         List<GbDistributerGoodsEntity> goodsEntities = gbDgService.queryGbDisGoodsQuickSearchStr(map);
-        return R.ok().put("data", goodsEntities);
+        System.out.println("goodsssiziz" + goodsEntities.size());
+        List<GbDistributerGoodsEntity> list = new ArrayList<>();
+        if(goodsEntities.size() > 0){
+            for(GbDistributerGoodsEntity gbDistributerGoodsEntity : goodsEntities){
+                gbDgService.getStockTotal(gbDistributerGoodsEntity);
+                list.add(gbDistributerGoodsEntity);
+            }
+
+        }
+        return R.ok().put("data", list);
     }
 
 
@@ -2824,7 +2919,7 @@ public class GbDistributerGoodsController {
     public R queryDepartmentIsSelfGoodsByQuickSearchGb(String searchStr, Integer isSelf, String depId) {
         Map<String, Object> map1 = new HashMap<>();
         map1.put("depId", depId);
-        map1.put("isSelf", isSelf);
+//        map1.put("isSelf", isSelf);
         for (int i = 0; i < searchStr.length(); i++) {
             String str = searchStr.substring(i, i + 1);
             if (str.matches("[\u4E00-\u9FFF]")) {
@@ -2891,6 +2986,9 @@ public class GbDistributerGoodsController {
                 depDisGoods.setGbDdgDisGoodsFatherId(fatherId);
                 GbDistributerFatherGoodsEntity fatherGoodsEntity = dgfService.queryObject(fatherId);
                 depDisGoods.setGbDdgDisGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+                GbDistributerFatherGoodsEntity grand = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+                depDisGoods.setGbDdgDisGoodsGreatId(grand.getGbDfgFathersFatherId());
+
                 gbDepDisGoodsService.update(depDisGoods);
             }
         }
@@ -2947,6 +3045,10 @@ public class GbDistributerGoodsController {
 
         goodsEntity.setGbDgDfgGoodsFatherId(fatherId);
         goodsEntity.setGbDgDfgGoodsGrandId(fatherGoodsEntity1.getGbDfgFathersFatherId());
+
+        GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+        goodsEntity.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
         gbDgService.update(goodsEntity);
 
         return R.ok();
@@ -3116,6 +3218,7 @@ public class GbDistributerGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(goods.getGbDgDfgGoodsGreatId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
@@ -3149,6 +3252,7 @@ public class GbDistributerGoodsController {
                     disGoodsEntityDep.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
                     disGoodsEntityDep.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
                     disGoodsEntity.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
+                    disGoodsEntity.setGbDdgDisGoodsGreatId(goods.getGbDgDfgGoodsGreatId());
                     disGoodsEntityDep.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
                     disGoodsEntityDep.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
                     disGoodsEntityDep.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
@@ -3227,6 +3331,7 @@ public class GbDistributerGoodsController {
         disGoodsEntityDep.setGbDdgDisGoodsId(goods.getGbDistributerGoodsId());
         disGoodsEntityDep.setGbDdgDisGoodsFatherId(goods.getGbDgDfgGoodsFatherId());
         disGoodsEntityDep.setGbDdgDisGoodsGrandId(goods.getGbDgDfgGoodsGrandId());
+        disGoodsEntityDep.setGbDdgDisGoodsGreatId(goods.getGbDgDfgGoodsGreatId());
         disGoodsEntityDep.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
         disGoodsEntityDep.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
         disGoodsEntityDep.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
@@ -3288,9 +3393,11 @@ public class GbDistributerGoodsController {
     public R canclePostDgnGoodsGb(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {
         Map<String, Object> map5 = new HashMap<>();
         map5.put("disGoodsId", disGoodsId);
+        System.out.println("mapapaap" + map5);
         Integer orderAmount = depOrdersService.queryGbDepartmentOrderAmount(map5);
         Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map5);
-        if (orderAmount > 0 || stockCount > 0) {
+        Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(map5);
+        if (orderAmount > 0 || stockCount > 0 || integer > 0) {
             return R.error(-1, "此商品在使用中");
         } else {
 
@@ -3366,6 +3473,90 @@ public class GbDistributerGoodsController {
 
     }
 
+//    @RequestMapping(value = "/canclePostDgnGoodsGb", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R canclePostDgnGoodsGb(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {
+//        Map<String, Object> map5 = new HashMap<>();
+//        map5.put("disGoodsId", disGoodsId);
+//        System.out.println("mapapaap" + map5);
+//        Integer orderAmount = depOrdersService.queryGbDepartmentOrderAmount(map5);
+//        Integer stockCount = gbDepGoodsStockService.queryGoodsStockCount(map5);
+//        Integer integer = gbDepGoodsDailyService.queryDepGoodsDailyCount(map5);
+//        if (orderAmount > 0 || stockCount > 0 || integer > 0) {
+//            return R.error(-1, "此商品在使用中");
+//        } else {
+//
+//            GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity = dgfService.queryObject(disGoodsFatherId);
+//            Integer gbDfgGoodsAmount = gbDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
+//            gbDistributerFatherGoodsEntity.setGbDfgGoodsAmount(gbDfgGoodsAmount - 1);
+//            dgfService.update(gbDistributerFatherGoodsEntity);
+//
+//            Map<String, Object> map1 = new HashMap<>();
+//            map1.put("disId", disId);
+//            map1.put("dgFatherId", disGoodsFatherId);
+//            //搜索fatherId下有几个disGoods
+//            List<GbDistributerGoodsEntity> totalDisGoods = gbDgService.queryDisGoodsByParams(map1);
+//            //如果disGoods的父类只有一个商品
+//            if (totalDisGoods.size() == 1 && totalDisGoods.get(0).getGbDgNxGoodsId() != null) {
+//                //父类Entity
+//                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity0 = dgfService.queryObject(disGoodsFatherId);
+//                //disGoods的grandId
+//                Integer grandId = gbDistributerFatherGoodsEntity0.getGbDfgFathersFatherId();
+//                Map<String, Object> mapGrand = new HashMap<>();
+//                mapGrand.put("fathersFatherId", grandId);
+//                //搜索grand有几个兄弟
+//                List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = dgfService.queryDisFathersGoodsByParamsGb(mapGrand);
+//                if (fatherGoodsEntities.size() == 1) {
+//                    Integer gbDfgFathersFatherId = fatherGoodsEntities.get(0).getGbDfgFathersFatherId();
+//                    GbDistributerFatherGoodsEntity grandEntity = dgfService.queryObject(gbDfgFathersFatherId);
+//                    Integer greatGrandId = grandEntity.getGbDfgFathersFatherId();
+//                    Map<String, Object> map = new HashMap<>();
+//                    map.put("fathersFatherId", greatGrandId);
+//                    List<GbDistributerFatherGoodsEntity> grandGoodsEntities = dgfService.queryDisFathersGoodsByParamsGb(map);
+//
+//                    //如果grandFather也是只有一个，则删除greatGrandFather
+//                    if (grandGoodsEntities.size() == 1) {
+//                        dgfService.delete(greatGrandId);
+//                    }
+//                    dgfService.delete(grandId);
+//                }
+//                dgfService.delete(disGoodsFatherId);
+//            } else {
+//                //父类商品数量减去1
+//                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity1 = dgfService.queryObject(disGoodsFatherId);
+//                Integer gbDfgGoodsAmount1 = gbDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
+//                gbDistributerFatherGoodsEntity.setGbDfgGoodsAmount(gbDfgGoodsAmount1 - 1);
+//                dgfService.update(gbDistributerFatherGoodsEntity1);
+//            }
+//
+//            //删除订货单位
+//            List<GbDistributerStandardEntity> standardEntities = gbDistributerStandardService.queryDisStandardByDisGoodsIdGb(disGoodsId);
+//            if (standardEntities.size() > 0) {
+//                for (GbDistributerStandardEntity disStandard : standardEntities) {
+//                    gbDistributerStandardService.delete(disStandard.getGbDistributerStandardId());
+//                }
+//            }
+//
+//            int i = gbDgService.delete(disGoodsId);
+//
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("disGoodsId", disGoodsId);
+//            List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities1 = gbDepDisGoodsService.queryGbDepDisGoodsByParams(map);
+//            if (departmentDisGoodsEntities1.size() > 0) {
+//                for (GbDepartmentDisGoodsEntity disGoodsEntity : departmentDisGoodsEntities1) {
+//                    gbDepDisGoodsService.delete(disGoodsEntity.getGbDepartmentDisGoodsId());
+//                }
+//            }
+//
+//            if (i == 1) {
+//                return R.ok();
+//            } else {
+//                return R.error(-1, "删除失败");
+//            }
+//
+//        }
+//
+//    }
     @RequestMapping(value = "/singleMendainCanclePostDgnGoodsGb", method = RequestMethod.POST)
     @ResponseBody
     public R singleMendainCanclePostDgnGoodsGb(Integer disGoodsId, Integer disGoodsFatherId, Integer disId) {

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxPrinterDeviceDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxPrinterDeviceEntity">
+        SELECT * FROM nx_machine_printer_device WHERE nx_pd_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxPrinterDeviceEntity">
+        SELECT * FROM nx_machine_printer_device
+        <where>
+            <if test="marketId != null">
+                AND nx_pd_market_id = #{marketId}
+            </if>
+            <if test="status != null">
+                AND nx_pd_status = #{status}
+            </if>
+        </where>
+        ORDER BY nx_pd_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_printer_device
+        <where>
+            <if test="marketId != null">
+                AND nx_pd_market_id = #{marketId}
+            </if>
+            <if test="status != null">
+                AND nx_pd_status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据设备编号查询 -->
+    <select id="queryByDeviceNo" resultType="com.nongxinle.entity.NxPrinterDeviceEntity">
+        SELECT * FROM nx_machine_printer_device WHERE nx_pd_device_no = #{deviceNo}
+    </select>
+
+    <!-- 根据市场ID查询设备列表 -->
+    <select id="queryByMarketId" resultType="com.nongxinle.entity.NxPrinterDeviceEntity">
+        SELECT * FROM nx_machine_printer_device
+        WHERE nx_pd_market_id = #{marketId}
+        <if test="status != null">
+            AND nx_pd_status = #{status}
+        </if>
+        ORDER BY nx_pd_device_name ASC
+    </select>
+
+    <!-- 查询设备详情（包含阈值配置和责任人） -->
+    <resultMap id="deviceDetailMap" type="com.nongxinle.entity.NxPrinterDeviceEntity">
+        <id property="nxPdId" column="nx_pd_id"/>
+        <result property="nxPdMarketId" column="nx_pd_market_id"/>
+        <result property="nxPdDeviceNo" column="nx_pd_device_no"/>
+        <result property="nxPdDeviceName" column="nx_pd_device_name"/>
+        <result property="nxPdModel" column="nx_pd_model"/>
+        <result property="nxPdLocation" column="nx_pd_location"/>
+        <result property="nxPdPaperCount" column="nx_pd_paper_count"/>
+        <result property="nxPdPaperMax" column="nx_pd_paper_max"/>
+        <result property="nxPdStatus" column="nx_pd_status"/>
+        <result property="nxPdQrCode" column="nx_pd_qr_code"/>
+        <result property="nxPdInstallDate" column="nx_pd_install_date"/>
+        <result property="nxPdLastUpdateTime" column="nx_pd_last_update_time"/>
+        <result property="nxPdCreateTime" column="nx_pd_create_time"/>
+        <collection property="alertThresholds" ofType="com.nongxinle.entity.NxAlertThresholdEntity"
+                    select="com.nongxinle.dao.NxAlertThresholdDao.queryByDeviceId" column="nx_pd_id"/>
+        <collection property="deviceManagers" ofType="com.nongxinle.entity.NxDeviceManagerEntity"
+                    select="com.nongxinle.dao.NxDeviceManagerDao.queryByDeviceId" column="nx_pd_id"/>
+    </resultMap>
+
+    <select id="queryDeviceDetail" resultMap="deviceDetailMap">
+        SELECT * FROM nx_machine_printer_device WHERE nx_pd_id = #{deviceId}
+    </select>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxPrinterDeviceEntity" useGeneratedKeys="true" keyProperty="nxPdId">
+        INSERT INTO nx_machine_printer_device
+        (
+            nx_pd_market_id,
+            nx_pd_device_no,
+            nx_pd_device_name,
+            nx_pd_model,
+            nx_pd_location,
+            nx_pd_paper_count,
+            nx_pd_paper_max,
+            nx_pd_status,
+            nx_pd_qr_code,
+            nx_pd_install_date,
+            nx_pd_create_time
+        )
+        VALUES
+        (
+            #{nxPdMarketId},
+            #{nxPdDeviceNo},
+            #{nxPdDeviceName},
+            #{nxPdModel},
+            #{nxPdLocation},
+            #{nxPdPaperCount},
+            #{nxPdPaperMax},
+            #{nxPdStatus},
+            #{nxPdQrCode},
+            #{nxPdInstallDate},
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxPrinterDeviceEntity">
+        UPDATE nx_machine_printer_device
+        <set>
+            <if test="nxPdDeviceName != null">nx_pd_device_name = #{nxPdDeviceName},</if>
+            <if test="nxPdModel != null">nx_pd_model = #{nxPdModel},</if>
+            <if test="nxPdLocation != null">nx_pd_location = #{nxPdLocation},</if>
+            <if test="nxPdPaperCount != null">nx_pd_paper_count = #{nxPdPaperCount},</if>
+            <if test="nxPdPaperMax != null">nx_pd_paper_max = #{nxPdPaperMax},</if>
+            <if test="nxPdStatus != null">nx_pd_status = #{nxPdStatus},</if>
+            <if test="nxPdQrCode != null">nx_pd_qr_code = #{nxPdQrCode},</if>
+        </set>
+        WHERE nx_pd_id = #{nxPdId}
+    </update>
+
+    <!-- 扣减纸张数量 -->
+    <update id="reducePaperCount">
+        UPDATE nx_machine_printer_device
+        SET nx_pd_paper_count = nx_pd_paper_count - #{count},
+            nx_pd_last_update_time = NOW()
+        WHERE nx_pd_id = #{deviceId}
+          AND nx_pd_paper_count >= #{count}
+    </update>
+
+    <!-- 增加纸张数量 -->
+    <update id="addPaperCount">
+        UPDATE nx_machine_printer_device
+        SET nx_pd_paper_count = nx_pd_paper_count + #{count},
+            nx_pd_last_update_time = NOW()
+        WHERE nx_pd_id = #{deviceId}
+    </update>
+
+    <!-- 手动设置纸张数量 -->
+    <update id="setPaperCount">
+        UPDATE nx_machine_printer_device
+        SET nx_pd_paper_count = #{paperCount},
+            nx_pd_last_update_time = NOW()
+        WHERE nx_pd_id = #{deviceId}
+    </update>
+
+    <!-- 更新设备状态 -->
+    <update id="updateStatus">
+        UPDATE nx_machine_printer_device
+        SET nx_pd_status = #{status}
+        WHERE nx_pd_id = #{deviceId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_printer_device WHERE nx_pd_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_printer_device WHERE nx_pd_id IN
+        <foreach item="nxPdId" collection="array" open="(" separator="," close=")">
+            #{nxPdId}
+        </foreach>
+    </delete>
+
+</mapper>
+

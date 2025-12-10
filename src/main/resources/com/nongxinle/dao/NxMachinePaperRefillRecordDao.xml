@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxMachinePaperRefillRecordDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record WHERE nx_prr_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        <where>
+            <if test="deviceId != null">
+                AND nx_prr_device_id = #{deviceId}
+            </if>
+            <if test="operatorId != null">
+                AND nx_prr_operator_id = #{operatorId}
+            </if>
+            <if test="refillType != null">
+                AND nx_prr_refill_type = #{refillType}
+            </if>
+            <if test="startDate != null">
+                AND DATE(nx_prr_create_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(nx_prr_create_time) &lt;= #{stopDate}
+            </if>
+        </where>
+        ORDER BY nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_paper_refill_record
+        <where>
+            <if test="deviceId != null">
+                AND nx_prr_device_id = #{deviceId}
+            </if>
+            <if test="operatorId != null">
+                AND nx_prr_operator_id = #{operatorId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据设备ID查询 -->
+    <select id="queryByDeviceId" resultType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+        ORDER BY nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 根据操作人ID查询 -->
+    <select id="queryByOperatorId" resultType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        WHERE nx_prr_operator_id = #{operatorId}
+        ORDER BY nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 根据市场ID查询换纸记录（关联设备表和管理员表） -->
+    <select id="queryByMarketIdWithDetails" resultType="map">
+        SELECT 
+            prr.nx_prr_id AS recordId,
+            prr.nx_prr_device_id AS deviceId,
+            pd.nx_pd_device_name AS deviceName,
+            pd.nx_pd_device_no AS deviceNo,
+            prr.nx_prr_refill_type AS refillType,
+            CASE prr.nx_prr_refill_type 
+                WHEN 1 THEN '正常换纸'
+                WHEN 3 THEN '手动校准'
+                ELSE '未知'
+            END AS refillTypeName,
+            prr.nx_prr_paper_type AS paperType,
+            CASE prr.nx_prr_paper_type 
+                WHEN 1 THEN '整张'
+                WHEN 2 THEN '半张'
+                WHEN 3 THEN '三分之一张'
+                ELSE '未知'
+            END AS paperTypeName,
+            prr.nx_prr_add_count AS addCount,
+            prr.nx_prr_waste_count AS wasteCount,
+            prr.nx_prr_after_count AS paperCount,
+            prr.nx_prr_remark AS remark,
+            prr.nx_prr_operator_id AS operatorId,
+            COALESCE(mm.nx_mm_name, '系统') AS operatorName,
+            COALESCE(mm.nx_mm_phone, '') AS operatorPhone,
+            prr.nx_prr_create_time AS createTime
+        FROM nx_machine_paper_refill_record prr
+        INNER JOIN nx_machine_printer_device pd ON prr.nx_prr_device_id = pd.nx_pd_id
+        LEFT JOIN nx_machine_market_manager mm ON prr.nx_prr_operator_id = mm.nx_mm_id
+        WHERE pd.nx_pd_market_id = #{marketId}
+        <if test="startDate != null">
+            AND DATE(prr.nx_prr_create_time) &gt;= #{startDate}
+        </if>
+        <if test="stopDate != null">
+            AND DATE(prr.nx_prr_create_time) &lt;= #{stopDate}
+        </if>
+        ORDER BY prr.nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计市场的换纸记录总数 -->
+    <select id="countByMarketId" resultType="int">
+        SELECT COUNT(*)
+        FROM nx_machine_paper_refill_record prr
+        INNER JOIN nx_machine_printer_device pd ON prr.nx_prr_device_id = pd.nx_pd_id
+        WHERE pd.nx_pd_market_id = #{marketId}
+        <if test="startDate != null">
+            AND DATE(prr.nx_prr_create_time) &gt;= #{startDate}
+        </if>
+        <if test="stopDate != null">
+            AND DATE(prr.nx_prr_create_time) &lt;= #{stopDate}
+        </if>
+    </select>
+
+    <!-- 根据市场ID查询设备换纸统计（按设备分组） -->
+    <select id="queryDeviceStatsByMarketId" resultType="map">
+        SELECT 
+            pd.nx_pd_id AS deviceId,
+            pd.nx_pd_device_name AS deviceName,
+            pd.nx_pd_device_no AS deviceNo,
+            pd.nx_pd_paper_count AS currentPaperCount,
+            pd.nx_pd_paper_type AS paperType,
+            CASE pd.nx_pd_paper_type 
+                WHEN 1 THEN '整张'
+                WHEN 2 THEN '半张'
+                WHEN 3 THEN '三分之一张'
+                ELSE '未知'
+            END AS paperTypeName,
+            COUNT(prr.nx_prr_id) AS refillCount,
+            COALESCE(SUM(CASE WHEN prr.nx_prr_refill_type = 1 THEN prr.nx_prr_add_count ELSE 0 END), 0) AS totalRefill,
+            COALESCE(SUM(CASE WHEN prr.nx_prr_refill_type = 1 THEN prr.nx_prr_waste_count ELSE 0 END), 0) AS refillWaste,
+            COALESCE(SUM(CASE WHEN prr.nx_prr_refill_type = 3 THEN prr.nx_prr_waste_count ELSE 0 END), 0) AS calibrateWaste,
+            COALESCE(SUM(prr.nx_prr_waste_count), 0) AS totalWaste,
+            MAX(prr.nx_prr_create_time) AS lastRefillTime
+        FROM nx_machine_printer_device pd
+        INNER JOIN nx_machine_paper_refill_record prr ON pd.nx_pd_id = prr.nx_prr_device_id
+        WHERE pd.nx_pd_market_id = #{marketId}
+        <if test="startDate != null">
+            AND DATE(prr.nx_prr_create_time) &gt;= #{startDate}
+        </if>
+        <if test="stopDate != null">
+            AND DATE(prr.nx_prr_create_time) &lt;= #{stopDate}
+        </if>
+        GROUP BY pd.nx_pd_id, pd.nx_pd_device_name, pd.nx_pd_device_no, pd.nx_pd_paper_count, pd.nx_pd_paper_type
+        ORDER BY lastRefillTime DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计市场的设备总数（有换纸记录的设备） -->
+    <select id="countDevicesByMarketId" resultType="int">
+        SELECT COUNT(DISTINCT pd.nx_pd_id)
+        FROM nx_machine_printer_device pd
+        INNER JOIN nx_machine_paper_refill_record prr ON pd.nx_pd_id = prr.nx_prr_device_id
+        WHERE pd.nx_pd_market_id = #{marketId}
+        <if test="startDate != null">
+            AND DATE(prr.nx_prr_create_time) &gt;= #{startDate}
+        </if>
+        <if test="stopDate != null">
+            AND DATE(prr.nx_prr_create_time) &lt;= #{stopDate}
+        </if>
+    </select>
+
+    <!-- 根据设备ID查询换纸记录（关联设备表和管理员表） -->
+    <select id="queryByDeviceIdWithDetails" resultType="map">
+        SELECT 
+            prr.nx_prr_id AS recordId,
+            prr.nx_prr_device_id AS deviceId,
+            pd.nx_pd_device_name AS deviceName,
+            pd.nx_pd_device_no AS deviceNo,
+            prr.nx_prr_refill_type AS refillType,
+            CASE prr.nx_prr_refill_type 
+                WHEN 1 THEN '正常换纸'
+                WHEN 3 THEN '手动校准'
+                ELSE '未知'
+            END AS refillTypeName,
+            prr.nx_prr_paper_type AS paperType,
+            CASE prr.nx_prr_paper_type 
+                WHEN 1 THEN '整张'
+                WHEN 2 THEN '半张'
+                WHEN 3 THEN '三分之一张'
+                ELSE '未知'
+            END AS paperTypeName,
+            prr.nx_prr_add_count AS addCount,
+            prr.nx_prr_waste_count AS wasteCount,
+            prr.nx_prr_after_count AS paperCount,
+            prr.nx_prr_remark AS remark,
+            prr.nx_prr_operator_id AS operatorId,
+            COALESCE(mm.nx_mm_name, '系统') AS operatorName,
+            COALESCE(mm.nx_mm_phone, '') AS operatorPhone,
+            prr.nx_prr_create_time AS createTime
+        FROM nx_machine_paper_refill_record prr
+        INNER JOIN nx_machine_printer_device pd ON prr.nx_prr_device_id = pd.nx_pd_id
+        LEFT JOIN nx_machine_market_manager mm ON prr.nx_prr_operator_id = mm.nx_mm_id
+        WHERE prr.nx_prr_device_id = #{deviceId}
+        <if test="startDate != null">
+            AND DATE(prr.nx_prr_create_time) &gt;= #{startDate}
+        </if>
+        <if test="stopDate != null">
+            AND DATE(prr.nx_prr_create_time) &lt;= #{stopDate}
+        </if>
+        ORDER BY prr.nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计设备的换纸记录总数 -->
+    <select id="countByDeviceIdWithDetails" resultType="int">
+        SELECT COUNT(*)
+        FROM nx_machine_paper_refill_record prr
+        WHERE prr.nx_prr_device_id = #{deviceId}
+        <if test="startDate != null">
+            AND DATE(prr.nx_prr_create_time) &gt;= #{startDate}
+        </if>
+        <if test="stopDate != null">
+            AND DATE(prr.nx_prr_create_time) &lt;= #{stopDate}
+        </if>
+    </select>
+
+    <!-- 查询最近一次加纸记录 -->
+    <select id="queryLatestByDeviceId" resultType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+        ORDER BY nx_prr_create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 统计加纸次数 -->
+    <select id="countByDeviceId" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+        <if test="startTime != null">
+            AND nx_prr_create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND nx_prr_create_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <!-- 统计纸张消耗量 -->
+    <select id="sumPaperConsumption" resultType="java.lang.Integer">
+        SELECT SUM(nx_prr_add_count) FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+          AND nx_prr_refill_type = 1
+        <if test="startTime != null">
+            AND nx_prr_create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND nx_prr_create_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity" useGeneratedKeys="true" keyProperty="nxPrrId">
+        INSERT INTO nx_machine_paper_refill_record
+        (
+            nx_prr_device_id,
+            nx_prr_before_count,
+            nx_prr_add_count,
+            nx_prr_after_count,
+            nx_prr_waste_count,
+            nx_prr_operator_id,
+            nx_prr_operator_name,
+            nx_prr_refill_type,
+            nx_prr_paper_type,
+            nx_prr_remark,
+            nx_prr_create_time
+        )
+        VALUES
+        (
+            #{nxPrrDeviceId},
+            #{nxPrrBeforeCount},
+            #{nxPrrAddCount},
+            #{nxPrrAfterCount},
+            #{nxPrrWasteCount},
+            #{nxPrrOperatorId},
+            #{nxPrrOperatorName},
+            #{nxPrrRefillType},
+            #{nxPrrPaperType},
+            #{nxPrrRemark},
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新（一般不需要更新加纸记录） -->
+    <update id="update" parameterType="com.nongxinle.entity.NxMachinePaperRefillRecordEntity">
+        UPDATE nx_machine_paper_refill_record
+        <set>
+            <if test="nxPrrRemark != null">nx_prr_remark = #{nxPrrRemark},</if>
+        </set>
+        WHERE nx_prr_id = #{nxPrrId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_paper_refill_record WHERE nx_prr_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_paper_refill_record WHERE nx_prr_id IN
+        <foreach item="nxPrrId" collection="array" open="(" separator="," close=")">
+            #{nxPrrId}
+        </foreach>
+    </delete>
+
+</mapper>
+

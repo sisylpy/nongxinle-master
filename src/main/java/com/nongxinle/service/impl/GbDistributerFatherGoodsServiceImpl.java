@@ -53,10 +53,10 @@ public class GbDistributerFatherGoodsServiceImpl implements GbDistributerFatherG
 	}
 
 
-    @Override
-    public List<GbDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map) {
-		return gbDistributerFatherGoodsDao.queryDisAll(map);
-    }
+//    @Override
+//    public List<GbDistributerFatherGoodsEntity> queryDisAll(Map<String, Object> map) {
+//		return gbDistributerFatherGoodsDao.queryDisAll(map);
+//    }
 
     @Override
     public List<GbDistributerFatherGoodsEntity> querySubFatherGoods(Integer goodsId) {
@@ -122,6 +122,11 @@ public class GbDistributerFatherGoodsServiceImpl implements GbDistributerFatherG
     public int queryGbFatherGoodsMaxSort(Map<String, Object> map5) {
 
 		return gbDistributerFatherGoodsDao.queryGbFatherGoodsMaxSort(map5);
+    }
+
+    @Override
+    public List<GbDistributerFatherGoodsEntity> queryDisGoodsCataWithFilter(Map<String, Object> mapG) {
+        return gbDistributerFatherGoodsDao.queryDisGoodsCataWithFilter(mapG);
     }
 
 

@@ -9,6 +9,7 @@ package com.nongxinle.entity;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,14 +67,18 @@ public class GbDistributerFatherGoodsEntity implements Serializable,Comparable {
 	private NxGoodsEntity nxGoodsEntity;
 
 	private List<GbDistributerFatherGoodsEntity> fatherGoodsEntities;
+	private TreeSet<GbDistributerFatherGoodsEntity> treeFatherGoodsEntities;
 	private List<GbDistributerPurchaseGoodsEntity> gbDistributerPurchaseGoodsEntities;
 	private List<GbDepartmentDisGoodsEntity> gbDepartmentDisGoodsEntities;
 	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
 	private String GbDgGoodsSubNames;
 
+	private Map<String,Object> dailyData;
+
 	private Boolean isSelected = false;
 
 	private BigDecimal purchaseSubTotal;
+	private double purchaseSubTotalDouble;
 	private BigDecimal purchaseSelfSubTotal;
 	private BigDecimal purchaseSupplierSubTotal;
 	private Double highestTotal ;

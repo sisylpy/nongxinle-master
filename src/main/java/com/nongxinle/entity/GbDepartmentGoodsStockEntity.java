@@ -43,6 +43,7 @@ public class GbDepartmentGoodsStockEntity implements Serializable,Comparable {
 	private Integer gbDgsGbDisGoodsId;
 	private Integer gbDgsGbDisGoodsFatherId;
 	private Integer gbDgsGbDisGoodsGrandId;
+	private Integer gbDgsGbDisGoodsGreatId;
 	/**
 	 *  
 	 */
@@ -131,6 +132,7 @@ public class GbDepartmentGoodsStockEntity implements Serializable,Comparable {
 	private Integer gbDgsDepSettleId;
 	private Integer gbDgsFromDepSettleId;
 	private Integer gbDgsStars;
+	private Integer gbDgsPurUserId;
 
 	private String gbStockWarnHours;
 	private String gbStockWasetHours;

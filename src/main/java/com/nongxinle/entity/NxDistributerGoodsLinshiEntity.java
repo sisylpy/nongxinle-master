@@ -38,38 +38,40 @@ public class NxDistributerGoodsLinshiEntity implements Serializable {
 	/**
 	 *  商品名称
 	 */
-	private String nxDgGoodsName;
+	private String nxDgGoodsLsName;
 	/**
 	 *  商品详细
 	 */
-	private String nxDgGoodsDetail;
+	private String nxDgGoodsLsDetail;
 	/**
 	 *  商品规格
 	 */
-	private String nxDgGoodsStandardname;
+	private String nxDgGoodsLsStandardname;
 	/**
 	 *  社区商品拼音
 	 */
-	private String nxDgGoodsPinyin;
+	private String nxDgGoodsLsPinyin;
 	/**
 	 *  社区商品拼音简拼
 	 */
-	private String nxDgGoodsPy;
-	/**
-	 *  nxGoodsId
-	 */
-	private Integer nxDgNxGoodsId;
+	private String nxDgGoodsLsPy;
+
 	/**
 	 *  
 	 */
-	private String nxDgGoodsBrand;
+	private String nxDgGoodsLsBrand;
 	/**
 	 *  
 	 */
-	private String nxDgGoodsPlace;
+	private String nxDgGoodsLsPlace;
+	private String nxDgApplyDate;
+	private String nxDgGoodsLsFile;
+	private String nxDgGoodsLsFileLarge;
 	/**
 	 *  商品状态
 	 */
 	private Integer nxDgToNxDisGoodsId;
+
+	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 
 }

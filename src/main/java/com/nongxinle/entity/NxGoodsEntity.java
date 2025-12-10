@@ -119,10 +119,20 @@ public class NxGoodsEntity implements Serializable, Comparable {
 
     private Integer nxGoodsStandardAmount;
 
+    //规格重量 例如 500克
     private String nxGoodsStandardWeight;
 
     private Integer subAmount;
     private Integer nxGoodsQuantityDays;
+
+    /**
+     * 外箱名称
+     */
+    private String nxGoodsCartonUnit;
+    /**
+     * 外箱装数量
+     */
+    private Integer nxGoodsItemsPerCarton;
 
     private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 

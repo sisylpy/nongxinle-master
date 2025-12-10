@@ -551,7 +551,11 @@
     </resultMap>
 
     <resultMap id="distributer" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
 	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
     </resultMap>

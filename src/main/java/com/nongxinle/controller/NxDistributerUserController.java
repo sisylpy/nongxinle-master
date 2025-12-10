@@ -386,8 +386,10 @@ public class NxDistributerUserController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("admin",  getNxDisUserAdmin());
+        System.out.println("aabc111" + map);
         List<NxDistributerUserEntity> zeroList = nxDistributerUserService.getAdminUserByParams(map);
         map.put("admin",  getNxDisUserStaff());
+        System.out.println("aabc222" + map);
         List<NxDistributerUserEntity> oneList = nxDistributerUserService.getAdminUserByParams(map);
         zeroList.addAll(oneList);
 
@@ -454,7 +456,7 @@ public class NxDistributerUserController {
         }
     }
 
-    @RequestMapping(value = "/disLoginWork", method = RequestMethod.POST)
+    @RequestMapping(value = "/wxworkLogin", method = RequestMethod.POST)
     @ResponseBody
     public R disLoginWork(@RequestBody  NxDistributerUserEntity distributerUserEntity) {
 
@@ -917,11 +919,13 @@ public class NxDistributerUserController {
     @ResponseBody
     public R disUserSaveWithFile(@RequestParam("file") MultipartFile file,
                                                @RequestParam("userName") String userName,
+                                               @RequestParam("phone") String phone,
                                                @RequestParam("code") String code,
                                                @RequestParam("disId") Integer disId,
                                                @RequestParam("admin") Integer admin,
                                  HttpSession session) {
 
+        System.out.println("fifiifieieieiee" + phone + "admin" + admin);
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAppID() + "&secret=" +
                 myAPPIDConfig.getTexiansongScreat() + "&js_code=" + code +  "&grant_type=authorization_code";
@@ -954,7 +958,9 @@ public class NxDistributerUserController {
             distributerUserEntity.setNxDiuWxNickName(userName);
             distributerUserEntity.setNxDiuDistributerId(disId);
             distributerUserEntity.setNxDiuAdmin(admin);
+            distributerUserEntity.setNxDiuWxPhone(phone);
             nxDistributerUserService.save(distributerUserEntity);
+            System.out.println("phoneoeheoeneoe"+phone);
 
             return R.ok();
         }
@@ -1106,9 +1112,12 @@ public class NxDistributerUserController {
 
     @RequestMapping(value = "/updateDisUser", method = RequestMethod.POST)
     @ResponseBody
-    public R updateDisUser(String userName, Integer userId) {
+    public R updateDisUser(String userName, Integer userId, String phone, String deviceId) {
         NxDistributerUserEntity nxDistributerUserEntity = nxDistributerUserService.queryObject(userId);
         nxDistributerUserEntity.setNxDiuWxNickName(userName);
+        nxDistributerUserEntity.setNxDiuWxPhone(phone);
+        nxDistributerUserEntity.setNxDiuPrintDeviceId(deviceId);
+        System.out.println("apddd" + phone);
         nxDistributerUserService.update(nxDistributerUserEntity);
 
         NxDistributerUserEntity nxDistributerUserEntity1 = nxDistributerUserService.queryUserInfo(userId);

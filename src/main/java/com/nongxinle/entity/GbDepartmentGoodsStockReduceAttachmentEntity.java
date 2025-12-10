@@ -36,7 +36,7 @@ public class GbDepartmentGoodsStockReduceAttachmentEntity implements Serializabl
 	 */
 	private String gbDgsraFilePath;
 	private String gbDgsraFileLargePath;
-	private String gbDgsraType;
+	private Integer gbDgsraType;
 	private Integer gbDgsraStars;
 	/**
 	 *  

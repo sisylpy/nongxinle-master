@@ -30,9 +30,9 @@ public class DateUtils {
     /**
      * 时间格式(yyyy-MM-dd HH:mm:ss)
      */
-    public final static String FULL_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    public final static String FULL_TIME_PATTERN = "yyyy-MM-dd HH:mm";
 
-    public final static String YEAR_DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
+    public final static String YEAR_DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm";
     public final static String DATE_TIME_PATTERN = "MM-dd HH:mm";
     public final static String ONLY_DATE_PATTERN = "MM-dd";
     public final static String MONTH_TIME_PATTERN = "MM";
@@ -65,6 +65,8 @@ public class DateUtils {
             return true;
         }
     }
+
+
 
 
 
@@ -512,7 +514,7 @@ public class DateUtils {
 
     public static String formatWhatTime(int what) {
         Date whatDay = calendarDay(what).getTime();
-        SimpleDateFormat dateFormat2 = new SimpleDateFormat("HH:mm:ss");
+        SimpleDateFormat dateFormat2 = new SimpleDateFormat("HH:mm");
         return dateFormat2.format(whatDay);
     }
 
@@ -696,25 +698,43 @@ public class DateUtils {
 
         return df.format(cld.getTime());
     }
+//    public static String thisWeekMondayString() {
+//        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");//设置日期格式
+//        Calendar cld = Calendar.getInstance(Locale.CHINA);
+//        cld.setFirstDayOfWeek(Calendar.MONDAY);//以周一为首日
+//        cld.setTimeInMillis(System.currentTimeMillis());//当前时间
+//
+//        cld.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);//周一
+//
+//        Date whatDay = calendarDay(0).getTime();
+//        SimpleDateFormat dateFormat2 = new SimpleDateFormat(MONTH_TIME_PATTERN);
+//        String format = dateFormat2.format(whatDay);
+//        SimpleDateFormat hao = new SimpleDateFormat("dd");
+//        String format1 = hao.format(cld.getTime());
+//        System.out.println(" formatformatformatformat" + format);
+//        System.out.println(format1);
+//        return format + "月" + format1 + "日";
+//    }
 
     public static String thisWeekMondayString() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");//设置日期格式
+        SimpleDateFormat df = new SimpleDateFormat("M月d日");
         Calendar cld = Calendar.getInstance(Locale.CHINA);
-        cld.setFirstDayOfWeek(Calendar.MONDAY);//以周一为首日
-        cld.setTimeInMillis(System.currentTimeMillis());//当前时间
+        cld.setFirstDayOfWeek(Calendar.MONDAY);
 
-        cld.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);//周一
+        // 获取当前日期
+        Date today = new Date();
+        cld.setTime(today);
 
-        Date whatDay = calendarDay(0).getTime();
-        SimpleDateFormat dateFormat2 = new SimpleDateFormat(MONTH_TIME_PATTERN);
-        String format = dateFormat2.format(whatDay);
-        SimpleDateFormat hao = new SimpleDateFormat("dd");
-        String format1 = hao.format(cld.getTime());
-        System.out.println(" formatformatformatformat" + format);
-        System.out.println(format1);
-        return format + "月" + format1 + "日";
+        // 计算到本周一的偏移量
+        int dayOfWeek = cld.get(Calendar.DAY_OF_WEEK);
+        int daysFromMonday = (dayOfWeek == Calendar.SUNDAY) ? 6 : dayOfWeek - Calendar.MONDAY;
+
+        // 设置为本周一
+        cld.add(Calendar.DAY_OF_MONTH, -daysFromMonday);
+
+        System.out.println(df.format(cld.getTime()));
+        return df.format(cld.getTime());
     }
-
 
 
     public static String thisWeekSunday() {
@@ -909,7 +929,7 @@ public class DateUtils {
         StringBuilder sb = new StringBuilder();
         System.out.println("dfdd");
         try {
-            SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             Date parse = mDateFormat.parse(date);
             System.out.println(parse);
             Date now = new Date();

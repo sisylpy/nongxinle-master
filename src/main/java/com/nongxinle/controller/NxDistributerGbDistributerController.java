@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 
+import static com.nongxinle.utils.DateUtils.formatWhatDay;
 import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeAppSupplier;
+import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeJicai;
 
 
 @RestController
@@ -37,6 +39,12 @@ public class NxDistributerGbDistributerController {
     private GbDepartmentService gbDepartmentService;
     @Autowired
     private GbDistributerService gbDistributerService;
+    @Autowired
+    private NxDistributerService nxDistributerService;
+    @Autowired
+    private NxDepartmentService nxDepartmentService;
+
+
 
 
 
@@ -93,7 +101,67 @@ public class NxDistributerGbDistributerController {
         NxDistributerGbDistributerEntity nxDistributerGbDistributerEntity = nxDisGbDisService.queryObject(id);
         nxDistributerGbDistributerEntity.setNxDgdStatus(status);
         nxDisGbDisService.update(nxDistributerGbDistributerEntity);
+
+        Integer nxDgdNxDistributerId = nxDistributerGbDistributerEntity.getNxDgdNxDistributerId();
+        Integer nxDgdGbDistributerId = nxDistributerGbDistributerEntity.getNxDgdGbDistributerId();
+
+        NxDistributerEntity distributerEntity = nxDistributerService.queryObject(nxDgdNxDistributerId);
+
+        Map<String, Object> mapS = new HashMap<>();
+        mapS.put("nxDisId", nxDgdNxDistributerId);
+        mapS.put("gbDisId", nxDgdGbDistributerId);
+        System.out.println("msssss" + mapS);
+        List<NxJrdhSupplierEntity> nxJrdhSupplierEntities = nxJrdhSupplierService.queryJrdhSupplerByParams(mapS);
+        if(nxJrdhSupplierEntities.size() == 0){
+            Map<String, Object> map = new HashMap<>();
+            map.put("disId", nxDgdGbDistributerId);
+            map.put("type",getGbDepartmentTypeJicai() );
+            System.out.println("mapapapap" + map);
+            List<GbDepartmentEntity> gbDepartmentEntities = gbDepartmentService.queryDepByDepType(map);
+            NxJrdhSupplierEntity supplierEntity = new NxJrdhSupplierEntity();
+            supplierEntity.setNxJrdhsGbDistributerId(nxDgdGbDistributerId);
+            supplierEntity.setNxJrdhsNxDistributerId(nxDgdNxDistributerId);
+            supplierEntity.setNxJrdhsSupplierName(distributerEntity.getNxDistributerName());
+            supplierEntity.setNxJrdhsSysMarketId(-1);
+            supplierEntity.setNxJrdhsSysCityId(-1);
+            supplierEntity.setNxJrdhsGbDepartmentId(gbDepartmentEntities.get(0).getGbDepartmentId());
+
+            nxJrdhSupplierService.save(supplierEntity);
+            nxDistributerGbDistributerEntity.setNxDgdNxSupplierId(supplierEntity.getNxJrdhSupplierId());
+            nxDisGbDisService.update(nxDistributerGbDistributerEntity);
+
+            GbDistributerEntity gbDistributerEntity = gbDistributerService.queryDistributerInfo(nxDgdGbDistributerId);
+
+            NxDepartmentEntity departmentEntity = new NxDepartmentEntity();
+            departmentEntity.setNxDepartmentName(gbDistributerEntity.getGbDistributerName());
+            departmentEntity.setNxDepartmentDisId(nxDgdNxDistributerId);
+            departmentEntity.setNxDepartmentGbDistributerId(nxDgdGbDistributerId);
+            departmentEntity.setNxDepartmentSettleType(nxDistributerGbDistributerEntity.getNxDgdGbPayMethod());
+            departmentEntity.setNxDepartmentFatherId(0);
+            departmentEntity.setNxDepartmentSubAmount(0);
+            departmentEntity.setNxDepartmentIsGroupDep(1);
+            departmentEntity.setNxDepartmentPrintName("ApplyFiftyPanel");
+            departmentEntity.setNxDepartmentSettleType(0);
+            departmentEntity.setNxDepartmentType("unFixed");
+            departmentEntity.setNxDepartmentShowWeeks(1);
+            departmentEntity.setNxDepartmentWorkingStatus(-1);
+            departmentEntity.setNxDepartmentOweBoxNumber(0);
+            departmentEntity.setNxDepartmentDeliveryBoxNumber(0);
+            departmentEntity.setNxDepartmentUnPayTotal("0");
+            departmentEntity.setNxDepartmentAddCount(0);
+            departmentEntity.setNxDepartmentPayTotal("0");
+            departmentEntity.setNxDepartmentProfitTotal("0");
+            departmentEntity.setNxDepartmentAttrName(gbDistributerEntity.getGbDistributerName());
+            departmentEntity.setNxDepartmentJoinDate(formatWhatDay(0));
+            departmentEntity.setNxDepartmentOrderTotal(0);
+            departmentEntity.setNxDepartmentRecordMinutes(0);
+
+            nxDepartmentService.saveJustDepartment(departmentEntity);
+        }
+
+
         return R.ok();
+
     }
     
 
@@ -111,13 +179,13 @@ public class NxDistributerGbDistributerController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("nxDisId", disId);
+        map.put("isSupplierId", 1);
+        System.out.println("abdbdbbdd" + map);
+        List<GbDistributerEntity>  yishangArr = nxDisGbDisService.queryGbDistributerByParams(map);
         map.put("isSupplierId", -1);
         System.out.println("abdbdbbdd" + map);
-        List<GbDistributerEntity> shixianArr = nxDisGbDisService.queryGbDistributerByParams(map);
-        map.put("isSupplierId", 0);
-        System.out.println("abdbdbbdd" + map);
 
-        List<GbDistributerEntity> yishangArr = nxDisGbDisService.queryGbDistributerByParams(map);
+        List<GbDistributerEntity> shixianArr = nxDisGbDisService.queryGbDistributerByParams(map);
 
         System.out.println("zhelieieieieieie" + shixianArr);
         Map<String, Object> mapRes = new HashMap<>();

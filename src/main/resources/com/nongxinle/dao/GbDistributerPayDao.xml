@@ -20,6 +20,8 @@
 
 	<resultMap id="gbDis" type="GbDistributerEntity">
 		<id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
 		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>

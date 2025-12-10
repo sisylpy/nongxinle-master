@@ -9,6 +9,7 @@ package com.nongxinle.entity;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import lombok.Getter;
@@ -90,6 +91,7 @@ public class NxDistributerEntity implements Serializable , Comparable{
 
 	private NxDistributerUserEntity nxDistributerUserEntity;
 
+
 	private List<NxDistributerUserEntity> nxDistributerUserEntities;
 	private List<NxCommunityGoodsEntity> nxCommunityGoodsEntities;
 	private List<GbDistributerGoodsEntity> gbDistributerGoodsEntities;
@@ -99,6 +101,7 @@ public class NxDistributerEntity implements Serializable , Comparable{
 
 	private List<NxDistributerServiceCityEntity> nxDistributerServiceCityEntities;
 	private SysBusinessTypeEntity sysBusinessTypeEntity;
+	private SysCityMarketEntity sysCityMarketEntity;
 	private GbDepartmentEntity gbDepartmentEntity;
 	private List<NxGoodsEntity> nxGoodsEntities;
 
@@ -121,7 +124,9 @@ public class NxDistributerEntity implements Serializable , Comparable{
 	private List<NxDistributerGoodsEntity> nxDistributerGoodsEntities;
 	private List<GbDistributerFatherGoodsEntity> gbFatherGoodsEntities;
 	private List<GbDistributerPurchaseGoodsEntity> gbDistributerPurchaseGoodsEntities;
+	private List<GbDistributerPurchaseBatchEntity> gbDistributerPurchaseBatchEntities;
 	private List<GbDepartmentBillEntity> gbDepartmentBillEntities;
+	private Map<String,Object> aaa;
 
 
 	@Override

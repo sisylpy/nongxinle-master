@@ -88,6 +88,17 @@ public class XMLParse {
             result[0] = 0;
             result[1] = nodelist1.item(0).getTextContent();
             result[2] = nodelist2.item(0).getTextContent();
+            
+            // 详细日志：检查提取的encrypt值
+            System.out.println("========== XMLParse.extract 提取结果 ==========");
+            System.out.println("原始XML长度=" + xmltext.length());
+            System.out.println("提取的encrypt=[\"" + result[1] + "\"]");
+            System.out.println("提取的encrypt长度=" + result[1].toString().length());
+            System.out.println("提取的encrypt是否包含+号=" + result[1].toString().contains("+"));
+            System.out.println("提取的encrypt是否包含空格=" + result[1].toString().contains(" "));
+            System.out.println("提取的ToUserName=[\"" + result[2] + "\"]");
+            System.out.println("===========================================");
+            
             return result;
         } catch (Exception e) {
             e.printStackTrace();

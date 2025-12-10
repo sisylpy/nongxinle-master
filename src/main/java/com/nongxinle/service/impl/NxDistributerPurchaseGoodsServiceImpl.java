@@ -1,6 +1,10 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
+import com.nongxinle.entity.NxDistributerGoodsEntity;
+import com.nongxinle.entity.NxDistributerUserEntity;
+import com.nongxinle.entity.NxJrdhUserEntity;
+import com.nongxinle.entity.PurchaseGoodsSimpleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -79,16 +83,16 @@ public class NxDistributerPurchaseGoodsServiceImpl implements NxDistributerPurch
 //    }
 
     @Override
-    public List<NxDistributerPurchaseGoodsEntity> queryPurchaseGoodsByGoodsId(Map<String, Object> map) {
+    public List<NxDistributerPurchaseGoodsEntity> queryPurchaseGoodsWithOrders(Map<String, Object> map) {
 
-		return nxDistributerPurchaseGoodsDao.queryPurchaseGoodsByGoodsId(map);
+		return nxDistributerPurchaseGoodsDao.queryPurchaseGoodsWithOrders(map);
     }
 
-    @Override
-    public List<NxDistributerPurchaseGoodsEntity> purUserGetPurchaseGoods(Integer purUserId) {
-
-		return nxDistributerPurchaseGoodsDao.queryPurUserPurchaseGoods(purUserId);
-    }
+//    @Override
+//    public List<NxDistributerPurchaseGoodsEntity> purUserGetPurchaseGoods(Integer purUserId) {
+//
+//		return nxDistributerPurchaseGoodsDao.queryPurUserPurchaseGoods(purUserId);
+//    }
 
     @Override
     public List<NxDistributerPurchaseGoodsEntity> queryPurchaseGoodsByBatchId(Integer purchaseBatchId) {
@@ -96,10 +100,10 @@ public class NxDistributerPurchaseGoodsServiceImpl implements NxDistributerPurch
 		return nxDistributerPurchaseGoodsDao.queryPurchaseGoodsByBatchId(purchaseBatchId);
     }
 
-	@Override
-	public List<NxDistributerPurchaseGoodsEntity> queryForDisGoods(Map<String, Object> map2) {
-		return  nxDistributerPurchaseGoodsDao.queryForDisGoods(map2);
-	}
+//	@Override
+//	public List<NxDistributerPurchaseGoodsEntity> queryForDisGoods(Map<String, Object> map2) {
+//		return  nxDistributerPurchaseGoodsDao.queryForDisGoods(map2);
+//	}
 
     @Override
     public List<NxDistributerPurchaseGoodsEntity> queryPurchaseGoodsByParams(Map<String, Object> map2) {
@@ -118,12 +122,12 @@ public class NxDistributerPurchaseGoodsServiceImpl implements NxDistributerPurch
 
 		return nxDistributerPurchaseGoodsDao.queryPurchaseGoodsWithDetailByParams(map);
     }
-
-    @Override
-    public List<NxDistributerFatherGoodsEntity> queryDisAutoPurchaseGoods(Map<String, Object> map4) {
-
-		return nxDistributerPurchaseGoodsDao.queryDisAutoPurchaseGoods(map4);
-    }
+//
+//    @Override
+//    public List<NxDistributerFatherGoodsEntity> queryDisAutoPurchaseGoods(Map<String, Object> map4) {
+//
+//		return nxDistributerPurchaseGoodsDao.queryDisAutoPurchaseGoods(map4);
+//    }
 
     @Override
     public Double queryPurchaseGoodsSubTotal(Map<String, Object> map) {
@@ -149,5 +153,59 @@ public class NxDistributerPurchaseGoodsServiceImpl implements NxDistributerPurch
 		return nxDistributerPurchaseGoodsDao.queryIfHavePurGoods(map);
     }
 
+    @Override
+    public Integer queryDistinctGoodsCount(Map<String, Object> map) {
+		return nxDistributerPurchaseGoodsDao.queryDistinctGoodsCount(map);
+    }
+
+    @Override
+    public Integer queryGoodsListCount(Map<String, Object> map) {
+		return nxDistributerPurchaseGoodsDao.queryGoodsListCount(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryGoodsListWithPurchase(Map<String, Object> map) {
+		return nxDistributerPurchaseGoodsDao.queryGoodsListWithPurchase(map);
+    }
+
+    @Override
+    public List<NxDistributerPurchaseGoodsEntity> queryPurchaseGoodsByDisGoodsIdAndDate(Map<String, Object> map) {
+		return nxDistributerPurchaseGoodsDao.queryPurchaseGoodsByDisGoodsIdAndDate(map);
+    }
+
+    @Override
+    public List<NxDistributerUserEntity> queryPurUserList(Map<String, Object> map) {
+		return nxDistributerPurchaseGoodsDao.queryPurUserList(map);
+    }
+
+    @Override
+    public List<NxJrdhUserEntity> querySupplierList(Map<String, Object> map) {
+		return nxDistributerPurchaseGoodsDao.querySupplierList(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryNxPurchaseGoodsTopTimes(Map<String, Object> map) {
+        return nxDistributerPurchaseGoodsDao.queryNxPurchaseGoodsTopTimes(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryNxPurchaseGoodsTopSubtotal(Map<String, Object> map) {
+        return nxDistributerPurchaseGoodsDao.queryNxPurchaseGoodsTopSubtotal(map);
+    }
+
+    @Override
+    public Double queryNxPurchaseSubtotalTopSubtotal(Map<String, Object> map) {
+        return nxDistributerPurchaseGoodsDao.queryNxPurchaseSubtotalTopSubtotal(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryNxPurchaseGoodsTopPriceFluctuation(Map<String, Object> map) {
+        return nxDistributerPurchaseGoodsDao.queryNxPurchaseGoodsTopPriceFluctuation(map);
+    }
+
+    @Override
+    public List<PurchaseGoodsSimpleDTO> queryPurchaseGoodsWithOrdersUltraSimple(Map<String, Object> map) {
+        return nxDistributerPurchaseGoodsDao.queryPurchaseGoodsWithOrdersUltraSimple(map);
+    }
 
 }

@@ -16,7 +16,8 @@ public enum QywechatEnum {
     DJAPP("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJAPPPOST("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJAPPDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh),
-    DJAPPPOSTDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh);
+    DJAPPPOSTDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh),
+    MSGAUDIT("会话存档", Constant.CorpID, Constant.TOKEN_MSGAUDIT, Constant.EncodingAESKey_MSGAUDIT);
 
     /**
      * 应用名

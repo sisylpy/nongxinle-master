@@ -74,4 +74,18 @@ public interface GbDepartmentGoodsStockReduceService {
 	List<GbDepartmentEntity> queryReduceDepartment(Map<String, Object> disGoodsMap);
 
     List<GbDistributerPurchaseGoodsEntity> queryPurGoodsForCost(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> queryStockProduceSubtotalTopTimes(Map<String, Object> map);
+
+	List<GbDistributerGoodsEntity> queryStockLossSubtotalTopTimes(Map<String, Object> map);
+
+	List<GbDistributerGoodsEntity> queryStockWasteSubtotalTopTimes(Map<String, Object> map);
+
+	List<Map<String, Object>> queryGbPurchaseGoodsTopDay(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> queryGoodsStockRecordListByParams(Map<String, Object> map0);
+
+    List<GbDistributerGoodsEntity> queryGoodsStockRecordTreeWithDetailV2(Map<String, Object> map0);
+
+    Integer queryReduceGoodsTotalCount(Map<String, Object> map0);
 }

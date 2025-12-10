@@ -52,7 +52,7 @@ public class NxDistributerPayListEntity implements Serializable {
 	/**
 	 *  
 	 */
-	private Integer nxNdplRestPoints;
+	private String nxNdplRestPoints;
 	private Integer nxNdplBuyPoints;
 
 	private Integer nxNdplNxDbId;

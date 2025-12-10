@@ -81,4 +81,6 @@ public interface NxGoodsDao extends BaseDao<NxGoodsEntity> {
 
 
 //    List<NxGoodsEntity> queryCataNxDistribterWithPeisong(Map<String, Object> map);
+
+    List<String> queryNxBrand();
 }

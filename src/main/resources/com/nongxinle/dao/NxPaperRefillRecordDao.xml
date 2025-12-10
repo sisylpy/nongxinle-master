@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxPaperRefillRecordDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxPaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record WHERE nx_prr_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxPaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        <where>
+            <if test="deviceId != null">
+                AND nx_prr_device_id = #{deviceId}
+            </if>
+            <if test="operatorId != null">
+                AND nx_prr_operator_id = #{operatorId}
+            </if>
+            <if test="refillType != null">
+                AND nx_prr_refill_type = #{refillType}
+            </if>
+        </where>
+        ORDER BY nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_paper_refill_record
+        <where>
+            <if test="deviceId != null">
+                AND nx_prr_device_id = #{deviceId}
+            </if>
+            <if test="operatorId != null">
+                AND nx_prr_operator_id = #{operatorId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据设备ID查询 -->
+    <select id="queryByDeviceId" resultType="com.nongxinle.entity.NxPaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+        ORDER BY nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 根据操作人ID查询 -->
+    <select id="queryByOperatorId" resultType="com.nongxinle.entity.NxPaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        WHERE nx_prr_operator_id = #{operatorId}
+        ORDER BY nx_prr_create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 查询最近一次加纸记录 -->
+    <select id="queryLatestByDeviceId" resultType="com.nongxinle.entity.NxPaperRefillRecordEntity">
+        SELECT * FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+        ORDER BY nx_prr_create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 统计加纸次数 -->
+    <select id="countByDeviceId" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+        <if test="startTime != null">
+            AND nx_prr_create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND nx_prr_create_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <!-- 统计纸张消耗量 -->
+    <select id="sumPaperConsumption" resultType="java.lang.Integer">
+        SELECT SUM(nx_prr_add_count) FROM nx_machine_paper_refill_record
+        WHERE nx_prr_device_id = #{deviceId}
+          AND nx_prr_refill_type = 1
+        <if test="startTime != null">
+            AND nx_prr_create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND nx_prr_create_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxPaperRefillRecordEntity" useGeneratedKeys="true" keyProperty="nxPrrId">
+        INSERT INTO nx_machine_paper_refill_record
+        (
+            nx_prr_device_id,
+            nx_prr_before_count,
+            nx_prr_add_count,
+            nx_prr_after_count,
+            nx_prr_waste_count,
+            nx_prr_operator_id,
+            nx_prr_operator_name,
+            nx_prr_refill_type,
+            nx_prr_remark,
+            nx_prr_create_time
+        )
+        VALUES
+        (
+            #{nxPrrDeviceId},
+            #{nxPrrBeforeCount},
+            #{nxPrrAddCount},
+            #{nxPrrAfterCount},
+            #{nxPrrWasteCount},
+            #{nxPrrOperatorId},
+            #{nxPrrOperatorName},
+            #{nxPrrRefillType},
+            #{nxPrrRemark},
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新（一般不需要更新加纸记录） -->
+    <update id="update" parameterType="com.nongxinle.entity.NxPaperRefillRecordEntity">
+        UPDATE nx_machine_paper_refill_record
+        <set>
+            <if test="nxPrrRemark != null">nx_prr_remark = #{nxPrrRemark},</if>
+        </set>
+        WHERE nx_prr_id = #{nxPrrId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_paper_refill_record WHERE nx_prr_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_paper_refill_record WHERE nx_prr_id IN
+        <foreach item="nxPrrId" collection="array" open="(" separator="," close=")">
+            #{nxPrrId}
+        </foreach>
+    </delete>
+
+</mapper>
+

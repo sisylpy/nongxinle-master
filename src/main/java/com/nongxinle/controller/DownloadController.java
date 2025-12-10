@@ -140,7 +140,7 @@ public class DownloadController {
 
         // 创建字体
         XSSFFont font = workbook.createFont();
-        font.setBold(true);                  // 加粗
+        font.setBold(true); // 加粗
         font.setFontHeightInPoints((short)14); // 14号字体
         font.setColor(IndexedColors.DARK_BLUE.getIndex()); // 深蓝色字体
 

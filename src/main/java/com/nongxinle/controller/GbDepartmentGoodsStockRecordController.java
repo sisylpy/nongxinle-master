@@ -20,7 +20,6 @@ import com.nongxinle.utils.R;
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
 import static com.nongxinle.utils.GbTypeUtils.*;
-import static com.sun.tools.doclint.Entity.divide;
 
 
 @RestController
@@ -29,11 +28,8 @@ public class GbDepartmentGoodsStockRecordController {
 
     @Autowired
     private GbDepartmentGoodsStockService gbDepGoodsStockService;
-
     @Autowired
     private GbDepartmentGoodsStockRecordService gbDepGoodsStockRecordService;
-    @Autowired
-    private GbDepartmentService gbDepartmentService;
 
 
 //    @RequestMapping(value = "/getEveryGoodsStockMany", method = RequestMethod.POST)
@@ -287,7 +283,7 @@ public class GbDepartmentGoodsStockRecordController {
         Integer integer = gbDepGoodsStockService.queryGoodsStockCount(map0);
         if (integer > 0) {
             //todo 查一下是否inventorytype 起作用
-            List<GbDistributerFatherGoodsEntity> stockGoodsEntities = gbDepGoodsStockService.queryDepStockDisFatherGoodsFather(map0);
+            List<GbDistributerFatherGoodsEntity> stockGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map0);
             //greatGrand
             totalGreatGrandGoodsList.addAll(stockGoodsEntities);
             for (GbDistributerFatherGoodsEntity greatGrandFather : stockGoodsEntities) {

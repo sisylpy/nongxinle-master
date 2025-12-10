@@ -27,9 +27,14 @@ public class GbDistributerAliasEntity implements Serializable {
 	 *  
 	 */
 	private Integer gbDaDisGoodsId;
+	private Integer gbDaGbAliasId;
 	/**
 	 *  
 	 */
 	private String gbDaAliasName;
+	private String gbDaAliasPinyin;
+	private String gbDaAliasPy;
+
+
 
 }

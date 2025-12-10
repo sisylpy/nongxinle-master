@@ -93,11 +93,18 @@ public class NxDistributerPurchaseGoodsEntity implements Serializable {
     private String nxDpgBuySubtotal;
     private String nxDpgExpectPrice;
     private String nxDpgExpectSubtotal;
+    private String nxDpgStockRestWeight;
 
     private NxJrdhUserEntity sellerUserEntity;
     private NxJrdhUserEntity buyerUserEntity;
     private NxJrdhSupplierEntity jrdhSupplierEntity;
+	private Integer nxDpgApplyShelfId;
 
+    private List<NxDistributerGoodsShelfGoodsEntity> shelfGoodsEntities;
+    private NxDistributerGoodsShelfEntity applyShelfEntity;
+
+    // 库存批次列表（根据该采购商品入库的库存批次）
+    private List<NxDistributerGoodsShelfStockEntity> nxDisGoodsShelfStockEntities;
 
     private NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity;
 }

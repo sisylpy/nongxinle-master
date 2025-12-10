@@ -29,7 +29,10 @@
 		<result property="nxDuWxPhone" column="nx_DU_wx_phone"/>
 	</resultMap>
 	<resultMap id="dep" type="NxDepartmentEntity">
-		<id property="nxDepartmentId" column="nx_department_id"/>
+		 <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -53,7 +56,11 @@
 	</resultMap>
 
 	<resultMap id="dis" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
 		<result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -138,11 +145,68 @@
 		</where>
 	</select>
 
+	<!-- 查询充值记录（支持日期过滤） -->
+	<select id="queryRechargeByParams" resultType="com.nongxinle.entity.NxDistributerPayEntity">
+		select * from nx_distributer_pay
+		<where>
+			<if test="disId != null">
+				and nx_ndp_nx_dis_id = #{disId}
+			</if>
+			<if test="type != null">
+				and nx_ndp_type = #{type}
+			</if>
+			<if test="equalStatus != null">
+				and nx_ndp_status = #{equalStatus}
+			</if>
+			<if test="startDate != null">
+				and DATE(nx_ndp_pay_time) &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and DATE(nx_ndp_pay_time) &lt;= #{stopDate}
+			</if>
+		</where>
+		order by nx_ndp_pay_time DESC
+	</select>
+
+	<select id="queryRechargeByMarketId" resultType="map">
+		SELECT 
+			ndp.nx_distributer_pay_id AS recordId,
+			ndp.nx_ndp_nx_dis_id AS distributerId,
+			nd.nx_distributer_name AS distributerName,
+			ndp.nx_ndp_pay_subtotal AS payAmount,
+			ndp.nx_ndp_buy_quantity AS rechargePoints,
+			ndp.nx_ndp_pay_time AS payTime,
+			ndp.nx_ndp_trade_no AS tradeNo,
+			ndp.nx_ndp_type AS payType,
+			ndp.nx_ndp_status AS payStatus
+		FROM nx_distributer_pay ndp
+		INNER JOIN nx_distributer nd ON ndp.nx_ndp_nx_dis_id = nd.nx_distributer_id
+		<where>
+			<if test="marketId != null">
+				and nd.nx_distributer_sys_market_id = #{marketId}
+			</if>
+			<if test="type != null">
+				and ndp.nx_ndp_type = #{type}
+			</if>
+			<if test="equalStatus != null">
+				and ndp.nx_ndp_status = #{equalStatus}
+			</if>
+			<if test="startDate != null">
+				and DATE(ndp.nx_ndp_pay_time) &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and DATE(ndp.nx_ndp_pay_time) &lt;= #{stopDate}
+			</if>
+		</where>
+		order by ndp.nx_ndp_pay_time DESC
+	</select>
+
 	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerPayEntity" useGeneratedKeys="true" keyProperty="nxDistributerPayId">
 		insert into nx_distributer_pay
 		(
 			`nx_distributer_pay_id`, 
-			`nx_ndp_nx_dis_id`, 
+			`nx_ndp_nx_dis_id`,
+			`nx_ndp_market_id`,
 			`nx_ndp_pay_subtotal`,
 			`nx_ndp_from_time`, 
 			`nx_ndp_stop_time`, 
@@ -160,7 +224,8 @@
 		values
 		(
 			#{nxDistributerPayId}, 
-			#{nxNdpNxDisId}, 
+			#{nxNdpNxDisId},
+			#{nxNdpMarketId},
 			#{nxNdpPaySubtotal},
 			#{nxNdpFromTime}, 
 			#{nxNdpStopTime}, 

@@ -209,6 +209,11 @@ public class NxGoodsServiceImpl implements NxGoodsService {
 		return nxGoodsDao.queryOnlyGoodsIds(map);
     }
 
+    @Override
+    public List<String> queryNxBrand() {
+        return nxGoodsDao.queryNxBrand();
+    }
+
 
 //    @Override
 //    public List<NxGoodsEntity> queryCataNxDistribterWithPeisong(Map<String, Object> map) {

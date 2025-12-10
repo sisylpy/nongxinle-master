@@ -21,6 +21,8 @@ public class TaskJobService extends TimerTask {
     GbDistributerService gbDistributerService;
     @Autowired
     GbDistributerGoodsService gbDistributerGoodsService;
+    @Autowired
+    GbDistributerFatherGoodsService dgfService;
 
     @Override
     public void run() {
@@ -73,6 +75,8 @@ public class TaskJobService extends TimerTask {
                         newDailyEntity.setGbDgdGbDisGoodsId(goods.getGbDdgDisGoodsId());
                         newDailyEntity.setGbDgdGbDisGoodsFatherId(goods.getGbDdgDisGoodsFatherId());
                         newDailyEntity.setGbDgdGbDisGoodsGrandId(goods.getGbDdgDisGoodsGrandId());
+                        GbDistributerFatherGoodsEntity fatherGoodsEntity = dgfService.queryObject(goods.getGbDdgDisGoodsGrandId());
+                        newDailyEntity.setGbDgdGbDisGoodsGreatGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
                         newDailyEntity.setGbDgdGbDepDisGoodsId(goods.getGbDepartmentDisGoodsId());
                         newDailyEntity.setGbDgdFullTime(formatFullTime());
                         newDailyEntity.setGbDgdTaskTime(formatFullTime());
@@ -98,7 +102,9 @@ public class TaskJobService extends TimerTask {
                         newDailyEntity.setGbDgdSellClearMinute("-1");
                         newDailyEntity.setGbDgdLastProduceWeight("0");
                         newDailyEntity.setGbDgdLastWeight(dailyEntity.getGbDgdRestWeight());
+                        newDailyEntity.setGbDgdLastSubtotal(dailyEntity.getGbDgdRestSubtotal());
                         newDailyEntity.setGbDgdRestWeight(dailyEntity.getGbDgdRestWeight());
+                        newDailyEntity.setGbDgdRestSubtotal(dailyEntity.getGbDgdRestSubtotal());
                         GbDistributerGoodsEntity distributerGoodsEntity = gbDistributerGoodsService.queryObject(dailyEntity.getGbDgdGbDisGoodsId());
                         if(distributerGoodsEntity.getGbDgControlFresh() == 1){
                             if( new BigDecimal(dailyEntity.getGbDgdRestWeight()).compareTo(BigDecimal.ZERO) == 1){

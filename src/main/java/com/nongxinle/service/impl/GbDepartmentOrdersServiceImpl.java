@@ -1,22 +1,13 @@
 package com.nongxinle.service.impl;
 
-import com.alibaba.fastjson.JSON;
-//import com.nongxinle.dao.GbDepartmentGoodsDao;
-import com.nongxinle.dao.GbDepartmentUserDao;
-import com.nongxinle.dao.GbDistributerUserDao;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
-import com.nongxinle.utils.HttpUtils;
-import com.sun.source.util.Trees;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 import com.nongxinle.dao.GbDepartmentOrdersDao;
-
-import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.getGbOrderBuyStatusNew;
 import static com.nongxinle.utils.GbTypeUtils.getGbOrderStatusNew;
 
@@ -228,6 +219,25 @@ public class GbDepartmentOrdersServiceImpl implements GbDepartmentOrdersService 
 	    return gbDepartmentOrdersDao.queryGrandGoodsOrder(map1);
     }
 
+    @Override
+    public List<GbDepartmentOrdersEntity> queryDepWeightOrderSearch(Map<String, Object> map) {
+
+	    return gbDepartmentOrdersDao.queryDepWeightOrderSearch(map);
+
+    }
+
+    @Override
+    public double queryOrderWeightTotalByPurGoodsId(Integer gbDoPurchaseGoodsId) {
+
+	    return gbDepartmentOrdersDao.queryOrderWeightTotalByPurGoodsId(gbDoPurchaseGoodsId);
+    }
+
+    @Override
+    public double queryOrderWeightTotalByParams(Map<String, Object> map) {
+
+	    return gbDepartmentOrdersDao.queryOrderWeightTotalByParams(map);
+    }
+
 
     @Override
 	public GbDepartmentOrdersEntity queryObject(Integer gbDepartmentOrdersId){
@@ -238,16 +248,6 @@ public class GbDepartmentOrdersServiceImpl implements GbDepartmentOrdersService 
 	public List<GbDepartmentOrdersEntity> queryList(Map<String, Object> map){
 		return gbDepartmentOrdersDao.queryList(map);
 	}
-//
-//
-//
-//	private String getToken(){
-//		String url = "https://api.weixin.qq.com/cgi-bin/token?appid=wxbc686226ccc443f1&secret=cefb0c474497e74879687862b0d8733e&grant_type=client_credential";
-//		String result = HttpUtils.get(url);
-//		Map<String,Object> map = JSON.parseObject(result);
-//		String access_token = map.get("access_token").toString();
-//		return access_token;
-//	}
 
 
 

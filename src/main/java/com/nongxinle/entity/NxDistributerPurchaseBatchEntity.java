@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import jdk.nashorn.internal.ir.IndexNode;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -68,6 +68,15 @@ public class NxDistributerPurchaseBatchEntity implements Serializable, Comparabl
 	private String nxDpbPruchaseWeek;
 	private String nxDpbBuyUserOpenId;
 	private String nxDpbSellUserOpenId;
+	private String nxDpbPasteContent;
+	/**
+	 * 部门父级ID
+	 */
+	private Integer nxDpbNxDepartmentFatherId;
+	/**
+	 * 部门名称（当部门ID不为null时，从部门表查询）
+	 */
+	private String nxDpbNxDepartmentName;
 
 	@Override
 	public boolean equals(Object o) {

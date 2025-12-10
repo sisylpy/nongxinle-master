@@ -365,7 +365,9 @@ public class GbDepartmentSettleController {
         }
 
         //2,udpate goods_stock
-        List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryStockListByParams(depFatherId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("depFatherId", depFatherId);
+        List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockByParams(map);
 
         for (GbDepartmentGoodsStockEntity stock : stockEntities) {
 
@@ -503,10 +505,10 @@ public class GbDepartmentSettleController {
         }
 
         //3,update goods_daily
-        Map<String, Object> map = new HashMap<>();
-        map.put("depFatherId", depFatherId);
-        map.put("status", 1);
-        List<GbDepInventoryGoodsDailyEntity> dailyEntities = gbDepInventoryGoodsDailyService.queryDailyStockListByParams(map);
+        Map<String, Object> map0 = new HashMap<>();
+        map0.put("depFatherId", depFatherId);
+        map0.put("status", 1);
+        List<GbDepInventoryGoodsDailyEntity> dailyEntities = gbDepInventoryGoodsDailyService.queryDailyStockListByParams(map0);
         if (dailyEntities.size() > 0) {
             for (GbDepInventoryGoodsDailyEntity daily : dailyEntities) {
                 daily.setGbIgdStatus(1);
@@ -636,7 +638,9 @@ public class GbDepartmentSettleController {
 
 
         //2,udpate goods_stock
-        List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryStockListByParams(depFatherId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("depFatherId", depFatherId);
+        List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockByParams(map);
 
         for (GbDepartmentGoodsStockEntity stock : stockEntities) {
             //1，添加stockRecord
@@ -701,10 +705,10 @@ public class GbDepartmentSettleController {
         }
 
         //3,update goods_daily
-        Map<String, Object> map = new HashMap<>();
-        map.put("depFatherId", depFatherId);
-        map.put("status", 1);
-        List<GbDepInventoryGoodsDailyEntity> dailyEntities = gbDepInventoryGoodsDailyService.queryDailyStockListByParams(map);
+        Map<String, Object> map0 = new HashMap<>();
+        map0.put("depFatherId", depFatherId);
+        map0.put("status", 1);
+        List<GbDepInventoryGoodsDailyEntity> dailyEntities = gbDepInventoryGoodsDailyService.queryDailyStockListByParams(map0);
         if (dailyEntities.size() > 0) {
             for (GbDepInventoryGoodsDailyEntity daily : dailyEntities) {
                 daily.setGbIgdStatus(1);

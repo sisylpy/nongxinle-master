@@ -19,7 +19,10 @@
 	</select>
 
 	<resultMap id="nxGoods" type="NxGoodsEntity">
-		        <id property="nxGoodsId" column="nx_goods_id"/>
+		         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
 		<result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>

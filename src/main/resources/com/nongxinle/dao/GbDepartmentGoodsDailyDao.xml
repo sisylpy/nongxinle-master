@@ -35,9 +35,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -117,8 +120,8 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
-                and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
             </if>
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
@@ -201,9 +204,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -281,9 +287,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -361,9 +370,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -441,9 +453,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -520,6 +535,8 @@
         <result property="gbDfgFathersFatherId" column="ndfgGrant_gb_dfg_fathers_father_id"/>
         <result property="gbDfgFatherGoodsName" column="ndfgGrant_gb_dfg_father_goods_name"/>
         <result property="gbDfgFatherGoodsColor" column="ndfgGrant_gb_dfg_father_goods_color"/>
+        <result property="gbDfgFatherGoodsImg" column="ndfgGrant_gb_dfg_father_goods_img"/>
+        <result property="gbDfgFatherGoodsImgLarge" column="ndfgGrant_gb_dfg_father_goods_img_large"/>
         <result property="gbDfgFatherGoodsSort" column="ndfgGrant_gb_dfg_father_goods_sort"/>
         <result property="gbDfgFatherGoodsLevel" column="ndfgGrant_gb_dfg_father_goods_level"/>
         <collection property="fatherGoodsEntities" resultMap="fatherGoods"/>
@@ -530,6 +547,8 @@
         <result property="gbDfgFathersFatherId" column="ndfgGreatGrand_gb_dfg_fathers_father_id"/>
         <result property="gbDfgFatherGoodsName" column="ndfgGreatGrand_gb_dfg_father_goods_name"/>
         <result property="gbDfgFatherGoodsColor" column="ndfgGreatGrand_gb_dfg_father_goods_color"/>
+        <result property="gbDfgFatherGoodsImgLarge" column="ndfgGreatGrand_gb_dfg_father_goods_img_large"/>
+        <result property="gbDfgFatherGoodsImg" column="ndfgGreatGrand_gb_dfg_father_goods_img"/>
         <result property="gbDfgFatherGoodsSort" column="ndfgGreatGrand_gb_dfg_father_goods_sort"/>
         <result property="gbDfgFatherGoodsLevel" column="ndfgGreatGrand_gb_dfg_father_goods_level"/>
         <collection property="fatherGoodsEntities" resultMap="grandGoods"/>
@@ -565,9 +584,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -638,9 +660,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -665,9 +690,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
 
             <if test="produce != null">
                 and gdgd.gb_dgd_produce_weight &gt; #{produce}
@@ -712,9 +740,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
@@ -792,9 +823,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -910,6 +944,7 @@
         <result property="gbDgPullOff" column="gb_dg_pull_off"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgDistributerId" column="gb_dg_distributer_id"/>
         <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
         <result property="gbDgNxFatherId" column="gb_dg_nx_father_id"/>
@@ -949,6 +984,7 @@
         <result property="gbDgFranchisePriceThreeUpdate" column="gb_dg_franchise_price_three_update"/>
         <result property="gbDgIsSelfControl" column="gb_dg_is_self_control"/>
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
+
 
     </resultMap>
 
@@ -1018,9 +1054,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1098,9 +1137,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1177,9 +1219,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1256,9 +1301,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1350,9 +1398,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1411,9 +1462,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1476,9 +1530,12 @@
             </if>
         </where>
     </select>
+
+
     <select id="queryDepDisGoodsTreeByParams" resultMap="depGoods">
+
         select * from gb_department_goods_daily as gdgd
-        left join gb_department_dis_goods as gdg on gdg.gb_department_dis_goods_id = gdgd.gb_dgd_gb_dep_dis_goods_id
+       left join gb_department_dis_goods as gdg on gdg.gb_department_dis_goods_id = gdgd.gb_dgd_gb_dep_dis_goods_id
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdg.gb_DDG_dis_goods_id
         left join gb_department as gd on gd.gb_department_id = gdgd.gb_dgd_gb_department_id
         <where>
@@ -1494,9 +1551,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1576,9 +1636,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1655,9 +1718,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1753,9 +1819,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1818,9 +1887,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1900,9 +1972,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -1982,9 +2057,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2064,9 +2142,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2146,9 +2227,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2228,9 +2312,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2310,9 +2397,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2392,9 +2482,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2474,9 +2567,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2561,9 +2657,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2662,7 +2761,8 @@
     </resultMap>
 
     <resultMap id="stockWithReduce" type="GbDepartmentGoodsStockEntity">
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
 		<result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -2681,7 +2781,9 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
 		<result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+
 		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -2690,8 +2792,12 @@
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsGbFromDepartmentId" column="gb_dgs_gb_from_department_id"/>
@@ -2809,9 +2915,12 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
-            <if test="disGoodsGrandId != null">
+             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
             </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
             </if>
@@ -2965,6 +3074,7 @@
         <result property="gbDgPullOff" column="gb_dg_pull_off"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgDistributerId" column="gb_dg_distributer_id"/>
         <result property="gbDgNxGoodsId" column="gb_dg_nx_goods_id"/>
         <result property="gbDgNxFatherId" column="gb_dg_nx_father_id"/>
@@ -3024,8 +3134,280 @@
             <if test="disGoodsFatherId != null">
                 and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
             </if>
+             <if test="disGoodsGrandId != null">
+                and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
+            <if test="disGoodsId != null">
+                and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="depGoodsId != null">
+                and gdgd.gb_dgd_gb_dep_dis_goods_id = #{depGoodsId}
+            </if>
+            <if test="depFatherId != null">
+                and gdgd.gb_dgd_gb_department_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and gdgd.gb_dgd_gb_department_id = #{depId}
+            </if>
+            <if test="date != null">
+                and gdgd.gb_dgd_date = #{date}
+            </if>
+            <if test="week != null">
+                and gdgd.gb_dgd_date = #{week}
+            </if>
+            <if test="month != null">
+                and gdgd.gb_dgd_month = #{month}
+            </if>
+            <if test="year != null">
+                and gdgd.gb_dgd_year = #{year}
+            </if>
+            <if test="startDate != null">
+                and gdgd.gb_dgd_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gdgd.gb_dgd_date &lt;= #{stopDate}
+            </if>
+            <if test="equalRestWeight != null">
+                and gdgd.gb_dgd_rest_weight = #{equalRestWeight}
+            </if>
+            <if test="restWeight != null">
+                and gdgd.gb_dgd_rest_weight &gt; #{restWeight}
+            </if>
+            <if test="produce != null">
+                and gdgd.gb_dgd_produce_weight &gt; #{produce}
+            </if>
+            <if test="loss != null">
+                and gdgd.gb_dgd_loss_weight &gt; #{loss}
+            </if>
+            <if test="waste != null">
+                and gdgd.gb_dgd_waste_weight &gt; #{waste}
+            </if>
+            <if test="controlFresh != null">
+                and gdg.gb_dg_control_fresh = #{controlFresh}
+            </if>
+            <if test="toDepId != null">
+                and gdg.gb_dg_gb_department_id = #{toDepId}
+            </if>
+            <if test="nxDisId != null">
+                and gdg.gb_dg_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="depFatherIds != null">
+                and gdgd.gb_dgd_gb_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="queryDisGoodsTreeByParams" resultType="com.nongxinle.entity.GbDistributerGoodsEntity">
+        select * from gb_department_goods_daily as gdgd
+        left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdgd.gb_dgd_gb_dis_goods_id
+        left join gb_department as gd on gd.gb_department_id = gdgd.gb_dgd_gb_department_id
+        <where>
+            <if test="depType != null">
+                and gd.gb_department_type = #{depType}
+            </if>
+            <if test="status != null">
+                and gdgd.gb_dgd_status = #{status}
+            </if>
+            <if test="disId != null">
+                and gdgd.gb_dgd_gb_distributer_id = #{disId}
+            </if>
+            <if test="disGoodsFatherId != null">
+                and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
+            </if>
+             <if test="disGoodsGrandId != null">
+                and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
+            <if test="disGoodsId != null">
+                and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="depGoodsId != null">
+                and gdgd.gb_dgd_gb_dep_dis_goods_id = #{depGoodsId}
+            </if>
+            <if test="depFatherId != null">
+                and gdgd.gb_dgd_gb_department_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and gdgd.gb_dgd_gb_department_id = #{depId}
+            </if>
+            <if test="date != null">
+                and gdgd.gb_dgd_date = #{date}
+            </if>
+            <if test="week != null">
+                and gdgd.gb_dgd_week = #{week}
+            </if>
+            <if test="month != null">
+                and gdgd.gb_dgd_month = #{month}
+            </if>
+            <if test="year != null">
+                and gdgd.gb_dgd_year = #{year}
+            </if>
+            <if test="startDate != null">
+                and gdgd.gb_dgd_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gdgd.gb_dgd_date &lt;= #{stopDate}
+            </if>
+            <if test="equalRestWeight != null">
+                and gdgd.gb_dgd_rest_weight = #{equalRestWeight}
+            </if>
+            <if test="restWeight != null">
+                and gdgd.gb_dgd_rest_weight &gt; #{restWeight}
+            </if>
+            <if test="produce != null">
+                and gdgd.gb_dgd_produce_weight &gt; #{produce}
+            </if>
+            <if test="loss != null">
+                and gdgd.gb_dgd_loss_weight &gt; #{loss}
+            </if>
+            <if test="waste != null">
+                and gdgd.gb_dgd_waste_weight &gt; #{waste}
+            </if>
+            <if test="return != null">
+                and gdgd.gb_dgd_return_weight &gt; #{return}
+            </if>
+            <if test="controlFresh != null">
+                and dg.gb_dg_control_fresh = #{controlFresh}
+            </if>
+            <if test="toDepId != null">
+                and dg.gb_dg_gb_department_id = #{toDepId}
+            </if>
+            <if test="nxDisId != null">
+                and dg.gb_dg_nx_distributer_id = #{nxDisId}
+            </if>
+            <if test="depFatherIds != null">
+                and gdgd.gb_dgd_gb_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="queryDepDailyGoodsFatherTypeByParamsTree"  resultMap="greatGrandGoods">
+        select *,
+        ndfgGrant.gb_distributer_father_goods_id 'ndfgGrant_gb_distributer_father_goods_id',
+        ndfgGrant.gb_dfg_fathers_father_id 'ndfgGrant_gb_dfg_fathers_father_id',
+        ndfgGrant.gb_dfg_father_goods_name 'ndfgGrant_gb_dfg_father_goods_name',
+        ndfgGrant.gb_dfg_father_goods_color 'ndfgGrant_gb_dfg_father_goods_color',
+        ndfgGrant.gb_dfg_father_goods_img 'ndfgGrant_gb_dfg_father_goods_img',
+        ndfgGrant.gb_dfg_father_goods_img_large 'ndfgGrant_gb_dfg_father_goods_img_large',
+        ndfgGrant.gb_dfg_father_goods_sort 'ndfgGrant_gb_dfg_father_goods_sort',
+        ndfgGrant.gb_dfg_father_goods_level 'ndfgGrant_gb_dfg_father_goods_level',
+        ndfgGreatGrand.gb_distributer_father_goods_id 'ndfgGreatGrand_gb_distributer_father_goods_id',
+        ndfgGreatGrand.gb_dfg_fathers_father_id 'ndfgGreatGrand_gb_dfg_fathers_father_id',
+        ndfgGreatGrand.gb_dfg_father_goods_name 'ndfgGreatGrand_gb_dfg_father_goods_name',
+        ndfgGreatGrand.gb_dfg_father_goods_color 'ndfgGreatGrand_gb_dfg_father_goods_color',
+        ndfgGreatGrand.gb_dfg_father_goods_img 'ndfgGreatGrand_gb_dfg_father_goods_img',
+        ndfgGreatGrand.gb_dfg_father_goods_img_large 'ndfgGreatGrand_gb_dfg_father_goods_img_large',
+        ndfgGreatGrand.gb_dfg_father_goods_sort 'ndfgGreatGrand_gb_dfg_father_goods_sort',
+        ndfgGreatGrand.gb_dfg_father_goods_level 'ndfgGreatGrand_gb_dfg_father_goods_level'
+        from gb_department_goods_daily as gdgd
+        left join gb_distributer_father_goods as ndfg on ndfg.gb_distributer_father_goods_id =
+        gdgd.gb_dgd_gb_dis_goods_father_id
+        left join gb_distributer_father_goods as ndfgGrant on ndfgGrant.gb_distributer_father_goods_id =
+        ndfg.gb_dfg_fathers_father_id
+        left join gb_distributer_father_goods as ndfgGreatGrand on
+        ndfgGreatGrand.gb_distributer_father_goods_id = ndfgGrant.gb_dfg_fathers_father_id
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgd.gb_dgd_gb_dis_goods_id
+        left join gb_department as gd on gd.gb_department_id = gdgd.gb_dgd_gb_department_id
+        <where>
+            <if test="depType != null">
+                and gd.gb_department_type = #{depType}
+            </if>
+            <if test="disGoodsFatherId != null">
+                and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
+            </if>
+             <if test="disGoodsGrandId != null">
+                and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
+            </if> 
+            <if test="disGoodsId != null">
+                and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="disId != null">
+                and gdgd.gb_dgd_gb_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and gdgd.gb_dgd_gb_department_father_id = #{depFatherId}
+            </if>
+            <if test="depId != null">
+                and gdgd.gb_dgd_gb_department_id = #{depId}
+            </if>
+            <if test="date != null">
+                and gdgd.gb_dgd_date = #{date}
+            </if>
+            <if test="startDate != null">
+                and gdgd.gb_dgd_date &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                and gdgd.gb_dgd_date &lt;= #{stopDate}
+            </if>
+            <if test="notDayuStopDate != null">
+                and gdgd.gb_dgd_date &lt;= #{notDayuStopDate}
+            </if>
+            <if test="produce != null">
+                and gdgd.gb_dgd_produce_weight &gt; #{produce}
+            </if>
+            <if test="loss != null">
+                and gdgd.gb_dgd_loss_weight &gt; #{loss}
+            </if>
+            <if test="waste != null">
+                and gdgd.gb_dgd_waste_weight &gt; #{waste}
+            </if>
+            <if test="return != null">
+                and gdgd.gb_dgd_return_weight &gt; #{return}
+            </if>
+            <if test="controlFresh != null">
+                and gdg.gb_dg_control_fresh = #{controlFresh}
+            </if>
+            <if test="toDepId != null">
+                and gdg.gb_dg_gb_department_id = #{toDepId}
+            </if>
+            <if test="nxDisId != null">
+                and gdg.gb_dg_nx_distributer_id = #{nxDisId}
+            </if>
+
+            <if test="depFatherIds != null">
+                and gdgd.gb_dgd_gb_department_father_id in
+                <foreach item="id" collection="depFatherIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+        </where>
+        order by ndfgGreatGrand.gb_dfg_father_goods_sort,
+        ndfgGrant.gb_dfg_father_goods_sort,ndfg.gb_dfg_father_goods_sort
+
+
+    </select>
+    <select id="queryDepGoodsDailyRestSubtotal" resultType="java.lang.Double">
+        select SUM(gb_dgd_rest_subtotal) from gb_department_goods_daily as gdgd
+        left join gb_distributer_goods as gdg on gdg.gb_distributer_goods_id = gdgd.gb_dgd_gb_dis_goods_id
+        left join gb_department as gd on gd.gb_department_id = gdgd.gb_dgd_gb_department_id
+        <where>
+            <if test="depType != null">
+                and gd.gb_department_type = #{depType}
+            </if>
+            <if test="disId != null">
+                and gdgd.gb_dgd_gb_distributer_id = #{disId}
+            </if>
+            <if test="disGoodsFatherId != null">
+                and gdgd.gb_dgd_gb_dis_goods_father_id = #{disGoodsFatherId}
+            </if>
             <if test="disGoodsGrandId != null">
                 and gdgd.gb_dgd_gb_dis_goods_grand_id = #{disGoodsGrandId}
+            </if>
+            <if test="disGoodsGreatId != null">
+                and gdgd.gb_dgd_gb_dis_goods_great_grand_id = #{disGoodsGreatId}
             </if>
             <if test="disGoodsId != null">
                 and gdgd.gb_dgd_gb_dis_goods_id = #{disGoodsId}
@@ -3091,6 +3473,7 @@
     </select>
 
 
+
     <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentGoodsDailyEntity">
         insert into gb_department_goods_daily
         (`gb_department_goods_daily_id`,
@@ -3100,9 +3483,11 @@
          `gb_dgd_gb_dis_goods_id`,
          `gb_dgd_gb_dis_goods_father_id`,
          `gb_dgd_gb_dis_goods_grand_id`,
+         `gb_dgd_gb_dis_goods_great_grand_id`,
          `gb_dgd_gb_dep_dis_goods_id`,
          `gb_dgd_weight`,
          `gb_dgd_rest_weight`,
+         `gb_dgd_rest_subtotal`,
          `gb_dgd_subtotal`,
          `gb_dgd_date`,
          `gb_dgd_day`,
@@ -3124,6 +3509,7 @@
          `gb_dgd_sell_clear_hour`,
          `gb_dgd_sell_clear_minute`,
          `gb_dgd_last_weight`,
+         `gb_dgd_last_subtotal`,
          `gb_dgd_fresh_rate`,
          `gb_dgd_task_time`,
          `gb_dgd_last_produce_weight`,
@@ -3136,9 +3522,11 @@
                 #{gbDgdGbDisGoodsId},
                 #{gbDgdGbDisGoodsFatherId},
                 #{gbDgdGbDisGoodsGrandId},
+                #{gbDgdGbDisGoodsGreatGrandId},
                 #{gbDgdGbDepDisGoodsId},
                 #{gbDgdWeight},
                 #{gbDgdRestWeight},
+                #{gbDgdRestSubtotal},
                 #{gbDgdSubtotal},
                 #{gbDgdDate},
                 #{gbDgdDay},
@@ -3160,6 +3548,7 @@
                 #{gbDgdSellClearHour},
                 #{gbDgdSellClearMinute},
                 #{gbDgdLastWeight},
+                #{gbDgdLastSubtotal},
                 #{gbDgdFreshRate},
                 #{gbDgdTaskTime},
                 #{gbDgdLastProduceWeight},
@@ -3179,9 +3568,13 @@
             <if test="gbDgdGbDisGoodsFatherId != null">`gb_dgd_gb_dis_goods_father_id` = #{gbDgdGbDisGoodsFatherId},</if>
             <if test="gbDgdGbDisGoodsGrandId != null">`gb_dgd_gb_dis_goods_grand_id` = #{gbDgdGbDisGoodsGrandId},
             </if>
+            <if test="gbDgdGbDisGoodsGreatGrandId != null">`gb_dgd_gb_dis_goods_great_grand_id` = #{gbDgdGbDisGoodsGreatGrandId},
+            </if>
+
             <if test="gbDgdGbDepDisGoodsId != null">`gb_dgd_gb_dep_dis_goods_id` = #{gbDgdGbDepDisGoodsId},</if>
             <if test="gbDgdWeight != null">`gb_dgd_weight` = #{gbDgdWeight},</if>
             <if test="gbDgdRestWeight != null">`gb_dgd_rest_weight` = #{gbDgdRestWeight},</if>
+            <if test="gbDgdRestSubtotal != null">`gb_dgd_rest_subtotal` = #{gbDgdRestSubtotal},</if>
             <if test="gbDgdSubtotal != null">`gb_dgd_subtotal` = #{gbDgdSubtotal},</if>
             <if test="gbDgdDate != null">`gb_dgd_date` = #{gbDgdDate},</if>
             <if test="gbDgdDay != null">`gb_dgd_day` = #{gbDgdDay},</if>

@@ -6,15 +6,10 @@ package com.nongxinle.controller;
  */
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import cn.hutool.core.util.PageUtil;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
-import com.nongxinle.service.impl.GbDepartmentOrdersHistoryServiceImpl;
 import com.nongxinle.utils.UploadFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +48,7 @@ public class GbDepartmentDisGoodsController {
     private GbDepartmentOrdersService gbDepartmentOrdersService;
 
    @Autowired
-   private GbDepartmentOrdersHistoryService gbDepartmentOrdersHistoryService;
+   private GbDepartmentGoodsDailyService gbDepartmentGoodsDailyService;
 
     private static final Logger log = LoggerFactory.getLogger(GbDepartmentDisGoodsController.class);
 
@@ -70,48 +65,48 @@ public class GbDepartmentDisGoodsController {
         return R.ok().put("page", list);
     }
 
-
-    @RequestMapping(value = "/getDepGoodsOrderHistory", method = RequestMethod.POST)
-    @ResponseBody
-    public R getDepGoodsOrderHistory (Integer depGoodsId, String startDate, String stopDate) {
-
-        GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(depGoodsId);
-
-        List<Map<String, Object>> dayList = new ArrayList<>();
-        Integer gbDdgDisGoodsId = departmentDisGoodsEntity.getGbDdgDisGoodsId();
-        Map<String, Object> map = new HashMap<>();
-        map.put("disGoodsId", gbDdgDisGoodsId);
-
-        Integer howManyDaysInPeriod = 0;
-        if (!startDate.equals(stopDate)) {
-            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
-        }
-        if (howManyDaysInPeriod > 0) {
-
-            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
-                // dateList
-                String whichDay = "";
-                if (i == 0) {
-                    whichDay = startDate;
-                } else {
-                    whichDay = afterWhatDay(startDate, i);
-                }
-                map.put("arriveDate", whichDay);
-                map.put("dayuStatus", 1);
-                map.put("depId", departmentDisGoodsEntity.getGbDdgDepartmentId());
-                map.put("orderTypeNotEqual", 9);
-                System.out.println("whdaydmamm" + map);
-                List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersByParams(map);
-                Map<String, Object> mapDay = new HashMap<>();
-                String substring = whichDay.substring(8, 10);
-                mapDay.put("day",  substring);
-                mapDay.put("arr", gbDepartmentOrdersEntities);
-                dayList.add(mapDay);
-            }
-        }
-
-        return R.ok().put("data", dayList);
-    }
+//
+//    @RequestMapping(value = "/getDepGoodsOrderHistory", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R getDepGoodsOrderHistory (Integer depGoodsId, String startDate, String stopDate) {
+//
+//        GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(depGoodsId);
+//
+//        List<Map<String, Object>> dayList = new ArrayList<>();
+//        Integer gbDdgDisGoodsId = departmentDisGoodsEntity.getGbDdgDisGoodsId();
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("disGoodsId", gbDdgDisGoodsId);
+//
+//        Integer howManyDaysInPeriod = 0;
+//        if (!startDate.equals(stopDate)) {
+//            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
+//        }
+//        if (howManyDaysInPeriod > 0) {
+//
+//            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
+//                // dateList
+//                String whichDay = "";
+//                if (i == 0) {
+//                    whichDay = startDate;
+//                } else {
+//                    whichDay = afterWhatDay(startDate, i);
+//                }
+//                map.put("arriveDate", whichDay);
+//                map.put("dayuStatus", 1);
+//                map.put("depId", departmentDisGoodsEntity.getGbDdgDepartmentId());
+//                map.put("orderTypeNotEqual", 9);
+//                System.out.println("whdaydmamm" + map);
+//                List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersByParams(map);
+//                Map<String, Object> mapDay = new HashMap<>();
+//                String substring = whichDay.substring(8, 10);
+//                mapDay.put("day",  substring);
+//                mapDay.put("arr", gbDepartmentOrdersEntities);
+//                dayList.add(mapDay);
+//            }
+//        }
+//
+//        return R.ok().put("data", dayList);
+//    }
 
 
     @RequestMapping(value = "/departmentSaveLinshiDisGoods", method = RequestMethod.POST)
@@ -127,6 +122,9 @@ public class GbDepartmentDisGoodsController {
         GbDistributerGoodsEntity cgnGoods  = new GbDistributerGoodsEntity();
         cgnGoods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
         cgnGoods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+        GbDistributerFatherGoodsEntity grandFather = gbDistributerFatherGoodsService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+        cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
         cgnGoods.setGbDgGoodsStatus(0);
         cgnGoods.setGbDgGoodsIsWeight(0);
         cgnGoods.setGbDgPullOff(0);
@@ -138,7 +136,7 @@ public class GbDepartmentDisGoodsController {
 
         Map<String, Object> mapDep = new HashMap<>();
         mapDep.put("disId", disGoodsEntity.getGbDdgGbDisId());
-        mapDep.put("type", 5);
+        mapDep.put("goodsType", 5);
         List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(mapDep);
         GbDepartmentEntity appDepartmentEntity = departmentEntities.get(0);
         cgnGoods.setGbDgGoodsName(disGoodsEntity.getGbDdgDepGoodsName());
@@ -167,6 +165,7 @@ public class GbDepartmentDisGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(cgnGoods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(cgnGoods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(cgnGoods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(cgnGoods.getGbDgDfgGoodsGreatId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(cgnGoods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(cgnGoods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(cgnGoods.getGbDgGoodsStandardname());
@@ -189,7 +188,8 @@ public class GbDepartmentDisGoodsController {
 
         gbDepDisGoodsService.save(disGoodsEntity);
 
-        cgnGoods.setGbDepartmentDisGoodsEntity(disGoodsEntity);
+        //todo
+//        cgnGoods.setGbDepartmentDisGoodsEntity(disGoodsEntity);
         return R.ok().put("data", cgnGoods);
     }
 
@@ -223,6 +223,9 @@ public class GbDepartmentDisGoodsController {
         GbDistributerGoodsEntity cgnGoods  = new GbDistributerGoodsEntity();
         cgnGoods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
         cgnGoods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+        GbDistributerFatherGoodsEntity grandFather = gbDistributerFatherGoodsService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+        cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
         cgnGoods.setGbDgGoodsStatus(0);
         cgnGoods.setGbDgGoodsIsWeight(0);
         cgnGoods.setGbDgPullOff(0);
@@ -233,7 +236,7 @@ public class GbDepartmentDisGoodsController {
         cgnGoods.setGbDgNxFatherImg(realPath);
         Map<String, Object> mapDep = new HashMap<>();
         mapDep.put("disId", disId);
-        mapDep.put("type", 5);
+        mapDep.put("goodsType", 5);
         List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(mapDep);
         GbDepartmentEntity appDepartmentEntity = departmentEntities.get(0);
         cgnGoods.setGbDgGbDepartmentId(appDepartmentEntity.getGbDepartmentId());
@@ -263,6 +266,7 @@ public class GbDepartmentDisGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(cgnGoods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(cgnGoods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(cgnGoods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(cgnGoods.getGbDgDfgGoodsGreatId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(cgnGoods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(cgnGoods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(cgnGoods.getGbDgGoodsStandardname());
@@ -292,6 +296,7 @@ public class GbDepartmentDisGoodsController {
     @RequestMapping(value = "/depSaveGbLinshiGoods", method = RequestMethod.POST)
     @ResponseBody
     public R depSaveGbLinshiGoods(@RequestBody GbDepartmentOrdersEntity ordersEntity) {
+
         GbDistributerGoodsEntity cgnGoods = ordersEntity.getGbDistributerGoodsEntity();
 
         System.out.println("ordereorororo" + ordersEntity.getGbDoDepartmentId());
@@ -303,6 +308,9 @@ public class GbDepartmentDisGoodsController {
         GbDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsEntities.get(0);
         cgnGoods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
         cgnGoods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+        GbDistributerFatherGoodsEntity grandFather = gbDistributerFatherGoodsService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+        cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
         cgnGoods.setGbDgGoodsStatus(0);
         cgnGoods.setGbDgGoodsIsWeight(0);
         cgnGoods.setGbDgPullOff(0);
@@ -342,6 +350,7 @@ public class GbDepartmentDisGoodsController {
         disGoodsEntity.setGbDdgDisGoodsId(cgnGoods.getGbDistributerGoodsId());
         disGoodsEntity.setGbDdgDisGoodsFatherId(cgnGoods.getGbDgDfgGoodsFatherId());
         disGoodsEntity.setGbDdgDisGoodsGrandId(cgnGoods.getGbDgDfgGoodsGrandId());
+        disGoodsEntity.setGbDdgDisGoodsGreatId(cgnGoods.getGbDgDfgGoodsGreatId());
         disGoodsEntity.setGbDdgDepGoodsPinyin(cgnGoods.getGbDgGoodsPinyin());
         disGoodsEntity.setGbDdgDepGoodsPy(cgnGoods.getGbDgGoodsPy());
         disGoodsEntity.setGbDdgDepGoodsStandardname(cgnGoods.getGbDgGoodsStandardname());
@@ -438,6 +447,7 @@ public class GbDepartmentDisGoodsController {
                 disGoodsEntity.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
                 disGoodsEntity.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
                 disGoodsEntity.setGbDdgDisGoodsGrandId(disGoods.getGbDgDfgGoodsGrandId());
+                disGoodsEntity.setGbDdgDisGoodsGreatId(disGoods.getGbDgDfgGoodsGreatId());
                 disGoodsEntity.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
                 disGoodsEntity.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
                 disGoodsEntity.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
@@ -462,6 +472,7 @@ public class GbDepartmentDisGoodsController {
             disGoodsEntity.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
             disGoodsEntity.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
             disGoodsEntity.setGbDdgDisGoodsGrandId(disGoods.getGbDgDfgGoodsGrandId());
+            disGoodsEntity.setGbDdgDisGoodsGreatId(disGoods.getGbDgDfgGoodsGreatId());
             disGoodsEntity.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
             disGoodsEntity.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
             disGoodsEntity.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
@@ -521,7 +532,7 @@ public class GbDepartmentDisGoodsController {
         Map<String, Object> mapD = new HashMap<>();
         mapD.put("depFatherId", depFatherId);
         mapD.put("fatherId", fatherId);
-        mapD.put("type", getGbDisGoodsTypeZicai());
+        mapD.put("goodsType", getGbDisGoodsTypeZicai());
         System.out.println("purrjrreee" + mapD);
         List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntities = gbDepartmentDisGoodsService.depGetDepsGoodsGb(mapD);
 
@@ -544,7 +555,7 @@ public class GbDepartmentDisGoodsController {
 
         Map<String, Object> mapD = new HashMap<>();
         mapD.put("depFatherId", depFatherId);
-        mapD.put("type", getGbDisGoodsTypeZicai());
+        mapD.put("goodsType", getGbDisGoodsTypeZicai());
         System.out.println("purrjrreee" + mapD);
         List<GbDistributerFatherGoodsEntity> disGoodsEntities = gbDepartmentDisGoodsService.queryDepTypeFatherGoods(mapD);
         mapTotal.put("arr", disGoodsEntities);
@@ -559,7 +570,7 @@ public class GbDepartmentDisGoodsController {
 
         Map<String, Object> mapD = new HashMap<>();
         mapD.put("depFatherId", depFatherId);
-        mapD.put("type", getGbDisGoodsTypeChuku());
+        mapD.put("goodsType", getGbDisGoodsTypeChuku());
         System.out.println("purrjrreee" + mapD);
         List<GbDistributerFatherGoodsEntity> disGoodsEntities = gbDepartmentDisGoodsService.queryDepTypeFatherGoods(mapD);
 
@@ -583,7 +594,7 @@ public class GbDepartmentDisGoodsController {
 
         Map<String, Object> mapD = new HashMap<>();
         mapD.put("depFatherId", depFatherId);
-        mapD.put("type", getGbDisGoodsTypeJicai());
+        mapD.put("goodsType", getGbDisGoodsTypeJicai());
         System.out.println("purrjrreee" + mapD);
         List<GbDistributerFatherGoodsEntity> disGoodsEntities = gbDepartmentDisGoodsService.queryDepTypeFatherGoods(mapD);
 
@@ -602,10 +613,19 @@ public class GbDepartmentDisGoodsController {
 
     @RequestMapping(value = "/disGetDepGoodsCataGb")
     @ResponseBody
-    public R disGetDepGoodsCataGb(Integer disId) {
+    public R disGetDepGoodsCataGb(Integer disId, Integer goodsType) {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
-        map.put("notLinshi", 1);
+        if(goodsType < 99){
+            map.put("goodsType", goodsType);
+        }else{
+            if(goodsType == 101){
+                map.put("fresh", 1);
+
+            }else if(goodsType == 102){
+                map.put("pull", 1);
+            }
+        }
         System.out.println("cattaktktktkktk");
         List<GbDistributerFatherGoodsEntity> disGoodsEntities = gbDepartmentDisGoodsService.disGetDepDisGoodsCataGb(map);
 
@@ -625,12 +645,10 @@ public class GbDepartmentDisGoodsController {
         Map<String, Object> map = new HashMap<>();
         map.put("depId", depId);
         map.put("disId", disId);
-        map.put("notLinshi", 1);
+        map.put("pull", 0);
         System.out.println("cattaktktktkktk");
         List<GbDistributerFatherGoodsEntity> disGoodsEntities = gbDepartmentDisGoodsService.disGetDepDisGoodsCataGb(map);
         // 1. 获取总数
-        int total = gbDepartmentDisGoodsService.queryDepGoodsCount(map);
-
         List<Integer > departmentDisGoodsEntities =   gbDepartmentDisGoodsService.queryOnlyDepGoodsIds(map);
         Map<String, Object> mapR = new HashMap<>();
         mapR.put("cataArr",disGoodsEntities);
@@ -650,7 +668,7 @@ public class GbDepartmentDisGoodsController {
         Map<String, Object> map = new HashMap<>();
         map.put("depFatherId", depFatherId);
         if (goodsType.equals("appSupplier")) {
-            map.put("type", getGbDisGoodsTypeAppSupplier());
+            map.put("goodsType", getGbDisGoodsTypeAppSupplier());
         }
         if (controlString.equals("price")) {
             map.put("price", "1");
@@ -675,7 +693,7 @@ public class GbDepartmentDisGoodsController {
         map.put("controlString", controlString);
         map.put("depFatherId", depFatherId);
         if (goodsType.equals("appSupplier")) {
-            map.put("type", getGbDisGoodsTypeAppSupplier());
+            map.put("goodsType", getGbDisGoodsTypeAppSupplier());
         }
         if (controlString.equals("price")) {
             map.put("price", "1");
@@ -718,7 +736,7 @@ public class GbDepartmentDisGoodsController {
         TreeSet<GbDistributerFatherGoodsEntity> stockGoodsEntities = new TreeSet<>();
         Integer integerStock = gbDepGoodsStockService.queryGoodsStockCount(map0);
         if (integerStock > 0) {
-            List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDepGoodsStockService.queryDepStockDisFatherGoodsFather(map0);
+            List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = gbDepGoodsStockService.queryDepStockTreeFatherGoodsByParams(map0);
             stockGoodsEntities.addAll(fatherGoodsEntities);
         }
         return stockGoodsEntities;
@@ -860,10 +878,17 @@ public class GbDepartmentDisGoodsController {
         map.put("depGoodsId", depGoodsId);
         map.put("restWeight", 0);
         List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockByParams(map);
-
         if (stockEntities.size() > 0) {
             return R.error(-1, "有库存，不能删除");
         } else {
+            map.put("restWeight",null);
+            map.put("date",formatWhatDay(0));
+            System.out.println("mapmamaamama" + map);
+            GbDepartmentGoodsDailyEntity gbDepartmentGoodsDailyEntity = gbDepartmentGoodsDailyService.queryDepGoodsDailyItem(map);
+            if(gbDepartmentGoodsDailyEntity != null){
+                gbDepartmentGoodsDailyEntity.setGbDgdStatus(-1);
+                gbDepartmentGoodsDailyService.update(gbDepartmentGoodsDailyEntity);
+            }
             gbDepartmentDisGoodsService.delete(depGoodsId);
             return R.ok();
         }
@@ -894,7 +919,7 @@ public class GbDepartmentDisGoodsController {
     public R depGetDepGoodsGbPage(Integer limit, Integer page, Integer depId) {
         Map<String, Object> map = new HashMap<>();
         map.put("depId", depId);
-        map.put("notLinshi", 1);
+        map.put("pull", 0);
 
         // 1. 获取总数
         int total = gbDepartmentDisGoodsService.queryDepGoodsCount(map);
@@ -905,16 +930,8 @@ public class GbDepartmentDisGoodsController {
         map.put("date", formatWhatDay(0));
         map.put("limit", limit);
         map.put("offset", (page - 1) * limit);
-        log.info("查询参数: limit={}, offset={}", limit, (page - 1) * limit);
-        log.info("map查询: {}", map);
+        System.out.println("mapaopapapa" + map);
         List<GbDepartmentDisGoodsEntity> currentPageList = gbDepartmentDisGoodsService.depQueryDepGoodsWithOrderForAi(map);
-        log.info("当前页数据量: {}", currentPageList.size());
-
-        // 4. 处理每个商品的提示文本
-//        for(GbDepartmentDisGoodsEntity departmentDisGoodsEntity: currentPageList){
-//            gbDepartmentDisGoodsService.getTipText(departmentDisGoodsEntity);
-//        }
-        log.info("最终返回数据量: {}", currentPageList.size());
 
         // 5. 返回分页数据
         PageUtils pageUtil = new PageUtils(currentPageList, total, limit, page);
@@ -924,14 +941,23 @@ public class GbDepartmentDisGoodsController {
 
     @RequestMapping(value = "/disGetDepGoodsGbPage")
     @ResponseBody
-    public R disGetDepGoodsGbPage(Integer limit, Integer page, Integer disId) {
+    public R disGetDepGoodsGbPage(Integer limit, Integer page, Integer disId, Integer goodsType) {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
-        map.put("notLinshi", 1);
+        if(goodsType < 99){
+            map.put("goodsType", goodsType);
+        }else{
+            if(goodsType == 101){
+                map.put("fresh", 1);
+
+            }else if(goodsType == 102){
+                map.put("pull", 1);
+            }
+        }
 
         // 1. 获取总数
         List<Integer > disGoodsIds =   gbDepartmentDisGoodsService.queryOnlyDisGoodsIds(map);
-        log.info("总记录数: {}", disGoodsIds.size());
+//        log.info("总记录数: {}", disGoodsIds.size());
 
         // 2. 获取当前页数据
         map.put("status", 4);
@@ -945,7 +971,8 @@ public class GbDepartmentDisGoodsController {
 
         // 4. 处理每个商品的提示文本
         for(GbDistributerGoodsEntity distributerGoodsEntity: currentPageSet){
-            gbDistributerGoodsService.getTipText(distributerGoodsEntity);
+//            gbDistributerGoodsService.getTipText(distributerGoodsEntity);
+            gbDistributerGoodsService.getStockTotal(distributerGoodsEntity);
         }
         log.info("最终返回数据量: {}", currentPageSet.size());
 
@@ -958,20 +985,20 @@ public class GbDepartmentDisGoodsController {
     }
 
 
-    @RequestMapping(value = "/depGetDepGoodsGbCata/{depId}")
-    @ResponseBody
-    public R depGetDepGoodsGbCata(@PathVariable Integer depId) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("depId", depId);
-        map.put("status", 4);
-        map.put("date", formatWhatDay(0));
-        map.put("pull", 0);
-        map.put("notLinshi", 1);
-        System.out.println("newnwenennee" + map);
-        List<GbDistributerFatherGoodsEntity> goodsEntities = gbDepartmentDisGoodsService.depQueryDepGoodsWithOrderGbNew(map);
-
-        return R.ok().put("data", goodsEntities);
-    }
+//    @RequestMapping(value = "/depGetDepGoodsGbCata/{depId}")
+//    @ResponseBody
+//    public R depGetDepGoodsGbCata(@PathVariable Integer depId) {
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("depId", depId);
+//        map.put("status", 4);
+//        map.put("date", formatWhatDay(0));
+//        map.put("pull", 0);
+//        map.put("notLinshi", 1);
+//        System.out.println("newnwenennee" + map);
+//        List<GbDistributerFatherGoodsEntity> goodsEntities = gbDepartmentDisGoodsService.depQueryDepGoodsWithOrderGbNew(map);
+//
+//        return R.ok().put("data", goodsEntities);
+//    }
 
     /**
      * lscgdh
@@ -1013,7 +1040,6 @@ public class GbDepartmentDisGoodsController {
         }
         if(controlString.equals("isNotSelf")){
             map.put("isSelf",0);
-//            map.put("type", getGbDisGoodsTypeChuku());
         }
         if(controlString.equals("isSelf")){
             map.put("isSelf",1);
@@ -1043,12 +1069,12 @@ public class GbDepartmentDisGoodsController {
             System.out.println("mappapapappapa" + map);
             fatherGoodsEntities = gbDepartmentDisGoodsService.depQueryDepGoodsWithOrderGb(map);
             if(fatherGoodsEntities.size() > 0){
-                for(GbDistributerFatherGoodsEntity grand: fatherGoodsEntities){
+//                for(GbDistributerFatherGoodsEntity grand: fatherGoodsEntities){
 
-                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities1 = grand.getFatherGoodsEntities();
-                    for(GbDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities1){
-                        System.out.println("fatherGoodsene" + fatherGoodsEntity.getGbDfgFatherGoodsName() + "id=" + fatherGoodsEntity.getGbDistributerFatherGoodsId());
-                        int total = 0;
+//                    List<GbDistributerFatherGoodsEntity> fatherGoodsEntities1 = grand.getFatherGoodsEntities();
+//                    for(GbDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities1){
+//                        System.out.println("fatherGoodsene" + fatherGoodsEntity.getGbDfgFatherGoodsName() + "id=" + fatherGoodsEntity.getGbDistributerFatherGoodsId());
+//                        int total = 0;
 //                        if(fatherGoodsEntities1.size() > 0){
 //                            for(GbDistributerFatherGoodsEntity orderFather: fatherGoodsEntity.getFatherGoodsEntities()){
 //                                Integer gbDistributerFatherGoodsId1 = orderFather.getGbDistributerFatherGoodsId();
@@ -1063,10 +1089,10 @@ public class GbDepartmentDisGoodsController {
 //                                System.out.println("orderrmr" + total);
 //                            }
 //                        }
-                        fatherGoodsEntity.setOrderAmount(total);
-                        System.out.println("aijaoellelelleleel" + total + "name===" + fatherGoodsEntity.getGbDfgFatherGoodsName());
-                    }
-                }
+//                        fatherGoodsEntity.setOrderAmount(total);
+//                        System.out.println("aijaoellelelleleel" + total + "name===" + fatherGoodsEntity.getGbDfgFatherGoodsName());
+//                    }
+//                }
 
             }
 
@@ -1080,7 +1106,7 @@ public class GbDepartmentDisGoodsController {
 
 
 
-
+//
     @RequestMapping(value = "/depGetDepGoodsByFatherId", method = RequestMethod.POST)
     @ResponseBody
     public R depGetDepGoodsByFatherId(Integer depId, Integer fatherId,String controlString, Integer isPrice) {
@@ -1098,7 +1124,7 @@ public class GbDepartmentDisGoodsController {
         }
         if(controlString.equals("isNotSelf")){
             map.put("isSelf",0);
-            map.put("type", getGbDisGoodsTypeChuku());
+            map.put("goodsType", getGbDisGoodsTypeChuku());
         }
         if(controlString.equals("isSelf")){
             map.put("isSelf",1);
@@ -1128,7 +1154,7 @@ public class GbDepartmentDisGoodsController {
         }
         if(controlString.equals("isNotSelf")){
             mapG.put("isSelf",0);
-            mapG.put("type", getGbDisGoodsTypeChuku());
+            mapG.put("goodsType", getGbDisGoodsTypeChuku());
         }
         if(controlString.equals("isSelf")){
             mapG.put("isSelf",1);

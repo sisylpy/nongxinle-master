@@ -11,6 +11,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 
 @Setter@Getter@ToString
@@ -64,5 +66,8 @@ public class GbDepartmentUserEntity implements Serializable {
 	private GbDepartmentEntity gbDepartmentEntity;
 	private GbDistributerEntity gbDistributerEntity;
 
+	private List<GbDistributerPurchaseGoodsEntity> purchaseGoodsEntityList;
+
+	private Map<String,Object> itemData;
 
 }

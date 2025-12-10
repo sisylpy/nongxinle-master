@@ -72,6 +72,7 @@ public class GbDistributerEntity implements Serializable {
 	private  Integer hasNotPriceCount;
 	private  Integer hasPriceCount;
 	private  Integer gbDistributerSysCityId;
+	private  Integer gbDistributerRecordSeconds;
 	private  int orderDepCount;
 	private  String disSubtotal;
 	private  int goodsCount;
@@ -80,8 +81,7 @@ public class GbDistributerEntity implements Serializable {
 	private  int orderCount;
 	private  int linshiCout;
 	private  int gbDistributerNxDisId;
-	private NxDistributerEntity nxDistributerEntity;
-
+	private  int gbDistributerStockCycle;
 
 
 	private GbDistributerUserEntity gbDistributerUserEntity;

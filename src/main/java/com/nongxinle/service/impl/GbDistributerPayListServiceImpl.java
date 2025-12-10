@@ -64,4 +64,11 @@ public class GbDistributerPayListServiceImpl implements GbDistributerPayListServ
 		return gbDistributerPayListDao.queryDisPayListCount(mapCount);
     }
 
+    @Override
+    public int queryDisRecordSecondsTotal(Map<String, Object> map) {
+
+		return gbDistributerPayListDao.queryDisRecordSecondsTotal(map);
+
+    }
+
 }

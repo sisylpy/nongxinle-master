@@ -94,7 +94,11 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private String nxDgNxGoodsFatherColor;
 
 	private String sellAmount;
-	private String sellSubtotal;
+	private String sellSubtotal;  // 采购总金额
+	private Double goodsStockTotal;  // 商品库存总额
+	private String goodsStockTotalString;  // 商品库存总额（字符串）
+	private Double goodsStockWeightTotal;  // 商品库存总重量
+	private String goodsStockWeightTotalString;  // 商品库存总重量（字符串）
 	private Integer nxDgPurchaseAuto;
 	private Integer nxDgGoodsSort;
 
@@ -132,6 +136,16 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private Integer orderSize;
 	private Integer nxDgGoodsSonsSort;
 	private Integer nxDgGoodsIsHidden;
+	
+	/**
+	 * 外箱名称
+	 */
+	private String nxDgCartonUnit;
+	/**
+	 * 外箱装数量
+	 */
+	private Integer nxDgItemsPerCarton;
+	
 	private Integer gbDisGoodsId;
 	private Integer gbDisGoodsFatherId;
 	private Integer gbDisGoodsType;
@@ -179,6 +193,49 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private String nxDgWillPriceOneAboutPrice;
 	private String nxDgWillPriceTwoAboutPrice;
 	private String nxDgWillPriceThreeAboutPrice;
+
+	// 出货统计字段
+	private Double goodsSalesTotal;   // 销售总额
+	private Double goodsWasteTotal;   // 浪费总额
+	private Double goodsLossTotal;    // 损耗总额
+	private Double goodsReturnTotal;  // 退货总额
+
+	// 采购记录集合
+	private List<NxDistributerPurchaseGoodsEntity> nxDistributerPurchaseGoodsEntities;
+
+	// 出货记录集合
+	private List<NxDistributerGoodsShelfStockReduceEntity> nxDistributerGoodsShelfStockReduceEntities;
+
+	// 库存批次集合
+	private List<NxDistributerGoodsShelfStockEntity> nxDisGoodsShelfStockEntities;
+
+	List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities;
+
+	/**
+	 * 货架名称（用于显示已上架商品的货架信息）
+	 */
+	private String shelfName;
+
+	/**
+	 * 商品最高价格
+	 */
+	private String nxDgGoodsHighestPrice;
+	/**
+	 * 商品最低价格
+	 */
+	private String nxDgGoodsLowestPrice;
+	/**
+	 * 价格差
+	 */
+	private String goodsPriceDiff;
+	/**
+	 * 价格波动（百分比）
+	 */
+	private String goodsPriceFluctuation;
+	/**
+	 * 采购总金额
+	 */
+	private String goodsPurTotalSubtotal;
 
 	@Override
 	public int compareTo(Object o) {

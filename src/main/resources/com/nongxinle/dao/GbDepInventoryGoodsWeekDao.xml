@@ -38,6 +38,7 @@
 		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
 		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
 		<result property="gbDgNxDistributerId" column="gb_dg_nx_distributer_id"/>
 		<result property="gbDgNxDistributerGoodsId" column="gb_dg_nx_distributer_goods_id"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -64,7 +65,8 @@
 	</resultMap>
 	<resultMap id="goodsStock" type="GbDepartmentGoodsStockEntity">
 
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
 		<result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -81,7 +83,9 @@
 		<result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
 		<result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
 		<result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
+
 		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
 		<result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
 		<result property="gbDgsPrice" column="gb_dgs_price"/>
 		<result property="gbDgsWeight" column="gb_dgs_weight"/>

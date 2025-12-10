@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyGbDisCorpChatRecordDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyGbDisCorpChatRecordEntity">
+		select * from qy_gb_dis_corp_chat_record where qy_gb_dis_corp_chat_record_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyGbDisCorpChatRecordEntity">
+		select * from qy_gb_dis_corp_chat_record 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_gb_dis_corp_chat_record 
+	</select>
+	
+	<select id="queryByMsgId" resultType="com.nongxinle.entity.QyGbDisCorpChatRecordEntity">
+		select * from qy_gb_dis_corp_chat_record where qy_gb_dis_corp_chat_record_msg_id = #{msgId}
+	</select>
+	
+	<select id="queryRecentRecordsByRoomId" resultType="com.nongxinle.entity.QyGbDisCorpChatRecordEntity">
+		select * from qy_gb_dis_corp_chat_record 
+		where qy_gb_dis_qy_corp_id = #{corpId} 
+		and qy_gb_dis_corp_chat_record_room_id = #{roomId}
+		order by qy_gb_dis_corp_chat_record_msg_time desc
+		limit #{limit}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.QyGbDisCorpChatRecordEntity" useGeneratedKeys="true"
+			keyProperty="qyGbDisCorpChatRecordId">
+		insert into qy_gb_dis_corp_chat_record
+		(
+			`qy_gb_dis_qy_corp_id`, 
+			`qy_gb_dis_corp_chat_record_msg_id`, 
+			`qy_gb_dis_corp_chat_record_room_id`, 
+			`qy_gb_dis_corp_chat_record_from_user`, 
+			`qy_gb_dis_corp_chat_record_msg_type`,
+			`qy_gb_dis_corp_chat_record_content`,
+			`qy_gb_dis_corp_chat_record_msg_time`,
+			`qy_gb_dis_corp_chat_record_is_replied`,
+			`qy_gb_dis_corp_chat_record_reply_content`,
+			`qy_gb_dis_corp_chat_record_create_date`
+		)
+		values
+		(
+			#{qyGbDisQyCorpId}, 
+			#{qyGbDisCorpChatRecordMsgId}, 
+			#{qyGbDisCorpChatRecordRoomId}, 
+			#{qyGbDisCorpChatRecordFromUser}, 
+			#{qyGbDisCorpChatRecordMsgType},
+			#{qyGbDisCorpChatRecordContent},
+			#{qyGbDisCorpChatRecordMsgTime},
+			#{qyGbDisCorpChatRecordIsReplied},
+			#{qyGbDisCorpChatRecordReplyContent},
+			#{qyGbDisCorpChatRecordCreateDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyGbDisCorpChatRecordEntity">
+		update qy_gb_dis_corp_chat_record 
+		<set>
+			<if test="qyGbDisQyCorpId != null">`qy_gb_dis_qy_corp_id` = #{qyGbDisQyCorpId}, </if>
+			<if test="qyGbDisCorpChatRecordRoomId != null">`qy_gb_dis_corp_chat_record_room_id` = #{qyGbDisCorpChatRecordRoomId}, </if>
+			<if test="qyGbDisCorpChatRecordFromUser != null">`qy_gb_dis_corp_chat_record_from_user` = #{qyGbDisCorpChatRecordFromUser}, </if>
+			<if test="qyGbDisCorpChatRecordMsgType != null">`qy_gb_dis_corp_chat_record_msg_type` = #{qyGbDisCorpChatRecordMsgType}, </if>
+			<if test="qyGbDisCorpChatRecordContent != null">`qy_gb_dis_corp_chat_record_content` = #{qyGbDisCorpChatRecordContent}, </if>
+			<if test="qyGbDisCorpChatRecordMsgTime != null">`qy_gb_dis_corp_chat_record_msg_time` = #{qyGbDisCorpChatRecordMsgTime}, </if>
+			<if test="qyGbDisCorpChatRecordIsReplied != null">`qy_gb_dis_corp_chat_record_is_replied` = #{qyGbDisCorpChatRecordIsReplied}, </if>
+			<if test="qyGbDisCorpChatRecordReplyContent != null">`qy_gb_dis_corp_chat_record_reply_content` = #{qyGbDisCorpChatRecordReplyContent}</if>
+		</set>
+		where qy_gb_dis_corp_chat_record_id = #{qyGbDisCorpChatRecordId}
+	</update>
+	
+	<update id="updateReplyStatus">
+		update qy_gb_dis_corp_chat_record 
+		set `qy_gb_dis_corp_chat_record_is_replied` = 1,
+			`qy_gb_dis_corp_chat_record_reply_content` = #{replyContent}
+		where qy_gb_dis_corp_chat_record_msg_id = #{msgId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_gb_dis_corp_chat_record where qy_gb_dis_corp_chat_record_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_gb_dis_corp_chat_record where qy_gb_dis_corp_chat_record_id in 
+		<foreach item="qyGbDisCorpChatRecordId" collection="array" open="(" separator="," close=")">
+			#{qyGbDisCorpChatRecordId}
+		</foreach>
+	</delete>
+
+</mapper>

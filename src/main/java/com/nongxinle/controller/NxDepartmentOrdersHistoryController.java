@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import com.nongxinle.service.NxDepartmentOrdersHistoryService;
 import com.nongxinle.utils.R;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 
 @RestController
@@ -27,6 +31,8 @@ public class NxDepartmentOrdersHistoryController {
 
         return R.ok();
     }
+
+
 
 
 }

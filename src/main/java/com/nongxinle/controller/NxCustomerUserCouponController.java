@@ -99,7 +99,7 @@ public class NxCustomerUserCouponController {
                 if (userCouponEntity.getNxCucStatus() == -1) {
                     LocalDateTime now = LocalDateTime.now();
                     String nxCucShareTime = userCouponEntity.getNxCucShareTime();
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
                     System.out.println("uutuututu------------------------" + nxCucShareTime);
                     // 将字符串解析为LocalDateTime
                     LocalDateTime wasteTime = LocalDateTime.parse(nxCucShareTime, formatter);

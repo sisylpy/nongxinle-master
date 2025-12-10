@@ -15,7 +15,12 @@ public class GbTypeUtils {
 
     /** GreatBegin  */
 
-//    NxPrinterUserAdmin: 1 txs; 2 gbStock; 3 gbPurchase; 4  
+//    NxPrinterUserAdmin: 1 txs; 2 gbStock; 3 gbPurchase; 4
+
+    public final static Integer GB_DIS_PAY_BATCH_FINISH = 0; //采购订货批次完成
+    public final static Integer GB_DIS_PAY_LIST_RECORD = 1; //语音下单
+    public final static Integer GB_DIS_PAY_GOODS_ADD = 2; //web
+
 
     public final static Integer GB_PURCHASE_BATCH_PAY_TYPE_CASH = 0;
     public final static Integer GB_PURCHASE_BATCH_PAY_TYPE_ACCOUNT = 1;
@@ -91,8 +96,10 @@ public class GbTypeUtils {
 
     public final static Integer GB_PURCHASE_GOODS_STATUS_NEW = 0;  //新采购商品
     public final static Integer GB_PURCHASE_GOODS_STATUS_PROCUREMENT = 1;  //采购员分享给供货商订单（生成一个采购批次Batch）
-    public final static Integer GB_PURCHASE_GOODS_STATUS_FINISHED = 2;  //采购员分享给供货商订单（生成一个采购批次Batch）
-    public final static Integer GB_PURCHASE_GOODS_STATUS_RECEIVE = 3;  //采购员分享给供货商订单（生成一个采购批次Batch）
+    public final static Integer GB_PURCHASE_GOODS_STATUS_WEIGHT_FINISHED = 2;  //出库完成
+    public final static Integer GB_PURCHASE_GOODS_STATUS_WAIT_RECEIVE = 3;  //等待收货
+    public final static Integer GB_PURCHASE_GOODS_STATUS_STOCK_FINISH = 4;  //完成收货
+    public final static Integer GB_PURCHASE_GOODS_STATUS_PAY_FINISH = 5;  //完成支付
 
 
     public final static Integer GB_DIS_PURCHASE_BATCH_UN_Send = -2; //卖方未读
@@ -100,8 +107,14 @@ public class GbTypeUtils {
     public final static Integer GB_DIS_PURCHASE_BATCH_HAVE_READ = 0; //卖方已读
     public final static Integer GB_DIS_PURCHASE_BATCH_SELLER_REPLY = 1; //卖方回复
     public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_WAIT_RECEIVE = 2; //等待收货
-    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY = 3; //收货完成
+    public final static Integer GB_DIS_PURCHASE_BATCH_DEP_USER_RECEIVE_FINISH = 3; //收货完成
+    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY = 4; //结账完成
 
+    public final static Integer GB_DEP_BILL_NEW = 0; //订单生成
+    public final static Integer GB_DEP_BILL_DELIVERY_FINISH = 1; //配送完成
+    public final static Integer GB_DEP_BILL_HAVE_PAY = 2; //有支付行为
+    public final static Integer GB_DEP_BILL_WAITING_PAY = 3; //等待收货
+    public final static Integer GB_DEP_BILL_RECEIVE_FINISH = 4; //收货完成
 
 //    public final static Integer GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH = 2; //Dis用户完成
 
@@ -112,7 +125,15 @@ public class GbTypeUtils {
     public final static Integer GB_WEIGHT_TOTAL_STATUS_UN_FINISHED = 0;  //
     public final static Integer GB_WEIGHT_TOTAL_STATUS_FINISHED = 1;  //
 
-
+    public static Integer getGbDisPayBatchFinish() {
+        return GB_DIS_PAY_BATCH_FINISH;
+    }
+    public static Integer getGbDisPayListRecord() {
+        return GB_DIS_PAY_LIST_RECORD;
+    }
+    public static Integer getGbDisPayGoodsAdd() {
+        return GB_DIS_PAY_GOODS_ADD;
+    }
 
 
     public static Integer getDISGoodsInventroyMonth(){
@@ -226,8 +247,10 @@ public class GbTypeUtils {
 
     public static Integer getGbPurchaseGoodsStatusNew(){ return GB_PURCHASE_GOODS_STATUS_NEW; }
     public static Integer getGbPurchaseGoodsStatusProcurement(){ return GB_PURCHASE_GOODS_STATUS_PROCUREMENT; }
-    public static Integer getGbPurchaseGoodsStatusFinished(){ return GB_PURCHASE_GOODS_STATUS_FINISHED; }
-    public static Integer getGbPurchaseGoodsStatusReceive(){ return GB_PURCHASE_GOODS_STATUS_RECEIVE; }
+    public static Integer getGbPurchaseGoodsStatusWeightFinished(){ return GB_PURCHASE_GOODS_STATUS_WEIGHT_FINISHED; }
+    public static Integer getGbPurchaseGoodsStatusWaitReceive(){ return GB_PURCHASE_GOODS_STATUS_WAIT_RECEIVE; }
+    public static Integer getGbPurchaseGoodsStatusStockFinish(){ return GB_PURCHASE_GOODS_STATUS_STOCK_FINISH; }
+    public static Integer getGbPurchaseGoodsStatusPayFinish(){ return GB_PURCHASE_GOODS_STATUS_PAY_FINISH; }
 
     public static Integer getGbWeightGoodsStatusPrepare(){ return GB_WEIGHT_GOODS_STATUS_PREPARE; }
     public static Integer getGbWeightGoodsStatusPrinted(){ return GB_WEIGHT_GOODS_STATUS_PRINTED; }
@@ -254,7 +277,29 @@ public class GbTypeUtils {
     public static Integer getGbDisPurchaseBatchDisUserWaitReceive() {
         return GB_DIS_PURCHASE_BATCH_DIS_USER_WAIT_RECEIVE;
     }
+    public static Integer getGbDisPurchaseBatchDepUserReceiveFinish() {
+        return GB_DIS_PURCHASE_BATCH_DEP_USER_RECEIVE_FINISH;
+    }
     public static Integer getGbDisPurchaseBatchDisUserFinishPay() {
         return GB_DIS_PURCHASE_BATCH_DIS_USER_FINISH_PAY;
     }
+
+
+    public static Integer getGbDepBillNew() {
+        return GB_DEP_BILL_NEW;
+    }
+    public static Integer getGbDepBillDeliveryFinish() {
+        return GB_DEP_BILL_DELIVERY_FINISH;
+    }
+    public static Integer getGbDepBillHavePay() {
+        return GB_DEP_BILL_HAVE_PAY;
+    }
+    public static Integer getGbDepBillWaitingPay() {
+        return GB_DEP_BILL_WAITING_PAY;
+    }
+    public static Integer getGbDepBillReceiveFinish() {
+        return GB_DEP_BILL_RECEIVE_FINISH;
+    }
+
+
 }

@@ -43,6 +43,8 @@ public class GbDistributerPayListEntity implements Serializable {
 	 *  
 	 */
 	private Integer gbNdplStatus;
+	private Integer gbNdplGbDepartmentFatherId;
+	private Integer gbNdplGbDepartmentId;
 	/**
 	 *  
 	 */
@@ -62,12 +64,15 @@ public class GbDistributerPayListEntity implements Serializable {
 	/**
 	 *  
 	 */
-	private Integer gbNdplRestPoints;
+	private String gbNdplRestPoints;
+	private Integer gbNdplGbDisGoodsId;
 	/**
 	 *  
 	 */
 	private Integer gbNdplNxSupplierId;
 
 	private NxJrdhSupplierEntity nxJrdhSupplierEntity;
+	private GbDepartmentEntity gbDepartmentEntity;
+	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
 
 }

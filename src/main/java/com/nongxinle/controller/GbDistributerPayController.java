@@ -104,7 +104,7 @@ public class GbDistributerPayController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
-        System.out.println("mappd" + map);
+        System.out.println("mappdaaa" + map);
         List<GbDistributerPayEntity> payEntities = gbDistributerPayService.queryDisPayListByParams(map);
         return R.ok().put("data", payEntities);
 
@@ -330,8 +330,11 @@ public class GbDistributerPayController {
                             System.out.println("decimdall========" + decimal);
                             BigDecimal decimal1 = new BigDecimal(payEntity.getGbGdpBuyQuantity()).multiply(BigDecimal.valueOf(10000));
                             System.out.println("nxdkkddkdk00" + nxDistributerEntity.getGbDistributerBuyQuantity());
-                            BigDecimal add = decimal.add(decimal1).setScale(0, BigDecimal.ROUND_HALF_UP);
+                            BigDecimal add = decimal.add(decimal1);
                             nxDistributerEntity.setGbDistributerBuyQuantity(add.toString());
+                            if(nxDistributerEntity.getGbDistributerBusinessType() == -1){
+                                nxDistributerEntity.setGbDistributerBusinessType(0);
+                            }
                             System.out.println("nxdkkddkdk11" + nxDistributerEntity.getGbDistributerBuyQuantity());
                             gbDistributerService.update(nxDistributerEntity);
                         }
@@ -458,54 +461,53 @@ public class GbDistributerPayController {
         List<NxDistributerPayEntity> list = new ArrayList<>();
         if (type == 0) {
             NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
-            payEntity.setNxNdpBuyQuantity("1.0");
-//			payEntity.setNxNdpPaySubtotal("100");
-            payEntity.setNxNdpPaySubtotal("3.6");
+            payEntity.setNxNdpBuyQuantity("2.0");
+			payEntity.setNxNdpPaySubtotal("198");
+//            payEntity.setNxNdpPaySubtotal("3.6");
             payEntity.setPerPrice("1");
             list.add(payEntity);
             NxDistributerPayEntity payEntity1 = new NxDistributerPayEntity();
-            payEntity1.setNxNdpBuyQuantity("2.0");
-			payEntity1.setNxNdpPaySubtotal("180");
+            payEntity1.setNxNdpBuyQuantity("4.0");
+			payEntity1.setNxNdpPaySubtotal("358");
 //            payEntity1.setNxNdpPaySubtotal("6.58");
             payEntity1.setPerPrice("0.9");
             list.add(payEntity1);
             NxDistributerPayEntity payEntity2 = new NxDistributerPayEntity();
-            payEntity2.setNxNdpBuyQuantity("3.0");
-            payEntity2.setNxNdpPaySubtotal("240");
+            payEntity2.setNxNdpBuyQuantity("6.0");
+            payEntity2.setNxNdpPaySubtotal("480");
             payEntity2.setPerPrice("0.8");
             list.add(payEntity2);
         }
 
+//        if (type == 1) {
+//
+//
+//            NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
+//            payEntity.setNxNdpBuyQuantity("1");
+//            payEntity.setNxNdpPaySubtotal("1800");
+////            payEntity.setNxNdpPaySubtotal("1.8");
+//            payEntity.setPerPrice("5");
+//            list.add(payEntity);
+//            NxDistributerPayEntity payEntity1 = new NxDistributerPayEntity();
+//            payEntity1.setNxNdpBuyQuantity("2");
+////            payEntity1.setNxNdpPaySubtotal("3.420");
+//            payEntity1.setNxNdpPaySubtotal("3420");
+//            payEntity1.setPerPrice("4.75");
+//            list.add(payEntity1);
+//            NxDistributerPayEntity payEntity3 = new NxDistributerPayEntity();
+//            payEntity3.setNxNdpBuyQuantity("3");
+////            payEntity3.setNxNdpPaySubtotal("4.860");
+//            payEntity3.setNxNdpPaySubtotal("4860");
+//            payEntity3.setPerPrice("4.5");
+//            list.add(payEntity3);
+//
+//        }
         if (type == 1) {
-
-
             NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
             payEntity.setNxNdpBuyQuantity("1");
-            payEntity.setNxNdpPaySubtotal("1800");
-//            payEntity.setNxNdpPaySubtotal("1.8");
-            payEntity.setPerPrice("5");
-            list.add(payEntity);
-            NxDistributerPayEntity payEntity1 = new NxDistributerPayEntity();
-            payEntity1.setNxNdpBuyQuantity("2");
-//            payEntity1.setNxNdpPaySubtotal("3.420");
-            payEntity1.setNxNdpPaySubtotal("3420");
-            payEntity1.setPerPrice("4.75");
-            list.add(payEntity1);
-            NxDistributerPayEntity payEntity3 = new NxDistributerPayEntity();
-            payEntity3.setNxNdpBuyQuantity("3");
-//            payEntity3.setNxNdpPaySubtotal("4.860");
-            payEntity3.setNxNdpPaySubtotal("4860");
-            payEntity3.setPerPrice("4.5");
-            list.add(payEntity3);
-
-        }
-        if (type == 2) {
-            NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
-            payEntity.setNxNdpBuyQuantity("1");
-//			payEntity.setNxNdpPaySubtotal("2800");
-            payEntity.setNxNdpPaySubtotal("2.80");
+			payEntity.setNxNdpPaySubtotal("2800");
             payEntity.setNxNdpType(0);
-            payEntity.setPerPrice("时鲜连锁店管理端");
+            payEntity.setPerPrice("连锁店管理端");
             payEntity.setNxNdpImgUrl("uploadImage/imPurchase/guanli.png");
             payEntity.setNxNdpSellDetail("实时监控 精准管理\n 管理者可以随时查看分店库存情况，掌握原料的使用状态、剩余数量，以及新鲜度等关键信息，能够对原料的采购、存储、使用等各环节进行精准的管理。");
             list.add(payEntity);

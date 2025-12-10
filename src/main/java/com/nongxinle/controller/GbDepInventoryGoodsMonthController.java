@@ -385,6 +385,7 @@ public class GbDepInventoryGoodsMonthController {
 				reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
 				reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
 				reduceEntity.setGbDgsrGbDisGoodsGrandId(stock.getGbDgsGbDisGoodsGrandId());
+				reduceEntity.setGbDgsrGbDisGoodsGreatId(stock.getGbDgsGbDisGoodsGreatId());
 				reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
 				reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
 				reduceEntity.setGbDgsrFullTime(formatFullTime());
@@ -448,6 +449,7 @@ public class GbDepInventoryGoodsMonthController {
             reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
             reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
             reduceEntity.setGbDgsrGbDisGoodsGrandId(stock.getGbDgsGbDisGoodsGrandId());
+            reduceEntity.setGbDgsrGbDisGoodsGreatId(stock.getGbDgsGbDisGoodsGreatId());
             reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
             reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
             reduceEntity.setGbDgsrFullTime(formatFullTime());
@@ -533,6 +535,7 @@ public class GbDepInventoryGoodsMonthController {
                 reduceEntity.setGbDgsrGbDisGoodsId(stock.getGbDgsGbDisGoodsId());
                 reduceEntity.setGbDgsrGbDisGoodsFatherId(stock.getGbDgsGbDisGoodsFatherId());
                 reduceEntity.setGbDgsrGbDisGoodsGrandId(stock.getGbDgsGbDisGoodsGrandId());
+                reduceEntity.setGbDgsrGbDisGoodsGreatId(stock.getGbDgsGbDisGoodsGreatId());
                 reduceEntity.setGbDgsrGbDepDisGoodsId(stock.getGbDgsGbDepDisGoodsId());
                 reduceEntity.setGbDgsrGbGoodsStockId(stock.getGbDepartmentGoodsStockId());
                 reduceEntity.setGbDgsrFullTime(formatFullTime());

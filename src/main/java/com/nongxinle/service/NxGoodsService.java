@@ -92,6 +92,8 @@ public interface NxGoodsService {
 
     List<Integer> queryOnlyGoodsIds(Map<String, Object> map);
 
+    List<String> queryNxBrand();
+
 
 //    List<NxGoodsEntity> queryCataNxDistribterWithPeisong(Map<String, Object> map);
 }

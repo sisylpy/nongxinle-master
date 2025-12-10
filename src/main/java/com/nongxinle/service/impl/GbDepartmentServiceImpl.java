@@ -287,6 +287,7 @@ public class GbDepartmentServiceImpl implements GbDepartmentService {
                         disGoodsEntity.setGbDdgDisGoodsId(departmentDisGoodsEntity.getGbDdgDisGoodsId());
                         disGoodsEntity.setGbDdgDisGoodsFatherId(departmentDisGoodsEntity.getGbDdgDisGoodsFatherId());
                         disGoodsEntity.setGbDdgDisGoodsGrandId(departmentDisGoodsEntity.getGbDdgDisGoodsGrandId());
+                        disGoodsEntity.setGbDdgDisGoodsGreatId(departmentDisGoodsEntity.getGbDdgDisGoodsGreatId());
                         disGoodsEntity.setGbDdgDepGoodsPinyin(departmentDisGoodsEntity.getGbDdgDepGoodsPinyin());
                         disGoodsEntity.setGbDdgDepGoodsPy(departmentDisGoodsEntity.getGbDdgDepGoodsPy());
                         disGoodsEntity.setGbDdgDepGoodsStandardname(departmentDisGoodsEntity.getGbDdgDepGoodsStandardname());
@@ -321,6 +322,7 @@ public class GbDepartmentServiceImpl implements GbDepartmentService {
                     disGoodsEntity.setGbDdgDisGoodsId(departmentDisGoodsEntity.getGbDdgDisGoodsId());
                     disGoodsEntity.setGbDdgDisGoodsFatherId(departmentDisGoodsEntity.getGbDdgDisGoodsFatherId());
                     disGoodsEntity.setGbDdgDisGoodsGrandId(departmentDisGoodsEntity.getGbDdgDisGoodsGrandId());
+                    disGoodsEntity.setGbDdgDisGoodsGreatId(departmentDisGoodsEntity.getGbDdgDisGoodsGreatId());
                     disGoodsEntity.setGbDdgDepGoodsPinyin(departmentDisGoodsEntity.getGbDdgDepGoodsPinyin());
                     disGoodsEntity.setGbDdgDepGoodsPy(departmentDisGoodsEntity.getGbDdgDepGoodsPy());
                     disGoodsEntity.setGbDdgDepGoodsStandardname(departmentDisGoodsEntity.getGbDdgDepGoodsStandardname());
@@ -358,6 +360,13 @@ public class GbDepartmentServiceImpl implements GbDepartmentService {
     public int queryDepHasOrdersCount(Map<String, Object> mapDis) {
 
         return gbDepartmentDao.queryDepHasOrdersCount(mapDis);
+    }
+
+    @Override
+    public List<GbDepartmentEntity> queryDepsByDisId(Map<String, Object> map) {
+
+
+        return  gbDepartmentDao.queryDepsByDisId(map);
     }
 
 }

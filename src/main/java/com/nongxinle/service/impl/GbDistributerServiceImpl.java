@@ -407,20 +407,8 @@ public class GbDistributerServiceImpl implements GbDistributerService {
         gbDistributerEntity.setGbDistributerSettleYear(formatWhatYear(0));
         gbDistributerEntity.setGbDistributerManager("09:00");
         gbDistributerEntity.setGbDistributerSettleTimes("0");
-        gbDistributerEntity.setGbDistributerBuyQuantity("50");
+        gbDistributerEntity.setGbDistributerBuyQuantity("0");
         gbDistributerDao.save(gbDistributerEntity);
-
-        System.out.println("disussavvve"+ gbDistributerEntity);
-//        GbDistributerUserEntity gbDistributerUserEntity = gbDistributerEntity.getGbDistributerUserEntity();
-//        gbDistributerUserEntity.setGbDiuDistributerId(gbDistributerEntity.getGbDistributerId());
-//        gbDistributerUserEntity.setGbDiuUrlChange(1);
-//        gbDistributerUserEntity.setGbDiuLoginTimes(0);
-//        gbDistributerUserEntity.setGbDiuPrintBillDeviceId("-1");
-//        gbDistributerUserEntity.setGbDiuPrintDeviceId("-1");
-//        gbDistributerUserEntity.setGbDiuAdmin(2);
-//        gbDistributerUserEntity.setGbDiuWxPhone(gbDistributerEntity.getGbDistributerPhone());
-//        gbDistributerUserService.save(gbDistributerUserEntity);
-
 
 
         //模块
@@ -458,6 +446,8 @@ public class GbDistributerServiceImpl implements GbDistributerService {
         greatGrand.setGbDfgFatherGoodsLevel(0);
         greatGrand.setGbDfgFatherGoodsImg("goodsImage/logo.jpg");
         greatGrand.setGbDfgFatherGoodsName("临时添加");
+        greatGrand.setGbDfgFatherGoodsColor("#757575");
+        greatGrand.setGbDfgFathersFatherId(0);
         dgfService.save(greatGrand);
 
 
@@ -467,6 +457,7 @@ public class GbDistributerServiceImpl implements GbDistributerService {
         grand.setGbDfgFatherGoodsImg("goodsImage/logo.jpg");
         grand.setGbDfgFatherGoodsName("临时添加");
         grand.setGbDfgGoodsAmount(0);
+        grand.setGbDfgFatherGoodsColor("#757575");
         grand.setGbDfgFathersFatherId(greatGrand.getGbDistributerFatherGoodsId());
 
         dgfService.save(grand);
@@ -477,12 +468,10 @@ public class GbDistributerServiceImpl implements GbDistributerService {
         father.setGbDfgFatherGoodsImg("goodsImage/logo.jpg");
         father.setGbDfgFatherGoodsName("临时添加");
         father.setGbDfgGoodsAmount(0);
+        father.setGbDfgFatherGoodsColor("#757575");
         father.setGbDfgFathersFatherId(grand.getGbDistributerFatherGoodsId());
         dgfService.save(father);
 
-//        List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = dgfService.queryDisGoodsCataLinshi(nxDistributerId);
-//        GbDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsEntities.get(0);
-//        gbDistributerEntity.setLinshiFather(fatherGoodsEntity);
     }
 
 

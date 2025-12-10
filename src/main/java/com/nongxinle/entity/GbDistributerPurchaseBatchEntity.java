@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import jdk.nashorn.internal.ir.IndexNode;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -42,6 +42,7 @@ public class GbDistributerPurchaseBatchEntity implements Serializable, Comparabl
 	 *  批发商进货采购员id
 	 */
 	private Integer gbDpbPurUserId;
+	private Integer gbDpbDepBillId;
 
 	private Integer gbDpbDistributerId;
 

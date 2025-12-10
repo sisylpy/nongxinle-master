@@ -262,16 +262,33 @@ public class MyAPPIDConfig  {
 
 
 
+//    public String getLaoDuDinghuoAppID() {
+//        return "wx38e2e89afe95a51f";
+//    }
+//
+//    public String getLaoDuDinghuoScreat(){
+//        return "5d020040fed265d26050f6da30578295";
+//    }
+
     public String getLaoDuDinghuoAppID() {
-        return "wx38e2e89afe95a51f";
+        return "wx159c5a46d80e4500";
     }
 
     public String getLaoDuDinghuoScreat(){
-        return "5d020040fed265d26050f6da30578295";
+        return "319555884ced0820af582ae2e622ee6b";
     }
 
-
-
-
+    /**
+     * 打印机耗材提醒小程序
+     * AppID: wxaad78fd4a9d898cf
+     * @return
+     */
+    public String getPrinterAlertAppId(){
+        return "wxaad78fd4a9d898cf";
+    }
+    
+    public String getPrinterAlertSecret(){
+        return "190652f297cf9826ebb72c29aa1ff0f6"; // 请替换为实际的Secret
+    }
 
 }

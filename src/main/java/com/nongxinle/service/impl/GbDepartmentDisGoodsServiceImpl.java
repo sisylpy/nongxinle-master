@@ -4,8 +4,6 @@ import com.nongxinle.dao.GbDepartmentGoodsStockDao;
 import com.nongxinle.dao.GbDepartmentOrdersDao;
 import com.nongxinle.dao.GbDistributerGoodsDao;
 import com.nongxinle.entity.*;
-import com.nongxinle.service.GbDepartmentGoodsStockService;
-import com.nongxinle.service.GbDistributerGoodsService;
 import com.nongxinle.service.GbDistributerStandardService;
 import com.nongxinle.utils.PageUtils;
 import org.slf4j.Logger;
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -158,7 +155,7 @@ public class GbDepartmentDisGoodsServiceImpl implements GbDepartmentDisGoodsServ
     }
 
     @Override
-    public GbDepartmentDisGoodsEntity queryDepartmentGoods(Map<String, Object> map) {
+    public List<GbDepartmentDisGoodsEntity>  queryDepartmentGoods(Map<String, Object> map) {
 
         return gbDepartmentDisGoodsDao.queryDepartmentGoods(map);
     }
@@ -628,7 +625,7 @@ public class GbDepartmentDisGoodsServiceImpl implements GbDepartmentDisGoodsServ
             }
 
             /* ---------- 2. 基础信息 ---------- */
-            GbDistributerGoodsEntity goods = gbDistributerGoodsDao.queryObject(gid);
+            GbDistributerGoodsEntity goods = gbDistributerGoodsDao.queryDisGoodsDetail(gid);
             if (goods == null) {
                 log.warn("SKU[{}] 商品信息不存在", gid);
                 continue;
@@ -1017,6 +1014,12 @@ public class GbDepartmentDisGoodsServiceImpl implements GbDepartmentDisGoodsServ
     public List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map) {
 
         return gbDepartmentDisGoodsDao.queryOnlyDisGoodsIds(map);
+    }
+
+    @Override
+    public GbDepartmentDisGoodsEntity queryDepartmentGoodsForAi(Map<String, Object> mapD) {
+
+        return gbDepartmentDisGoodsDao.queryDepartmentGoodsForAi(mapD);
     }
 
 

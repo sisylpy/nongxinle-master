@@ -8,6 +8,7 @@ package com.nongxinle.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.*;
 
 import com.alibaba.fastjson.JSONObject;
@@ -53,10 +54,62 @@ public class GbDistributerController {
     private GbDistributerFatherGoodsService dgfService;
     @Autowired
     private GbDepartmentUserService gbDepartmentUserService;
+    @Autowired
+    private GbDistributerPayService payService;
 
 
 
+    @RequestMapping(value = "/addAppPointsWithUserId", method = RequestMethod.POST)
+    @ResponseBody
+    public R addAppPointsWithUserId (Integer userId, Integer disId, String points) {
 
+
+        GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(disId);
+        GbDistributerPayEntity gbDistributerPayEntity = new GbDistributerPayEntity();
+        gbDistributerPayEntity.setGbGdpGbDisId(disId);
+        gbDistributerPayEntity.setGbGdpGbNewDisId(disId);
+        BigDecimal multiply = new BigDecimal(points).divide(new BigDecimal(10000)).setScale(1,BigDecimal.ROUND_HALF_UP);
+
+        gbDistributerPayEntity.setGbGdpBuyQuantity(multiply.toString());
+        gbDistributerPayEntity.setGbGdpPaySubtotal("0");
+        gbDistributerPayEntity.setGbGdpStatus(0);
+        gbDistributerPayEntity.setGbGdpPayTime(formatWhatYearDayTime(0));
+        // 设置开始时间为今天
+        Date fromTime = new Date();
+        gbDistributerPayEntity.setGbGdpFromTime(fromTime);
+        
+        // 设置结束时间为7天后
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(fromTime);
+        calendar.add(Calendar.DAY_OF_MONTH, 7);
+        Date toTime = calendar.getTime();
+        gbDistributerPayEntity.setGbGdpStopTime(toTime);
+        gbDistributerPayEntity.setGbGdpType(-1);
+
+        payService.save(gbDistributerPayEntity);
+
+        BigDecimal decimal = new BigDecimal(points);
+        System.out.println("decimdall========" + decimal);
+        BigDecimal decimal1 = new BigDecimal(gbDistributerEntity.getGbDistributerBuyQuantity());
+        System.out.println("nxdkkddkdk00" + gbDistributerEntity.getGbDistributerBuyQuantity());
+        BigDecimal add = decimal.add(decimal1);
+        gbDistributerEntity.setGbDistributerBuyQuantity(add.toString());
+        System.out.println("nxdkkddkdk11" + gbDistributerEntity.getGbDistributerBuyQuantity());
+        gbDistributerService.update(gbDistributerEntity);
+
+        System.out.println("oposos"  + points);
+
+
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/salesManAddPoints/{XqLi4ZvFRv.txt}")
+    @ResponseBody
+    public String salesManAddPoints() {
+        
+        return "9976e22e84530fdfba7dfe6907737027";
+    }
 
 
 
@@ -87,14 +140,14 @@ public class GbDistributerController {
         if(gbDepartmentEntityList.size() > 0){
             for(GbDepartmentEntity gbDepartmentEntity: gbDepartmentEntityList){
                 Integer gbDepartmentType = gbDepartmentEntity.getGbDepartmentType();
-//                if(gbDepartmentType.equals(getGbDepartmentTypeMendian())){
-//                    String gbDepartmentName = dis.getGbDistributerName();
-//                    gbDepartmentEntity.setGbDepartmentName(dis.getGbDistributerName());
-//                    gbDepartmentEntity.setGbDepartmentAttrName(dis.getGbDistributerName());
-//                    String headPinyin = getHeadStringByString(gbDepartmentName, false, null);
-//                    gbDepartmentEntity.setGbDepartmentNamePy(headPinyin);
-//                    gbDepartmentService.update(gbDepartmentEntity);
-//                }
+                if(gbDepartmentType.equals(getGbDepartmentTypeMendian())){
+                    String gbDepartmentName = dis.getGbDistributerName();
+                    gbDepartmentEntity.setGbDepartmentName(dis.getGbDistributerName());
+                    gbDepartmentEntity.setGbDepartmentAttrName(dis.getGbDistributerName());
+                    String headPinyin = getHeadStringByString(gbDepartmentName, false, null);
+                    gbDepartmentEntity.setGbDepartmentNamePy(headPinyin);
+                    gbDepartmentService.update(gbDepartmentEntity);
+                }
                 if(gbDepartmentType.equals(getGbDepartmentTypeJicai())){
                     String gbDepartmentName = dis.getGbDistributerName()+"集采部";
                     gbDepartmentEntity.setGbDepartmentName(dis.getGbDistributerName());

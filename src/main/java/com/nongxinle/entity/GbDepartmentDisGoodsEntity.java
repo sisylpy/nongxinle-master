@@ -110,6 +110,7 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private String 	gbDdgPrintStandard;
 	private String 	gbDdgOrderGoodsName;
 	private String 	gbDdgOrderPriceLevel;
+	private String gbDgFreshWasteHour;
 
 
 	private Integer 	gbDdgPrepareStatus;
@@ -117,6 +118,8 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private Integer 	gbDdgDepGoodsPullOff;
 	private String gbTipText;
 	private String gbDgGoodsStandardWeight;
+	private String gbDgGoodsName;
+	private String gbDgGoodsStandardname;
 
 	private Boolean showStock = false;
 
@@ -126,16 +129,16 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 
 	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;
-	private List<GbDepartmentOrdersHistoryEntity> gbDepOrdersHistoryEntities;
+//	private List<GbDepartmentOrdersHistoryEntity> gbDepOrdersHistoryEntities;
 
 	private List<GbDistributerStandardEntity> gbDistributerStandardEntities;
-	private NxDistributerEntity nxDistributerEntity;
+//	private NxDistributerEntity nxDistributerEntity;
 	private GbDepartmentEntity outStockDepartmentEntity;
 	private GbDepartmentEntity gbGoodsDepartmentEntity;
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
-	private GbDepInventoryGoodsDailyEntity gbDepInventoryGoodsDailyEntity;
-	private GbDepInventoryGoodsWeekEntity gbDepInventoryGoodsWeekEntity;
-	private GbDepInventoryGoodsMonthEntity gbDepInventoryGoodsMonthEntity;
+//	private GbDepInventoryGoodsDailyEntity gbDepInventoryGoodsDailyEntity;
+//	private GbDepInventoryGoodsWeekEntity gbDepInventoryGoodsWeekEntity;
+//	private GbDepInventoryGoodsMonthEntity gbDepInventoryGoodsMonthEntity;
     private GbDepartmentGoodsDailyEntity gbDepGoodsDailyEntity;
 //
 //	private List<GbDepInventoryGoodsDailyEntity> todayInventoryGoodsDailyEntities;
@@ -240,17 +243,19 @@ public class GbDepartmentDisGoodsEntity implements Serializable, Comparable {
 //				Objects.equals(gbDdgStockSubtotalTotal, that.gbDdgStockSubtotalTotal) &&
 				Objects.equals(gbDepartmentGoodsStockEntities, that.gbDepartmentGoodsStockEntities) &&
 				Objects.equals(gbDistributerGoodsEntity, that.gbDistributerGoodsEntity) &&
-				Objects.equals(gbDepartmentOrdersEntity, that.gbDepartmentOrdersEntity) &&
-				Objects.equals(gbDepOrdersHistoryEntities, that.gbDepOrdersHistoryEntities) &&
-				Objects.equals(gbDistributerStandardEntities, that.gbDistributerStandardEntities) &&
-				Objects.equals(nxDistributerEntity, that.nxDistributerEntity) &&
+//				Objects.equals(gbDepartmentOrdersEntity, that.gbDepartmentOrdersEntity) &&
+//				Objects.equals(gbDepOrdersHistoryEntities, that.gbDepOrdersHistoryEntities) &&
+//				Objects.equals(gbDistributerStandardEntities, that.gbDistributerStandardEntities) &&
+//				Objects.equals(nxDistributerEntity, that.nxDistributerEntity) &&
 				Objects.equals(outStockDepartmentEntity, that.outStockDepartmentEntity) &&
 				Objects.equals(nxDistributerGoodsEntity, that.nxDistributerGoodsEntity);
 	}
 
+
+//	gbDistributerGoodsEntity, gbDepartmentOrdersEntity, gbDepOrdersHistoryEntities, gbDistributerStandardEntities, nxDistributerEntity,
 	@Override
 	public int hashCode() {
-		return Objects.hash(gbDepartmentDisGoodsId, gbDdgDepartmentFatherId, gbDdgDepartmentId, gbDdgDisGoodsId, gbDdgDisGoodsFatherId, gbDdgDepGoodsName, gbDdgDepGoodsPinyin, gbDdgDepGoodsPy, gbDdgDepGoodsStandardname, gbDdgDepGoodsDetail, gbDdgDepGoodsBrand, gbDdgDepGoodsPlace, gbDdgGoodsType, gbDdgNxDistributerId, gbDdgNxDistributerGoodsId, gbDdgGbDepartmentId, gbDepartmentGoodsStockEntities, gbDistributerGoodsEntity, gbDepartmentOrdersEntity, gbDepOrdersHistoryEntities, gbDistributerStandardEntities, nxDistributerEntity, outStockDepartmentEntity, nxDistributerGoodsEntity);
+		return Objects.hash(gbDepartmentDisGoodsId, gbDdgDepartmentFatherId, gbDdgDepartmentId, gbDdgDisGoodsId, gbDdgDisGoodsFatherId, gbDdgDepGoodsName, gbDistributerGoodsEntity,gbDdgDepGoodsPinyin, gbDdgDepGoodsPy, gbDdgDepGoodsStandardname, gbDdgDepGoodsDetail, gbDdgDepGoodsBrand, gbDdgDepGoodsPlace, gbDdgGoodsType, gbDdgNxDistributerId, gbDdgNxDistributerGoodsId, gbDdgGbDepartmentId, gbDepartmentGoodsStockEntities, outStockDepartmentEntity, nxDistributerGoodsEntity);
 	}
 
 	@Override

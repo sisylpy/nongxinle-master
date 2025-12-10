@@ -64,6 +64,7 @@
 
 	<resultMap id="subDeps" type="NxDepartmentEntity">
 		<id property="nxDepartmentId" column="subs_nx_department_id"/>
+		<result property="nxDepartmentOrderCode" column="subs_nx_department_order_code"/>
 		<result property="nxDepartmentPickName" column="subs_nx_department_pick_name"/>
 		<result property="nxDepartmentAppId" column="subs_nx_department_app_id"/>
 		<result property="nxDepartmentPrintName" column="subs_nx_department_print_name"/>
@@ -89,7 +90,14 @@
 
 
 	<resultMap id="fatherNxDep" type="NxDepartmentEntity">
-		<id property="nxDepartmentId" column="d_nx_department_id"/>
+		  <id property="nxDepartmentId" column="d_nx_department_id"/>
+		<result property="nxDepartmentPoints" column="d_nx_department_points"/>
+		<result property="nxDepartmentWaitingPoints" column="d_nx_department_waiting_points"/>
+		<result property="nxDepartmentAddress" column="d_nx_department_address"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="d_nx_department_latest_delivery_time"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="d_nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLat" column="d_nx_department_lat"/>
+        <result property="nxDepartmentLng" column="d_nx_department_lng"/>
         <result property="nxDepartmentPickName" column="d_nx_department_pick_name"/>
 		<result property="nxDepartmentPrintName" column="d_nx_department_print_name"/>
 		<result property="nxDepartmentType" column="d_nx_department_type"/>
@@ -154,6 +162,8 @@
 	<select id="queryPayListListByParams" resultMap="payDetail">
 		select *,
 		d.nx_department_id                'd_nx_department_id',
+		d.nx_department_points            'd_nx_department_points',
+		d.nx_department_waiting_points    'd_nx_department_waiting_points',
 		d.nx_department_name              'd_nx_department_name',
 		d.nx_department_attr_name              'd_nx_department_attr_name',
 		d.nx_department_settle_type       'd_nx_department_settle_type',
@@ -173,7 +183,7 @@
 		subsd.nx_department_id            'subs_nx_department_id',
 		subsd.nx_department_name          'subs_nx_department_name',
 		subsd.nx_department_pick_name		'subs_nx_department_pick_name',
-		subsd.nx_department_pick_name		'subs_nx_department_pick_name',
+		subsd.nx_department_order_code		'subs_nx_department_order_code',
  		subsd.nx_department_attr_name       'subs_nx_department_attr_name',
 		subsd.nx_department_settle_type      'subs_nx_department_settle_type',
 		subsd.nx_department_type          'subs_nx_department_type',

@@ -693,7 +693,7 @@
             <if test="nxCosPickUpCode != null">`nx_COS_pick_up_code` = #{nxCosPickUpCode},</if>
             <if test="nxCosService != null">`nx_COS_service` = #{nxCosService},</if>
             <if test="nxCosServiceDate != null">`nx_COS_service_date` = #{nxCosServiceDate},</if>
-            <if test="nxCosServiceTime != null">`nx_COS_service_time` = #{nxCosServiceTime},</if>
+            <if test="nxCosServiceTime != null and nxCosServiceTime != ''">`nx_COS_service_time` = #{nxCosServiceTime},</if>
             <if test="nxCosPrintTime != null">`nx_COS_print_time` = #{nxCosPrintTime},</if>
             <if test="nxCosPrintLog != null">`nx_COS_print_log` = #{nxCosPrintLog},</if>
             <if test="nxCosCucId != null">`nx_COS_cuc_id` = #{nxCosCucId},</if>

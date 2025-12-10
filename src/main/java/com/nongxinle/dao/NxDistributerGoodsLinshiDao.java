@@ -9,7 +9,14 @@ package com.nongxinle.dao;
 
 import com.nongxinle.entity.NxDistributerGoodsLinshiEntity;
 
+import java.util.List;
+import java.util.Map;
+
 
 public interface NxDistributerGoodsLinshiDao extends BaseDao<NxDistributerGoodsLinshiEntity> {
-	
+
+    List<NxDistributerGoodsLinshiEntity> disGetLinshiGoodsList(Map<String, Object> map);
+
+    int disGetLinshiGoodsTotal(Map<String, Object> map);
+
 }

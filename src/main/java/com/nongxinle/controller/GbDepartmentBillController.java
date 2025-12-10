@@ -214,7 +214,7 @@ public class GbDepartmentBillController {
             //0,修改订单上次价格涨幅
             String gbDdgOrderDate = departmentDisGoodsEntity.getGbDdgOrderDate();
 
-            if (gbDdgOrderDate != null && order.getGbDoPrice() != null) {
+            if (gbDdgOrderDate != null && !gbDdgOrderDate.trim().isEmpty() && order.getGbDoPrice() != null && !order.getGbDoPrice().trim().isEmpty()) {
                 BigDecimal decimal = new BigDecimal(departmentDisGoodsEntity.getGbDdgOrderPrice());
                 BigDecimal decimal1 = new BigDecimal(order.getGbDoPrice());
                 BigDecimal subtract1 = decimal1.subtract(decimal);
@@ -235,6 +235,7 @@ public class GbDepartmentBillController {
             stockEntity.setGbDgsRestSubtotal(order.getGbDoSubtotal());
             stockEntity.setGbDgsGbDisGoodsId(order.getGbDoDisGoodsId());
             stockEntity.setGbDgsGbDisGoodsGrandId(order.getGbDoDisGoodsGrandId());
+            stockEntity.setGbDgsGbDisGoodsGreatId(order.getGbDoDisGoodsGreatId());
             stockEntity.setGbDgsGbDepDisGoodsId(order.getGbDoDepDisGoodsId());
             stockEntity.setGbDgsDate(formatWhatDay(0));
             stockEntity.setGbDgsTimeStamp(getTimeStamp());
@@ -251,7 +252,7 @@ public class GbDepartmentBillController {
             stockEntity.setGbDgsWasteWeight("0");
             stockEntity.setGbDgsWasteSubtotal("0");
             String gbDdgSellingPrice = departmentDisGoodsEntity.getGbDdgSellingPrice();
-            if (gbDdgSellingPrice != null && new BigDecimal(gbDdgSellingPrice).compareTo(new BigDecimal(0)) == 1) {
+            if (gbDdgSellingPrice != null && !gbDdgSellingPrice.trim().isEmpty() && new BigDecimal(gbDdgSellingPrice).compareTo(new BigDecimal(0)) == 1) {
                 stockEntity.setGbDgsAfterProfitSubtotal("0");
                 stockEntity.setGbDgsBetweenPrice("0");
                 stockEntity.setGbDgsCostRate("0");
@@ -275,34 +276,35 @@ public class GbDepartmentBillController {
             //判断是否有保鲜时间参数
             if (order.getGbDoPurchaseGoodsId() != -1) {
                 GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(order.getGbDoPurchaseGoodsId());
-                if (purchaseGoodsEntity.getGbDpgWarnFullTime() != null && purchaseGoodsEntity.getGbDpgWasteFullTime() != null) {
-                    stockEntity.setGbDgsWarnFullTime(purchaseGoodsEntity.getGbDpgWarnFullTime());
+                if (purchaseGoodsEntity.getGbDpgWasteFullTime() != null && !purchaseGoodsEntity.getGbDpgWasteFullTime().trim().isEmpty()) {
                     stockEntity.setGbDgsWasteFullTime(purchaseGoodsEntity.getGbDpgWasteFullTime());
-
-                    String gbDpgWarnFullTime = purchaseGoodsEntity.getGbDpgWarnFullTime();
                     String gbDpgWasteFullTime = purchaseGoodsEntity.getGbDpgWasteFullTime();
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
                     // 设置日期字符串
                     // 解析日期字符串为Date对象
                     Date dateWaste = null;
                     Date dateWarn = null;
                     try {
-                        dateWaste = dateFormat.parse(gbDpgWasteFullTime);
-                        dateWarn = dateFormat.parse(gbDpgWarnFullTime);
+                        if (gbDpgWasteFullTime != null && !gbDpgWasteFullTime.trim().isEmpty()) {
+                            dateWaste = dateFormat.parse(gbDpgWasteFullTime);
+                        }
+
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
                     // 获取时间戳
-                    long timestampWaste = dateWaste.getTime();
-                    long timestampWarn = dateWarn.getTime();
+                    long timestampWaste = 0;
+                    if (dateWaste != null) {
+                        timestampWaste = dateWaste.getTime();
+                    }
+
                     // 输出时间戳
                     System.out.println("zhelieiieieiieieiieeiie" + dateWaste + "abcc" + timestampWaste);
                     stockEntity.setGbDgsWasteTimeQuantumName(String.valueOf(timestampWaste));
-                    stockEntity.setGbDgsWarnTimeQuantumName(String.valueOf(timestampWarn));
 
                 }
                 //判断是否价格异常商品
-                if (purchaseGoodsEntity.getGbDpgDisGoodsPriceId() != null) {
+                if (purchaseGoodsEntity.getGbDpgDisGoodsPriceId() != null && !purchaseGoodsEntity.getGbDpgDisGoodsPriceId().toString().trim().isEmpty()) {
                     GbDistributerGoodsPriceEntity goodsPriceEntity = goodsPriceService.queryObject(purchaseGoodsEntity.getGbDpgDisGoodsPriceId());
                     String doWeight = order.getGbDoWeight();
                     Integer gbDgpPurWhat = goodsPriceEntity.getGbDgpPurWhat();
@@ -361,7 +363,7 @@ public class GbDepartmentBillController {
                 BigDecimal gbDbFinishAmount = new BigDecimal(purchaseGoodsEntity.getGbDpgOrdersFinishAmount());
                 if (gbDbFinishAmount.add(new BigDecimal(1)).compareTo(gbPgOrderAmount) == 0) {
                     purchaseGoodsEntity.setGbDpgOrdersFinishAmount(purchaseGoodsEntity.getGbDpgOrdersAmount());
-                    purchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusReceive());
+                    purchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusWaitReceive());
                 } else {
                     BigDecimal add = gbDbFinishAmount.add(new BigDecimal(1));
                     purchaseGoodsEntity.setGbDpgOrdersFinishAmount(add.intValue());
@@ -435,6 +437,7 @@ public class GbDepartmentBillController {
         GbDepartmentGoodsDailyEntity depGoodsDailyItem = gbDepGoodsDailyService.queryDepGoodsDailyItem(map);
         if (depGoodsDailyItem != null) {
             BigDecimal restWeight = new BigDecimal(depGoodsDailyItem.getGbDgdRestWeight());
+            BigDecimal restSubtotal = new BigDecimal(depGoodsDailyItem.getGbDgdRestSubtotal());
             BigDecimal produceWeight = new BigDecimal(depGoodsDailyItem.getGbDgdProduceWeight());
             BigDecimal produceSubtotal = new BigDecimal(depGoodsDailyItem.getGbDgdProduceSubtotal());
 
@@ -443,7 +446,9 @@ public class GbDepartmentBillController {
             BigDecimal produceAllWeight = produceWeight.add(outWeight);
             BigDecimal produceAllSubtotal = produceSubtotal.add(outSubtotal);
             BigDecimal totalRestWeight = restWeight.subtract(outWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalRestSubtotal = restSubtotal.subtract(outSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
             depGoodsDailyItem.setGbDgdRestWeight(totalRestWeight.toString());
+            depGoodsDailyItem.setGbDgdRestSubtotal(totalRestSubtotal.toString());
             depGoodsDailyItem.setGbDgdProduceWeight(produceAllWeight.toString());
             depGoodsDailyItem.setGbDgdProduceSubtotal(produceAllSubtotal.toString());
             gbDepGoodsDailyService.update(depGoodsDailyItem);
@@ -462,12 +467,15 @@ public class GbDepartmentBillController {
             BigDecimal weight = new BigDecimal(depGoodsDailyItem.getGbDgdWeight());
             BigDecimal total = new BigDecimal(depGoodsDailyItem.getGbDgdSubtotal());
             BigDecimal restWeight = new BigDecimal(depGoodsDailyItem.getGbDgdRestWeight());
+            BigDecimal restSubtotal = new BigDecimal(depGoodsDailyItem.getGbDgdRestSubtotal());
             BigDecimal totalWeight = new BigDecimal(stock.getGbDgsWeight()).add(weight).setScale(1, BigDecimal.ROUND_HALF_UP);
             BigDecimal totalSubtotal = new BigDecimal(stock.getGbDgsSubtotal()).add(total).setScale(1, BigDecimal.ROUND_HALF_UP);
             BigDecimal totalRestWeight = new BigDecimal(stock.getGbDgsWeight()).add(restWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalRestSubtotal = new BigDecimal(stock.getGbDgsSubtotal()).add(restSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
             depGoodsDailyItem.setGbDgdWeight(totalWeight.toString());
             depGoodsDailyItem.setGbDgdSubtotal(totalSubtotal.toString());
             depGoodsDailyItem.setGbDgdRestWeight(totalRestWeight.toString());
+            depGoodsDailyItem.setGbDgdRestSubtotal(totalRestSubtotal.toString());
             depGoodsDailyItem.setGbDgdSellClearHour("-1");
             depGoodsDailyItem.setGbDgdSellClearMinute("-1");
             depGoodsDailyItem.setGbDgdStatus(0);
@@ -488,6 +496,7 @@ public class GbDepartmentBillController {
             dailyEntity.setGbDgdDay(getWeek(0));
             dailyEntity.setGbDgdWeight(stock.getGbDgsWeight());
             dailyEntity.setGbDgdRestWeight(stock.getGbDgsWeight());
+            dailyEntity.setGbDgdRestSubtotal(stock.getGbDgsSubtotal());
             dailyEntity.setGbDgdSubtotal(stock.getGbDgsSubtotal());
             dailyEntity.setGbDgdProduceWeight("0");
             dailyEntity.setGbDgdProduceSubtotal("0");
@@ -503,6 +512,7 @@ public class GbDepartmentBillController {
             dailyEntity.setGbDgdSellClearHour("-1");
             dailyEntity.setGbDgdSellClearMinute("-1");
             dailyEntity.setGbDgdLastWeight("0");
+            dailyEntity.setGbDgdLastSubtotal("0");
             dailyEntity.setGbDgdLastProduceWeight("0");
             Integer gbDgdGbDisGoodsId = dailyEntity.getGbDgdGbDisGoodsId();
             GbDistributerGoodsEntity distributerGoodsEntity = gbDistributerGoodsService.queryObject(gbDgdGbDisGoodsId);

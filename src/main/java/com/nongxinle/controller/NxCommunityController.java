@@ -66,16 +66,40 @@ public class NxCommunityController {
 	@ResponseBody
 	public R comAndUserSave(@RequestBody NxCommunityEntity nxCommunity){
 
+		// 检查用户信息
+		if (nxCommunity.getNxCommunityUserEntity() == null) {
+			return R.error(-1, "用户信息不能为空");
+		}
+		
+		String code = nxCommunity.getNxCommunityUserEntity().getNxCouCode();
+		if (code == null || code.trim().isEmpty()) {
+			return R.error(-1, "微信登录code不能为空，请先调用wx.login()获取code");
+		}
+
 		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
 
 		// 1, 先检查微信号是否以前注册过
 		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getCommunityAppID() + "&secret=" +
-				myAPPIDConfig.getCommunityScreat() + "&js_code=" + nxCommunity.getNxCommunityUserEntity().getNxCouCode() +
+				myAPPIDConfig.getCommunityScreat() + "&js_code=" + code +
 				"&grant_type=authorization_code";
 		// 发送请求，返回Json字符串
 		String str = WeChatUtil.httpRequest(url, "GET", null);
 		// 转成Json对象 获取openid
 		JSONObject jsonObject = JSONObject.parseObject(str);
+
+		// 检查微信API返回的错误
+		if (jsonObject.containsKey("errcode")) {
+			Integer errcode = jsonObject.getInteger("errcode");
+			String errmsg = jsonObject.getString("errmsg");
+			System.out.println("微信接口返回错误: errcode=" + errcode + ", errmsg=" + errmsg);
+			return R.error(-1, "微信登录失败: " + errmsg + " (错误码: " + errcode + ")");
+		}
+
+		// 检查是否有openid
+		if (!jsonObject.containsKey("openid")) {
+			System.out.println("微信接口未返回openid，返回数据: " + jsonObject);
+			return R.error(-1, "获取openid失败，请检查微信配置");
+		}
 
 		// 我们需要的openid，在一个小程序中，openid是唯一的
 		String openid = jsonObject.get("openid").toString();
@@ -88,42 +112,66 @@ public class NxCommunityController {
 			return R.error(-1,"微信号已注册!");
 		}else {
 
-			// 3，如果没有注册过
-			// 3.1保存批发商
+			try {
+				// 3，如果没有注册过
+				// 3.1保存批发商
+				System.out.println("开始保存餐馆，数据: " + nxCommunity);
+				
+				// 检查坐标
+				if (nxCommunity.getNxCommunityLat() == null || nxCommunity.getNxCommunityLat().trim().isEmpty()) {
+					return R.error(-1, "纬度不能为空");
+				}
+				if (nxCommunity.getNxCommunityLng() == null || nxCommunity.getNxCommunityLng().trim().isEmpty()) {
+					return R.error(-1, "经度不能为空");
+				}
+				
+				nxCommunityService.saveWithEcommerce(nxCommunity);
 
-//			nxCommunity.set
-			nxCommunityService.saveWithEcommerce(nxCommunity);
+				// 3.2，保存批发商用户
+				Integer communityId = nxCommunity.getNxCommunityId();
+				System.out.println("餐馆保存成功，ID: " + communityId);
+				
+				if (communityId == null) {
+					return R.error(-1, "餐馆保存失败，未获取到餐馆ID");
+				}
 
-			// 3.2，保存批发商用户
-			Integer communityId = nxCommunity.getNxCommunityId();
-			System.out.println(nxCommunity + "ididiidiididid");
+				NxCommunityUserEntity nxCommunityUserEntity = nxCommunity.getNxCommunityUserEntity();
+				nxCommunityUserEntity.setNxCouCommunityId(communityId);
+				nxCommunityUserEntity.setNxCouWxOpenId(openid);
+				nxCommunityUserEntity.setNxCouDeviceId("-1");
+				nxCommunityUserEntity.setNxCouUrlIsChange(0);
+				nxCommunityUserService.save(nxCommunityUserEntity);
+				System.out.println("用户保存成功");
 
-			NxCommunityUserEntity nxCommunityUserEntity = nxCommunity.getNxCommunityUserEntity();
-			nxCommunityUserEntity.setNxCouCommunityId(communityId);
-			nxCommunityUserEntity.setNxCouWxOpenId(openid);
-			nxCommunityUserEntity.setNxCouDeviceId("-1");
-			nxCommunityUserEntity.setNxCouUrlIsChange(0);
-			nxCommunityUserService.save(nxCommunityUserEntity);
+				NxCommunityFatherGoodsEntity fatherGoodsEntity = new NxCommunityFatherGoodsEntity();
+				fatherGoodsEntity.setNxCfgOrderRank(0);
+				fatherGoodsEntity.setNxCfgCommunityId(communityId);
+				fatherGoodsEntity.setNxCfgFathersFatherId(0);
+				fatherGoodsEntity.setNxCfgFatherGoodsLevel(0);
+				fatherGoodsEntity.setNxCfgFatherGoodsName("商品");
+				fatherGoodsEntity.setNxCfgFatherGoodsColor("#3cc36e");
 
+				nxCommunityFatherGoodsService.save(fatherGoodsEntity);
+				System.out.println("默认商品分类创建成功");
 
-			NxCommunityFatherGoodsEntity fatherGoodsEntity = new NxCommunityFatherGoodsEntity();
-			fatherGoodsEntity.setNxCfgOrderRank(0);
-			fatherGoodsEntity.setNxCfgCommunityId(communityId);
-			fatherGoodsEntity.setNxCfgFathersFatherId(0);
-			fatherGoodsEntity.setNxCfgFatherGoodsLevel(0);
-			fatherGoodsEntity.setNxCfgFatherGoodsName("商品");
-			fatherGoodsEntity.setNxCfgFatherGoodsColor("#3cc36e");
+				//3..3 返回用户id
+				Integer nxCommunityUserId = nxCommunityUserEntity.getNxCommunityUserId();
+				if (nxCommunityUserId == null) {
+					return R.error(-1, "用户保存失败，未获取到用户ID");
+				}
+				
+				Map<String, Object> map1 = new HashMap<>();
+				map1.put("userId", nxCommunityUserId);
+				map1.put("roleId", 0 );
+				NxCommunityUserEntity nxCommunityUserEntity1 = nxCommunityUserService.queryComUserInfo(map1);
 
-			nxCommunityFatherGoodsService.save(fatherGoodsEntity);
-
-			//3..3 返回用户id
-			Integer nxCommunityUserId = nxCommunityUserEntity.getNxCommunityUserId();
-			Map<String, Object> map1 = new HashMap<>();
-			map1.put("userId", nxCommunityUserId);
-			map1.put("roleId", 0 );
-			NxCommunityUserEntity nxCommunityUserEntity1 = nxCommunityUserService.queryComUserInfo(map1);
-
-			return R.ok().put("data", nxCommunityUserEntity1);
+				System.out.println("retturnrnr" + nxCommunityUserEntity1);
+				return R.ok().put("data", nxCommunityUserEntity1);
+			} catch (Exception e) {
+				System.err.println("注册餐馆时发生异常: " + e.getMessage());
+				e.printStackTrace();
+				return R.error(-1, "注册失败: " + e.getMessage());
+			}
 		}
 	}
 

@@ -161,4 +161,11 @@ public class NxDepartmentOrderHistoryServiceImpl implements NxDepartmentOrderHis
 
 	}
 
+    @Override
+    public List<Map<String, Object>> queryDepGoodsHistoryPrice(Map<String, Object> map) {
+
+		return nxDepartmentOrderHistoryDao.queryDepGoodsHistoryPrice(map);
+
+	}
+
 }

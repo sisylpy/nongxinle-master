@@ -38,7 +38,11 @@
 	</resultMap>
 
 	<resultMap id="nxDis" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -77,7 +81,7 @@
 		<result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
 		<result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
 		<result property="nxDgdStatus" column="nx_DGD_status"/>
-		<association property="nxDistributerEntity" resultMap="jjNxDis"/>
+		<association property="nxDistributerEntity" resultMap="nxDis"/>
 	</resultMap>
 
 	<resultMap id="appSupplierDep" type="GbDepartmentEntity">
@@ -159,6 +163,8 @@
 	</resultMap>
 	<resultMap id="disInfo" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
         <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -182,7 +188,6 @@
 		<association property="appSupplierDepartment" resultMap="appSupplierDep"/>
  		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
 		<association property="sysBusinessTypeEntity" resultMap="sysBusiness"/>
-		<association property="nxDistributerEntity" resultMap="nxDis"/>
 		<collection property="franchiseeDepartmentList" resultMap="franchiseeDeps"/>
  		<collection property="purDepartmentList" resultMap="purDeps"/>
 		<collection property="stockDepartmentList" resultMap="stockDep"/>
@@ -230,26 +235,8 @@
 			   kitchenDep.gb_department_father_id 'kitchenDep_gb_department_father_id',
 			   kitchenDep.gb_department_dis_id 'kitchenDep_gb_department_dis_id',
 			   kitchenDep.gb_department_print_name 'kitchenDep_gb_department_print_name',
-			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name',
-
-			   nd2.nx_distributer_id 'nx_distributer_id',
-			   nd2.nx_distributer_pay_url 'nx_distributer_pay_url',
-			   nd2.nx_distributer_shelf_quantity 'nx_distributer_shelf_quantity',
-			   nd2.nx_distributer_type 'nx_distributer_type',
-			   nd2.nx_distributer_name 'nx_distributer_name',
-			   nd2.nx_distributer_show_name 'nx_distributer_show_name',
-			   nd2.nx_distributer_img 'nx_distributer_img',
-			   nd2.nx_distributer_address 'nx_distributer_address',
-			   nd2.nx_distributer_phone 'nx_distributer_phone',
-			   nd2.nx_distributer_market_name 'nx_distributer_market_name',
-
-			   nd.nx_distributer_id 'jj_nx_distributer_id',
-			   nd.nx_distributer_name 'jj_nx_distributer_name',
-			   nd.nx_distributer_show_name 'jj_nx_distributer_show_name',
-			   nd.nx_distributer_img 'jj_nx_distributer_img',
-			   nd.nx_distributer_address 'jj_nx_distributer_address',
-			   nd.nx_distributer_phone 'jj_nx_distributer_phone',
-			   nd.nx_distributer_market_name 'jj_nx_distributer_market_name'
+			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name'
+#
 		from gb_distributer  as dis
 				 left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id
 				 left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id
@@ -271,7 +258,6 @@
 			and appSupplierDep.gb_department_type = 5
 				 left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id
 				 left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id
-				 left join nx_distributer as nd2 on nd2.nx_distributer_id = dis.gb_distributer_nx_dis_id
 		where gb_distributer_id = #{diuDistributerId}
 		order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id
 
@@ -495,7 +481,9 @@
 	</resultMap>
 
 	<resultMap id="gbDistributer" type="GbDistributerEntity">
-<id property="gbDistributerId" column="gb_distributer_id"/>
+        <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
 		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -558,7 +546,9 @@
 		 	`gb_distributer_buy_quantity`,
 		 	`gb_distributer_sys_city_id`,
 		 	`gb_distributer_nx_dis_id`,
-		 	`gb_distributer_pick_name`
+		 	`gb_distributer_pick_name`,
+		 	`gb_distributer_record_seconds`,
+		 	`gb_distributer_stock_cycle`
 		)
 		values
 		(
@@ -582,7 +572,9 @@
 		 	#{gbDistributerBuyQuantity},
 		 	#{gbDistributerSysCityId},
 		 	#{gbDistributerNxDisId},
-		 	#{gbDistributerPickName}
+		 	#{gbDistributerPickName},
+		 	#{gbDistributerRecordSeconds},
+		 	#{gbDistributerStockCycle}
 		)
 	</insert>
 
@@ -609,6 +601,8 @@
 			<if test="gbDistributerSysCityId != null">`gb_distributer_sys_city_id` = #{gbDistributerSysCityId}, </if>
 			<if test="gbDistributerNxDisId != null">`gb_distributer_nx_dis_id` = #{gbDistributerNxDisId}, </if>
 			<if test="gbDistributerPickName != null">`gb_distributer_pick_name` = #{gbDistributerPickName}, </if>
+			<if test="gbDistributerRecordSeconds != null">`gb_distributer_record_seconds` = #{gbDistributerRecordSeconds}, </if>
+			<if test="gbDistributerStockCycle != null">`gb_distributer_stock_cycle` = #{gbDistributerStockCycle}, </if>
 			<if test="gbDistributerImg != null">`gb_distributer_img` = #{gbDistributerImg}</if>
 		</set>
 		where gb_distributer_id = #{gbDistributerId}

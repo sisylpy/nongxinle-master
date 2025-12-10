@@ -31,4 +31,6 @@ public interface NxDistributerStandardService {
 	void deleteBatch(Integer[] nxDistributerStandardIds);
 
     List<NxDistributerStandardEntity> queryDisStandardByParams(Map<String, Object> map);
+    
+
 }

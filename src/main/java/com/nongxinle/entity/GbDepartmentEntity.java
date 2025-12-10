@@ -100,16 +100,16 @@ public class GbDepartmentEntity implements Serializable, Comparable {
 	private List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities;
 
 	private GbDepartmentUserEntity gbDepartmentUserEntity;
-	private GbDistributerEntity gbDistributerEntity;
-	private List<GbDistributerUserEntity> gbDistributerUserEntities;
+//	private GbDistributerEntity gbDistributerEntity;
+//	private List<GbDistributerUserEntity> gbDistributerUserEntities;
 	private List<GbDepartmentUserEntity>  gbDepartmentUserEntities;
 	private List<GbDepartmentDisGoodsEntity> gbDepartmentDisGoodsEntities;
 	private List<GbDepartmentEntity> gbSubDepartments;
-	private List<GbDistributerSupplierEntity> gbDistributerSupplierEntities;
-	private List<GbDepartmentGoodsStockReduceEntity> gbDepGoodsStockReduceEntities;
-	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
-	private List<GbDistributerFatherGoodsEntity> fatherGoodsEntities;
-	private List<GbDistributerGoodsEntity> distributerGoodsEntities;
+//	private List<GbDistributerSupplierEntity> gbDistributerSupplierEntities;
+//	private List<GbDepartmentGoodsStockReduceEntity> gbDepGoodsStockReduceEntities;
+//	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
+//	private List<GbDistributerFatherGoodsEntity> fatherGoodsEntities;
+//	private List<GbDistributerGoodsEntity> distributerGoodsEntities;
 
     private List<NxDistributerGbDistributerEntity> appSupplierList;
     private GbDepartmentBillEntity unPayBill;

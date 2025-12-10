@@ -60,7 +60,7 @@ public interface GbDepartmentDisGoodsService {
 
     List<GbDepartmentDisGoodsEntity> queryDepDisGoodsByParams(Map<String, Object> map);
 
-    GbDepartmentDisGoodsEntity queryDepartmentGoods(Map<String, Object> map);
+    List<GbDepartmentDisGoodsEntity>  queryDepartmentGoods(Map<String, Object> map);
 
     List<GbDepartmentDisGoodsEntity> depQueryDepGoodsWithOrder(Map<String, Object> map);
 
@@ -78,4 +78,5 @@ public interface GbDepartmentDisGoodsService {
 
     List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map);
 
+    GbDepartmentDisGoodsEntity queryDepartmentGoodsForAi(Map<String, Object> mapD);
 }

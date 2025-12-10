@@ -100,6 +100,7 @@ public class NxDistributerUserServiceImpl implements NxDistributerUserService {
 		NxDistributerUserEntity nxDistributerUserEntity = nxDistributerUserDao.queryUserInfo(userId);
 		//用户信息
 		Integer diuDistributerId = nxDistributerUserEntity.getNxDiuDistributerId();
+		System.out.println("sissysysysysyysysysysysysy");
 		NxDistributerEntity nxDistributerEntity = nxDistributerUserDao.queryNxDisInfo(diuDistributerId);
 
 		//返回

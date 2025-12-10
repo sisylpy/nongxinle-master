@@ -45,7 +45,7 @@ public interface GbDepartmentDisGoodsDao extends BaseDao<GbDepartmentDisGoodsEnt
 
     List<GbDepartmentDisGoodsEntity> queryDepDisGoodsByParams(Map<String, Object> map);
 
-    GbDepartmentDisGoodsEntity queryDepartmentGoods(Map<String, Object> map);
+    List<GbDepartmentDisGoodsEntity>  queryDepartmentGoods(Map<String, Object> map);
 
     List<GbDepartmentDisGoodsEntity> depQueryDepGoodsWithOrder(Map<String, Object> map);
 
@@ -62,4 +62,6 @@ public interface GbDepartmentDisGoodsDao extends BaseDao<GbDepartmentDisGoodsEnt
     List<Integer> queryOnlyDisGoodsIds(Map<String, Object> map);
 
     GbDepartmentDisGoodsEntity queryDepartmentGoodsOnly(Map<String, Object> map);
+
+
 }

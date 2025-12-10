@@ -33,6 +33,8 @@
 				   location="file:///opt/tomcat/latest/app-data/images/userImage/"/>
 	<mvc:resources mapping="/uploadClock/**"
 				   location="file:///opt/tomcat/latest/app-data/images/uploadClock/"/>
+	<mvc:resources mapping="/stockImages/**"
+				   location="file:///opt/tomcat/latest/app-data/images/stockImages/"/>
 
 
 	<!-- 下面标签可以不加 等价于所有component-scan-->

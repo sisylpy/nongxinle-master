@@ -60,8 +60,12 @@
 
 
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -205,6 +209,8 @@
         <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
         <result property="nxDbNxCommunityId" column="nx_DB_nx_community_id"/>
         <result property="nxDbNxRestrauntId" column="nx_DB_nx_restraunt_id"/>
+        <result property="nxDbPayPoints" column="nx_DB_pay_points"/>
+        <result property="nxDbPayCash" column="nx_DB_pay_cash"/>
         <association property="nxDepartmentEntity" resultMap="nxDep"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="applys"/>
     </resultMap>
@@ -321,6 +327,8 @@
         <result property="nxDbProfitScale" column="nx_DB_profit_scale"/>
         <result property="nxDbNxCommunityId" column="nx_DB_nx_community_id"/>
         <result property="nxDbNxRestrauntId" column="nx_DB_nx_restraunt_id"/>
+        <result property="nxDbPayPoints" column="nx_DB_pay_points"/>
+        <result property="nxDbPayCash" column="nx_DB_pay_cash"/>
         <association property="gbDepartmentEntity" resultMap="gbdep"/>
         <association property="nxRestrauntEntity" resultMap="nxRes"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="applys"/>
@@ -441,7 +449,10 @@
     </select>
 
     <resultMap id="nxDep" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -458,6 +469,8 @@
         <result property="nxDepartmentSubAmount" column="nx_department_sub_amount"/>
         <result property="nxDepartmentJoinDate" column="nx_department_join_date"/>
         <result property="nxDepartmentOrderTotal" column="nx_department_order_total"/>
+        <result property="nxDepartmentPoints" column="nx_department_points"/>
+        <result property="nxDepartmentWaitingPoints" column="nx_department_waiting_points"/>
     </resultMap>
     <resultMap id="billWithDep" type="NxDepartmentBillEntity">
         <id property="nxDepartmentBillId" column="nx_department_bill_id"/>
@@ -774,7 +787,9 @@
          `nx_DB_wx_out_trade_no`,
          `nx_DB_year`,
          `nx_DB_gb_department_bill_id`,
-         `nx_DB_gb_dep_father_id`
+         `nx_DB_gb_dep_father_id`,
+         `nx_DB_pay_points`,
+         `nx_DB_pay_cash`
          )
         values (#{nxDepartmentBillId},
                 #{nxDbDisId},
@@ -800,7 +815,9 @@
                 #{nxDbWxOutTradeNo},
                 #{nxDbYear},
                 #{nxDbGbDepartmentBillId},
-                #{nxDbGbDepFatherId}
+                #{nxDbGbDepFatherId},
+                #{nxDbPayPoints},
+                #{nxDbPayCash}
                 )
     </insert>
 
@@ -830,6 +847,8 @@
             <if test="nxDbWxOutTradeNo != null">`nx_DB_wx_out_trade_no` = #{nxDbWxOutTradeNo},</if>
             <if test="nxDbYear != null">`nx_DB_year` = #{nxDbYear},</if>
             <if test="nxDbGbDepartmentBillId != null">`nx_DB_gb_department_bill_id` = #{nxDbGbDepartmentBillId},</if>
+            <if test="nxDbPayPoints != null">`nx_DB_pay_points` = #{nxDbPayPoints},</if>
+            <if test="nxDbPayCash != null">`nx_DB_pay_cash` = #{nxDbPayCash},</if>
             <if test="nxDbIssueUserId != null">`nx_DB_issue_user_id` = #{nxDbIssueUserId}</if>
         </set>
         where nx_department_bill_id = #{nxDepartmentBillId}

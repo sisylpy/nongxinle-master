@@ -16,37 +16,39 @@ import java.util.TreeSet;
 
 public interface GbDepartmentGoodsStockDao extends BaseDao<GbDepartmentGoodsStockEntity> {
 
+    List<GbDepartmentGoodsStockEntity> queryDepStockListByParams(Map<String, Object> mapGoods);
+
     List<GbDepartmentGoodsStockEntity> queryGoodsStockByParams(Map<String, Object> map);
 
+    List<GbDepartmentGoodsStockEntity> queryGoodsStockByParamsWithDetail(Map<String, Object> map);
+
+    List<GbDepartmentGoodsStockEntity> queryGoodsStockWithReduceList(Map<String, Object> map);
+
+
+    List<GbDistributerGoodsEntity> queryDisGoodsWithFromDepGoods(Map<String, Object> map0);
     List<GbDistributerGoodsEntity> queryDisGoodsStockByParams(Map<String, Object> map);
 
-    List<GbDistributerGoodsEntity> queryDisGoodsStockDetailByParams(Map<String, Object> map);
 
-    List<GbDistributerFatherGoodsEntity> queryDepGoodsStockByParams(Map<String, Object> map);
+    List<GbDistributerFatherGoodsEntity> queryDepStockTreeFatherGoodsByParams(Map<String, Object> map);
 
-    List<GbDistributerFatherGoodsEntity> getDepartmentDisGoodsStock(Map<String, Object> map);
+
+    TreeSet<GbDepartmentEntity> queryDepGoodsTreeDepartments(Map<String, Object> map2);
+
+    List<GbDepartmentEntity> queryWhichDepHasStock(Map<String, Object> map);
+
+
+    GbDepartmentGoodsStockEntity queryMinFullTimeForDayStock(Map<String, Object> map);
+    GbDepartmentGoodsStockEntity queryMaxFullTimeForDayStock(Map<String, Object> map);
+
+    List<GbDistributerGoodsShelfEntity> queryEveryDayOutStockShelfGoods(Map<String, Object> map1);
+
+    GbDepartmentGoodsStockEntity queryReturnStockItemByOrderId(Integer gbDepartmentOrdersId);
 
     Integer queryGoodsStockCount(Map<String, Object> map14);
 
     Double queryDepGoodsRestTotal(Map<String, Object> map5);
 
-    TreeSet<GbDepartmentEntity> queryDepGoodsTreeDepartments(Map<String, Object> map2);
-
-    List<GbDepartmentGoodsStockEntity> queryStockListByParams(Integer depFatherId);
-
     Double queryDepGoodsSubtotal(Map<String, Object> map4);
-
-    GbDepartmentGoodsStockEntity queryMinFullTimeForDayStock(Map<String, Object> map);
-
-    List<GbDistributerGoodsShelfEntity> queryEveryDayOutStockShelfGoods(Map<String, Object> map1);
-
-    GbDepartmentGoodsStockEntity queryMaxFullTimeForDayStock(Map<String, Object> map);
-
-    List<GbDistributerFatherGoodsEntity> queryDepStockDisFatherGoodsFather(Map<String, Object> map);
-
-//    List<GbDepartmentGoodsStockEntity> queryDepGoodsWasteList(Map<String, Object> map3);
-
-    List<GbDepartmentGoodsStockEntity> queryGoodsStockWithReduceList(Map<String, Object> map);
 
     Double queryDepGoodsRestWeightTotal(Map<String, Object> map1);
 
@@ -54,14 +56,9 @@ public interface GbDepartmentGoodsStockDao extends BaseDao<GbDepartmentGoodsStoc
 
     Double queryDepGoodsSellingSubtotal(Map<String, Object> map2);
 
-    List<GbDepartmentGoodsStockEntity> queryGoodsStockReduceByParams(Map<String, Object> map);
-
-    List<GbDistributerFatherGoodsEntity> queryDepStockTreeFatherGoodsByParams(Map<String, Object> map);
-
     Double queryStockSellingPriceTotal(Map<String, Object> map);
 
     Double queryStockPriceTotal(Map<String, Object> map);
-
 
     Double queryDepStockWeightTotal(Map<String, Object> map);
 
@@ -70,8 +67,6 @@ public interface GbDepartmentGoodsStockDao extends BaseDao<GbDepartmentGoodsStoc
     Double queryDepStockWasteWeightTotal(Map<String, Object> map);
 
     Double queryDepStockRestWeightTotal(Map<String, Object> map);
-
-    List<GbDepartmentEntity> queryWhichDepHasStock(Map<String, Object> map);
 
     Double queryStockCostRateTotal(Map<String, Object> map);
 
@@ -91,27 +86,17 @@ public interface GbDepartmentGoodsStockDao extends BaseDao<GbDepartmentGoodsStoc
 
     double queryDepStockProduceSellingSubtotal(Map<String, Object> map);
 
-    List<GbDepartmentGoodsStockEntity> queryDepStockListByParams(Map<String, Object> mapGoods);
-
-    GbDepartmentGoodsStockEntity queryReturnStockItemByOrderId(Integer gbDepartmentOrdersId);
-
     double queryDepStockReturnSubtotal(Map<String, Object> map);
 
     Double queryDepStockReturnWeightTotal(Map<String, Object> disGoodsMap);
 
-    List<GbDistributerGoodsEntity> queryDisGoodsWithFromDepGoods(Map<String, Object> map0);
-
     Double queryDepStockSubtotal(Map<String, Object> mapDisGoods);
-
-    List<GbDepartmentEntity> queryStockDepWithFatherGoods(Map<String, Object> map0);
 
     Double queryDepGoodsWasteTotal(Map<String, Object> map0);
 
     int queryGoodsStockStars(Map<String, Object> map1);
 
     Integer queryGoodsStarsTimes(Map<String, Object> map);
-
-    List<GbDepartmentGoodsStockEntity> queryGoodsStockWithTodayReduceList(Map<String, Object> mapDisGoods);
 
     Double queryDepStockProduceWeightTotal(Map<String, Object> mapS);
 
@@ -121,5 +106,7 @@ public interface GbDepartmentGoodsStockDao extends BaseDao<GbDepartmentGoodsStoc
 
     double queryGoodsLatestWasteWeight(Map<String, Object> map);
 
-    List<GbDepartmentGoodsStockEntity> queryGoodsStockByParamsWithDetail(Map<String, Object> map);
+    Integer queryDisStockGoodsCount(Map<String, Object> map);
+
+
 }

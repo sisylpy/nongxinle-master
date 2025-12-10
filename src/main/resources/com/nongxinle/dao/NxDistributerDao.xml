@@ -84,6 +84,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
         <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+        <result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgDistributerId" column="gb_dg_distributer_id"/>
         <result property="gbDgNxDistributerId" column="gb_dg_nx_distributer_id"/>
         <result property="gbDgNxDistributerGoodsId" column="gb_dg_nx_distributer_goods_id"/>
@@ -110,7 +111,11 @@
         <result property="gbDgSelfPrice" column="gb_dg_self_price"/>
     </resultMap>
     <resultMap id="disWithFatherGoods" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
         <result property="nxDistributerAppId" column="nx_distributer_app_id"/>
@@ -125,6 +130,7 @@
         <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
         <result property="nxDistributerBuyQuantity" column="nx_distributer_buy_quantity"/>
         <association property="nxDistributerGbDistributerEntity" resultMap="nxDisGbDis"/>
+        <association property="sysCityMarketEntity" resultMap="market"/>
         <association property="nxDisBuyerUser" resultMap="jrdhUser"/>
         <collection property="gbDistributerGoodsEntities" resultMap="gbDisGoods"/>
         <collection property="nxDistributerServiceCityEntities" resultMap="serviceCities"/>
@@ -137,6 +143,7 @@
         ndgd.nx_DGD_gb_dep_id = #{gbDepId}
         left join gb_distributer_goods as gdg on gdg.gb_dg_nx_distributer_id = #{nxDisId}
         and gdg.gb_dg_distributer_id = #{gbDisId}
+        left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
 
         <where>
             <if test="nxDisId != null">
@@ -186,7 +193,11 @@
         <result property="nxJrdhAdmin" column="sell_user_nx_jrdh_admin"/>
     </resultMap>
     <resultMap id="nxDistributer" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
         <result property="nxDistributerAppId" column="nx_distributer_app_id"/>
@@ -201,10 +212,13 @@
         <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
         <result property="nxDistributerBuyQuantity" column="nx_distributer_buy_quantity"/>
         <association property="sellerUser" resultMap="jrdhSellUser"/>
+        <association property="sysCityMarketEntity" resultMap="market"/>
     </resultMap>
 
     <resultMap id="gbDistributer" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
         <result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
         <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
         <result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -224,6 +238,63 @@
         <result property="gbDistributerTimeQuantum" column="gb_distributer_time_quantum"/>
     </resultMap>
 
+
+    <resultMap id="payList" type="NxDistributerPayEntity">
+        <id property="nxDistributerPayId" column="nx_distributer_pay_id"/>
+        <result property="nxNdpStatus" column="nx_ndp_status"/>
+        <result property="nxNdpPaySubtotal" column="nx_ndp_pay_subtotal"/>
+        <result property="nxNdpPayTime" column="nx_ndp_pay_time"/>
+        <result property="nxNdpFromTime" column="nx_ndp_from_time"/>
+        <result property="nxNdpStopTime" column="nx_ndp_stop_time"/>
+        <result property="nxNdpPayTime" column="nx_ndp_pay_time"/>
+        <result property="nxNdpType" column="nx_ndp_type"/>
+        <result property="nxNdpNxNewDisId" column="nx_ndp_nx_new_dis_id"/>
+        <result property="nxNdpBuyQuantity" column="nx_ndp_buy_quantity"/>
+        <result property="nxNdpOrderQuantity" column="nx_ndp_order_quantity"/>
+        <result property="nxNdpSellDetail" column="nx_ndp_sell_detail"/>
+        <result property="nxNdpImgUrl" column="nx_ndp_img_url"/>
+    </resultMap>
+
+    <resultMap id="market" type="SysCityMarketEntity">
+        <id property="sysCityMarketId" column="sys_city_market_id"/>
+        <result property="sysCmMarketName" column="sys_cm_market_name"/>
+        <result property="sysCmCityId" column="sys_cm_city_id"/>
+        <result property="sysCmRegisterGiftPoints" column="sys_cm_register_gift_points"/>
+        <result property="sysCmPointsPerYuan" column="sys_cm_points_per_yuan"/>
+        <result property="sysCmSelfPrintEnabled" column="sys_cm_self_print_enabled"/>
+        <result property="sysCmManagerPhone" column="sys_cm_manager_phone"/>
+        <result property="sysCmAreaCoordinates" column="sys_cm_area_coordinates"/>
+        <result property="sysCmCenterLatitude" column="sys_cm_center_latitude"/>
+        <result property="sysCmCenterLongitude" column="sys_cm_center_longitude"/>
+        <result property="sysCmDeliveryRadius" column="sys_cm_delivery_radius"/>
+        <result property="sysCmPayConfigClass" column="sys_cm_pay_config_class"/>
+        <result property="sysCmMiniAppId" column="sys_cm_mini_app_id"/>
+    </resultMap>
+
+    <resultMap id="disInfo" type="NxDistributerEntity">
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerAppId" column="nx_distributer_app_id"/>
+        <result property="nxDistributerType" column="nx_distributer_type"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerBusinessTypeId" column="nx_distributer_business_type_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distributer_buy_quantity"/>
+        <association property="sellerUser" resultMap="jrdhSellUser"/>
+        <association property="sysCityMarketEntity" resultMap="market"/>
+        <collection property="machinePayList" resultMap="payList"/>
+    </resultMap>
+
     <select id="queryNxDisCustomerBySellerOpenId" resultMap="nxDistributer">
         select *,
                sell_user.nx_jrdh_user_id           'sell_user_nx_jrdh_user_id',
@@ -233,6 +304,7 @@
                sell_user.nx_jrdh_admin             'sell_user_nx_jrdh_admin',
                sell_user.nx_jrdh_nx_distributer_id 'sell_user_nx_jrdh_nx_distributer_id'
         from nx_distributer as nd
+                 left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
                  left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_nx_distributer_id = nd.nx_distributer_id
         where sell_user.nx_jrdh_wx_open_id = #{openId}
     </select>
@@ -247,6 +319,7 @@
                buy.nx_jrdh_nx_distributer_id 'buy_user_nx_jrdh_nx_distributer_id'
         from nx_distributer as nd
                  left join nx_distributer_service_city as ndsc on ndsc.nx_ds_dis_id = nd.nx_distributer_id
+                 left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
                  left join nx_jrdh_user as buy on buy.nx_jrdh_nx_distributer_id = nd.nx_distributer_id
         where nd.nx_distributer_id = #{id}
     </select>
@@ -254,7 +327,16 @@
     <select id="queryAllTypeOne" resultType="com.nongxinle.entity.NxDistributerEntity">
         select *
         from nx_distributer as d
-        where d.nx_distributer_type = 1
+                 left join sys_city_market as scm on scm.sys_city_market_id = d.nx_distributer_sys_market_id
+
+    </select>
+
+    <select id="queryDistributerInfo" resultMap="disInfo">
+        select  * from nongxinle.nx_distributer as nd
+        left join nx_distributer_pay as ndp on ndp.nx_ndp_nx_dis_id = nd.nx_distributer_id
+        left join sys_city_market as scm on scm.sys_city_market_id = nd.nx_distributer_sys_market_id
+        where nx_distributer_id = #{disId}
+
     </select>
 
 
@@ -341,5 +423,12 @@
             #{distributerId}
         </foreach>
     </delete>
+
+    <!-- 根据市场ID查询配送商列表 -->
+    <select id="queryByMarketId" resultType="com.nongxinle.entity.NxDistributerEntity">
+        SELECT * FROM nx_distributer
+        WHERE nx_distributer_sys_market_id = #{marketId}
+        ORDER BY nx_distributer_name
+    </select>
 
 </mapper>

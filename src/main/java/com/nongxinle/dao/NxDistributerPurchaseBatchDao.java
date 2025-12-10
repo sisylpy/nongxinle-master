@@ -27,10 +27,13 @@ public interface NxDistributerPurchaseBatchDao extends BaseDao<NxDistributerPurc
     int queryDisPurchaseBatchCount(Map<String, Object> map);
 
     Double queryDisPurchaseBatchTotal(Map<String, Object> map);
+    
+    Double querySupplierUnSettleSubtotal(Map<String, Object> map);
 
     Double queryPurchaserCashTotal(Map<String, Object> map1);
 
     List<NxDistributerEntity> queryNxDistributerBySellerId(String sellId);
 
     NxDistributerPurchaseBatchEntity queryBatchItemByParams(Map<String, Object> mapB);
+
 }

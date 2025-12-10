@@ -19,10 +19,129 @@
 	</select>
 	<select id="queryReduceListByParams"
 			resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
-		select * from nx_distributer_goods_shelf_stock_reduce
+		select ndgssr.* from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
 		<where>
 			<if test="orderId != null">
-				and nx_dgssr_nx_dep_order_id = #{orderId}
+				and ndgssr.nx_dgssr_nx_dep_order_id = #{orderId}
+			</if>
+			<if test="stockId != null">
+				and ndgssr.nx_dgssr_nx_stock_id = #{stockId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+		</where>
+		order by ndgssr.nx_dgssr_date DESC, ndgssr.nx_dgssr_full_time DESC
+	</select>
+
+	<select id="queryReduceTypeCount" resultType="java.lang.Integer">
+		select count(*) from nx_distributer_goods_shelf_stock_reduce as ndgssr
+		<if test="disGoodsGreatId != null">
+			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+		</if>
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="type != null">
+				and ndgssr.nx_dgssr_type = #{type}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="status != null">
+				and ndgssr.nx_dgssr_status = #{status}
+			</if>
+			<if test="disGoodsGreatId != null">
+				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+		</where>
+	</select>
+
+	<select id="queryReduceCostSubtotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_cost_subtotal), 0) from nx_distributer_goods_shelf_stock_reduce as ndgssr
+		<if test="disGoodsGreatId != null">
+			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="type != null">
+				and ndgssr.nx_dgssr_type = #{type}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="status != null">
+				and ndgssr.nx_dgssr_status = #{status}
+			</if>
+			<if test="disGoodsGreatId != null">
+				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
 			</if>
 		</where>
 	</select>
@@ -127,5 +246,711 @@
 			#{nxDistributerGoodsShelfStockReduceId}
 		</foreach>
 	</delete>
+
+	<!-- 出货统计新增方法 -->
+	
+	<!-- 统计浪费金额 -->
+	<select id="queryReduceWasteSubtotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_waste_subtotal), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="type != null">
+				and ndgssr.nx_dgssr_type = #{type}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+		</where>
+	</select>
+
+	<!-- 统计损耗金额 -->
+	<select id="queryReduceLossSubtotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_loss_subtotal), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="type != null">
+				and ndgssr.nx_dgssr_type = #{type}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+		</where>
+	</select>
+
+	<!-- 统计销售/制作金额 -->
+	<select id="queryReduceProduceSubtotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_produce_subtotal), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="type != null">
+				and ndgssr.nx_dgssr_type = #{type}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+		</where>
+	</select>
+
+	<!-- 统计不同商品种类数量（去重） -->
+	<select id="queryReduceGoodsTotalCount" resultType="java.lang.Integer">
+		select count(distinct ndgssr.nx_dgssr_nx_dis_goods_id) from nx_distributer_goods_shelf_stock_reduce as ndgssr
+		<if test="disGoodsGreatId != null">
+			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="disGoodsGreatId != null">
+				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
+			</if>
+		</where>
+	</select>
+
+	<!-- 商品列表带出货记录的resultMap -->
+	<resultMap id="disGoodsWithReduceRecords" type="NxDistributerGoodsEntity">
+		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+		<result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+		<result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+		<result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+		<result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+		<result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+		<result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+		<result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+		<result property="goodsSalesTotal" column="goodsSalesTotal"/>
+		<result property="goodsWasteTotal" column="goodsWasteTotal"/>
+		<result property="goodsLossTotal" column="goodsLossTotal"/>
+		<result property="goodsReturnTotal" column="goodsReturnTotal"/>
+		<collection property="nxDistributerGoodsShelfStockReduceEntities"
+					select="queryReduceRecordsByDisGoodsIdAndDate"
+					column="{disGoodsId=nx_distributer_goods_id,disId=disId,startDate=startDate,stopDate=stopDate,equalType=equalType,typesStr=typesStr}"/>
+	</resultMap>
+
+	<!-- 子查询：根据商品ID和日期查询出货记录 -->
+	<select id="queryReduceRecordsByDisGoodsIdAndDate" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		select 
+		ndgssr.nx_distributer_goods_shelf_stock_reduce_id,
+		ndgssr.nx_dgssr_nx_distributer_id,
+		ndgssr.nx_dgssr_nx_dis_goods_id,
+		ndgssr.nx_dgssr_nx_dis_goods_father_id,
+		ndgssr.nx_dgssr_nx_stock_id,
+		ndgssr.nx_dgssr_date,
+		ndgssr.nx_dgssr_week,
+		ndgssr.nx_dgssr_month,
+		ndgssr.nx_dgssr_full_time,
+		ndgssr.nx_dgssr_type,
+		ndgssr.nx_dgssr_do_user_id,
+		ndgssr.nx_dgssr_cost_weight,
+		ndgssr.nx_dgssr_cost_subtotal,
+		ndgssr.nx_dgssr_waste_weight,
+		ndgssr.nx_dgssr_waste_subtotal,
+		ndgssr.nx_dgssr_loss_weight,
+		ndgssr.nx_dgssr_loss_subtotal,
+		ndgssr.nx_dgssr_produce_weight,
+		ndgssr.nx_dgssr_produce_subtotal,
+		ndgssr.nx_dgssr_return_weight,
+		ndgssr.nx_dgssr_return_subtotal,
+		ndgssr.nx_dgssr_nx_pur_goods_id,
+		ndgssr.nx_dgssr_nx_dep_order_id,
+		ndgssr.nx_dgssr_status,
+		nd.nx_department_name as departmentName,
+		ndo.nx_DO_quantity as orderQuantity,
+		ndo.nx_DO_standard as orderStandard,
+		du.nx_DIU_wx_nick_name as doUserName
+		from nx_distributer_goods_shelf_stock_reduce as ndgssr
+		left join nx_department_orders as ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+		left join nx_department as nd on nd.nx_department_id = ndo.nx_DO_department_id
+		left join nx_distributer_user as du on du.nx_distributer_user_id = ndgssr.nx_dgssr_do_user_id
+		<where>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="typesStr != null and typesStr != ''">
+				and FIND_IN_SET(ndgssr.nx_dgssr_type, #{typesStr})
+			</if>
+		</where>
+		order by ndgssr.nx_dgssr_date DESC, ndgssr.nx_dgssr_full_time DESC
+	</select>
+
+	<!-- 查询商品列表（带扣减记录） -->
+	<select id="queryGoodsWithReduceRecords" resultMap="disGoodsWithReduceRecords">
+		select 
+			dg.nx_distributer_goods_id,
+			dg.nx_dg_goods_name,
+			dg.nx_dg_goods_standardname,
+		    dg.nx_dg_goods_standard_weight,
+			dg.nx_dg_goods_detail,
+			dg.nx_dg_goods_brand,
+			dg.nx_dg_goods_place,
+			dg.nx_dg_goods_file,
+			dg.nx_dg_goods_file_large,
+		    dg.nx_dg_carton_unit,
+		    dg.nx_dg_items_per_carton,
+
+			#{disId} AS disId,
+			#{startDate} AS startDate,
+			#{stopDate} AS stopDate,
+			<if test="equalType != null">
+				#{equalType} AS equalType,
+			</if>
+			<if test="equalType == null">
+				NULL AS equalType,
+			</if>
+			<if test="typesStr != null">
+				#{typesStr} AS typesStr,
+			</if>
+			<if test="typesStr == null">
+				NULL AS typesStr,
+			</if>
+			IFNULL(sum(CASE WHEN ndgssr.nx_dgssr_type IN (0, 1) THEN ndgssr.nx_dgssr_cost_subtotal ELSE 0 END), 0) as goodsSalesTotal,
+			IFNULL(sum(CASE WHEN ndgssr.nx_dgssr_type IN (2, 3) THEN (COALESCE(ndgssr.nx_dgssr_waste_subtotal, 0) + COALESCE(ndgssr.nx_dgssr_loss_subtotal, 0)) ELSE 0 END), 0) as goodsLossTotal,
+			IFNULL(sum(CASE WHEN ndgssr.nx_dgssr_type = 4 THEN ndgssr.nx_dgssr_cost_subtotal ELSE 0 END), 0) as goodsReturnTotal
+		from nx_distributer_goods_shelf_stock_reduce as ndgssr
+		left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+		<if test="disGoodsGreatId != null">
+			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_grand_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="disGoodsGreatId != null">
+				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
+			</if>
+		</where>
+		group by dg.nx_distributer_goods_id
+		<if test="orderType != null">
+			<choose>
+				<when test="orderType == 'sales'">
+					order by goodsSalesTotal DESC
+				</when>
+				<when test="orderType == 'loss'">
+					order by goodsLossTotal DESC
+				</when>
+				<when test="orderType == 'return'">
+					order by goodsReturnTotal DESC
+				</when>
+				<otherwise>
+					order by dg.nx_dg_goods_name
+				</otherwise>
+			</choose>
+		</if>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+	<!-- 盘库相关查询 -->
+
+	<!-- 查询批次在当前周期是否已盘库 -->
+	<select id="queryStockInventoryRecord" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockReduceEntity">
+		select * from nx_distributer_goods_shelf_stock_reduce
+		<where>
+			nx_dgssr_nx_stock_id = #{stockId}
+			and nx_dgssr_type = 2
+			<if test="inventoryType != null and inventoryType == 1">
+				and nx_dgssr_date = #{inventoryDate}
+			</if>
+			<if test="inventoryType != null and inventoryType == 2">
+				and nx_dgssr_week = #{inventoryWeek}
+			</if>
+			<if test="inventoryType != null and inventoryType == 3">
+				and nx_dgssr_month = #{inventoryMonth}
+			</if>
+		</where>
+		limit 1
+	</select>
+
+	<!-- 按销售成本TOP商品（type = 0, 1） -->
+	<select id="queryStockProduceSubtotalTopTimes" resultType="com.nongxinle.entity.NxDistributerGoodsEntity">
+		SELECT
+		dg.nx_distributer_goods_id,
+		dg.nx_dg_goods_name,
+		dg.nx_dg_goods_standardname,
+		dg.nx_dg_goods_standard_weight,
+		dg.nx_dg_goods_detail,
+		dg.nx_dg_goods_brand,
+		dg.nx_dg_goods_place,
+		dg.nx_dg_goods_file,
+		dg.nx_dg_goods_file_large,
+		dg.nx_dg_carton_unit,
+		dg.nx_dg_items_per_carton,
+		ROUND(SUM(ndgssr.nx_dgssr_cost_subtotal), 1) AS goodsSalesTotal
+		FROM nx_distributer_goods_shelf_stock_reduce ndgssr
+		LEFT JOIN nx_distributer_goods dg ON dg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+		WHERE 1=1
+		<if test="disId != null">
+			AND ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+		</if>
+		<if test="startDate != null">
+			AND ndgssr.nx_dgssr_date &gt;= #{startDate}
+		</if>
+		<if test="stopDate != null">
+			AND ndgssr.nx_dgssr_date &lt;= #{stopDate}
+		</if>
+		<if test="purUserIds != null">
+			AND ndgssr.nx_dgssr_do_user_id IN
+			<foreach collection="purUserIds" item="userId" open="(" separator="," close=")">
+				#{userId}
+			</foreach>
+		</if>
+		AND ndgssr.nx_dgssr_type IN (0, 1)
+		GROUP BY ndgssr.nx_dgssr_nx_dis_goods_id, dg.nx_dg_goods_name
+		ORDER BY goodsSalesTotal DESC
+		LIMIT 10
+	</select>
+
+	<!-- 按损耗成本TOP商品（type = 2, 3）：包括浪费和损耗 -->
+	<select id="queryStockLossSubtotalTopTimes" resultType="com.nongxinle.entity.NxDistributerGoodsEntity">
+		SELECT
+		dg.nx_distributer_goods_id,
+		dg.nx_dg_goods_name,
+		dg.nx_dg_goods_standardname,
+		dg.nx_dg_goods_standard_weight,
+		dg.nx_dg_goods_detail,
+		dg.nx_dg_goods_brand,
+		dg.nx_dg_goods_place,
+		dg.nx_dg_goods_file,
+		dg.nx_dg_goods_file_large,
+		dg.nx_dg_carton_unit,
+		dg.nx_dg_items_per_carton,
+		ROUND(SUM(COALESCE(ndgssr.nx_dgssr_waste_subtotal, 0) + COALESCE(ndgssr.nx_dgssr_loss_subtotal, 0)), 1) AS goodsLossTotal
+		FROM nx_distributer_goods_shelf_stock_reduce ndgssr
+		LEFT JOIN nx_distributer_goods dg ON dg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+		WHERE 1=1
+		<if test="disId != null">
+			AND ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+		</if>
+		<if test="startDate != null">
+			AND ndgssr.nx_dgssr_date &gt;= #{startDate}
+		</if>
+		<if test="stopDate != null">
+			AND ndgssr.nx_dgssr_date &lt;= #{stopDate}
+		</if>
+		<if test="purUserIds != null">
+			AND ndgssr.nx_dgssr_do_user_id IN
+			<foreach collection="purUserIds" item="userId" open="(" separator="," close=")">
+				#{userId}
+			</foreach>
+		</if>
+		AND ndgssr.nx_dgssr_type IN (2, 3)
+		GROUP BY ndgssr.nx_dgssr_nx_dis_goods_id
+		ORDER BY goodsLossTotal DESC
+		LIMIT 10
+	</select>
+
+	<!-- 按废弃成本TOP商品（type = 2）：已废弃，保留用于兼容，但实际应该用损耗查询 -->
+	<select id="queryStockWasteSubtotalTopTimes" resultType="com.nongxinle.entity.NxDistributerGoodsEntity">
+		SELECT
+		dg.nx_distributer_goods_id,
+		dg.nx_dg_goods_name,
+		dg.nx_dg_goods_standardname,
+		dg.nx_dg_goods_standard_weight,
+		dg.nx_dg_goods_detail,
+		dg.nx_dg_goods_brand,
+		dg.nx_dg_goods_place,
+		dg.nx_dg_goods_file,
+		dg.nx_dg_goods_file_large,
+		dg.nx_dg_carton_unit,
+		dg.nx_dg_items_per_carton,
+		ROUND(SUM(ndgssr.nx_dgssr_waste_subtotal), 1) AS goodsWasteTotal
+		FROM nx_distributer_goods_shelf_stock_reduce ndgssr
+		LEFT JOIN nx_distributer_goods dg ON dg.nx_distributer_goods_id = ndgssr.nx_dgssr_nx_dis_goods_id
+		WHERE 1=1
+		<if test="disId != null">
+			AND ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+		</if>
+		<if test="startDate != null">
+			AND ndgssr.nx_dgssr_date &gt;= #{startDate}
+		</if>
+		<if test="stopDate != null">
+			AND ndgssr.nx_dgssr_date &lt;= #{stopDate}
+		</if>
+		<if test="purUserIds != null">
+			AND ndgssr.nx_dgssr_do_user_id IN
+			<foreach collection="purUserIds" item="userId" open="(" separator="," close=")">
+				#{userId}
+			</foreach>
+		</if>
+		AND ndgssr.nx_dgssr_type = 2
+		GROUP BY ndgssr.nx_dgssr_nx_dis_goods_id
+		ORDER BY goodsWasteTotal DESC
+		LIMIT 10
+	</select>
+
+	<!-- 按日支出TOP -->
+	<select id="queryNxPurchaseGoodsTopDay" resultType="java.util.Map">
+		SELECT
+		ndgssr.nx_dgssr_date AS date,
+		ROUND(SUM(COALESCE(ndgssr.nx_dgssr_cost_subtotal, 0)), 1) AS goodsProduceTotal
+		FROM nx_distributer_goods_shelf_stock_reduce ndgssr
+		WHERE 1=1
+		<if test="disId != null">
+			AND ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+		</if>
+		<if test="startDate != null">
+			AND ndgssr.nx_dgssr_date &gt;= #{startDate}
+		</if>
+		<if test="stopDate != null">
+			AND ndgssr.nx_dgssr_date &lt;= #{stopDate}
+		</if>
+		<if test="purUserIds != null">
+			AND ndgssr.nx_dgssr_do_user_id IN
+			<foreach collection="purUserIds" item="userId" open="(" separator="," close=")">
+				#{userId}
+			</foreach>
+		</if>
+		and ndgssr.nx_dgssr_type != 5
+		GROUP BY ndgssr.nx_dgssr_date
+		ORDER BY goodsProduceTotal DESC
+		LIMIT 10
+	</select>
+
+	<!-- 统计退货金额（type = 4） -->
+	<select id="queryReduceReturnTotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_cost_subtotal), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="purUserIds != null">
+				AND ndgssr.nx_dgssr_do_user_id IN
+				<foreach collection="purUserIds" item="userId" open="(" separator="," close=")">
+					#{userId}
+				</foreach>
+			</if>
+			and ndgssr.nx_dgssr_type = 4
+		</where>
+	</select>
+
+	<!-- 统计废弃重量（type = 2） -->
+	<select id="queryReduceWasteWeightTotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_waste_weight), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+			and ndgssr.nx_dgssr_type = 2
+		</where>
+	</select>
+
+	<!-- 统计损耗重量（type = 3） -->
+	<select id="queryReduceLossWeightTotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_loss_weight), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+			and ndgssr.nx_dgssr_type = 3
+		</where>
+	</select>
+
+	<!-- 统计销售重量（type = 0, 1） -->
+	<select id="queryReduceProduceWeightTotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_produce_weight), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+			and ndgssr.nx_dgssr_type in (0, 1)
+		</where>
+	</select>
+
+	<!-- 统计成本重量（type = 0, 1） -->
+	<select id="queryReduceCostWeightTotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgssr.nx_dgssr_cost_weight), 0) from nx_distributer_goods_shelf_stock_reduce ndgssr
+		<if test="depId != null">
+			left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+			left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="equalType != null">
+				and ndgssr.nx_dgssr_type = #{equalType}
+			</if>
+			<if test="types != null">
+				and ndgssr.nx_dgssr_type in
+				<foreach collection="types" item="typeItem" open="(" separator="," close=")">
+					#{typeItem}
+				</foreach>
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+			and ndgssr.nx_dgssr_type in (0, 1)
+		</where>
+	</select>
+
+	<!-- 查询有出货记录的门店列表（通过订单关联） -->
+	<select id="queryReduceDepartment" resultType="com.nongxinle.entity.NxDepartmentEntity">
+		select distinct
+		nd.nx_department_id,
+		nd.nx_department_name,
+		nd.nx_department_type,
+		nd.nx_department_father_id,
+		nd.nx_department_sub_amount
+		from nx_distributer_goods_shelf_stock_reduce ndgssr
+		left join nx_department_orders ndo on ndo.nx_department_orders_id = ndgssr.nx_dgssr_nx_dep_order_id
+		left join nx_department nd on nd.nx_department_id = ndo.nx_DO_department_id
+		<where>
+			<if test="disId != null">
+				and ndgssr.nx_dgssr_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgssr.nx_dgssr_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgssr.nx_dgssr_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgssr.nx_dgssr_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgssr.nx_dgssr_date &lt;= #{stopDate}
+			</if>
+			<if test="depId != null">
+				and nd.nx_department_id = #{depId}
+			</if>
+			<if test="depFatherId != null">
+				and nd.nx_department_father_id = #{depFatherId}
+			</if>
+			and nd.nx_department_id is not null
+		</where>
+		order by nd.nx_department_id
+	</select>
 
 </mapper>

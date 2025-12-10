@@ -84,4 +84,34 @@
 		</foreach>
 	</delete>
 
+	<!-- 为 nx_dg_items_per_carton > 1 的商品自动添加订货规格 -->
+	<!-- 规格名称使用外箱名称（nx_dg_carton_unit） -->
+	<insert id="batchAddCartonStandard">
+		INSERT INTO nx_distributer_standard
+		(
+			`nx_DS_dis_goods_id`, 
+			`nx_DS_standard_name`, 
+			`nx_DS_standard_sort`
+		)
+		SELECT 
+			ndg.nx_distributer_goods_id,
+			ndg.nx_dg_carton_unit,
+			COALESCE((
+				SELECT MAX(nx_DS_standard_sort) 
+				FROM nx_distributer_standard 
+				WHERE nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+			), -1) + 1 AS standard_sort
+		FROM nx_distributer_goods AS ndg
+		WHERE ndg.nx_dg_items_per_carton > 1
+			AND ndg.nx_dg_carton_unit IS NOT NULL
+			AND TRIM(ndg.nx_dg_carton_unit) != ''
+			-- 检查是否已经存在该规格（避免重复插入）
+			AND NOT EXISTS (
+				SELECT 1 
+				FROM nx_distributer_standard AS nds
+				WHERE nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+					AND nds.nx_DS_standard_name = ndg.nx_dg_carton_unit
+			)
+	</insert>
+
 </mapper>

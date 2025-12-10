@@ -7,7 +7,6 @@ import com.nongxinle.dao.NxDistributerUserDao;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.HttpUtils;
-import com.sun.source.util.Trees;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -252,6 +251,16 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         return nxDepartmentOrdersDao.queryGreatGrandOrderFatherGoods(map);
     }
 
+    @Override
+    public List<GreatGrandFatherGoodsSimpleDTO> queryGreatGrandOrderFatherGoodsUltraSimple(Map<String, Object> map) {
+        return nxDepartmentOrdersDao.queryGreatGrandOrderFatherGoodsUltraSimple(map);
+    }
+
+    @Override
+    public List<OutGoodsSimpleDTO> queryOutGoodsWithOrdersUltraSimple(Map<String, Object> map) {
+        return nxDepartmentOrdersDao.queryOutGoodsWithOrdersUltraSimple(map);
+    }
+
 
     @Override
     public List<NxDistributerFatherGoodsEntity> queryDisGoodsForTodayOrders(Map<String, Object> map) {
@@ -305,6 +314,77 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                             stats.put("count0", ((Number) map.get("count0")).intValue());
                             stats.put("count1", ((Number) map.get("count1")).intValue());
                             stats.put("count2", ((Number) map.get("count2")).intValue());
+                            return stats;
+                        }
+                ));
+    }
+
+    @Override
+    public Map<Integer, Integer> batchQueryFatherGoodsOrderCount(List<Integer> grandIds, Map<String, Object> params) {
+        // 构建查询参数
+        Map<String, Object> queryParams = new HashMap<>(params);
+        queryParams.put("grandIds", grandIds);
+        
+        // 执行批量查询
+        List<Map<String, Object>> results = nxDepartmentOrdersDao.batchQueryFatherGoodsOrderCount(queryParams);
+        
+        // 转换结果
+        return results.stream()
+                .collect(Collectors.toMap(
+                        map -> {
+                            Object grandIdObj = map.get("grandId");
+                            if (grandIdObj instanceof Integer) {
+                                return (Integer) grandIdObj;
+                            } else if (grandIdObj instanceof Long) {
+                                return ((Long) grandIdObj).intValue();
+                            } else if (grandIdObj instanceof Number) {
+                                return ((Number) grandIdObj).intValue();
+                            }
+                            return Integer.valueOf(grandIdObj.toString());
+                        },
+                        map -> ((Number) map.get("orderCount")).intValue()
+                ));
+    }
+    
+    @Override
+    public Map<Integer, Map<String, Object>> batchQueryDepartmentOrderStats(List<Integer> depFatherIds) {
+        List<Map<String, Object>> results = nxDepartmentOrdersDao.batchQueryDepartmentOrderStats(depFatherIds);
+        
+        return results.stream()
+                .collect(Collectors.toMap(
+                        map -> (Integer) map.get("depFatherId"),
+                        map -> {
+                            Map<String, Object> stats = new HashMap<>();
+                            stats.put("unDo", ((Number) map.get("unDo")).intValue());
+                            stats.put("hasPrice", ((Number) map.get("hasPrice")).intValue());
+                            stats.put("hasWeight", ((Number) map.get("hasWeight")).intValue());
+                            stats.put("totalCount", ((Number) map.get("totalCount")).intValue());
+                            stats.put("finishCount", ((Number) map.get("finishCount")).intValue());
+                            stats.put("totalSubtotal", map.get("totalSubtotal"));
+                            return stats;
+                        }
+                ));
+    }
+    
+    @Override
+    public Map<String, Map<String, Object>> batchQueryGbDistributerDepartmentStats(List<Integer> gbDisIds, List<Integer> gbDepIds) {
+        List<Map<String, Object>> results = nxDepartmentOrdersDao.batchQueryGbDistributerDepartmentStats(gbDisIds, gbDepIds);
+        
+        return results.stream()
+                .collect(Collectors.toMap(
+                        map -> map.get("gbDisId") + "_" + map.get("gbDepId"), // 使用复合键
+                        map -> {
+                            Map<String, Object> stats = new HashMap<>();
+                            stats.put("newOrder", ((Number) map.get("newOrder")).intValue());
+                            stats.put("jinhuoOrder", ((Number) map.get("jinhuoOrder")).intValue());
+                            stats.put("chukuOrder", ((Number) map.get("chukuOrder")).intValue());
+                            stats.put("hasNotWeight", ((Number) map.get("hasNotWeight")).intValue());
+                            stats.put("jinhuoHasWeight", ((Number) map.get("jinhuoHasWeight")).intValue());
+                            stats.put("chukuHasWeight", ((Number) map.get("chukuHasWeight")).intValue());
+                            stats.put("hasPrice", ((Number) map.get("hasPrice")).intValue());
+                            stats.put("hasNotPrice", ((Number) map.get("hasNotPrice")).intValue());
+                            stats.put("twoTotal", ((Number) map.get("twoTotal")).intValue());
+                            stats.put("total", map.get("total"));
                             return stats;
                         }
                 ));
@@ -383,6 +463,29 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
     public List<Integer> queryOnlyNxGoodsIds(Map<String, Object> map) {
 
         return  nxDepartmentOrdersDao.queryOnlyNxGoodsIds(map);
+    }
+
+    @Override
+    public List<NxDistributerFatherGoodsEntity> disGetOutGoodsGrandCata(Map<String, Object> map) {
+
+        return nxDepartmentOrdersDao.disGetOutGoodsGrandCata(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> disGetNxGoodsApply(Map<String, Object> map) {
+
+        return nxDepartmentOrdersDao.disGetNxGoodsApply(map);
+    }
+
+    @Override
+    public List<OutGoodsSimpleDTO> disGetNxGoodsApplyUltraSimple(Map<String, Object> map) {
+        return nxDepartmentOrdersDao.disGetNxGoodsApplyUltraSimple(map);
+    }
+
+    @Override
+    public Integer queryOrderGoodsCount(Map<String, Object> mapCount) {
+
+        return nxDepartmentOrdersDao.queryOrderGoodsCount(mapCount);
     }
 
 
@@ -482,11 +585,16 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         return nxDepartmentOrdersDao.queryReturnSubtotal(mapR);
     }
 
-    @Override
-    public List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1) {
+//    @Override
+//    public List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1) {
+//        return null;
+//    }
 
-        return nxDepartmentOrdersDao.queryqueryOrderGbDepartmentList(map1);
-    }
+//    @Override
+//    public List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1) {
+//
+//        return nxDepartmentOrdersDao.queryqueryOrderGbDepartmentList(map1);
+//    }
 
 
 
@@ -623,6 +731,203 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
     public List<NxDepartmentOrdersEntity> queryOrdersForDisGoods(Map<String, Object> map1) {
 
         return nxDepartmentOrdersDao.queryOrdersForDisGoods(map1);
+    }
+
+    @Override
+    public Map<String, Object> queryShelfListWithDepIds(Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 1. 获取货架列表（包含订单数量统计）
+        // SQL 查询已经返回了订单数量，直接使用查询结果
+        List<ShelfListSimpleDTO> shelfListDTO = nxDepartmentOrdersDao.queryShelfListBasic(params);
+        
+        // 2. 获取部门数据
+        List<NxDepartmentEntity> departmentEntities = queryPureOrderNxDepartmentSimple(params);
+        List<GbDepartmentEntity> gbDepartmentEntities = queryPureOrderGbDepartment(params);
+        
+        // 3. 获取统计数据
+        Integer count = queryDepOrdersAcount(params);
+        Integer stockCount = disGetPurchaseGoodsApplysCount(params);
+        params.put("purStatus", null);
+        params.put("dayuPurStatus", 3);
+        Integer stockCountOK = disGetPurchaseGoodsApplysCount(params);
+        
+        // 组装结果
+        result.put("shelfList", shelfListDTO);
+        result.put("waitDepNx", departmentEntities);
+        result.put("waitDepGb", gbDepartmentEntities);
+        result.put("depOrdersWait", count);
+        result.put("stockCount", stockCount);
+        result.put("stockCountOk", stockCountOK);
+        
+        return result;
+    }
+
+    @Override
+    public NxDistributerGoodsShelfEntity queryShelfGoodsDetail(Map<String, Object> params) {
+        // 查询指定货架的商品详情（使用简化版查询，只返回必要字段）
+        // 设置 shelfId = 1 表示只查询有货架的商品
+        // 添加 targetShelfId 参数用于过滤指定货架
+        Integer targetShelfId = (Integer) params.get("shelfId");
+        params.put("shelfId", 1);
+        params.put("targetShelfId", targetShelfId);
+        
+        // 使用简化版查询，减少数据传输量
+        List<NxDistributerGoodsShelfEntity> shelfList = nxDepartmentOrdersDao.queryShelfGoodsDetailSimple(params);
+        
+        if (shelfList != null && !shelfList.isEmpty()) {
+            // 找到指定货架的数据
+            for (NxDistributerGoodsShelfEntity shelf : shelfList) {
+                if (shelf.getNxDistributerGoodsShelfId().equals(targetShelfId)) {
+                    return shelf;
+                }
+            }
+        }
+        
+        // 如果没有找到，返回一个空的货架对象
+        NxDistributerGoodsShelfEntity emptyShelf = new NxDistributerGoodsShelfEntity();
+        emptyShelf.setNxDistributerGoodsShelfId(targetShelfId);
+        emptyShelf.setNxDisGoodsShelfGoodsEntities(new ArrayList<>());
+        return emptyShelf;
+    }
+
+    @Override
+    public ShelfDetailSimpleDTO queryShelfGoodsDetailUltraSimple(Map<String, Object> params) {
+        // 查询指定货架的商品详情（使用超简化版查询，字段扁平化）
+        // 设置 shelfId = 1 表示只查询有货架的商品
+        // 添加 targetShelfId 参数用于过滤指定货架
+        Integer targetShelfId = (Integer) params.get("shelfId");
+        params.put("shelfId", 1);
+        params.put("targetShelfId", targetShelfId);
+        
+        // 使用超简化版查询，字段扁平化，大幅减少数据传输量
+        ShelfDetailSimpleDTO shelfDetail = nxDepartmentOrdersDao.queryShelfGoodsDetailUltraSimple(params);
+        
+        // 如果没有找到，返回一个空的货架对象
+        if (shelfDetail == null) {
+            shelfDetail = new ShelfDetailSimpleDTO();
+            shelfDetail.setNxDistributerGoodsShelfId(targetShelfId);
+            shelfDetail.setGoodsList(new ArrayList<>());
+        }
+        
+        return shelfDetail;
+    }
+
+    @Override
+    public Map<String, Object> queryShelfStatistics(Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 1. 获取部门数据
+        List<NxDepartmentEntity> departmentEntities = queryPureOrderNxDepartmentSimple(params);
+        List<GbDepartmentEntity> gbDepartmentEntities = queryPureOrderGbDepartment(params);
+        
+        // 2. 获取统计数据
+        Integer count = queryDepOrdersAcount(params);
+        Integer stockCount = disGetPurchaseGoodsApplysCount(params);
+        params.put("purStatus", null);
+        params.put("dayuPurStatus", 3);
+        Integer stockCountOK = disGetPurchaseGoodsApplysCount(params);
+        
+        // 组装结果
+        result.put("waitDepNx", departmentEntities);
+        result.put("waitDepGb", gbDepartmentEntities);
+        result.put("depOrdersWait", count);
+        result.put("stockCount", stockCount);
+        result.put("stockCountOk", stockCountOK);
+        
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> queryCategoryListWithDepIds(Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 1. 获取类别列表（曾祖父级别，包含订单数量统计）
+        // SQL 查询已经返回了订单数量，直接使用查询结果
+        List<CategoryListSimpleDTO> categoryListDTO = nxDepartmentOrdersDao.queryCategoryListBasic(params);
+        
+        // 2. 获取部门数据
+        List<NxDepartmentEntity> departmentEntities = queryPureOrderNxDepartmentSimple(params);
+        List<GbDepartmentEntity> gbDepartmentEntities = queryPureOrderGbDepartment(params);
+        
+        // 3. 获取统计数据
+        Integer count = queryDepOrdersAcount(params);
+        Integer stockCount = disGetPurchaseGoodsApplysCount(params);
+        params.put("purStatus", null);
+        params.put("dayuPurStatus", 3);
+        Integer stockCountOK = disGetPurchaseGoodsApplysCount(params);
+        
+        // 组装结果
+        result.put("categoryList", categoryListDTO);
+        result.put("waitDepNx", departmentEntities);
+        result.put("waitDepGb", gbDepartmentEntities);
+        result.put("depOrdersWait", count);
+        result.put("stockCount", stockCount);
+        result.put("stockCountOk", stockCountOK);
+        
+        return result;
+    }
+
+    @Override
+    public CategoryDetailSimpleDTO queryCategoryGoodsDetailUltraSimple(Map<String, Object> params) {
+        // 查询指定类别的商品详情（使用超简化版查询，字段扁平化）
+        CategoryDetailSimpleDTO categoryDetail = nxDepartmentOrdersDao.queryCategoryGoodsDetailUltraSimple(params);
+        
+        // 如果没有找到，返回一个空的类别对象
+        if (categoryDetail == null) {
+            categoryDetail = new CategoryDetailSimpleDTO();
+            Integer categoryId = (Integer) params.get("categoryId");
+            categoryDetail.setNxDistributerFatherGoodsId(categoryId);
+            categoryDetail.setGoodsList(new ArrayList<>());
+        }
+        
+        return categoryDetail;
+    }
+
+    @Override
+    public Map<String, Object> queryCategoryStatistics(Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 1. 获取部门数据
+        List<NxDepartmentEntity> departmentEntities = queryPureOrderNxDepartmentSimple(params);
+        List<GbDepartmentEntity> gbDepartmentEntities = queryPureOrderGbDepartment(params);
+        
+        // 2. 获取统计数据
+        Integer count = queryDepOrdersAcount(params);
+        Integer stockCount = disGetPurchaseGoodsApplysCount(params);
+        params.put("purStatus", null);
+        params.put("dayuPurStatus", 3);
+        Integer stockCountOK = disGetPurchaseGoodsApplysCount(params);
+        
+        // 组装结果
+        result.put("waitDepNx", departmentEntities);
+        result.put("waitDepGb", gbDepartmentEntities);
+        result.put("depOrdersWait", count);
+        result.put("stockCount", stockCount);
+        result.put("stockCountOk", stockCountOK);
+        
+        return result;
+    }
+
+    @Override
+    public Map<Integer, Map<String, Object>> batchQueryDepartmentOrderStatsSunla(List<Integer> depFatherIds) {
+        List<Map<String, Object>> results = nxDepartmentOrdersDao.batchQueryDepartmentOrderStatsSunla(depFatherIds);
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        map -> (Integer) map.get("depFatherId"),
+                        map -> {
+                            Map<String, Object> stats = new HashMap<>();
+                            stats.put("unDo", ((Number) map.get("unDo")).intValue());
+                            stats.put("hasPrice", ((Number) map.get("hasPrice")).intValue());
+                            stats.put("hasWeight", ((Number) map.get("hasWeight")).intValue());
+                            stats.put("totalCount", ((Number) map.get("totalCount")).intValue());
+                            stats.put("finishCount", ((Number) map.get("finishCount")).intValue());
+                            stats.put("totalSubtotal", map.get("totalSubtotal"));
+                            return stats;
+                        }
+                ));
+
     }
 
 

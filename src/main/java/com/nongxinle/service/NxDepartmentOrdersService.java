@@ -83,6 +83,13 @@ public interface NxDepartmentOrdersService {
 
     List<NxDistributerFatherGoodsEntity> queryGreatGrandOrderFatherGoods(Map<String, Object> map);
 
+    /**
+     * 查询曾祖父商品列表（超简化版，只返回基本信息，不包含嵌套对象）
+     */
+    List<GreatGrandFatherGoodsSimpleDTO> queryGreatGrandOrderFatherGoodsUltraSimple(Map<String, Object> map);
+
+    List<OutGoodsSimpleDTO> queryOutGoodsWithOrdersUltraSimple(Map<String, Object> map);
+
     List<NxDistributerFatherGoodsEntity> queryDisGoodsForTodayOrders(Map<String, Object> map);
 
     List<NxDepartmentEntity> queryPureOrderNxDepartment(Map<String, Object> map);
@@ -121,7 +128,7 @@ public interface NxDepartmentOrdersService {
 
     double queryReturnSubtotal(Map<String, Object> mapR);
 
-    List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1);
+//    List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1);
 
     void moveOrderToHistory(NxDepartmentOrdersEntity orders);
 
@@ -134,8 +141,73 @@ public interface NxDepartmentOrdersService {
 
     Map<Integer, Map<String, Integer>> batchQueryGbDepStats(@Param("list") List<Integer>  gbDepIds);
 
+    Map<Integer, Integer> batchQueryFatherGoodsOrderCount(List<Integer> grandIds, Map<String, Object> params);
+    
+    Map<Integer, Map<String, Object>> batchQueryDepartmentOrderStats(List<Integer> depFatherIds);
+    
+    Map<String, Map<String, Object>> batchQueryGbDistributerDepartmentStats(List<Integer> gbDisIds, List<Integer> gbDepIds);
+
     Map<String, Object> getOrderStats(Integer disId);
 
 
     List<Integer> queryOnlyNxGoodsIds(Map<String, Object> map);
+
+    List<NxDistributerFatherGoodsEntity> disGetOutGoodsGrandCata(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> disGetNxGoodsApply(Map<String, Object> map);
+
+    List<OutGoodsSimpleDTO> disGetNxGoodsApplyUltraSimple(Map<String, Object> map);
+
+    Integer queryOrderGoodsCount(Map<String, Object> mapCount);
+
+    /**
+     * 获取货架列表（仅基本信息，不包含商品详情）
+     * @param params 查询参数
+     * @return 包含货架列表、部门列表、统计数据的Map
+     */
+    Map<String, Object> queryShelfListWithDepIds(Map<String, Object> params);
+
+    /**
+     * 获取指定货架的商品详情（包含订单信息）
+     * @param params 查询参数，必须包含shelfId
+     * @return 完整的货架对象（包含商品列表和订单）
+     */
+    NxDistributerGoodsShelfEntity queryShelfGoodsDetail(Map<String, Object> params);
+
+    /**
+     * 获取指定货架的商品详情（超简化版，使用DTO对象，字段扁平化）
+     * @param params 查询参数，必须包含shelfId
+     * @return 货架详情DTO（字段已最大程度简化）
+     */
+    ShelfDetailSimpleDTO queryShelfGoodsDetailUltraSimple(Map<String, Object> params);
+
+    /**
+     * 获取统计数据（不包含货架和商品数据）
+     * @param params 查询参数
+     * @return 包含部门列表和统计数据的Map
+     */
+    Map<String, Object> queryShelfStatistics(Map<String, Object> params);
+
+    /**
+     * 查询类别列表（曾祖父级别，仅基本信息，不包含商品详情）
+     * @param params 查询参数
+     * @return 包含类别列表、部门列表和统计数据的Map
+     */
+    Map<String, Object> queryCategoryListWithDepIds(Map<String, Object> params);
+
+    /**
+     * 查询指定类别的商品详情（超简化版，使用DTO对象，字段扁平化）
+     * @param params 查询参数，必须包含categoryId
+     * @return 类别详情DTO（字段已最大程度简化）
+     */
+    CategoryDetailSimpleDTO queryCategoryGoodsDetailUltraSimple(Map<String, Object> params);
+
+    /**
+     * 查询统计数据（不包含类别和商品数据）
+     * @param params 查询参数
+     * @return 包含部门列表和统计数据的Map
+     */
+    Map<String, Object> queryCategoryStatistics(Map<String, Object> params);
+
+    Map<Integer, Map<String, Object>> batchQueryDepartmentOrderStatsSunla(List<Integer> depFatherIds);
 }

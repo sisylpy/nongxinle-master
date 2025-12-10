@@ -51,5 +51,17 @@ public class NxDistributerGoodsLinshiServiceImpl implements NxDistributerGoodsLi
 	public void deleteBatch(Integer[] nxDistributerGoodsLsIds){
 		nxDistributerGoodsLinshiDao.deleteBatch(nxDistributerGoodsLsIds);
 	}
-	
+
+    @Override
+    public List<NxDistributerGoodsLinshiEntity> disGetLinshiGoodsList(Map<String, Object> map) {
+
+		return nxDistributerGoodsLinshiDao.disGetLinshiGoodsList(map);
+    }
+
+    @Override
+    public int disGetLinshiGoodsTotal(Map<String, Object> map) {
+
+		return nxDistributerGoodsLinshiDao.disGetLinshiGoodsTotal(map);
+    }
+
 }

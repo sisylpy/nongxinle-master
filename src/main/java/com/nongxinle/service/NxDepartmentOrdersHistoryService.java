@@ -37,4 +37,5 @@ public interface NxDepartmentOrdersHistoryService {
 
 	List<Map<String,Object>> queryLogs(Map<String, Object> mapLog);
 
+
 }

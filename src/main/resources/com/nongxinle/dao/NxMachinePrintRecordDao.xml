@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxMachinePrintRecordDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxMachinePrintRecordEntity">
+        SELECT * FROM nx_machine_print_record WHERE nx_pr_id = #{value}
+    </select>
+
+    <!-- 条件查询列表 -->
+    <select id="queryList" resultType="com.nongxinle.entity.NxMachinePrintRecordEntity">
+        SELECT * FROM nx_machine_print_record
+        <where>
+            <if test="marketId != null">
+                AND nx_pr_market_id = #{marketId}
+            </if>
+            <if test="deviceId != null">
+                AND nx_pr_device_id = #{deviceId}
+            </if>
+            <if test="distributerId != null">
+                AND nx_pr_distributer_id = #{distributerId}
+            </if>
+            <if test="billId != null">
+                AND nx_pr_bill_id = #{billId}
+            </if>
+            <if test="paperType != null">
+                AND nx_pr_paper_type = #{paperType}
+            </if>
+            <if test="printStatus != null">
+                AND nx_pr_print_status = #{printStatus}
+            </if>
+            <if test="startDate != null">
+                AND DATE(nx_pr_print_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(nx_pr_print_time) &lt;= #{stopDate}
+            </if>
+        </where>
+        ORDER BY nx_pr_print_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+    
+    <!-- 条件查询列表（包含配送商名称和设备名称） -->
+    <select id="queryListWithDistributer" resultType="map">
+        SELECT 
+            pr.*,
+            d.nx_distributer_name AS distributerName,
+            dev.nx_pd_device_name AS deviceName,
+            dev.nx_pd_device_no AS deviceNo
+        FROM nx_machine_print_record pr
+        LEFT JOIN nx_distributer d ON pr.nx_pr_distributer_id = d.nx_distributer_id
+        LEFT JOIN nx_machine_printer_device dev ON pr.nx_pr_device_id = dev.nx_pd_id
+        <where>
+            <if test="marketId != null">
+                AND pr.nx_pr_market_id = #{marketId}
+            </if>
+            <if test="deviceId != null">
+                AND pr.nx_pr_device_id = #{deviceId}
+            </if>
+            <if test="distributerId != null">
+                AND pr.nx_pr_distributer_id = #{distributerId}
+            </if>
+            <if test="billId != null">
+                AND pr.nx_pr_bill_id = #{billId}
+            </if>
+            <if test="paperType != null">
+                AND pr.nx_pr_paper_type = #{paperType}
+            </if>
+            <if test="printStatus != null">
+                AND pr.nx_pr_print_status = #{printStatus}
+            </if>
+            <if test="startDate != null">
+                AND DATE(pr.nx_pr_print_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(pr.nx_pr_print_time) &lt;= #{stopDate}
+            </if>
+        </where>
+        ORDER BY pr.nx_pr_print_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 查询总数 -->
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_print_record
+        <where>
+            <if test="marketId != null">
+                AND nx_pr_market_id = #{marketId}
+            </if>
+            <if test="deviceId != null">
+                AND nx_pr_device_id = #{deviceId}
+            </if>
+            <if test="distributerId != null">
+                AND nx_pr_distributer_id = #{distributerId}
+            </if>
+            <if test="billId != null">
+                AND nx_pr_bill_id = #{billId}
+            </if>
+            <if test="printStatus != null">
+                AND nx_pr_print_status = #{printStatus}
+            </if>
+            <if test="startDate != null">
+                AND DATE(nx_pr_print_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(nx_pr_print_time) &lt;= #{stopDate}
+            </if>
+        </where>
+    </select>
+
+    <!-- 保存 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxMachinePrintRecordEntity" 
+            useGeneratedKeys="true" keyProperty="nxPrId">
+        INSERT INTO nx_machine_print_record (
+            nx_pr_bill_id,
+            nx_pr_device_id,
+            nx_pr_market_id,
+            nx_pr_distributer_id,
+            nx_pr_distributer_type,
+            nx_pr_paper_type,
+            nx_pr_paper_count,
+            nx_pr_print_time,
+            nx_pr_print_status,
+            nx_pr_bill_total,
+            nx_pr_bill_date,
+            nx_pr_bill_trade_no,
+            nx_pr_operator_id,
+            nx_pr_operator_name,
+            nx_pr_remark,
+            nx_pr_create_time
+        ) VALUES (
+            #{nxPrBillId},
+            #{nxPrDeviceId},
+            #{nxPrMarketId},
+            #{nxPrDistributerId},
+            #{nxPrDistributerType},
+            #{nxPrPaperType},
+            #{nxPrPaperCount},
+            #{nxPrPrintTime},
+            #{nxPrPrintStatus},
+            #{nxPrBillTotal},
+            #{nxPrBillDate},
+            #{nxPrBillTradeNo},
+            #{nxPrOperatorId},
+            #{nxPrOperatorName},
+            #{nxPrRemark},
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxMachinePrintRecordEntity">
+        UPDATE nx_machine_print_record
+        <set>
+            <if test="nxPrPrintStatus != null">nx_pr_print_status = #{nxPrPrintStatus},</if>
+            <if test="nxPrRemark != null">nx_pr_remark = #{nxPrRemark},</if>
+        </set>
+        WHERE nx_pr_id = #{nxPrId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_print_record WHERE nx_pr_id = #{value}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_print_record WHERE nx_pr_id IN
+        <foreach item="nxPrId" collection="array" open="(" separator="," close=")">
+            #{nxPrId}
+        </foreach>
+    </delete>
+
+    <!-- 根据单据ID查询打印记录 -->
+    <select id="queryByBillId" resultType="com.nongxinle.entity.NxMachinePrintRecordEntity">
+        SELECT * FROM nx_machine_print_record 
+        WHERE nx_pr_bill_id = #{billId}
+        ORDER BY nx_pr_print_time DESC
+    </select>
+
+    <!-- 按日期统计打印量 -->
+    <select id="queryDailyStats" resultType="map">
+        SELECT 
+            DATE_FORMAT(nx_pr_print_time, '%Y-%m-%d') AS print_date,
+            COUNT(*) AS print_count,
+            SUM(nx_pr_paper_count) AS total_paper,
+            -- 只统计配送商状态=0（正式）的打印费用，体验打印不计入市场收入
+            SUM(CASE WHEN nx_pr_distributer_type = 0 THEN nx_pr_bill_total ELSE 0 END) AS total_amount
+        FROM nx_machine_print_record
+        <where>
+            nx_pr_print_status = 1
+            <if test="marketId != null">
+                AND nx_pr_market_id = #{marketId}
+            </if>
+            <if test="deviceId != null">
+                AND nx_pr_device_id = #{deviceId}
+            </if>
+            <if test="startDate != null">
+                AND DATE(nx_pr_print_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(nx_pr_print_time) &lt;= #{stopDate}
+            </if>
+        </where>
+        GROUP BY DATE_FORMAT(nx_pr_print_time, '%Y-%m-%d')
+        ORDER BY print_date DESC
+    </select>
+
+    <!-- 按设备统计打印量（优化版） -->
+    <select id="queryDeviceStats" resultType="map">
+        SELECT 
+            pr.nx_pr_device_id AS device_id,
+            pd.nx_pd_device_name AS device_name,
+            pd.nx_pd_device_no AS device_no,
+            pd.nx_pd_model AS device_model,
+            pd.nx_pd_location AS device_location,
+            pd.nx_pd_paper_type AS paper_type,
+            pd.nx_pd_paper_count AS current_paper_count,
+            pd.nx_pd_paper_max AS paper_max,
+            pd.nx_pd_status AS device_status,
+            COUNT(*) AS print_count,
+            SUM(pr.nx_pr_paper_count) AS total_paper_used,
+            -- 只统计配送商状态=0（正式）的打印费用，体验打印不计入市场收入
+            SUM(CASE WHEN pr.nx_pr_distributer_type = 0 THEN pr.nx_pr_bill_total ELSE 0 END) AS total_amount,
+            DATE_FORMAT(MIN(pr.nx_pr_print_time), '%Y-%m-%d') AS first_print_date,
+            DATE_FORMAT(MAX(pr.nx_pr_print_time), '%Y-%m-%d') AS last_print_date,
+            COUNT(DISTINCT DATE(pr.nx_pr_print_time)) AS active_days,
+            ROUND(COUNT(*) / COUNT(DISTINCT DATE(pr.nx_pr_print_time)), 2) AS avg_daily_count
+        FROM nx_machine_print_record pr
+        LEFT JOIN nx_machine_printer_device pd ON pr.nx_pr_device_id = pd.nx_pd_id
+        <where>
+            pr.nx_pr_print_status = 1
+            <if test="marketId != null">
+                AND pr.nx_pr_market_id = #{marketId}
+            </if>
+            <if test="startDate != null">
+                AND DATE(pr.nx_pr_print_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(pr.nx_pr_print_time) &lt;= #{stopDate}
+            </if>
+        </where>
+        GROUP BY 
+            pr.nx_pr_device_id, 
+            pd.nx_pd_device_name, 
+            pd.nx_pd_device_no,
+            pd.nx_pd_model,
+            pd.nx_pd_location,
+            pd.nx_pd_paper_type,
+            pd.nx_pd_paper_count,
+            pd.nx_pd_paper_max,
+            pd.nx_pd_status
+        ORDER BY print_count DESC
+    </select>
+
+    <!-- 按配送商统计打印量 -->
+    <select id="queryDistributerStats" resultType="map">
+        SELECT 
+            nx_pr_distributer_id AS distributer_id,
+            COUNT(*) AS print_count,
+            SUM(nx_pr_paper_count) AS total_paper,
+            -- 只统计配送商状态=0（正式）的打印费用，体验打印不计入市场收入
+            SUM(CASE WHEN nx_pr_distributer_type = 0 THEN nx_pr_bill_total ELSE 0 END) AS total_amount
+        FROM nx_machine_print_record
+        <where>
+            nx_pr_print_status = 1
+            <if test="marketId != null">
+                AND nx_pr_market_id = #{marketId}
+            </if>
+            <if test="startDate != null">
+                AND DATE(nx_pr_print_time) &gt;= #{startDate}
+            </if>
+            <if test="stopDate != null">
+                AND DATE(nx_pr_print_time) &lt;= #{stopDate}
+            </if>
+        </where>
+        GROUP BY nx_pr_distributer_id
+        ORDER BY print_count DESC
+    </select>
+
+</mapper>
+

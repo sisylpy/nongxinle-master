@@ -49,6 +49,7 @@ public class GbDepartmentGoodsStockReduceEntity implements Serializable {
 	 */
 	private Integer gbDgsrGbDisGoodsFatherId;
 	private Integer gbDgsrGbDisGoodsGrandId;
+	private Integer gbDgsrGbDisGoodsGreatId;
 	/**
 	 *  批次采购商品id
 	 */
@@ -116,9 +117,12 @@ public class GbDepartmentGoodsStockReduceEntity implements Serializable {
 	private String gbDgsrProduceSubtotal;
 	private String gbDgsrProfitSubtotal;
 	private String gbDgsrSalesSubtotal;
+	private String gbDgsrGbPurchaseDate;
 
 	private Integer gbDgsrGbGoodsInventoryType;
 	private Integer gbDgsrStatus;
+	private Integer gbDgsrStockPurUserId;
+
 	private Integer gbDgsrDepSettleId;
 	private Integer gbDgsrGbPurGoodsId;
 	private Integer gbDgsrFromDepSettleId;

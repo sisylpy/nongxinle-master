@@ -38,6 +38,7 @@
 	        	/login.html=anon
 				/apply.html=anon
 				/index.html=anon
+				/agent-test.html=anon
 				/sys/login=anon
 				/sys/**=anon
 				/sys/loginNx=anon

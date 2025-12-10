@@ -184,7 +184,7 @@ public class GbDepartmentGoodsDailyServiceImpl implements GbDepartmentGoodsDaily
 
     @Override
     public Double queryDepGoodsDailyProduceSubtotal(Map<String, Object> map11) {
-
+		System.out.println("dalilyssqlqllqlq" + map11);
 		return gbDepartmentGoodsDailyDao.queryDepGoodsDailyProduceSubtotal(map11);
     }
 
@@ -242,17 +242,34 @@ public class GbDepartmentGoodsDailyServiceImpl implements GbDepartmentGoodsDaily
 		return gbDepartmentGoodsDailyDao.queryDepGoodsDailyListWithReduceByParams(mapSearch);
     }
 
-    @Override
-    public List<GbDistributerFatherGoodsEntity> queryFatherGoodsByParams(Map<String, Object> mapSearch) {
 
-		return gbDepartmentGoodsDailyDao.queryFatherGoodsByParams(mapSearch);
-    }
 
     @Override
     public TreeSet<GbDistributerGoodsEntity> queryDisGoodsWithBusinessDep(Map<String, Object> mapSearch) {
 
 		return gbDepartmentGoodsDailyDao.queryDisGoodsWithBusinessDep(mapSearch);
     }
+
+	@Override
+	public TreeSet<GbDistributerGoodsEntity> queryDisGoodsTreeByParams(Map<String, Object> map) {
+
+
+
+		return gbDepartmentGoodsDailyDao.queryDisGoodsTreeByParams(map);
+	}
+
+    @Override
+    public TreeSet<GbDistributerFatherGoodsEntity> queryDepDailyGoodsFatherTypeByParamsTree(Map<String, Object> mapDep) {
+
+		return gbDepartmentGoodsDailyDao.queryDepDailyGoodsFatherTypeByParamsTree(mapDep);
+    }
+
+	@Override
+	public Double queryDepGoodsDailyRestSubtotal(Map<String, Object> mapDaily) {
+
+		return gbDepartmentGoodsDailyDao.queryDepGoodsDailyRestSubtotal(mapDaily);
+	}
+
 
 
 }

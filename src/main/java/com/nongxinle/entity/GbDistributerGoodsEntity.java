@@ -7,6 +7,7 @@ package com.nongxinle.entity;
  */
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.Objects;
 
@@ -128,6 +129,12 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private String gbDgGoodsPrice;
 	private String gbDgGoodsLowestPrice;
 	private String gbDgGoodsHighestPrice;
+	private String gbDgGoodsAveragePrice;
+	private String goodsPriceFluctuation;
+	private String goodsPriceDiff;
+	private String calc_highest_price;
+	private String calc_lowest_price;
+
 	private String gbDgSelfPrice;
 	private String gbDgSellingPrice;
 	private String gbDgNxDistributerGoodsPrice;
@@ -143,30 +150,21 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 
 	private Boolean isSelected = false;
 
-	@JSONField(serialize = false)
 	private List<NxStandardEntity> nxStandardEntities;
-	@JSONField(serialize = false)
 	private List<GbDistributerAliasEntity> gbDistributerAliasEntities;
-	@JSONField(serialize = false)
 	private List<NxAliasEntity> nxAliasEntities;
-	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;
 	@JSONField(serialize = false)
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;
-		@JSONField(serialize = false)
+	@JSONField(serialize = false)
 	private GbDistributerWeightGoodsEntity gbDistributerWeightGoodsEntity;
 
-	@JSONField(serialize = false)
+	private GbDistributerAliasEntity gbAliasEntities;
 	private List<GbDistributerStandardEntity> gbDistributerStandardEntities;
-	@JSONField(serialize = false)
 	private NxDistributerEntity nxDistributerEntity;
-	@JSONField(serialize = false)
 	private GbDepartmentEntity gbDepartmentEntity;
 	@JSONField(serialize = false)
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
-	@JSONField(serialize = false)
-	private List<GbDistributerPurchaseGoodsEntity>  unPurDisGoodsList;
-	@JSONField(serialize = false)
 	private List<GbDepartmentGoodsStockEntity> gbDepartmentGoodsStockEntities;
 	@JSONField(serialize = false)
 	private GbDepartmentGoodsStockEntity gbDepartmentGoodsStockEntity;
@@ -174,30 +172,19 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private GbDistributerGoodsShelfEntity gbDistributerGoodsShelfEntity;
 	@JSONField(serialize = false)
 	private GbDistributerGoodsShelfGoodsEntity gbDistributerGoodsShelfGoodsEntity;
-	@JSONField(serialize = false)
+//	@JSONField(serialize = false)
 	private List<GbDistributerPurchaseGoodsEntity> wastePurGoodsEntities;
-	@JSONField(serialize = false)
-    private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
-
-	@JSONField(serialize = false)
+	private List<GbDistributerPurchaseGoodsEntity> returnPurGoodsEntities;
+//	@JSONField(serialize = false)
 	private  List<GbDepartmentEntity> wasteDepartmentEntities;
-	@JSONField(serialize = false)
 	private TreeSet<GbDepartmentEntity> stockDepartmentEntities;
-	@JSONField(serialize = false)
 	private TreeSet<GbDepartmentEntity> produceDepartmentEntities;
-	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> prepareOrderEntities;
-	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> weightedOrderEntities;
-	@JSONField(serialize = false)
 	private List<GbDepartmentOrdersEntity> deliveryOrderEntities;
-	@JSONField(serialize = false)
 	private GbDistributerWeightGoodsEntity prepareWeightGoods;
-	@JSONField(serialize = false)
 	private List<GbDistributerWeightGoodsEntity> printedWeightGoods;
-	@JSONField(serialize = false)
 	private List<GbDistributerWeightGoodsEntity> finishWeightGoods;
-	@JSONField(serialize = false)
 	private List<GbDistributerGoodsPriceEntity> gbDisGoodsPriceEntities;
 
 	private Map<String, Object> purEveryDay;
@@ -215,7 +202,11 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 
 
 	private Double goodsPriceTotal = 0.0;
+
+
+
 	private String goodsPriceTotalString;
+
 	private Double goodsAveragePrice = 0.0;
 	private String goodsAveragePriceString  = "0";
 	private Integer goodsAveragePriceWhat = 0;
@@ -231,7 +222,6 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private int goodsStarGray;
 	private int goodsStarHalf;
 
-	private Double goodsCostTotal = 0.0;
 	private String goodsCostTotalString  = "0";
 
 	private Double goodsCostWeightTotal = 0.0;
@@ -241,22 +231,24 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 
 
 
-	private Double goodsWasteTotal = 0.0;
+//	private Double goodsWasteTotal = 0.0;
 	private String goodsWasteTotalString  = "0";
 	private Double goodsWasteWeightTotal = 0.0;
 	private String goodsWasteWeightTotalString  = "0";
 	private String goodsWastePercent  = "0";
 
-	private Double goodsLossTotal = 0.0;
 	private String goodsLossTotalString  = "0";
 	private Double goodsLossWeightTotal = 0.0;
 	private String goodsLossWeightTotalString  = "0";
 	private String goodsLossPercent  = "0";
 
-	private Double goodsProduceTotal = 0.0;
 	private String goodsProduceTotalString  = "0";
 	private Double goodsProfitTotal = 0.0;
 	private String goodsProfitTotalString  = "0";
+	private BigDecimal goodsCostTotal      = BigDecimal.ZERO;
+	private BigDecimal goodsProduceTotal   = BigDecimal.ZERO;
+	private BigDecimal goodsLossTotal      = BigDecimal.ZERO;
+	private BigDecimal goodsWasteTotal     = BigDecimal.ZERO;
 
 
 	private Double goodsProduceWeightTotal = 0.0;
@@ -324,10 +316,9 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private Map<String, Object> goodsData;
 
 
-	@JSONField(serialize = false)
-	private GbDepartmentGoodsStockReduceEntity reduceEntity;
+//	@JSONField(serialize = false)
+//	private GbDepartmentGoodsStockReduceEntity reduceEntity;
 
-	@JSONField(serialize = false)
 	private NxJrdhSupplierEntity gbDistributerAppointSupplierEntity;
 
 	private String gbTipText;
@@ -392,6 +383,7 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	 * 距离上次订货天数
 	 */
 	private String aiDaysSinceLastOrder;
+	private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
 
 	/**
 	 * 预计明天用量
@@ -399,6 +391,7 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 	private String aiTomorrowNeed;
 
 	private String aiAvailableDays;
+	private  GbDistributerPurchaseGoodsEntity unPurDisGoodsList;
 
 
 	@Override
@@ -467,7 +460,7 @@ public class GbDistributerGoodsEntity implements Serializable,Comparable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(gbDistributerGoodsId,goodsPriceTotal, gbDgDfgGoodsFatherId, gbDgDistributerId, gbDgGoodsStatus, gbDgGoodsIsWeight, gbDgGoodsName, gbDgGoodsDetail, gbDgGoodsStandardname, gbDgGoodsPinyin, gbDgGoodsPy, gbDgNxGoodsId, gbDgNxFatherImg, gbDgNxFatherId, gbDgNxGrandName, gbDgNxGreatGrandName, gbDgNxFatherName, gbDgNxGoodsFatherImg, gbDgControlPrice, gbDgControlFresh, gbDgFreshWarnHour, gbDgFreshWasteHour, gbDgGoodsInventoryType, gbDgNxGrandId, gbDgNxGreatGrandId, gbDgPullOff, gbDgGoodsBrand, gbDgGoodsPlace, gbDgNxGoodsFatherColor, gbDgGoodsStandardWeight, gbDgGoodsType, gbDgGoodsPrice, gbDgGoodsLowestPrice, gbDgGoodsHighestPrice, gbDgNxDistributerId, gbDgNxDistributerGoodsId, gbDgGbDepartmentId, isSelected, nxStandardEntities, gbDistributerAliasEntities, nxAliasEntities, gbDepartmentOrdersEntities, gbDepartmentOrdersEntity, gbDistributerStandardEntities, nxDistributerEntity, gbDepartmentEntity, nxDistributerGoodsEntity, unPurDisGoodsList, gbDepartmentGoodsStockEntities, gbDepartmentGoodsStockEntity, gbDistributerGoodsShelfEntity, gbDistributerGoodsShelfGoodsEntity, wasteDepartmentEntities, goodsWasteTotal,goodsWasteTotalString, goodsLossTotal, goodsLossTotalString);
+		return Objects.hash(gbDistributerGoodsId,goodsPriceTotal, gbDgDfgGoodsFatherId, gbDgDistributerId, gbDgGoodsStatus, gbDgGoodsIsWeight, gbDgGoodsName, gbDgGoodsDetail, gbDgGoodsStandardname, gbDgGoodsPinyin, gbDgGoodsPy, gbDgNxGoodsId, gbDgNxFatherImg, gbDgNxFatherId, gbDgNxGrandName, gbDgNxGreatGrandName, gbDgNxFatherName, gbDgNxGoodsFatherImg, gbDgControlPrice, gbDgControlFresh, gbDgFreshWarnHour, gbDgFreshWasteHour, gbDgGoodsInventoryType, gbDgNxGrandId, gbDgNxGreatGrandId, gbDgPullOff, gbDgGoodsBrand, gbDgGoodsPlace, gbDgNxGoodsFatherColor, gbDgGoodsStandardWeight, gbDgGoodsType, gbDgGoodsPrice, gbDgGoodsLowestPrice, gbDgGoodsHighestPrice, gbDgNxDistributerId, gbDgNxDistributerGoodsId, gbDgGbDepartmentId, isSelected, nxStandardEntities, gbDistributerAliasEntities, nxAliasEntities, gbDepartmentOrdersEntities, gbDepartmentOrdersEntity, gbDistributerStandardEntities, nxDistributerEntity, gbDepartmentEntity, nxDistributerGoodsEntity,  gbDepartmentGoodsStockEntities, gbDepartmentGoodsStockEntity, gbDistributerGoodsShelfEntity, gbDistributerGoodsShelfGoodsEntity, wasteDepartmentEntities, goodsWasteTotal,goodsWasteTotalString, goodsLossTotal, goodsLossTotalString);
 	}
 
 	@Override

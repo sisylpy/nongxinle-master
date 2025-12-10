@@ -30,6 +30,7 @@ import javax.servlet.http.HttpSession;
 
 import static com.nongxinle.utils.DateUtils.formatWhatYearDayTime;
 import static com.nongxinle.utils.GbTypeUtils.*;
+import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeAppSupplier;
 import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisUserPurchase;
 
 
@@ -47,6 +48,8 @@ public class GbDistributerUserController {
     @Autowired
     private NxDistributerGbDistributerService nxDistributerGbDistributerService;
     @Autowired
+    private NxDistributerService nxDistributerService;
+    @Autowired
     private NxDepartmentDisGoodsService nxDepartmentDisGoodsService;
     @Autowired
     private NxDistributerGoodsService nxDistributerGoodsService;
@@ -63,11 +66,11 @@ public class GbDistributerUserController {
     @Autowired
     private NxGoodsService nxGoodsService;
     @Autowired
-    private  NxAliasService nxAliasService;
-    @Autowired
     private GbDistributerPayService gbDistributerPayService;
     @Autowired
     private NxJrdhUserService nxJrdhUserService;
+    @Autowired
+    private NxJrdhSupplierService jrdhSupplierService;
 
 
     private static Logger logger=Logger.getLogger(GbDistributerUserController.class);   //获取Logger对象
@@ -105,16 +108,16 @@ public class GbDistributerUserController {
         map.put("openId", openid);
         map.put("admin", 2);
         GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(map);
+        NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryWhichUserByOpenId(openid);
 
-        if (depUserEntities == null) {
+        if (depUserEntities == null && nxJrdhUserEntity == null) {
             GbDistributerEntity gbDistributerEntity = new GbDistributerEntity();
             gbDistributerEntity.setGbDistributerName(restaurantName);
             gbDistributerEntity.setGbDistributerPhone(phone);
             gbDistributerEntity.setGbDistributerAddress(address);
-            gbDistributerEntity.setGbDistributerBusinessType(0);
+            gbDistributerEntity.setGbDistributerBusinessType(-1);
             gbDistributerEntity.setGbDistributerPrintName("ApplyHalfPanel");
             gbDistributerEntity.setGbDistributerSysCityId(6);
-            gbDistributerEntity.setGbDistributerBusinessType(0);
             gbDistributerEntity.setGbDistributerNxDisId(-1);
 
             GbDepartmentUserEntity purUser = new GbDepartmentUserEntity();
@@ -137,7 +140,7 @@ public class GbDistributerUserController {
                 GbDistributerEntity inviteGbDis = gbDistributerService.queryObject(disId);
 
                 BigDecimal bitSet = new BigDecimal(inviteGbDis.getGbDistributerBuyQuantity());
-                BigDecimal add = bitSet.add(new BigDecimal(1000)).setScale(0,BigDecimal.ROUND_HALF_UP);
+                BigDecimal add = bitSet.add(new BigDecimal(1000));
                 inviteGbDis.setGbDistributerBuyQuantity(add.toString());
 
                 gbDistributerService.update(inviteGbDis);
@@ -193,8 +196,9 @@ public class GbDistributerUserController {
         map.put("openId", openid);
         map.put("admin", 2);
         GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(map);
+        NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryWhichUserByOpenId(openid);
 
-        if (depUserEntities == null) {
+        if (depUserEntities == null && nxJrdhUserEntity == null) {
             GbDistributerEntity gbDistributerEntity = new GbDistributerEntity();
             gbDistributerEntity.setGbDistributerName(restaurantName);
             gbDistributerEntity.setGbDistributerPhone(phone);
@@ -202,8 +206,8 @@ public class GbDistributerUserController {
             gbDistributerEntity.setGbDistributerBusinessType(0);
             gbDistributerEntity.setGbDistributerPrintName("ApplyHalfPanel");
             gbDistributerEntity.setGbDistributerSysCityId(6);
-            gbDistributerEntity.setGbDistributerBusinessType(0);
             gbDistributerEntity.setGbDistributerNxDisId(-1);
+
             GbDepartmentUserEntity purUser = new GbDepartmentUserEntity();
 
             //1,上传图片
@@ -222,10 +226,34 @@ public class GbDistributerUserController {
             System.out.println("usidididid" + newDisId);
             if (newDisId != null) {
 
+                NxDistributerEntity distributerEntity = nxDistributerService.queryObject(disId);
+
+                Map<String, Object> mapD = new HashMap<>();
+                mapD.put("disId", newDisId);
+                mapD.put("type", getGbDepartmentTypeJicai());
+                List<GbDepartmentEntity> gbDepartmentEntities = gbDepartmentService.queryDepByDepType(mapD);
+
+                List<GbDepartmentUserEntity> gbDepartmentUserEntities = gbDepartmentUserService.queryAllUsersByDepId(gbDepartmentEntities.get(0).getGbDepartmentId());
+
+                NxJrdhSupplierEntity supplierEntity = new NxJrdhSupplierEntity();
+                supplierEntity.setNxJrdhsGbPurUserId(gbDepartmentUserEntities.get(0).getGbDepartmentUserId());
+                supplierEntity.setNxJrdhsSupplierName(distributerEntity.getNxDistributerName());
+                supplierEntity.setNxJrdhsNxDistributerId(disId);
+                supplierEntity.setNxJrdhsGbDistributerId(newDisId);
+                supplierEntity.setNxJrdhsGbDepartmentId(gbDepartmentEntities.get(0).getGbDepartmentId());
+                supplierEntity.setNxJrdhsUserId(-1);
+                supplierEntity.setNxJrdhsCommPurUserId(-1);
+                supplierEntity.setNxJrdhsNxCommunityId(-1);
+                supplierEntity.setNxJrdhsNxPurUserId(-1);
+                supplierEntity.setNxJrdhsSysCityId(distributerEntity.getNxDistributerSysCityId());
+                supplierEntity.setNxJrdhsSysMarketId(-1);
+                jrdhSupplierService.save(supplierEntity);
+
                 NxDistributerGbDistributerEntity entity = new NxDistributerGbDistributerEntity();
                 entity.setNxDgdNxDistributerId(disId);
                 entity.setNxDgdGbDistributerId(newDisId);
-                entity.setNxDgdGbPayMethod(1);
+                entity.setNxDgdNxSupplierId(supplierEntity.getNxJrdhSupplierId());
+                entity.setNxDgdGbPayMethod(0);
                 entity.setNxDgdGbPayPeriodWeek(4);
                 entity.setNxDgdStatus(0);
                 entity.setNxDgdFromNxDisId(disId);
@@ -277,16 +305,19 @@ public class GbDistributerUserController {
         map.put("openId", openid);
         map.put("admin", 2);
         GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(map);
+        NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryWhichUserByOpenId(openid);
 
-        if (depUserEntities == null) {
+        if (depUserEntities == null && nxJrdhUserEntity == null) {
             GbDistributerEntity gbDistributerEntity = new GbDistributerEntity();
             gbDistributerEntity.setGbDistributerName(restaurantName);
             gbDistributerEntity.setGbDistributerPhone(phone);
             gbDistributerEntity.setGbDistributerAddress(address);
             gbDistributerEntity.setGbDistributerPrintName("ApplyHalfPanel");
             gbDistributerEntity.setGbDistributerSysCityId(6);
-            gbDistributerEntity.setGbDistributerBusinessType(0);
+            gbDistributerEntity.setGbDistributerBusinessType(-1);
             gbDistributerEntity.setGbDistributerNxDisId(-1);
+            gbDistributerEntity.setGbDistributerRecordSeconds(30);
+            gbDistributerEntity.setGbDistributerStockCycle(0);
             GbDepartmentUserEntity purUser = new GbDepartmentUserEntity();
 
             String newUploadName = "uploadImage";
@@ -310,7 +341,7 @@ public class GbDistributerUserController {
             }
             return R.error(-1, "注册失败");
         } else {
-            return R.error(-1, "此微信号已注册过采购员");
+            return R.error(-1, "此微信号已注册过用户");
         }
 
     }
@@ -474,6 +505,7 @@ public class GbDistributerUserController {
             disGoodsEntity.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
             disGoodsEntity.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
             disGoodsEntity.setGbDdgDisGoodsGrandId(disGoods.getGbDgDfgGoodsGrandId());
+            disGoodsEntity.setGbDdgDisGoodsGreatId(disGoods.getGbDgDfgGoodsGreatId());
             disGoodsEntity.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
             disGoodsEntity.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
             disGoodsEntity.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
@@ -531,6 +563,7 @@ public class GbDistributerUserController {
                         disGoodsEntityDep.setGbDdgDisGoodsId(disGoods.getGbDistributerGoodsId());
                         disGoodsEntityDep.setGbDdgDisGoodsFatherId(disGoods.getGbDgDfgGoodsFatherId());
                         disGoodsEntityDep.setGbDdgDisGoodsGrandId(disGoods.getGbDgDfgGoodsGrandId());
+                        disGoodsEntityDep.setGbDdgDisGoodsGreatId(disGoods.getGbDgDfgGoodsGreatId());
                         disGoodsEntityDep.setGbDdgDepGoodsPinyin(disGoods.getGbDgGoodsPinyin());
                         disGoodsEntityDep.setGbDdgDepGoodsPy(disGoods.getGbDgGoodsPy());
                         disGoodsEntityDep.setGbDdgDepGoodsStandardname(disGoods.getGbDgGoodsStandardname());
@@ -597,6 +630,10 @@ public class GbDistributerUserController {
             //2，保存disId商品
             cgnGoods.setGbDgDfgGoodsFatherId(fatherGoodsEntity.getGbDistributerFatherGoodsId());
             cgnGoods.setGbDgDfgGoodsGrandId(fatherGoodsEntity.getGbDfgFathersFatherId());
+            GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
+            cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
+
             //1 ，先保存disGoods
 
             gbDgService.save(cgnGoods);
@@ -620,6 +657,10 @@ public class GbDistributerUserController {
             Integer distributerFatherGoodsId = dgf.getGbDistributerFatherGoodsId();
             cgnGoods.setGbDgDfgGoodsFatherId(distributerFatherGoodsId);
             cgnGoods.setGbDgDfgGoodsGrandId(dgf.getGbDfgFathersFatherId());
+            GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(dgf.getGbDfgFathersFatherId());
+            cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
+
             gbDgService.save(cgnGoods);
             //继续查询是否有GrandFather
             String grandName = cgnGoods.getGbDgNxGrandName();
@@ -718,7 +759,7 @@ public class GbDistributerUserController {
         String str = WeChatUtil.httpRequest(url, "GET", null);
         JSONObject jsonObject = JSONObject.parseObject(str);
         String openId = jsonObject.get("openid").toString();
-        if (openId != null) {
+        if (openId != null && !openId.trim().isEmpty()) {
             System.out.println("pepeeooppppp");
             GbDepartmentUserEntity departmentUserEntity = gbDepartmentUserService.queryDepUserByOpenId(openId);
 
@@ -752,16 +793,17 @@ public class GbDistributerUserController {
         String str = WeChatUtil.httpRequest(url, "GET", null);
         JSONObject jsonObject = JSONObject.parseObject(str);
         String openId = jsonObject.get("openid").toString();
-        if (openId != null) {
+        if (openId != null && !openId.trim().isEmpty()) {
             GbDepartmentUserEntity departmentUserEntity = gbDepartmentUserService.queryDepUserByOpenId(openId);
 
             if (departmentUserEntity != null) {
                 GbDistributerEntity gbDistributerEntity = gbDistributerService.queryDistributerInfo(departmentUserEntity.getGbDuDistributerId());
-
                 GbDepartmentUserEntity depUserEntity = gbDepartmentUserService.queryDepUserByOpenId(openId);
+                GbDepartmentEntity gbDepartmentEntity = gbDepartmentService.queryDepInfoGb(depUserEntity.getGbDuDepartmentId());
                 Map<String, Object> stringObjectMap = new HashMap<>();
                 stringObjectMap.put("depUserInfo", depUserEntity);
                 stringObjectMap.put("disInfo", gbDistributerEntity);
+                stringObjectMap.put("depInfo", gbDepartmentEntity);
                 return R.ok().put("data", stringObjectMap);
             } else {
                 System.out.println("jrjrrjjrjrjr" + openId);

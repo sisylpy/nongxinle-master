@@ -14,8 +14,12 @@
     </resultMap>
 
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
         <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -83,8 +87,12 @@
         <collection property="nxDistributerAliasEntities" resultMap="disAlias"/>
     </resultMap>
     <resultMap id="disGoodsWithAi" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
         <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -489,7 +497,10 @@
     </resultMap>
 
     <resultMap id="justDep" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
         <result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
         <result property="nxDepartmentLat" column="nx_department_lat"/>
         <result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -578,7 +589,10 @@
         order by great.nx_dfg_father_goods_sort, dfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sons_sort
     </select>
     <resultMap id="depWithDepDisGoods" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
         <result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
         <result property="nxDepartmentLat" column="nx_department_lat"/>
         <result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -1062,6 +1076,14 @@
     </select>
 
 
+    <!-- 单独查询商品的规格列表 -->
+    <select id="selectStandardsByDisGoodsId" resultMap="disStandards">
+        SELECT *
+        FROM nx_distributer_standard
+        WHERE nx_DS_dis_goods_id = #{nxDdgDisGoodsId}
+        ORDER BY nx_ds_standard_sort
+    </select>
+
     <resultMap id="depDisGoodsForAi" type="NxDepartmentDisGoodsEntity">
         <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
         <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
@@ -1099,9 +1121,13 @@
         <result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
         <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
         <result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
-<!--        <association property="nxDepartmentOrdersEntity" resultMap="depOrders"/>-->
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
          <collection property="depGoodsDepOrderList" resultMap="depOrders"/>
-        <collection property="nxDistributerStandardEntities" resultMap="disStandards"/>
+        <!-- 使用嵌套查询来获取规格列表，避免笛卡尔积问题 -->
+        <collection property="nxDistributerStandardEntities" 
+                    column="nx_DDG_dis_goods_id" 
+                    select="selectStandardsByDisGoodsId"/>
 
     </resultMap>
 
@@ -1110,7 +1136,6 @@
         ddg.*,
         dg.*,
         gda.*,
-        gdd.*,
         dfg.*,
         great.*,
         great.nx_distributer_father_goods_id AS greatFatherId,
@@ -1147,21 +1172,15 @@
             <if test="notLinshi != null and notLinshi == -1">
                 AND dg.nx_dg_dfg_goods_father_id IS NULL
             </if>
-
-
         </where>
-
         ORDER BY
-
         greatGrand.nx_dfg_father_goods_sort,
         great.nx_dfg_father_goods_sort,
         dfg.nx_dfg_father_goods_sort,
         dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort
-
         LIMIT #{limit} OFFSET #{offset}
         ) AS base
 
-        <!-- 2）再拿这 15 条去 JOIN 其它所有表 -->
         INNER JOIN nx_department_dis_goods AS ddg
         ON ddg.nx_department_dis_goods_id = base.nx_department_dis_goods_id
 
@@ -1171,23 +1190,8 @@
         LEFT JOIN nx_distributer_alias AS gda
         ON gda.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
 
-        <!-- Only one standard row per good -->
-#         LEFT JOIN (
-#         SELECT *
-#         FROM (
-#         SELECT
-#         s.*,
-#         ROW_NUMBER() OVER (
-#         PARTITION BY s.nx_DS_dis_goods_id
-#         ORDER BY s.nx_distributer_standard_id DESC
-#         ) AS rn
-#         FROM nx_distributer_standard AS s
-#         ) AS ranked
-#         WHERE ranked.rn = 1
-#         ) AS gdd
-#         ON gdd.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
-
-        LEFT JOIN nx_distributer_standard AS gdd ON gdd.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
+        -- 规格表已改为嵌套查询，移除此JOIN避免笛卡尔积问题
+        -- LEFT JOIN nx_distributer_standard AS gdd ON gdd.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
 
         LEFT JOIN nx_distributer_father_goods AS dfg
         ON dfg.nx_distributer_father_goods_id = ddg.nx_DDG_dis_goods_father_id
@@ -1277,7 +1281,10 @@
 
 
     <resultMap id="departments" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
         <result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
         <result property="nxDepartmentLat" column="nx_department_lat"/>
         <result property="nxDepartmentLng" column="nx_department_lng"/>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyGbDisCorpReplyRuleDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyGbDisCorpReplyRuleEntity">
+		select * from qy_gb_dis_corp_reply_rule where qy_gb_dis_corp_reply_rule_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyGbDisCorpReplyRuleEntity">
+		select * from qy_gb_dis_corp_reply_rule 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_gb_dis_corp_reply_rule 
+	</select>
+	
+	<select id="queryEnabledRulesByCorpId" resultType="com.nongxinle.entity.QyGbDisCorpReplyRuleEntity">
+		select * from qy_gb_dis_corp_reply_rule 
+		where qy_gb_dis_qy_corp_id = #{corpId} 
+		and qy_gb_dis_corp_reply_rule_status = 1
+		order by qy_gb_dis_corp_reply_rule_priority desc, qy_gb_dis_corp_reply_rule_id asc
+	</select>
+	
+	<select id="queryRulesByCorpId" resultType="com.nongxinle.entity.QyGbDisCorpReplyRuleEntity">
+		select * from qy_gb_dis_corp_reply_rule 
+		where qy_gb_dis_qy_corp_id = #{corpId}
+		order by qy_gb_dis_corp_reply_rule_priority desc, qy_gb_dis_corp_reply_rule_id asc
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.QyGbDisCorpReplyRuleEntity" useGeneratedKeys="true"
+			keyProperty="qyGbDisCorpReplyRuleId">
+		insert into qy_gb_dis_corp_reply_rule
+		(
+			`qy_gb_dis_qy_corp_id`, 
+			`qy_gb_dis_corp_reply_rule_name`, 
+			`qy_gb_dis_corp_reply_rule_keyword`, 
+			`qy_gb_dis_corp_reply_rule_match_type`, 
+			`qy_gb_dis_corp_reply_rule_type`,
+			`qy_gb_dis_corp_reply_rule_content`,
+			`qy_gb_dis_corp_reply_rule_priority`,
+			`qy_gb_dis_corp_reply_rule_status`,
+			`qy_gb_dis_corp_reply_rule_create_date`,
+			`qy_gb_dis_corp_reply_rule_update_date`
+		)
+		values
+		(
+			#{qyGbDisQyCorpId}, 
+			#{qyGbDisCorpReplyRuleName}, 
+			#{qyGbDisCorpReplyRuleKeyword}, 
+			#{qyGbDisCorpReplyRuleMatchType}, 
+			#{qyGbDisCorpReplyRuleType},
+			#{qyGbDisCorpReplyRuleContent},
+			#{qyGbDisCorpReplyRulePriority},
+			#{qyGbDisCorpReplyRuleStatus},
+			#{qyGbDisCorpReplyRuleCreateDate},
+			#{qyGbDisCorpReplyRuleUpdateDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyGbDisCorpReplyRuleEntity">
+		update qy_gb_dis_corp_reply_rule 
+		<set>
+			<if test="qyGbDisQyCorpId != null">`qy_gb_dis_qy_corp_id` = #{qyGbDisQyCorpId}, </if>
+			<if test="qyGbDisCorpReplyRuleName != null">`qy_gb_dis_corp_reply_rule_name` = #{qyGbDisCorpReplyRuleName}, </if>
+			<if test="qyGbDisCorpReplyRuleKeyword != null">`qy_gb_dis_corp_reply_rule_keyword` = #{qyGbDisCorpReplyRuleKeyword}, </if>
+			<if test="qyGbDisCorpReplyRuleMatchType != null">`qy_gb_dis_corp_reply_rule_match_type` = #{qyGbDisCorpReplyRuleMatchType}, </if>
+			<if test="qyGbDisCorpReplyRuleType != null">`qy_gb_dis_corp_reply_rule_type` = #{qyGbDisCorpReplyRuleType}, </if>
+			<if test="qyGbDisCorpReplyRuleContent != null">`qy_gb_dis_corp_reply_rule_content` = #{qyGbDisCorpReplyRuleContent}, </if>
+			<if test="qyGbDisCorpReplyRulePriority != null">`qy_gb_dis_corp_reply_rule_priority` = #{qyGbDisCorpReplyRulePriority}, </if>
+			<if test="qyGbDisCorpReplyRuleStatus != null">`qy_gb_dis_corp_reply_rule_status` = #{qyGbDisCorpReplyRuleStatus}, </if>
+			`qy_gb_dis_corp_reply_rule_update_date` = now()
+		</set>
+		where qy_gb_dis_corp_reply_rule_id = #{qyGbDisCorpReplyRuleId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_gb_dis_corp_reply_rule where qy_gb_dis_corp_reply_rule_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_gb_dis_corp_reply_rule where qy_gb_dis_corp_reply_rule_id in 
+		<foreach item="qyGbDisCorpReplyRuleId" collection="array" open="(" separator="," close=")">
+			#{qyGbDisCorpReplyRuleId}
+		</foreach>
+	</delete>
+
+</mapper>
+
+

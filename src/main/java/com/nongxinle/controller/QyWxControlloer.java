@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.*;
+import com.nongxinle.utils.WxTokenManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -61,6 +62,9 @@ public class QyWxControlloer {
     private NxDistributerService nxDistributerService;
     @Autowired
     private NxDepartmentUserService nxDepartmentUserService;
+
+    @Autowired
+    private WxTokenManager wxTokenManager;
 
 
 
@@ -561,6 +565,90 @@ public class QyWxControlloer {
             e.printStackTrace();
         }
 
+    }
+
+    /**
+     * 京采接单小程序专用回调接口
+     */
+    @RequestMapping(value = "/callback_jingcai", method = RequestMethod.GET)
+    public void callbackJingcaiGet(final HttpServletRequest request,
+                                  @RequestParam(name = "msg_signature") final String sMsgSignature,
+                                  @RequestParam(name = "timestamp") final String sTimestamp,
+                                  @RequestParam(name = "nonce") final String sNonce,
+                                  @RequestParam(name = "echostr") final String sEchoStr,
+                                  HttpServletResponse response) {
+        System.out.println("京采接单小程序回调验证 - GET请求");
+        System.out.println("msg_signature: " + sMsgSignature);
+        System.out.println("timestamp: " + sTimestamp);
+        System.out.println("nonce: " + sNonce);
+        System.out.println("echostr: " + sEchoStr);
+        
+        try {
+            PrintWriter writer = response.getWriter();
+            writer.write(sEchoStr);
+            writer.flush();
+            System.out.println("京采接单小程序回调验证成功");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @RequestMapping(value = "/callback_jingcai", method = RequestMethod.POST)
+    public void callbackJingcaiPost(final HttpServletRequest request,
+                                   @RequestParam(name = "msg_signature") final String sMsgSignature,
+                                   @RequestParam(name = "timestamp") final String sTimestamp,
+                                   @RequestParam(name = "nonce") final String sNonce,
+                                   HttpServletResponse response) {
+        System.out.println("京采接单小程序回调处理 - POST请求");
+        
+        try {
+            InputStream inputStream = request.getInputStream();
+            String sPostData = IOUtils.toString(inputStream, "UTF-8");
+            Map<String, String> stringStringMap = MessageUtil.parseXml(sPostData);
+            String toUserName = stringStringMap.get("ToUserName");
+            System.out.println("京采接单小程序回调toUserName===" + toUserName);
+            
+            QywechatEnum qywechatEnum = QywechatEnum.JXPPSX;
+            qywechatEnum.setCorpid(toUserName);
+            QywechatInfo qywechatInfo = new QywechatInfo();
+            qywechatInfo.setMsgSignature(sMsgSignature);
+            qywechatInfo.setNonce(sNonce);
+            qywechatInfo.setQywechatEnum(qywechatEnum);
+            qywechatInfo.setTimestamp(sTimestamp);
+            qywechatInfo.setSPostData(sPostData);
+            WXBizMsgCrypt msgCrypt = new WXBizMsgCrypt(qywechatInfo.getQywechatEnum());
+            String sMsg = msgCrypt.decryptMsg(qywechatInfo);
+            Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
+            System.out.println("京采接单小程序回调信息：=========new" + dataMap);
+
+            if(dataMap.get("InfoType") != null){
+                if (dataMap.get("InfoType").equals("suite_ticket")) {
+                    System.out.println("京采接单小程序saveSuiteToken----------");
+                    saveSuiteToken(dataMap);
+                } else if (dataMap.get("InfoType").equals("create_auth")) {
+                    saveAuthToken(dataMap);
+                } else if (dataMap.get("InfoType").equals("cancel_auth")) {
+                    deleteCorp(dataMap);
+                } else {
+                    System.out.println("京采接单小程序回调InfoType!== null and else====" + dataMap.get("InfoType"));
+                }
+            }
+            if(dataMap.get("Event") != null){
+                System.out.println("京采接单小程序回调Event====Event=====" + dataMap.get("Event"));
+            }
+
+            try {
+                PrintWriter writer = response.getWriter();
+                writer.write("success");
+                writer.flush();
+                System.out.println("京采接单小程序回调处理成功");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("京采接单小程序回调处理失败: " + e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/callback", method = RequestMethod.GET)
@@ -1155,37 +1243,57 @@ public class QyWxControlloer {
     }
 
 
-    private void saveWxProperty(String key, String value) {
-        System.out.println("savekkekekeykey====" + key + "value==" + value);
-        PropertiesConfiguration configuration = null;
+    /**
+     * 测试Token管理器状态
+     */
+    @RequestMapping(value = "/test-token-status", method = RequestMethod.GET)
+    @ResponseBody
+    public R testTokenStatus() {
         try {
-            configuration = new PropertiesConfiguration("wx.properties");
-            configuration.setProperty(key, value);
-            configuration.save();
-            System.out.println("condarrrr" + configuration.getKeys());
-            System.out.println("saveWxProperty---------------" + key + "===" + configuration.getString(key));
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
+            String cacheStatus = wxTokenManager.getCacheStatus();
+            boolean suiteTokenValid = wxTokenManager.isTokenValid(Constant.SUITE_TOKEN);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("cacheStatus", cacheStatus);
+            result.put("suiteTokenValid", suiteTokenValid);
+            result.put("suiteToken", getWxProperty(Constant.SUITE_TOKEN));
+            
+            return R.ok().put("data", result);
+        } catch (Exception e) {
+            return R.error("检查Token状态失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 手动刷新Token缓存
+     */
+    @RequestMapping(value = "/refresh-token-cache", method = RequestMethod.POST)
+    @ResponseBody
+    public R refreshTokenCache() {
+        try {
+            // 清除缓存，强制从文件重新读取
+            wxTokenManager.clearAllTokenCache();
+            
+            // 重新读取Token
+            String suiteToken = getWxProperty(Constant.SUITE_TOKEN);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "Token缓存已刷新");
+            result.put("suiteToken", suiteToken);
+            result.put("suiteTokenValid", wxTokenManager.isTokenValid(Constant.SUITE_TOKEN));
+            
+            return R.ok().put("data", result);
+        } catch (Exception e) {
+            return R.error("刷新Token缓存失败: " + e.getMessage());
+        }
+    }
 
+    private void saveWxProperty(String key, String value) {
+        wxTokenManager.saveWxProperty(key, value);
     }
 
     private String getWxProperty(String key) {
-        Properties pps = new Properties();
-        InputStream is = QyWxControlloer.class.getClassLoader().getResourceAsStream("wx.properties");//假设当前这个方法是在CommonUtils类下面
-        try {
-            pps.load(is);
-            String value = pps.getProperty(key);
-            System.out.println(key + " = " + value);
-            is.close();
-            System.out.println("getWxProperty---------------" + key + "===" + pps.get(key));
-            return value;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "-1";
-        }
-
+        return wxTokenManager.getWxProperty(key);
     }
 
 

@@ -17,14 +17,27 @@ public class SHA1 {
     public static String getSHA1(String token, String timestamp, String nonce, String encrypt) throws AesException
     {
         try {
+            System.out.println("========== SHA1.getSHA1 签名计算过程 ==========");
+            System.out.println("输入参数：");
+            System.out.println("  token=[\"" + token + "\"]");
+            System.out.println("  timestamp=[\"" + timestamp + "\"]");
+            System.out.println("  nonce=[\"" + nonce + "\"]");
+            System.out.println("  encrypt=[\"" + encrypt + "\"]");
+            System.out.println("  encrypt长度=" + encrypt.length());
+            
             String[] array = new String[] { token, timestamp, nonce, encrypt };
             StringBuffer sb = new StringBuffer();
             // 字符串排序
             Arrays.sort(array);
+            System.out.println("排序后的顺序：");
             for (int i = 0; i < 4; i++) {
                 sb.append(array[i]);
+                System.out.println("  [" + i + "]=[\"" + array[i] + "\"]");
             }
             String str = sb.toString();
+            System.out.println("拼接后的字符串长度=" + str.length());
+            System.out.println("拼接后的字符串前100字符=[\"" + (str.length() > 100 ? str.substring(0, 100) : str) + "...\"]");
+            
             // SHA1签名生成
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             md.update(str.getBytes());
@@ -39,7 +52,10 @@ public class SHA1 {
                 }
                 hexstr.append(shaHex);
             }
-            return hexstr.toString();
+            String result = hexstr.toString();
+            System.out.println("计算出的签名=[\"" + result + "\"]");
+            System.out.println("===========================================");
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             throw new AesException(AesException.ComputeSignatureError);

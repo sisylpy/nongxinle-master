@@ -90,6 +90,8 @@ public class NxDepartmentBillController000 {
     private GbDepartmentGoodsStockReduceService gbDepartmentStockReduceService;
     @Autowired
     private GbDistributerPurchaseGoodsService gbDPGService;
+    @Autowired
+    private GbDistributerPurchaseBatchService gbDistributerPurchaseBatchService;
 
 
 
@@ -357,7 +359,7 @@ public class NxDepartmentBillController000 {
         payListEntity.setNxNdplPayYear(formatWhatYear(0));
         payListEntity.setNxNdplStatus(0);
         payListEntity.setNxNdplType(getNxDisPayListWeb());
-        payListEntity.setNxNdplRestPoints(Integer.valueOf(nxDistributerEntity.getNxDistributerBuyQuantity()));
+        payListEntity.setNxNdplRestPoints(nxDistributerEntity.getNxDistributerBuyQuantity());
         payListEntity.setNxNdplNxDbId(nxDepartmentBill.getNxDepartmentBillId());
         payListService.save(payListEntity);
 
@@ -370,7 +372,7 @@ public class NxDepartmentBillController000 {
         Integer gbDpbDistributerId = nxDepartmentBill.getNxDbGbDisId();
         GbDistributerEntity gbDistributerEntity = gbDistributerService.queryObject(gbDpbDistributerId);
         BigDecimal decimal = new BigDecimal(gbDistributerEntity.getGbDistributerBuyQuantity());
-        BigDecimal add = decimal.subtract(decimal1).setScale(0, BigDecimal.ROUND_HALF_UP);
+        BigDecimal add = decimal.subtract(decimal1);
         gbDistributerEntity.setGbDistributerBuyQuantity(add.toString());
         System.out.println("updabbbgbgb" + add);
         gbDistributerService.update(gbDistributerEntity);
@@ -459,28 +461,32 @@ public class NxDepartmentBillController000 {
         //判断是否有保鲜时间参数
         if (order.getGbDoPurchaseGoodsId() != -1) {
             GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDPGService.queryObject(order.getGbDoPurchaseGoodsId());
-            if (purchaseGoodsEntity.getGbDpgWarnFullTime() != null && purchaseGoodsEntity.getGbDpgWasteFullTime() != null) {
-                stockEntity.setGbDgsWarnFullTime(purchaseGoodsEntity.getGbDpgWarnFullTime());
+            if (purchaseGoodsEntity.getGbDpgWasteFullTime() != null) {
                 stockEntity.setGbDgsWasteFullTime(purchaseGoodsEntity.getGbDpgWasteFullTime());
-                String gbDpgWarnFullTime = purchaseGoodsEntity.getGbDpgWarnFullTime();
                 String gbDpgWasteFullTime = purchaseGoodsEntity.getGbDpgWasteFullTime();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
                 // 设置日期字符串
                 // 解析日期字符串为Date对象
                 Date dateWaste = null;
                 Date dateWarn = null;
                 try {
-                    dateWaste = dateFormat.parse(gbDpgWasteFullTime);
-                    dateWarn = dateFormat.parse(gbDpgWarnFullTime);
+                    if (gbDpgWasteFullTime != null && !gbDpgWasteFullTime.trim().isEmpty()) {
+                        dateWaste = dateFormat.parse(gbDpgWasteFullTime);
+                    }
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
                 // 获取时间戳
-                long timestampWaste = dateWaste.getTime();
-                long timestampWarn = dateWarn.getTime();
+                long timestampWaste = 0;
+                long timestampWarn = 0;
+                if (dateWaste != null) {
+                    timestampWaste = dateWaste.getTime();
+                }
+                if (dateWarn != null) {
+                    timestampWarn = dateWarn.getTime();
+                }
                 // 输出时间戳
                 stockEntity.setGbDgsWasteTimeQuantumName(String.valueOf(timestampWaste));
-                stockEntity.setGbDgsWarnTimeQuantumName(String.valueOf(timestampWarn));
             }
             //判断是否价格异常商品
             if (purchaseGoodsEntity.getGbDpgDisGoodsPriceId() != null) {
@@ -540,7 +546,7 @@ public class NxDepartmentBillController000 {
             BigDecimal gbDbFinishAmount = new BigDecimal(purchaseGoodsEntity.getGbDpgOrdersFinishAmount());
             if (gbDbFinishAmount.add(new BigDecimal(1)).compareTo(gbPgOrderAmount) == 0) {
                 purchaseGoodsEntity.setGbDpgOrdersFinishAmount(purchaseGoodsEntity.getGbDpgOrdersAmount());
-                purchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusReceive());
+                purchaseGoodsEntity.setGbDpgStatus(getGbPurchaseGoodsStatusWaitReceive());
             } else {
                 BigDecimal add = gbDbFinishAmount.add(new BigDecimal(1));
                 purchaseGoodsEntity.setGbDpgOrdersFinishAmount(add.intValue());
@@ -610,12 +616,15 @@ public class NxDepartmentBillController000 {
             BigDecimal weight = new BigDecimal(depGoodsDailyItem.getGbDgdWeight());
             BigDecimal total = new BigDecimal(depGoodsDailyItem.getGbDgdSubtotal());
             BigDecimal restWeight = new BigDecimal(depGoodsDailyItem.getGbDgdRestWeight());
+            BigDecimal restSubtotal = new BigDecimal(depGoodsDailyItem.getGbDgdRestSubtotal());
             BigDecimal totalWeight = new BigDecimal(stock.getGbDgsWeight()).add(weight).setScale(1, BigDecimal.ROUND_HALF_UP);
             BigDecimal totalSubtotal = new BigDecimal(stock.getGbDgsSubtotal()).add(total).setScale(1, BigDecimal.ROUND_HALF_UP);
             BigDecimal totalRestWeight = new BigDecimal(stock.getGbDgsWeight()).add(restWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalRestSubtotal = new BigDecimal(stock.getGbDgsSubtotal()).add(restSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
             depGoodsDailyItem.setGbDgdWeight(totalWeight.toString());
             depGoodsDailyItem.setGbDgdSubtotal(totalSubtotal.toString());
             depGoodsDailyItem.setGbDgdRestWeight(totalRestWeight.toString());
+            depGoodsDailyItem.setGbDgdRestSubtotal(totalRestSubtotal.toString());
             depGoodsDailyItem.setGbDgdSellClearHour("-1");
             depGoodsDailyItem.setGbDgdSellClearMinute("-1");
             depGoodsDailyItem.setGbDgdStatus(0);
@@ -637,6 +646,7 @@ public class NxDepartmentBillController000 {
             dailyEntity.setGbDgdDay(getWeek(0));
             dailyEntity.setGbDgdWeight(stock.getGbDgsWeight());
             dailyEntity.setGbDgdRestWeight(stock.getGbDgsWeight());
+            dailyEntity.setGbDgdRestSubtotal(stock.getGbDgsSubtotal());
             dailyEntity.setGbDgdSubtotal(stock.getGbDgsSubtotal());
             dailyEntity.setGbDgdProduceWeight("0");
             dailyEntity.setGbDgdProduceSubtotal("0");
@@ -652,6 +662,7 @@ public class NxDepartmentBillController000 {
             dailyEntity.setGbDgdSellClearHour("-1");
             dailyEntity.setGbDgdSellClearMinute("-1");
             dailyEntity.setGbDgdLastWeight("0");
+            dailyEntity.setGbDgdLastSubtotal("0");
             dailyEntity.setGbDgdLastProduceWeight("0");
             Integer gbDgdGbDisGoodsId = dailyEntity.getGbDgdGbDisGoodsId();
             GbDistributerGoodsEntity distributerGoodsEntity = gbDistributerGoodsService.queryObject(gbDgdGbDisGoodsId);
@@ -951,7 +962,7 @@ public class NxDepartmentBillController000 {
             payListEntity.setNxNdplPayYear(formatWhatYear(0));
             payListEntity.setNxNdplStatus(0);
             payListEntity.setNxNdplType(getNxDisPayListWeb());
-            payListEntity.setNxNdplRestPoints(Integer.valueOf(nxDistributerEntity.getNxDistributerBuyQuantity()));
+            payListEntity.setNxNdplRestPoints(nxDistributerEntity.getNxDistributerBuyQuantity());
             payListEntity.setNxNdplNxDbId(nxDepartmentBill.getNxDepartmentBillId());
             payListService.save(payListEntity);
 
@@ -1194,7 +1205,7 @@ public class NxDepartmentBillController000 {
         payListEntity.setNxNdplPayYear(formatWhatYear(0));
         payListEntity.setNxNdplStatus(0);
         payListEntity.setNxNdplType(getNxDisPayListPrinter());
-        payListEntity.setNxNdplRestPoints(Integer.valueOf(nxDistributerEntity.getNxDistributerBuyQuantity()));
+        payListEntity.setNxNdplRestPoints(nxDistributerEntity.getNxDistributerBuyQuantity());
         payListEntity.setNxNdplGbDbId(gbDepartmentBill.getGbDepartmentBillId());
         payListService.save(payListEntity);
 
@@ -1341,7 +1352,7 @@ public class NxDepartmentBillController000 {
         payListEntity.setNxNdplPayYear(formatWhatYear(0));
         payListEntity.setNxNdplStatus(0);
         payListEntity.setNxNdplType(getNxDisPayListPrinter());
-        payListEntity.setNxNdplRestPoints(Integer.valueOf(nxDistributerEntity.getNxDistributerBuyQuantity()));
+        payListEntity.setNxNdplRestPoints(nxDistributerEntity.getNxDistributerBuyQuantity());
         payListEntity.setNxNdplNxDbId(nxDepartmentBill.getNxDepartmentBillId());
         payListService.save(payListEntity);
 
@@ -1642,7 +1653,6 @@ public class NxDepartmentBillController000 {
             purchaseGoodsEntity.setNxDpgDisGoodsFatherId(disGoods.getNxDgDfgGoodsFatherId());
             purchaseGoodsEntity.setNxDpgDisGoodsGrandId(disGoods.getNxDgDfgGoodsGrandId());
             purchaseGoodsEntity.setNxDpgDistributerId(disGoods.getNxDgDistributerId());
-            purchaseGoodsEntity.setNxDpgApplyDate(formatWhatDay(0));
 //            purchaseGoodsEntity.setNxDpgCostLevel(disGoods.getNxDgBuyingPriceIsGrade());
             purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
             purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
@@ -2139,62 +2149,62 @@ public class NxDepartmentBillController000 {
     }
 
 
-    @RequestMapping(value = "/getBillApplysGbDep")
-    @ResponseBody
-    public R getBillApplysGbDep(Integer billId, Integer depFatherId) {
-
-        //billRetrunNumber
-        Integer count = nxDepartmentBillService.queryReturnNumberByBillId(billId);
-
-        NxDepartmentBillEntity salesBill = nxDepartmentBillService.querySalesBillApplys(billId);
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("gbDepFatherId", depFatherId);
-        map.put("billId", billId);
-        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-
-        if(salesBill.getNxDbGbDepId().equals(salesBill.getNxDbGbDepFatherId())){
-            List<Map<String, Object>> mapList = new ArrayList<>();
-            List<GbDepartmentEntity> entities = gbDepartmentService.querySubDepartments(depFatherId);
-
-            if (entities.size() > 0) {
-                for (GbDepartmentEntity dep : entities) {
-                    Map<String, Object> mapDep = new HashMap<>();
-                    mapDep.put("gbDepId", dep.getGbDepartmentId());
-                    mapDep.put("depName", dep.getGbDepartmentName());
-                    Map<String, Object> map1 = new HashMap<>();
-                    map1.put("billId", billId);
-                    map1.put("gbDepId", dep.getGbDepartmentId());
-
-                    System.out.println("mapp111111" + map1);
-                    List<NxDepartmentOrdersEntity> depOrders = nxDepartmentOrdersService.queryDisOrdersByParams(map1);
-                    mapDep.put("depOrders", depOrders);
-                    if (depOrders.size() > 0) {
-                        mapList.add(mapDep);
-                    }
-                }
-
-                Map<String, Object> map3 = new HashMap<>();
-                map3.put("arr", mapList);
-                map3.put("bill", salesBill);
-                map3.put("returnNumber", count);
-                return R.ok().put("data", map3);
-            }else{
-                Map<String, Object> map4 = new HashMap<>();
-                map4.put("arr", ordersEntities);
-                map4.put("bill", salesBill);
-                map4.put("returnNumber", count);
-                return R.ok().put("data", map4);
-            }
-        }else {
-            Map<String, Object> map4 = new HashMap<>();
-            map4.put("arr", ordersEntities);
-            map4.put("bill", salesBill);
-            map4.put("returnNumber", count);
-            return R.ok().put("data", map4);
-        }
-
-    }
+//    @RequestMapping(value = "/getBillApplysGbDep")
+//    @ResponseBody
+//    public R getBillApplysGbDep(Integer billId, Integer depFatherId) {
+//
+//        //billRetrunNumber
+//        Integer count = nxDepartmentBillService.queryReturnNumberByBillId(billId);
+//
+//        NxDepartmentBillEntity salesBill = nxDepartmentBillService.querySalesBillApplys(billId);
+//
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("gbDepFatherId", depFatherId);
+//        map.put("billId", billId);
+//        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+//
+//        if(salesBill.getNxDbGbDepId().equals(salesBill.getNxDbGbDepFatherId())){
+//            List<Map<String, Object>> mapList = new ArrayList<>();
+//            List<GbDepartmentEntity> entities = gbDepartmentService.querySubDepartments(depFatherId);
+//
+//            if (entities.size() > 0) {
+//                for (GbDepartmentEntity dep : entities) {
+//                    Map<String, Object> mapDep = new HashMap<>();
+//                    mapDep.put("gbDepId", dep.getGbDepartmentId());
+//                    mapDep.put("depName", dep.getGbDepartmentName());
+//                    Map<String, Object> map1 = new HashMap<>();
+//                    map1.put("billId", billId);
+//                    map1.put("gbDepId", dep.getGbDepartmentId());
+//
+//                    System.out.println("mapp111111" + map1);
+//                    List<NxDepartmentOrdersEntity> depOrders = nxDepartmentOrdersService.queryDisOrdersByParams(map1);
+//                    mapDep.put("depOrders", depOrders);
+//                    if (depOrders.size() > 0) {
+//                        mapList.add(mapDep);
+//                    }
+//                }
+//
+//                Map<String, Object> map3 = new HashMap<>();
+//                map3.put("arr", mapList);
+//                map3.put("bill", salesBill);
+//                map3.put("returnNumber", count);
+//                return R.ok().put("data", map3);
+//            }else{
+//                Map<String, Object> map4 = new HashMap<>();
+//                map4.put("arr", ordersEntities);
+//                map4.put("bill", salesBill);
+//                map4.put("returnNumber", count);
+//                return R.ok().put("data", map4);
+//            }
+//        }else {
+//            Map<String, Object> map4 = new HashMap<>();
+//            map4.put("arr", ordersEntities);
+//            map4.put("bill", salesBill);
+//            map4.put("returnNumber", count);
+//            return R.ok().put("data", map4);
+//        }
+//
+//    }
 
     @RequestMapping(value = "/getBillApplysGb")
     @ResponseBody
@@ -2789,6 +2799,11 @@ public class NxDepartmentBillController000 {
                 if (nxDpgOrdersAmount - nxDpgFinishAmount == 1) {
                     purchaseGoodsEntity.setGbDpgOrdersFinishAmount(nxDpgOrdersAmount);
                     purchaseGoodsEntity.setGbDpgStatus(getNxDisPurchaseGoodsFinishPay());
+                    Integer gbDpgBatchId = purchaseGoodsEntity.getGbDpgBatchId();
+
+                    GbDistributerPurchaseBatchEntity gbDistributerPurchaseBatchEntity = gbDistributerPurchaseBatchService.queryObject(gbDpgBatchId);
+                    gbDistributerPurchaseBatchEntity.setGbDpbStatus(getGbDisPurchaseBatchDisUserWaitReceive());
+
                 } else {
                     purchaseGoodsEntity.setGbDpgOrdersFinishAmount(nxDpgFinishAmount + 1);
                 }
@@ -2801,12 +2816,8 @@ public class NxDepartmentBillController000 {
                 checkPurGoodsPrice(purchaseGoodsEntity);
             }
               //  判断是否有保鲜时间参数
-//            Integer gbDoDisGoodsId = purchaseGoodsEntity.getGbDpgDisGoodsId();
-//            GbDistributerGoodsEntity gbDisGoodsEntity = gbDistributerGoodsService.queryObject(gbDoDisGoodsId);
             if (gbDistributerGoodsEntity.getGbDgControlFresh() != null && gbDistributerGoodsEntity.getGbDgControlFresh() == 1) {
-                int warnHour = Integer.parseInt(gbDistributerGoodsEntity.getGbDgFreshWarnHour());
                 int wasteHour = Integer.parseInt(gbDistributerGoodsEntity.getGbDgFreshWasteHour());
-                purchaseGoodsEntity.setGbDpgWarnFullTime(formatWhatFullTime(warnHour));
                 purchaseGoodsEntity.setGbDpgWasteFullTime(formatWhatFullTime(wasteHour));
             }
                 gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);

@@ -197,7 +197,8 @@
 	</resultMap>
 
 	<resultMap id="applys" type="GbDepartmentOrdersEntity">
-		<id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+		 <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -644,6 +645,7 @@
 		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
 		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
 		<result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
 		<result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -795,7 +797,10 @@
 		</where>
 	</select>
 	<resultMap id="reduce" type="GbDepartmentGoodsStockReduceEntity">
-		 <id property="gbDepartmentGoodsStockReduceId" column="gb_department_goods_stock_reduce_id"/>
+		<id property="gbDepartmentGoodsStockReduceId" column="gb_department_goods_stock_reduce_id"/>
+		<result property="gbDgsrGbPurchaseDate" column="gb_dgsr_gb_purchase_date"/>
+		<result property="gbDgsrStockPurUserId" column="gb_dgsr_stock_pur_user_id"/>
+		<result property="gbDgsrStockPurUserId" column="gb_dgsr_stock_pur_user_id"/>
         <result property="gbDgsrStockNxSupplierId" column="gb_dgsr_stock_nx_supplier_id"/>
 		<result property="gbDgsrStockNxDistribtuerId" column="gb_dgsr_stock_nx_distributer_id"/>
 		<result property="gbDgsrProfitSubtotal" column="gb_dgsr_profit_subtotal"/>
@@ -816,8 +821,8 @@
 		<result property="gbDgsrGbDepartmentId" column="gb_dgsr_gb_department_id"/>
 		<result property="gbDgsrGbDepartmentFatherId" column="gb_dgsr_gb_department_father_id"/>
 		<result property="gbDgsrGbDisGoodsId" column="gb_dgsr_gb_dis_goods_id"/>
-        <result property="gbDgsrGbDisGoodsFatherId" column="gb_dgsr_gb_dis_goods_father_id"/>
-        <result property="gbDgsrGbDisGoodsGrandId" column="gb_dgsr_gb_dis_goods_grand_id"/>
+        <result property="gbDgsrGbDisGoodsFatherId" column="gb_dgsr_gb_dis_goods_father_id"/>		<result property="gbDgsrGbDisGoodsGrandId" column="gb_dgsr_gb_dis_goods_grand_id"/>
+		<result property="gbDgsrGbDisGoodsGreatId" column="gb_dgsr_gb_dis_goods_great_id"/>
 		<result property="gbDgsrMonth" column="gb_dgsr_month"/>
 		<result property="gbDgsrWeek" column="gb_dgsr_week"/>
 		<result property="gbDgsrGbDistributerId" column="gb_dgsr_gb_distributer_id"/>

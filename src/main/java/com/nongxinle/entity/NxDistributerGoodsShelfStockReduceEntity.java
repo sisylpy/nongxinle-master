@@ -117,4 +117,10 @@ public class NxDistributerGoodsShelfStockReduceEntity implements Serializable {
 	private Integer nxDgssrStatus;
 	private Integer nxDgssrNxDepOrderId;
 
+	// 关联订单和部门信息
+	private String departmentName;  // 订货部门名称
+	private String orderQuantity;   // 订货数量
+	private String orderStandard;   // 订货规格
+	private String doUserName;      // 支出人名字
+
 }

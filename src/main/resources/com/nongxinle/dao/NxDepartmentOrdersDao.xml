@@ -93,6 +93,7 @@
         ds.nx_department_id 'nx_department_id',
         ds.nx_department_name 'nx_department_name',
         ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_order_code 'nx_department_order_code',
         ds.nx_department_type 'nx_department_type',
         ds.nx_department_father_id 'nx_department_father_id',
         ds.nx_department_is_group_dep 'nx_department_is_group_dep',
@@ -100,11 +101,13 @@
         df.nx_department_pick_name 'dd_nx_department_pick_name',
         df.nx_department_name 'dd_nx_department_name',
         df.nx_department_attr_name 'dd_nx_department_attr_name',
+        df.nx_department_order_code 'dd_nx_department_order_code',
         df.nx_department_pick_name 'dd_nx_department_pick_name',
 
         nds.nx_department_id 'nds_nx_department_id',
         nds.nx_department_name 'nds_nx_department_name',
         nds.nx_department_attr_name 'nds_nx_department_attr_name',
+        nds.nx_department_order_code 'nds_nx_department_order_code',
         nds.nx_department_pick_name 'nds_nx_department_pick_name',
         nds.nx_department_type 'nds_nx_department_type',
         nds.nx_department_father_id 'nds_nx_department_father_id',
@@ -112,6 +115,7 @@
         ndf.nx_department_id 'ndf_dd_nx_department_id',
         ndf.nx_department_name 'ndf_dd_nx_department_name',
         ndf.nx_department_attr_name 'ndf_dd_nx_department_attr_name',
+        ndf.nx_department_order_code 'ndf_dd_nx_department_order_code',
         ndf.nx_department_pick_name 'ndf_dd_nx_department_pick_name',
 
         nr.nx_restraunt_id,
@@ -205,10 +209,12 @@
         purDs.nx_department_father_id 'purDs_nx_department_father_id',
         purDs.nx_department_name 'purDs_nx_department_name',
         purDs.nx_department_attr_name 'purDs_nx_department_attr_name',
+        purDs.nx_department_order_code 'purDs_nx_department_order_code',
         purDs.nx_department_pick_name 'purDs_nx_department_pick_name',
         purDf.nx_department_id 'purDf_nx_department_id',
         purDf.nx_department_name 'purDf_nx_department_name',
         purDf.nx_department_attr_name 'purDf_nx_department_attr_name',
+        purDf.nx_department_order_code 'purDf_nx_department_order_code',
         purDf.nx_department_pick_name 'purDf_nx_department_pick_name',
         purGbDs.gb_department_id 'purGbDs_gb_department_id',
         purGbDs.gb_department_name 'purGbDs_gb_department_name',
@@ -426,9 +432,10 @@
             <if test="inputType != null">
                 and ndpg.nx_DPG_input_type = #{inputType}
             </if>
-            <if test="purType != null and purType == -1">
-                and nx_DO_purchase_goods_id is null
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
+
 
             <if test="purType != null and purType == 0">
                 and nx_DO_purchase_goods_id = -1
@@ -461,6 +468,7 @@
         ds.nx_department_is_group_dep 'ds_nx_department_is_group_dep',
         ds.nx_department_settle_type 'ds_nx_department_settle_type',
         ds.nx_department_attr_name 'ds_nx_department_attr_name',
+        ds.nx_department_order_code 'ds_nx_department_order_code',
         ds.nx_department_pick_name 'ds_nx_department_pick_name',
         ndpg.nx_DPG_distributer_id,
         ndpg.nx_DPG_status,
@@ -492,6 +500,9 @@
             <if test="gbDepFatherId != null">
                 and nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
+            <if test="agent != null">
+                and dor.nx_DO_is_agent = #{agent}
+            </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
             </if>
@@ -509,6 +520,9 @@
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -568,6 +582,17 @@
 
     <select id="queryList" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
         select * from nx_department_orders
+        <where>
+            <if test="depFatherId != null">
+                and nx_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="equalStatus != null">
+                and nx_DO_status = #{equalStatus}
+            </if>
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+        </where>
         <if test="offset != null and limit != null">
             limit #{offset}, #{limit}
         </if>
@@ -579,8 +604,12 @@
     </select>
 
     <resultMap id="nxGoods" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
-        <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+        <result property="cartonUnit" column="carton_unit"/>
+        <result property="itemsPerCarton" column="items_per_carton"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -610,6 +639,7 @@
         <id property="nxDepartmentId" column="dd_nx_department_id"/>
         <result property="nxDepartmentName" column="dd_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="dd_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="dd_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="dd_nx_department_pick_name"/>
         <result property="nxDepartmentType" column="dd_nx_department_type"/>
         <result property="nxDepartmentSettleType" column="dd_nx_department_settle_type"/>
@@ -645,7 +675,12 @@
     </resultMap>
 
     <resultMap id="orderDepartment" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -707,8 +742,12 @@
     </resultMap>
 
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -805,7 +844,8 @@
     </resultMap>
 
     <resultMap id="gbOrder" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -848,7 +888,12 @@
 
 
     <resultMap id="gbPurGoods" type="GbDistributerPurchaseGoodsEntity">
-        <id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
+          <id property="gbDistributerPurchaseGoodsId" column="gb_distributer_purchase_goods_id"/>
+        <result property="gbDpgOrdersWeightAmount" column="gb_DPG_orders_weight_amount"/>
+        <result property="gbDpgStockFinishDate" column="gb_DPG_stock_finish_date"/>
+        <result property="gbDpgSupplierFinishDate" column="gb_DPG_supplier_finish_date"/>
+         <result property="gbDpgDisGoodsGreatId" column="gb_DPG_dis_goods_great_id"/>
+		<result property="gbDpgDisGoodsGrandId" column="gb_DPG_dis_goods_grand_id"/>
         <result property="gbDpgPurchaseNxSupplierId" column="gb_DPG_purchase_nx_supplier_id"/>
         <result property="gbDpgOrdersBillAmount" column="gb_DPG_orders_bill_amount"/>
         <result property="gbDpgPurchaseNxDistributerId" column="gb_DPG_purchase_nx_distributer_id"/>
@@ -896,7 +941,8 @@
     </resultMap>
 
     <resultMap id="gbOrderWithPurGoods" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -966,7 +1012,9 @@
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
@@ -1053,7 +1101,9 @@
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
@@ -1100,7 +1150,74 @@
         <!--        <association property="orderPurGoods" resultMap="purGoods"/>-->
         <!--        <association property="nxDistributerWeightEntity" resultMap="weight"/>-->
     </resultMap>
-
+    <resultMap id="applysWithAllDeps" type="NxDepartmentOrdersEntity">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="nxDoTodayOrder" column="nx_DO_today_order"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoGoodsType" column="nx_DO_goods_type"/>
+        <result property="nxDoDisGoodsGrandId" column="nx_DO_dis_goods_grand_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoNxGoodsId" column="nx_DO_nx_goods_id"/>
+        <result property="nxDoOrderUserId" column="nx_DO_order_user_id"/>
+        <result property="nxDoApplyDate" column="nx_DO_apply_date"/>
+        <result property="nxDoApplyOnlyTime" column="nx_DO_apply_only_time"/>
+        <result property="nxDoApplyFullTime" column="nx_DO_apply_full_time"/>
+        <result property="nxDoArriveOnlyDate" column="nx_DO_arrive_only_date"/>
+        <result property="nxDoArriveDate" column="nx_DO_arrive_date"/>
+        <result property="nxDoArriveWhatDay" column="nx_DO_arrive_what_day"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoNxGoodsFatherId" column="nx_DO_nx_goods_father_id"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+        <result property="nxDoDisGoodsFatherId" column="nx_DO_dis_goods_father_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoDepDisGoodsPrice" column="nx_DO_dep_dis_goods_price"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
+        <result property="nxDoOperationTime" column="nx_DO_operation_time"/>
+        <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoDepDisGoodsId" column="nx_DO_dep_dis_goods_id"/>
+        <result property="nxDoPurchaseUserId" column="nx_DO_purchase_user_id"/>
+        <result property="nxDoReturnWeight" column="nx_DO_return_weight"/>
+        <result property="nxDoReturnBillId" column="nx_DO_return_bill_id"/>
+        <result property="nxDoReturnStatus" column="nx_DO_return_status"/>
+        <result property="nxDoReturnSubtotal" column="nx_DO_return_subtotal"/>
+        <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
+        <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
+        <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoProfitSubtotal" column="nx_DO_profit_subtotal"/>
+        <result property="nxDoProfitScale" column="nx_DO_profit_scale"/>
+        <result property="nxDoWeightId" column="nx_DO_weight_id"/>
+        <result property="nxDoNxCommunityId" column="nx_DO_nx_community_id"/>
+        <result property="nxDoNxCommRestrauntFatherId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
+        <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
+        <result property="nxDoGbDepartmentFatherId" column="nx_DO_gb_department_father_id"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoCostPriceUpdate" column="nx_DO_cost_price_update"/>
+        <result property="nxDoCostPriceLevel" column="nx_DO_cost_price_level"/>
+        <result property="nxDoBillId" column="nx_DO_bill_id"/>
+        <result property="nxDoReturnBillId" column="nx_DO_return_bill_id"/>
+        <association property="nxDepartmentEntity" resultMap="nxDep"/>
+        <association property="gbDepartmentEntity" resultMap="orderGbDepartment"/>
+    </resultMap>
 
     <resultMap id="purGoodsFatherGbDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="purGbDf_gb_department_id"/>
@@ -1132,8 +1249,11 @@
     </resultMap>
 
     <resultMap id="disGoodsWithApplys" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -1209,9 +1329,12 @@
         <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
@@ -1375,6 +1498,7 @@
         <id property="nxDepartmentId" column="ndf_dd_nx_department_id"/>
         <result property="nxDepartmentName" column="ndf_dd_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="ndf_dd_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="ndf_dd_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="ndf_dd_nx_department_pick_name"/>
     </resultMap>
 
@@ -1383,6 +1507,7 @@
         <id property="nxDepartmentId" column="nds_nx_department_id"/>
         <result property="nxDepartmentName" column="nds_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nds_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="nds_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="nds_nx_department_pick_name"/>
         <result property="nxDepartmentFatherId" column="nds_nx_department_father_id"/>
         <association property="fatherDepartmentEntity" resultMap="ndsFatherDep"/>
@@ -1459,6 +1584,7 @@
         <result property="nxDepartmentFatherId" column="purDs_nx_department_father_id"/>
         <result property="nxDepartmentName" column="purDs_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="purDs_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="purDs_nx_department_order_code"/>
         <result property="nxDepartmentFatherId" column="purDs_nx_department_father_id"/>
         <association property="fatherDepartmentEntity" resultMap="purGoodsFatherDep"/>
     </resultMap>
@@ -1467,11 +1593,16 @@
         <id property="nxDepartmentId" column="purDf_nx_department_id"/>
         <result property="nxDepartmentName" column="purDf_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="purDf_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="purDf_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="purDf_nx_department_pick_name"/>
     </resultMap>
     <resultMap id="disGoodsWithOrders" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -1532,7 +1663,69 @@
         <collection property="neetNotPurOrders" resultMap="needNotBuyOrders"/>
     </resultMap>
 
+    <resultMap id="disGoodsWithOrdersSimple" type="NxDistributerGoodsEntity">
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
 
+        <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
+        <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
+        <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+        <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+        <result property="nxDgWillPriceOneAboutPrice" column="nx_dg_will_price_one_about_price"/>
+        <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+        <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+        <result property="nxDgOutTotalWeight" column="nx_dg_out_total_weight"/>
+        <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
+        <result property="nxDgWillPriceOneWeight" column="nx_dg_will_price_one_weight"/>
+        <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+        <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+        <result property="nxDgGoodsStatus" column="nx_dg_goods_status"/>
+        <result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+        <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+        <result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_will_price_three"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgGoodsSonsSort" column="nx_dg_goods_sons_sort"/>
+        <result property="nxDgGoodsSort" column="nx_dg_goods_sort"/>
+        <result property="nxDgPurchaseAuto" column="nx_dg_purchase_auto"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
+        <result property="nxDgPriceFirstDay" column="nx_dg_price_first_day"/>
+        <result property="nxDgPriceSecondDay" column="nx_dg_price_second_day"/>
+        <result property="nxDgPriceThirdDay" column="nx_dg_price_third_day"/>
+        <result property="nxDgDfgGoodsGrandId" column="nx_dg_dfg_goods_grand_id"/>
+        <result property="nxDgDfgGoodsFatherId" column="nx_dg_dfg_goods_father_id"/>
+        <result property="nxDgGoodsFile" column="nx_dg_goods_file"/>
+        <result property="nxDgGoodsFileLarge" column="nx_dg_goods_file_large"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsPinyin" column="nx_dg_goods_pinyin"/>
+        <result property="nxDgGoodsPy" column="nx_dg_goods_py"/>
+        <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+        <result property="nxDgGoodsPinyin" column="nx_dg_goods_pinyin"/>
+        <result property="nxDgBuyingPrice" column="nx_dg_buying_price"/>
+        <result property="nxDgPriceProfitOne" column="nx_dg_price_profit_one"/>
+        <result property="nxDgPriceProfitTwo" column="nx_dg_price_profit_two"/>
+        <result property="nxDgPriceProfitThree" column="nx_dg_price_profit_three"/>
+        <result property="nxDgSupplierId" column="nx_dg_supplier_id"/>
+        <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <result property="nxDgBuyingPriceIsGrade" column="nx_dg_buying_price_is_grade"/>
+        <result property="nxDgBuyingPriceOne" column="nx_dg_buying_price_one"/>
+        <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+        <result property="nxDgBuyingPriceTwo" column="nx_dg_buying_price_two"/>
+        <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+        <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
+        <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgBuyingPriceUpdate" column="nx_dg_buying_price_update"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="applysWithAllDeps"/>
+    </resultMap>
     <resultMap id="purGoodsOrdersWithOutExr" type="NxDistributerPurchaseGoodsEntity">
         <id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
         <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
@@ -1594,6 +1787,7 @@
         <result property="nxDepartmentFatherId" column="ds_nx_department_father_id"/>
         <result property="nxDepartmentIsGroupDep" column="ds_nx_department_is_group_dep"/>
         <result property="nxDepartmentAttrName" column="ds_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="ds_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="ds_nx_department_pick_name"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="applys"/>
     </resultMap>
@@ -1606,6 +1800,7 @@
         <result property="nxDepartmentFatherId" column="ds_nx_department_father_id"/>
         <result property="nxDepartmentIsGroupDep" column="ds_nx_department_is_group_dep"/>
         <result property="nxDepartmentAttrName" column="ds_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="ds_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="ds_nx_department_pick_name"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="applysSimple"/>
     </resultMap>
@@ -1618,6 +1813,7 @@
         <result property="nxDepartmentFatherId" column="ds_nx_department_father_id"/>
         <result property="nxDepartmentIsGroupDep" column="ds_nx_department_is_group_dep"/>
         <result property="nxDepartmentAttrName" column="ds_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="ds_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="ds_nx_department_pick_name"/>
         <collection property="nxDisFatherGoodsEntities" resultMap="unPlanPurchaseOrdersDisGreatGoods"/>
     </resultMap>
@@ -1667,7 +1863,9 @@
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPriceKg" column="nx_DO_price_kg"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
@@ -1794,6 +1992,7 @@
         ds.nx_department_is_group_dep 'ds_nx_department_is_group_dep',
         ds.nx_department_settle_type 'ds_nx_department_settle_type',
         ds.nx_department_attr_name 'ds_nx_department_attr_name',
+        ds.nx_department_order_code 'ds_nx_department_order_code',
         ds.nx_department_pick_name 'ds_nx_department_pick_name',
         dor.nx_department_orders_id,
         dor.nx_DO_nx_goods_id,
@@ -2092,12 +2291,14 @@
 
     <resultMap id="subDeps" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="subs_nx_department_id"/>
+        <result property="nxDepartmentOrderCode" column="subs_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="subs_nx_department_pick_name"/>
         <result property="nxDepartmentPrintName" column="subs_nx_department_print_name"/>
         <result property="nxDepartmentType" column="subs_nx_department_type"/>
         <result property="nxDepartmentName" column="subs_nx_department_name"/>
         <result property="nxDepartmentSettleType" column="subs_nx_department_settle_type"/>
         <result property="nxDepartmentAttrName" column="subs_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="subs_nx_department_order_code"/>
         <result property="nxDepartmentSubAmount" column="subs_nx_department_sub_amount"/>
         <result property="nxDepartmentFatherId" column="subs_nx_department_father_id"/>
         <result property="nxDepartmentShowWeeks" column="subs_nx_department_show_weeks"/>
@@ -2107,7 +2308,12 @@
         <result property="nxDepartmentFilePath" column="subs_nx_department_file_path"/>
     </resultMap>
     <resultMap id="depWithUser" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentUnloadDuration" column="nx_department_unload_duration"/>
+        <result property="nxDepartmentAddress" column="nx_department_address"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -2116,11 +2322,13 @@
         <result property="nxDepartmentType" column="nx_department_type"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="nx_department_order_code"/>
         <result property="nxDepartmentDisId" column="nx_department_dis_id"/>
         <result property="nxDepartmentSettleType" column="nx_department_settle_type"/>
         <result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
         <result property="nxDepartmentSubAmount" column="nx_department_sub_amount"/>
         <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
+        <result property="nxDepartmentPoints" column="nx_department_points"/>
         <association property="nxDepartmentUserEntity" resultMap="depUser"/>
         <collection property="nxDepartmentEntities" resultMap="subDeps"/>
     </resultMap>
@@ -2135,11 +2343,14 @@
         ds.nx_department_settle_type,ds.nx_department_name,ds.nx_department_attr_name,
         ds.nx_department_sub_amount, ds.nx_department_pick_name,
         subsd.nx_department_id 'subs_nx_department_id',
+        subsd.nx_department_address 'subs_nx_department_address',
+        subsd.nx_department_unload_duration 'subs_nx_department_unload_duration',
 
         subsd.nx_department_settle_type 'subs_nx_department_settle_type',
         subsd.nx_department_name 'subs_nx_department_name',
         subsd.nx_department_attr_name 'subs_nx_department_attr_name',
         subsd.nx_department_pick_name 'subs_nx_department_pick_name',
+        subsd.nx_department_order_code		'subs_nx_department_order_code',
         subsd.nx_department_type 'subs_nx_department_type',
         subsd.nx_department_print_name 'subs_nx_department_print_name',
         subsd.nx_department_show_weeks 'subs_nx_department_show_weeks',
@@ -2168,6 +2379,9 @@
             </if>
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuStatus != null">
+                and nx_DO_status &gt; #{dayuStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -2263,6 +2477,19 @@
             <if test="purGoodsId != null ">
                 and dor.nx_DO_purchase_goods_id = #{purGoodsId}
             </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="purType != null and purType == -1">
+                and dor.nx_DO_purchase_goods_id is null
+            </if>
+
+            <if test="purType != null and purType == 0">
+                and dor.nx_DO_purchase_goods_id = -1
+            </if>
+            <if test="purType != null and purType == 1">
+                and dor.nx_DO_purchase_goods_id &gt; 0
+            </if>
         </where>
         order by great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort
     </select>
@@ -2270,6 +2497,8 @@
         select COUNT(*) from nx_department_orders as dor
         left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id =
         dor.nx_DO_purchase_goods_id
+        left join nx_distributer_purchase_batch as ndpb on ndpb.nx_distributer_purchase_batch_id = ndpg.nx_DPG_batch_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id =
         dor.nx_DO_dis_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
@@ -2278,6 +2507,9 @@
         <where>
             <if test="todayOrder != null and todayOrder == 1">
                 and dor.nx_DO_today_order is not null
+            </if>
+            <if test="agent != null">
+                and dor.nx_DO_is_agent = #{agent}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -2406,6 +2638,18 @@
             <if test="inputType != null">
                 and ndpg.nx_DPG_input_type = #{inputType}
             </if>
+            <if test="batchType != null">
+                and nx_DPB_purchase_type = #{batchType}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="purchaseAuto != null">
+                and dg.nx_dg_purchase_auto = #{purchaseAuto}
+            </if>
             <if test="nxDepIds != null">
                 and dor.nx_DO_department_father_id in
                 <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
@@ -2480,6 +2724,9 @@
             <if test="subtotal != null">
                 and nx_DO_subtotal &gt; #{subtotal}
             </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
+            </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
             </if>
@@ -2539,6 +2786,9 @@
             </if>
             <if test="subtotal != null">
                 and nx_DO_subtotal &gt; #{subtotal}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -2617,6 +2867,9 @@
 
             <if test="stopDate != null">
                 and dor.nx_DO_arrive_date &lt;= #{stopDate}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -2737,19 +2990,11 @@
         order by nr.nx_restraunt_id
     </select>
 
-    <resultMap id="subGbDep" type="GbDepartmentEntity">
-        <id property="gbDepartmentId" column="ds_gb_department_id"/>
-        <result property="gbDepartmentName" column="ds_gb_department_name"/>
-        <result property="gbDepartmentType" column="ds_gb_department_type"/>
-        <result property="gbDepartmentFilePath" column="ds_gb_department_file_path"/>
-        <result property="gbDepartmentFatherId" column="ds_gb_department_father_id"/>
-        <result property="gbDepartmentIsGroupDep" column="ds_gb_department_is_group_dep"/>
-        <result property="gbDepartmentAttrName" column="ds_gb_department_attr_name"/>
-        <result property="gbDepartmentDisId" column="ds_gb_department_dis_id"/>
-        <result property="gbDepartmentPrintName" column="ds_gb_department_print_name"/>
-    </resultMap>
+
+
     <resultMap id="gbDepartmentWithOrder" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="ds_gb_department_id"/>
+        <result property="gbDepartmentFatherId" column="ds_gb_department_father_id"/>
         <result property="gbDepartmentSubAmount" column="ds_gb_department_sub_amount"/>
         <result property="gbDepartmentNamePy" column="ds_gb_department_name_py"/>
         <result property="gbDepartmentName" column="ds_gb_department_name"/>
@@ -2779,6 +3024,7 @@
         from nx_department_orders as dor
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join gb_department as ds on ds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as df on df.gb_department_id = dor.nx_DO_gb_department_father_id
         <where>
             <if test="arriveDate != null">
                 and dor.nx_DO_arrive_date = #{arriveDate}
@@ -2818,6 +3064,9 @@
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -2908,6 +3157,9 @@
             <if test="weightId != null and weightId == 1">
                 and dor.nx_DO_weight_id is not null
             </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
+            </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
             </if>
@@ -2956,6 +3208,7 @@
         ndf.nx_department_id 'ndf_dd_nx_department_id',
         ndf.nx_department_name 'ndf_dd_nx_department_name',
         ndf.nx_department_attr_name 'ndf_dd_nx_department_attr_name',
+        ndf.nx_department_order_code 'ndf_dd_nx_department_order_code',
         ndf.nx_department_pick_name 'ndf_dd_nx_department_pick_name',
         sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
         sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
@@ -3023,6 +3276,9 @@
             <if test="gbDepFatherId != null">
                 and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
+            <if test="dayuStatus != null">
+                and dor.nx_DO_status &gt; #{dayuStatus}
+            </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
             </if>
@@ -3047,8 +3303,14 @@
             <if test="dayuPurStatus != null ">
                 and dor.nx_DO_purchase_status &gt; #{dayuPurStatus}
             </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
+            </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
+            </if>
+            <if test="purType != null and purType == -2">
+                and nx_DO_purchase_goods_id is not null
             </if>
             <if test="purType != null and purType == 0">
                 and nx_DO_purchase_goods_id = -1
@@ -3075,7 +3337,10 @@
         <result property="gbDepartmentDisId" column="app_gb_department_dis_id"/>
     </resultMap>
     <resultMap id="nxDep" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -3089,6 +3354,7 @@
         <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
         <result property="nxDepartmentFilePath" column="nx_department_file_path"/>
         <result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
+        <result property="nxDepartmentPoints" column="nx_department_points"/>
         <association property="fatherDepartmentEntity" resultMap="fatherDepartment"/>
     </resultMap>
 
@@ -3109,6 +3375,8 @@
     </resultMap>
     <resultMap id="gbDis" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
         <result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
         <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
         <result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -3192,6 +3460,9 @@
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -3381,6 +3652,7 @@
         nds.nx_department_id 'nds_nx_department_id',
         nds.nx_department_name 'nds_nx_department_name',
         nds.nx_department_attr_name 'nds_nx_department_attr_name',
+        nds.nx_department_order_code 'nds_nx_department_order_code',
         nds.nx_department_pick_name 'nds_nx_department_pick_name',
         nds.nx_department_type 'nds_nx_department_type',
         nds.nx_department_father_id 'nds_nx_department_father_id',
@@ -3388,6 +3660,7 @@
         ndf.nx_department_id 'ndf_dd_nx_department_id',
         ndf.nx_department_name 'ndf_dd_nx_department_name',
         ndf.nx_department_attr_name 'ndf_dd_nx_department_attr_name',
+        ndf.nx_department_order_code 'ndf_dd_nx_department_order_code',
         ndf.nx_department_pick_name 'ndf_dd_nx_department_pick_name',
 
         ngds.gb_department_id 'nds_gb_department_id',
@@ -3465,10 +3738,12 @@
         purDs.nx_department_father_id 'purDs_nx_department_father_id',
         purDs.nx_department_name 'purDs_nx_department_name',
         purDs.nx_department_attr_name 'purDs_nx_department_attr_name',
+        purDs.nx_department_order_code 'purDs_nx_department_order_code',
         purDs.nx_department_pick_name 'purDs_nx_department_pick_name',
         purDf.nx_department_id 'purDf_nx_department_id',
         purDf.nx_department_name 'purDf_nx_department_name',
         purDf.nx_department_attr_name 'purDf_nx_department_attr_name',
+        purDf.nx_department_order_code 'purDf_nx_department_order_code',
         purDf.nx_department_pick_name 'purDf_nx_department_pick_name',
         purGbDs.gb_department_id 'purGbDs_gb_department_id',
         purGbDs.gb_department_name 'purGbDs_gb_department_name',
@@ -3665,6 +3940,7 @@
         left join nx_distributer_purchase_goods as ndpg on dor.nx_DO_purchase_goods_id =
         ndpg.nx_distributer_purchase_goods_id
         left join nx_distributer_weight as ndw on ndw.nx_distributer_weight_id = dor.nx_DO_weight_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
 
         <where>
             <if test="weightStatusEqual != null">
@@ -3708,6 +3984,9 @@
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
             </if>
+            <if test="dayuStatus != null">
+                and dor.nx_DO_status &gt; #{dayuStatus}
+            </if>
             <if test="purStatus != null">
                 and dor.nx_DO_purchase_status &lt; #{purStatus}
             </if>
@@ -3739,7 +4018,7 @@
                 and ndpg.nx_DPG_batch_id is not null
             </if>
             <if test="batchId != null and batchId == 0">
-                and ndpg.nx_DPG_batch_id is null or ndpg.nx_DPG_batch_id = -1
+                and ndpg.nx_DPG_batch_id is null
             </if>
             <if test="arriveDate != null">
                 and dor.nx_DO_arrive_date = #{arriveDate}
@@ -3750,6 +4029,9 @@
 
             <if test="stopDate != null">
                 and dor.nx_DO_arrive_date &lt;= #{stopDate}
+            </if>
+            <if test="purchaseAuto != null">
+                and dg.nx_dg_purchase_auto = #{purchaseAuto}
             </if>
 
         </where>
@@ -3811,10 +4093,12 @@
         purDs.nx_department_father_id 'purDs_nx_department_father_id',
         purDs.nx_department_name 'purDs_nx_department_name',
         purDs.nx_department_attr_name 'purDs_nx_department_attr_name',
+        purDs.nx_department_order_code 'purDs_nx_department_order_code',
         purDs.nx_department_pick_name 'purDs_nx_department_pick_name',
         purDf.nx_department_id 'purDf_nx_department_id',
         purDf.nx_department_name 'purDf_nx_department_name',
         purDf.nx_department_attr_name 'purDf_nx_department_attr_name',
+        purDf.nx_department_order_code 'purDf_nx_department_order_code',
         purDf.nx_department_pick_name 'purDf_nx_department_pick_name',
         purGbDs.gb_department_id 'purGbDs_gb_department_id',
         purGbDs.gb_department_name 'purGbDs_gb_department_name',
@@ -3999,8 +4283,12 @@
     </select>
 
     <resultMap id="disGoodsWithNeedNotOrders" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -4056,8 +4344,12 @@
         <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
     </resultMap>
     <resultMap id="disGoodsWithOrdersForStock" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -4116,13 +4408,53 @@
         <id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
         <result property="nxDfgFatherGoodsName" column="nx_DFG_father_goods_name"/>
         <result property="nxDfgFathersFatherId" column="nx_dfg_fathers_father_id"/>
-        <collection property="nxDistributerGoodsEntities" resultMap="disGoodsWithNeedNotOrders"/>
+        <collection property="nxDistributerPurchaseGoodsEntities" resultMap="purchaseGoodsForDep"/>
+    </resultMap>
+    
+    <!-- 采购商品 resultMap，用于按部门查询 -->
+    <resultMap id="purchaseGoodsForDep" type="NxDistributerPurchaseGoodsEntity">
+        <id property="nxDistributerPurchaseGoodsId" column="nx_distributer_purchase_goods_id"/>
+        <result property="nxDpgFinishAmount" column="nx_DPG_finish_amount"/>
+        <result property="nxDpgDisGoodsId" column="nx_DPG_dis_goods_id"/>
+        <result property="nxDpgDisGoodsFatherId" column="nx_DPG_dis_goods_father_id"/>
+        <result property="nxDpgDisGoodsGrandId" column="nx_DPG_dis_goods_grand_id"/>
+        <result property="nxDpgNxWeightId" column="nx_DPG_nx_weight_id"/>
+        <result property="nxDpgQuantity" column="nx_DPG_quantity"/>
+        <result property="nxDpgStandard" column="nx_DPG_standard"/>
+        <result property="nxDpgStatus" column="nx_DPG_status"/>
+        <result property="nxDpgBuyPrice" column="nx_DPG_buy_price"/>
+        <result property="nxDpgBuyQuantity" column="nx_DPG_buy_quantity"/>
+        <result property="nxDpgBuySubtotal" column="nx_DPG_buy_subtotal"/>
+        <result property="nxDpgPurchaseType" column="nx_DPG_purchase_type"/>
+        <result property="nxDpgOrdersAmount" column="nx_DPG_orders_amount"/>
+        <result property="nxDpgTypeAddUserId" column="nx_DPG_type_add_user_id"/>
+        <result property="nxDpgInputType" column="nx_DPG_input_type"/>
+        <result property="nxDpgTime" column="nx_DPG_time"/>
+        <result property="nxDpgDistributerId" column="nx_DPG_distributer_id"/>
+        <result property="nxDpgBuyUserId" column="nx_DPG_buy_user_id"/>
+        <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
+        <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
+        <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
+        <result property="nxDpgExpectPrice" column="nx_DPG_expect_price"/>
+        <result property="nxDpgApplyShelfId" column="nx_DPG_apply_shelf_id"/>
+        <result property="nxDpgApplyDate" column="nx_DPG_apply_date"/>
+        <result property="nxDpgPurchaseDate" column="nx_DPG_purchase_date"/>
+        <result property="nxDpgExpectSubtotal" column="nx_DPG_expect_subtotal"/>
+        <result property="nxDpgStockRestWeight" column="nx_DPG_stock_rest_weight"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
     </resultMap>
     <resultMap id="disFatherGoods" type="NxDistributerFatherGoodsEntity">
         <id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
         <result property="nxDfgFatherGoodsName" column="nx_DFG_father_goods_name"/>
         <result property="nxDfgFathersFatherId" column="nx_dfg_fathers_father_id"/>
         <collection property="nxDistributerGoodsEntities" resultMap="disGoodsWithNeedNotOrders"/>
+    </resultMap>
+    <resultMap id="disFatherGoodsJust" type="NxDistributerFatherGoodsEntity">
+        <id property="nxDistributerFatherGoodsId" column="grand_nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="grand_nx_DFG_father_goods_name"/>
+        <result property="nxDfgFathersFatherId" column="grand_nx_dfg_fathers_father_id"/>
+        <result property="nxDfgFatherGoodsSort" column="grand_nx_dfg_father_goods_sort"/>
     </resultMap>
 
     <!--    <select id="disGetOutStockGoodsApply" resultMap="disFatherGoods">-->
@@ -4505,6 +4837,25 @@
                     #{id}
                 </foreach>
             </if>
+            <if test="purchaseAuto != null">
+                and ndg.nx_dg_purchase_auto = #{purchaseAuto}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and dor.nx_DO_purchase_goods_id != -1
+                and exists (
+                    select 1 from nx_distributer_purchase_goods as ndpg 
+                    where ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id 
+                    and ndpg.nx_DPG_batch_id is null
+                )
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and dor.nx_DO_purchase_goods_id != -1
+                and exists (
+                    select 1 from nx_distributer_purchase_goods as ndpg 
+                    where ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id 
+                    and ndpg.nx_DPG_batch_id is not null
+                )
+            </if>
         </where>
         order by greatGrand.nx_dfg_father_goods_sort , grand.nx_dfg_father_goods_sort
 
@@ -4622,7 +4973,10 @@
     </select>
 
     <resultMap id="justFatherDep" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
         <result property="nxDepartmentLat" column="nx_department_lat"/>
         <result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -4630,6 +4984,7 @@
         <result property="nxDepartmentPromotionGoodsId" column="nx_department_promotion_goods_id"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="nx_department_order_code"/>
         <result property="nxDepartmentType" column="nx_department_type"/>
         <result property="nxDepartmentPrintName" column="nx_department_print_name"/>
         <result property="nxDepartmentSettleType" column="nx_department_settle_type"/>
@@ -4638,7 +4993,10 @@
 <!--        <collection property="nxDepartmentEntities" resultMap="subDepartmentWithOrdersSimple"/>-->
     </resultMap>
     <resultMap id="fatherDep" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
 		<result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -4756,9 +5114,12 @@
         df.nx_department_is_group_dep,
         df.nx_department_settle_type,
         df.nx_department_attr_name,
+        df.nx_department_order_code,
         df.nx_department_pick_name
         from nx_department_orders as dor
         left join nx_department as df on df.nx_department_id = dor.nx_DO_department_father_id
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
         <where>
             <if test="disId != null">
                 and dor.nx_DO_distributer_id = #{disId}
@@ -4772,7 +5133,14 @@
             <if test="euqalPurStatus != null">
                 and dor.nx_DO_purchase_status = #{euqalPurStatus}
             </if>
+            <if test="purchaseAuto != null">
+                and dg.nx_dg_purchase_auto = #{purchaseAuto}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
             and nx_DO_gb_department_id = -1 and dor.nx_DO_nx_comm_restraunt_id = -1
+            and df.nx_department_id IS NOT NULL
         </where>
         order by df.nx_department_pick_name
     </select>
@@ -4859,6 +5227,7 @@
         </where>
         order by df.nx_department_id
     </select>
+
     <select id="queryPureOrderGbDepartment" resultMap="gbDepartmentWithSubAndOrders">
         select *,
         ngdf.gb_department_id 'ngdf_gb_department_id',
@@ -4872,6 +5241,9 @@
         left join gb_department as gds on gds.gb_department_id = dor.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
         <where>
+            <if test="gbDisId != null">
+                and dor.nx_DO_gb_distributer_id = #{gbDisId}
+            </if>
             <if test="disId != null">
                 and dor.nx_DO_distributer_id = #{disId}
             </if>
@@ -5028,146 +5400,124 @@
 
 
     <select id="disGetOutStockGoodsApplyForStock" resultMap="disFatherGoodsForStock">
-        select *,
-        needNotDor.nx_department_orders_id 'needNotDor_nx_department_orders_id',
-        needNotDor.nx_DO_remark 'needNotDor_nx_DO_remark',
-        needNotDor.nx_DO_status 'needNotDor_nx_DO_status',
-        needNotDor.nx_department_orders_id 'needNotDor_nx_department_id',
-        needNotDor.nx_DO_purchase_goods_id 'needNotDor_nx_Do_purchase_goods_id',
-        needNotDor.nx_DO_department_id 'needNotDor_nx_DO_department_id',
-        needNotDor.nx_DO_department_father_id 'needNotDor_nx_DO_department_father_id',
-        needNotDor.nx_DO_nx_comm_restraunt_id 'needNotDor_nx_DO_nx_comm_restraunt_father_id',
-        needNotDor.nx_DO_quantity 'needNotDor_nx_DO_quantity',
-        needNotDor.nx_DO_standard 'needNotDor_nx_DO_standard',
-        needNotDor.nx_DO_weight 'needNotDor_nx_DO_weight',
-        needNotDor.nx_DO_price 'needNotDor_nx_DO_price',
-        needNotDor.nx_DO_subtotal 'needNotDor_nx_DO_subtotal',
-        needNotDor.nx_DO_dis_goods_id 'needNotDor_nx_DO_dis_goods_id',
-        needNotDor.nx_DO_purchase_status 'needNotDor_nx_DO_purchase_status',
-        needNotDor.nx_DO_cost_price 'needNotDor_nx_DO_cost_price',
-        needNotDor.nx_DO_cost_price_level 'needNotDor_nx_DO_cost_price_level',
-        needNotDor.nx_DO_cost_price_update 'needNotDor_nx_DO_cost_price_update',
+        select ndpg.*,
+               dg.*,
+               ndo.*,
+               ndfg.nx_distributer_father_goods_id 'nx_distributer_father_goods_id',
+               ndfg.nx_DFG_father_goods_name 'nx_DFG_father_goods_name',
+               ndfg.nx_dfg_fathers_father_id 'nx_dfg_fathers_father_id',
+               ndfg.nx_dfg_father_goods_sort 'nx_dfg_father_goods_sort',
+               
+               -- 添加 purDor_ 前缀的字段，用于 depsOrders resultMap 映射
+               ndo.nx_department_orders_id 'purDor_nx_department_orders_id',
+               ndo.nx_DO_distributer_id 'purDor_nx_do_distributer_id',
+               ndo.nx_DO_department_id 'purDor_nx_DO_department_id',
+               ndo.nx_DO_cost_price_level 'purDor_nx_cost_price_level',
+               ndo.nx_DO_cost_price 'purDor_nx_DO_cost_price',
+               ndo.nx_DO_cost_subtotal 'purDor_nx_DO_cost_subtotal',
+               ndo.nx_DO_department_father_id 'purDor_nx_DO_department_father_id',
+               ndo.nx_DO_purchase_goods_id 'purDor_nx_DO_purchase_goods_id',
+               ndo.nx_DO_dis_goods_id 'purDor_nx_DO_dis_goods_id',
+               ndo.nx_DO_dis_goods_father_id 'purDor_nx_DO_dis_goods_father_id',
+               ndo.nx_DO_dis_goods_grand_id 'purDor_nx_DO_dis_goods_grand_id',
+               ndo.nx_DO_quantity 'purDor_nx_DO_quantity',
+               ndo.nx_DO_standard 'purDor_nx_DO_standard',
+               ndo.nx_DO_status 'purDor_nx_DO_status',
+               ndo.nx_DO_weight 'purDor_nx_DO_weight',
+               ndo.nx_DO_price 'purDor_nx_DO_price',
+               ndo.nx_DO_subtotal 'purDor_nx_DO_subtotal',
+               ndo.nx_DO_weight_id 'purDor_nx_DO_weight_id',
+               ndo.nx_DO_nx_community_id 'purDor_nx_DO_nx_community_id',
+               ndo.nx_DO_nx_comm_restraunt_father_id 'purDor_nx_DO_nx_comm_restraunt_father_id',
+               ndo.nx_DO_nx_comm_restraunt_id 'purDor_nx_DO_nx_comm_restraunt_id',
+               ndo.nx_DO_nx_restraunt_order_id 'purDor_nx_DO_nx_restraunt_order_id',
+               ndo.nx_DO_gb_department_order_id 'purDor_nx_DO_gb_department_order_id',
+               ndo.nx_DO_gb_department_father_id 'purDor_nx_DO_gb_department_father_id',
+               ndo.nx_DO_gb_department_id 'purDor_nx_DO_gb_department_id',
+               
+               -- 添加 purDs_ 和 purDf_ 前缀的字段，用于 purGoodsDep 和 purGoodsFatherDep resultMap 映射
+               nds.nx_department_id 'purDs_nx_department_id',
+               nds.nx_department_father_id 'purDs_nx_department_father_id',
+               nds.nx_department_name 'purDs_nx_department_name',
+               nds.nx_department_attr_name 'purDs_nx_department_attr_name',
+               nds.nx_department_order_code 'purDs_nx_department_order_code',
+               ndf.nx_department_id 'purDf_nx_department_id',
+               ndf.nx_department_name 'purDf_nx_department_name',
+               ndf.nx_department_attr_name 'purDf_nx_department_attr_name',
+               ndf.nx_department_order_code 'purDf_nx_department_order_code',
+               ndf.nx_department_pick_name 'purDf_nx_department_pick_name',
+               
+               -- 添加 purGbDs_ 和 purGbDf_ 前缀的字段，用于 purGbDepartment 和 purGoodsFatherGbDep resultMap 映射
+               ngds.gb_department_id 'purGbDs_gb_department_id',
+               ngds.gb_department_name 'purGbDs_gb_department_name',
+               ngds.gb_department_attr_name 'purGbDs_gb_department_attr_name',
+               ngdf.gb_department_id 'purGbDf_gb_department_id',
+               ngdf.gb_department_name 'purGbDf_gb_department_name',
+               ngdf.gb_department_attr_name 'purGbDf_gb_department_attr_name',
+               
+               -- 添加 purNr_ 前缀的字段，用于 purRestraunt resultMap 映射
+               ndnr.nx_restraunt_id 'purNr_nx_restraunt_id',
+               ndnr.nx_restraunt_name 'purNr_nx_restraunt_name',
+               ndnr.nx_restraunt_attr_name 'purNr_nx_restraunt_attr_name'
 
-        needNotDor.nx_DO_dep_dis_goods_price 'needNotDor_nx_DO_dep_dis_goods_price',
-        needNotDor.nx_DO_distributer_id 'needNotDor_nx_DO_distributer_id',
-
-        nds.nx_department_id 'nds_nx_department_id',
-        nds.nx_department_name 'nds_nx_department_name',
-        nds.nx_department_attr_name 'nds_nx_department_attr_name',
-        nds.nx_department_pick_name 'nds_nx_department_pick_name',
-        nds.nx_department_type 'nds_nx_department_type',
-        nds.nx_department_father_id 'nds_nx_department_father_id',
-        nds.nx_department_is_group_dep 'nds_nx_department_is_group_dep',
-        ndf.nx_department_id 'ndf_dd_nx_department_id',
-        ndf.nx_department_pick_name 'ndf_dd_nx_department_pick_name',
-        ndf.nx_department_name 'ndf_dd_nx_department_name',
-        ndf.nx_department_attr_name 'ndf_dd_nx_department_attr_name',
-
-        ngds.gb_department_id 'nds_gb_department_id',
-        ngds.gb_department_name 'nds_gb_department_name',
-        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
-        ngds.gb_department_type 'nds_gb_department_type',
-        ngds.gb_department_father_id 'nds_gb_department_father_id',
-        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
-        ngdf.gb_department_id 'ngdf_dd_gb_department_id',
-        ngdf.gb_department_name 'ngdf_dd_gb_department_name',
-        ngdf.gb_department_attr_name 'ngdf_dd_gb_department_attr_name',
-        ngdf.gb_department_sub_amount 'ngdf_dd_gb_department_sub_amount',
-        ndnr.nx_restraunt_id 'ndnr_nx_restraunt_id',
-        ndnr.nx_restraunt_attr_name 'ndnr_nx_restraunt_attr_name'
-
-        from nx_department_orders as needNotDor
-        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = needNotDor.nx_DO_dis_goods_id
-        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id =
-        dg.nx_dg_dfg_goods_grand_id
-        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
-        ndfg.nx_dfg_fathers_father_id
-
-        left join nx_department as nds on nds.nx_department_id = needNotDor.nx_DO_department_id
+        from nx_distributer_purchase_goods as ndpg
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_grand_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+        left join nx_department_orders as ndo on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
+        left join nx_department as nds on nds.nx_department_id = ndo.nx_DO_department_id
         left join nx_department as ndf on ndf.nx_department_id = nds.nx_department_father_id
-        left join gb_department as ngds on ngds.gb_department_id = needNotDor.nx_DO_gb_department_id
-        left join gb_department as ngdf on ngdf.gb_department_id = needNotDor.nx_DO_gb_department_father_id
-        left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = needNotDor.nx_DO_nx_comm_restraunt_id
+        left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
+        left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
 
         <where>
             <if test="disId != null">
-                and needNotDor.nx_DO_distributer_id = #{disId}
+                and ndpg.nx_DPG_distributer_id = #{disId}
             </if>
-            <if test="goodsType != null">
-                and needNotDor.nx_DO_goods_type = #{goodsType}
-            </if>
-
             <if test="status != null">
-                and needNotDor.nx_DO_status &lt; #{status}
+                and ndpg.nx_DPG_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and ndo.nx_DO_purchase_status &lt; #{purStatus}
             </if>
             <if test="grandId != null">
-                and needNotDor.nx_DO_dis_goods_grand_id = #{grandId}
+                and ndpg.nx_DPG_dis_goods_grand_id = #{grandId}
             </if>
             <if test="fathersFatherId != null">
                 and ndfg.nx_dfg_fathers_father_id = #{fathersFatherId}
             </if>
             <if test="depId != null">
-                and nx_DO_department_id = #{depId}
+                and ndo.nx_DO_department_id = #{depId}
             </if>
             <if test="gbDepFatherId != null">
-                and nx_DO_gb_department_father_id = #{gbDepFatherId}
+                and ndo.nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
             <if test="gbDepId != null">
-                and nx_DO_gb_department_id = #{gbDepId}
+                and ndo.nx_DO_gb_department_id = #{gbDepId}
             </if>
             <if test="depFatherId != null">
-                and nx_DO_department_father_id = #{depFatherId}
+                and ndo.nx_DO_department_father_id = #{depFatherId}
             </if>
             <if test="resFatherId != null">
-                and needNotDor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
-            </if>
-
-            <if test="purStatus != null">
-                and needNotDor.nx_DO_purchase_status &lt; #{purStatus}
-            </if>
-            <if test="equalStatus != null">
-                and needNotDor.nx_DO_status = #{equalStatus}
-            </if>
-            <if test="equalPurStatus != null">
-                and needNotDor.nx_DO_purchase_status = #{equalPurStatus}
-            </if>
-
-            <if test="arriveDate != null">
-                and needNotDor.nx_DO_arrive_date = #{arriveDate}
-            </if>
-            <if test="purType != null and purType == -1">
-                and needNotDor.nx_DO_purchase_goods_id is null
+                and ndo.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
             </if>
             <if test="purType != null and purType == 0">
-                and needNotDor.nx_DO_purchase_goods_id = -1
+                and ndo.nx_DO_purchase_goods_id = -1
             </if>
             <if test="purType != null and purType == 1">
-                and needNotDor.nx_DO_purchase_goods_id != -1
+                and ndo.nx_DO_purchase_goods_id != -1 and ndo.nx_DO_purchase_goods_id is not null
             </if>
-            <if test="weightId != null and weightId == 1">
-                and needNotDor.nx_DO_weight_id is not null
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is null
             </if>
-            <if test="weightId != null and weightId == 0">
-                and needNotDor.nx_DO_weight_id is null
-            </if>
-            <if test="nxDepIds != null">
-                and needNotDor.nx_DO_department_father_id in
-                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-
-            </if>
-            <if test="gbDepIds != null">
-                and needNotDor.nx_DO_gb_department_father_id in
-                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-
+            <if test="purchaseAuto != null">
+                and dg.nx_dg_purchase_auto = #{purchaseAuto}
             </if>
         </where>
         order by great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort,
         nds.nx_department_id,
-        ngds.gb_department_id,ndnr.nx_restraunt_id
+        ngds.gb_department_id, ndnr.nx_restraunt_id
     </select>
 
     <select id="queryPrintDepOrder" resultMap="applys">
@@ -5556,6 +5906,9 @@
             <if test="weightId != null and weightId == 1">
                 and dor.nx_DO_weight_id is not null
             </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
+            </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
             </if>
@@ -5617,6 +5970,7 @@
         ds.nx_department_is_group_dep 'ds_nx_department_is_group_dep',
         ds.nx_department_settle_type 'ds_nx_department_settle_type',
         ds.nx_department_attr_name 'ds_nx_department_attr_name',
+        ds.nx_department_order_code 'ds_nx_department_order_code',
         ds.nx_department_pick_name 'ds_nx_department_pick_name',
         ndpg.nx_DPG_distributer_id,
         ndpg.nx_DPG_status,
@@ -5702,6 +6056,9 @@
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -5828,6 +6185,9 @@
             <if test="subtotal != null">
                 and nx_DO_subtotal &gt; #{subtotal}
             </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
+            </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
             </if>
@@ -5891,6 +6251,9 @@
             <if test="subtotal != null">
                 and nx_DO_subtotal &gt; #{subtotal}
             </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
+            </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
             </if>
@@ -5927,7 +6290,8 @@
         <result property="nxDpgBuyUserId" column="nx_DPG_buy_user_id"/>
         <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
         <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
-        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithApplys"/>
+
     </resultMap>
 
 
@@ -5966,7 +6330,9 @@
         <result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
     </resultMap>
     <resultMap id="purchaseBatch" type="NxDistributerPurchaseBatchEntity">
-        <id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
+         <id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
+        <result property="nxDpbNxDepartmentFatherId" column="nx_DPB_nx_department_father_id"/>
+		<result property="nxDpbPasteContent" column="nx_DPB_paste_content"/>
         <result property="nxDpbNeedDate" column="nx_DPB_need_date"/>
         <result property="nxDpbSupplierId" column="nx_DPB_supplier_id"/>
         <result property="nxDpbDistributerId" column="nx_DPB_distributer_id"/>
@@ -5985,6 +6351,7 @@
         <result property="nxDpbPayFullTime" column="nx_DPB_pay_full_time"/>
         <result property="nxDpbOrderIsNotice" column="nx_DPB_order_is_notice"/>
         <result property="nxDpbSellUserId" column="nx_DPB_sell_user_id"/>
+        <result property="nxDpbNxDepartmentName" column="batch_dep_nx_department_name"/>
         <association property="nxJrdhPurEntity" resultMap="disUser"/>
         <association property="nxJrdhBuyerEntity" resultMap="jrdhBuyUser"/>
         <association property="nxJrdhSellerEntity" resultMap="jrdhSellUser"/>
@@ -5995,27 +6362,40 @@
 
     <select id="queryDisPurchaseBatch" resultMap="purchaseBatch">
         select * ,
+        ngds.gb_department_id 'nds_gb_department_id',
+        ngds.gb_department_name 'nds_gb_department_name',
+        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
+        ngds.gb_department_type 'nds_gb_department_type',
+        ngds.gb_department_father_id 'nds_gb_department_father_id',
+        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
+        ngdf.gb_department_id 'ndf_dd_gb_department_id',
+        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',
+        ngdf.gb_department_name 'ndf_dd_gb_department_name',
+        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name',
         sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
         sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
         sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
-        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change',
+        batchDep.nx_department_order_code 'batch_dep_nx_department_name'
         from nx_department_orders as dor
         left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id =
         dor.nx_DO_purchase_goods_id and ndpg.nx_DPG_batch_id is not null
         left join nx_distributer_purchase_batch as dpb on dpb.nx_distributer_purchase_batch_id = ndpg.nx_DPG_batch_id
+        left join nx_department as batchDep on batchDep.nx_department_id = dpb.nx_DPB_nx_department_father_id
         left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = dpb.nx_DPB_supplier_id
         left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id =
         dg.nx_dg_dfg_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
         ndfg.nx_dfg_fathers_father_id
+
         left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
         left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
         left join nx_jrdh_user as buy_user on buy_user.nx_jrdh_user_id = dpb.nx_DPB_buy_user_id
         left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = dpb.nx_DPB_sell_user_id
         left join nx_distributer_user as ndu on ndu.nx_distributer_user_id = dpb.nx_DPB_pur_user_id
-        left join gb_department as purGbDs on purGbDs.gb_department_id = dor.nx_DO_gb_department_id
-        left join gb_department as purGbDf on purGbDf.gb_department_id = purGbDs.gb_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = ngds.gb_department_father_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
         <where>
             <if test="disId != null">
@@ -6060,8 +6440,14 @@
             <if test="dayuStatus != null">
                 and nx_DO_status &gt; #{dayuStatus}
             </if>
+            <if test="purStatus != null">
+                and nx_DO_purchase_status &lt; #{purStatus}
+            </if>
             <if test="subtotal != null">
                 and nx_DO_subtotal &gt; #{subtotal}
+            </if>
+            <if test="isPurType != null">
+                and nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
                 and nx_DO_purchase_goods_id is null
@@ -6072,18 +6458,19 @@
             <if test="purType != null and purType == 1">
                 and nx_DO_purchase_goods_id != -1
             </if>
-            <if test="weightId != null and weightId == 1">
-                and nx_DO_weight_id is not null
+            <if test="batchType != null">
+                and nx_dpb_purchase_type = #{batchType}
             </if>
-            <if test="weightId != null and weightId == 0">
-                and nx_DO_weight_id is null
-            </if>
+
 
             <if test="xiaoyuBatchStatus != null">
                 and dpb.nx_DPB_status &lt; #{xiaoyuBatchStatus}
             </if>
 
         </where>
+        order by nx_distributer_purchase_batch_id DESC, great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort,
+        dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort, df.nx_department_id,ds.nx_department_id,
+        ngdf.gb_department_id, ngds.gb_department_id
     </select>
     <select id="queryDepOrdersAcountByDepGoods" resultType="java.lang.Integer">
         select COUNT(*) from nx_department_orders as dor
@@ -6123,6 +6510,8 @@
 
     <resultMap id="disStock" type="NxDistributerGoodsShelfStockEntity">
         <id property="nxDistributerGoodsShelfStockId" column="nx_distributer_goods_shelf_stock_id"/>
+        <result property="nxDgssSellingPriceCarton" column="nx_dgss_selling_price_carton"/>
+        <result property="nxDgssPriceCarton" column="nx_dgss_price_carton"/>
         <result property="nxDgssNxDisGoodsId" column="nx_dgss_nx_dis_goods_id"/>
         <result property="nxDgssNxDistributerId" column="nx_dgss_nx_distributer_id"/>
         <result property="nxDgssWeight" column="nx_dgss_weight"/>
@@ -6135,6 +6524,8 @@
         <result property="nxDgssPrice" column="nx_dgss_price"/>
         <result property="nxDgssStatus" column="nx_dgss_status"/>
         <result property="nxDgssRestSubtotal" column="nx_dgss_rest_subtotal"/>
+        <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
+        <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
     </resultMap>
 
 
@@ -6144,6 +6535,7 @@
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithApplys"/>
         <collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
     </resultMap>
@@ -6189,7 +6581,7 @@
         left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id =
         ndg.nx_distributer_goods_id
         left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
-        and nddg.nx_DDG_gb_department_id = dor.nx_DO_gb_department_id
+        and nddg.nx_DDG_department_id = dor.nx_DO_department_id
         <where>
             <if test="shelfId != null and shelfId == 0">
                 and ndgsg.nx_DGSG_dis_goods_id is null
@@ -6252,7 +6644,6 @@
                 and dor.nx_DO_arrive_date &lt;= #{stopDate}
             </if>
 
-
             <if test="purType != null and purType == -1">
                 and dor.nx_DO_purchase_goods_id is null
             </if>
@@ -6281,6 +6672,9 @@
                     #{id}
                 </foreach>
             </if>
+            <if test="targetShelfId != null">
+                and ndgs.nx_distributer_goods_shelf_id = #{targetShelfId}
+            </if>
 
         </where>
         order by ndgs.nx_distributer_goods_shelf_sort, ndgsg.nx_DGSG_sort
@@ -6290,6 +6684,15 @@
         select COUNT(*) from nx_department_orders
 
         <where>
+            <if test="disId != null">
+                and nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="gbDepFatherId != null">
+                and nx_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="equalStatus != null">
+                and nx_DO_status = #{equalStatus}
+            </if>
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
@@ -6351,56 +6754,56 @@
         <collection property="nxDepartmentOrdersEntities" resultMap="applys"/>
     </resultMap>
 
-    <select id="queryqueryOrderGbDepartmentList" resultMap="gbDepartmentWithSubAndOrders">
+<!--    <select id="queryqueryOrderGbDepartmentList" resultMap="gbDepartmentWithSubAndOrders">-->
 
-        select *,
+<!--        select *,-->
 
-        ngds.gb_department_id 'nds_gb_department_id',
-        ngds.gb_department_name 'nds_gb_department_name',
-        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
-        ngds.gb_department_type 'nds_gb_department_type',
-        ngds.gb_department_father_id 'nds_gb_department_father_id',
-        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
-        ngdf.gb_department_id 'ndf_dd_gb_department_id',
-        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',
-        ngdf.gb_department_name 'ndf_dd_gb_department_name',
-        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name'
+<!--        ngds.gb_department_id 'nds_gb_department_id',-->
+<!--        ngds.gb_department_name 'nds_gb_department_name',-->
+<!--        ngds.gb_department_attr_name 'nds_gb_department_attr_name',-->
+<!--        ngds.gb_department_type 'nds_gb_department_type',-->
+<!--        ngds.gb_department_father_id 'nds_gb_department_father_id',-->
+<!--        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',-->
+<!--        ngdf.gb_department_id 'ndf_dd_gb_department_id',-->
+<!--        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',-->
+<!--        ngdf.gb_department_name 'ndf_dd_gb_department_name',-->
+<!--        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name'-->
 
-        from nx_department_orders as dor
-        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
-        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
-        left join gb_department_orders as gdo on gdo.gb_department_orders_id = dor.nx_DO_gb_department_order_id
-        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+<!--        from nx_department_orders as dor-->
+<!--        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id-->
+<!--        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id-->
+<!--        left join gb_department_orders as gdo on gdo.gb_department_orders_id = dor.nx_DO_gb_department_order_id-->
+<!--        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id-->
 
-        <where>
-            <if test="goodsType != null">
-                and dor.nx_DO_goods_type = #{goodsType}
-            </if>
-            <if test="disId != null">
-                and nx_DO_distributer_id = #{disId}
-            </if>
-            <if test="status != null">
-                and nx_DO_status &lt; #{status}
-            </if>
-            <if test="equalStatus != null">
-                and nx_DO_status = #{equalStatus}
-            </if>
-            <if test="returnStatus != null">
-                and nx_DO_return_status &lt; #{returnStatus}
-            </if>
-            <if test="equalPurStatus != null">
-                and dor.nx_DO_purchase_status = #{equalPurStatus}
-            </if>
-            <if test="subtotal != null">
-                and dor.nx_DO_subtotal &gt; #{subtotal}
-            </if>
-            <if test="arriveDate != null">
-                and nx_DO_arrive_Date = #{arriveDate}
-            </if>
-            and dor.nx_DO_gb_department_id != -1 and dor.nx_DO_nx_comm_restraunt_id = -1
-        </where>
+<!--        <where>-->
+<!--            <if test="goodsType != null">-->
+<!--                and dor.nx_DO_goods_type = #{goodsType}-->
+<!--            </if>-->
+<!--            <if test="disId != null">-->
+<!--                and nx_DO_distributer_id = #{disId}-->
+<!--            </if>-->
+<!--            <if test="status != null">-->
+<!--                and nx_DO_status &lt; #{status}-->
+<!--            </if>-->
+<!--            <if test="equalStatus != null">-->
+<!--                and nx_DO_status = #{equalStatus}-->
+<!--            </if>-->
+<!--            <if test="returnStatus != null">-->
+<!--                and nx_DO_return_status &lt; #{returnStatus}-->
+<!--            </if>-->
+<!--            <if test="equalPurStatus != null">-->
+<!--                and dor.nx_DO_purchase_status = #{equalPurStatus}-->
+<!--            </if>-->
+<!--            <if test="subtotal != null">-->
+<!--                and dor.nx_DO_subtotal &gt; #{subtotal}-->
+<!--            </if>-->
+<!--            <if test="arriveDate != null">-->
+<!--                and nx_DO_arrive_Date = #{arriveDate}-->
+<!--            </if>-->
+<!--            and dor.nx_DO_gb_department_id != -1 and dor.nx_DO_nx_comm_restraunt_id = -1-->
+<!--        </where>-->
 
-    </select>
+<!--    </select>-->
     <select id="queryNxOrderByGbOrderId" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
         select *
         from nx_department_orders
@@ -6414,20 +6817,6 @@
         where nx_department_orders_id = #{orderId}
     </select>
 
-    <!-- 批量查询部门订单统计 -->
-<!--    <select id="batchQueryDepStats" resultType="java.util.Map">-->
-<!--        SELECT-->
-<!--        nx_DO_department_father_id as depId,-->
-<!--        COUNT(CASE WHEN nx_DO_status = 3 THEN 1 END) as count0,-->
-<!--        COUNT(CASE WHEN nx_DO_status = 3 AND nx_DO_purchase_status = 4 THEN 1 END) as count1,-->
-<!--        COUNT(CASE WHEN nx_DO_status = 3 AND nx_DO_purchase_status = 4 THEN 1 END) as count2-->
-<!--        FROM nx_department_orders-->
-<!--        WHERE nx_DO_department_father_id IN-->
-<!--        <foreach collection="depIds" item="depId" open="(" separator="," close=")">-->
-<!--            #{depId}-->
-<!--        </foreach>-->
-<!--        GROUP BY nx_DO_department_father_id-->
-<!--    </select>-->
 
     <!-- 批量查询部门订单统计 -->
     <select id="batchQueryDepStats" resultType="java.util.Map">
@@ -6442,6 +6831,57 @@
             #{depId}
         </foreach>
         GROUP BY nx_DO_department_father_id
+    </select>
+    
+    <!-- 批量查询部门订单统计信息 -->
+    <select id="batchQueryDepartmentOrderStats" resultType="java.util.Map">
+        SELECT
+        nx_DO_department_father_id as `depFatherId`,
+        COUNT(CASE WHEN nx_DO_status = -2 and nx_DO_is_agent = 1 THEN 1 END ) as `unDo`,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_price IS NOT NULL  AND  nx_DO_price != 0.1 THEN 1 END) as `hasPrice`,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_purchase_status &gt; 3 THEN 1 END) as `hasWeight`,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 THEN 1 END) as `totalCount`,
+        COUNT(CASE WHEN nx_DO_status = 2 and nx_DO_purchase_status &gt; 3 and nx_DO_price != 0.1  and  nx_DO_subtotal &gt; 0 THEN 1 END) as `finishCount`,
+        SUM(CASE WHEN nx_DO_status = 2 and nx_DO_purchase_status &gt; 3 THEN nx_DO_subtotal ELSE 0 END) as `totalSubtotal`
+        FROM nx_department_orders
+        WHERE nx_DO_department_father_id IN
+        <foreach collection="depFatherIds" item="depFatherId" open="(" separator="," close=")">
+            #{depFatherId}
+        </foreach>
+        GROUP BY nx_DO_department_father_id
+    </select>
+    
+    <!-- 批量查询国标分销商和部门订单统计信息 -->
+    <select id="batchQueryGbDistributerDepartmentStats" resultType="java.util.Map">
+        SELECT
+        nx_DO_gb_distributer_id as gbDisId,
+        nx_DO_gb_department_father_id as gbDepId,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 THEN 1 END) as newOrder,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_purchase_goods_id = 1 THEN 1 END) as jinhuoOrder,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_purchase_goods_id = -1 THEN 1 END) as chukuOrder,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_weight IS NULL THEN 1 END) as hasNotWeight,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_purchase_goods_id = 1 AND nx_DO_weight IS NOT NULL THEN 1 END) as jinhuoHasWeight,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_purchase_goods_id = -1 AND nx_DO_weight IS NOT NULL THEN 1 END) as chukuHasWeight,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_price IS NOT NULL THEN 1 END) as hasPrice,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_price IS NULL THEN 1 END) as hasNotPrice,
+        COUNT(CASE WHEN nx_DO_status = 2 THEN 1 END) as twoTotal,
+        SUM(CASE WHEN nx_DO_status = 2 THEN nx_DO_subtotal ELSE 0 END) as total
+        FROM nx_department_orders
+        <where>
+            <if test="gbDisIds != null and gbDisIds.size() > 0">
+                AND nx_DO_gb_distributer_id IN
+                <foreach collection="gbDisIds" item="gbDisId" open="(" separator="," close=")">
+                    #{gbDisId}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null and gbDepIds.size() > 0">
+                AND nx_DO_gb_department_father_id IN
+                <foreach collection="gbDepIds" item="gbDepId" open="(" separator="," close=")">
+                    #{gbDepId}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY nx_DO_gb_distributer_id, nx_DO_gb_department_father_id
     </select>
 
     <!-- 批量查询国标部门订单统计 -->
@@ -6498,21 +6938,68 @@
         GROUP BY nx_do_gb_department_id
     </select>
 
-    <!-- 批量查询采购批次统计 -->
-    <select id="batchQueryPurchaseBatchStats" resultType="java.util.Map">
+
+    
+    <!-- 批量查询父级商品订单数量统计 -->
+    <select id="batchQueryFatherGoodsOrderCount" resultType="java.util.Map">
         SELECT
-        nx_do_purchase_batch_id as batchId,
-        COUNT(*) as goodsCount,
-        SUM(CASE WHEN nx_do_price IS NULL THEN 1 ELSE 0 END) as hasNotPrice,
-        SUM(CASE WHEN nx_do_price IS NOT NULL THEN 1 ELSE 0 END) as hasPriceCount,
-        COALESCE(SUM(nx_do_subtotal), 0) as subtotal
-        FROM nx_department_orders
-        WHERE nx_do_purchase_batch_id IN
-        <foreach collection="batchIds" item="batchId" open="(" separator="," close=")">
-            #{batchId}
-        </foreach>
-        GROUP BY nx_do_purchase_batch_id
+        COALESCE(greatGrand.nx_distributer_father_goods_id, dor.nx_do_dis_goods_grand_id) as grandId,
+        COUNT(*) as orderCount
+        FROM nx_department_orders as dor
+        left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
+        left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = dor.nx_do_dis_goods_grand_id
+        left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        <where>
+            (greatGrand.nx_distributer_father_goods_id IN
+            <foreach collection="grandIds" item="grandId" open="(" separator="," close=")">
+                #{grandId}
+            </foreach>
+            OR dor.nx_do_dis_goods_grand_id IN
+            <foreach collection="grandIds" item="grandId" open="(" separator="," close=")">
+                #{grandId}
+            </foreach>)
+            <if test="disId != null">
+                AND dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                AND dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                AND dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="dayuPurStatus != null">
+                AND dor.nx_DO_purchase_status &gt; #{dayuPurStatus}
+            </if>
+            <if test="equalPurStatus != null">
+                AND dor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
+            <!-- 使用更灵活的条件，与原来的queryDepOrdersAcount保持一致 -->
+            <if test="purType != null and purType == -1">
+                AND dor.nx_DO_purchase_goods_id is null
+            </if>
+            <if test="purType != null and purType == 0">
+                AND dor.nx_DO_purchase_goods_id = -1
+            </if>
+            <if test="purType != null and purType == 1">
+                AND dor.nx_DO_purchase_goods_id != -1
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
+            <if test="purchaseAuto != null">
+                and exists (
+                    select 1 from nx_distributer_goods as dg 
+                    where dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id 
+                    and dg.nx_dg_purchase_auto = #{purchaseAuto}
+                )
+            </if>
+        </where>
+        GROUP BY COALESCE(greatGrand.nx_distributer_father_goods_id, dor.nx_do_dis_goods_grand_id)
     </select>
+
     <select id="queryLinshiGoodsCount" resultType="java.lang.Integer">
         select COUNT(DISTINCT ndg.nx_distributer_goods_id)
         from nx_distributer_goods as ndg
@@ -6532,6 +7019,7 @@
             </if>
         </where>
     </select>
+
     <select id="queryGoodsIds" resultType="java.lang.Integer">
         select nx_DO_dis_goods_id from nx_department_orders as ndo
         <where>
@@ -6588,398 +7076,520 @@
         f.nx_dfg_father_goods_sort,
         dg.nx_dg_goods_sort
     </select>
+    
+    <select id="disGetOutGoodsGrandCata" resultMap="disFatherGoodsJust">
 
+        select distinct
 
-    <!--    <select id="queryLinshiGoodsCount" resultType="java.lang.Integer">-->
+               grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+               grand.nx_DFG_father_goods_name 'grand_nx_DFG_father_goods_name',
+               grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+               grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
 
-<!--        select COUNT(*) from nx_distributer_goods as ndg-->
-<!--        left join nx_department_orders as dor on dor.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id-->
-<!--         <where>-->
-<!--             <if test="disId != null">-->
-<!--                 and nx_DO_distributer_id = #{disId}-->
-<!--             </if>-->
-<!--             <if test="status != null">-->
-<!--                 and nx_DO_status &lt; #{status}-->
-<!--             </if>-->
-<!--             <if test="purStatus != null">-->
-<!--                 and dor.nx_DO_purchase_status &lt; #{purStatus}-->
-<!--             </if>-->
-<!--         </where>-->
-<!--    </select>-->
+               greatGrand.nx_distributer_father_goods_id  'great_grand_nx_distributer_father_goods_id',
+               greatGrand.nx_dfg_father_goods_sort 'great_grand_nx_dfg_father_goods_sort'
 
-    <!--    <select id="queryShelfGoodsOrderPage"  resultMap="shelfGoods">-->
+        from nx_department_orders as needNotDor
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = needNotDor.nx_DO_dis_goods_id
+        left join  nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = needNotDor.nx_DO_purchase_goods_id
+        left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_grand_id
+        left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
 
-<!--        select-->
-<!--        *,-->
-<!--        ndgsg.nx_DGSG_shelf_id,-->
-<!--               ndgsg.nx_DGSG_sort,-->
-<!--               ndgsg.nx_DGSG_dis_goods_id,-->
+        <where>
+            <if test="disId != null">
+                and needNotDor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="goodsType != null">
+                and needNotDor.nx_DO_goods_type = #{goodsType}
+            </if>
 
-<!--        ndf.nx_department_id 'dd_nx_department_id',-->
-<!--        ndf.nx_department_pick_name 'dd_nx_department_pick_name',-->
-<!--        ndf.nx_department_name 'dd_nx_department_name',-->
-<!--        ndf.nx_department_attr_name 'dd_nx_department_attr_name',-->
-<!--        ngds.gb_department_id 'nds_gb_department_id',-->
-<!--        ngds.gb_department_name 'nds_gb_department_name',-->
-<!--        ngds.gb_department_attr_name 'nds_gb_department_attr_name',-->
-<!--        ngds.gb_department_type 'nds_gb_department_type',-->
-<!--        ngds.gb_department_father_id 'nds_gb_department_father_id',-->
-<!--        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',-->
-<!--        ngdf.gb_department_id 'ndf_dd_gb_department_id',-->
-<!--        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',-->
-<!--        ngdf.gb_department_name 'ndf_dd_gb_department_name',-->
-<!--        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name'-->
-<!--        from nx_department_orders as dor-->
-<!--        left join nx_department as nds on nds.nx_department_id = dor.nx_DO_department_id-->
-<!--        left join nx_department as ndf on ndf.nx_department_id = nds.nx_department_father_id-->
-<!--        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id-->
-<!--        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id-->
-<!--        left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id-->
-<!--        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id-->
-<!--        left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id-->
-<!--        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id =-->
-<!--        ndg.nx_distributer_goods_id-->
-<!--        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id-->
-<!--        and nddg.nx_DDG_gb_department_id = dor.nx_DO_gb_department_id-->
-<!--        <where>-->
-<!--            <if test="shelfId != null and shelfId == 0">-->
-<!--                and ndgsg.nx_DGSG_dis_goods_id is null-->
-<!--            </if>-->
-<!--            <if test="shelfId != null and shelfId == 1">-->
-<!--                and ndgsg.nx_DGSG_dis_goods_id is not null-->
-<!--            </if>-->
-<!--            <if test="disId != null">-->
-<!--                and dor.nx_DO_distributer_id = #{disId}-->
-<!--            </if>-->
-<!--            <if test="goodsType != null">-->
-<!--                and dor.nx_DO_goods_type = #{goodsType}-->
-<!--            </if>-->
-<!--            <if test="gbDepFatherId != null">-->
-<!--                and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}-->
-<!--            </if>-->
-<!--            <if test="gbDepId != null">-->
-<!--                and dor.nx_DO_gb_department_id = #{gbDepId}-->
-<!--            </if>-->
-<!--            <if test="depFatherId != null">-->
-<!--                and dor.nx_DO_department_father_id = #{depFatherId}-->
-<!--            </if>-->
-<!--            <if test="resFatherId != null">-->
-<!--                and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}-->
-<!--            </if>-->
-<!--            <if test="gbDepFatherId != null">-->
-<!--                and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}-->
-<!--            </if>-->
+            <if test="status != null">
+                and needNotDor.nx_DO_status &lt; #{status}
+            </if>
 
-<!--            <if test="status != null">-->
-<!--                and dor.nx_DO_status &lt; #{status}-->
-<!--            </if>-->
-<!--            <if test="disGoodsId != null">-->
-<!--                and dor.nx_DO_dis_goods_id = #{disGoodsId}-->
-<!--            </if>-->
-<!--            <if test="grandId != null">-->
-<!--                and dor.nx_DO_dis_goods_grand_id = #{grandId}-->
-<!--            </if>-->
-<!--            <if test="purStatus != null">-->
-<!--                and dor.nx_DO_purchase_status &lt; #{purStatus}-->
-<!--            </if>-->
-<!--            <if test="dayuPurStatus != null">-->
-<!--                and dor.nx_DO_purchase_status &gt; #{dayuPurStatus}-->
-<!--            </if>-->
-<!--            <if test="equalStatus != null">-->
-<!--                and dor.nx_DO_status = #{equalStatus}-->
-<!--            </if>-->
-<!--            <if test="equalPurStatus != null">-->
-<!--                and dor.nx_DO_purchase_status = #{equalPurStatus}-->
-<!--            </if>-->
+            <if test="depId != null">
+                and nx_DO_department_id = #{depId}
+            </if>
+            <if test="gbDepFatherId != null">
+                and nx_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="gbDepId != null">
+                and nx_DO_gb_department_id = #{gbDepId}
+            </if>
+            <if test="depFatherId != null">
+                and nx_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="resFatherId != null">
+                and needNotDor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
+            </if>
 
-<!--            <if test="arriveDate != null">-->
-<!--                and dor.nx_DO_arrive_date = #{arriveDate}-->
-<!--            </if>-->
-<!--            <if test="startDate != null">-->
-<!--                and dor.nx_DO_arrive_date &gt;= #{startDate}-->
-<!--            </if>-->
+            <if test="purStatus != null">
+                and needNotDor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="equalStatus != null">
+                and needNotDor.nx_DO_status = #{equalStatus}
+            </if>
+            <if test="equalPurStatus != null">
+                and needNotDor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
 
-<!--            <if test="stopDate != null">-->
-<!--                and dor.nx_DO_arrive_date &lt;= #{stopDate}-->
-<!--            </if>-->
+            <if test="arriveDate != null">
+                and needNotDor.nx_DO_arrive_date = #{arriveDate}
+            </if>
+            <if test="purType != null and purType == -1">
+                and needNotDor.nx_DO_purchase_goods_id is null
+            </if>
+            <if test="purType != null and purType == 0">
+                and needNotDor.nx_DO_purchase_goods_id = -1
+            </if>
+            <if test="purType != null and purType == 1">
+                and needNotDor.nx_DO_purchase_goods_id != -1
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and nx_DPG_batch_id is null
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and nx_DPG_batch_id is not null
+            </if>
+            <if test="weightId != null and weightId == 1">
+                and needNotDor.nx_DO_weight_id is not null
+            </if>
+            <if test="weightId != null and weightId == 0">
+                and needNotDor.nx_DO_weight_id is null
+            </if>
+            <if test="nxDepIds != null">
+                and needNotDor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
 
+            </if>
+            <if test="gbDepIds != null">
+                and needNotDor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
 
-<!--            <if test="purType != null and purType == -1">-->
-<!--                and dor.nx_DO_purchase_goods_id is null-->
-<!--            </if>-->
-<!--            <if test="purType != null and purType == 0">-->
-<!--                and dor.nx_DO_purchase_goods_id = -1-->
-<!--            </if>-->
-<!--            <if test="purType != null and purType == 1">-->
-<!--                and dor.nx_DO_purchase_goods_id != -1-->
-<!--            </if>-->
-<!--            <if test="weightId != null and weightId == 1">-->
-<!--                and dor.nx_DO_weight_id is not null-->
-<!--            </if>-->
-<!--            <if test="weightId != null and weightId == 0">-->
-<!--                and dor.nx_DO_weight_id is null-->
-<!--            </if>-->
-<!--            <if test="nxDepIds != null">-->
-<!--                and dor.nx_DO_department_father_id in-->
-<!--                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">-->
-<!--                    #{id}-->
-<!--                </foreach>-->
-<!--            </if>-->
+            </if>
+            <if test="purchaseAuto != null">
+                and dg.nx_dg_purchase_auto = #{purchaseAuto}
+            </if>
+        </where>
+                 order by greatGrand.nx_dfg_father_goods_sort, grand.nx_dfg_father_goods_sort
+    </select>
 
-<!--            <if test="gbDepIds != null">-->
-<!--                and dor.nx_DO_gb_department_father_id in-->
-<!--                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">-->
-<!--                    #{id}-->
-<!--                </foreach>-->
-<!--            </if>-->
+    <select id="disGetNxGoodsApply" resultMap="disGoodsWithOrdersSimple">
 
-<!--        </where>-->
-<!--        order by ndgsg.nx_DGSG_shelf_sort, ndgsg.nx_DGSG_sort-->
-<!--        <if test="offset != null and limit != null">-->
-<!--            limit #{offset}, #{limit}-->
-<!--        </if>-->
-<!--    </select>-->
+        select dg.*,
+        dor.*,
+        great.nx_dfg_father_goods_sort as great_sort,
+        grand.nx_dfg_father_goods_sort as grand_sort,
+        ndfg.nx_dfg_father_goods_sort as ndfg_sort,
 
+        ngds.gb_department_id 'nds_gb_department_id',
+        ngds.gb_department_name 'nds_gb_department_name',
+        ngds.gb_department_attr_name 'nds_gb_department_attr_name',
+        ngds.gb_department_type 'nds_gb_department_type',
+        ngds.gb_department_father_id 'nds_gb_department_father_id',
+        ngds.gb_department_is_group_dep 'nds_gb_department_is_group_dep',
+        ngdf.gb_department_id 'ndf_dd_gb_department_id',
+        ngdf.gb_department_sub_amount 'ndf_dd_gb_department_sub_amount',
+        ngdf.gb_department_name 'ndf_dd_gb_department_name',
+        ngdf.gb_department_attr_name 'ndf_dd_gb_department_attr_name',
+        ds.nx_department_id 'nx_department_id',
+        ds.nx_department_name 'nx_department_name',
+        ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_order_code 'nx_department_order_code',
+        ds.nx_department_type 'nx_department_type',
+        ds.nx_department_father_id 'nx_department_father_id',
+        ds.nx_department_is_group_dep 'nx_department_is_group_dep',
+        df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_pick_name 'dd_nx_department_pick_name',
+        df.nx_department_name 'dd_nx_department_name',
+        df.nx_department_attr_name 'dd_nx_department_attr_name',
+        df.nx_department_pick_name 'dd_nx_department_pick_name'
 
-<!--    <select id="queryShelfGoodsOrderPage"-->
-<!--            resultMap="shelfGoods"-->
-<!--            parameterType="map">-->
-<!--        SELECT-->
-<!--        &#45;&#45; === ① 主表：货架商品字段（ndgsg） ===-->
-<!--        ndgsg.nx_distributer_goods_shelf_goods_id    AS nx_distributer_goods_shelf_goods_id,-->
-<!--        ndgsg.nx_DGSG_shelf_id                       AS nx_DGSG_shelf_id,-->
-<!--        ndgsg.nx_DGSG_dis_goods_id                   AS nx_DGSG_dis_goods_id,-->
-<!--        ndgsg.nx_DGSG_sort                           AS nx_DGSG_sort,-->
+        from (
+            select DISTINCT dg.nx_distributer_goods_id,
+            great.nx_dfg_father_goods_sort as great_sort,
+            grand.nx_dfg_father_goods_sort as grand_sort,
+            ndfg.nx_dfg_father_goods_sort as ndfg_sort,
+            dg.nx_dg_goods_sort,
+            dg.nx_dg_goods_sons_sort
+            from nx_department_orders as dor
+            left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+            left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+            left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+            left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+            <where>
+                <if test="goodsType != null">
+                    and dor.nx_DO_goods_type = #{goodsType}
+                </if>
+                <if test="disId != null">
+                    and nx_DO_distributer_id = #{disId}
+                </if>
+                <if test="purType != null and purType == -1">
+                    and dor.nx_DO_purchase_goods_id is null
+                </if>
+                <if test="purType != null and purType == 0">
+                    and dor.nx_DO_purchase_goods_id = -1
+                </if>
+                <if test="purType != null and purType == 1">
+                    and dor.nx_DO_purchase_goods_id != -1
+                </if>
+                <if test="status != null">
+                    and nx_DO_status &lt; #{status}
+                </if>
+                <if test="equalStatus != null">
+                    and nx_DO_status = #{equalStatus}
+                </if>
+                <if test="returnStatus != null">
+                    and nx_DO_return_status &lt; #{returnStatus}
+                </if>
+                <if test="equalPurStatus != null">
+                    and dor.nx_DO_purchase_status = #{equalPurStatus}
+                </if>
+                <if test="purStatus != null">
+                    and dor.nx_DO_purchase_status &lt; #{purStatus}
+                </if>
+                <if test="subtotal != null">
+                    and dor.nx_DO_subtotal &gt; #{subtotal}
+                </if>
+                <if test="arriveDate != null">
+                    and nx_DO_arrive_Date = #{arriveDate}
+                </if>
+                <if test="depFatherId != null">
+                    and dor.nx_DO_department_father_id = #{depFatherId}
+                </if>
+                <if test="depId != null">
+                    and dor.nx_DO_department_id = #{depId}
+                </if>
+            </where>
+            order by great_sort, grand_sort, ndfg_sort,
+                     dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort
+            <if test="offset != null and limit != null">
+                limit #{offset}, #{limit}
+            </if>
+        ) as sorted_goods
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = sorted_goods.nx_distributer_goods_id
+        left join nx_department_orders as dor on dor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+             and dor.nx_DO_purchase_goods_id = -1 and dor.nx_DO_purchase_status &lt; 4
+             <if test="depFatherId != null">
+                 and dor.nx_DO_department_father_id = #{depFatherId}
+             </if>
+             <if test="depId != null">
+                 and dor.nx_DO_department_id = #{depId}
+             </if>
+        left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = dor.nx_DO_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+        left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+    </select>
 
-<!--        &#45;&#45; === ② 关联：部门订单表（dor），这里只查出想要的订单字段 ===-->
-<!--        dor.nx_department_orders_id                  AS nx_department_orders_id,-->
-<!--        dor.nx_DO_nx_goods_id                        AS nx_DO_nx_goods_id,-->
-<!--        dor.nx_DO_nx_goods_father_id                 AS nx_DO_nx_goods_father_id,-->
-<!--        dor.nx_DO_dis_goods_id                       AS nx_DO_dis_goods_id,-->
-<!--        dor.nx_DO_dis_goods_father_id                AS nx_DO_dis_goods_father_id,-->
-<!--        dor.nx_DO_dep_dis_goods_id                   AS nx_DO_dep_dis_goods_id,-->
-<!--        dor.nx_DO_dep_dis_goods_price                AS nx_DO_dep_dis_goods_price,-->
-<!--        dor.nx_DO_quantity                           AS nx_DO_quantity,-->
-<!--        dor.nx_DO_standard                           AS nx_DO_standard,-->
-<!--        dor.nx_DO_remark                             AS nx_DO_remark,-->
-<!--        dor.nx_DO_weight                             AS nx_DO_weight,-->
-<!--        dor.nx_DO_price                              AS nx_DO_price,-->
-<!--        dor.nx_DO_subtotal                           AS nx_DO_subtotal,-->
-<!--        dor.nx_DO_department_id                      AS nx_DO_department_id,-->
-<!--        dor.nx_DO_department_father_id               AS nx_DO_department_father_id,-->
-<!--        dor.nx_DO_distributer_id                     AS nx_DO_distributer_id,-->
-<!--        dor.nx_DO_purchase_user_id                   AS nx_DO_purchase_user_id,-->
-<!--        dor.nx_DO_bill_id                            AS nx_DO_bill_id,-->
-<!--        dor.nx_DO_status                             AS nx_DO_status,-->
-<!--        dor.nx_DO_order_user_id                      AS nx_DO_order_user_id,-->
-<!--        dor.nx_DO_pick_user_id                       AS nx_DO_pick_user_id,-->
-<!--        dor.nx_DO_account_user_id                    AS nx_DO_account_user_id,-->
-<!--        dor.nx_DO_purchase_status                    AS nx_DO_purchase_status,-->
-<!--        dor.nx_DO_apply_date                         AS nx_DO_apply_date,-->
-<!--        dor.nx_DO_arrive_date                        AS nx_DO_arrive_date,-->
-<!--        dor.nx_DO_purchase_goods_id                  AS nx_DO_purchase_goods_id,-->
-<!--        dor.nx_DO_arrive_only_date                   AS nx_DO_arrive_only_date,-->
-<!--        dor.nx_DO_apply_full_time                    AS nx_DO_apply_full_time,-->
-<!--        dor.nx_DO_goods_type                         AS nx_DO_goods_type,-->
-<!--        dor.nx_DO_operation_time                     AS nx_DO_operation_time,-->
-<!--        dor.nx_DO_arrive_what_day                    AS nx_DO_arrive_what_day,-->
-<!--        dor.nx_DO_is_agent                           AS nx_DO_is_agent,-->
-<!--        dor.nx_DO_arrive_weeks_year                  AS nx_DO_arrive_weeks_year,-->
-<!--        dor.nx_DO_apply_only_time                    AS nx_DO_apply_only_time,-->
-<!--        dor.nx_DO_cost_price                         AS nx_DO_cost_price,-->
-<!--        dor.nx_DO_cost_subtotal                      AS nx_DO_cost_subtotal,-->
-<!--        dor.nx_DO_gb_distributer_id                  AS nx_DO_gb_distributer_id,-->
-<!--        dor.nx_DO_gb_department_id                   AS nx_DO_gb_department_id,-->
-<!--        dor.nx_DO_gb_department_father_id            AS nx_DO_gb_department_father_id,-->
-<!--        dor.nx_DO_return_weight                      AS nx_DO_return_weight,-->
-<!--        dor.nx_DO_return_subtotal                     AS nx_DO_return_subtotal,-->
-<!--        dor.nx_DO_return_bill_id                      AS nx_DO_return_bill_id,-->
-<!--        dor.nx_DO_return_status                       AS nx_DO_return_status,-->
-<!--        dor.nx_DO_weight_id                           AS nx_DO_weight_id,-->
-<!--        dor.nx_DO_profit_subtotal                     AS nx_DO_profit_subtotal,-->
-<!--        dor.nx_DO_profit_scale                        AS nx_DO_profit_scale,-->
-<!--        dor.nx_DO_nx_community_id                     AS nx_DO_nx_community_id,-->
-<!--        dor.nx_DO_nx_comm_restraunt_id                 AS nx_DO_nx_comm_restraunt_id,-->
-<!--        dor.nx_DO_nx_comm_restraunt_father_id          AS nx_DO_nx_comm_restraunt_father_id,-->
-<!--        dor.nx_DO_gb_department_order_id               AS nx_DO_gb_department_order_id,-->
-<!--        dor.nx_DO_nx_restraunt_order_id                AS nx_DO_nx_restraunt_order_id,-->
-<!--        dor.nx_DO_cost_price_update                     AS nx_DO_cost_price_update,-->
-<!--        dor.nx_DO_cost_price_level                      AS nx_DO_cost_price_level,-->
-<!--        dor.nx_DO_dis_goods_grand_id                    AS nx_DO_dis_goods_grand_id,-->
-<!--        dor.nx_DO_print_standard                        AS nx_DO_print_standard,-->
-<!--        dor.nx_DO_today_order                           AS nx_DO_today_order,-->
-<!--        dor.nx_DO_price_different                       AS nx_DO_price_different,-->
-<!--        dor.nx_DO_expect_price                          AS nx_DO_expect_price,-->
-<!--        dor.nx_DO_goods_name                            AS nx_DO_goods_name,-->
-<!--        dor.nx_DO_gb_dep_dis_goods_id                   AS nx_DO_gb_dep_dis_goods_id,-->
+    <select id="queryOrderGoodsCount" resultType="java.lang.Integer">
 
-<!--        &#45;&#45; === ③ 关联：上级、下级部门、供应商等等字段（保留原来写法，只做 LEFT JOIN，不放到 WHERE） ===-->
-<!--        nds.nx_department_id            AS ds_nx_department_id,-->
-<!--        nds.nx_department_pick_name     AS ds_nx_department_pick_name,-->
-<!--        nds.nx_department_name          AS ds_nx_department_name,-->
-<!--        nds.nx_department_attr_name     AS ds_nx_department_attr_name,-->
+        select count(1)
+        from (
+        select distinct dg.nx_distributer_goods_id
+        from nx_department_orders as dor
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        <where>
+            <if test="goodsType != null">
+                and dor.nx_DO_goods_type = #{goodsType}
+            </if>
+            <if test="disId != null">
+                and nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="purType != null and purType == -1">
+                and dor.nx_DO_purchase_goods_id is null
+            </if>
+            <if test="purType != null and purType == 0">
+                and dor.nx_DO_purchase_goods_id = -1
+            </if>
+            <if test="purType != null and purType == 1">
+                and dor.nx_DO_purchase_goods_id != -1
+            </if>
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and nx_DO_status = #{equalStatus}
+            </if>
+            <if test="returnStatus != null">
+                and nx_DO_return_status &lt; #{returnStatus}
+            </if>
+            <if test="equalPurStatus != null">
+                and dor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
+            <if test="subtotal != null">
+                and dor.nx_DO_subtotal &gt; #{subtotal}
+            </if>
+            <if test="arriveDate != null">
+                and nx_DO_arrive_Date = #{arriveDate}
+            </if>
+        </where>
+        ) as count_goods
 
-<!--        ndf.nx_department_id            AS dd_nx_department_id,-->
-<!--        ndf.nx_department_pick_name     AS dd_nx_department_pick_name,-->
-<!--        ndf.nx_department_name          AS dd_nx_department_name,-->
-<!--        ndf.nx_department_attr_name     AS dd_nx_department_attr_name,-->
+    </select>
 
-<!--        ngds.gb_department_id           AS nds_gb_department_id,-->
-<!--        ngds.gb_department_name         AS nds_gb_department_name,-->
-<!--        ngds.gb_department_attr_name    AS nds_gb_department_attr_name,-->
-<!--        ngds.gb_department_type         AS nds_gb_department_type,-->
-<!--        ngds.gb_department_father_id    AS nds_gb_department_father_id,-->
-<!--        ngds.gb_department_is_group_dep AS nds_gb_department_is_group_dep,-->
+    <!-- 出库商品简化版 resultMap -->
+    <resultMap id="outGoodsUltraSimple" type="OutGoodsSimpleDTO">
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+        <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+        <result property="nxDgDfgGoodsGreatGrandId" column="great_nx_distributer_father_goods_id"/>
+        <result property="nxDgDfgGoodsGreatGrandName" column="great_nx_dfg_father_goods_name"/>
+        <result property="isSelected" column="is_selected"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="outOrderUltraSimple"/>
+    </resultMap>
 
-<!--        ngdf.gb_department_id           AS ndf_dd_gb_department_id,-->
-<!--        ngdf.gb_department_sub_amount   AS ndf_dd_gb_department_sub_amount,-->
-<!--        ngdf.gb_department_name         AS ndf_dd_gb_department_name,-->
-<!--        ngdf.gb_department_attr_name    AS ndf_dd_gb_department_attr_name-->
+    <!-- 出库订单简化版 resultMap -->
+    <resultMap id="outOrderUltraSimple" type="OutOrderSimpleDTO">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
+        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="fatherDepartmentAttrName" column="father_department_attr_name"/>
+        <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
+        <result property="nxDoGbDepartmentFatherId" column="nx_DO_gb_department_father_id"/>
+        <result property="gbDepartmentName" column="gb_department_name"/>
+        <result property="fatherGbDepartmentName" column="father_gb_department_name"/>
+        <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
+        <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        <result property="purSelected" column="pur_selected"/>
+    </resultMap>
 
-<!--        FROM nx_retailer_goods_shelf_goods AS ndgsg-->
+    <!-- 出库商品简化版查询（只返回前端需要的字段） -->
+    <select id="queryOutGoodsWithOrdersUltraSimple" resultMap="outGoodsUltraSimple">
+        select
+        dg.nx_distributer_goods_id,
+        dg.nx_dg_goods_name,
+        dg.nx_dg_goods_standardname,
+        dg.nx_dg_goods_standard_weight,
+        dg.nx_dg_goods_brand,
+        dg.nx_dg_goods_place,
+        dg.nx_dg_goods_detail,
+        great.nx_distributer_father_goods_id as great_nx_distributer_father_goods_id,
+        great.nx_dfg_father_goods_name as great_nx_dfg_father_goods_name,
+        0 as is_selected,
+        ndo.nx_department_orders_id,
+        ndo.nx_DO_quantity,
+        ndo.nx_DO_standard,
+        ndo.nx_DO_remark,
+        ndo.nx_DO_department_id,
+        ndo.nx_DO_department_father_id,
+        ds.nx_department_attr_name as nx_department_attr_name,
+        df.nx_department_attr_name as father_department_attr_name,
+        ndo.nx_DO_gb_department_id,
+        ndo.nx_DO_gb_department_father_id,
+        ngds.gb_department_name as gb_department_name,
+        ngdf.gb_department_name as father_gb_department_name,
+        ndo.nx_DO_nx_comm_restraunt_id,
+        nr.nx_restraunt_attr_name as nx_restraunt_attr_name,
+        0 as pur_selected
+        from (
+            select DISTINCT dg.nx_distributer_goods_id,
+            great.nx_distributer_father_goods_id as great_id,
+            great.nx_dfg_father_goods_sort as great_sort,
+            grand.nx_dfg_father_goods_sort as grand_sort,
+            ndfg.nx_dfg_father_goods_sort as ndfg_sort,
+            dg.nx_dg_goods_sort,
+            dg.nx_dg_goods_sons_sort
+            from nx_department_orders as dor
+            left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+            left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+            left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+            left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+            <where>
+                <if test="goodsType != null">
+                    and dor.nx_DO_goods_type = #{goodsType}
+                </if>
+                <if test="disId != null">
+                    and nx_DO_distributer_id = #{disId}
+                </if>
+                <if test="purType != null and purType == -1">
+                    and dor.nx_DO_purchase_goods_id is null
+                </if>
+                <if test="purType != null and purType == 0">
+                    and dor.nx_DO_purchase_goods_id = -1
+                </if>
+                <if test="purType != null and purType == 1">
+                    and dor.nx_DO_purchase_goods_id != -1
+                </if>
+                <if test="status != null">
+                    and nx_DO_status &lt; #{status}
+                </if>
+                <if test="equalStatus != null">
+                    and nx_DO_status = #{equalStatus}
+                </if>
+                <if test="returnStatus != null">
+                    and nx_DO_return_status &lt; #{returnStatus}
+                </if>
+                <if test="equalPurStatus != null">
+                    and dor.nx_DO_purchase_status = #{equalPurStatus}
+                </if>
+                <if test="purStatus != null">
+                    and dor.nx_DO_purchase_status &lt; #{purStatus}
+                </if>
+                <if test="subtotal != null">
+                    and dor.nx_DO_subtotal &gt; #{subtotal}
+                </if>
+                <if test="arriveDate != null">
+                    and nx_DO_arrive_Date = #{arriveDate}
+                </if>
+                <if test="depFatherId != null">
+                    and dor.nx_DO_department_father_id = #{depFatherId}
+                </if>
+                <if test="depId != null">
+                    and dor.nx_DO_department_id = #{depId}
+                </if>
+            </where>
+            order by great_sort, great_id, grand_sort, ndfg_sort,
+                     dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort
+            <if test="offset != null and limit != null">
+                limit #{offset}, #{limit}
+            </if>
+        ) as sorted_goods
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = sorted_goods.nx_distributer_goods_id
+        left join nx_department_orders as ndo on ndo.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+             and ndo.nx_DO_purchase_goods_id = -1 and ndo.nx_DO_purchase_status &lt; 4
+             <if test="depFatherId != null">
+                 and ndo.nx_DO_department_father_id = #{depFatherId}
+             </if>
+             <if test="depId != null">
+                 and ndo.nx_DO_department_id = #{depId}
+             </if>
+        left join nx_department as ds on ds.nx_department_id = ndo.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = ndo.nx_DO_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
+        left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+        left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        order by great.nx_dfg_father_goods_sort, great.nx_distributer_father_goods_id, grand.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort,
+                 dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort, df.nx_department_id
+    </select>
 
-<!--        &lt;!&ndash; ① 左联：关联部门订单，并在 ON 中写“必须满足”的三个条件 &ndash;&gt;-->
-<!--        LEFT JOIN nx_department_orders AS dor-->
-<!--        ON dor.nx_DO_dis_goods_id      = ndgsg.nx_DGSG_dis_goods_id-->
-<!--        AND dor.nx_DO_distributer_id   = #{disId}-->
-<!--        AND dor.nx_DO_status           < #{status}-->
-<!--        AND dor.nx_DO_purchase_status  < #{purStatus}-->
+    <!-- 精简版：按部门查询出库商品（用于 disGetTypePrepareOutByDep 接口） -->
+    <select id="disGetNxGoodsApplyUltraSimple" resultMap="outGoodsUltraSimple">
+        select
+        dg.nx_distributer_goods_id,
+        dg.nx_dg_goods_name,
+        dg.nx_dg_goods_standardname,
+        dg.nx_dg_goods_standard_weight,
+        dg.nx_dg_goods_brand,
+        dg.nx_dg_goods_place,
+        dg.nx_dg_goods_detail,
+        great.nx_distributer_father_goods_id as great_nx_distributer_father_goods_id,
+        great.nx_dfg_father_goods_name as great_nx_dfg_father_goods_name,
+        0 as is_selected,
+        ndo.nx_department_orders_id,
+        ndo.nx_DO_quantity,
+        ndo.nx_DO_standard,
+        ndo.nx_DO_remark,
+        ndo.nx_DO_department_id,
+        ndo.nx_DO_department_father_id,
+        ds.nx_department_attr_name as nx_department_attr_name,
+        df.nx_department_attr_name as father_department_attr_name,
+        ndo.nx_DO_gb_department_id,
+        ndo.nx_DO_gb_department_father_id,
+        ngds.gb_department_name as gb_department_name,
+        ngdf.gb_department_name as father_gb_department_name,
+        ndo.nx_DO_nx_comm_restraunt_id,
+        nr.nx_restraunt_attr_name as nx_restraunt_attr_name,
+        0 as pur_selected
+        from (
+            select DISTINCT dg.nx_distributer_goods_id,
+            great.nx_distributer_father_goods_id as great_id,
+            great.nx_dfg_father_goods_sort as great_sort,
+            grand.nx_dfg_father_goods_sort as grand_sort,
+            ndfg.nx_dfg_father_goods_sort as ndfg_sort,
+            dg.nx_dg_goods_sort,
+            dg.nx_dg_goods_sons_sort
+            from nx_department_orders as dor
+            left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+            left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+            left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+            left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+            <where>
+                <if test="goodsType != null">
+                    and dor.nx_DO_goods_type = #{goodsType}
+                </if>
+                <if test="disId != null">
+                    and nx_DO_distributer_id = #{disId}
+                </if>
+                <if test="purType != null and purType == -1">
+                    and dor.nx_DO_purchase_goods_id is null
+                </if>
+                <if test="purType != null and purType == 0">
+                    and dor.nx_DO_purchase_goods_id = -1
+                </if>
+                <if test="purType != null and purType == 1">
+                    and dor.nx_DO_purchase_goods_id != -1
+                </if>
+                <if test="status != null">
+                    and nx_DO_status &lt; #{status}
+                </if>
+                <if test="equalStatus != null">
+                    and nx_DO_status = #{equalStatus}
+                </if>
+                <if test="returnStatus != null">
+                    and nx_DO_return_status &lt; #{returnStatus}
+                </if>
+                <if test="equalPurStatus != null">
+                    and dor.nx_DO_purchase_status = #{equalPurStatus}
+                </if>
+                <if test="purStatus != null">
+                    and dor.nx_DO_purchase_status &lt; #{purStatus}
+                </if>
+                <if test="subtotal != null">
+                    and dor.nx_DO_subtotal &gt; #{subtotal}
+                </if>
+                <if test="arriveDate != null">
+                    and nx_DO_arrive_Date = #{arriveDate}
+                </if>
+                <if test="depFatherId != null">
+                    and dor.nx_DO_department_father_id = #{depFatherId}
+                </if>
+                <if test="depId != null">
+                    and dor.nx_DO_department_id = #{depId}
+                </if>
+            </where>
+            order by great_sort, great_id, grand_sort, ndfg_sort,
+                     dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort
+        ) as sorted_goods
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = sorted_goods.nx_distributer_goods_id
+        left join nx_department_orders as ndo on ndo.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+             and ndo.nx_DO_purchase_goods_id = -1 and ndo.nx_DO_purchase_status &lt; 4
+             <if test="depFatherId != null">
+                 and ndo.nx_DO_department_father_id = #{depFatherId}
+             </if>
+             <if test="depId != null">
+                 and ndo.nx_DO_department_id = #{depId}
+             </if>
+        left join nx_department as ds on ds.nx_department_id = ndo.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = ndo.nx_DO_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
+        left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+        left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        order by great.nx_dfg_father_goods_sort, great.nx_distributer_father_goods_id, grand.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort,
+                 dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort, df.nx_department_id
+    </select>
 
-<!--        &lt;!&ndash; ② 左联：关联下级部门 &ndash;&gt;-->
-<!--        LEFT JOIN nx_department AS nds-->
-<!--        ON nds.nx_department_id = dor.nx_DO_department_id-->
-
-<!--        &lt;!&ndash; ③ 左联：关联上级部门 &ndash;&gt;-->
-<!--        LEFT JOIN nx_department AS ndf-->
-<!--        ON ndf.nx_department_id = nds.nx_department_father_id-->
-
-<!--        &lt;!&ndash; ④ 左联：关联大类部门 &ndash;&gt;-->
-<!--        LEFT JOIN gb_department AS ngds-->
-<!--        ON ngds.gb_department_id = dor.nx_DO_gb_department_id-->
-
-<!--        &lt;!&ndash; ⑤ 左联：关联大类上级部门 &ndash;&gt;-->
-<!--        LEFT JOIN gb_department AS ngdf-->
-<!--        ON ngdf.gb_department_id = dor.nx_DO_gb_department_father_id-->
-
-<!--        &lt;!&ndash; ⑥ 左联：关联餐厅信息 &ndash;&gt;-->
-<!--        LEFT JOIN nx_restraunt AS ndnr-->
-<!--        ON ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id-->
-
-<!--        &lt;!&ndash; ⑦ 左联：关联分销商商品信息 &ndash;&gt;-->
-<!--        LEFT JOIN nx_distributer_goods AS ndg-->
-<!--        ON ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id-->
-
-<!--        &lt;!&ndash; ⑧ 左联：关联货架商品 &ndash;&gt;-->
-<!--        LEFT JOIN nx_distributer_goods_shelf_goods AS ndgsg2-->
-<!--        ON ndgsg2.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id-->
-
-<!--        &lt;!&ndash; ⑨ 左联：关联货架库存 &ndash;&gt;-->
-<!--        LEFT JOIN nx_distributer_goods_shelf_stock AS ndgss-->
-<!--        ON ndgss.nx_dgss_nx_dis_goods_id = ndg.nx_distributer_goods_id-->
-
-<!--        &lt;!&ndash; ⑩ 左联：关联部门商品 &ndash;&gt;-->
-<!--        LEFT JOIN nx_department_dis_goods AS nddg-->
-<!--        ON nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id-->
-<!--        AND nddg.nx_DDG_gb_department_id = dor.nx_DO_gb_department_id-->
-
-<!--        <where>-->
-<!--            &lt;!&ndash; 必要条件：根据 shelfId 区分“空货架”与“非空货架” &ndash;&gt;-->
-<!--            <if test="shelfId != null and shelfId == 0">-->
-<!--                AND ndgsg.nx_DGSG_dis_goods_id IS NULL-->
-<!--            </if>-->
-<!--            <if test="shelfId != null and shelfId == 1">-->
-<!--                AND ndgsg.nx_DGSG_dis_goods_id IS NOT NULL-->
-<!--            </if>-->
-
-<!--            &lt;!&ndash; 根据 disId 筛分销商 &ndash;&gt;-->
-<!--            <if test="disId != null">-->
-<!--                AND dor.nx_DO_distributer_id = #{disId}-->
-<!--            </if>-->
-
-<!--            &lt;!&ndash; 其他可选条件，依旧写 here &ndash;&gt;-->
-<!--            <if test="goodsType != null">-->
-<!--                AND dor.nx_DO_goods_type = #{goodsType}-->
-<!--            </if>-->
-<!--            <if test="gbDepFatherId != null">-->
-<!--                AND dor.nx_DO_gb_department_father_id = #{gbDepFatherId}-->
-<!--            </if>-->
-<!--            <if test="gbDepId != null">-->
-<!--                AND dor.nx_DO_gb_department_id = #{gbDepId}-->
-<!--            </if>-->
-<!--            <if test="depFatherId != null">-->
-<!--                AND dor.nx_DO_department_father_id = #{depFatherId}-->
-<!--            </if>-->
-<!--            <if test="resFatherId != null">-->
-<!--                AND dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}-->
-<!--            </if>-->
-
-<!--            <if test="status != null">-->
-<!--                AND dor.nx_DO_status < #{status}-->
-<!--            </if>-->
-<!--            <if test="disGoodsId != null">-->
-<!--                AND dor.nx_DO_dis_goods_id = #{disGoodsId}-->
-<!--            </if>-->
-<!--            <if test="grandId != null">-->
-<!--                AND dor.nx_DO_dis_goods_grand_id = #{grandId}-->
-<!--            </if>-->
-<!--            <if test="purStatus != null">-->
-<!--                AND dor.nx_DO_purchase_status < #{purStatus}-->
-<!--            </if>-->
-<!--            <if test="dayuPurStatus != null">-->
-<!--                AND dor.nx_DO_purchase_status > #{dayuPurStatus}-->
-<!--            </if>-->
-<!--            <if test="equalStatus != null">-->
-<!--                AND dor.nx_DO_status = #{equalStatus}-->
-<!--            </if>-->
-<!--            <if test="equalPurStatus != null">-->
-<!--                AND dor.nx_DO_purchase_status = #{equalPurStatus}-->
-<!--            </if>-->
-
-<!--            <if test="arriveDate != null">-->
-<!--                AND dor.nx_DO_arrive_date = #{arriveDate}-->
-<!--            </if>-->
-<!--            <if test="startDate != null">-->
-<!--                AND dor.nx_DO_arrive_date &gt;= #{startDate}-->
-<!--            </if>-->
-<!--            <if test="stopDate != null">-->
-<!--                AND dor.nx_DO_arrive_date &lt;= #{stopDate}-->
-<!--            </if>-->
-
-<!--            <if test="purType != null and purType == -1">-->
-<!--                AND dor.nx_DO_purchase_goods_id IS NULL-->
-<!--            </if>-->
-<!--            <if test="purType != null and purType == 0">-->
-<!--                AND dor.nx_DO_purchase_goods_id = -1-->
-<!--            </if>-->
-<!--            <if test="purType != null and purType == 1">-->
-<!--                AND dor.nx_DO_purchase_goods_id != -1-->
-<!--            </if>-->
-<!--            <if test="weightId != null and weightId == 1">-->
-<!--                AND dor.nx_DO_weight_id IS NOT NULL-->
-<!--            </if>-->
-<!--            <if test="weightId != null and weightId == 0">-->
-<!--                AND dor.nx_DO_weight_id IS NULL-->
-<!--            </if>-->
-<!--            <if test="nxDepIds != null">-->
-<!--                AND dor.nx_DO_department_father_id IN-->
-<!--                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">-->
-<!--                    #{id}-->
-<!--                </foreach>-->
-<!--            </if>-->
-<!--            <if test="gbDepIds != null">-->
-<!--                AND dor.nx_DO_gb_department_father_id IN-->
-<!--                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">-->
-<!--                    #{id}-->
-<!--                </foreach>-->
-<!--            </if>-->
-<!--        </where>-->
-
-<!--        ORDER BY ndgsg.nx_DGSG_sort-->
-
-<!--        <if test="offset != null and limit != null">-->
-<!--            LIMIT #{offset}, #{limit}-->
-<!--        </if>-->
-<!--    </select>-->
 
     <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentOrdersEntity"
             useGeneratedKeys="true" keyProperty="nxDepartmentOrdersId">
@@ -6995,7 +7605,9 @@
          `nx_DO_standard`,
          `nx_DO_remark`,
          `nx_DO_weight`,
+         `nx_DO_weight_kg`,
          `nx_DO_price`,
+         `nx_DO_price_kg`,
          `nx_DO_subtotal`,
          `nx_DO_department_id`,
          `nx_DO_department_father_id`,
@@ -7055,7 +7667,9 @@
                 #{nxDoStandard},
                 #{nxDoRemark},
                 #{nxDoWeight},
+                #{nxDoWeightKg},
                 #{nxDoPrice},
+                #{nxDoPriceKg},
                 #{nxDoSubtotal},
                 #{nxDoDepartmentId},
                 #{nxDoDepartmentFatherId},
@@ -7107,17 +7721,264 @@
     </insert>
     <insert id="insertFromOrder">
         INSERT INTO nx_department_order_history
-        SELECT *
+        (`nx_department_orders_id`,
+         `nx_DO_nx_goods_id`,
+         `nx_DO_nx_goods_father_id`,
+         `nx_DO_dis_goods_id`,
+         `nx_DO_dis_goods_father_id`,
+         `nx_DO_dep_dis_goods_id`,
+         `nx_DO_dep_dis_goods_price`,
+         `nx_DO_quantity`,
+         `nx_DO_standard`,
+         `nx_DO_remark`,
+         `nx_DO_weight`,
+         `nx_DO_weight_kg`,
+         `nx_DO_price`,
+         `nx_DO_price_kg`,
+         `nx_DO_subtotal`,
+         `nx_DO_department_id`,
+         `nx_DO_department_father_id`,
+         `nx_DO_distributer_id`,
+         `nx_DO_purchase_user_id`,
+         `nx_DO_bill_id`,
+         `nx_DO_status`,
+         `nx_DO_order_user_id`,
+         `nx_DO_pick_user_id`,
+         `nx_DO_account_user_id`,
+         `nx_DO_purchase_status`,
+         `nx_DO_apply_date`,
+         `nx_DO_arrive_date`,
+         `nx_DO_purchase_goods_id`,
+         `nx_DO_arrive_only_date`,
+         `nx_DO_apply_full_time`,
+         `nx_DO_goods_type`,
+         `nx_DO_operation_time`,
+         `nx_DO_arrive_what_day`,
+         `nx_DO_is_agent`,
+         `nx_DO_arrive_weeks_year`,
+         `nx_DO_apply_only_time`,
+         `nx_DO_cost_price`,
+         `nx_DO_cost_subtotal`,
+         `nx_DO_gb_distributer_id`,
+         `nx_DO_gb_department_id`,
+         `nx_DO_gb_department_father_id`,
+         `nx_DO_return_weight`,
+         `nx_DO_return_subtotal`,
+         `nx_DO_return_bill_id`,
+         `nx_DO_return_status`,
+         `nx_DO_weight_id`,
+         `nx_DO_profit_subtotal`,
+         `nx_DO_profit_scale`,
+         `nx_DO_nx_community_id`,
+         `nx_DO_nx_comm_restraunt_id`,
+         `nx_DO_nx_comm_restraunt_father_id`,
+         `nx_DO_gb_department_order_id`,
+         `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_cost_price_update`,
+         `nx_DO_cost_price_level`,
+         `nx_DO_dis_goods_grand_id`,
+         `nx_DO_print_standard`,
+         `nx_DO_today_order`,
+         `nx_DO_price_different`,
+         `nx_DO_expect_price`,
+         `nx_DO_goods_name`,
+         `nx_DO_gb_dep_dis_goods_id`)
+        SELECT
+         `nx_department_orders_id`,
+         `nx_DO_nx_goods_id`,
+         `nx_DO_nx_goods_father_id`,
+         `nx_DO_dis_goods_id`,
+         `nx_DO_dis_goods_father_id`,
+         `nx_DO_dep_dis_goods_id`,
+         `nx_DO_dep_dis_goods_price`,
+         `nx_DO_quantity`,
+         `nx_DO_standard`,
+         `nx_DO_remark`,
+         `nx_DO_weight`,
+         `nx_DO_weight_kg`,
+         `nx_DO_price`,
+         `nx_DO_price_kg`,
+         `nx_DO_subtotal`,
+         `nx_DO_department_id`,
+         `nx_DO_department_father_id`,
+         `nx_DO_distributer_id`,
+         `nx_DO_purchase_user_id`,
+         `nx_DO_bill_id`,
+         `nx_DO_status`,
+         `nx_DO_order_user_id`,
+         `nx_DO_pick_user_id`,
+         `nx_DO_account_user_id`,
+         `nx_DO_purchase_status`,
+         `nx_DO_apply_date`,
+         `nx_DO_arrive_date`,
+         `nx_DO_purchase_goods_id`,
+         `nx_DO_arrive_only_date`,
+         `nx_DO_apply_full_time`,
+         `nx_DO_goods_type`,
+         `nx_DO_operation_time`,
+         `nx_DO_arrive_what_day`,
+         `nx_DO_is_agent`,
+         `nx_DO_arrive_weeks_year`,
+         `nx_DO_apply_only_time`,
+         `nx_DO_cost_price`,
+         `nx_DO_cost_subtotal`,
+         `nx_DO_gb_distributer_id`,
+         `nx_DO_gb_department_id`,
+         `nx_DO_gb_department_father_id`,
+         `nx_DO_return_weight`,
+         `nx_DO_return_subtotal`,
+         `nx_DO_return_bill_id`,
+         `nx_DO_return_status`,
+         `nx_DO_weight_id`,
+         `nx_DO_profit_subtotal`,
+         `nx_DO_profit_scale`,
+         `nx_DO_nx_community_id`,
+         `nx_DO_nx_comm_restraunt_id`,
+         `nx_DO_nx_comm_restraunt_father_id`,
+         `nx_DO_gb_department_order_id`,
+         `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_cost_price_update`,
+         `nx_DO_cost_price_level`,
+         `nx_DO_dis_goods_grand_id`,
+         `nx_DO_print_standard`,
+         `nx_DO_today_order`,
+         `nx_DO_price_different`,
+         `nx_DO_expect_price`,
+         `nx_DO_goods_name`,
+         `nx_DO_gb_dep_dis_goods_id`
         FROM nx_department_orders
         WHERE nx_department_orders_id = #{nxDepartmentOrdersId}
     </insert>
 
     <insert id="insertToOrder">
         INSERT INTO nx_department_orders
-        SELECT *
+        (`nx_department_orders_id`,
+         `nx_DO_nx_goods_id`,
+         `nx_DO_nx_goods_father_id`,
+         `nx_DO_dis_goods_id`,
+         `nx_DO_dis_goods_father_id`,
+         `nx_DO_dep_dis_goods_id`,
+         `nx_DO_dep_dis_goods_price`,
+         `nx_DO_quantity`,
+         `nx_DO_standard`,
+         `nx_DO_remark`,
+         `nx_DO_weight`,
+         `nx_DO_weight_kg`,
+         `nx_DO_price`,
+         `nx_DO_price_kg`,
+         `nx_DO_subtotal`,
+         `nx_DO_department_id`,
+         `nx_DO_department_father_id`,
+         `nx_DO_distributer_id`,
+         `nx_DO_bill_id`,
+         `nx_DO_status`,
+         `nx_DO_order_user_id`,
+         `nx_DO_pick_user_id`,
+         `nx_DO_account_user_id`,
+         `nx_DO_purchase_user_id`,
+         `nx_DO_purchase_goods_id`,
+         `nx_DO_purchase_status`,
+         `nx_DO_apply_date`,
+         `nx_DO_arrive_date`,
+         `nx_DO_arrive_only_date`,
+         `nx_DO_apply_full_time`,
+         `nx_DO_operation_time`,
+         `nx_DO_arrive_what_day`,
+         `nx_DO_is_agent`,
+         `nx_DO_arrive_weeks_year`,
+         `nx_DO_apply_only_time`,
+         `nx_DO_cost_price`,
+         `nx_DO_cost_subtotal`,
+         `nx_DO_gb_distributer_id`,
+         `nx_DO_gb_department_id`,
+         `nx_DO_gb_department_father_id`,
+         `nx_DO_return_weight`,
+         `nx_DO_return_subtotal`,
+         `nx_DO_return_bill_id`,
+         `nx_DO_return_status`,
+         `nx_DO_weight_id`,
+         `nx_DO_profit_subtotal`,
+         `nx_DO_profit_scale`,
+         `nx_DO_nx_community_id`,
+         `nx_DO_nx_comm_restraunt_id`,
+         `nx_DO_nx_comm_restraunt_father_id`,
+         `nx_DO_gb_department_order_id`,
+         `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_cost_price_update`,
+         `nx_DO_cost_price_level`,
+         `nx_DO_dis_goods_grand_id`,
+         `nx_DO_goods_type`,
+         `nx_DO_print_standard`,
+         `nx_DO_today_order`,
+         `nx_DO_price_different`,
+         `nx_DO_expect_price`,
+         `nx_DO_goods_name`,
+         `nx_DO_gb_dep_dis_goods_id`)
+        SELECT
+         `nx_department_orders_id`,
+         `nx_DO_nx_goods_id`,
+         `nx_DO_nx_goods_father_id`,
+         `nx_DO_dis_goods_id`,
+         `nx_DO_dis_goods_father_id`,
+         `nx_DO_dep_dis_goods_id`,
+         `nx_DO_dep_dis_goods_price`,
+         `nx_DO_quantity`,
+         `nx_DO_standard`,
+         `nx_DO_remark`,
+         `nx_DO_weight`,
+         `nx_DO_weight_kg`,
+         `nx_DO_price`,
+         `nx_DO_price_kg`,
+         `nx_DO_subtotal`,
+         `nx_DO_department_id`,
+         `nx_DO_department_father_id`,
+         `nx_DO_distributer_id`,
+         `nx_DO_purchase_user_id`,
+         `nx_DO_bill_id`,
+         `nx_DO_status`,
+         `nx_DO_order_user_id`,
+         `nx_DO_pick_user_id`,
+         `nx_DO_account_user_id`,
+         `nx_DO_purchase_status`,
+         `nx_DO_apply_date`,
+         `nx_DO_arrive_date`,
+         `nx_DO_purchase_goods_id`,
+         `nx_DO_arrive_only_date`,
+         `nx_DO_apply_full_time`,
+         `nx_DO_goods_type`,
+         `nx_DO_operation_time`,
+         `nx_DO_arrive_what_day`,
+         `nx_DO_is_agent`,
+         `nx_DO_arrive_weeks_year`,
+         `nx_DO_apply_only_time`,
+         `nx_DO_cost_price`,
+         `nx_DO_cost_subtotal`,
+         `nx_DO_gb_distributer_id`,
+         `nx_DO_gb_department_id`,
+         `nx_DO_gb_department_father_id`,
+         `nx_DO_return_weight`,
+         `nx_DO_return_subtotal`,
+         `nx_DO_return_bill_id`,
+         `nx_DO_return_status`,
+         `nx_DO_weight_id`,
+         `nx_DO_profit_subtotal`,
+         `nx_DO_profit_scale`,
+         `nx_DO_nx_community_id`,
+         `nx_DO_nx_comm_restraunt_id`,
+         `nx_DO_nx_comm_restraunt_father_id`,
+         `nx_DO_gb_department_order_id`,
+         `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_cost_price_update`,
+         `nx_DO_cost_price_level`,
+         `nx_DO_dis_goods_grand_id`,
+         `nx_DO_print_standard`,
+         `nx_DO_today_order`,
+         `nx_DO_price_different`,
+         `nx_DO_expect_price`,
+         `nx_DO_goods_name`,
+         `nx_DO_gb_dep_dis_goods_id`
         FROM nx_department_order_history
         WHERE nx_department_orders_id = #{nxDepartmentOrdersId}
-
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.NxDepartmentOrdersEntity">
@@ -7161,7 +8022,9 @@
             </if>
             <if test="nxDoCostSubtotal != '-99'">`nx_DO_cost_subtotal` = #{nxDoCostSubtotal},</if>
             <if test="nxDoPrice != '-99'">`nx_DO_price` = #{nxDoPrice},</if>
+            <if test="nxDoPriceKg != null">`nx_DO_price_kg` = #{nxDoPriceKg},</if>
             <if test="nxDoWeight != '-99'">`nx_DO_weight` = #{nxDoWeight},</if>
+            <if test="nxDoWeightKg != null">`nx_DO_weight_kg` = #{nxDoWeightKg},</if>
             <if test="nxDoSubtotal != '-99'">`nx_DO_subtotal` = #{nxDoSubtotal},</if>
             <if test="nxDoPurchaseGoodsId != '-99'">`nx_DO_purchase_goods_id` = #{nxDoPurchaseGoodsId},</if>
             <if test="nxDoPurchaseUserId != '-99'">`nx_DO_purchase_user_id` = #{nxDoPurchaseUserId},</if>
@@ -7201,5 +8064,726 @@
             #{nxDepartmentOrdersId}
         </foreach>
     </delete>
+
+    <!-- 查询货架列表（仅基本信息，包含订单数量统计） -->
+    <resultMap id="shelfBasic" type="ShelfListSimpleDTO">
+        <id property="nxDistributerGoodsShelfId" column="nx_distributer_goods_shelf_id"/>
+        <result property="nxDistributerGoodsShelfName" column="nx_distributer_goods_shelf_name"/>
+        <result property="nxDistributerGoodsShelfSort" column="nx_distributer_goods_shelf_sort"/>
+        <result property="nxDistributerGoodsShelfDisId" column="nx_distributer_goods_shelf_dis_id"/>
+        <result property="newOrderCount" column="order_count"/>
+    </resultMap>
+
+    <select id="queryShelfListBasic" resultMap="shelfBasic">
+        select
+        ndgs.nx_distributer_goods_shelf_id,
+        ndgs.nx_distributer_goods_shelf_name,
+        ndgs.nx_distributer_goods_shelf_sort,
+        ndgs.nx_distributer_goods_shelf_dis_id,
+        COUNT(DISTINCT dor.nx_department_orders_id) as order_count
+        from nx_distributer_goods_shelf as ndgs
+        inner join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_shelf_id = ndgs.nx_distributer_goods_shelf_id
+        inner join nx_department_orders as dor on dor.nx_DO_dis_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        <where>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="nxDepIds != null and nxDepIds.size() > 0">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null and gbDepIds.size() > 0">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        group by 
+            ndgs.nx_distributer_goods_shelf_id,
+            ndgs.nx_distributer_goods_shelf_name,
+            ndgs.nx_distributer_goods_shelf_sort,
+            ndgs.nx_distributer_goods_shelf_dis_id
+        order by ndgs.nx_distributer_goods_shelf_sort
+    </select>
+
+    <!-- 查询指定货架有订单的商品数量（去重后的商品种类数） -->
+    <!-- 统计该货架下，有订单的商品种类数量 -->
+    <select id="queryShelfGoodsCount" resultType="java.lang.Integer">
+        select IFNULL(COUNT(DISTINCT ndgsg.nx_DGSG_dis_goods_id), 0)
+        from nx_distributer_goods_shelf_goods as ndgsg
+        inner join nx_department_orders as dor on dor.nx_DO_dis_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        <where>
+            <!-- 指定货架ID -->
+            <if test="shelfId != null">
+                and ndgsg.nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <!-- 分销商ID -->
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <!-- 订单状态：status < 3 表示待出库订单 -->
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <!-- 采购状态：purStatus < 4 表示待出库状态 -->
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <!-- 部门过滤：NX部门 -->
+            <if test="nxDepIds != null">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <!-- 部门过滤：GB部门 -->
+            <if test="gbDepIds != null">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!-- ========== 简化版查询：用于 stockerGetShelfGoodsDetail 接口 ========== -->
+    
+    <!-- 简化的订单 resultMap -->
+    <resultMap id="ordersSimple" type="NxDepartmentOrdersEntity">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoWeightKg" column="nx_DO_weight_kg"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <!-- 简化的部门信息 -->
+        <association property="nxDepartmentEntity" javaType="NxDepartmentEntity">
+            <id property="nxDepartmentId" column="nx_department_id"/>
+            <result property="nxDepartmentName" column="nx_department_name"/>
+            <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+            <association property="fatherDepartmentEntity" javaType="NxDepartmentEntity">
+                <id property="nxDepartmentId" column="dd_nx_department_id"/>
+                <result property="nxDepartmentAttrName" column="dd_nx_department_attr_name"/>
+            </association>
+        </association>
+        <association property="gbDepartmentEntity" javaType="GbDepartmentEntity">
+            <id property="gbDepartmentId" column="nds_gb_department_id"/>
+            <result property="gbDepartmentName" column="nds_gb_department_name"/>
+            <association property="fatherGbDepartmentEntity" javaType="GbDepartmentEntity">
+                <id property="gbDepartmentId" column="ndf_dd_gb_department_id"/>
+                <result property="gbDepartmentName" column="ndf_dd_gb_department_name"/>
+            </association>
+        </association>
+        <association property="nxRestrauntEntity" javaType="NxRestrauntEntity">
+            <id property="nxRestrauntId" column="nx_restraunt_id"/>
+            <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
+        </association>
+    </resultMap>
+
+    <!-- 简化的商品 resultMap -->
+    <resultMap id="disGoodsSimple" type="NxDistributerGoodsEntity">
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <collection property="nxDepartmentOrdersEntities" resultMap="ordersSimple"/>
+    </resultMap>
+
+    <!-- 简化的货架商品 resultMap -->
+    <resultMap id="shelfGoodsSimple" type="NxDistributerGoodsShelfGoodsEntity">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoodsSimple"/>
+    </resultMap>
+
+    <!-- 简化的货架 resultMap -->
+    <resultMap id="disShelfSimple" type="NxDistributerGoodsShelfEntity">
+        <id property="nxDistributerGoodsShelfId" column="nx_distributer_goods_shelf_id"/>
+        <result property="nxDistributerGoodsShelfSort" column="nx_distributer_goods_shelf_sort"/>
+        <result property="nxDistributerGoodsShelfDisId" column="nx_distributer_goods_shelf_dis_id"/>
+        <result property="nxDistributerGoodsShelfName" column="nx_distributer_goods_shelf_name"/>
+        <collection property="nxDisGoodsShelfGoodsEntities" resultMap="shelfGoodsSimple"/>
+    </resultMap>
+
+    <!-- 简化的货架商品详情查询（只返回必要字段） -->
+    <select id="queryShelfGoodsDetailSimple" resultMap="disShelfSimple">
+        select
+        -- 货架基本信息
+        ndgs.nx_distributer_goods_shelf_id,
+        ndgs.nx_distributer_goods_shelf_name,
+        ndgs.nx_distributer_goods_shelf_sort,
+        ndgs.nx_distributer_goods_shelf_dis_id,
+        
+        -- 货架商品基本信息
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        
+        -- 商品基本信息（只返回必要字段）
+        ndg.nx_distributer_goods_id,
+        ndg.nx_dg_goods_name,
+        ndg.nx_dg_goods_standardname,
+        ndg.nx_dg_goods_standard_weight,
+        ndg.nx_dg_carton_unit,
+        ndg.nx_dg_goods_brand,
+        
+        -- 订单基本信息（只返回必要字段）
+        dor.nx_department_orders_id,
+        dor.nx_DO_quantity,
+        dor.nx_DO_standard,
+        dor.nx_DO_weight,
+        dor.nx_DO_weight_kg,
+        dor.nx_DO_remark,
+        dor.nx_DO_print_standard,
+        
+        -- 部门信息（简化）
+        nds.nx_department_id,
+        nds.nx_department_name,
+        nds.nx_department_attr_name,
+        ndf.nx_department_id 'dd_nx_department_id',
+        ndf.nx_department_attr_name 'dd_nx_department_attr_name',
+        
+        -- GB部门信息（简化）
+        ngds.gb_department_id 'nds_gb_department_id',
+        ngds.gb_department_name 'nds_gb_department_name',
+        ngdf.gb_department_id 'ndf_dd_gb_department_id',
+        ngdf.gb_department_name 'ndf_dd_gb_department_name',
+        
+        -- 餐厅信息（简化）
+        ndnr.nx_restraunt_id,
+        ndnr.nx_restraunt_attr_name
+        
+        from nx_department_orders as dor
+        left join nx_department as nds on nds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as ndf on ndf.nx_department_id = nds.nx_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
+        left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
+        left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        <where>
+            <if test="targetShelfId != null">
+                and ndgs.nx_distributer_goods_shelf_id = #{targetShelfId}
+            </if>
+            <if test="shelfId != null and shelfId == 1">
+                and ndgsg.nx_DGSG_dis_goods_id is not null
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="nxDepIds != null">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        order by ndgs.nx_distributer_goods_shelf_sort, ndgsg.nx_DGSG_sort
+    </select>
+
+    <!-- ========== 超简化版查询：使用DTO对象，字段扁平化 ========== -->
+    
+    <!-- 超简化的订单 resultMap -->
+    <resultMap id="shelfOrderUltraSimple" type="ShelfOrderSimpleDTO">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="depName" column="dep_name"/>
+        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="fatherDepartmentAttrName" column="father_department_attr_name"/>
+        <result property="gbDepName" column="gb_dep_name"/>
+        <result property="restrauntName" column="restraunt_name"/>
+        <result property="pickDetail" column="pick_detail"/>
+    </resultMap>
+
+    <!-- 超简化的商品 resultMap -->
+    <resultMap id="shelfGoodsUltraSimple" type="ShelfGoodsSimpleDTO">
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <collection property="orders" resultMap="shelfOrderUltraSimple"/>
+    </resultMap>
+
+    <!-- 超简化的货架商品 resultMap -->
+    <resultMap id="shelfGoodsShelfGoodsUltraSimple" type="ShelfGoodsShelfGoodsSimpleDTO">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <association property="goods" resultMap="shelfGoodsUltraSimple"/>
+        <!-- 查询同一商品在其他货架的信息（只包含货架名称） -->
+        <collection property="sameShelfGoods" 
+                    select="querySameShelfGoodsForSimple" 
+                    column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
+    </resultMap>
+
+    <!-- 查询同一商品在其他货架的信息（简化版，只返回货架名称） -->
+    <resultMap id="sameShelfGoodsSimple" type="ShelfGoodsShelfGoodsSimpleDTO">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="shelfName" column="shelf_name"/>
+    </resultMap>
+
+    <select id="querySameShelfGoodsForSimple" resultMap="sameShelfGoodsSimple">
+        select distinct
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_sort,
+        ndgs.nx_distributer_goods_shelf_name as shelf_name
+        from nx_distributer_goods_shelf_goods as ndgsg
+        left join nx_distributer_goods_shelf as ndgs 
+            on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        where ndgsg.nx_DGSG_dis_goods_id = #{disGoodsId}
+            and ndgsg.nx_distributer_goods_shelf_goods_id != #{currentShelfGoodsId}
+        order by ndgsg.nx_DGSG_shelf_id, ndgsg.nx_DGSG_sort
+    </select>
+
+    <!-- 超简化的货架 resultMap -->
+    <resultMap id="shelfDetailUltraSimple" type="ShelfDetailSimpleDTO">
+        <id property="nxDistributerGoodsShelfId" column="nx_distributer_goods_shelf_id"/>
+        <result property="nxDistributerGoodsShelfName" column="nx_distributer_goods_shelf_name"/>
+        <result property="nxDistributerGoodsShelfSort" column="nx_distributer_goods_shelf_sort"/>
+        <result property="nxDistributerGoodsShelfDisId" column="nx_distributer_goods_shelf_dis_id"/>
+        <collection property="goodsList" resultMap="shelfGoodsShelfGoodsUltraSimple"/>
+    </resultMap>
+
+    <!-- 超简化的货架商品详情查询（字段扁平化，使用DTO对象） -->
+    <select id="queryShelfGoodsDetailUltraSimple" resultMap="shelfDetailUltraSimple">
+        select
+        -- 货架基本信息
+        ndgs.nx_distributer_goods_shelf_id,
+        ndgs.nx_distributer_goods_shelf_name,
+        ndgs.nx_distributer_goods_shelf_sort,
+        ndgs.nx_distributer_goods_shelf_dis_id,
+        
+        -- 货架商品基本信息
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        
+        -- 商品基本信息（只返回必要字段）
+        ndg.nx_distributer_goods_id,
+        ndg.nx_dg_goods_name,
+        ndg.nx_dg_goods_standardname,
+        ndg.nx_dg_goods_standard_weight,
+        ndg.nx_dg_carton_unit,
+        ndg.nx_dg_goods_brand,
+        
+        -- 订单基本信息（只返回必要字段）
+        dor.nx_department_orders_id,
+        dor.nx_DO_quantity,
+        dor.nx_DO_standard,
+        dor.nx_DO_weight,
+        dor.nx_DO_remark,
+        dor.nx_DO_print_standard,
+        
+        -- 部门名称（扁平化字符串，使用 CONCAT 拼接）
+        CASE 
+            WHEN ndf.nx_department_attr_name IS NOT NULL AND ndf.nx_department_attr_name != '' 
+            THEN CONCAT(ndf.nx_department_attr_name, '.', nds.nx_department_attr_name)
+            ELSE nds.nx_department_attr_name
+        END as dep_name,
+        
+        -- 部门属性名称（单独返回）
+        nds.nx_department_attr_name as nx_department_attr_name,
+        
+        -- 父部门属性名称（单独返回）
+        ndf.nx_department_attr_name as father_department_attr_name,
+        
+        -- GB部门名称（扁平化字符串）
+        CASE 
+            WHEN ngdf.gb_department_name IS NOT NULL AND ngdf.gb_department_name != '' 
+            THEN CONCAT(ngdf.gb_department_name, '.', ngds.gb_department_name)
+            ELSE ngds.gb_department_name
+        END as gb_dep_name,
+        
+        -- 餐厅名称
+        ndnr.nx_restraunt_attr_name as restraunt_name,
+        
+        -- 拣货详情
+        nddg.nx_DDG_pick_detail as pick_detail
+        
+        from nx_department_orders as dor
+        left join nx_department as nds on nds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as ndf on ndf.nx_department_id = nds.nx_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
+        left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
+        left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+            and nddg.nx_DDG_department_id = dor.nx_DO_department_id
+        <where>
+            <if test="targetShelfId != null">
+                and ndgs.nx_distributer_goods_shelf_id = #{targetShelfId}
+            </if>
+            <if test="shelfId != null and shelfId == 1">
+                and ndgsg.nx_DGSG_dis_goods_id is not null
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="nxDepIds != null">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        order by ndgs.nx_distributer_goods_shelf_sort, ndgsg.nx_DGSG_sort
+    </select>
+
+    <!-- ========== 类别商品查询：用于 stockerGetCategoryListWithDepIds 和 stockerGetCategoryGoodsDetail 接口 ========== -->
+    
+    <!-- 类别基本信息 resultMap（曾祖父级别 - Level 0，包含订单数量） -->
+    <resultMap id="categoryBasic" type="CategoryListSimpleDTO">
+        <id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="nx_dfg_father_goods_name"/>
+        <result property="nxDfgFatherGoodsSort" column="nx_dfg_father_goods_sort"/>
+        <result property="nxDfgFatherGoodsColor" column="nx_dfg_father_goods_color"/>
+        <result property="newOrderCount" column="order_count"/>
+    </resultMap>
+
+    <!-- 查询类别列表（曾祖父级别，包含订单数量统计） -->
+    <select id="queryCategoryListBasic" resultMap="categoryBasic">
+        select
+        greatGrand.nx_distributer_father_goods_id,
+        greatGrand.nx_dfg_father_goods_name,
+        greatGrand.nx_dfg_father_goods_sort,
+        greatGrand.nx_dfg_father_goods_color,
+        COUNT(DISTINCT dor.nx_department_orders_id) as order_count
+        from nx_department_orders as dor
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_father_goods as grand on dor.nx_DO_dis_goods_grand_id = grand.nx_distributer_father_goods_id
+        left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
+        <where>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="nxDepIds != null and nxDepIds.size() > 0">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null and gbDepIds.size() > 0">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            -- 只查询有曾祖父的商品
+            and greatGrand.nx_distributer_father_goods_id is not null
+            </where>
+        group by 
+            greatGrand.nx_distributer_father_goods_id,
+            greatGrand.nx_dfg_father_goods_name,
+            greatGrand.nx_dfg_father_goods_sort,
+            greatGrand.nx_dfg_father_goods_color
+        order by greatGrand.nx_dfg_father_goods_sort
+    </select>
+
+    <!-- 查询指定类别有订单的商品数量（去重后的商品种类数） -->
+    <select id="queryCategoryGoodsCount" resultType="java.lang.Integer">
+        select IFNULL(COUNT(DISTINCT dor.nx_DO_dis_goods_id), 0)
+        from nx_department_orders as dor
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_father_goods as grand on dor.nx_DO_dis_goods_grand_id = grand.nx_distributer_father_goods_id
+        left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        <where>
+            <if test="categoryId != null">
+                and greatGrand.nx_distributer_father_goods_id = #{categoryId}
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="nxDepIds != null and nxDepIds.size() > 0">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null and gbDepIds.size() > 0">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!-- ========== 简化版查询：用于 stockerGetCategoryGoodsDetail 接口 ========== -->
+    
+    <!-- 简化的订单 resultMap（类别商品用） -->
+    <resultMap id="categoryOrderUltraSimple" type="CategoryOrderSimpleDTO">
+        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="depName" column="dep_name"/>
+        <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="fatherDepartmentAttrName" column="father_department_attr_name"/>
+        <result property="gbDepName" column="gb_dep_name"/>
+        <result property="restrauntName" column="restraunt_name"/>
+        <result property="pickDetail" column="pick_detail"/>
+    </resultMap>
+
+    <!-- 简化的商品 resultMap（类别商品用） -->
+    <resultMap id="categoryGoodsUltraSimple" type="CategoryGoodsSimpleDTO">
+        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+        <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+        <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <collection property="orders" resultMap="categoryOrderUltraSimple"/>
+    </resultMap>
+
+    <!-- 简化的类别详情 resultMap -->
+    <resultMap id="categoryDetailUltraSimple" type="CategoryDetailSimpleDTO">
+        <id property="nxDistributerFatherGoodsId" column="nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="nx_dfg_father_goods_name"/>
+        <result property="nxDfgFatherGoodsSort" column="nx_dfg_father_goods_sort"/>
+        <result property="nxDfgFatherGoodsColor" column="nx_dfg_father_goods_color"/>
+        <collection property="goodsList" resultMap="categoryGoodsUltraSimple"/>
+    </resultMap>
+
+    <!-- 查询指定类别的商品详情（超简化版，使用DTO对象，字段扁平化） -->
+    <select id="queryCategoryGoodsDetailUltraSimple" resultMap="categoryDetailUltraSimple">
+        select
+        -- 类别基本信息（曾祖父级别）
+        greatGrand.nx_distributer_father_goods_id,
+        greatGrand.nx_dfg_father_goods_name,
+        greatGrand.nx_dfg_father_goods_sort,
+        greatGrand.nx_dfg_father_goods_color,
+
+        -- 商品基本信息（只返回必要字段）
+        ndg.nx_distributer_goods_id,
+        ndg.nx_dg_goods_name,
+        ndg.nx_dg_goods_standardname,
+        ndg.nx_dg_goods_standard_weight,
+        ndg.nx_dg_carton_unit,
+        ndg.nx_dg_goods_brand,
+
+        -- 订单基本信息（只返回必要字段）
+        dor.nx_department_orders_id,
+        dor.nx_DO_quantity,
+        dor.nx_DO_standard,
+        dor.nx_DO_weight,
+        dor.nx_DO_remark,
+        dor.nx_DO_print_standard,
+
+        -- 扁平化的部门信息
+        CONCAT(
+            CASE WHEN ndf.nx_department_attr_name IS NOT NULL AND ndf.nx_department_attr_name != '' 
+            THEN CONCAT(ndf.nx_department_attr_name, '.') ELSE '' END,
+            nds.nx_department_attr_name
+        ) AS dep_name,
+        
+        -- 部门属性名称（单独返回）
+        nds.nx_department_attr_name as nx_department_attr_name,
+        
+        -- 父部门属性名称（单独返回）
+        ndf.nx_department_attr_name as father_department_attr_name,
+        
+        CONCAT(
+            CASE WHEN ngdf.gb_department_name IS NOT NULL AND ngdf.gb_department_name != '' 
+            THEN CONCAT(ngdf.gb_department_name, '.') ELSE '' END,
+            ngds.gb_department_name
+        ) AS gb_dep_name,
+        ndnr.nx_restraunt_attr_name AS restraunt_name,
+        nddg.nx_DDG_pick_detail AS pick_detail
+
+        from nx_department_orders as dor
+        left join nx_department as nds on nds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as ndf on ndf.nx_department_id = nds.nx_department_father_id
+        left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
+        left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
+        left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_father_goods as grand on dor.nx_DO_dis_goods_grand_id = grand.nx_distributer_father_goods_id
+        left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_father_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+            and nddg.nx_DDG_department_id = dor.nx_DO_department_id
+        <where>
+            <if test="categoryId != null">
+                and greatGrand.nx_distributer_father_goods_id = #{categoryId}
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="nxDepIds != null and nxDepIds.size() > 0">
+                and dor.nx_DO_department_father_id in
+                <foreach item="id" collection="nxDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="gbDepIds != null and gbDepIds.size() > 0">
+                and dor.nx_DO_gb_department_father_id in
+                <foreach item="id" collection="gbDepIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        order by greatGrand.nx_dfg_father_goods_sort, greatGrand.nx_distributer_father_goods_id, grand.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort,
+                 ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort, ndf.nx_department_id, dor.nx_department_orders_id
+    </select>
+
+    <!-- ========== 简化版查询：用于 disGetTypePrepareOutCata 接口，只返回曾祖父对象 ========== -->
+    
+    <!-- 简化的曾祖父商品 resultMap -->
+    <resultMap id="greatGrandFatherGoodsUltraSimple" type="GreatGrandFatherGoodsSimpleDTO">
+        <id property="nxDistributerFatherGoodsId" column="greatGrand_nx_distributer_father_goods_id"/>
+        <result property="nxDfgFatherGoodsName" column="greatGrand_nx_dfg_father_goods_name"/>
+        <result property="nxDfgFatherGoodsSort" column="greatGrand_nx_dfg_father_goods_sort"/>
+        <result property="nxDfgFatherGoodsColor" column="greatGrand_nx_dfg_father_goods_color"/>
+        <result property="nxDfgFatherGoodsImg" column="greatGrand_nx_dfg_father_goods_img"/>
+        <result property="newOrderCount" column="order_count"/>
+    </resultMap>
+
+    <!-- 查询曾祖父商品列表（超简化版，只返回基本信息，不包含嵌套对象） -->
+    <select id="queryGreatGrandOrderFatherGoodsUltraSimple" resultMap="greatGrandFatherGoodsUltraSimple">
+        select
+        -- 曾祖父商品基本信息（只返回必要字段）
+        greatGrand.nx_distributer_father_goods_id as greatGrand_nx_distributer_father_goods_id,
+        greatGrand.nx_dfg_father_goods_name as greatGrand_nx_dfg_father_goods_name,
+        greatGrand.nx_dfg_father_goods_sort as greatGrand_nx_dfg_father_goods_sort,
+        greatGrand.nx_dfg_father_goods_color as greatGrand_nx_dfg_father_goods_color,
+        greatGrand.nx_dfg_father_goods_img as greatGrand_nx_dfg_father_goods_img,
+        
+        -- 订单数量（直接统计）
+        COUNT(DISTINCT dor.nx_department_orders_id) as order_count
+        
+        from nx_department_orders as dor
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_father_goods as grand on dor.nx_DO_dis_goods_grand_id = grand.nx_distributer_father_goods_id
+        left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+        left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
+        <where>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="purchaseAuto != null">
+                and ndg.nx_dg_purchase_auto = #{purchaseAuto}
+            </if>
+            -- 只查询有曾祖父的商品
+            and greatGrand.nx_distributer_father_goods_id is not null
+        </where>
+        group by 
+            greatGrand.nx_distributer_father_goods_id,
+            greatGrand.nx_dfg_father_goods_name,
+            greatGrand.nx_dfg_father_goods_sort,
+            greatGrand.nx_dfg_father_goods_color,
+            greatGrand.nx_dfg_father_goods_img
+        -- 按照曾祖父商品的排序字段排序
+        order by greatGrand.nx_dfg_father_goods_sort
+    </select>
+
+    <select id="batchQueryDepartmentOrderStatsSunla"  resultType="java.util.Map">
+        SELECT
+        nx_DO_department_father_id as `depFatherId`,
+        COUNT(CASE WHEN nx_DO_status = -2 and nx_DO_is_agent = 1 THEN 1 END ) as `unDo`,
+        COUNT(CASE WHEN nx_DO_status &gt; -1 AND nx_DO_status &lt; 3 AND nx_DO_price IS NOT NULL  AND  nx_DO_price != 0.1 THEN 1 END) as `hasPrice`,
+        COUNT(CASE WHEN nx_DO_status &gt; -1 AND nx_DO_status &lt; 3 AND nx_DO_purchase_status &gt; 3 THEN 1 END) as `hasWeight`,
+        COUNT(CASE WHEN nx_DO_status &gt; -1 AND nx_DO_status &lt; 3 THEN 1 END) as `totalCount`,
+        COUNT(CASE WHEN nx_DO_status = 2 and nx_DO_purchase_status &gt; 3 and nx_DO_price != 0.1  and  nx_DO_subtotal &gt; 0 THEN 1 END) as `finishCount`,
+        SUM(CASE WHEN nx_DO_status = 2 and nx_DO_purchase_status &gt; 3 THEN nx_DO_subtotal ELSE 0 END) as `totalSubtotal`
+        FROM nx_department_orders
+        WHERE nx_DO_department_father_id IN
+        <foreach collection="depFatherIds" item="depFatherId" open="(" separator="," close=")">
+            #{depFatherId}
+        </foreach>
+        GROUP BY nx_DO_department_father_id
+        </select>
 
 </mapper>

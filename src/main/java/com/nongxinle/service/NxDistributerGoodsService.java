@@ -55,6 +55,8 @@ public interface NxDistributerGoodsService {
 
     List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatId(Map<String, Object> map);
 
+    List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatIdSunHola(Map<String, Object> map);
+
     List<NxDistributerGoodsEntity> queryIfHasSameDisGoods(Map<String, Object> mapS);
 
     List<NxDistributerGoodsEntity>  queryDisGoodsByName(Map<String, Object> map);
@@ -90,6 +92,8 @@ public interface NxDistributerGoodsService {
 
     List<NxDistributerGoodsShelfGoodsEntity> queryDisShelfGoods(Map<String, Object> map);
 
+    List<NxDistributerGoodsShelfGoodsEntity> queryDisShelfGoodsWithNxGoodsId(Map<String, Object> map);
+
     List<NxDistributerGoodsEntity> queryDisLinshiGoodsQuickSearchStr(Map<String, Object> map);
 
     List<NxDistributerGoodsEntity> queryDisNxGoodsQuickSearchStrByGrandId(Map<String, Object> map);
@@ -106,8 +110,6 @@ public interface NxDistributerGoodsService {
 
     int queryNxGoodsSonsSortByParams(Map<String, Object> mapF);
 
-    List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatIdAllGb(Map<String, Object> map);
-
     List<NxDistributerGoodsEntity> queryDisGoodsByLikeName(Map<String, Object> mapOne);
 
     NxDistributerGoodsEntity querySameGoodsWithOrders(Map<String, Object> map);
@@ -117,4 +119,16 @@ public interface NxDistributerGoodsService {
     List<NxDistributerGoodsEntity> queryDisGoodsByAliasLike(Map<String, Object> mapA);
 
     List<Integer> queryOnlyDepGoodsIds(Map<String, Object> map);
+
+    List<Integer> queryOnlyDepGoodsIdsWithPurchaseType(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisUnshelfGoodsWithPage(Map<String, Object> map);
+
+    int queryDisUnshelfGoodsTotal(Map<String, Object> map);
+
+    List<String> queryDisGoodsBrand();
+
+    List<NxDistributerGoodsEntity> queryUnShelfDisGoodsQuickSearchStr(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryUnShelfDisGoodsQuickSearchStrWithNxGoodsId(Map<String, Object> map);
 }

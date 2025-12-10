@@ -91,14 +91,15 @@ public class NxDistributerPurchaseBatchServiceImpl implements NxDistributerPurch
 
 		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatchTotal(map);
     }
+    
+    @Override
+    public Double querySupplierUnSettleSubtotal(Map<String, Object> map) {
+
+		return nxDistributerPurchaseBatchDao.querySupplierUnSettleSubtotal(map);
+    }
+
 
 	@Override
-	public Double queryPurchaseGoodsSubTotal(Map<String, Object> map) {
-		return null;
-	}
-
-
-    @Override
     public Double queryPurchaserCashTotal(Map<String, Object> map1) {
 
 		return nxDistributerPurchaseBatchDao.queryPurchaserCashTotal(map1);

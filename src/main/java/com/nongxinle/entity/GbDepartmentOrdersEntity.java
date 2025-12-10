@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -39,6 +40,7 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	private Integer gbDoDisGoodsId;
 	private Integer gbDoDisGoodsFatherId;
 	private Integer gbDoDisGoodsGrandId;
+	private Integer gbDoDisGoodsGreatId;
 
 	private  Integer gbDoDepDisGoodsId;
 
@@ -159,13 +161,11 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	private String gbDoDsStandardScale;
 	private String gbDoScaleWeight;
 	private String gbDoScalePrice;
+	private String gbDoGoodsName;
 
 
 	private NxGoodsEntity nxGoodsEntity;
     private GbDistributerGoodsEntity gbDistributerGoodsEntity;
-    private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
-    private GbDistributerPurchaseGoodsEntity gbDistributerPurchaseGoodsEntity;
-    private GbDistributerPurchaseGoodsEntity returnPurGoodsEntity;
 
 	private GbDepartmentUserEntity gbDepartmentUserEntity;
 	private GbDepartmentEntity gbDepartmentEntity;
@@ -174,7 +174,7 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	private GbDepartmentUserEntity pickerUserEntity;
 	private NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity;
 
-	private String gbDoGoodsName;
+//	@JsonIgnore
 	private List<GbDistributerGoodsEntity> gbDistributerGoodsEntityList;
 	private TreeSet<NxGoodsEntity> nxGoodsEntities;
 	private List<GbDepartmentOrdersEntity> hasOrderList;
@@ -199,7 +199,7 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 
 	private GbDepartmentGoodsStockEntity selfControlStockEntity;
 	private NxDepartmentOrdersEntity nxDepartmentOrdersEntity;
-	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+//	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 
 
 	@Override

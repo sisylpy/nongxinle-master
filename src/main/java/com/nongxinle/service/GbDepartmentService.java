@@ -59,4 +59,6 @@ public interface GbDepartmentService {
 	GbDepartmentEntity queryDepInfoByDisId(Map<String, Object> map);
 
     int queryDepHasOrdersCount(Map<String, Object> mapDis);
+
+    List<GbDepartmentEntity> queryDepsByDisId(Map<String, Object> map);
 }

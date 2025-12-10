@@ -332,14 +332,70 @@ public class NxCommunityUserController {
 	public R comUserLogin (@RequestBody NxCommunityUserEntity communityUserEntity ) {
 		System.out.println("afdafaskfjaslkdfj;alsf;alsjf;lasflasjflalogigngignigig");
 
+		try {
+			// 检查请求参数
+			if (communityUserEntity == null) {
+				System.out.println("请求参数为空");
+				return R.error(-1, "请求参数不能为空");
+			}
+			
+			String nxCouCode = communityUserEntity.getNxCouCode();
+			if (nxCouCode == null || nxCouCode.trim().isEmpty()) {
+				System.out.println("微信code为空");
+				return R.error(-1, "微信登录code不能为空");
+			}
+			
 		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getCommunityAppID() + "&secret=" +
-				myAPPIDConfig.getCommunityScreat() + "&js_code=" + communityUserEntity.getNxCouCode() +
-				"&grant_type=authorization_code";
+			String appId = myAPPIDConfig.getCommunityAppID();
+			String secret = myAPPIDConfig.getCommunityScreat();
+			
+			if (appId == null || secret == null) {
+				System.out.println("微信配置信息不完整");
+				return R.error(-1, "微信配置信息不完整");
+			}
+			
+			String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + appId + "&secret=" +
+					secret + "&js_code=" + nxCouCode + "&grant_type=authorization_code";
+			
+			System.out.println("requestUrl-====" + url);
+			
 		// 发送请求，返回Json字符串
 		String str = WeChatUtil.httpRequest(url, "GET", null);
+			
+			if (str == null || str.trim().isEmpty()) {
+				System.out.println("微信API返回空响应");
+				return R.error(-1, "微信API返回空响应");
+			}
+			
+			System.out.println("微信API响应: " + str);
+			
 		// 转成Json对象 获取openid
-		JSONObject jsonObject = JSONObject.parseObject(str);
+			JSONObject jsonObject = null;
+			try {
+				jsonObject = JSONObject.parseObject(str);
+			} catch (Exception e) {
+				System.out.println("解析微信API响应失败: " + str);
+				return R.error(-1, "解析微信API响应失败");
+			}
+			
+			if (jsonObject == null) {
+				System.out.println("微信API响应解析后为空");
+				return R.error(-1, "微信API响应解析失败");
+			}
+
+			// 检查微信API返回的错误
+			if (jsonObject.containsKey("errcode")) {
+				Integer errcode = jsonObject.getInteger("errcode");
+				String errmsg = jsonObject.getString("errmsg");
+				System.out.println("微信接口返回错误: errcode=" + errcode + ", errmsg=" + errmsg);
+				return R.error(-1, "微信登录失败: " + errmsg + " (错误码: " + errcode + ")");
+			}
+
+			// 检查是否有openid
+			if (!jsonObject.containsKey("openid") || jsonObject.get("openid") == null) {
+				System.out.println("微信接口未返回openid，返回数据: " + jsonObject);
+				return R.error(-1, "获取openid失败，请检查微信配置");
+			}
 
 		// 我们需要的openid，在一个小程序中，openid是唯一的
 		String openid = jsonObject.get("openid").toString();
@@ -351,15 +407,54 @@ public class NxCommunityUserController {
 
 		if(nxCommunityUserEntity != null){
 			Integer communityUserId = nxCommunityUserEntity.getNxCommunityUserId();
+				if (communityUserId == null) {
+					System.out.println("用户ID为空");
+					return R.error(-1, "用户ID为空");
+				}
+				
 			Map<String, Object> map1 = new HashMap<>();
 			map1.put("userId", communityUserId);
 //			map1.put("roleId", 0);
 			System.out.println("ammmda11111" + map1);
 			NxCommunityUserEntity nxCommunityUserEntity1 = nxCommunityUserService.queryComUserInfo(map1);
+				if (nxCommunityUserEntity1 == null) {
+					return R.error(-1, "查询用户信息失败");
+				}
+				if (nxCommunityUserEntity1.getNxCommunityEntity() != null) {
 			System.out.println("diididididiidi" + nxCommunityUserEntity1.getNxCommunityEntity().getNxCommunityName());
+					NxCommunityEntity communityEntity = nxCommunityUserEntity1.getNxCommunityEntity();
+					
+					// 打破循环引用，避免JSON序列化错误
+					// 1. NxCommunityEntity中包含NxCommunityUserEntity，会造成循环引用
+					communityEntity.setNxCommunityUserEntity(null);
+					
+					// 2. NxECommerceCommunityEntity可能包含循环引用
+					if (communityEntity.getNxECommerceCommunityEntity() != null) {
+						communityEntity.getNxECommerceCommunityEntity().setNxCommunityEntity(null);
+						// NxECommerceEntity也可能包含循环引用
+						if (communityEntity.getNxECommerceCommunityEntity().getNxECommerceEntity() != null) {
+							communityEntity.getNxECommerceCommunityEntity().getNxECommerceEntity().setNxECommerceCommunityEntity(null);
+							communityEntity.getNxECommerceCommunityEntity().getNxECommerceEntity().setNxECommerceCommunityEntities(null);
+						}
+					}
+					
+					// 3. NxECommerceEntity可能包含循环引用
+					if (communityEntity.getNxECommerceEntity() != null) {
+						communityEntity.getNxECommerceEntity().setNxECommerceCommunityEntity(null);
+						communityEntity.getNxECommerceEntity().setNxECommerceCommunityEntities(null);
+					}
+				}
+				System.out.println("准备返回用户数据");
 			return R.ok().put("data", nxCommunityUserEntity1);
 		}else {
 			return R.error(-1,"用户不存在");
+			}
+		} catch (Exception e) {
+			System.out.println("========== comUserLogin 发生异常 ==========");
+			System.out.println("异常类型: " + e.getClass().getName());
+			System.out.println("异常信息: " + e.getMessage());
+			e.printStackTrace();
+			return R.error(-1, "登录失败: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
 		}
 	}
 

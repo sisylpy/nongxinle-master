@@ -3,11 +3,37 @@
 
 <mapper namespace="com.nongxinle.dao.NxDistributerGoodsShelfDao">
 
+	<resultMap id="responsibleUser" type="NxDistributerUserEntity">
+		<id property="nxDistributerUserId" column="ru_nx_distributer_user_id"/>
+		<result property="nxDiuWxNickName" column="ru_nx_DIU_wx_nick_name"/>
+		<result property="nxDiuWxAvartraUrl" column="ru_nx_DIU_wx_avartra_url"/>
+		<result property="nxDiuWxPhone" column="ru_nx_DIU_wx_phone"/>
+		<result property="nxDiuLoginPhone" column="ru_nx_DIU_login_phone"/>
+		<result property="nxDiuDistributerId" column="ru_nx_DIU_distributer_id"/>
+	</resultMap>
 
+	<resultMap id="shelfWithUser" type="com.nongxinle.entity.NxDistributerGoodsShelfEntity">
+		<id property="nxDistributerGoodsShelfId" column="nx_distributer_goods_shelf_id"/>
+		<result property="nxDistributerGoodsShelfName" column="nx_distributer_goods_shelf_name"/>
+		<result property="nxDistributerGoodsShelfSort" column="nx_distributer_goods_shelf_sort"/>
+		<result property="nxDistributerGoodsShelfDisId" column="nx_distributer_goods_shelf_dis_id"/>
+		<result property="nxDistributerGoodsShelfUserId" column="nx_distributer_goods_shelf_user_id"/>
+		<result property="goodsCount" column="goods_count"/>
+		<association property="responsibleUser" resultMap="responsibleUser"/>
+	</resultMap>
 
-
-	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerGoodsShelfEntity">
-		select * from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{value}
+	<select id="queryObject" resultMap="shelfWithUser">
+		select 
+			gs.*,
+			ru.nx_distributer_user_id 'ru_nx_distributer_user_id',
+			ru.nx_DIU_wx_nick_name 'ru_nx_DIU_wx_nick_name',
+			ru.nx_DIU_wx_avartra_url 'ru_nx_DIU_wx_avartra_url',
+			ru.nx_DIU_wx_phone 'ru_nx_DIU_wx_phone',
+			ru.nx_DIU_login_phone 'ru_nx_DIU_login_phone',
+			ru.nx_DIU_distributer_id 'ru_nx_DIU_distributer_id'
+		from nx_distributer_goods_shelf gs
+		left join nx_distributer_user ru on ru.nx_distributer_user_id = gs.nx_distributer_goods_shelf_user_id
+		where nx_distributer_goods_shelf_id = #{value}
 	</select>
 
 	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerGoodsShelfEntity">
@@ -29,12 +55,16 @@
 		dg.nx_distributer_goods_id
 		left join nx_distributer_purchase_goods as ndpg on ndpg.nx_DPG_dis_goods_id = dg.nx_distributer_goods_id
 		                                                       and ndpg.nx_DPG_status &lt; 3
+		left join nx_distributer_user as ru on ru.nx_distributer_user_id = gs.nx_distributer_goods_shelf_user_id
 		<where>
 			<if test="shelfId != null">
-				and nx_distributer_goods_shelf_id = #{shelfId}
+				and gs.nx_distributer_goods_shelf_id = #{shelfId}
 			</if>
 			<if test="disId != null">
-				and nx_distributer_goods_shelf_dis_id = #{disId}
+				and gs.nx_distributer_goods_shelf_dis_id = #{disId}
+			</if>
+			<if test="userId != null">
+				and gs.nx_distributer_goods_shelf_user_id = #{userId}
 			</if>
 		</where>
 		order by gs.nx_distributer_goods_shelf_sort, gsg.nx_DGSG_sort
@@ -70,7 +100,10 @@
 	</resultMap>
 	<resultMap id="disGoods" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -135,6 +168,8 @@
 		<result property="nxDgssPrice" column="nx_gdss_price"/>
 		<result property="nxDgssStatus" column="nx_dgss_status"/>
 		<result property="nxDgssRestSubtotal" column="nx_dgss_rest_subtotal"/>
+		<result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
+		<result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
 	</resultMap>
 	<resultMap id="shelfGoods" type="NxDistributerGoodsShelfGoodsEntity">
 		<id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
@@ -143,6 +178,8 @@
 		<result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
 		<result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
 		<result property="nxDgsgSort" column="nx_DGSG_sort"/>
+		<result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+		<result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
 		<association property="nxDistributerGoodsEntity" resultMap="disGoodsWithOrders"/>
 		<collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
 	</resultMap>
@@ -152,7 +189,9 @@
 		<result property="nxDistributerGoodsShelfName" column="nx_distributer_goods_shelf_name"/>
 		<result property="nxDistributerGoodsShelfDisId" column="nx_distributer_goods_shelf_dis_id"/>
 		<result property="nxDistributerGoodsShelfSort" column="nx_distributer_goods_shelf_sort"/>
-<!--		<collection property="nxDisGoodsShelfGoodsEntities" resultMap="shelfGoods"/>-->
+		<result property="nxDistributerGoodsShelfUserId" column="nx_distributer_goods_shelf_user_id"/>
+		<association property="responsibleUser" resultMap="responsibleUser"/>
+		<collection property="nxDisGoodsShelfGoodsEntities" resultMap="shelfGoods"/>
 	</resultMap>
 
 	<select id="queryShelfGoodsByParams" resultMap="shelfDetail">
@@ -183,7 +222,10 @@
 	</resultMap>
 
 	<resultMap id="orderDepartment" type="NxDepartmentEntity">
-		<id property="nxDepartmentId" column="nx_department_id"/>
+		 <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
 		<result property="nxDepartmentLat" column="nx_department_lat"/>
@@ -328,7 +370,10 @@
 
 	<resultMap id="disGoodsWithOrders" type="NxDistributerGoodsEntity">
 		<id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -442,6 +487,13 @@
 		 dgs.nx_distributer_goods_shelf_name,
 		 dgs.nx_distributer_goods_shelf_sort,
 		dgs.nx_distributer_goods_shelf_dis_id,
+		dgs.nx_distributer_goods_shelf_user_id,
+		ru.nx_distributer_user_id 'ru_nx_distributer_user_id',
+		ru.nx_DIU_wx_nick_name 'ru_nx_DIU_wx_nick_name',
+		ru.nx_DIU_wx_avartra_url 'ru_nx_DIU_wx_avartra_url',
+		ru.nx_DIU_wx_phone 'ru_nx_DIU_wx_phone',
+		ru.nx_DIU_login_phone 'ru_nx_DIU_login_phone',
+		ru.nx_DIU_distributer_id 'ru_nx_DIU_distributer_id',
 		dgsg.nx_distributer_goods_shelf_goods_id,
 		dgsg.nx_DGSG_shelf_id,
 		dgsg.nx_DGSG_dis_goods_id,
@@ -520,6 +572,7 @@
 
 
 		from nx_distributer_goods_shelf as dgs
+		left join nx_distributer_user as ru on ru.nx_distributer_user_id = dgs.nx_distributer_goods_shelf_user_id
 		left join nx_distributer_goods_shelf_goods as dgsg on dgs.nx_distributer_goods_shelf_id = dgsg.nx_DGSG_shelf_id
 		left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dgsg.nx_DGSG_dis_goods_id
 		left join nx_department_orders as dor on dor.nx_DO_dis_goods_id = dgsg.nx_DGSG_dis_goods_id
@@ -568,14 +621,25 @@
 		) as t1 on t1.nx_DGSG_shelf_id = ndgs.nx_distributer_goods_shelf_id
 		order by ndgs.nx_distributer_goods_shelf_sort
 	</select>
-	<select id="queryShelfList" resultType="com.nongxinle.entity.NxDistributerGoodsShelfEntity">
-		select * from nx_distributer_goods_shelf
+	<select id="queryShelfList" resultMap="shelfWithUser">
+		select 
+			gs.*,
+			ru.nx_distributer_user_id 'ru_nx_distributer_user_id',
+			ru.nx_DIU_wx_nick_name 'ru_nx_DIU_wx_nick_name',
+			ru.nx_DIU_wx_avartra_url 'ru_nx_DIU_wx_avartra_url',
+			ru.nx_DIU_wx_phone 'ru_nx_DIU_wx_phone',
+			ru.nx_DIU_login_phone 'ru_nx_DIU_login_phone',
+			ru.nx_DIU_distributer_id 'ru_nx_DIU_distributer_id',
+			(select count(*) from nx_distributer_goods_shelf_goods as gsg 
+			 where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id) as goods_count
+		from nx_distributer_goods_shelf gs
+		left join nx_distributer_user ru on ru.nx_distributer_user_id = gs.nx_distributer_goods_shelf_user_id
 		<where>
 			<if test="disId != null">
-				and nx_distributer_goods_shelf_dis_id = #{disId}
+				and gs.nx_distributer_goods_shelf_dis_id = #{disId}
 			</if>
 		</where>
-		order by nx_distributer_goods_shelf_sort
+		order by gs.nx_distributer_goods_shelf_sort
 	</select>
 
 	<!--	<select id="queryStockShelf" resultMap="shelfDetail">-->
@@ -607,14 +671,16 @@
 			`nx_distributer_goods_shelf_id`, 
 			`nx_distributer_goods_shelf_name`, 
 			`nx_distributer_goods_shelf_sort`, 
-			`nx_distributer_goods_shelf_dis_id`
+			`nx_distributer_goods_shelf_dis_id`,
+			`nx_distributer_goods_shelf_user_id`
 		)
 		values
 		(
 			#{nxDistributerGoodsShelfId}, 
 			#{nxDistributerGoodsShelfName}, 
 			#{nxDistributerGoodsShelfSort}, 
-			#{nxDistributerGoodsShelfDisId}
+			#{nxDistributerGoodsShelfDisId},
+			#{nxDistributerGoodsShelfUserId}
 		)
 	</insert>
 	 
@@ -623,7 +689,8 @@
 		<set>
 			<if test="nxDistributerGoodsShelfName != null">`nx_distributer_goods_shelf_name` = #{nxDistributerGoodsShelfName}, </if>
 			<if test="nxDistributerGoodsShelfSort != null">`nx_distributer_goods_shelf_sort` = #{nxDistributerGoodsShelfSort}, </if>
-			<if test="nxDistributerGoodsShelfDisId != null">`nx_distributer_goods_shelf_dis_id` = #{nxDistributerGoodsShelfDisId}</if>
+			<if test="nxDistributerGoodsShelfDisId != null">`nx_distributer_goods_shelf_dis_id` = #{nxDistributerGoodsShelfDisId}, </if>
+			<if test="nxDistributerGoodsShelfUserId != null">`nx_distributer_goods_shelf_user_id` = #{nxDistributerGoodsShelfUserId}</if>
 		</set>
 		where nx_distributer_goods_shelf_id = #{nxDistributerGoodsShelfId}
 	</update>

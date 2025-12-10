@@ -22,8 +22,314 @@
     </select>
 
     <select id="queryShelfForGoodsByParams" resultMap="shelfGoods">
-        select * from nx_distributer_goods_shelf_goods as ndgsg
+        select 
+        ndgsg.*,
+        ndg.*,
+        #{status} as statusParam,
+        #{shelfId} as shelfIdParam,
+        ndgss.*,
+        stockPurGoods.nx_distributer_purchase_goods_id as stockPurGoods_nx_distributer_purchase_goods_id,
+        stockPurGoods.nx_DPG_finish_amount as stockPurGoods_nx_DPG_finish_amount,
+        stockPurGoods.nx_DPG_dis_goods_id as stockPurGoods_nx_DPG_dis_goods_id,
+        stockPurGoods.nx_DPG_dis_goods_father_id as stockPurGoods_nx_DPG_dis_goods_father_id,
+        stockPurGoods.nx_DPG_dis_goods_grand_id as stockPurGoods_nx_DPG_dis_goods_grand_id,
+        stockPurGoods.nx_DPG_nx_weight_id as stockPurGoods_nx_DPG_nx_weight_id,
+        stockPurGoods.nx_DPG_batch_id as stockPurGoods_nx_DPG_batch_id,
+        stockPurGoods.nx_DPG_quantity as stockPurGoods_nx_DPG_quantity,
+        stockPurGoods.nx_DPG_buy_quantity as stockPurGoods_nx_DPG_buy_quantity,
+        stockPurGoods.nx_DPG_buy_subtotal as stockPurGoods_nx_DPG_buy_subtotal,
+        stockPurGoods.nx_DPG_standard as stockPurGoods_nx_DPG_standard,
+        stockPurGoods.nx_DPG_status as stockPurGoods_nx_DPG_status,
+        stockPurGoods.nx_DPG_buy_price as stockPurGoods_nx_DPG_buy_price,
+        stockPurGoods.nx_DPG_purchase_type as stockPurGoods_nx_DPG_purchase_type,
+        stockPurGoods.nx_DPG_orders_amount as stockPurGoods_nx_DPG_orders_amount,
+        stockPurGoods.nx_DPG_type_add_user_id as stockPurGoods_nx_DPG_type_add_user_id,
+        stockPurGoods.nx_DPG_input_type as stockPurGoods_nx_DPG_input_type,
+        stockPurGoods.nx_DPG_time as stockPurGoods_nx_DPG_time,
+        stockPurGoods.nx_DPG_purchase_date as stockPurGoods_nx_DPG_purchase_date,
+        stockPurGoods.nx_DPG_distributer_id as stockPurGoods_nx_DPG_distributer_id,
+        stockPurGoods.nx_DPG_sell_user_id as stockPurGoods_nx_DPG_sell_user_id,
+        stockPurGoods.nx_DPG_buy_user_id as stockPurGoods_nx_DPG_buy_user_id,
+        stockPurGoods.nx_DPG_pur_user_id as stockPurGoods_nx_DPG_pur_user_id,
+        stockPurGoods.nx_DPG_cost_level as stockPurGoods_nx_DPG_cost_level,
+        stockPurGoods.nx_DPG_pay_type as stockPurGoods_nx_DPG_pay_type,
+        stockPurUser.nx_distributer_user_id as stockPurUser_nx_distributer_user_id,
+        stockPurUser.nx_DIU_wx_nick_name as stockPurUser_nx_DIU_wx_nick_name,
+        stockPurUser.nx_DIU_wx_avartra_url as stockPurUser_nx_DIU_wx_avartra_url,
+        stockPurUser.nx_DIU_wx_open_id as stockPurUser_nx_DIU_wx_open_id,
+        stockPurUser.nx_DIU_wx_phone as stockPurUser_nx_DIU_wx_phone,
+        stockPurUser.nx_DIU_distributer_id as stockPurUser_nx_DIU_distributer_id,
+        stockPurUser.nx_DIU_admin as stockPurUser_nx_DIU_admin
+        from (
+        select 
+        ndgsg.nx_distributer_goods_shelf_goods_id
+        from nx_distributer_goods_shelf_goods as ndgsg
+        <where>
+            <if test="shelfId !=null">
+                and nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+        </where>
+        order by nx_DGSG_sort asc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+        ) as t1
+        inner join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = t1.nx_distributer_goods_shelf_goods_id
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+            and ndgss.nx_dgss_rest_weight &gt; 0
+            and ndgss.nx_dgss_status = 0
+        left join nx_distributer_purchase_goods as stockPurGoods on stockPurGoods.nx_distributer_purchase_goods_id = ndgss.nx_dgss_nx_pur_goods_id
+        left join nx_distributer_user as stockPurUser on stockPurUser.nx_distributer_user_id = stockPurGoods.nx_DPG_pur_user_id
+        order by ndgsg.nx_DGSG_sort asc
+    </select>
+
+    <!-- 子查询：根据商品ID查询货架采购商品 -->
+    <select id="queryShelfPurGoodsByDisGoodsId" resultMap="onlyPurGoods">
+        select 
+        ndpg.nx_distributer_purchase_goods_id,
+        ndpg.nx_DPG_finish_amount,
+        ndpg.nx_DPG_dis_goods_id,
+        ndpg.nx_DPG_dis_goods_father_id,
+        ndpg.nx_DPG_dis_goods_grand_id,
+        ndpg.nx_DPG_nx_weight_id,
+        ndpg.nx_DPG_batch_id,
+        ndpg.nx_DPG_quantity,
+        ndpg.nx_DPG_buy_quantity,
+        ndpg.nx_DPG_buy_subtotal,
+        ndpg.nx_DPG_standard,
+        ndpg.nx_DPG_status,
+        ndpg.nx_DPG_buy_price,
+        ndpg.nx_DPG_purchase_type,
+        ndpg.nx_DPG_orders_amount,
+        ndpg.nx_DPG_type_add_user_id,
+        ndpg.nx_DPG_input_type,
+        ndpg.nx_DPG_time,
+        ndpg.nx_DPG_purchase_date,
+        ndpg.nx_DPG_distributer_id,
+        ndpg.nx_DPG_sell_user_id,
+        ndpg.nx_DPG_buy_user_id,
+        ndpg.nx_DPG_pur_user_id,
+        ndpg.nx_DPG_cost_level,
+        ndpg.nx_DPG_pay_type
+        from nx_distributer_purchase_goods as ndpg
+        where ndpg.nx_DPG_dis_goods_id = #{disGoodsId}
+        and ndpg.nx_DPG_purchase_type = 0
+        and ndpg.nx_DPG_status &lt; #{status}
+        <if test="shelfId != null">
+            and ndpg.nx_DPG_apply_shelf_id = #{shelfId}
+        </if>
+        limit 1
+    </select>
+
+    <!-- 子查询：根据采购用户ID查询采购员信息 -->
+    <select id="queryPurchaserByPurUserId" resultMap="disUser">
+        select 
+        nx_distributer_user_id,
+        nx_DIU_wx_nick_name,
+        nx_DIU_wx_avartra_url,
+        nx_DIU_wx_open_id,
+        nx_DIU_wx_phone,
+        nx_DIU_distributer_id,
+        nx_DIU_admin
+        from nx_distributer_user
+        where nx_distributer_user_id = #{purUserId}
+    </select>
+
+    <!-- 查询未盘库的货架商品列表 -->
+    <select id="queryUnInventoriedShelfGoods" resultMap="shelfGoodsUnInventoried">
+        select distinct ndgsg.*,
+        ndg.*,
+        ndpg.*,
+        <if test="inventoryType != null">
+            ${inventoryType} as inventoryTypeParam,
+        </if>
+        <if test="inventoryType == null">
+            null as inventoryTypeParam,
+        </if>
+        <if test="inventoryDate != null">
+            '${inventoryDate}' as inventoryDateParam,
+        </if>
+        <if test="inventoryDate == null">
+            null as inventoryDateParam,
+        </if>
+        <if test="inventoryWeek != null">
+            '${inventoryWeek}' as inventoryWeekParam,
+        </if>
+        <if test="inventoryWeek == null">
+            null as inventoryWeekParam,
+        </if>
+        <if test="inventoryMonth != null">
+            '${inventoryMonth}' as inventoryMonthParam,
+        </if>
+        <if test="inventoryMonth == null">
+            null as inventoryMonthParam,
+        </if>
+        COALESCE((
+            select SUM(CAST(ndgss2.nx_dgss_rest_weight AS DECIMAL(10,1)))
+            from nx_distributer_goods_shelf_stock as ndgss2
+            left join nx_distributer_goods_shelf_stock_reduce as ir2 on ir2.nx_dgssr_nx_stock_id = ndgss2.nx_distributer_goods_shelf_stock_id
+                and ir2.nx_dgssr_type = 2
+                <if test="inventoryType != null and inventoryType == 1">
+                    and ir2.nx_dgssr_date = #{inventoryDate}
+                </if>
+                <if test="inventoryType != null and inventoryType == 2">
+                    and ir2.nx_dgssr_week = #{inventoryWeek}
+                </if>
+                <if test="inventoryType != null and inventoryType == 3">
+                    and ir2.nx_dgssr_month = #{inventoryMonth}
+                </if>
+            where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+                and ndgss2.nx_dgss_rest_weight &gt; 0
+                and ndgss2.nx_dgss_status = 0
+                and ir2.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+        ), 0) as totalRestWeight
+        from nx_distributer_goods_shelf_goods as ndgsg
+        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id = ndgsg.nx_DGSG_dis_goods_id
+            and ndgss.nx_dgss_rest_weight &gt; 0
+            and ndgss.nx_dgss_status = 0
+            and ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+        left join nx_distributer_goods_shelf_stock_reduce as ir on ir.nx_dgssr_nx_stock_id = ndgss.nx_distributer_goods_shelf_stock_id
+            and ir.nx_dgssr_type = 2
+            <if test="inventoryType != null and inventoryType == 1">
+                and ir.nx_dgssr_date = #{inventoryDate}
+            </if>
+            <if test="inventoryType != null and inventoryType == 2">
+                and ir.nx_dgssr_week = #{inventoryWeek}
+            </if>
+            <if test="inventoryType != null and inventoryType == 3">
+                and ir.nx_dgssr_month = #{inventoryMonth}
+            </if>
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        left join nx_distributer_purchase_goods as ndpg on ndpg.nx_DPG_dis_goods_id = ndg.nx_distributer_goods_id
+             and ndpg.nx_DPG_purchase_type = 0 and ndpg.nx_DPG_status &lt; 3
+        <where>
+            <if test="shelfId !=null">
+                and ndgsg.nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            and ir.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+            <!-- 确保至少存在一个未盘库且库存大于0的批次 -->
+            and exists (
+                select 1
+                from nx_distributer_goods_shelf_stock as ndgss3
+                left join nx_distributer_goods_shelf_stock_reduce as ir3 on ir3.nx_dgssr_nx_stock_id = ndgss3.nx_distributer_goods_shelf_stock_id
+                    and ir3.nx_dgssr_type = 2
+                    <if test="inventoryType != null and inventoryType == 1">
+                        and ir3.nx_dgssr_date = #{inventoryDate}
+                    </if>
+                    <if test="inventoryType != null and inventoryType == 2">
+                        and ir3.nx_dgssr_week = #{inventoryWeek}
+                    </if>
+                    <if test="inventoryType != null and inventoryType == 3">
+                        and ir3.nx_dgssr_month = #{inventoryMonth}
+                    </if>
+                where ndgss3.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+                    and ndgss3.nx_dgss_rest_weight &gt; 0
+                    and ndgss3.nx_dgss_status = 0
+                    and ir3.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+            )
+        </where>
+        order by ndgsg.nx_DGSG_sort asc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- resultMap：货架商品带未盘库批次 -->
+    <resultMap id="shelfGoodsUnInventoried" type="NxDistributerGoodsShelfGoodsEntity">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <result property="totalRestWeight" column="totalRestWeight"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="shelfPurGoods" resultMap="onlyPurGoods"/>
+        <collection property="nxDisGoodsShelfStockEntities"
+                    select="queryUnInventoriedStockByShelfGoodsId"
+                    column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id,inventoryType=inventoryTypeParam,inventoryDate=inventoryDateParam,inventoryWeek=inventoryWeekParam,inventoryMonth=inventoryMonthParam}"/>
+    </resultMap>
+
+    <!-- 子查询：查询货架商品的未盘库批次 -->
+    <select id="queryUnInventoriedStockByShelfGoodsId" resultMap="disStock">
+        select ndgss.*
+        from nx_distributer_goods_shelf_stock as ndgss
+        left join nx_distributer_goods_shelf_stock_reduce as ir on ir.nx_dgssr_nx_stock_id = ndgss.nx_distributer_goods_shelf_stock_id
+            and ir.nx_dgssr_type = 2
+            <if test="inventoryType != null and inventoryType == 1">
+                and ir.nx_dgssr_date = #{inventoryDate}
+            </if>
+            <if test="inventoryType != null and inventoryType == 2">
+                and ir.nx_dgssr_week = #{inventoryWeek}
+            </if>
+            <if test="inventoryType != null and inventoryType == 3">
+                and ir.nx_dgssr_month = #{inventoryMonth}
+            </if>
+        where ndgss.nx_dgss_nx_shelf_goods_id = #{shelfGoodsId}
+            and ndgss.nx_dgss_rest_weight &gt; 0
+            and ndgss.nx_dgss_status = 0
+            and ir.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+        order by ndgss.nx_dgss_date ASC
+    </select>
+
+    <!-- 统计未盘库的货架商品数量 -->
+    <select id="queryUnInventoriedShelfGoodsCount" resultType="java.lang.Integer">
+        select count(distinct ndgsg.nx_distributer_goods_shelf_goods_id)
+        from nx_distributer_goods_shelf_goods as ndgsg
+        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id = ndgsg.nx_DGSG_dis_goods_id
+            and ndgss.nx_dgss_rest_weight &gt; 0
+            and ndgss.nx_dgss_status = 0
+            and ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+        left join nx_distributer_goods_shelf_stock_reduce as ir on ir.nx_dgssr_nx_stock_id = ndgss.nx_distributer_goods_shelf_stock_id
+            and ir.nx_dgssr_type = 2
+            <if test="inventoryType != null and inventoryType == 1">
+                and ir.nx_dgssr_date = #{inventoryDate}
+            </if>
+            <if test="inventoryType != null and inventoryType == 2">
+                and ir.nx_dgssr_week = #{inventoryWeek}
+            </if>
+            <if test="inventoryType != null and inventoryType == 3">
+                and ir.nx_dgssr_month = #{inventoryMonth}
+            </if>
+        <where>
+            <if test="shelfId !=null">
+                and ndgsg.nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            and ir.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+            <!-- 确保至少存在一个未盘库且库存大于0的批次 -->
+            and exists (
+                select 1
+                from nx_distributer_goods_shelf_stock as ndgss3
+                left join nx_distributer_goods_shelf_stock_reduce as ir3 on ir3.nx_dgssr_nx_stock_id = ndgss3.nx_distributer_goods_shelf_stock_id
+                    and ir3.nx_dgssr_type = 2
+                    <if test="inventoryType != null and inventoryType == 1">
+                        and ir3.nx_dgssr_date = #{inventoryDate}
+                    </if>
+                    <if test="inventoryType != null and inventoryType == 2">
+                        and ir3.nx_dgssr_week = #{inventoryWeek}
+                    </if>
+                    <if test="inventoryType != null and inventoryType == 3">
+                        and ir3.nx_dgssr_month = #{inventoryMonth}
+                    </if>
+                where ndgss3.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+                    and ndgss3.nx_dgss_rest_weight &gt; 0
+                    and ndgss3.nx_dgss_status = 0
+                    and ir3.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+            )
+        </where>
+    </select>
+
+    <select id="queryShelfForGoodsCount" resultType="java.lang.Integer">
+        select count(*)
+        from nx_distributer_goods_shelf_goods as ndgsg
         <where>
             <if test="shelfId !=null">
                 and nx_DGSG_shelf_id = #{shelfId}
@@ -80,10 +386,14 @@
 
     <resultMap id="disStock" type="NxDistributerGoodsShelfStockEntity">
         <id property="nxDistributerGoodsShelfStockId" column="nx_distributer_goods_shelf_stock_id"/>
+        <result property="nxDgssSellingPriceCarton" column="nx_dgss_selling_price_carton"/>
+        <result property="nxDgssPriceCarton" column="nx_dgss_price_carton"/>
         <result property="nxDgssNxDisGoodsId" column="nx_dgss_nx_dis_goods_id"/>
         <result property="nxDgssNxDistributerId" column="nx_dgss_nx_distributer_id"/>
         <result property="nxDgssWeight" column="nx_dgss_weight"/>
+        <result property="nxDgssSubtotal" column="nx_dgss_subtotal"/>
         <result property="nxDgssRestWeight" column="nx_dgss_rest_weight"/>
+        <result property="nxDgssSellingPrice" column="nx_dgss_selling_price"/>
         <result property="nxDgssDate" column="nx_dgss_date"/>
         <result property="nxDgssFullTime" column="nx_dgss_full_time"/>
         <result property="nxDgssLossSubtotal" column="nx_dgss_loss_subtotal"/>
@@ -92,6 +402,9 @@
         <result property="nxDgssPrice" column="nx_dgss_price"/>
         <result property="nxDgssStatus" column="nx_dgss_status"/>
         <result property="nxDgssRestSubtotal" column="nx_dgss_rest_subtotal"/>
+        <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
+        <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
+        <association property="nxDistributerPurchaseGoodsEntity" resultMap="onlyPurGoods" columnPrefix="stockPurGoods_"/>
     </resultMap>
     <resultMap id="disStandards" type="NxDistributerStandardEntity">
         <id property="nxDistributerStandardId" column="nx_distributer_standard_id"/>
@@ -107,6 +420,8 @@
         <result property="nxDpgNxWeightId" column="nx_DPG_nx_weight_id"/>
         <result property="nxDpgBatchId" column="nx_DPG_batch_id"/>
         <result property="nxDpgQuantity" column="nx_DPG_quantity"/>
+        <result property="nxDpgBuyQuantity" column="nx_DPG_buy_quantity"/>
+        <result property="nxDpgBuySubtotal" column="nx_DPG_buy_subtotal"/>
         <result property="nxDpgStandard" column="nx_DPG_standard"/>
         <result property="nxDpgStatus" column="nx_DPG_status"/>
         <result property="nxDpgBuyPrice" column="nx_DPG_buy_price"/>
@@ -125,10 +440,27 @@
         <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
         <result property="nxDpgPayType" column="nx_DPG_pay_type"/>
         <!--		<association property="sellerUserEntity" resultMap="jrdhSellUser"/>-->
+        <association property="nxPurchaserEntity" 
+                     select="queryPurchaserByPurUserId" 
+                     column="nx_DPG_pur_user_id"/>
+    </resultMap>
+
+    <!-- 采购用户 resultMap（简化版，只包含基本信息） -->
+    <resultMap id="disUser" type="NxDistributerUserEntity">
+        <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
+        <result property="nxDiuWxNickName" column="nx_DIU_wx_nick_name"/>
+        <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartra_url"/>
+        <result property="nxDiuWxOpenId" column="nx_DIU_wx_open_id"/>
+        <result property="nxDiuWxPhone" column="nx_DIU_wx_phone"/>
+        <result property="nxDiuDistributerId" column="nx_DIU_distributer_id"/>
+        <result property="nxDiuAdmin" column="nx_DIU_admin"/>
     </resultMap>
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -252,7 +584,10 @@
     </resultMap>
 
     <resultMap id="orderDepartment" type="NxDepartmentEntity">
-        <id property="nxDepartmentId" column="nx_department_id"/>
+         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
+        <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
+        <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
 		<result property="nxDepartmentRecordMinutes" column="nx_department_record_minutes"/>
         <result property="nxDepartmentLat" column="nx_department_lat"/>
         <result property="nxDepartmentLng" column="nx_department_lng"/>
@@ -316,8 +651,11 @@
         <!---->
     </resultMap>
     <resultMap id="disGoodsWithApplys" type="NxDistributerGoodsEntity">
-        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+       <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -372,14 +710,23 @@
         <collection property="nxDepartmentOrdersEntities" resultMap="orders"/>
     </resultMap>
 
+
     <resultMap id="shelfGoods" type="NxDistributerGoodsShelfGoodsEntity">
         <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
         <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
-        <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithApplys"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="shelfPurGoods" 
+                     select="queryShelfPurGoodsByDisGoodsId" 
+                     column="{disGoodsId=nx_DGSG_dis_goods_id,status=statusParam,shelfId=shelfIdParam}"/>
         <collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
+        <collection property="sameShelfGoods" 
+                    select="querySameShelfGoodsByDisGoodsId" 
+                    column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
     </resultMap>
 
     <resultMap id="shelfGoodsWithOrders" type="NxDistributerGoodsShelfGoodsEntity">
@@ -388,6 +735,8 @@
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithApplys"/>
         <!--		<collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>-->
     </resultMap>
@@ -433,6 +782,28 @@
 		and nddg.nx_DDG_gb_department_id = dor.nx_DO_gb_department_id
 		order by t1.nx_DGSG_shelf_sort, t1.nx_DGSG_sort
 	</select>
+    <select id="queryShlefGoodsByGoodsId" resultType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+        select * from nx_distributer_goods_shelf_goods where  nx_DGSG_dis_goods_id = #{nxDpgDisGoodsId}
+    </select>
+
+    <select id="queryShlefGoodsByGoodsIdAndShelfId" resultType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+        select * from nx_distributer_goods_shelf_goods 
+        where nx_DGSG_dis_goods_id = #{disGoodsId} and nx_DGSG_shelf_id = #{shelfId}
+        limit 1
+    </select>
+
+    <select id="queryShelfGoodsBasic" resultType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
+        select
+        nx_distributer_goods_shelf_goods_id,
+        nx_DGSG_dis_goods_id,
+        nx_DGSG_shelf_id,
+        nx_DGSG_sort,
+        nx_DGSG_shelf_sort,
+        nx_DGSG_shelf_layer
+        from nx_distributer_goods_shelf_goods
+        where nx_DGSG_shelf_id = #{shelfId}
+        order by nx_DGSG_sort asc
+    </select>
 
     <!--	<select id="queryShelfForGoodsWithOrders" resultMap="shelfGoodsWithOrders">-->
     <!--		select-->
@@ -572,12 +943,16 @@
          `nx_DGSG_dis_goods_id`,
          `nx_DGSG_shelf_id`,
          `nx_DGSG_sort`,
-         `nx_DGSG_shelf_sort`)
+         `nx_DGSG_shelf_sort`,
+         `nx_DGSG_shelf_layer`,
+         `nx_DGSG_is_duplicate`)
         values (#{nxDistributerGoodsShelfGoodsId},
                 #{nxDgsgDisGoodsId},
                 #{nxDgsgShelfId},
                 #{nxDgsgSort},
-                #{nxDgsgShelfSort})
+                #{nxDgsgShelfSort},
+                #{nxDgsgShelfLayer},
+                #{nxDgsgIsDuplicate})
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.NxDistributerGoodsShelfGoodsEntity">
@@ -586,9 +961,34 @@
             <if test="nxDgsgDisGoodsId != null">`nx_DGSG_dis_goods_id` = #{nxDgsgDisGoodsId},</if>
             <if test="nxDgsgShelfId != null">`nx_DGSG_shelf_id` = #{nxDgsgShelfId},</if>
             <if test="nxDgsgShelfSort != null">`nx_DGSG_shelf_sort` = #{nxDgsgShelfSort},</if>
-            <if test="nxDgsgSort != null">`nx_DGSG_sort` = #{nxDgsgSort}</if>
+            <if test="nxDgsgSort != null">`nx_DGSG_sort` = #{nxDgsgSort},</if>
+            <if test="nxDgsgShelfLayer != null">`nx_DGSG_shelf_layer` = #{nxDgsgShelfLayer},</if>
+            <if test="nxDgsgIsDuplicate != null">`nx_DGSG_is_duplicate` = #{nxDgsgIsDuplicate}</if>
         </set>
         where nx_distributer_goods_shelf_goods_id = #{nxDistributerGoodsShelfGoodsId}
+    </update>
+
+    <update id="updateShelfLayer">
+        update nx_distributer_goods_shelf_goods
+        set nx_DGSG_shelf_layer = #{layer,jdbcType=INTEGER}
+        where nx_distributer_goods_shelf_goods_id = #{id}
+    </update>
+
+    <!-- 更新商品在所有货架的重复标记 -->
+    <update id="updateDuplicateFlagForGoods">
+        update nx_distributer_goods_shelf_goods as ndgsg
+        inner join (
+            select nx_DGSG_dis_goods_id,
+                   CASE 
+                       WHEN COUNT(DISTINCT nx_DGSG_shelf_id) >= 2 THEN 1
+                       ELSE 0
+                   END as is_duplicate
+            from nx_distributer_goods_shelf_goods
+            where nx_DGSG_dis_goods_id = #{disGoodsId}
+            group by nx_DGSG_dis_goods_id
+        ) as tmp on tmp.nx_DGSG_dis_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        set ndgsg.nx_DGSG_is_duplicate = tmp.is_duplicate
+        where ndgsg.nx_DGSG_dis_goods_id = #{disGoodsId}
     </update>
 
     <delete id="delete">
@@ -603,5 +1003,87 @@
             #{nxDistributerGoodsShelfGoodsId}
         </foreach>
     </delete>
+
+    <!-- 根据商品ID查询有库存的货架商品列表 -->
+    <select id="queryShelfGoodsWithStockByDisGoodsId" resultMap="simpleShelfGoods">
+        select distinct
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_is_duplicate,
+        ndgs.nx_distributer_goods_shelf_id as shelf_nx_distributer_goods_shelf_id,
+        ndgs.nx_distributer_goods_shelf_name as shelf_nx_distributer_goods_shelf_name
+        from nx_distributer_goods_shelf_goods as ndgsg
+        inner join nx_distributer_goods_shelf_stock as ndgss 
+            on ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+        left join nx_distributer_goods_shelf as ndgs 
+            on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        where ndgsg.nx_DGSG_dis_goods_id = #{disGoodsId}
+            and CAST(ndgss.nx_dgss_rest_weight AS DECIMAL(10,2)) > 0
+            and ndgss.nx_dgss_status = 0
+        order by ndgsg.nx_DGSG_shelf_id, ndgsg.nx_DGSG_sort
+    </select>
+
+    <!-- 简化的货架商品resultMap（用于采购商品下的货架商品列表） -->
+    <resultMap id="simpleShelfGoods" type="NxDistributerGoodsShelfGoodsEntity">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <result property="shelfName" column="shelf_nx_distributer_goods_shelf_name"/>
+        <association property="nxDistributerGoodsShelfEntity" resultMap="simpleShelf"/>
+        <collection property="nxDisGoodsShelfStockEntities" 
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByShelfGoodsIdWithRest"
+                    column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
+    </resultMap>
+
+    <!-- 简化的货架resultMap（只包含基本字段） -->
+    <resultMap id="simpleShelf" type="NxDistributerGoodsShelfEntity">
+        <id property="nxDistributerGoodsShelfId" column="shelf_nx_distributer_goods_shelf_id"/>
+        <result property="nxDistributerGoodsShelfName" column="shelf_nx_distributer_goods_shelf_name"/>
+    </resultMap>
+
+    <!-- 查询相同商品ID的其他货架商品（排除当前货架商品） -->
+    <select id="querySameShelfGoodsByDisGoodsId" resultMap="shelfGoodsWithStock">
+        select distinct
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_is_duplicate,
+        ndgs.nx_distributer_goods_shelf_id as shelf_nx_distributer_goods_shelf_id,
+        ndgs.nx_distributer_goods_shelf_name as shelf_nx_distributer_goods_shelf_name
+        from nx_distributer_goods_shelf_goods as ndgsg
+        left join nx_distributer_goods_shelf as ndgs 
+            on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        where ndgsg.nx_DGSG_dis_goods_id = #{disGoodsId}
+            and ndgsg.nx_distributer_goods_shelf_goods_id != #{currentShelfGoodsId}
+        order by ndgsg.nx_DGSG_shelf_id, ndgsg.nx_DGSG_sort
+    </select>
+
+
+    <!-- 带库存批次的货架商品resultMap -->
+    <resultMap id="shelfGoodsWithStock" type="NxDistributerGoodsShelfGoodsEntity">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <result property="shelfName" column="shelf_nx_distributer_goods_shelf_name"/>
+        <association property="nxDistributerGoodsShelfEntity" resultMap="simpleShelf"/>
+        <collection property="nxDisGoodsShelfStockEntities" 
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByShelfGoodsIdWithRest"
+                    column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
+    </resultMap>
 
 </mapper>

@@ -7,6 +7,7 @@ package com.nongxinle.entity;
  */
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +30,8 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	 *  订货部门名称
 	 */
 	private String nxDepartmentName;
+	private String distance;
+	private String duration;
 	/**
 	 *  订货部门上级id
 	 */
@@ -79,11 +82,28 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	private String nxDepartmentProfitTotal;
 
 	private String nxDepartmentPinyin;
+	private String nxDepartmentAddress;
 	private String nxDepartmentAppId;
 	private String nxDepartmentPickName;
+	/**
+	 * 订货代号（用于对客户名称保密）
+	 */
+	private String nxDepartmentOrderCode;
 	private String nxDepartmentLat;
 	private String nxDepartmentLng;
 
+	private Integer nxDepartmentEarliestDeliveryTime;
+	private Integer nxDepartmentLatestDeliveryTime;
+	private Integer nxDepartmentUnloadDuration;
+	private Integer nxDepartmentGbDistributerId;
+	/**
+	 *  部门积分
+	 */
+	private String nxDepartmentPoints;
+	/**
+	 *  等待积分（客户货品卖出前的积分，卖出后加到积分字段）
+	 */
+	private String nxDepartmentWaitingPoints;
 
 	private NxDepartmentEntity fatherDepartmentEntity;
 	private NxDistributerPayEntity payEntity;

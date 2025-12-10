@@ -187,6 +187,8 @@ public class NxDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private String nxDgWillPriceOneAboutPrice;
 	private String nxDgWillPriceTwoAboutPrice;
 	private String nxDgWillPriceThreeAboutPrice;
+	private String nxDgGoodsBrand;
+	private String nxDgGoodsDetail;
 
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 	private NxDepartmentOrdersEntity nxDepartmentOrdersEntity;

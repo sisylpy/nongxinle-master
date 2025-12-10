@@ -813,7 +813,7 @@ public class NxCommunityOrdersController {
         mapD.put("type", 0 );
         mapD.put("commId", commId);
         mapD.put("xiaoyuStatus", 1);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         String formattedNow = LocalDateTime.now().format(formatter);
         mapD.put("nowTime", formattedNow);
         System.out.println("delleleleNowtiem" + mapD);
@@ -999,6 +999,9 @@ public class NxCommunityOrdersController {
 
         // 构造金额对象（单位：分）
         String refundAmountString  = nxCommunityOrdersEntity.getNxCoTotal();
+        if (refundAmountString == null || refundAmountString.trim().isEmpty()) {
+            return R.error("订单总金额为空，无法处理退款");
+        }
         double doubleVal = Double.parseDouble(refundAmountString);          // => 18.0
         int totalFen = (int) Math.round(doubleVal * 100);                   // => 1800
         int funFen = totalFen / 2;
@@ -1593,6 +1596,10 @@ public class NxCommunityOrdersController {
             for (NxCommunityOrdersSubEntity subEntity : nxOrdersSubEntities) {
                 subEntity.setNxCosOrdersId(nxOrders.getNxCommunityOrdersId());
                 subEntity.setNxCosStatus(0);
+                // Normalize empty strings to null for integer fields
+                if (subEntity.getNxCosServiceTime() != null && subEntity.getNxCosServiceTime().trim().isEmpty()) {
+                    subEntity.setNxCosServiceTime(null);
+                }
                 nxCommunityOrdersSubService.update(subEntity);
             }
         }
@@ -1635,6 +1642,10 @@ public class NxCommunityOrdersController {
             for (NxCommunityOrdersSubEntity subEntity : nxOrdersSubEntities) {
                 subEntity.setNxCosOrdersId(nxOrders.getNxCommunityOrdersId());
                 subEntity.setNxCosStatus(0);
+                // Normalize empty strings to null for integer fields
+                if (subEntity.getNxCosServiceTime() != null && subEntity.getNxCosServiceTime().trim().isEmpty()) {
+                    subEntity.setNxCosServiceTime(null);
+                }
                 nxCommunityOrdersSubService.update(subEntity);
 
                 printSubOrderGoodsDesk(subEntity);

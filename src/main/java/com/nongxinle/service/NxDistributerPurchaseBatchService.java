@@ -37,8 +37,8 @@ public interface NxDistributerPurchaseBatchService {
 	int queryDisPurchaseBatchCount(Map<String, Object> map);
 
 	Double queryDisPurchaseBatchTotal(Map<String, Object> map);
-
-    Double queryPurchaseGoodsSubTotal(Map<String, Object> map);
+	
+	Double querySupplierUnSettleSubtotal(Map<String, Object> map);
 
 	Double queryPurchaserCashTotal(Map<String, Object> map1);
 

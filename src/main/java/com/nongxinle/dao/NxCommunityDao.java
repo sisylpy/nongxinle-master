@@ -10,6 +10,7 @@ package com.nongxinle.dao;
 import com.nongxinle.entity.NxCommunityEntity;
 import com.nongxinle.entity.NxECommerceCommunityEntity;
 import com.nongxinle.entity.NxECommerceEntity;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -20,5 +21,5 @@ public interface NxCommunityDao extends BaseDao<NxCommunityEntity> {
 
     NxECommerceEntity queryCommunityByECommerceId(Integer id);
 
-    List<NxCommunityEntity> queryCommunityListByUserPoint(String nxCuaLocation);
+    List<NxCommunityEntity> queryCommunityListByUserPoint(@Param("nxCuaLat") String nxCuaLat, @Param("nxCuaLng") String nxCuaLng);
 }

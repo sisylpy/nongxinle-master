@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.nongxinle.entity.GbDistributerEntity;
-import com.nongxinle.entity.GbDistributerPayListEntity;
+import com.nongxinle.entity.*;
 import com.nongxinle.service.GbDistributerService;
+import com.nongxinle.service.NxGoodsService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +26,8 @@ import com.nongxinle.utils.R;
 
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.DateUtils.formatWhatYear;
+import static com.nongxinle.utils.GbTypeUtils.getGbDisPayListRecord;
+import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisPayListRecord;
 
 
 @RestController
@@ -35,6 +37,63 @@ public class GbDistributerPayListController {
 	private GbDistributerPayListService gbDistributerPayListService;
 	@Autowired
 	private GbDistributerService gbDistributerService;
+	@Autowired
+	private NxGoodsService nxGoodsService;
+
+	@RequestMapping(value = "/addRecord", method = RequestMethod.POST)
+	@ResponseBody
+	public R addRecord (@RequestBody GbDistributerPayListEntity payListEntity) {
+
+		System.out.println("palisss" + payListEntity);
+		GbDistributerEntity nxDistributerEntity = gbDistributerService.queryObject(payListEntity.getGbNdplGbDisId());
+
+		payListEntity.setGbNdplPayTime(formatFullTime());
+		payListEntity.setGbNdplPayDate(formatWhatDay(0));
+		payListEntity.setGbNdplPayMonth(formatWhatMonth(0));
+		payListEntity.setGbNdplPayYear(formatWhatYear(0));
+		payListEntity.setGbNdplStatus(0);
+		payListEntity.setGbNdplType(getGbDisPayListRecord());
+		payListEntity.setGbNdplRestPoints(nxDistributerEntity.getGbDistributerBuyQuantity());
+		payListEntity.setGbNdplNxSupplierId(-1);
+		System.out.println("savemee" + payListEntity);
+		gbDistributerPayListService.save(payListEntity);
+
+		BigDecimal decimal0 = new BigDecimal(nxDistributerEntity.getGbDistributerBuyQuantity());
+		System.out.println("00000000" + decimal0);
+		BigDecimal decimal1 = new BigDecimal(payListEntity.getGbNdplPaySubtotal());
+		BigDecimal restPoints = decimal0.subtract(decimal1);
+		nxDistributerEntity.setGbDistributerBuyQuantity(restPoints.toString());
+		gbDistributerService.update(nxDistributerEntity);
+		return R.ok();
+	}
+
+	@RequestMapping(value = "/depGetTodayRecordSeconds/{disId}")
+	@ResponseBody
+	public R depGetTodayRecordSeconds(@PathVariable Integer disId) {
+		System.out.println("depGetTodayRecordSecondsdepGetTodayRecordSeconds" + disId);
+		GbDistributerEntity distributerEntity = gbDistributerService.queryObject(disId);
+		BigDecimal recordMinutes = new BigDecimal(distributerEntity.getGbDistributerRecordSeconds());
+
+		Map<String, Object> map = new HashMap<>();
+		map.put("disId", disId);
+		map.put("date", formatWhatDay(0));
+		map.put("type", getGbDisPayListRecord());
+		System.out.println("mapmapapapap" + map);
+		int count =	gbDistributerPayListService.queryDisPayListCount(map);
+		System.out.println("tootttc" + count);
+		if(count > 0){
+			int total =	gbDistributerPayListService.queryDisRecordSecondsTotal(map);
+			recordMinutes = recordMinutes.subtract(new BigDecimal(total));
+		}
+
+		List<NxGoodsEntity> books = nxGoodsService.queryNumberGoods();
+		Map<String, Object> mapR = new HashMap<>();
+		mapR.put("books", books);
+		mapR.put("minute", recordMinutes);
+
+		return R.ok().put("data", mapR);
+	}
+
 
 
 	@RequestMapping(value = "/addPoints", method = RequestMethod.POST)
@@ -45,7 +104,7 @@ public class GbDistributerPayListController {
 		System.out.println("decimdall========" + decimal);
 		BigDecimal decimal1 = new BigDecimal(points);
 		System.out.println("nxdkkddkdk00" + gbDistributerEntity.getGbDistributerBuyQuantity());
-		BigDecimal add = decimal.add(decimal1).setScale(0, BigDecimal.ROUND_HALF_UP);
+		BigDecimal add = decimal.add(decimal1);
 		gbDistributerEntity.setGbDistributerBuyQuantity(add.toString());
 		System.out.println("nxdkkddkdk11" + gbDistributerEntity.getGbDistributerBuyQuantity());
 		gbDistributerService.update(gbDistributerEntity);
@@ -61,11 +120,13 @@ public class GbDistributerPayListController {
 		map.put("disId", disId);
 		map.put("offset", (page - 1) * limit);
 		map.put("limit", limit);
+		map.put("type", type);
 		System.out.println("ididid" + map);
 		List<GbDistributerPayListEntity> listEntities = gbDistributerPayListService.queryPayListListByParams(map);
 		System.out.println("rlisisisis" + listEntities);
 		Map<String, Object> mapCount = new HashMap<>();
 		mapCount.put("disId", disId);
+		mapCount.put("type", type);
 		int total = gbDistributerPayListService.queryDisPayListCount(mapCount);
 		PageUtils pageUtil = new PageUtils(listEntities, total, limit, page);
 		return R.ok().put("page", pageUtil);

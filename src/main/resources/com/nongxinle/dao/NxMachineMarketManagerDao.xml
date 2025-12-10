@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxMachineMarketManagerDao">
+
+    <!-- 基础查询 -->
+    <select id="queryObject" resultType="com.nongxinle.entity.NxMachineMarketManagerEntity">
+        SELECT * FROM nx_machine_market_manager WHERE nx_mm_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxMachineMarketManagerEntity">
+        SELECT * FROM nx_machine_market_manager
+        <where>
+            <if test="marketId != null">
+                AND nx_mm_market_id = #{marketId}
+            </if>
+            <if test="status != null">
+                AND nx_mm_status = #{status}
+            </if>
+        </where>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_machine_market_manager
+        <where>
+            <if test="marketId != null">
+                AND nx_mm_market_id = #{marketId}
+            </if>
+            <if test="status != null">
+                AND nx_mm_status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据OpenID查询 -->
+    <select id="queryByOpenid" resultType="com.nongxinle.entity.NxMachineMarketManagerEntity">
+        SELECT * FROM nx_machine_market_manager WHERE nx_mm_wx_openid = #{openid}
+    </select>
+
+    <!-- 根据手机号查询 -->
+    <select id="queryByPhone" resultType="com.nongxinle.entity.NxMachineMarketManagerEntity">
+        SELECT * FROM nx_machine_market_manager WHERE nx_mm_phone = #{phone}
+    </select>
+
+    <!-- 根据市场ID查询管理员列表 -->
+    <select id="queryByMarketId" resultType="com.nongxinle.entity.NxMachineMarketManagerEntity">
+        SELECT * FROM nx_machine_market_manager
+        WHERE nx_mm_market_id = #{marketId}
+        <if test="status != null">
+            AND nx_mm_status = #{status}
+        </if>
+        ORDER BY nx_mm_create_time DESC
+    </select>
+
+    <!-- 新增 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxMachineMarketManagerEntity" useGeneratedKeys="true" keyProperty="nxMmId">
+        INSERT INTO nx_machine_market_manager
+        (
+            nx_mm_market_id,
+            nx_mm_wx_openid,
+            nx_mm_wx_unionid,
+            nx_mm_wx_nickname,
+            nx_mm_wx_avatar,
+            nx_mm_phone,
+            nx_mm_name,
+            nx_mm_role,
+            nx_mm_status,
+            nx_mm_create_time
+        )
+        VALUES
+        (
+            #{nxMmMarketId},
+            #{nxMmWxOpenid},
+            #{nxMmWxUnionid},
+            #{nxMmWxNickname},
+            #{nxMmWxAvatar},
+            #{nxMmPhone},
+            #{nxMmName},
+            #{nxMmRole},
+            #{nxMmStatus},
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxMachineMarketManagerEntity">
+        UPDATE nx_machine_market_manager
+        <set>
+            <if test="nxMmWxNickname != null">nx_mm_wx_nickname = #{nxMmWxNickname},</if>
+            <if test="nxMmWxAvatar != null">nx_mm_wx_avatar = #{nxMmWxAvatar},</if>
+            <if test="nxMmPhone != null">nx_mm_phone = #{nxMmPhone},</if>
+            <if test="nxMmName != null">nx_mm_name = #{nxMmName},</if>
+            <if test="nxMmRole != null">nx_mm_role = #{nxMmRole},</if>
+            <if test="nxMmStatus != null">nx_mm_status = #{nxMmStatus},</if>
+        </set>
+        WHERE nx_mm_id = #{nxMmId}
+    </update>
+
+    <!-- 更新最后登录时间 -->
+    <update id="updateLastLoginTime">
+        UPDATE nx_machine_market_manager
+        SET nx_mm_last_login_time = NOW()
+        WHERE nx_mm_id = #{managerId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_machine_market_manager WHERE nx_mm_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM nx_machine_market_manager WHERE nx_mm_id IN
+        <foreach item="nxMmId" collection="array" open="(" separator="," close=")">
+            #{nxMmId}
+        </foreach>
+    </delete>
+
+</mapper>
+

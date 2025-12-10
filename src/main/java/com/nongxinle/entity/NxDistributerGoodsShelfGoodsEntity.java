@@ -35,9 +35,29 @@ NxDistributerGoodsShelfGoodsEntity implements Serializable {
 	private Integer nxDgsgShelfId;
 	private Integer nxDgsgSort;
 	private Integer nxDgsgShelfSort;
+	private Integer nxDgsgShelfLayer;
+	/**
+	 * 是否重复出现在多个货架
+	 * 0 = 未重复（只出现在一个货架）
+	 * 1 = 重复（出现在多个不同货架）
+	 */
+	private Integer nxDgsgIsDuplicate;
 
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+	private NxDistributerPurchaseGoodsEntity shelfPurGoods;
+	private NxDistributerGoodsShelfEntity nxDistributerGoodsShelfEntity;
 
 	private List<NxDistributerGoodsShelfStockEntity> nxDisGoodsShelfStockEntities;
+	private List<NxDistributerGoodsShelfGoodsEntity> sameShelfGoods;
+
+	/**
+	 * 总库存重量（SQL计算）
+	 */
+	private String totalRestWeight;
+
+	/**
+	 * 货架名称（用于显示）
+	 */
+	private String shelfName;
 
 }

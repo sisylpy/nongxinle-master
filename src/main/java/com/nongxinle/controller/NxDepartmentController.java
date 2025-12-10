@@ -47,8 +47,6 @@ public class NxDepartmentController {
     @Autowired
     private NxDepartmentBillService nxDepartmentBillService;
     @Autowired
-    private NxDistributerCommunityService nxDisCommunityService;
-    @Autowired
     private NxDistributerService nxDistributerService;
     @Autowired
     private NxDistributerGbDistributerService nxDisGbDisService;
@@ -60,6 +58,8 @@ public class NxDepartmentController {
     private NxDistributerUserService nxDistributerUserService;
     @Autowired
     private NxDepartmentOrderHistoryService historyService;
+    @Autowired
+    private NxDistributerGbDistributerService nxDistributerGbDistributerService;
 
 
     private Map<String, Boolean> tokenStatus = new HashMap<>();
@@ -67,10 +67,10 @@ public class NxDepartmentController {
 
     @RequestMapping(value = "/changeDeps", method = RequestMethod.POST)
     @ResponseBody
-    public R changeDeps (Integer oldDepId, Integer newDepId) {
+    public R changeDeps(Integer oldDepId, Integer newDepId) {
         NxDepartmentEntity newDepartmentEntity = nxDepartmentService.queryObject(newDepId);
-        Integer newFatherId = newDepartmentEntity.getNxDepartmentFatherId() ;
-        if(newDepartmentEntity.getNxDepartmentFatherId() == 0 ){
+        Integer newFatherId = newDepartmentEntity.getNxDepartmentFatherId();
+        if (newDepartmentEntity.getNxDepartmentFatherId() == 0) {
             newFatherId = newDepId;
         }
 
@@ -78,8 +78,8 @@ public class NxDepartmentController {
         Map<String, Object> map = new HashMap<>();
         map.put("depId", oldDepId);
         List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-        if(nxDepartmentOrdersEntities.size() > 0){
-            for(NxDepartmentOrdersEntity ordersEntity: nxDepartmentOrdersEntities){
+        if (nxDepartmentOrdersEntities.size() > 0) {
+            for (NxDepartmentOrdersEntity ordersEntity : nxDepartmentOrdersEntities) {
                 ordersEntity.setNxDoDepartmentId(newDepId);
                 ordersEntity.setNxDoDepartmentFatherId(newFatherId);
                 nxDepartmentOrdersService.update(ordersEntity);
@@ -89,8 +89,8 @@ public class NxDepartmentController {
 
         //orderHistory
         List<NxDepartmentOrderHistoryEntity> historyEntities = historyService.queryDisHistoryOrdersByParams(map);
-        if(nxDepartmentOrdersEntities.size() > 0){
-            for(NxDepartmentOrderHistoryEntity ordersEntity: historyEntities){
+        if (nxDepartmentOrdersEntities.size() > 0) {
+            for (NxDepartmentOrderHistoryEntity ordersEntity : historyEntities) {
                 ordersEntity.setNxDoDepartmentId(newDepId);
                 ordersEntity.setNxDoDepartmentFatherId(newFatherId);
                 historyService.update(ordersEntity);
@@ -100,8 +100,8 @@ public class NxDepartmentController {
         //depDisGoods
 
         List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = departmentDisGoodsService.queryDepDisGoodsByParams(map);
-        if(departmentDisGoodsEntities.size() > 0){
-            for(NxDepartmentDisGoodsEntity departmentDisGoodsEntity: departmentDisGoodsEntities){
+        if (departmentDisGoodsEntities.size() > 0) {
+            for (NxDepartmentDisGoodsEntity departmentDisGoodsEntity : departmentDisGoodsEntities) {
                 departmentDisGoodsEntity.setNxDdgDepartmentId(newDepId);
                 departmentDisGoodsEntity.setNxDdgDepartmentFatherId(newFatherId);
                 departmentDisGoodsService.update(departmentDisGoodsEntity);
@@ -109,8 +109,8 @@ public class NxDepartmentController {
         }
 
         List<NxDepartmentBillEntity> nxDepartmentBillEntities = nxDepartmentBillService.queryBillsListByParams(map);
-        if(nxDepartmentBillEntities.size() > 0){
-            for(NxDepartmentBillEntity billEntity: nxDepartmentBillEntities){
+        if (nxDepartmentBillEntities.size() > 0) {
+            for (NxDepartmentBillEntity billEntity : nxDepartmentBillEntities) {
                 billEntity.setNxDbDepId(newDepId);
                 billEntity.setNxDbDepFatherId(newFatherId);
                 nxDepartmentBillService.update(billEntity);
@@ -138,7 +138,7 @@ public class NxDepartmentController {
 
     @RequestMapping(value = "/updateDepPickName", method = RequestMethod.POST)
     @ResponseBody
-    public R updateDepPickName (Integer depId, String pickName ) {
+    public R updateDepPickName(Integer depId, String pickName) {
         NxDepartmentEntity nxDepartmentEntity = nxDepartmentService.queryObject(depId);
         nxDepartmentEntity.setNxDepartmentPickName(pickName);
         nxDepartmentService.update(nxDepartmentEntity);
@@ -173,7 +173,7 @@ public class NxDepartmentController {
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
     public Map<String, Object> getStatus(@RequestParam String token) {
-        System.out.println("toemmene123" +token);
+        System.out.println("toemmene123" + token);
         Map<String, Object> response = new HashMap<>();
         if ("uniqueToken123".equals(token)) {
             response.put("loggedIn", true);
@@ -187,6 +187,15 @@ public class NxDepartmentController {
     @RequestMapping(value = "/changeMultiDeps", method = RequestMethod.POST)
     @ResponseBody
     public R changeMultiDeps(@RequestBody NxDepartmentEntity depart) {
+        Integer nxDepartmentId = depart.getNxDepartmentId();
+        Map<String, Object> map = new HashMap<>();
+        map.put("depFatherId", nxDepartmentId);
+        map.put("status", 3);
+        Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(map);
+        if(integer > 0){
+            return R.error(-1,"有未完成订单，不能修改部门");
+        }
+
         List<NxDepartmentEntity> nxDepartmentEntities = depart.getNxDepartmentEntities();
         if (nxDepartmentEntities.size() > 0) {
             for (NxDepartmentEntity departmentEntity : nxDepartmentEntities) {
@@ -236,14 +245,14 @@ public class NxDepartmentController {
         }
 
         nxDepartmentService.delete(delId);
-		NxDepartmentEntity fatherDepart = nxDepartmentService.queryObject(fatherId);
+        NxDepartmentEntity fatherDepart = nxDepartmentService.queryObject(fatherId);
 
-		Integer nxDepartmentSubAmount = fatherDepart.getNxDepartmentSubAmount();
-		int wxCountAuto = nxDepartmentSubAmount - 1;
-		fatherDepart.setNxDepartmentSubAmount(wxCountAuto);
-		nxDepartmentService.update(fatherDepart);
+        Integer nxDepartmentSubAmount = fatherDepart.getNxDepartmentSubAmount();
+        int wxCountAuto = nxDepartmentSubAmount - 1;
+        fatherDepart.setNxDepartmentSubAmount(wxCountAuto);
+        nxDepartmentService.update(fatherDepart);
 
-		return R.ok();
+        return R.ok();
     }
 
     @RequestMapping(value = "/disDeleteSubDeps/{id}")
@@ -254,46 +263,46 @@ public class NxDepartmentController {
         List<NxDepartmentEntity> departmentEntities = nxDepartmentService.querySubDepartments(id);
         if (departmentEntities.size() > 0) {
             for (NxDepartmentEntity departmentEntity : departmentEntities) {
-
-
-                //bill
-                Map<String, Object> map = new HashMap<>();
-                map.put("depId", departmentEntity.getNxDepartmentId());
-                List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryBillsByParams(map);
-                if (billEntityList.size() > 0) {
-                    for (NxDepartmentBillEntity billEntity : billEntityList) {
-                        billEntity.setNxDbDepId(id);
-                        nxDepartmentBillService.update(billEntity);
+                if (departmentEntity.getNxDepartmentFatherId().equals(id)) {
+                    //bill
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("depId", departmentEntity.getNxDepartmentId());
+                    List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryBillsByParams(map);
+                    if (billEntityList.size() > 0) {
+                        for (NxDepartmentBillEntity billEntity : billEntityList) {
+                            billEntity.setNxDbDepId(id);
+                            nxDepartmentBillService.update(billEntity);
+                        }
                     }
-                }
 
-                //order
-                List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-                if (ordersEntities.size() > 0) {
-                    for (NxDepartmentOrdersEntity ordersEntity : ordersEntities) {
-                        ordersEntity.setNxDoDepartmentId(id);
-                        nxDepartmentOrdersService.update(ordersEntity);
+                    //order
+                    List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+                    if (ordersEntities.size() > 0) {
+                        for (NxDepartmentOrdersEntity ordersEntity : ordersEntities) {
+                            ordersEntity.setNxDoDepartmentId(id);
+                            nxDepartmentOrdersService.update(ordersEntity);
+                        }
                     }
-                }
 
-                //depGoods
-                List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = departmentDisGoodsService.queryDepDisGoodsByParams(map);
-                TreeSet<NxDepartmentDisGoodsEntity> list = new TreeSet<>();
-                if (departmentDisGoodsEntities.size() > 0) {
-                    for (NxDepartmentDisGoodsEntity departmentDisGoodsEntity : departmentDisGoodsEntities) {
-                        departmentDisGoodsEntity.setNxDdgDepartmentId(id);
-                        list.add(departmentDisGoodsEntity);
-                        departmentDisGoodsService.delete(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
+                    //depGoods
+                    List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = departmentDisGoodsService.queryDepDisGoodsByParams(map);
+                    TreeSet<NxDepartmentDisGoodsEntity> list = new TreeSet<>();
+                    if (departmentDisGoodsEntities.size() > 0) {
+                        for (NxDepartmentDisGoodsEntity departmentDisGoodsEntity : departmentDisGoodsEntities) {
+                            departmentDisGoodsEntity.setNxDdgDepartmentId(id);
+                            list.add(departmentDisGoodsEntity);
+                            departmentDisGoodsService.delete(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
+                        }
                     }
-                }
 
-                if (list.size() > 0) {
-                    for (NxDepartmentDisGoodsEntity disGoodsEntity : list) {
-                        departmentDisGoodsService.save(disGoodsEntity);
+                    if (list.size() > 0) {
+                        for (NxDepartmentDisGoodsEntity disGoodsEntity : list) {
+                            departmentDisGoodsService.save(disGoodsEntity);
+                        }
                     }
-                }
 
-                nxDepartmentService.delete(departmentEntity.getNxDepartmentId());
+                    nxDepartmentService.delete(departmentEntity.getNxDepartmentId());
+                }
             }
             NxDepartmentEntity departmentEntity = nxDepartmentService.queryObject(id);
             departmentEntity.setNxDepartmentSubAmount(0);
@@ -450,16 +459,16 @@ public class NxDepartmentController {
         Map<String, TemplateData> mapNotice = new HashMap<>();
         mapNotice.put("thing2", new TemplateData(nxDepartmentUserEntity.getNxDuWxNickName()));
         mapNotice.put("time3", new TemplateData(formatWhatDayTime(0)));
-        mapNotice.put("phrase5", new TemplateData( "待审核"));
-        mapNotice.put("phrase9", new TemplateData( "待审核"));
-        mapNotice.put("phone_number6", new TemplateData( nxDepartmentUserEntity.getNxDuWxPhone()));
+        mapNotice.put("phrase5", new TemplateData("待审核"));
+        mapNotice.put("phrase9", new TemplateData("待审核"));
+        mapNotice.put("phone_number6", new TemplateData(nxDepartmentUserEntity.getNxDuWxPhone()));
         System.out.println("nociiciiiicicautotootototoototoRRRRR" + mapNotice);
         Map<String, Object> mapU = new HashMap<>();
         mapU.put("disId", nxDepartmentUserEntity.getNxDuDistributerId());
         mapU.put("admin", 0);
         List<NxDistributerUserEntity> userEntities = nxDistributerUserService.queryRoleNxDisRoleUserList(mapU);
-        if(userEntities.size() > 0){
-            for(NxDistributerUserEntity userEntity: userEntities){
+        if (userEntities.size() > 0) {
+            for (NxDistributerUserEntity userEntity : userEntities) {
                 System.out.println("diusern" + userEntity.getNxDiuWxNickName());
                 WeNoticeService.nxCashDepSave(userEntity.getNxDiuWxOpenId(), "subPackage/pages/customer/index/index", mapNotice);
 
@@ -511,6 +520,7 @@ public class NxDepartmentController {
 
     /**
      * 获取批发商客户列表
+     *
      * @param disId 批发商id
      * @return 客户列表
      */
@@ -521,6 +531,7 @@ public class NxDepartmentController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("type", 0);
+        map.put("gbDisId", -1);
         System.out.println("selelelelllemmama" + map);
         List<NxDepartmentEntity> entities = nxDepartmentService.queryDepartmentBySettleType(map);
         map.put("type", 1);
@@ -597,6 +608,7 @@ public class NxDepartmentController {
 
     /**
      * 批发商添加客户
+     *
      * @param
      * @return 0
      */
@@ -616,6 +628,7 @@ public class NxDepartmentController {
 
     /**
      * 批发商添加客户
+     *
      * @param distributerDepartmentEntity 客户
      * @return 0
      */
@@ -656,12 +669,13 @@ public class NxDepartmentController {
     public R deleteGroupDep(@RequestBody NxDepartmentEntity dep) {
         Integer departmentId = dep.getNxDepartmentId();
 
-
         //depUser
         List<NxDepartmentUserEntity> userEntities = nxDepartmentUserService.queryAllUsersByDepId(departmentId);
-        if (userEntities.size() > 0) {
+        if (userEntities.size() > 0 ) {
             for (NxDepartmentUserEntity user : userEntities) {
-                nxDepartmentUserService.delete(user.getNxDepartmentUserId());
+                if(user.getNxDuDepartmentId().equals(departmentId)){
+                    nxDepartmentUserService.delete(user.getNxDepartmentUserId());
+                }
             }
         }
 
@@ -671,7 +685,10 @@ public class NxDepartmentController {
         List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepartmentDisGoodsService.queryDepDisGoodsByParams(map);
         if (departmentDisGoodsEntities.size() > 0) {
             for (NxDepartmentDisGoodsEntity disGoods : departmentDisGoodsEntities) {
-                nxDepartmentDisGoodsService.delete(disGoods.getNxDepartmentDisGoodsId());
+                if(disGoods.getNxDdgDepartmentId().equals(departmentId)){
+                    nxDepartmentDisGoodsService.delete(disGoods.getNxDepartmentDisGoodsId());
+                }
+
             }
         }
         //depBill
@@ -680,7 +697,9 @@ public class NxDepartmentController {
         List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryBillsByParams(map1);
         if (billEntityList.size() > 0) {
             for (NxDepartmentBillEntity bill : billEntityList) {
-                nxDepartmentBillService.delete(bill.getNxDepartmentBillId());
+                if(bill.getNxDbDepId().equals(departmentId)){
+                    nxDepartmentBillService.delete(bill.getNxDepartmentBillId());
+                }
             }
         }
 
@@ -701,6 +720,7 @@ public class NxDepartmentController {
     /**
      * PURCHASE
      * 修改群名称
+     *
      * @param departmentEntity 群
      * @return ok
      */
@@ -710,6 +730,8 @@ public class NxDepartmentController {
 
         departmentEntity.setNxDepartmentPinyin(hanziToPinyin(departmentEntity.getNxDepartmentName()));
         System.out.println("upddiadpririicci" + departmentEntity.getNxDepartmentPickName());
+        System.out.println("upddiadpririicci" + departmentEntity.getNxDepartmentLat());
+        System.out.println("upddiadpririicci" + departmentEntity.getNxDepartmentLatestDeliveryTime());
         nxDepartmentService.update(departmentEntity);
         if (departmentEntity.getNxDepartmentEntities().size() > 0) {
             for (NxDepartmentEntity subdep : departmentEntity.getNxDepartmentEntities()) {
@@ -717,6 +739,7 @@ public class NxDepartmentController {
                 subdep.setNxDepartmentSettleType(departmentEntity.getNxDepartmentSettleType());
                 subdep.setNxDepartmentType(departmentEntity.getNxDepartmentType());
                 subdep.setNxDepartmentPinyin(hanziToPinyin(subdep.getNxDepartmentName()));
+
                 nxDepartmentService.update(subdep);
             }
 
@@ -724,8 +747,30 @@ public class NxDepartmentController {
         return R.ok();
     }
 
+    @RequestMapping(value = "/updateGroupNameWithNxDisBusiness", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateGroupNameWithNxDisBusiness(@RequestBody NxDepartmentEntity departmentEntity) {
+
+
+        departmentEntity.setNxDepartmentPinyin(hanziToPinyin(departmentEntity.getNxDepartmentName()));
+        nxDepartmentService.update(departmentEntity);
+        Map<String, Object> map = new HashMap<>();
+        map.put("gbDisId", departmentEntity.getNxDepartmentGbDistributerId());
+        map.put("nxDisId", departmentEntity.getNxDepartmentDisId());
+        NxDistributerGbDistributerEntity nxDistributerGbDistributerEntity = nxDistributerGbDistributerService.queryObjectByParams(map);
+
+        if (nxDistributerGbDistributerEntity != null) {
+            nxDistributerGbDistributerEntity.setNxDgdGbPayMethod(departmentEntity.getNxDepartmentSettleType());
+            nxDistributerGbDistributerService.update(nxDistributerGbDistributerEntity);
+        }
+        return R.ok();
+    }
+
+
+
     /**
      * 微信小程序扫描二维码校验文件
+     *
      * @return 校验内容
      */
     @RequestMapping(value = "/cash/rO1D9uJkqM.txt")
@@ -751,6 +796,7 @@ public class NxDepartmentController {
     /**
      * PURCHASE
      * 采购员注册
+     *
      * @param dep 订货群restrauntRegist
      * @return 群信息
      */
@@ -791,6 +837,7 @@ public class NxDepartmentController {
     /**
      * PURCHASE
      * 采购员注册
+     *
      * @param dep 订货群restrauntRegist
      * @return 群信息
      */
@@ -841,6 +888,7 @@ public class NxDepartmentController {
     /**
      * PURCHASE
      * 采购员注册
+     *
      * @param dep 订货群
      * @return 群信息
      */
@@ -879,6 +927,7 @@ public class NxDepartmentController {
     /**
      * ORDER
      * 获取群的子部门
+     *
      * @param depId 群id
      * @return 子部门列表
      */
@@ -893,6 +942,7 @@ public class NxDepartmentController {
 
     /**
      * ORDER
+     *
      * @param depId
      * @return
      */
@@ -903,6 +953,15 @@ public class NxDepartmentController {
         NxDepartmentEntity nxDepartmentEntity = nxDepartmentService.queryDepInfo(depId);
         return R.ok().put("data", nxDepartmentEntity);
     }
+
+    @RequestMapping(value = "/getGbDisDepInfo/{disId}")
+    @ResponseBody
+    public R getGbDisDepInfo(@PathVariable Integer disId) {
+
+        NxDepartmentEntity nxDepartmentEntity = nxDepartmentService.queryDepInfoByGbDisId(disId);
+        return R.ok().put("data", nxDepartmentEntity);
+    }
+
 
     @RequestMapping(value = "/getGroupInfo/{depId}")
     @ResponseBody

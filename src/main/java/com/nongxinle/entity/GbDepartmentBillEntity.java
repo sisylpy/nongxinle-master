@@ -91,6 +91,7 @@ public class GbDepartmentBillEntity implements Serializable {
 	private Integer gbDbDepSettleId;
 	private Integer gbDbIssueNxDisId;
 	private Integer gbDbSetAutoGoods;
+
 	private Integer gbDbUserCouponId;
 	private Integer gbDbReturnOrderId;
 	private  String gbUserOpenId;

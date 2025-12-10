@@ -113,6 +113,7 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 		nxDepartmentEntity.setNxDepartmentOrderTotal(0);
 		String s = hanziToPinyin(nxDepartmentEntity.getNxDepartmentName());
 		nxDepartmentEntity.setNxDepartmentPinyin(s);
+		nxDepartmentEntity.setNxDepartmentAttrName(nxDepartmentEntity.getNxDepartmentName());
 		Integer nxDepartmentDisId = nxDepartmentEntity.getNxDepartmentDisId();
 		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
         nxDepartmentEntity.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
@@ -302,6 +303,12 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 		map.put("userInfo", nxDepartmentUserEntity);
 		map.put("depInfo", nxDepartmentEntity);
 		return  map;
+    }
+
+    @Override
+    public NxDepartmentEntity queryDepInfoByGbDisId(Integer disId) {
+
+		return nxDepartmentDao.queryDepInfoByGbDisId(disId);
     }
 
 

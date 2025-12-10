@@ -98,9 +98,11 @@ public class NxDistributerPayListController {
 		payListEntity.setNxNdplPayYear(formatWhatYear(0));
 		payListEntity.setNxNdplStatus(0);
 		payListEntity.setNxNdplType(getNxDisPayListRecord());
-		payListEntity.setNxNdplRestPoints(Integer.valueOf(nxDistributerEntity.getNxDistributerBuyQuantity()));
+		payListEntity.setNxNdplRestPoints(nxDistributerEntity.getNxDistributerBuyQuantity());
 		payListEntity.setNxNdplNxDbId(-1);
 		nxDistributerPayListService.save(payListEntity);
+
+		System.out.println("papappapa" + payListEntity);
 
 
 		BigDecimal decimal0 = new BigDecimal(nxDistributerEntity.getNxDistributerBuyQuantity());

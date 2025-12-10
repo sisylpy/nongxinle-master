@@ -3,6 +3,14 @@
 
 <mapper namespace="com.nongxinle.dao.NxGoodsDao">
 
+    <select id="queryNxBrand" resultType="java.lang.String">
+        SELECT DISTINCT TRIM(nx_goods_brand)
+        FROM nx_goods
+        WHERE nx_goods_brand IS NOT NULL
+          AND TRIM(nx_goods_brand) != ''
+        ORDER BY TRIM(nx_goods_brand)
+    </select>
+
 
     <select id="queryQuickSearchNxCategoryGoods" resultMap="nxGoods">
         select g.nx_goods_id              'nx_goods_id',
@@ -36,7 +44,10 @@
     </select>
 
     <resultMap id="searchGoods" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -82,9 +93,14 @@
                g.nx_goods_pinyin,
                g.nx_goods_sort,
                g.nx_goods_sons_sort,
+               g.nx_goods_quantity_days,
+               g.nx_goods_carton_unit,
+               g.nx_goods_items_per_carton,
+               g.nx_goods_level,
+               g.nx_goods_is_hidden ,
                a.nx_als_goods_id,
-               a.nx_alias_name,
 
+               a.nx_alias_name,
                ns.nx_standard_id,
                ns.nx_standard_name,
                ns.nx_standard_weight,
@@ -96,13 +112,13 @@
 
                  left join nx_alias as a on a.nx_als_goods_id = g.nx_goods_id
                  left join nx_standard as ns on ns.nx_s_goods_id = g.nx_goods_id
-        where (g.nx_goods_py like concat('%', #{searchPinyin}, '%')
-            or g.nx_goods_pinyin like concat('%', #{searchPinyin}, '%')
+        where (g.nx_goods_py = #{searchPinyin}
+            or g.nx_goods_pinyin = #{searchPinyin}
             or g.nx_goods_name like concat('%', #{searchStr}, '%')
             or a.nx_alias_name like concat('%', #{searchStr}, '%')
             )
           and g.nx_goods_standardname is not null
-          and g.nx_goods_level = 3
+          and g.nx_goods_level = 3 and g.nx_goods_is_hidden = 0
     </select>
 
 
@@ -113,7 +129,13 @@
                 and nx_goods_name = #{name}
             </if>
             <if test="standard != null">
-                and nx_goods_standard = #{standard}
+                and nx_goods_standardname = #{standard}
+            </if>
+            <if test="standardWeight != null">
+                and nx_goods_standard_weight = #{standardWeight}
+            </if>
+            <if test="brand != null">
+                and nx_goods_brand = #{brand}
             </if>
             <if test="grandId != null">
                 and nx_goods_grand_id = #{grandId}
@@ -171,6 +193,7 @@
         <result property="nxGoodsFatherId" column="grand_nx_goods_father_id"/>
         <result property="nxGoodsSort" column="grand_nx_goods_sort"/>
         <result property="nxGoodsSonsSort" column="grand_nx_goods_sons_sort"/>
+        <result property="nxGoodsQuantityDays" column="grand_nx_goods_quantity_days"/>
         <association property="fatherGoods" resultMap="greatGrandGoods"/>
     </resultMap>
 
@@ -184,7 +207,10 @@
     </resultMap>
 
     <resultMap id="nxGoods" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -206,6 +232,8 @@
         <result property="nxGoodsStandardWeight" column="nx_goods_standard_weight"/>
         <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
         <result property="nxGoodsLevel" column="nx_goods_level"/>
+        <result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+        <result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
         <association property="fatherGoods" resultMap="father"/>
         <association property="grandGoods" resultMap="grandGoods"/>
         <association property="greatGrandGoods" resultMap="greatGrandGoods"/>
@@ -234,6 +262,9 @@
                g.nx_goods_level              'nx_goods_level',
                g.nx_goods_sort               'nx_goods_sort',
                g.nx_goods_is_hidden          'nx_goods_is_hidden',
+               g.nx_goods_quantity_days          'nx_goods_quantity_days',
+               g.nx_goods_carton_unit                 'nx_goods_carton_unit',
+               g.nx_goods_items_per_carton            'nx_goods_items_per_carton',
 
                f.nx_goods_id                 'f_nx_goods_id',
                f.nx_goods_name               'f_nx_goods_name',
@@ -244,6 +275,7 @@
                f.nx_goods_sort               'f_nx_goods_sort',
                f.nx_goods_sons_sort          'f_nx_goods_sons_sort',
                f.nx_goods_is_hidden          'f_nx_goods_is_hidden',
+               f.nx_goods_quantity_days          'f_nx_goods_quantity_days',
 
                grand.nx_goods_id             'grand_nx_goods_id',
                grand.nx_goods_name           'grand_nx_goods_name',
@@ -252,6 +284,8 @@
                grand.nx_goods_file_big       'grand_nx_goods_file_big',
                grand.nx_goods_sort           'grand_nx_goods_sort',
                grand.nx_goods_sons_sort      'grand_nx_goods_sons_sort',
+               grand.nx_goods_quantity_days          'grand_nx_goods_quantity_days',
+
                greatgrand.nx_goods_id        'greatgrand_nx_goods_id',
                greatgrand.nx_goods_name      'greatgrand_nx_goods_name',
                greatgrand.nx_goods_sort      'greatgrand_nx_goods_sort',
@@ -274,7 +308,10 @@
 
 
     <resultMap id="nxCatalogue" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -293,7 +330,10 @@
 
 
     <resultMap id="goods" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -341,7 +381,10 @@
 
 
     <resultMap id="nxGoodsCateList" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsFile" column="nx_goods_file"/>
@@ -475,6 +518,12 @@
             <if test="notEqualFatherId != null">
                 and nx_goods_father_id != #{notEqualFatherId}
             </if>
+            <if test="unitName != null">
+                and nx_goods_carton_unit = #{unitName}
+            </if>
+            <if test="items != null">
+                and nx_goods_items_per_carton = #{items}
+            </if>
 
         </where>
 
@@ -498,11 +547,17 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
     </resultMap>
 
     <resultMap id="nxDisGoods" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
+
         <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
+        <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <result property="nxDgWillPriceOneStandard" column="nx_dg_will_price_one_standard"/>
         <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
         <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
@@ -558,7 +613,10 @@
     </resultMap>
 
     <resultMap id="nxGoodsWithNxDis" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -660,7 +718,10 @@
 
 
     <resultMap id="nxGoodsWithNxDisGoods" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -730,7 +791,10 @@
     </select>
 
     <resultMap id="nxgoodsWithGreat" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -806,7 +870,7 @@
                  left join nx_standard as ns on ns.nx_s_goods_id = g.nx_goods_id
                  left join nx_distributer_goods as ndg on ndg.nx_dg_nx_goods_id = g.nx_goods_id
             and ndg.nx_dg_distributer_id = #{disId}
-        where g.nx_goods_level = 3
+        where g.nx_goods_level = 3 and g.nx_goods_is_hidden = 0
           and (g.nx_goods_py like concat('%', #{searchStr}, '%')
             or g.nx_goods_pinyin like concat('%', #{searchStr}, '%')
             or g.nx_goods_name like concat('%', #{searchStr}, '%')
@@ -818,7 +882,10 @@
 
 
     <resultMap id="nxGoodsWithShelfGoods" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -903,7 +970,11 @@
         <result property="nxDgdStatus" column="nx_DGD_status"/>
     </resultMap>
     <resultMap id="nxDisWithGbDep" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
         <result property="nxDistributerType" column="nx_distributer_type"/>
@@ -922,7 +993,10 @@
 
 
     <resultMap id="cataDistributer" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
         <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
@@ -934,7 +1008,8 @@
     </resultMap>
 
     <resultMap id="gbOrder" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -1033,6 +1108,7 @@
         <result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
         <result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
         <result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+        <result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
         <result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
         <result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
         <result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -1107,7 +1183,10 @@
     </resultMap>
 
     <resultMap id="goodsWithGbOrder" type="NxGoodsEntity">
-        <id property="nxGoodsId" column="nx_goods_id"/>
+         <id property="nxGoodsId" column="nx_goods_id"/>
+		<result property="nxGoodsItemsPerCarton" column="nx_goods_items_per_carton"/>
+		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
+		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
         <result property="nxGoodsDetail" column="nx_goods_detail"/>
         <result property="nxGoodsPlace" column="nx_goods_place"/>
@@ -1132,7 +1211,8 @@
         <collection property="nxAliasEntities" resultMap="aliasList"/>
     </resultMap>
     <resultMap id="gbDepStock" type="GbDepartmentGoodsStockEntity">
-        <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+         <id property="gbDepartmentGoodsStockId" column="gb_department_goods_stock_id"/>
+		<result property="gbDgsPurUserId" column="gb_dgs_pur_user_id"/>
         <result property="gbDgsNxSupplierId" column="gb_dgs_nx_supplier_id"/>
         <result property="gbDgsStars" column="gb_dgs_stars"/>
         <result property="gbDgsProduceSellingSubtotal" column="gb_dgs_produce_selling_subtotal"/>
@@ -1151,7 +1231,9 @@
         <result property="gbDgsRestWeightShowStandardName" column="gb_dgs_rest_weight_show_standard_name"/>
         <result property="gbDgsGbDisGoodsId" column="gb_dgs_gb_dis_goods_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
-        <result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+
+		<result property="gbDgsGbDisGoodsGrandId" column="gb_dgs_gb_dis_goods_grand_id"/>
+		<result property="gbDgsGbDisGoodsGreatId" column="gb_dgs_gb_dis_goods_great_id"/>
         <result property="gbDgsGbDistributerId" column="gb_dgs_gb_distributer_id"/>
         <result property="gbDgsGbDisGoodsFatherId" column="gb_dgs_gb_dis_goods_father_id"/>
         <result property="gbDgsGbDepDisGoodsId" column="gb_dgs_gb_dep_dis_goods_id"/>
@@ -1160,8 +1242,12 @@
         <result property="gbDgsSubtotal" column="gb_dgs_subtotal"/>
         <result property="gbDgsRestWeight" column="gb_dgs_rest_weight"/>
         <result property="gbDgsRestSubtotal" column="gb_dgs_rest_subtotal"/>
-        <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
+       <result property="gbDgsProduceWeight" column="gb_dgs_produce_weight"/>
         <result property="gbDgsProduceSubtotal" column="gb_dgs_produce_subtotal"/>
+        <result property="gbDgsLossWeight" column="gb_dgs_loss_weight"/>
+        <result property="gbDgsLossSubtotal" column="gb_dgs_loss_subtotal"/>
+        <result property="gbDgsWasteWeight" column="gb_dgs_waste_weight"/>
+        <result property="gbDgsWasteSubtotal" column="gb_dgs_waste_subtotal"/>
         <result property="gbDgsGbDepartmentId" column="gb_dgs_gb_department_id"/>
         <result property="gbDgsGbDepartmentFatherId" column="gb_dgs_gb_department_father_id"/>
         <result property="gbDgsGbFromDepartmentId" column="gb_dgs_gb_from_department_id"/>
@@ -1203,12 +1289,15 @@
         gds.*,
         ns.*,
         gdg.*,
-        gdo.*
+        gddg.*,
+        gdo.*,
+        gs.*
         FROM (
         SELECT
         ng.nx_goods_id            AS nx_goods_id,
         ng.nx_goods_name          AS nx_goods_name,
         ng.nx_goods_standardname   AS nx_goods_standardname,
+        ng.nx_goods_standard_weight AS nx_goods_standard_weight,
         ng.nx_goods_father_id     AS nx_goods_father_id,
         ng.nx_goods_grand_id      AS nx_goods_grand_id,
         ng.nx_goods_great_grand_id AS nx_goods_great_grand_id,
@@ -1216,8 +1305,7 @@
         ng.nx_goods_sons_sort     AS nx_goods_sons_sort,
         ng.nx_goods_file AS   nx_goods_file,
         ng.nx_goods_file_big AS   nx_goods_file_big,
-
-        ng.nx_goods_standard_weight AS nx_goods_standard_weight,
+        ng.nx_goods_detail AS nx_goods_detail,
         f.nx_goods_id             AS father_nx_goods_id,
         f.nx_goods_father_id      AS father_nx_goods_father_id,
         f.nx_goods_name           AS father_nx_goods_name,
@@ -1269,6 +1357,9 @@
         ON gdg.gb_dg_nx_goods_id    = limited_goods.nx_goods_id
         AND gdg.gb_dg_distributer_id = #{gbDisId}
 
+        LEFT JOIN gb_distributer_standard as gs
+            on gs.gb_DS_dis_goods_id = gdg.gb_distributer_goods_id
+
 
         LEFT JOIN gb_department_dis_goods AS gddg
         ON gddg.gb_DDG_dis_goods_id   = gdg.gb_distributer_goods_id
@@ -1281,54 +1372,72 @@
         LEFT JOIN gb_department_goods_stock as gds
         on gds.gb_dgs_gb_dep_dis_goods_id = gddg.gb_department_dis_goods_id
 
+
+
+
+        ORDER BY
+        limited_goods.great_nx_goods_sort,
+        limited_goods.grand_nx_goods_sort,
+        limited_goods.father_nx_goods_sort,
+        limited_goods.nx_goods_sort,
+        limited_goods.nx_goods_sons_sort
+
     </select>
 
 
-    <!--    <select id="queryGbDepNxGrandGoodsByGreatId" resultMap="goodsWithGbOrder">-->
-<!--        SELECT limited_goods.*-->
 
+
+<!--    <select id="queryGbDepNxGrandGoodsByGreatId"-->
+<!--            parameterType="map"-->
+<!--            resultMap="goodsWithGbOrder">-->
+
+<!--        SELECT-->
+<!--        limited_goods.*,-->
+<!--        gds.*,-->
+<!--        ns.*,-->
+<!--        gdg.*,-->
+<!--        gddg.*,-->
+<!--        gdo.*-->
 <!--        FROM (-->
 <!--        SELECT-->
-<!--         ng.nx_goods_id         AS nx_goods_id,-->
-<!--        ng.nx_goods_name       AS nx_goods_name,-->
-<!--        ng.nx_goods_father_id AS nx_goods_father_id,-->
-<!--        ng.nx_goods_grand_id AS nx_goods_grand_id,-->
+<!--        ng.nx_goods_id            AS nx_goods_id,-->
+<!--        ng.nx_goods_name          AS nx_goods_name,-->
+<!--        ng.nx_goods_standardname   AS nx_goods_standardname,-->
+<!--        ng.nx_goods_father_id     AS nx_goods_father_id,-->
+<!--        ng.nx_goods_grand_id      AS nx_goods_grand_id,-->
 <!--        ng.nx_goods_great_grand_id AS nx_goods_great_grand_id,-->
-<!--        ng.nx_goods_sort AS nx_goods_sort,-->
-<!--        ng.nx_goods_sons_sort AS nx_goods_sons_sort,-->
-<!--        ng.nx_goods_standardname AS nx_goods_standardname,-->
-<!--        &#45;&#45; … 其它 ng 字段 …-->
-<!--        f.nx_goods_id          AS father_nx_goods_id,-->
-<!--        f.nx_goods_name        AS father_nx_goods_name,-->
-<!--        f.nx_goods_father_id        AS father_nx_goods_father_id,-->
-<!--        f.nx_goods_grand_id        AS father_nx_goods_grand_id,-->
-<!--        f.nx_goods_great_grand_id        AS father_nx_goods_great_grand_id,-->
-<!--        f.nx_goods_sort        AS father_nx_goods_sort,-->
-<!--        f.nx_goods_sons_sort        AS father_nx_goods_sons_sort,-->
-<!--        g.nx_goods_id          AS grand_goods_id,-->
-<!--        gg.nx_goods_id         AS great_grand_goods_id,-->
-<!--        gg.nx_goods_father_id        AS great_nx_goods_father_id,-->
-<!--        gg.nx_goods_grand_id        AS great_nx_goods_grand_id,-->
-<!--        gg.nx_goods_great_grand_id        AS great_nx_goods_great_grand_id,-->
-<!--        gg.nx_goods_sort        AS great_nx_goods_sort,-->
-<!--        gg.nx_goods_sons_sort        AS great_nx_goods_sons_sort,-->
-<!--        gdg.gb_distributer_goods_id-->
-<!--        FROM nx_goods AS ng-->
-<!--        left join nx_goods as f-->
-<!--        on f.nx_goods_id = ng.nx_goods_father_id-->
-<!--        left join nx_goods as g-->
-<!--        on g.nx_goods_id = f.nx_goods_father_id-->
-<!--        left join nx_goods as gg-->
-<!--        on gg.nx_goods_id = g.nx_goods_father_id-->
-<!--        LEFT JOIN gb_distributer_goods AS gdg ON gdg.gb_dg_nx_goods_id = ng.nx_goods_id and gb_dg_distributer_id =-->
-<!--        #{gbDisId}-->
-<!--        left join gb_distributer_standard as gds on gds.gb_DS_dis_goods_id = gdg.gb_distributer_goods_id-->
-<!--        left join gb_department_dis_goods as gddg on gddg.gb_DDG_dis_goods_id = gdg.gb_distributer_goods_id and-->
-<!--        gddg.gb_DDG_department_id = #{gbDepId}-->
-<!--        LEFT JOIN gb_department_orders AS gdo ON gdo.gb_DO_nx_goods_id = ng.nx_goods_id-->
-<!--        AND gdo.gb_DO_status &lt; 3 AND gdo.gb_DO_department_id = #{gbDepId}-->
-<!--        <where>-->
+<!--        ng.nx_goods_sort          AS nx_goods_sort,-->
+<!--        ng.nx_goods_sons_sort     AS nx_goods_sons_sort,-->
+<!--        ng.nx_goods_file AS   nx_goods_file,-->
+<!--        ng.nx_goods_file_big AS   nx_goods_file_big,-->
 
+<!--        ng.nx_goods_standard_weight AS nx_goods_standard_weight,-->
+<!--        f.nx_goods_id             AS father_nx_goods_id,-->
+<!--        f.nx_goods_father_id      AS father_nx_goods_father_id,-->
+<!--        f.nx_goods_name           AS father_nx_goods_name,-->
+<!--        f.nx_goods_sort           AS father_nx_goods_sort,-->
+<!--        f.nx_goods_sons_sort      AS father_nx_goods_sons_sort,-->
+
+<!--        g.nx_goods_id             AS grand_nx_goods_id,-->
+<!--        g.nx_goods_father_id      AS grand_nx_goods_father_id,-->
+<!--        g.nx_goods_sort           AS grand_nx_goods_sort,-->
+<!--        g.nx_goods_sons_sort      AS grand_nx_goods_sons_sort,-->
+<!--        gg.nx_goods_id            AS great_nx_goods_id,-->
+<!--        gg.nx_goods_father_id     AS great_nx_goods_father_id,-->
+<!--        gg.nx_goods_sort           AS great_nx_goods_sort,-->
+<!--        gg.nx_goods_sons_sort      AS great_nx_goods_sons_sort-->
+
+
+<!--        FROM nx_goods AS ng-->
+<!--        LEFT JOIN nx_goods AS f-->
+<!--        ON f.nx_goods_id = ng.nx_goods_father_id-->
+<!--        LEFT JOIN nx_goods AS g-->
+<!--        ON g.nx_goods_id = f.nx_goods_father_id-->
+<!--        LEFT JOIN nx_goods AS gg-->
+<!--        ON gg.nx_goods_id = g.nx_goods_father_id-->
+
+
+<!--        <where>-->
 <!--            <if test="grandId != null">-->
 <!--                AND ng.nx_goods_great_grand_id = #{grandId}-->
 <!--            </if>-->
@@ -1336,52 +1445,37 @@
 <!--                AND ng.nx_goods_is_hidden = #{isHidden}-->
 <!--            </if>-->
 <!--        </where>-->
-<!--        ORDER BY gg.nx_goods_sort, g.nx_goods_sort, f.nx_goods_sort, ng.nx_goods_sort,ng.nx_goods_sons_sort-->
+
+<!--        ORDER BY-->
+<!--        gg.nx_goods_sort,-->
+<!--        g.nx_goods_sort,-->
+<!--        f.nx_goods_sort,-->
+<!--        ng.nx_goods_sort,-->
+<!--        ng.nx_goods_sons_sort-->
+
 <!--        LIMIT #{offset}, #{limit}-->
-<!--        )-->
-<!--        AS limited_goods-->
-<!--        LEFT JOIN nx_standard AS ns ON ns.nx_s_goods_id = limited_goods.nx_goods_id-->
-<!--        LEFT JOIN nx_alias AS na ON na.nx_als_goods_id = limited_goods.nx_goods_id-->
+<!--        ) AS limited_goods-->
+
+<!--        LEFT JOIN nx_standard AS ns-->
+<!--        ON ns.nx_s_goods_id = limited_goods.nx_goods_id-->
+
+<!--        LEFT JOIN gb_distributer_goods AS gdg-->
+<!--        ON gdg.gb_dg_nx_goods_id    = limited_goods.nx_goods_id-->
+<!--        AND gdg.gb_dg_distributer_id = #{gbDisId}-->
+
+
+<!--        LEFT JOIN gb_department_dis_goods AS gddg-->
+<!--        ON gddg.gb_DDG_dis_goods_id   = gdg.gb_distributer_goods_id-->
+<!--        AND gddg.gb_DDG_department_id = #{gbDepId}-->
+
+<!--        LEFT JOIN gb_department_orders AS gdo-->
+<!--        ON gdo.gb_DO_nx_goods_id    = limited_goods.nx_goods_id-->
+<!--        AND gdo.gb_DO_status   &lt; 3-->
+<!--        AND gdo.gb_DO_department_id = #{gbDepId}-->
+<!--        LEFT JOIN gb_department_goods_stock as gds-->
+<!--        on gds.gb_dgs_gb_dep_dis_goods_id = gddg.gb_department_dis_goods_id-->
+
 <!--    </select>-->
-
-
-<!--    <select id="queryGbDepNxGrandGoodsByGreatId" resultMap="goodsWithGbOrder">-->
-<!--        SELECT *-->
-<!--        FROM (-->
-<!--        SELECT *-->
-<!--        FROM nx_goods AS ng-->
-<!--        left join nx_goods as f-->
-<!--        on f.nx_goods_id = ng.nx_goods_father_id-->
-<!--        left join nx_goods as g-->
-<!--        on g.nx_goods_id = f.nx_goods_father_id-->
-<!--        left join nx_goods as gg-->
-<!--        on gg.nx_goods_id = g.nx_goods_father_id-->
-<!--        LEFT JOIN gb_distributer_goods AS gdg ON gdg.gb_dg_nx_goods_id = ng.nx_goods_id and gb_dg_distributer_id =-->
-<!--        #{gbDisId}-->
-<!--        left join gb_distributer_standard as gds on gds.gb_DS_dis_goods_id = gdg.gb_distributer_goods_id-->
-<!--        left join gb_department_dis_goods as gddg on gddg.gb_DDG_dis_goods_id = gdg.gb_distributer_goods_id and-->
-<!--        gddg.gb_DDG_department_id = #{gbDepId}-->
-<!--        LEFT JOIN gb_department_orders AS gdo ON gdo.gb_DO_nx_goods_id = ng.nx_goods_id-->
-<!--        AND gdo.gb_DO_status &lt; 3 AND gdo.gb_DO_department_id = #{gbDepId}-->
-<!--        <where>-->
-
-<!--            <if test="grandId != null">-->
-<!--                AND ng.nx_goods_great_grand_id = #{grandId}-->
-<!--            </if>-->
-<!--            <if test="isHidden != null">-->
-<!--                AND ng.nx_goods_is_hidden = #{isHidden}-->
-<!--            </if>-->
-<!--        </where>-->
-<!--        ORDER BY gg.nx_goods_sort, g.nx_goods_sort, f.nx_goods_sort, ng.nx_goods_sort,ng.nx_goods_sons_sort-->
-<!--        LIMIT #{offset}, #{limit}-->
-<!--        )-->
-<!--        AS limited_goods-->
-<!--        LEFT JOIN nx_standard AS ns ON ns.nx_s_goods_id = limited_goods.nx_goods_id-->
-<!--        LEFT JOIN nx_alias AS na ON na.nx_als_goods_id = limited_goods.nx_goods_id-->
-<!--    </select>-->
-
-
-
 
 
     <select id="queryGbDepNxGrandGoodsByGreatIdAll" resultMap="goodsWithGbOrder">
@@ -1629,7 +1723,9 @@
          `nx_goods_is_oldest_son`,
          `nx_goods_sons_sort`,
          `nx_goods_is_hidden`,
-         `nx_goods_quantity_days`)
+         `nx_goods_quantity_days`,
+         `nx_goods_carton_unit`,
+         `nx_goods_items_per_carton`)
         values (#{nxGoodsId},
                 #{nxGoodsName},
                 #{nxGoodsStandardname},
@@ -1651,7 +1747,10 @@
                 #{nxGoodsIsOldestSon},
                 #{nxGoodsSonsSort},
                 #{nxGoodsIsHidden},
-                #{nxGoodsQuantityDays})
+                #{nxGoodsQuantityDays},
+                #{nxGoodsCartonUnit},
+                #{nxGoodsItemsPerCarton}
+                )
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.NxGoodsEntity">
@@ -1659,8 +1758,8 @@
         <set>
             <if test="nxGoodsName != null">`nx_goods_name` = #{nxGoodsName},</if>
             <if test="nxGoodsStandardname != null">`nx_goods_standardname` = #{nxGoodsStandardname},</if>
-            <if test="nxGoodsBrand != null">`nx_goods_brand` = #{nxGoodsBrand},</if>
-            <if test="nxGoodsPlace != null">`nx_goods_place` = #{nxGoodsPlace},</if>
+            <if test="nxGoodsBrand != '-99'">`nx_goods_brand` = #{nxGoodsBrand},</if>
+            <if test="nxGoodsPlace != '-99'">`nx_goods_place` = #{nxGoodsPlace},</if>
             <if test="nxGoodsPinyin != null">`nx_goods_pinyin` = #{nxGoodsPinyin},</if>
             <if test="nxGoodsPy != null">`nx_goods_py` = #{nxGoodsPy},</if>
             <if test="nxGoodsFatherId != null">`nx_goods_father_id` = #{nxGoodsFatherId},</if>
@@ -1668,7 +1767,7 @@
             <if test="nxGoodsFile != null">`nx_goods_file` = #{nxGoodsFile},</if>
             <if test="nxGoodsFileBig != null">`nx_goods_file_big` = #{nxGoodsFileBig},</if>
             <if test="nxGoodsStandardAmount != null">`nx_goods_standard_amount` = #{nxGoodsStandardAmount},</if>
-            <if test="nxGoodsStandardWeight != null">`nx_goods_standard_weight` = #{nxGoodsStandardWeight},</if>
+            <if test="nxGoodsStandardWeight != '-99'">`nx_goods_standard_weight` = #{nxGoodsStandardWeight},</if>
             <if test="nxGoodsApplyNxDistributerId != null">`nx_goods_apply_nx_goods_id` =
                 #{nxGoodsApplyNxDistributerId},
             </if>
@@ -1677,8 +1776,10 @@
             <if test="nxGoodsGreatGrandId != null">`nx_goods_great_grand_id` = #{nxGoodsGreatGrandId},</if>
             <if test="nxGoodsIsOldestSon != null">`nx_goods_is_oldest_son` = #{nxGoodsIsOldestSon},</if>
             <if test="nxGoodsSonsSort != null">`nx_goods_sons_sort` = #{nxGoodsSonsSort},</if>
-            <if test="nxGoodsIsHidden != null">`nx_goods_is_hidden` = #{nxGoodsIsHidden},</if>
-            <if test="nxGoodsQuantityDays != null">`nx_goods_quantity_days` = #{nxGoodsQuantityDays},</if>
+            <if test="nxGoodsIsHidden != '-99'">`nx_goods_is_hidden` = #{nxGoodsIsHidden},</if>
+            <if test="nxGoodsQuantityDays != '-99'">`nx_goods_quantity_days` = #{nxGoodsQuantityDays},</if>
+            <if test="nxGoodsCartonUnit != '-99'">`nx_goods_carton_unit` = #{nxGoodsCartonUnit},</if>
+            <if test="nxGoodsItemsPerCarton != '-99'">`nx_goods_items_per_carton` = #{nxGoodsItemsPerCarton},</if>
             <if test="nxGoodsSort != null">`nx_goods_sort` = #{nxGoodsSort}</if>
         </set>
         where nx_goods_id = #{nxGoodsId}

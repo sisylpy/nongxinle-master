@@ -186,7 +186,7 @@ public class GbDistributerWeightGoodsController {
 							outStockEntity.setGbDgsRestSubtotal(outTotalRestSubtotal.toString());
 
 							//
-							if (outStockEntity.getGbDgsRestWeightShowStandard() != null) {
+							if (outStockEntity.getGbDgsRestWeightShowStandard() != null && !outStockEntity.getGbDgsRestWeightShowStandard().trim().isEmpty()) {
 								Integer gbDgsGbDepDisGoodsId = outStockEntity.getGbDgsGbDepDisGoodsId();
 								GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(gbDgsGbDepDisGoodsId);
 								BigDecimal gbDdgShowStandardScale = new BigDecimal(departmentDisGoodsEntity.getGbDdgShowStandardScale());

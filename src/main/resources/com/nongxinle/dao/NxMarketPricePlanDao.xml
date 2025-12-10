@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxMarketPricePlanDao">
+
+    <resultMap id="nxMarketPricePlanMap" type="com.nongxinle.entity.NxMarketPricePlanEntity">
+        <id property="nxMppId" column="nx_mpp_id"/>
+        <result property="nxMppMarketId" column="nx_mpp_market_id"/>
+        <result property="nxMppType" column="nx_mpp_type"/>
+        <result property="nxMppPlanName" column="nx_mpp_plan_name"/>
+        <result property="nxMppQuantity" column="nx_mpp_quantity"/>
+        <result property="nxMppPrice" column="nx_mpp_price"/>
+        <result property="nxMppUnitPrice" column="nx_mpp_unit_price"/>
+        <result property="nxMppDescription" column="nx_mpp_description"/>
+        <result property="nxMppImageUrl" column="nx_mpp_image_url"/>
+        <result property="nxMppSortOrder" column="nx_mpp_sort_order"/>
+        <result property="nxMppStatus" column="nx_mpp_status"/>
+        <result property="nxMppCreateTime" column="nx_mpp_create_time"/>
+        <result property="nxMppUpdateTime" column="nx_mpp_update_time"/>
+    </resultMap>
+
+    <!-- 根据市场ID和类型查询价格方案 -->
+    <select id="queryByMarketAndType" resultMap="nxMarketPricePlanMap">
+        SELECT 
+            nx_mpp_id,
+            nx_mpp_market_id,
+            nx_mpp_type,
+            nx_mpp_plan_name,
+            nx_mpp_quantity,
+            nx_mpp_price,
+            nx_mpp_unit_price,
+            nx_mpp_description,
+            nx_mpp_image_url,
+            nx_mpp_sort_order,
+            nx_mpp_status,
+            nx_mpp_create_time,
+            nx_mpp_update_time
+        FROM nx_market_price_plan
+        WHERE nx_mpp_market_id = #{marketId}
+          AND nx_mpp_type = #{type}
+          AND nx_mpp_status = 1
+        ORDER BY nx_mpp_sort_order ASC, nx_mpp_id ASC
+    </select>
+
+    <!-- 根据条件查询价格方案列表 -->
+    <select id="queryList" resultMap="nxMarketPricePlanMap">
+        SELECT 
+            nx_mpp_id,
+            nx_mpp_market_id,
+            nx_mpp_type,
+            nx_mpp_plan_name,
+            nx_mpp_quantity,
+            nx_mpp_price,
+            nx_mpp_unit_price,
+            nx_mpp_description,
+            nx_mpp_image_url,
+            nx_mpp_sort_order,
+            nx_mpp_status,
+            nx_mpp_create_time,
+            nx_mpp_update_time
+        FROM nx_market_price_plan
+        <where>
+            <if test="marketId != null">
+                AND nx_mpp_market_id = #{marketId}
+            </if>
+            <if test="type != null">
+                AND nx_mpp_type = #{type}
+            </if>
+            <if test="status != null">
+                AND nx_mpp_status = #{status}
+            </if>
+            <if test="planName != null and planName.trim() != ''">
+                AND nx_mpp_plan_name LIKE CONCAT('%', #{planName}, '%')
+            </if>
+        </where>
+        ORDER BY nx_mpp_market_id ASC, nx_mpp_type ASC, nx_mpp_sort_order ASC, nx_mpp_id ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 查询总数 -->
+    <select id="queryTotal" resultType="int">
+        SELECT COUNT(*) FROM nx_market_price_plan
+        <where>
+            <if test="marketId != null">
+                AND nx_mpp_market_id = #{marketId}
+            </if>
+            <if test="type != null">
+                AND nx_mpp_type = #{type}
+            </if>
+            <if test="status != null">
+                AND nx_mpp_status = #{status}
+            </if>
+            <if test="planName != null and planName.trim() != ''">
+                AND nx_mpp_plan_name LIKE CONCAT('%', #{planName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据ID查询 -->
+    <select id="queryObject" resultMap="nxMarketPricePlanMap">
+        SELECT 
+            nx_mpp_id,
+            nx_mpp_market_id,
+            nx_mpp_type,
+            nx_mpp_plan_name,
+            nx_mpp_quantity,
+            nx_mpp_price,
+            nx_mpp_unit_price,
+            nx_mpp_description,
+            nx_mpp_image_url,
+            nx_mpp_sort_order,
+            nx_mpp_status,
+            nx_mpp_create_time,
+            nx_mpp_update_time
+        FROM nx_market_price_plan
+        WHERE nx_mpp_id = #{id}
+    </select>
+
+    <!-- 保存 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxMarketPricePlanEntity" useGeneratedKeys="true" keyProperty="nxMppId">
+        INSERT INTO nx_market_price_plan
+        (
+            `nx_mpp_market_id`,
+            `nx_mpp_type`,
+            `nx_mpp_plan_name`,
+            `nx_mpp_quantity`,
+            `nx_mpp_price`,
+            `nx_mpp_unit_price`,
+            `nx_mpp_description`,
+            `nx_mpp_image_url`,
+            `nx_mpp_sort_order`,
+            `nx_mpp_status`
+        )
+        VALUES
+        (
+            #{nxMppMarketId},
+            #{nxMppType},
+            #{nxMppPlanName},
+            #{nxMppQuantity},
+            #{nxMppPrice},
+            #{nxMppUnitPrice},
+            #{nxMppDescription},
+            #{nxMppImageUrl},
+            #{nxMppSortOrder},
+            #{nxMppStatus}
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxMarketPricePlanEntity">
+        UPDATE nx_market_price_plan
+        <set>
+            <if test="nxMppMarketId != null">`nx_mpp_market_id` = #{nxMppMarketId},</if>
+            <if test="nxMppType != null">`nx_mpp_type` = #{nxMppType},</if>
+            <if test="nxMppPlanName != null">`nx_mpp_plan_name` = #{nxMppPlanName},</if>
+            <if test="nxMppQuantity != null">`nx_mpp_quantity` = #{nxMppQuantity},</if>
+            <if test="nxMppPrice != null">`nx_mpp_price` = #{nxMppPrice},</if>
+            <if test="nxMppUnitPrice != null">`nx_mpp_unit_price` = #{nxMppUnitPrice},</if>
+            <if test="nxMppDescription != null">`nx_mpp_description` = #{nxMppDescription},</if>
+            <if test="nxMppImageUrl != null">`nx_mpp_image_url` = #{nxMppImageUrl},</if>
+            <if test="nxMppSortOrder != null">`nx_mpp_sort_order` = #{nxMppSortOrder},</if>
+            <if test="nxMppStatus != null">`nx_mpp_status` = #{nxMppStatus}</if>
+        </set>
+        WHERE nx_mpp_id = #{nxMppId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM nx_market_price_plan WHERE nx_mpp_id = #{id}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="deleteBatch">
+        DELETE FROM nx_market_price_plan WHERE nx_mpp_id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

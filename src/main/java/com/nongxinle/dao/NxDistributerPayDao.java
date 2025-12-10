@@ -24,4 +24,18 @@ public interface NxDistributerPayDao extends BaseDao<NxDistributerPayEntity> {
     List<NxDistributerPayEntity> queryItemListByTradeNo(String ordersSn);
 
     NxDistributerPayEntity queryUnPayByParams(Map<String, Object> mapP);
+
+    /**
+     * 查询充值记录（支持日期过滤）
+     * @param params 查询参数
+     * @return 充值记录列表
+     */
+    List<NxDistributerPayEntity> queryRechargeByParams(Map<String, Object> params);
+
+    /**
+     * 按市场ID查询充值记录（支持日期过滤）
+     * @param params 查询参数，包含marketId
+     * @return 充值记录列表（包含配送商信息）
+     */
+    List<Map<String, Object>> queryRechargeByMarketId(Map<String, Object> params);
 }

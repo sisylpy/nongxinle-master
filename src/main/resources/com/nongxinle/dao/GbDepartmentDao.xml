@@ -49,8 +49,10 @@
         from gb_department as d
         left join gb_department as subsd on subsd.gb_department_father_id = d.gb_department_id
        left join gb_department_user as gdu on gdu.gb_DU_department_id = d.gb_department_id
+        and gdu.gb_DU_wx_open_id != -1
        left join gb_department as userDep on userDep.gb_department_id = gdu.gb_DU_department_id
         left join gb_department_user as subu on subu.gb_DU_department_id = subsd.gb_department_id
+        and subu.gb_DU_wx_open_id != -1
         <where>
             <if test="depType != null">
                 and d.gb_department_type = #{depType}
@@ -58,6 +60,7 @@
             <if test="disId != null">
                 and d.gb_department_dis_id = #{disId}
             </if>
+
         </where>
         and d.gb_department_is_group_dep = 1
         order by  d.gb_department_id, subsd.gb_department_id
@@ -133,7 +136,7 @@
         <result property="gbDepartmentSettleYear" column="subs_gb_department_settle_year"/>
         <result property="gbDepartmentSettleTimes" column="subs_gb_department_settle_times"/>
         <result property="gbDepartmentDepSettleId" column="subs_gb_department_dep_settle_id"/>
-        <association property="gbDistributerEntity" resultMap="distributer"/>
+<!--        <association property="gbDistributerEntity" resultMap="distributer"/>-->
         <collection property="gbDepartmentUserEntities" resultMap="subDepUsers"/>
     </resultMap>
     <resultMap id="userDep" type="GbDepartmentEntity">
@@ -145,8 +148,6 @@
         <result property="gbDepartmentIsGroupDep" column="userDep_gb_department_is_group_dep"/>
         <result property="gbDepartmentFatherId" column="userDep_gb_department_father_id"/>
         <result property="gbDepartmentDisId" column="userDep_gb_department_dis_id"/>
-        <result property="gbDepartmentSubAmount" column="userDep_gb_department_sub_amount"/>
-        <result property="gbDepartmentIsGroupDep" column="userDep_gb_department_is_group_dep"/>
         <result property="gbDepartmentSubAmount" column="userDep_gb_department_sub_amount"/>
         <result property="gbDepartmentFatherId" column="userDep_gb_department_father_id"/>
         <result property="gbDepartmentSettleType" column="userDep_gb_department_settle_type"/>
@@ -197,6 +198,8 @@
     </resultMap>
     <resultMap id="distributer" type="GbDistributerEntity">
         <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
         <result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
         <result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -245,7 +248,11 @@
         <result property="gbDepartmentName" column="pur_gb_department_name"/>
     </resultMap>
     <resultMap id="nxDis" type="NxDistributerEntity">
-        <id property="nxDistributerId" column="nx_distributer_id"/>
+         <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
@@ -300,6 +307,7 @@
 
     <resultMap id="depInfo" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="gb_department_id"/>
+        <result property="gbDepartmentIsGroupDep" column="gb_deparment_is_group_dep"/>
         <result property="gbDepartmentSubAmount" column="gb_department_sub_amount"/>
 		<result property="gbDepartmentNamePy" column="gb_department_name_py"/>
         <result property="gbDepartmentPrintSet" column="gb_department_print_set"/>
@@ -322,7 +330,7 @@
         <result property="gbDepartmentDepSettleId" column="gb_department_dep_settle_id"/>
         <result property="gbDepartmentPrintSet" column="gb_department_print_set"/>
         <result property="gbDepartmentPrintName" column="gb_department_print_name"/>
-        <association property="gbDistributerEntity" resultMap="distributer"/>
+<!--        <association property="gbDistributerEntity" resultMap="distributer"/>-->
         <association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
         <collection property="gbDepartmentEntityList" resultMap="subDeps"/>
         <collection property="gbDepartmentUserEntities" resultMap="depUser"/>
@@ -399,6 +407,7 @@
                  left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
             and appSupplierDep.gb_department_type = 5
            left join gb_department_user as gdu on gdu.gb_DU_department_id = directDep.gb_department_id
+           and gdu.gb_DU_wx_open_id != -1
 
         where d.gb_department_id = #{gbDuDepartmentId}
 order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_department_id, stockDep.gb_department_id,kitchenDep.gb_department_id
@@ -425,7 +434,8 @@ order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_departm
         <collection property="gbDepartmentOrdersEntities" resultMap="depOrders"/>
     </resultMap>
     <resultMap id="depOrders" type="GbDepartmentOrdersEntity">
-        <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+         <id property="gbDepartmentOrdersId" column="gb_department_orders_id"/>
+        <result property="gbDoGoodsName" column="gb_do_goods_name"/>
         <result property="gbDoCostPriceLevel" column="gb_do_cost_price_level"/>
         <result property="gbDoPrintStandard" column="gb_do_print_standard"/>
         <result property="gbDoNxGoodsGreatId" column="gb_do_nx_goods_great_id"/>
@@ -524,6 +534,7 @@ order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_departm
             <if test="type != null">
                 and gb_department_type = #{type}
             </if>
+            and gb_DU_wx_open_id != -1
         </where>
     </select>
     <select id="queryDepByDepType" resultType="com.nongxinle.entity.GbDepartmentEntity">
@@ -614,6 +625,8 @@ order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_departm
                 and d.gb_department_dis_id = #{disId}
             </if>
 
+
+
         </where>
 
         order by  d.gb_department_id, subsd.gb_department_id
@@ -623,8 +636,9 @@ order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_departm
         select * from gb_department
         <where>
             <if test="disId != null">
-                and gb_department_dis_id = #{disId} and gb_department_type = 1
+                and gb_department_dis_id = #{disId} and gb_department_type = 1 and gb_department_is_group_dep = 1
             </if>
+
         </where>
     </select>
     <select id="queryDepHasOrdersCount" resultType="java.lang.Integer">
@@ -666,7 +680,7 @@ order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_departm
         <result property="gbDepartmentSettleTimes" column="subs_gb_department_settle_times"/>
         <result property="gbDepartmentDepSettleId" column="subs_gb_department_dep_settle_id"/>
         <association property="fatherGbDepartmentEntity" resultMap="fatherDep"/>
-        <association property="gbDistributerEntity" resultMap="distributer"/>
+<!--        <association property="gbDistributerEntity" resultMap="distributer"/>-->
     </resultMap>
 
     <select id="querySelfDepInfoGb" resultMap="selfDep">
@@ -756,10 +770,25 @@ order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_departm
                  left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
             and appSupplierDep.gb_department_type = 5
                  left join gb_department_user as gdu on gdu.gb_DU_department_id = directDep.gb_department_id
+            and gdu.gb_DU_wx_open_id != -1
 
         where d.gb_department_id = #{gbDuDepartmentId}
         order by directDep.gb_department_id,franchDep.gb_department_id,purDep.gb_department_id, stockDep.gb_department_id,kitchenDep.gb_department_id
 
+    </select>
+    <select id="queryDepsByDisId" resultType="com.nongxinle.entity.GbDepartmentEntity">
+        select * from gb_department as d
+            <where>
+                <if test="depType != null">
+                    and d.gb_department_type = #{depType}
+                </if>
+                <if test="disId != null">
+                    and d.gb_department_dis_id = #{disId}
+                </if>
+                <if test="isGroup != null">
+                    and d.gb_department_is_group_dep = #{isGroup}
+                </if>
+            </where>
     </select>
 
 

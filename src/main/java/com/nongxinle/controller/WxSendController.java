@@ -28,7 +28,7 @@ import static com.nongxinle.utils.DateUtils.formatWhatDayTime;
  */
 
 @RestController
-@RequestMapping("/api/test")
+@RequestMapping("/api/wxsend")
 public class WxSendController {
 
 
@@ -37,6 +37,13 @@ public class WxSendController {
 
     @Autowired
     private NxCommunityOrdersService nxCommunityOrdersService;
+
+
+    @RequestMapping(value = "/i7948FzJJ6.txt")
+    @ResponseBody
+    public String grainServiceClub( ) {
+        return "bb7a0c73e61112c45ebd6ad3743bb05e";
+    }
 
 
     @RequestMapping(value = "/send/{nxOrdersId}")

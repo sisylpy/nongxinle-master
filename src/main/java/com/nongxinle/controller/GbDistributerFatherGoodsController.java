@@ -58,8 +58,15 @@ public class GbDistributerFatherGoodsController {
 		map.put("grandId", fatherId);
 		map.put("offset", (page - 1) * limit);
 		map.put("limit", limit);
-		if(goodsType != 99){
+		if(goodsType < 99){
 			map.put("goodsType", goodsType);
+		}else{
+			if(goodsType == 101){
+				map.put("fresh", 1);
+
+			}else if(goodsType == 102){
+				map.put("pull", 1);
+			}
 		}
 		map.put("limit", limit);
 		System.out.println("mapappapapapa" + map);
@@ -68,9 +75,19 @@ public class GbDistributerFatherGoodsController {
 		Map<String, Object> mapCount = new HashMap<>();
 		mapCount.put("greatGrandId", fatherId);
 		mapCount.put("isHidden", 0);
+		if(goodsType < 99){
+			mapCount.put("goodsType", goodsType);
+		}else{
+			if(goodsType == 101){
+				mapCount.put("fresh", 1);
+
+			}else if(goodsType == 102){
+				mapCount.put("pull", 1);
+			}
+		}
+
 		int total = gbDistributerGoodsService.queryDisGoodsCount(mapCount);
 		PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
-
 
 		Map<String, Object> returnData = new HashMap<>();
 
@@ -90,36 +107,26 @@ public class GbDistributerFatherGoodsController {
 		Map<String, Object> returnData = new HashMap<>();
 		Map<String, Object> mapG = new HashMap<>();
 		mapG.put("disId", disId);
-		if(goodsType != 99){
-			mapG.put("type", goodsType);
+		if(goodsType < 99){
+			mapG.put("goodsType", goodsType);
+		}else{
+			if(goodsType == 101){
+				mapG.put("fresh", 1);
+
+			}else if(goodsType == 102){
+				mapG.put("pull", 1);
+			}
 		}
 
 		System.out.println("mapdgGg" + mapG);
-		int count =  gbDistributerGoodsService.queryDisGoodsCount(mapG);
+		List<GbDistributerFatherGoodsEntity> greatGrandGoods = gbDistributerFatherGoodsService.queryDisGoodsCataWithFilter(mapG);
 
-		if(count > 0){
-			List<GbDistributerFatherGoodsEntity> greatGrandGoods = gbDistributerFatherGoodsService.queryDisGoodsCataWithGoods(mapG);
-			if(greatGrandGoods.size() > 0){
-				for(GbDistributerFatherGoodsEntity greatGrand : greatGrandGoods){
-					List<GbDistributerFatherGoodsEntity> fatherGoodsEntities = greatGrand.getFatherGoodsEntities();
-					if(fatherGoodsEntities.size() > 0){
-						for(GbDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
-							fatherGoodsEntity.setGbDistributerGoodsEntities(null);
-						}
-					}
-				}
-			}
-			returnData.put("list", greatGrandGoods);
-		}else{
-			returnData.put("list", new ArrayList<>());
-		}
 		Map<String, Object> map = new HashMap<>();
 		map.put("disId", disId);
 		map.put("isLinshi", 1);
 		int wxCountAuto1 = gbDistributerGoodsService.queryDisGoodsCount(map);
 
-
-
+		returnData.put("list", greatGrandGoods);
 		returnData.put("lishiCount", wxCountAuto1);
 
 		return R.ok().put("data", returnData);
@@ -234,20 +241,20 @@ public class GbDistributerFatherGoodsController {
 		Map<String, Object> map = new HashMap<>();
 		map.put("disId", disId);
 		if(goodsType.equals("jicai")){
-			map.put("type", getGbDisGoodsTypeJicai());
+			map.put("goodsType", getGbDisGoodsTypeJicai());
 		}
 
 		if(goodsType.equals("chuku")){
-			map.put("type", getGbDisGoodsTypeChuku());
+			map.put("goodsType", getGbDisGoodsTypeChuku());
 		}
 		if(goodsType.equals("zicai")){
-			map.put("type", getGbDisGoodsTypeZicai());
+			map.put("goodsType", getGbDisGoodsTypeZicai());
 		}
 		if(goodsType.equals("kitchen")){
-			map.put("type", getGbDisGoodsTypeKitchen());
+			map.put("goodsType", getGbDisGoodsTypeKitchen());
 		}
 		if(goodsType.equals("appSupplier")){
-			map.put("type", getGbDisGoodsTypeAppSupplier());
+			map.put("goodsType", getGbDisGoodsTypeAppSupplier());
 		}
 		if(controlString.equals("price")){
 			map.put("price", "1");
@@ -298,20 +305,20 @@ public class GbDistributerFatherGoodsController {
 			map.put("greatGrandId", greatGrandId);
 		}
 		if(goodsType.equals("jicai")){
-			map.put("type", getGbDisGoodsTypeJicai());
+			map.put("goodsType", getGbDisGoodsTypeJicai());
 		}
 
 		if(goodsType.equals("chuku")){
-			map.put("type", getGbDisGoodsTypeChuku());
+			map.put("goodsType", getGbDisGoodsTypeChuku());
 		}
 		if(goodsType.equals("zicai")){
-			map.put("type", getGbDisGoodsTypeZicai());
+			map.put("goodsType", getGbDisGoodsTypeZicai());
 		}
 		if(goodsType.equals("kitchen")){
-			map.put("type", getGbDisGoodsTypeKitchen());
+			map.put("goodsType", getGbDisGoodsTypeKitchen());
 		}
 		if(goodsType.equals("appSupplier")){
-			map.put("type", getGbDisGoodsTypeAppSupplier());
+			map.put("goodsType", getGbDisGoodsTypeAppSupplier());
 		}
 		if(controlString.equals("price")){
 			map.put("price", "1");
@@ -321,7 +328,7 @@ public class GbDistributerFatherGoodsController {
 		}
 		if(controlString.equals("isNotSelf")){
 			map.put("isSelf",0);
-			map.put("type", getGbDisGoodsTypeChuku());
+			map.put("goodsType", getGbDisGoodsTypeChuku());
 		}
 		if(controlString.equals("isSelf")){
 			map.put("isSelf",1);
@@ -443,15 +450,15 @@ public class GbDistributerFatherGoodsController {
 
 
 
-	@RequestMapping(value = "/getAllFatherGoods/{disId}")
-	@ResponseBody
-	public R getAllFatherGoods(@PathVariable Integer disId) {
-		Map<String, Object> map = new HashMap<>();
-		map.put("disId", disId);
-		List<GbDistributerFatherGoodsEntity> goodsEntities = gbDistributerFatherGoodsService.queryDisAll(map);
-
-		return R.ok().put("data", goodsEntities);
-	}
+//	@RequestMapping(value = "/getAllFatherGoods/{disId}")
+//	@ResponseBody
+//	public R getAllFatherGoods(@PathVariable Integer disId) {
+//		Map<String, Object> map = new HashMap<>();
+//		map.put("disId", disId);
+//		List<GbDistributerFatherGoodsEntity> goodsEntities = gbDistributerFatherGoodsService.queryDisAll(map);
+//
+//		return R.ok().put("data", goodsEntities);
+//	}
 
 
 

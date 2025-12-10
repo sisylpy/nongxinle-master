@@ -37,8 +37,9 @@ public class NxCustomerUserAddressController {
 	@ResponseBody
 	public R getCommityByAddressId(@PathVariable Integer id) {
 		NxCustomerUserAddressEntity addressEntity = nxCustomerUserAddressService.queryObject(id);
-		String nxCuaLocation = addressEntity.getNxCuaLocation();
-		List<NxCommunityEntity> communityEntities =  nxCommunityService.queryCommunityListByUserPoint(nxCuaLocation);
+		String nxCuaLat = addressEntity.getNxCuaLat();
+		String nxCuaLng = addressEntity.getNxCuaLng();
+		List<NxCommunityEntity> communityEntities =  nxCommunityService.queryCommunityListByUserPoint(nxCuaLat, nxCuaLng);
 
 		return R.ok().put("data", communityEntities);
 	}

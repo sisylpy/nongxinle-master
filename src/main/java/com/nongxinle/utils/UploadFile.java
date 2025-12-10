@@ -36,12 +36,18 @@ public class UploadFile {
      * @param file
      */
 
+    // 服务器路径：/opt/tomcat/latest/app-data/images/
+    // 本地开发路径（根据实际项目路径修改）
+    // 本地测试路径（测试时修改为）：
+    // private static final String EXTERNAL_IMAGE_DIR = "/Users/lpy/Documents/javaWeb/kuangjia/nongxinle-master/stockImagesMac/";
+    // 生产环境路径
     private static final String EXTERNAL_IMAGE_DIR = "/opt/tomcat/latest/app-data/images/";
 
 
     public static String uploadFileName(HttpSession session, String newFileName, MultipartFile file, String saveFileName){
-        System.out.println("11111111");
+        System.out.println("[UploadFile.uploadFileName] 开始上传文件，文件夹: " + newFileName + ", 文件名: " + saveFileName);
         String realPath = EXTERNAL_IMAGE_DIR + newFileName;
+        System.out.println("[UploadFile.uploadFileName] 完整路径: " + realPath);
 
         //1，保存文件
 //        ServletContext servletContext = session.getServletContext();
@@ -50,15 +56,81 @@ public class UploadFile {
 
         File uploadDir = new File(realPath);
         if(!uploadDir.exists()) {
-            uploadDir.mkdirs();
+            boolean created = uploadDir.mkdirs();
+            System.out.println("[UploadFile.uploadFileName] 创建文件夹: " + realPath + ", 结果: " + created);
+            if (!created) {
+                // 检查父目录是否存在
+                File parentDir = uploadDir.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    System.err.println("[UploadFile.uploadFileName] 父目录不存在: " + parentDir.getAbsolutePath());
+                }
+                // 检查权限
+                if (parentDir != null && parentDir.exists() && !parentDir.canWrite()) {
+                    System.err.println("[UploadFile.uploadFileName] 父目录无写权限: " + parentDir.getAbsolutePath());
+                }
+                throw new RuntimeException("无法创建目录: " + realPath + "，请检查权限");
+            }
+        } else {
+            System.out.println("[UploadFile.uploadFileName] 文件夹已存在: " + realPath);
         }
+        
+        // 验证目录是否可写
+        if (!uploadDir.canWrite()) {
+            System.err.println("[UploadFile.uploadFileName] 目录无写权限: " + realPath);
+            System.err.println("[UploadFile.uploadFileName] 目录权限检查: exists=" + uploadDir.exists() + ", canWrite=" + uploadDir.canWrite() + ", canRead=" + uploadDir.canRead());
+            throw new RuntimeException("目录无写权限: " + realPath);
+        }
+        
+        System.out.println("[UploadFile.uploadFileName] 目录权限验证通过: " + realPath);
+        
         String filename = file.getOriginalFilename();
-        File destination  = new File(uploadDir + "/" + saveFileName + ".jpg");
-        System.out.println("updalfiififfneneen" + destination);
+        // 使用 File 构造函数确保路径正确
+        File destination = new File(uploadDir, saveFileName + ".jpg");
+        System.out.println("[UploadFile.uploadFileName] 目标文件路径: " + destination.getAbsolutePath());
+        System.out.println("[UploadFile.uploadFileName] 原始文件名: " + filename);
+        System.out.println("[UploadFile.uploadFileName] 文件大小: " + file.getSize() + " bytes");
+        
+        // 确保父目录存在且可写（destination.getParentFile() 应该就是 uploadDir）
+        File parentFile = destination.getParentFile();
+        if (parentFile != null) {
+            System.out.println("[UploadFile.uploadFileName] 父目录路径: " + parentFile.getAbsolutePath());
+            System.out.println("[UploadFile.uploadFileName] 父目录是否存在: " + parentFile.exists());
+            System.out.println("[UploadFile.uploadFileName] 父目录是否可写: " + parentFile.canWrite());
+            
+            if (!parentFile.exists()) {
+                boolean parentCreated = parentFile.mkdirs();
+                System.out.println("[UploadFile.uploadFileName] 创建父目录: " + parentFile.getAbsolutePath() + ", 结果: " + parentCreated);
+                if (!parentCreated) {
+                    throw new RuntimeException("无法创建父目录: " + parentFile.getAbsolutePath());
+                }
+            }
+            // 验证父目录可写
+            if (!parentFile.canWrite()) {
+                System.err.println("[UploadFile.uploadFileName] 父目录无写权限: " + parentFile.getAbsolutePath());
+                throw new RuntimeException("父目录无写权限: " + parentFile.getAbsolutePath());
+            }
+        }
+        
         try {
+            // 如果目标文件已存在，先删除
+            if (destination.exists()) {
+                boolean deleted = destination.delete();
+                System.out.println("[UploadFile.uploadFileName] 删除已存在的文件: " + destination.getAbsolutePath() + ", 结果: " + deleted);
+            }
+            
+            System.out.println("[UploadFile.uploadFileName] 准备写入文件: " + destination.getAbsolutePath());
             file.transferTo(destination);
+            System.out.println("[UploadFile.uploadFileName] 文件上传成功: " + destination.getAbsolutePath());
+            // 验证文件是否真的存在
+            if (destination.exists()) {
+                System.out.println("[UploadFile.uploadFileName] 文件验证成功，文件大小: " + destination.length() + " bytes");
+            } else {
+                System.err.println("[UploadFile.uploadFileName] 警告：文件上传后不存在！");
+            }
         } catch (IOException e) {
+            System.err.println("[UploadFile.uploadFileName] 文件上传失败: " + e.getMessage());
             e.printStackTrace();
+            throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
         }
 
         return destination.getAbsolutePath();

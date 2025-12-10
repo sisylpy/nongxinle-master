@@ -1,29 +1,20 @@
 package com.nongxinle.service;
 
 /**
- * 
+ *
  *
  * @author lpy
  * @date 06-24 11:45
  */
 
-import com.nongxinle.entity.GbDistributerFatherGoodsEntity;
-import com.nongxinle.entity.GbDistributerGoodsEntity;
-import com.nongxinle.entity.GbDistributerPurchaseGoodsEntity;
+import com.nongxinle.entity.*;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
 public interface GbDistributerPurchaseGoodsService {
-
-
-	List<GbDistributerFatherGoodsEntity> queryDisPurchaseGoods(Map<String, Object> map);
-
-
-//	//////////////////
-
-	List<GbDistributerPurchaseGoodsEntity> purUserGetPurchaseGoods(Integer purUserId);
 
 
 	GbDistributerPurchaseGoodsEntity queryObject(Integer nxDistributerPurchaseGoods);
@@ -41,23 +32,8 @@ public interface GbDistributerPurchaseGoodsService {
 	void deleteBatch(Integer[] nxDistributerPurchaseGoodss);
 
 
-//	List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByUUID(String uuid);
-
-	List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByGoodsId(Map<String, Object> map);
-
-
-    List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByBatchId(Integer purchaseBatchId);
-
-	List<GbDistributerPurchaseGoodsEntity> queryForDisGoods(Map<String, Object> map2);
-
-	List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsByParams(Map<String, Object> map2);
-
-	int queryPurchaseGoodsTotal(Map<String, Object> map2);
-
     List<GbDistributerPurchaseGoodsEntity> queryPurchaseGoodsWithDetailByParams(Map<String, Object> map);
 
-
-    List<GbDistributerFatherGoodsEntity> queryStockPurchaseGoods(Map<String, Object> map4);
 
     Integer queryGbPurchaseGoodsCount(Map<String, Object> map);
 
@@ -67,13 +43,12 @@ public interface GbDistributerPurchaseGoodsService {
 
     Double queryPurchaseInventoryGoodsSubTotal(Map<String, Object> map);
 
-	List<GbDistributerPurchaseGoodsEntity> queryPurchaseInventoryGoodsList(Map<String, Object> map);
 
     Double queryPurchaseGoodsWeightTotal(Map<String, Object> map1);
 
     String queryPurchaseGoodsPrice(Map<String, Object> map1);
 
-    List<GbDistributerFatherGoodsEntity> queryDisPurchaseGoodsForNxDis(Map<String, Object> map4);
+    List<GbDistributerFatherGoodsEntity> queryGbFatherDisPurchaseGoods(Map<String, Object> map4);
 
     String queryPurGoodsMaxPrice(Map<String, Object> map);
 
@@ -81,18 +56,48 @@ public interface GbDistributerPurchaseGoodsService {
 
     GbDistributerPurchaseGoodsEntity queryPurGoodsWithOrders(Integer id);
 
-    List<GbDistributerFatherGoodsEntity> queryGreatGrandPurGoodsDetail(Map<String, Object> map);
 
     int queryGbPurchaseOrderAmount(Map<String, Object> map1);
 
-    GbDistributerPurchaseGoodsEntity queryBuyingPurGoods(Map<String, Object> map);
 
-    List<GbDistributerFatherGoodsEntity> queryGreatGrandGoodsByDisGoods(Map<String, Object> map1);
-
-	TreeSet<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map);
-
-    List<GbDistributerFatherGoodsEntity> queryGrandPurchaseGoods(Map<String, Object> map4);
+    List<GbDistributerGoodsEntity> queryDisTreeGoods(Map<String, Object> map);
 
     String queryPurchaseGoodsWeight(Map<String, Object> mapDay);
 
+    int queryPurchaseGoodsOrderCount(Map<String, Object> map);
+
+	Integer queryGbDisGoods(Map<String, Object> queryMap);
+
+
+	List<NxJrdhSupplierEntity> queryDisPurGoodsSupplierList(Map<String, Object> map);
+
+    List<GbDistributerPurchaseGoodsEntity> querySimplePurGoods(Map<String, Object> map4);
+
+    List<GbDistributerPurchaseGoodsEntity> queryOnlyPurGoods(Map<String, Object> map);
+
+    List<GbDistributerFatherGoodsEntity> queryGrandGoodsByDisGoods(Map<String, Object> map);
+
+    List<GbDepartmentUserEntity> queryPurUserList(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> queryGbPurchaseGoodsTopTimes(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> queryGbPurchaseGoodsTopSubtotal(Map<String, Object> map);
+
+    TreeSet<GbDistributerFatherGoodsEntity> queryPurchaseGreatGrand(Map<String, Object> map);
+
+    double queryGbPurchaseSubtotalTopSubtotal(Map<String, Object> map);
+
+    Integer queryGbDisGoodsTreeCount(Map<String, Object> queryMap);
+
+    List<GbDistributerGoodsEntity> queryGbPurchaseGoodsTopPriceFluctuation(Map<String, Object> map);
+
+    List<GbDistributerGoodsEntity> queryDisTreeGoodsWithPurList(Map<String, Object> queryMap);
+
+    List<Map<String, Object>> debugQueryGoodsPriceData(Map<String, Object> map);
+
+    int queryGbGoodsCount(Map<String, Object> map);
+
+    GbDistributerPurchaseGoodsEntity queryPurchaseGoodsLastItem(Map<String, Object> mapG);
+
+    List<GbDistributerGoodsEntity> queryReturnDisTreeGoodsWithPurList(Map<String, Object> map);
 }

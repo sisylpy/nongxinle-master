@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.QyGbDisCorpMsgAuditDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.QyGbDisCorpMsgAuditEntity">
+		select * from qy_gb_dis_corp_msgaudit where qy_gb_dis_corp_msgaudit_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.QyGbDisCorpMsgAuditEntity">
+		select * from qy_gb_dis_corp_msgaudit 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from qy_gb_dis_corp_msgaudit 
+	</select>
+	
+	<select id="queryByCorpId" resultType="com.nongxinle.entity.QyGbDisCorpMsgAuditEntity">
+		select * from qy_gb_dis_corp_msgaudit where qy_gb_dis_qy_corp_id = #{corpId}
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.QyGbDisCorpMsgAuditEntity" useGeneratedKeys="true"
+			keyProperty="qyGbDisCorpMsgAuditId">
+		insert into qy_gb_dis_corp_msgaudit
+		(
+			`qy_gb_dis_qy_corp_id`, 
+			`qy_gb_dis_corp_msgaudit_secret`, 
+			`qy_gb_dis_corp_msgaudit_token`, 
+			`qy_gb_dis_corp_msgaudit_encoding_aes_key`, 
+			`qy_gb_dis_corp_msgaudit_private_key`,
+			`qy_gb_dis_corp_msgaudit_access_token`,
+			`qy_gb_dis_corp_msgaudit_token_expire_time`,
+			`qy_gb_dis_corp_msgaudit_status`,
+			`qy_gb_dis_corp_msgaudit_create_date`,
+			`qy_gb_dis_corp_msgaudit_update_date`
+		)
+		values
+		(
+			#{qyGbDisQyCorpId}, 
+			#{qyGbDisCorpMsgAuditSecret}, 
+			#{qyGbDisCorpMsgAuditToken}, 
+			#{qyGbDisCorpMsgAuditEncodingAesKey}, 
+			#{qyGbDisCorpMsgAuditPrivateKey},
+			#{qyGbDisCorpMsgAuditAccessToken},
+			#{qyGbDisCorpMsgAuditTokenExpireTime},
+			#{qyGbDisCorpMsgAuditStatus},
+			#{qyGbDisCorpMsgAuditCreateDate},
+			#{qyGbDisCorpMsgAuditUpdateDate}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.QyGbDisCorpMsgAuditEntity">
+		update qy_gb_dis_corp_msgaudit 
+		<set>
+			<if test="qyGbDisQyCorpId != null">`qy_gb_dis_qy_corp_id` = #{qyGbDisQyCorpId}, </if>
+			<if test="qyGbDisCorpMsgAuditSecret != null">`qy_gb_dis_corp_msgaudit_secret` = #{qyGbDisCorpMsgAuditSecret}, </if>
+			<if test="qyGbDisCorpMsgAuditToken != null">`qy_gb_dis_corp_msgaudit_token` = #{qyGbDisCorpMsgAuditToken}, </if>
+			<if test="qyGbDisCorpMsgAuditEncodingAesKey != null">`qy_gb_dis_corp_msgaudit_encoding_aes_key` = #{qyGbDisCorpMsgAuditEncodingAesKey}, </if>
+			<if test="qyGbDisCorpMsgAuditPrivateKey != null">`qy_gb_dis_corp_msgaudit_private_key` = #{qyGbDisCorpMsgAuditPrivateKey}, </if>
+			<if test="qyGbDisCorpMsgAuditAccessToken != null">`qy_gb_dis_corp_msgaudit_access_token` = #{qyGbDisCorpMsgAuditAccessToken}, </if>
+			<if test="qyGbDisCorpMsgAuditTokenExpireTime != null">`qy_gb_dis_corp_msgaudit_token_expire_time` = #{qyGbDisCorpMsgAuditTokenExpireTime}, </if>
+			<if test="qyGbDisCorpMsgAuditStatus != null">`qy_gb_dis_corp_msgaudit_status` = #{qyGbDisCorpMsgAuditStatus}, </if>
+			`qy_gb_dis_corp_msgaudit_update_date` = now()
+		</set>
+		where qy_gb_dis_corp_msgaudit_id = #{qyGbDisCorpMsgAuditId}
+	</update>
+	
+	<update id="updateAccessToken">
+		update qy_gb_dis_corp_msgaudit 
+		set `qy_gb_dis_corp_msgaudit_access_token` = #{accessToken},
+			`qy_gb_dis_corp_msgaudit_token_expire_time` = #{expireTime},
+			`qy_gb_dis_corp_msgaudit_update_date` = now()
+		where qy_gb_dis_qy_corp_id = #{corpId}
+	</update>
+	
+	<delete id="delete">
+		delete from qy_gb_dis_corp_msgaudit where qy_gb_dis_corp_msgaudit_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from qy_gb_dis_corp_msgaudit where qy_gb_dis_corp_msgaudit_id in 
+		<foreach item="qyGbDisCorpMsgAuditId" collection="array" open="(" separator="," close=")">
+			#{qyGbDisCorpMsgAuditId}
+		</foreach>
+	</delete>
+
+</mapper>

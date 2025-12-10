@@ -8,6 +8,7 @@ package com.nongxinle.dao;
  */
 
 import com.nongxinle.entity.*;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     List<NxDepartmentOrdersEntity> disQueryDisOrdersByParams(Map<String, Object> map);
 
-    List<GbDepartmentEntity> queryDistributerTodayGbDepartments(Map<String, Object> map1);
+//    List<GbDepartmentEntity> queryDistributerTodayGbDepartments(Map<String, Object> map1);
 
     List<NxDepartmentOrdersEntity> queryDisOrdersGbByParams(Map<String, Object> map);
 
@@ -73,6 +74,13 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     List<NxDistributerFatherGoodsEntity> queryGreatGrandOrderFatherGoods(Map<String, Object> map);
 
+    /**
+     * 查询曾祖父商品列表（超简化版，只返回基本信息，不包含嵌套对象）
+     */
+    List<com.nongxinle.entity.GreatGrandFatherGoodsSimpleDTO> queryGreatGrandOrderFatherGoodsUltraSimple(Map<String, Object> map);
+
+    List<com.nongxinle.entity.OutGoodsSimpleDTO> queryOutGoodsWithOrdersUltraSimple(Map<String, Object> map);
+
     List<NxDistributerFatherGoodsEntity> queryDisGoodsForTodayOrders(Map<String, Object> map);
 
     List<NxDepartmentEntity> queryPureOrderNxDepartment(Map<String, Object> map);
@@ -109,7 +117,7 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     double queryReturnSubtotal(Map<String, Object> mapR);
 
-    List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1);
+//    List<GbDepartmentEntity> queryqueryOrderGbDepartmentList(Map<String, Object> map1);
 
     NxDepartmentOrdersEntity queryNxOrderByGbOrderId(Integer gbDoNxDepartmentOrderId);
 
@@ -131,9 +139,73 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     int queryLinshiGoodsCount(Map<String, Object> countParams);
 
+    List<Map<String, Object>> batchQueryFatherGoodsOrderCount(Map<String, Object> params);
+    
+    List<Map<String, Object>> batchQueryDepartmentOrderStats(@Param("depFatherIds") List<Integer> depFatherIds);
+    
+    List<Map<String, Object>> batchQueryGbDistributerDepartmentStats(@Param("gbDisIds") List<Integer> gbDisIds, @Param("gbDepIds") List<Integer> gbDepIds);
 
     List<Integer> queryGoodsIds(Map<String, Object> map);
 
 
     List<Integer> queryOnlyNxGoodsIds(Map<String, Object> map);
+
+    List<NxDistributerFatherGoodsEntity> disGetOutGoodsGrandCata(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> disGetNxGoodsApply(Map<String, Object> map);
+
+    List<OutGoodsSimpleDTO> disGetNxGoodsApplyUltraSimple(Map<String, Object> map);
+
+    Integer queryOrderGoodsCount(Map<String, Object> mapCount);
+
+    /**
+     * 查询货架列表（仅基本信息，不包含商品详情）
+     * @param params 查询参数
+     * @return 货架列表
+     */
+    List<ShelfListSimpleDTO> queryShelfListBasic(Map<String, Object> params);
+
+    /**
+     * 查询指定货架的商品数量
+     * @param params 查询参数，必须包含shelfId
+     * @return 商品数量
+     */
+    Integer queryShelfGoodsCount(Map<String, Object> params);
+
+    /**
+     * 查询指定货架的商品详情（简化版，只返回必要字段）
+     * @param params 查询参数，必须包含targetShelfId
+     * @return 货架对象（包含商品和订单，但字段已简化）
+     */
+    List<NxDistributerGoodsShelfEntity> queryShelfGoodsDetailSimple(Map<String, Object> params);
+
+    /**
+     * 查询指定货架的商品详情（超简化版，使用DTO对象，字段扁平化）
+     * @param params 查询参数，必须包含targetShelfId
+     * @return 货架详情DTO（字段已最大程度简化）
+     */
+    ShelfDetailSimpleDTO queryShelfGoodsDetailUltraSimple(Map<String, Object> params);
+
+    /**
+     * 查询类别列表（曾祖父级别，仅基本信息，不包含商品详情）
+     * @param params 查询参数
+     * @return 类别列表
+     */
+    List<CategoryListSimpleDTO> queryCategoryListBasic(Map<String, Object> params);
+
+    /**
+     * 查询指定类别的商品数量
+     * @param params 查询参数，必须包含categoryId
+     * @return 商品数量
+     */
+    Integer queryCategoryGoodsCount(Map<String, Object> params);
+
+    /**
+     * 查询指定类别的商品详情（超简化版，使用DTO对象，字段扁平化）
+     * @param params 查询参数，必须包含categoryId
+     * @return 类别详情DTO（字段已最大程度简化）
+     */
+    CategoryDetailSimpleDTO queryCategoryGoodsDetailUltraSimple(Map<String, Object> params);
+
+    List<Map<String, Object>> batchQueryDepartmentOrderStatsSunla(@Param("depFatherIds") List<Integer> depFatherIds);
 }

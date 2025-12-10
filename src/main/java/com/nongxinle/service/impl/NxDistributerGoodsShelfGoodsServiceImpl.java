@@ -59,6 +59,12 @@ public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoo
     }
 
     @Override
+    public int queryShelfForGoodsCount(Map<String, Object> map) {
+
+		return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsCount(map);
+    }
+
+    @Override
     public int queryShelfGoodsCount(Map<String, Object> map) {
 
 		return nxDistributerGoodsShelfGoodsDao.queryShelfGoodsCount(map);
@@ -69,5 +75,44 @@ public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoo
 
 		return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsWithOrders(pageParams);
     }
+
+    @Override
+    public NxDistributerGoodsShelfGoodsEntity queryShlefGoodsByGoodsId(Integer nxDpgDisGoodsId) {
+
+		return nxDistributerGoodsShelfGoodsDao.queryShlefGoodsByGoodsId(nxDpgDisGoodsId);
+    }
+
+    @Override
+    public NxDistributerGoodsShelfGoodsEntity queryShlefGoodsByGoodsIdAndShelfId(Integer disGoodsId, Integer shelfId) {
+		return nxDistributerGoodsShelfGoodsDao.queryShlefGoodsByGoodsIdAndShelfId(disGoodsId, shelfId);
+    }
+
+    @Override
+    public List<NxDistributerGoodsShelfGoodsEntity> queryShelfGoodsBasic(Integer shelfId) {
+
+        return nxDistributerGoodsShelfGoodsDao.queryShelfGoodsBasic(shelfId);
+    }
+
+    @Override
+    public void updateShelfLayer(Integer id, Integer layer) {
+
+        nxDistributerGoodsShelfGoodsDao.updateShelfLayer(id, layer);
+    }
+
+    @Override
+    public void updateDuplicateFlagForGoods(Integer disGoodsId) {
+        nxDistributerGoodsShelfGoodsDao.updateDuplicateFlagForGoods(disGoodsId);
+    }
+
+    @Override
+    public List<NxDistributerGoodsShelfGoodsEntity> queryUnInventoriedShelfGoods(Map<String, Object> map) {
+        return nxDistributerGoodsShelfGoodsDao.queryUnInventoriedShelfGoods(map);
+    }
+
+    @Override
+    public Integer queryUnInventoriedShelfGoodsCount(Map<String, Object> map) {
+        return nxDistributerGoodsShelfGoodsDao.queryUnInventoriedShelfGoodsCount(map);
+    }
+
 
 }

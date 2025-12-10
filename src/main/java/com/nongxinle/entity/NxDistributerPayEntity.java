@@ -25,11 +25,17 @@ public class NxDistributerPayEntity implements Serializable {
 	 */
 	private Integer nxDistributerPayId;
 	/**
-	 *  
+	 * 配送商ID
 	 */
 	private Integer nxNdpNxDisId;
+	
 	/**
-	 *  
+	 * 市场ID（外键→sys_city_market）
+	 */
+	private Integer nxNdpMarketId;
+	
+	/**
+	 * 支付金额
 	 */
 	private String nxNdpPaySubtotal;
 	/**

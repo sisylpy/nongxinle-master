@@ -7,10 +7,7 @@ package com.nongxinle.service;
  * @date 06-25 22:52
  */
 
-import com.nongxinle.entity.GbDepartmentEntity;
-import com.nongxinle.entity.GbDistributerEntity;
-import com.nongxinle.entity.GbDistributerPurchaseBatchEntity;
-import com.nongxinle.entity.NxJrdhSupplierEntity;
+import com.nongxinle.entity.*;
 
 import java.util.List;
 import java.util.Map;
@@ -54,4 +51,8 @@ public interface GbDistributerPurchaseBatchService {
     List<NxJrdhSupplierEntity> querySupplierList(Map<String, Object> map);
 
     List<GbDistributerPurchaseBatchEntity> queryDisPurchaseBatchInfo(Map<String, Object> map);
+
+    List<NxDistributerEntity> queryDisPurchaseBatchWithNx(Map<String, Object> map);
+
+    List<NxJrdhSupplierEntity> querySupplierListWithDetail(Map<String, Object> mapS);
 }

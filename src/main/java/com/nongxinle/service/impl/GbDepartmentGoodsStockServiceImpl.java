@@ -65,16 +65,7 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 		return gbDepartmentGoodsStockDao.queryDisGoodsStockByParams(map);
     }
 
-	@Override
-	public List<GbDistributerGoodsEntity> queryDisGoodsStockDetailByParams(Map<String, Object> map) {
-		return gbDepartmentGoodsStockDao.queryDisGoodsStockDetailByParams(map);
-	}
 
-    @Override
-    public List<GbDistributerFatherGoodsEntity> queryDepGoodsStockByParams(Map<String, Object> map) {
-
-		return gbDepartmentGoodsStockDao.queryDepGoodsStockByParams(map);
-    }
 
     @Override
     public Integer queryGoodsStockCount(Map<String, Object> map14) {
@@ -88,12 +79,6 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 		return gbDepartmentGoodsStockDao.queryDepGoodsRestTotal(map5);
     }
 
-    @Override
-    public List<GbDepartmentGoodsStockEntity> queryStockListByParams(Integer depFatherId) {
-
-
-		return gbDepartmentGoodsStockDao.queryStockListByParams(depFatherId);
-    }
 
     @Override
     public Double queryDepGoodsSubtotal(Map<String, Object> map4) {
@@ -119,11 +104,11 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 		return gbDepartmentGoodsStockDao.queryMaxFullTimeForDayStock(map);
     }
 
-    @Override
-    public List<GbDistributerFatherGoodsEntity> queryDepStockDisFatherGoodsFather(Map<String, Object> map) {
-
-		return gbDepartmentGoodsStockDao.queryDepStockDisFatherGoodsFather(map);
-    }
+//    @Override
+//    public List<GbDistributerFatherGoodsEntity> queryDepStockDisFatherGoodsFather(Map<String, Object> map) {
+//
+//		return gbDepartmentGoodsStockDao.queryDepStockDisFatherGoodsFather(map);
+//    }
 
     @Override
     public List<GbDepartmentGoodsStockEntity> queryGoodsStockWithReduceList(Map<String, Object> map) {
@@ -143,11 +128,11 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 	    return gbDepartmentGoodsStockDao.queryGoodsStockTimeStamp(map0);
     }
 
-    @Override
-    public List<GbDepartmentGoodsStockEntity> queryGoodsStockReduceByParams(Map<String, Object> map) {
-
-	    return gbDepartmentGoodsStockDao.queryGoodsStockReduceByParams(map);
-    }
+//    @Override
+//    public List<GbDepartmentGoodsStockEntity> queryGoodsStockReduceByParams(Map<String, Object> map) {
+//
+//	    return gbDepartmentGoodsStockDao.queryGoodsStockReduceByParams(map);
+//    }
 
     @Override
     public List<GbDistributerFatherGoodsEntity> queryDepStockTreeFatherGoodsByParams(Map<String, Object> map) {
@@ -266,10 +251,6 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 	    return gbDepartmentGoodsStockDao.queryDepStockSubtotal(mapDisGoods);
     }
 
-    @Override
-    public List<GbDepartmentEntity> queryStockDepWithFatherGoods(Map<String, Object> map0) {
-	    return gbDepartmentGoodsStockDao.queryStockDepWithFatherGoods(map0);
-    }
 
     @Override
     public Double queryDepGoodsWasteTotal(Map<String, Object> map0) {
@@ -289,11 +270,11 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 	    return gbDepartmentGoodsStockDao.queryGoodsStarsTimes(map);
     }
 
-    @Override
-    public List<GbDepartmentGoodsStockEntity> queryGoodsStockWithTodayReduceList(Map<String, Object> mapDisGoods) {
-
-	    return gbDepartmentGoodsStockDao.queryGoodsStockWithTodayReduceList(mapDisGoods);
-    }
+//    @Override
+//    public List<GbDepartmentGoodsStockEntity> queryGoodsStockWithTodayReduceList(Map<String, Object> mapDisGoods) {
+//
+//	    return gbDepartmentGoodsStockDao.queryGoodsStockWithTodayReduceList(mapDisGoods);
+//    }
 
     @Override
     public Double queryDepStockProduceWeightTotal(Map<String, Object> mapS) {
@@ -318,6 +299,13 @@ public class GbDepartmentGoodsStockServiceImpl implements GbDepartmentGoodsStock
 
 	    return gbDepartmentGoodsStockDao.queryGoodsStockByParamsWithDetail(map);
     }
+
+    @Override
+    public Integer queryDisStockGoodsCount(Map<String, Object> map) {
+
+	    return gbDepartmentGoodsStockDao.queryDisStockGoodsCount(map);
+    }
+
 
 
 }

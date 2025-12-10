@@ -134,5 +134,17 @@ public class GbDistributerPurchaseBatchServiceImpl implements GbDistributerPurch
 		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatchInfo(map);
     }
 
+    @Override
+    public List<NxDistributerEntity> queryDisPurchaseBatchWithNx(Map<String, Object> map) {
+
+		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatchWithNx(map);
+    }
+
+    @Override
+    public List<NxJrdhSupplierEntity> querySupplierListWithDetail(Map<String, Object> mapS) {
+
+		return nxDistributerPurchaseBatchDao.querySupplierListWithDetail(mapS);
+    }
+
 
 }

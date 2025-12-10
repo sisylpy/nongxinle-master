@@ -40,4 +40,6 @@ public interface NxDepartmentOrderHistoryDao extends BaseDao<NxDepartmentOrderHi
     List<Integer> selectFrequentGoodsWithPage(Map<String, Object> freqParams);
 
     int selectFrequentGoodsCount(Map<String, Object> freqParams);
+
+    List<Map<String, Object>> queryDepGoodsHistoryPrice(Map<String, Object> map);
 }

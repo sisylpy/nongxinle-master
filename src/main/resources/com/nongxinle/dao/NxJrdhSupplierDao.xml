@@ -93,6 +93,7 @@
 		<result property="gbDgGoodsIsWeight" column="gb_dg_goods_is_weight"/>
 		<result property="gbDgDfgGoodsFatherId" column="gb_dg_dfg_goods_father_id"/>
 		<result property="gbDgDfgGoodsGrandId" column="gb_dg_dfg_goods_grand_id"/>
+		<result property="gbDgDfgGoodsGreatId" column="gb_dg_dfg_goods_great_id"/>
 		<result property="gbDgNxDistributerId" column="gb_dg_gb_distributer_id"/>
 		<result property="gbDgNxDistributerGoodsId" column="gb_dg_gb_distributer_goods_id"/>
 		<result property="gbDgGbDepartmentId" column="gb_dg_gb_department_id"/>
@@ -136,6 +137,7 @@
 		<result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
 		<result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
 		<result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+		<result property="nxJrdhsNxJrdhBuyUserId" column="nx_jrdhs_nx_jrdh_buy_user_id"/>
 		<result property="nxJrdhsGbPurUserId" column="nx_jrdhs_gb_pur_user_id"/>
 		<association property="nxDistributerEntity" resultMap="nxDis"/>
 		<association property="gbDistributerEntity" resultMap="gbDis"/>
@@ -146,21 +148,44 @@
 <!--		<collection property="gbDistributerGoodsEntities" resultMap="disGoods"/>-->
   	</resultMap>
 
+	<resultMap id="nxDisBusiness" type="NxDistributerGbDistributerEntity">
+		<id property="nxDistributerGbDistributerId" column="nx_distributer_gb_distributer_id"/>
+		<result property="nxDgdNxSupplierId" column="nx_DGD_nx_supplier_id"/>
+		<result property="nxDgdNxSupplierId" column="nx_DGD_nx_supplier_id"/>
+		<result property="nxDgdFromNxDepId" column="nx_DGD_from_nx_dep_id"/>
+		<result property="nxDgdFromNxDisId" column="nx_DGD_from_nx_dis_id"/>
+		<result property="nxDgdFromNxDisId" column="nx_DGD_from_nx_dis_id"/>
+		<result property="nxDgdGbDistributerId" column="nx_DGD_gb_distributer_id"/>
+		<result property="nxDgdNxDistributerId" column="nx_DGD_nx_distributer_id"/>
+		<result property="nxDgdGbDepId" column="nx_DGD_gb_dep_id"/>
+		<result property="nxDgdGbPayMethod" column="nx_DGD_gb_pay_method"/>
+		<result property="nxDgdGbPayPeriodWeek" column="nx_DGD_gb_pay_period_week"/>
+		<result property="nxDgdGbDepUserId" column="nx_DGD_gb_dep_user_id"/>
+		<result property="nxDgdGbGoodsPrice" column="nx_DGD_gb_goods_price"/>
+		<result property="nxDgdStatus" column="nx_DGD_status"/>
+	</resultMap>
 	<resultMap id="nxDis" type="NxDistributerEntity">
-		<id property="nxDistributerId" column="nx_distributer_id"/>
+		 <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
 		<result property="nxDistributerType" column="nx_distributer_type"/>
 		<result property="nxDistributerName" column="nx_distributer_name"/>
-	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+	    <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
 		<result property="nxDistributerManager" column="nx_distributer_manager"/>
 		<result property="nxDistributerAddress" column="nx_distributer_address"/>
 		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
 		<result property="nxDistributerImg" column="nx_distributer_img"/>
 		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+		<association property="nxDistributerGbDistributerEntity" resultMap="nxDisBusiness"/>
 	</resultMap>
 	<resultMap id="gbDis" type="GbDistributerEntity">
 <id property="gbDistributerId" column="gb_distributer_id"/>
+        <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
+		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
 		<result property="gbDistributerPickName" column="gb_distributer_pick_name"/>
 		<result property="gbDistributerLan" column="gb_distributer_lan"/>
@@ -193,6 +218,7 @@
 		<result property="nxJrdhsGbDepartmentId" column="nx_jrdhs_gb_department_id"/>
 		<result property="nxJrdhsSupplierName" column="nx_jrdhs_supplier_name"/>
 		<result property="nxJrdhsUserId" column="nx_jrdhs_user_id"/>
+		<result property="nxJrdhsNxJrdhBuyUserId" column="nx_jrdhs_nx_jrdh_buy_user_id"/>
 		<result property="nxJrdhsGbPurUserId" column="nx_jrdhs_gb_pur_user_id"/>
 		<association property="gbPurUserEntity" resultMap="gbDepUser"/>
 		<association property="nxDistributerEntity" resultMap="nxDis"/>
@@ -201,13 +227,13 @@
 
     <select id="queryJrdhSupplerByParams" resultMap="jrdhSupplier">
 		select * from nx_jrdh_supplier as njs
+
 		    left join nx_distributer as nd on nd.nx_distributer_id = njs.nx_jrdhs_nx_distributer_id
-		    left join gb_distributer as gd on gd.gb_distributer_id = njs.nx_jrdhs_gb_distributer_id
+		left join nx_distributer_gb_distributer as ndgd on njs.nx_jrdhs_gb_distributer_id  = ndgd.nx_DGD_gb_distributer_id and ndgd.nx_DGD_nx_distributer_id = nd.nx_distributer_id
+		left join gb_distributer as gd on gd.gb_distributer_id = njs.nx_jrdhs_gb_distributer_id
 		    left join nx_jrdh_user as nju on nju.nx_jrdh_user_id = njs.nx_jrdhs_user_id
 		    left join nx_distributer_user as ndu on ndu.nx_distributer_user_id = njs.nx_jrdhs_nx_pur_user_id
-		    left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_gb_pur_user_id
-		    left join nx_community_user as ncu on ncu.nx_community_user_id = njs.nx_jrdhs_comm_pur_user_id
-# 		    left join gb_distributer_goods as gdg on gdg.gb_dg_gb_supplier_id = njs.nx_jrdh_supplier_id
+		    left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_nx_jrdh_buy_user_id
 			<where>
 				<if test="supplierId != null">
 					and	nx_jrdh_supplier_id = #{supplierId}
@@ -236,7 +262,8 @@
 	<select id="querySellUserSupplier" resultMap="jrdhSupplier">
 		select * from nx_jrdh_supplier as njs
 		left join nx_jrdh_user as nju on nju.nx_jrdh_user_id = njs.nx_jrdhs_user_id
-		left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_gb_pur_user_id
+		left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_nx_jrdh_buy_user_id
+		left join nx_distributer as nd on nd.nx_distributer_id = njs.nx_jrdhs_nx_distributer_id
 		<where>
 			<if test="supplierId != null">
 				and nx_jrdh_supplier_id = #{supplierId}
@@ -262,7 +289,7 @@
 		select * from nx_jrdh_supplier as njs
         left join nx_distributer as nd on nd.nx_distributer_id = njs.nx_jrdhs_nx_distributer_id
          left join gb_distributer as gd on gd.gb_distributer_id = njs.nx_jrdhs_gb_distributer_id
-         left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_gb_pur_user_id
+         left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_nx_jrdh_buy_user_id
        <where>
           <if test="userId != null">
 			  and njs.nx_jrdhs_user_id = #{userId}
@@ -278,7 +305,7 @@
 	</select>
 	<select id="querySupplierByUserId" resultMap="jrdhSupplier">
 		select * from nx_jrdh_supplier as njs
-		left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_gb_pur_user_id
+		left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_nx_jrdh_buy_user_id
 		where nx_jrdhs_user_id = #{sellerId}
 	</select>
 	<select id="queryJrdhSupplierCount" resultType="java.lang.Integer">
