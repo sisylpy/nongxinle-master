@@ -37,6 +37,7 @@
         ds.nx_department_id 'nx_department_id',
         ds.nx_department_name 'nx_department_name',
         ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_order_code 'nx_department_order_code',
         ds.nx_department_type 'nx_department_type',
         ds.nx_department_father_id 'nx_department_father_id',
         ds.nx_department_is_group_dep 'nx_department_is_group_dep',
@@ -44,6 +45,7 @@
                df.nx_department_pick_name 'dd_nx_department_pick_name',
         df.nx_department_name 'dd_nx_department_name',
         df.nx_department_attr_name 'dd_nx_department_attr_name',
+        df.nx_department_order_code 'dd_nx_department_order_code',
         nr.nx_restraunt_id,
         nr.nx_restraunt_attr_name,
         nr.nx_restraunt_name,
@@ -82,6 +84,9 @@
         ndpg.nx_DPG_dis_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
         dfg.nx_dfg_fathers_father_id
+        left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        left join nx_goods as ng_dfg on ng_dfg.nx_goods_id = dfg.nx_dfg_nx_goods_id
+        left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
         left join gb_department as purGbDs on purGbDs.gb_department_id = dor.nx_DO_gb_department_id
         left join gb_department as purGbDf on purGbDf.gb_department_id = purGbDs.gb_department_father_id
         left join nx_restraunt as purNr on purNr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_father_id
@@ -103,6 +108,9 @@
                 and ndpg.nx_DPG_status = #{equalStatus}
             </if>
 
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -110,6 +118,9 @@
                 and ndpg.nx_DPG_nx_weight_id is null
             </if>
 
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -120,7 +131,7 @@
                 and ndpg.nx_DPG_batch_id is  null
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpg.nx_DPG_batch_id &gt; 0
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="weightId != null and weightId == 1">
                 and ndpg.nx_DPG_nx_weight_id is not null
@@ -136,7 +147,7 @@
             </if>
 
         </where>
-        order by great.nx_dfg_father_goods_sort ,dfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort,
+        order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), COALESCE(ng_dfg.nx_goods_sort, dfg.nx_dfg_father_goods_sort), COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort),
                  df.nx_department_id,ds.nx_department_id,purGbDf.gb_department_id,purGbDs.gb_department_id,
         purNr.nx_restraunt_id
     </select>
@@ -170,6 +181,7 @@
         <id property="nxDepartmentId" column="dd_nx_department_id"/>
         <result property="nxDepartmentName" column="dd_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="dd_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="dd_nx_department_order_code"/>
     </resultMap>
 
     <resultMap id="orderDepartments" type="NxDepartmentEntity">
@@ -186,6 +198,7 @@
         <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="nx_department_order_code"/>
         <association property="fatherDepartmentEntity" resultMap="fatherDepartment"/>
     </resultMap>
 
@@ -223,6 +236,7 @@
         <id property="nxDepartmentId" column="nds_nx_department_id"/>
         <result property="nxDepartmentName" column="nds_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nds_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="nds_nx_department_order_code"/>
         <result property="nxDepartmentFatherId" column="nds_nx_department_father_id"/>
         <association property="fatherDepartmentEntity" resultMap="ndsFatherDep"/>
     </resultMap>
@@ -230,7 +244,7 @@
         <id property="nxDepartmentId" column="ndf_dd_nx_department_id"/>
         <result property="nxDepartmentName" column="ndf_dd_nx_department_name"/>
         <result property="nxDepartmentAttrName" column="ndf_dd_nx_department_attr_name"/>
-        <result property="nxDepartmentAttrName" column="ndf_dd_nx_department_attr_name"/>
+        <result property="nxDepartmentOrderCode" column="ndf_dd_nx_department_order_code"/>
     </resultMap>
     <resultMap id="ngdsFatherDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="ngdf_dd_gb_department_id"/>
@@ -519,6 +533,7 @@
         <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
         <result property="nxDpgExpectPrice" column="nx_DPG_expect_price"/>
         <result property="nxDpgApplyShelfId" column="nx_DPG_apply_shelf_id"/>
+        <result property="nxDpgTraceReportId" column="nx_DPG_trace_report_id"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
     </resultMap>
@@ -570,6 +585,7 @@
         <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
         <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
         <result property="nxDpgApplyShelfId" column="nx_DPG_apply_shelf_id"/>
+        <result property="nxDpgTraceReportId" column="nx_DPG_trace_report_id"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
         <association property="nxPurchaserEntity" resultMap="disUser"/>
         <association property="sellerUserEntity" resultMap="jrdhSellUser"/>
@@ -606,7 +622,6 @@
 
     <resultMap id="purBatch" type="NxDistributerPurchaseBatchEntity">
          <id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
-        <result property="nxDpbNxDepartmentFatherId" column="nx_DPB_nx_department_father_id"/>
 		<result property="nxDpbPasteContent" column="nx_DPB_paste_content"/>
         <result property="nxDpbNeedDate" column="nx_DPB_need_date"/>
 		<result property="nxDpbSupplierId" column="nx_DPB_supplier_id"/>
@@ -676,6 +691,7 @@
         <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
         <result property="nxDpgCostLevel" column="nx_DPG_cost_level"/>
         <result property="nxDpgApplyShelfId" column="nx_DPG_apply_shelf_id"/>
+        <result property="nxDpgTraceReportId" column="nx_DPG_trace_report_id"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
         <association property="nxDepartmentOrdersEntity" resultMap="depOrders"/>
         <association property="nxPurchaserEntity" resultMap="purUser"/>
@@ -709,6 +725,7 @@
                d.nx_department_name                  'nx_department_name',
                d.nx_department_father_id             'nx_department_father_id',
                d.nx_department_attr_name             'nx_department_attr_name',
+               d.nx_department_order_code             'nx_department_order_code',
                d.nx_department_type                  'nx_department_type',
                d.nx_department_sub_amount            'nx_department_sub_amount',
                dd.nx_department_id                   'dd_nx_department_id',
@@ -716,6 +733,7 @@
                dd.nx_department_settle_type          'dd_nx_department_settle_type',
                dd.nx_department_father_id            'dd_nx_department_father_id',
                dd.nx_department_attr_name            'dd_nx_department_attr_name',
+               dd.nx_department_order_code            'dd_nx_department_order_code',
                dd.nx_department_type                 'dd_nx_department_type',
                dd.nx_department_sub_amount           'dd_nx_department_sub_amount'
 
@@ -725,6 +743,9 @@
         dg.nx_dg_dfg_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
         ndfg.nx_dfg_fathers_father_id
+        left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        left join nx_goods as ng_ndfg on ng_ndfg.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
                  left join nx_department_orders as ndo
                            on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
         left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
@@ -756,7 +777,7 @@
             </if>
 
         </where>
-        order by great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort,
+        order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), COALESCE(ng_ndfg.nx_goods_sort, ndfg.nx_dfg_father_goods_sort), COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort),
         dd.nx_department_id
         <if test="offset != null and limit != null">
             limit #{offset}, #{limit}
@@ -790,6 +811,9 @@
             <if test="disGoodsId != null">
                 and nx_DPG_dis_goods_id = #{disGoodsId}
             </if>
+            <if test="standard != null">
+                and nx_DPG_standard = #{standard}
+            </if>
             <if test="status != null">
                 and nx_DPG_status &lt; #{status}
             </if>
@@ -815,19 +839,20 @@
             <if test="payType != null">
                 and nx_DPG_pay_type = #{payType}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
             <if test="batchId != null and batchId == -1">
                 and nx_DPG_batch_id is null
             </if>
-            <if test="batchId != null and batchId == 0">
-                and ndpg.nx_DPG_batch_id is  null
-            </if>
+
             <if test="batchId != null and batchId == 1">
                 and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
-            <if test="batchId != null">
+            <if test="batchId != null and batchId != 1 and batchId != -1">
                 and ndpg.nx_DPG_batch_id  = #{batchId}
             </if>
             <if test="weightId != null and weightId == 1">
@@ -867,14 +892,19 @@
             <if test="type != null">
                 and nx_DPG_purchase_type =  #{type}
             </if>
-            
+
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
             <if test="purchaseTypeNotEqual != null">
                 and (ndpg.nx_DPG_purchase_type is null OR ndpg.nx_DPG_purchase_type != #{purchaseTypeNotEqual})
             </if>
-
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id  &gt; 0
+            </if>
             <if test="batchId != null and batchId != -1 and batchId != 1">
                 and ndpg.nx_DPG_batch_id = #{batchId}
             </if>
@@ -932,6 +962,7 @@
         ds.nx_department_type 'nx_department_type',
         ds.nx_department_sub_amount 'nx_department_sub_amount',
         ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_order_code 'nx_department_order_code',
         df.nx_department_id 'dd_nx_department_id',
                df.nx_department_pick_name 'dd_nx_department_pick_name',
         df.nx_department_name 'dd_nx_department_name',
@@ -939,6 +970,7 @@
         df.nx_department_father_id 'dd_nx_department_father_id',
         df.nx_department_type 'dd_nx_department_type',
         df.nx_department_attr_name 'dd_nx_department_attr_name',
+        df.nx_department_order_code 'dd_nx_department_order_code',
         df.nx_department_sub_amount 'dd_nx_department_sub_amount',
         sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
         sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
@@ -974,6 +1006,9 @@
             <if test="payType != null">
                 and ndpg.nx_DPG_pay_type = #{payType}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -981,7 +1016,7 @@
                 and ndpg.nx_DPG_batch_id is  null
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpg.nx_DPG_batch_id is not null
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="weightId != null and weightId == 1">
                 and ndpg.nx_DPG_nx_weight_id is not null
@@ -1016,15 +1051,15 @@
             <if test="dayuStatus != null">
                 and ndpg.nx_DPG_status &gt; #{dayuStatus}
             </if>
-            <if test="orderStatus != null">
-                and dor.nx_DO_status &lt; #{orderStatus}
-            </if>
-           
-            <if test="purStatus != null">
-                and dor.nx_DO_purchase_status &lt; #{purStatus}
-            </if>
+
             <if test="payType != null">
                 and ndpg.nx_DPG_pay_type = #{payType}
+            </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+              </if>
+            <if test="batchId != null and batchId == 1">
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
@@ -1051,7 +1086,7 @@
                 and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpb.nx_DPB_purchase_type = 12
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="batchId != null and batchId != -1 and batchId != 1">
                 and ndpg.nx_DPG_batch_id = #{batchId}
@@ -1098,6 +1133,9 @@
             <if test="dayuStatus != null">
                 and ndpg.nx_DPG_status &gt; #{dayuStatus}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1117,7 +1155,7 @@
                 and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpb.nx_DPB_purchase_type = 12
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="disGoodsGreatId != null">
                 and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
@@ -1143,6 +1181,9 @@
             <if test="dayuStatus != null">
                 and ndpg.nx_DPG_status &gt; #{dayuStatus}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1153,7 +1194,7 @@
                 and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpb.nx_DPB_purchase_type = 12
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="batchId != null and batchId != -1 and batchId != 1">
                 and ndpg.nx_DPG_batch_id = #{batchId}
@@ -1195,7 +1236,7 @@
         <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <collection property="nxDistributerPurchaseGoodsEntities" 
                     select="queryPurchaseGoodsByDisGoodsIdAndDate"
-                    column="{disGoodsId=nx_distributer_goods_id,disId=disId,startDate=startDate,stopDate=stopDate}"/>
+                    column="{disGoodsId=nx_distributer_goods_id,disId=disId,startDate=startDate,stopDate=stopDate,purchaseType=purchaseType,dayuStatus=dayuStatus}"/>
         <collection property="nxDisGoodsShelfStockEntities" 
                     select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByDisGoodsIdAndDate"
                     column="{disGoodsId=nx_distributer_goods_id,disId=disId,startDate=startDate,stopDate=stopDate}"/>
@@ -1222,12 +1263,13 @@
         <result property="nxDpgPurUserId" column="nx_DPG_pur_user_id"/>
         <result property="nxDpgSellUserId" column="nx_DPG_sell_user_id"/>
         <result property="nxDpgApplyShelfId" column="nx_DPG_apply_shelf_id"/>
+        <result property="nxDpgTraceReportId" column="nx_DPG_trace_report_id"/>
         <collection property="nxDisGoodsShelfStockEntities" 
                     select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByPurGoodsId"
                     column="{purGoodsId=nx_distributer_purchase_goods_id,disId=disId,startDate=startDate,stopDate=stopDate}"/>
     </resultMap>
 
-    <!-- 子查询：根据商品ID和日期查询采购记录 -->
+    <!-- 子查询：根据商品ID和日期查询采购记录 ndgs.nx_distributer_goods_shelf_name AS shelf_name -->
     <select id="queryPurchaseGoodsByDisGoodsIdAndDate" resultMap="simplePurchaseGoods">
         select 
         ndpg.nx_distributer_purchase_goods_id,
@@ -1259,6 +1301,15 @@
             <if test="disId != null">
                 and ndpg.nx_DPG_distributer_id = #{disId}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+            <if test="dayuStatus != null">
+                and ndpg.nx_DPG_status &gt; #{dayuStatus}
+            </if>
             <if test="startDate != null">
                 and ndpg.nx_DPG_purchase_date &gt;= #{startDate}
             </if>
@@ -1289,6 +1340,8 @@
         #{disId} AS disId,
         #{startDate} AS startDate,
         #{stopDate} AS stopDate,
+        #{purchaseType} AS purchaseType,
+        #{dayuStatus} AS dayuStatus,
         IFNULL((
             select SUM(ndpg.nx_DPG_buy_subtotal)
             from nx_distributer_purchase_goods as ndpg
@@ -1299,11 +1352,18 @@
             <if test="purchaseTypeNotEqual != null">
                 and (ndpg.nx_DPG_purchase_type is null OR ndpg.nx_DPG_purchase_type != #{purchaseTypeNotEqual})
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
+
             <if test="batchId != null and batchId == -1">
                 and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpb.nx_DPB_purchase_type = 12
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="batchId != null and batchId != -1 and batchId != 1">
                 and ndpg.nx_DPG_batch_id = #{batchId}
@@ -1340,6 +1400,12 @@
                 <if test="dayuStatus != null">
                     and ndpg.nx_DPG_status &gt; #{dayuStatus}
                 </if>
+                <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
                 <if test="purchaseTypeNotEqual != null">
                     and (ndpg.nx_DPG_purchase_type is null OR ndpg.nx_DPG_purchase_type != #{purchaseTypeNotEqual})
                 </if>
@@ -1347,7 +1413,7 @@
                     and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
                 </if>
                 <if test="batchId != null and batchId == 1">
-                    and ndpb.nx_DPB_purchase_type = 12
+                    and ndpg.nx_DPG_batch_id  &gt; 0
                 </if>
                 <if test="batchId != null and batchId != -1 and batchId != 1">
                     and ndpg.nx_DPG_batch_id = #{batchId}
@@ -1402,6 +1468,9 @@
             <if test="equalStatus != null">
                 and ndpg.nx_DPG_status  = #{equalStatus}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1414,15 +1483,22 @@
              <if test="equalBuyStatus != null">
                  and ndo.nx_DO_purchase_status = #{equalBuyStatus}
              </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
-            <if test="batchId != null and batchId == 1">
-                and ndpg.nx_DPG_batch_id is not null
-            </if>
-            <if test="batchId != null and batchId == 0">
-                and ndpg.nx_DPG_batch_id is  null
-            </if>
+             <if test="batchId != null and batchId == -1">
+                 and nx_DPG_batch_id is null
+             </if>
+
+             <if test="batchId != null and batchId == 1">
+                 and ndpg.nx_DPG_batch_id  &gt; 0
+             </if>
+             <if test="batchId != null and batchId != 1 and batchId != -1">
+                 and ndpg.nx_DPG_batch_id  = #{batchId}
+             </if>
             <if test="weightId != null and weightId == 1">
                 and ndpg.nx_DPG_nx_weight_id is not null
             </if>
@@ -1456,6 +1532,7 @@
                    left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndpg.nx_DPG_dis_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+        left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
 
         <where>
             <if test="disId != null">
@@ -1475,6 +1552,9 @@
             </if>
 
 
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1485,6 +1565,9 @@
                 and ndpg.nx_DPG_batch_id is null
             </if>
 
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1492,7 +1575,7 @@
                 and ndpg.nx_DPG_batch_id is  null
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpg.nx_DPG_batch_id is not null
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="weightId != null and weightId == 1">
                 and ndpg.nx_DPG_nx_weight_id is not null
@@ -1520,7 +1603,7 @@
             </if>
 
         </where>
-        order by great.nx_dfg_father_goods_sort
+        order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort)
 
     </select>
 
@@ -1544,9 +1627,12 @@
             and ndpg.nx_DPG_status = #{equalStatus}
         </if>
 
-        <if test="purchaseType != null">
-            and ndpg.nx_DPG_purchase_type = #{purchaseType}
-        </if>
+        <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
         <if test="weightId != null and weightId == -1">
             and ndpg.nx_DPG_nx_weight_id is null
         </if>
@@ -1554,14 +1640,17 @@
             and ndpg.nx_DPG_batch_id is null
         </if>
 
-        <if test="purchaseType != null">
-            and ndpg.nx_DPG_purchase_type = #{purchaseType}
-        </if>
+        <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
+            <if test="purchaseType != null">
+                and ndpg.nx_DPG_purchase_type = #{purchaseType}
+            </if>
         <if test="batchId != null and batchId == 0">
             and ndpg.nx_DPG_batch_id is  null
         </if>
         <if test="batchId != null and batchId == 1">
-            and ndpg.nx_DPG_batch_id is not null
+            and ndpg.nx_DPG_batch_id  &gt; 0
         </if>
         <if test="weightId != null and weightId == 1">
             and ndpg.nx_DPG_nx_weight_id is not null
@@ -1611,7 +1700,8 @@
          `nx_DPG_nx_weight_id`,
          `nx_DPG_cost_level`,
          `nx_DPG_finish_amount`,
-         `nx_DPG_apply_shelf_id`
+         `nx_DPG_apply_shelf_id`,
+         `nx_DPG_trace_report_id`
 
          )
         values (#{nxDistributerPurchaseGoodsId},
@@ -1642,7 +1732,8 @@
                 #{nxDpgNxWeightId},
                 #{nxDpgCostLevel},
                 #{nxDpgFinishAmount},
-                #{nxDpgApplyShelfId}
+                #{nxDpgApplyShelfId},
+                #{nxDpgTraceReportId}
                 )
     </insert>
 
@@ -1676,7 +1767,8 @@
             <if test="nxDpgCostLevel != '-99'">`nx_DPG_cost_level` = #{nxDpgCostLevel},</if>
             <if test="nxDpgFinishAmount != '-99'">`nx_DPG_finish_amount` = #{nxDpgFinishAmount},</if>
             <if test="nxDpgTime != '-99'">`nx_DPG_time` = #{nxDpgTime},</if>
-            <if test="nxDpgApplyShelfId != null">`nx_DPG_apply_shelf_id` = #{nxDpgApplyShelfId}</if>
+            <if test="nxDpgApplyShelfId != null">`nx_DPG_apply_shelf_id` = #{nxDpgApplyShelfId},</if>
+            <if test="nxDpgTraceReportId != null">`nx_DPG_trace_report_id` = #{nxDpgTraceReportId}</if>
         </set>
         where nx_distributer_purchase_goods_id = #{nxDistributerPurchaseGoodsId}
     </update>
@@ -1703,6 +1795,9 @@
             <if test="disId != null">
                 and ndpg.nx_DPG_distributer_id = #{disId}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1713,7 +1808,7 @@
                 and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpb.nx_DPB_purchase_type = 12
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="dayuStatus != null">
                 and ndpg.nx_DPG_status &gt; #{dayuStatus}
@@ -1738,6 +1833,9 @@
             <if test="disId != null">
                 and ndpg.nx_DPG_distributer_id = #{disId}
             </if>
+            <if test="dayuPurchaseType != null">
+                and ndpg.nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+            </if>
             <if test="purchaseType != null">
                 and ndpg.nx_DPG_purchase_type = #{purchaseType}
             </if>
@@ -1748,7 +1846,7 @@
                 and (ndpg.nx_DPG_batch_id is null OR ndpb.nx_DPB_purchase_type = 13)
             </if>
             <if test="batchId != null and batchId == 1">
-                and ndpb.nx_DPB_purchase_type = 12
+                and ndpg.nx_DPG_batch_id  &gt; 0
             </if>
             <if test="dayuStatus != null">
                 and ndpg.nx_DPG_status &gt; #{dayuStatus}
@@ -1783,6 +1881,9 @@
                    AND nx_DPG_distributer_id = #{disId}
                    AND nx_DPG_status &gt; 2
                    AND nx_DPG_buy_subtotal &gt; 0
+        <if test="dayuPurchaseType != null">
+            AND nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+        </if>
                    <if test="purchaseTypeNotEqual != null">
                    AND nx_DPG_purchase_type != #{purchaseTypeNotEqual}
                    </if>
@@ -1826,6 +1927,9 @@
                    AND nx_DPG_distributer_id = #{disId}
                    AND nx_DPG_status &gt; 2
                    AND nx_DPG_buy_subtotal &gt; 0
+        <if test="dayuPurchaseType != null">
+            AND nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+        </if>
                    <if test="purchaseTypeNotEqual != null">
                    AND nx_DPG_purchase_type != #{purchaseTypeNotEqual}
                    </if>
@@ -1860,6 +1964,9 @@
                    AND nx_DPG_distributer_id = #{disId}
                    AND nx_DPG_status &gt; 2
                    AND nx_DPG_buy_subtotal &gt; 0
+        <if test="dayuPurchaseType != null">
+            AND nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+        </if>
                    <if test="purchaseTypeNotEqual != null">
                    AND nx_DPG_purchase_type != #{purchaseTypeNotEqual}
                    </if>
@@ -1910,6 +2017,9 @@
                    AND nx_DPG_distributer_id = #{disId}
                    AND nx_DPG_buy_price IS NOT NULL
                    AND nx_DPG_status &gt; 2
+        <if test="dayuPurchaseType != null">
+            AND nx_DPG_purchase_type &gt; #{dayuPurchaseType}
+        </if>
                    <if test="purchaseTypeNotEqual != null">
                    AND nx_DPG_purchase_type != #{purchaseTypeNotEqual}
                    </if>
@@ -1946,6 +2056,7 @@
         <result property="depName" column="dep_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
         <result property="nxDepartmentOrderCode" column="nx_department_order_code"/>
+        <result property="fatherDepartmentOrderCode" column="father_department_order_code"/>
         <result property="fatherDepartmentAttrName" column="father_department_attr_name"/>
         <result property="gbDepName" column="gb_dep_name"/>
         <result property="restrauntName" column="restraunt_name"/>
@@ -1975,6 +2086,7 @@
     </resultMap>
 
     <!-- 查询采购商品列表（超简化版，使用DTO对象，字段扁平化） -->
+    <!-- 注意：使用子查询先获取采购商品列表（应用LIMIT），然后再JOIN订单，确保LIMIT是应用在采购商品上，而不是在"采购商品×订单"的行上 -->
     <select id="queryPurchaseGoodsWithOrdersUltraSimple" resultMap="purchaseGoodsUltraSimple">
         select
         -- 采购商品基本信息（只返回必要字段）
@@ -1984,7 +2096,8 @@
         ndpg.nx_DPG_standard,
         ndpg.nx_DPG_status,
         ndpg.nx_DPG_orders_amount,
-        
+        ndpg.nx_DPG_purchase_type,
+
         -- 商品基本信息（只返回必要字段）
         dg.nx_distributer_goods_id,
         dg.nx_dg_goods_name,
@@ -2009,9 +2122,9 @@
         
         -- 扁平化的部门信息
         CONCAT(
-            CASE WHEN dd.nx_department_attr_name IS NOT NULL AND dd.nx_department_attr_name != '' 
-            THEN CONCAT(dd.nx_department_attr_name, '.') ELSE '' END,
-            d.nx_department_attr_name
+            CASE WHEN dd.nx_department_order_code IS NOT NULL AND dd.nx_department_order_code != ''
+            THEN CONCAT(dd.nx_department_order_code, '.') ELSE '' END,
+            d.nx_department_order_code
         ) AS dep_name,
         
         -- 部门属性名称（单独返回）
@@ -2019,6 +2132,9 @@
         
         -- 部门订货代号（单独返回）
         d.nx_department_order_code as nx_department_order_code,
+        
+        -- 父部门订货代号（单独返回）
+        dd.nx_department_order_code as father_department_order_code,
         
         -- 父部门属性名称（单独返回）
         dd.nx_department_attr_name as father_department_attr_name,
@@ -2033,42 +2149,62 @@
         -- 餐厅名称
         nr.nx_restraunt_attr_name AS restraunt_name
         
-        from nx_distributer_purchase_goods as ndpg
+        from (
+            -- 子查询：先获取需要返回的采购商品ID列表（应用WHERE条件和LIMIT）
+            select ndpg_inner.nx_distributer_purchase_goods_id
+            from nx_distributer_purchase_goods as ndpg_inner
+            left join nx_distributer_goods as dg_inner on dg_inner.nx_distributer_goods_id = ndpg_inner.nx_DPG_dis_goods_id
+            left join nx_distributer_father_goods as ndfg_inner on ndfg_inner.nx_distributer_father_goods_id = dg_inner.nx_dg_dfg_goods_grand_id
+            left join nx_distributer_father_goods as great_inner on great_inner.nx_distributer_father_goods_id = ndfg_inner.nx_dfg_fathers_father_id
+            left join nx_goods as ng_great_inner on ng_great_inner.nx_goods_id = great_inner.nx_dfg_nx_goods_id
+            left join nx_goods as ng_ndfg_inner on ng_ndfg_inner.nx_goods_id = ndfg_inner.nx_dfg_nx_goods_id
+            left join nx_goods as ng_dg_inner on ng_dg_inner.nx_goods_id = dg_inner.nx_dg_nx_goods_id
+            <where>
+                <if test="disId != null">
+                    and ndpg_inner.nx_DPG_distributer_id = #{disId}
+                </if>
+                <if test="status != null">
+                    and ndpg_inner.nx_DPG_status &lt; #{status}
+                </if>
+                <if test="goodsId != null">
+                    and ndpg_inner.nx_DPG_dis_goods_id = #{goodsId}
+                </if>
+                <if test="batchId != null and batchId == -1">
+                    and ndpg_inner.nx_DPG_batch_id is null
+                </if>
+                <if test="batchId != null and batchId == 1">
+                    and ndpg.nx_DPG_batch_id  &gt; 0
+                </if>
+                <if test="equalInputType != null">
+                    and ndpg_inner.nx_DPG_input_type = #{equalInputType}
+                </if>
+            </where>
+            -- 按照曾祖父商品的排序字段作为第一排序字段，然后按曾祖父ID、爷爷商品、商品排序
+            order by COALESCE(ng_great_inner.nx_goods_sort, great_inner.nx_dfg_father_goods_sort), great_inner.nx_distributer_father_goods_id, COALESCE(ng_ndfg_inner.nx_goods_sort, ndfg_inner.nx_dfg_father_goods_sort), COALESCE(ng_dg_inner.nx_goods_sort, dg_inner.nx_dg_goods_sort), COALESCE(ng_dg_inner.nx_goods_sons_sort, dg_inner.nx_dg_goods_sons_sort)
+            <if test="offset != null and limit != null">
+                limit #{offset}, #{limit}
+            </if>
+        ) as pg_ids
+        inner join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = pg_ids.nx_distributer_purchase_goods_id
         left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ndpg.nx_DPG_dis_goods_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+        left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        left join nx_goods as ng_ndfg on ng_ndfg.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
         left join nx_department_orders as ndo on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
+        <if test="orderPurStatus != null">
+            and ndo.nx_do_purchase_status &lt; #{orderPurStatus}
+        </if>
         left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
         left join nx_department as d on d.nx_department_id = ndo.nx_DO_department_id
         left join nx_department as dd on d.nx_department_father_id = dd.nx_department_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
-        <where>
-            <if test="disId != null">
-                and ndpg.nx_DPG_distributer_id = #{disId}
-            </if>
-            <if test="status != null">
-                and ndpg.nx_DPG_status &lt; #{status}
-            </if>
-            <if test="orderPurStatus != null">
-                and ndo.nx_do_purchase_status &lt; #{orderPurStatus}
-            </if>
-            <if test="goodsId != null">
-                and ndpg.nx_DPG_dis_goods_id = #{goodsId}
-            </if>
-            <if test="batchId != null and batchId == -1">
-                and ndpg.nx_DPG_batch_id is null
-            </if>
-            <if test="batchId != null and batchId == 1">
-                and ndpg.nx_DPG_batch_id &gt; 0
-            </if>
-        </where>
         -- 按照曾祖父商品的排序字段作为第一排序字段，然后按曾祖父ID（确保相同ID的商品在一起）、爷爷商品、商品、部门排序
-        order by great.nx_dfg_father_goods_sort, great.nx_distributer_father_goods_id, ndfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort,
-        dd.nx_department_id
-        <if test="offset != null and limit != null">
-            limit #{offset}, #{limit}
-        </if>
+        -- 注意：dd.nx_department_id 可能为 NULL（当采购商品没有订单时），使用 IFNULL 确保 NULL 值排在最后
+        order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), great.nx_distributer_father_goods_id, COALESCE(ng_ndfg.nx_goods_sort, ndfg.nx_dfg_father_goods_sort), COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort),
+        IFNULL(dd.nx_department_id, 999999999)
     </select>
 
 </mapper>

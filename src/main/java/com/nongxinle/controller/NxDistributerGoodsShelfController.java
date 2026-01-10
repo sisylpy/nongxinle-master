@@ -126,6 +126,46 @@ public class NxDistributerGoodsShelfController {
 		return R.ok().put("page", pageUtil);
 	}
 
+	/**
+	 * 查询货架商品列表（包含溯源报告信息）
+	 * 返回所有货架商品，有溯源报告的库存批次会包含溯源信息（nxDgssTraceReportId不为null），
+	 * 没有溯源报告的库存批次的nxDgssTraceReportId为null
+	 * 这样前端可以显示所有商品，并且可以识别哪些商品有溯源报告，哪些没有
+	 * 同时支持后续通过接口删除或更新溯源报告
+	 */
+	@RequestMapping(value = "/getShelfGoodsWithTraceReport/{shelfId}")
+	@ResponseBody
+	public R getShelfGoodsWithTraceReport(@PathVariable Integer shelfId, Integer page, Integer limit) {
+		// 设置默认分页参数
+		if (page == null || page < 1) {
+			page = 1;
+		}
+		if (limit == null || limit < 1) {
+			limit = 15;
+		}
+
+		// 计算偏移量
+		int offset = (page - 1) * limit;
+
+		// 构建查询参数
+		Map<String, Object> map = new HashMap<>();
+		map.put("shelfId", shelfId);
+		map.put("status", 3);
+		map.put("offset", offset);
+		map.put("limit", limit);
+
+		logger.info("[getShelfGoodsWithTraceReport] 查询参数: shelfId={}, page={}, limit={}", shelfId, page, limit);
+
+		// 查询总数（返回所有货架商品）
+		int total = nxDisGoodsShelfGoodsService.queryShelfForGoodsWithTraceReportCount(map);
+		// 查询分页数据（返回所有货架商品，包含溯源报告信息）
+		List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities = nxDisGoodsShelfGoodsService.queryShelfForGoodsWithTraceReportByParams(map);
+
+		// 使用 PageUtils 返回分页结果
+		PageUtils pageUtil = new PageUtils(nxDistributerGoodsShelfGoodsEntities, total, limit, page);
+		return R.ok().put("page", pageUtil);
+	}
+
 
 	
 	@RequestMapping(value = "/disGetShelfs/{disId}")

@@ -22,6 +22,8 @@ import com.nongxinle.utils.*;
 import com.nongxinle.utils.aes.WXBizMsgCrypt;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.HttpHeaders;
@@ -47,6 +49,8 @@ import static com.nongxinle.utils.PinYin4jUtils.hanziToPinyin;
 @Controller
 @RequestMapping("api/nxdistributer")
 public class NxDistributerController {
+	private static final Logger logger = LoggerFactory.getLogger(NxDistributerController.class);
+	
 	@Autowired
 	private NxDistributerService nxDistributerService;
 	@Autowired
@@ -65,6 +69,8 @@ public class NxDistributerController {
 	private NxDistributerGbDistributerService nxDisGbDisService;
 	@Autowired
 	private GbDepartmentService gbDepartmentService;
+	@Autowired
+	private InviteCodeManager inviteCodeManager;
 
 
 
@@ -351,6 +357,7 @@ public class NxDistributerController {
 								  @RequestParam("userName") String userName,
 								 @RequestParam("address") String address,
 								  @RequestParam("phone") String phone,
+								  @RequestParam(value = "downloadAllGoods", required = false, defaultValue = "false") Boolean downloadAllGoods,
 								 HttpSession session) {
 
 		System.out.println("aaaa===="   + code + marketId + address);
@@ -397,6 +404,7 @@ public class NxDistributerController {
 
 			Integer userId =  nxDistributerService.saveNewNxDistributer(distributerEntity);
 			Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(userId);
+
 
 
 			return R.ok().put("data", stringObjectMap);
@@ -756,5 +764,68 @@ public class NxDistributerController {
 //
 //		return R.ok();
 //	}
+
+	/**
+	 * 销售人员创建邀请码
+	 * @param userId 销售人员用户ID
+	 * @return 邀请码信息
+	 */
+	@RequestMapping(value = "/createInviteCode", method = RequestMethod.POST)
+	@ResponseBody
+	public R createInviteCode(@RequestParam("userId") Long userId) {
+		logger.info("[创建邀请码] 开始创建邀请码，销售人员ID: {}", userId);
+		try {
+			// 验证销售人员身份（这里可以根据实际业务逻辑进行验证）
+			SysUserEntity sysUser = sysUserService.queryObject(userId);
+			if (sysUser == null) {
+				logger.warn("[创建邀请码] 用户不存在，userId: {}", userId);
+				return R.error(-1, "用户不存在");
+			}
+
+			// 生成邀请码
+			String inviteCode = inviteCodeManager.generateInviteCode();
+
+			// 返回邀请码和有效期信息
+			Map<String, Object> result = new HashMap<>();
+			result.put("inviteCode", inviteCode);
+			result.put("expireTime", 180); // 3分钟 = 180秒
+			result.put("createTime", System.currentTimeMillis());
+			return R.ok().put("data", result);
+		} catch (Exception e) {
+			return R.error(-1, "创建邀请码失败：" + e.getMessage());
+		}
+	}
+
+	/**
+	 * 用户获取邀请码（验证并消费邀请码）
+	 * @param inviteCode 邀请码
+	 * @return 验证结果
+	 */
+	@RequestMapping(value = "/getInviteCode", method = RequestMethod.POST)
+	@ResponseBody
+	public R getInviteCode(@RequestParam("inviteCode") String inviteCode) {
+		logger.info("[验证邀请码] 开始验证邀请码，邀请码: {}", inviteCode);
+		try {
+			if (inviteCode == null || inviteCode.trim().isEmpty()) {
+				return R.error(-1, "邀请码不能为空");
+			}
+			
+			// 验证并消费邀请码（使用后删除，确保只能使用一次）
+			boolean isValid = inviteCodeManager.useInviteCode(inviteCode);
+			
+			if (!isValid) {
+				return R.error(-1, "邀请码无效或已过期");
+			}
+
+			Map<String, Object> result = new HashMap<>();
+			result.put("inviteCode", inviteCode);
+			result.put("isValid", true);
+			result.put("message", "邀请码验证成功");
+			
+			return R.ok().put("data", result);
+		} catch (Exception e) {
+			return R.error(-1, "验证邀请码失败：" + e.getMessage());
+		}
+	}
 	
 }

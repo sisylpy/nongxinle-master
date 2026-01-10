@@ -3812,7 +3812,8 @@ public class GbDepartmentOrdersController {
             //standard Same
             if (gbDistributerGoodsEntity.getGbDgGoodsStandardname().equals(gbDepartmentOrders.getGbDoStandard())) {
                 gbDepartmentOrders.setGbDoWeight(gbDepartmentOrders.getGbDoQuantity());
-                gbPurchaseGoodsEntity.setGbDpgBuyQuantity(gbDepartmentOrders.getGbDoQuantity());
+                BigDecimal bigDecimal = new BigDecimal(gbDepartmentOrders.getGbDoQuantity()).add(new BigDecimal(gbPurchaseGoodsEntity.getGbDpgBuyQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
+                gbPurchaseGoodsEntity.setGbDpgBuyQuantity(bigDecimal.toString());
             }
             gbDistributerPurchaseGoodsService.update(gbPurchaseGoodsEntity);
         }
@@ -3875,31 +3876,6 @@ public class GbDepartmentOrdersController {
         mapG.put("disGoodsId", gbDoDisGoodsId);
         GbDistributerGoodsEntity goodsEntity = gbDistributerGoodsService.queryDisGoodsWithDepDisGoods(mapG);
         gbDepartmentOrdersEntity.setGbDistributerGoodsEntity(goodsEntity);
-
-//        //
-//        Map<String, TemplateData> mapNotice = new HashMap<>();
-//        mapNotice.put("time2", new TemplateData(formatWhatDayTime(0)));
-//
-//        mapNotice.put("thing13", new TemplateData(departmentEntity.getGbDepartmentName()));
-//        mapNotice.put("thing8", new TemplateData(gbDistributerGoodsEntity.getGbDgGoodsName()));
-//        mapNotice.put("thing10", new TemplateData("订货"));
-//        Integer gbDoOrderUserId = gbDepartmentOrders.getGbDoOrderUserId();
-//        GbDepartmentUserEntity gbDepartmentUserEntity = gbDepartmentUserService.queryObject(gbDoOrderUserId);
-//        mapNotice.put("thing9", new TemplateData(gbDepartmentUserEntity.getGbDuWxNickName()));
-//        System.out.println("nociiciiiicicautotootototoototo" + mapNotice);
-//
-//        StringBuilder pathBuilderAll = new StringBuilder("subPackage/pages/gbMarket/gbReceiveBatch/gbReceiveBatch");
-//        pathBuilderAll.append("?batchId=").append(1);
-//
-//        pathBuilderAll.append("&retName=").append("abc");
-//        pathBuilderAll.append("&disId=").append(1);
-//        pathBuilderAll.append("&buyUserId=").append(1);
-//        pathBuilderAll.append("&fromBuyer=1");
-//        pathBuilderAll.append("&depId=").append("1");
-//        String pathall = pathBuilderAll.toString();
-//        System.out.println("Encoded URLARRRRRR: " + pathall);
-//
-//        WeNoticeService.autoGbSuppliertixingMessageJj("o85GY5bUj3f1lS5-tK1eFOMb5uZ8", pathall, mapNotice);
 
         return R.ok().put("data", gbDepartmentOrdersEntity);
     }

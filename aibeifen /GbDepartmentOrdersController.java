@@ -8243,7 +8243,7 @@ public class GbDepartmentOrdersController {
                         purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
                         purchaseGoodsEntity.setNxDpgOrdersAmount(1);
                         purchaseGoodsEntity.setNxDpgFinishAmount(0);
-                        purchaseGoodsEntity.setNxDpgPurchaseType(1);
+                        purchaseGoodsEntity.setNxDpgPurchaseType(getGbPurchaseGoodsTypeForOrder);
                         purchaseGoodsEntity.setNxDpgExpectPrice(distributerGoodsEntity.getNxDgBuyingPrice());
                         purchaseGoodsEntity.setNxDpgBuyPrice(distributerGoodsEntity.getNxDgBuyingPrice());
                         purchaseGoodsEntity.setNxDpgDisGoodsId(doDisGoodsId);

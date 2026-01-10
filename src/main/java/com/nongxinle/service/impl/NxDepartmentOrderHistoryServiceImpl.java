@@ -168,4 +168,20 @@ public class NxDepartmentOrderHistoryServiceImpl implements NxDepartmentOrderHis
 
 	}
 
+    @Override
+    public Integer queryReturnOrderCount(Map<String, Object> mapR) {
+		return nxDepartmentOrderHistoryDao.queryReturnOrderCount(mapR);
+    }
+
+	@Override
+	public double queryReturnSubtotal(Map<String, Object> mapR) {
+
+		return nxDepartmentOrderHistoryDao.queryReturnSubtotal(mapR);
+	}
+
+	@Override
+	public List<NxDepartmentOrderHistoryEntity> queryOrdersByBillIdWithTraceReport(Map<String, Object> map) {
+		return nxDepartmentOrderHistoryDao.queryOrdersByBillIdWithTraceReport(map);
+	}
+
 }

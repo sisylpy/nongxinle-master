@@ -139,36 +139,8 @@
 			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
 			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
 		</if>
-		<where>
-			<if test="disId != null">
-				and ndgss.nx_dgss_nx_distributer_id = #{disId}
-			</if>
-			<if test="disGoodsId != null">
-				and ndgss.nx_dgss_nx_dis_goods_id = #{disGoodsId}
-			</if>
-			<if test="date != null">
-				and ndgss.nx_dgss_date = #{date}
-			</if>
-			<if test="startDate != null">
-				and ndgss.nx_dgss_date &gt;= #{startDate}
-			</if>
-			<if test="stopDate != null">
-				and ndgss.nx_dgss_date &lt;= #{stopDate}
-			</if>
-			<if test="status != null">
-				and ndgss.nx_dgss_status = #{status}
-			</if>
-			<if test="disGoodsGreatId != null">
-				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
-			</if>
-		</where>
-	</select>
-
-	<select id="queryShelfStockRestWeightTotal" resultType="java.lang.Double">
-		select IFNULL(sum(ndgss.nx_dgss_rest_weight), 0) from nx_distributer_goods_shelf_stock as ndgss
-		<if test="disGoodsGreatId != null">
+		<if test="disGoodsGrandId != null and disGoodsGreatId == null">
 			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
-			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
 		</if>
 		<where>
 			<if test="disId != null">
@@ -188,6 +160,46 @@
 			</if>
 			<if test="status != null">
 				and ndgss.nx_dgss_status = #{status}
+			</if>
+			<if test="disGoodsGrandId != null">
+				and ndg.nx_dg_dfg_goods_grand_id = #{disGoodsGrandId}
+			</if>
+			<if test="disGoodsGreatId != null">
+				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
+			</if>
+		</where>
+	</select>
+
+	<select id="queryShelfStockRestWeightTotal" resultType="java.lang.Double">
+		select IFNULL(sum(ndgss.nx_dgss_rest_weight), 0) from nx_distributer_goods_shelf_stock as ndgss
+		<if test="disGoodsGreatId != null">
+			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
+			left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+		</if>
+		<if test="disGoodsGrandId != null and disGoodsGreatId == null">
+			left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
+		</if>
+		<where>
+			<if test="disId != null">
+				and ndgss.nx_dgss_nx_distributer_id = #{disId}
+			</if>
+			<if test="disGoodsId != null">
+				and ndgss.nx_dgss_nx_dis_goods_id = #{disGoodsId}
+			</if>
+			<if test="date != null">
+				and ndgss.nx_dgss_date = #{date}
+			</if>
+			<if test="startDate != null">
+				and ndgss.nx_dgss_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null">
+				and ndgss.nx_dgss_date &lt;= #{stopDate}
+			</if>
+			<if test="status != null">
+				and ndgss.nx_dgss_status = #{status}
+			</if>
+			<if test="disGoodsGrandId != null">
+				and ndg.nx_dg_dfg_goods_grand_id = #{disGoodsGrandId}
 			</if>
 			<if test="disGoodsGreatId != null">
 				and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
@@ -245,10 +257,11 @@
 			`nx_dgss_produce_selling_subtotal`,
 			`nx_dgss_nx_shelf_goods_id`,
 			`nx_dgss_nx_department_father_id`,
-			`nx_dgss_stock_image`,
-			`nx_dgss_stock_remark`,
-			`nx_dgss_return_points`,
-			`nx_dgss_return_points_time`
+		`nx_dgss_stock_image`,
+		`nx_dgss_stock_remark`,
+		`nx_dgss_return_points`,
+		`nx_dgss_return_points_time`,
+		`nx_dgss_trace_report_id`
 		)
 		values
 		(
@@ -301,7 +314,8 @@
 			#{nxDgssStockImage},
 			#{nxDgssStockRemark},
 			#{nxDgssReturnPoints},
-			#{nxDgssReturnPointsTime}
+			#{nxDgssReturnPointsTime},
+			#{nxDgssTraceReportId}
 		)
 	</insert>
 	 
@@ -357,7 +371,8 @@
 			<if test="nxDgssStockImage != null">`nx_dgss_stock_image` = #{nxDgssStockImage}, </if>
 			<if test="nxDgssStockRemark != null">`nx_dgss_stock_remark` = #{nxDgssStockRemark}, </if>
 			<if test="nxDgssReturnPoints != null">`nx_dgss_return_points` = #{nxDgssReturnPoints}, </if>
-			<if test="nxDgssReturnPointsTime != null">`nx_dgss_return_points_time` = #{nxDgssReturnPointsTime}</if>
+			<if test="nxDgssReturnPointsTime != null">`nx_dgss_return_points_time` = #{nxDgssReturnPointsTime}, </if>
+			<if test="nxDgssTraceReportId != null">`nx_dgss_trace_report_id` = #{nxDgssTraceReportId}</if>
 		</set>
 		where nx_distributer_goods_shelf_stock_id = #{nxDistributerGoodsShelfStockId}
 	</update>
@@ -542,6 +557,7 @@
 		<result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
 		<result property="nxDgssReturnPoints" column="nx_dgss_return_points"/>
 		<result property="nxDgssReturnPointsTime" column="nx_dgss_return_points_time"/>
+		<result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
 		<!-- 盘库记录字段（通过别名映射） -->
 		<result property="nxDgssInventoryWeight" column="inventory_actual_weight"/>
 		<result property="nxDgssInventoryDate" column="inventory_date"/>
@@ -552,9 +568,11 @@
 		<result property="departmentPoints" column="department_points"/>
 		<result property="departmentWaitingPoints" column="department_waiting_points"/>
 		<result property="pointsReturnTime" column="points_return_time"/>
+		<!-- 货架名称字段（关联查询返回） -->
+		<result property="shelfName" column="shelf_name"/>
 		<collection property="reduceEntityList" 
 					select="queryReduceRecordsByStockId"
-					column="{stockId=nx_distributer_goods_shelf_stock_id,startDate=startDate,stopDate=stopDate,equalType=equalType,typesStr=typesStr,depFatherId=depFatherId}"/>
+					column="{stockId=nx_distributer_goods_shelf_stock_id,startDate=startDate,stopDate=stopDate,equalType=equalType,typesStr=typesStr}"/>
 	</resultMap>
 	<!-- 子查询：根据商品ID和日期查询库存批次 -->
 	<select id="queryStockByDisGoodsIdAndDate" resultMap="stockWithReduce">
@@ -572,19 +590,16 @@
 			#{typesStr} AS typesStr,
 		</if>
 		<if test="typesStr == null">
-			NULL AS typesStr
+			NULL AS typesStr,
 		</if>
-		<if test="depFatherId != null">
-			, #{depFatherId} AS depFatherId
-		</if>
-		<if test="depFatherId == null">
-			, NULL AS depFatherId
-		</if>
-		, d.nx_department_points AS department_points
-		, d.nx_department_waiting_points AS department_waiting_points
-		, DATE_FORMAT(ndgss.nx_dgss_full_time, '%Y-%m-%d %H:%i') AS points_return_time
+		d.nx_department_points AS department_points,
+		d.nx_department_waiting_points AS department_waiting_points,
+		DATE_FORMAT(ndgss.nx_dgss_full_time, '%Y-%m-%d %H:%i') AS points_return_time,
+		ndgs.nx_distributer_goods_shelf_name AS shelf_name
 		from nx_distributer_goods_shelf_stock as ndgss
 		left join nx_department as d on d.nx_department_id = ndgss.nx_dgss_nx_department_father_id
+		left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
+		left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
 		<where>
 			<if test="disGoodsId != null">
 				and ndgss.nx_dgss_nx_dis_goods_id = #{disGoodsId}
@@ -622,9 +637,12 @@
 			#{typesStr} AS typesStr,
 		</if>
 		<if test="typesStr == null">
-			NULL AS typesStr
+			NULL AS typesStr,
 		</if>
+		ndgs.nx_distributer_goods_shelf_name AS shelf_name
 		from nx_distributer_goods_shelf_stock as ndgss
+		left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
+		left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
 		<where>
 			<if test="purGoodsId != null">
 				and ndgss.nx_dgss_nx_pur_goods_id = #{purGoodsId}
@@ -725,6 +743,10 @@
 		where dg.nx_distributer_goods_id in (
 			select distinct ndgss.nx_dgss_nx_dis_goods_id
 			from nx_distributer_goods_shelf_stock as ndgss
+			<if test="disGoodsGreatId != null">
+				left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
+				left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+			</if>
 			<where>
 				<if test="disId != null">
 					and ndgss.nx_dgss_nx_distributer_id = #{disId}
@@ -738,6 +760,9 @@
 				</if>
 				<if test="stopDate != null">
 					and ndgss.nx_dgss_date &lt;= #{stopDate}
+				</if>
+				<if test="disGoodsGreatId != null">
+					and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
 				</if>
 				and ndgss.nx_dgss_rest_weight > 0
 			</where>
@@ -757,6 +782,10 @@
 		where dg.nx_distributer_goods_id in (
 			select distinct ndgss.nx_dgss_nx_dis_goods_id
 			from nx_distributer_goods_shelf_stock as ndgss
+			<if test="disGoodsGreatId != null">
+				left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
+				left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+			</if>
 			<where>
 				<if test="disId != null">
 					and ndgss.nx_dgss_nx_distributer_id = #{disId}
@@ -770,6 +799,9 @@
 				</if>
 				<if test="stopDate != null">
 					and ndgss.nx_dgss_date &lt;= #{stopDate}
+				</if>
+				<if test="disGoodsGreatId != null">
+					and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
 				</if>
 				and ndgss.nx_dgss_rest_weight > 0
 			</where>
@@ -953,6 +985,7 @@
 		<result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
 		<result property="nxDgssReturnPoints" column="nx_dgss_return_points"/>
 		<result property="nxDgssReturnPointsTime" column="nx_dgss_return_points_time"/>
+		<result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
 		<!-- 盘库记录字段（通过别名映射） -->
 		<result property="nxDgssInventoryWeight" column="inventory_actual_weight"/>
 		<result property="nxDgssInventoryDate" column="inventory_date"/>
@@ -1012,6 +1045,9 @@
 		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgss.nx_dgss_nx_dis_goods_id
 		left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
 		left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
+		left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+		left join nx_goods as ng_ndfg on ng_ndfg.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+		left join nx_goods as ng_dg on ng_dg.nx_goods_id = ndg.nx_dg_nx_goods_id
 		<where>
 			<if test="disId != null">
 				and ndgss.nx_dgss_nx_distributer_id = #{disId}
@@ -1036,7 +1072,7 @@
 			</if>
 			and great.nx_distributer_father_goods_id is not null
 		</where>
-		order by great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort, ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort
+		order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), COALESCE(ng_ndfg.nx_goods_sort, ndfg.nx_dfg_father_goods_sort), COALESCE(ng_dg.nx_goods_sort, ndg.nx_dg_goods_sort), COALESCE(ng_dg.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
 	</select>
 
 	<!-- 根据货架商品ID查询库存大于0的库存批次 -->

@@ -131,4 +131,11 @@ public interface NxDistributerGoodsService {
     List<NxDistributerGoodsEntity> queryUnShelfDisGoodsQuickSearchStr(Map<String, Object> map);
 
     List<NxDistributerGoodsEntity> queryUnShelfDisGoodsQuickSearchStrWithNxGoodsId(Map<String, Object> map);
+
+    /**
+     * 批量更新曾祖父商品下的所有商品的 nxDgPurchaseAuto 字段
+     * @param map 包含 greatGrandIds（曾祖父ID列表）和 type（-1 出库商品，1 采购商品）
+     * @return 更新的记录数
+     */
+    int updatePurchaseAutoByGreatGrandIds(Map<String, Object> map);
 }

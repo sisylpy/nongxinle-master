@@ -37,8 +37,6 @@ public class NxDistributerPayController {
     @Autowired
     private NxDistributerService nxDistributerService;
     @Autowired
-    private NxDistributerPayListService nxDistributerPayListService;
-    @Autowired
     private NxMarketPricePlanService nxMarketPricePlanService;
 
 
@@ -47,8 +45,6 @@ public class NxDistributerPayController {
     public R disGetBuyType(Integer disId, Integer type) {
         List<NxDistributerPayEntity> list = new ArrayList<>();
         if (type == 0) {
-
-
             NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
             payEntity.setNxNdpBuyQuantity("3");
 //            payEntity.setNxNdpPaySubtotal("3");
@@ -72,8 +68,8 @@ public class NxDistributerPayController {
 
             NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
             payEntity.setNxNdpBuyQuantity("1");
-//            payEntity.setNxNdpPaySubtotal("18000");
-            payEntity.setNxNdpPaySubtotal("1.8");
+            payEntity.setNxNdpPaySubtotal("18000");
+//            payEntity.setNxNdpPaySubtotal("1.8");
             payEntity.setPerPrice("1500");
             list.add(payEntity);
             NxDistributerPayEntity payEntity1 = new NxDistributerPayEntity();
@@ -112,8 +108,8 @@ public class NxDistributerPayController {
 
             NxDistributerPayEntity payEntity3 = new NxDistributerPayEntity();
             payEntity3.setNxNdpBuyQuantity("1");
-//            payEntity3.setNxNdpPaySubtotal("450");
-            payEntity3.setNxNdpPaySubtotal("4.5");
+            payEntity3.setNxNdpPaySubtotal("450");
+//            payEntity3.setNxNdpPaySubtotal("4.5");
             payEntity3.setPerPrice("蓝牙称");
             payEntity3.setNxNdpImgUrl("uploadImage/m_3.jpg");
             payEntity3.setNxNdpSellDetail("配合蓝牙打印机，直接打印重量标签、条码、价格标签等，重量会实时传输到“京京出库，系统自动匹配对应订单里的商品，直接填入重量，无需手工输入，避免录错");

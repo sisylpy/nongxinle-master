@@ -268,7 +268,7 @@ public class NxJrdhSupplierController {
                 if(stopDate != null && !stopDate.isEmpty()){
                     mapS.put("stopDate", stopDate);
                 }
-                mapS.put("equalStatus", 3);  // 未结账状态
+                mapS.put("equalStatus", 2);  // 未结账状态
                 mapS.put("notEqualPurchaseType", -1);  // 排除入库（purchaseType=-1）
                 
                 Double unPayOrderDouble = 0.0; // 未结账订单

@@ -86,12 +86,12 @@ public class GbDistributerPayListController {
 			recordMinutes = recordMinutes.subtract(new BigDecimal(total));
 		}
 
-		List<NxGoodsEntity> books = nxGoodsService.queryNumberGoods();
-		Map<String, Object> mapR = new HashMap<>();
-		mapR.put("books", books);
-		mapR.put("minute", recordMinutes);
+//		List<NxGoodsEntity> books = nxGoodsService.queryNumberGoods();
+//		Map<String, Object> mapR = new HashMap<>();
+//		mapR.put("books", books);
+//		mapR.put("minute", recordMinutes);
 
-		return R.ok().put("data", mapR);
+		return R.ok().put("data", recordMinutes);
 	}
 
 

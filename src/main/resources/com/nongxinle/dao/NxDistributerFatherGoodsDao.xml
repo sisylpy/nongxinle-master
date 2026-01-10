@@ -358,6 +358,12 @@
 						<if test="hasCartonUnit != null and hasCartonUnit == 0">
 							AND (nx_dg_carton_unit IS NULL OR TRIM(nx_dg_carton_unit) = '')
 						</if>
+						<if test="hasTraceReport != null and hasTraceReport == 1">
+							AND nx_dg_trace_report_id IS NOT NULL
+						</if>
+						<if test="hasTraceReport != null and hasTraceReport == 0">
+							AND nx_dg_trace_report_id IS NULL
+						</if>
 					GROUP BY nx_dg_dfg_goods_grand_id
 				) AS father_count ON father_count.nx_dg_dfg_goods_grand_id = father.nx_distributer_father_goods_id
 				-- 优化：使用LEFT JOIN替代子查询计算greatGrand的商品数量
@@ -385,6 +391,12 @@
 						<if test="hasCartonUnit != null and hasCartonUnit == 0">
 							AND (goods_count.nx_dg_carton_unit IS NULL OR TRIM(goods_count.nx_dg_carton_unit) = '')
 						</if>
+						<if test="hasTraceReport != null and hasTraceReport == 1">
+							AND goods_count.nx_dg_trace_report_id IS NOT NULL
+						</if>
+						<if test="hasTraceReport != null and hasTraceReport == 0">
+							AND goods_count.nx_dg_trace_report_id IS NULL
+						</if>
 					GROUP BY COALESCE(father_count.nx_dfg_fathers_father_id, goods_count.nx_dg_nx_great_grand_id)
 				) AS greatGrand_count ON greatGrand_count.great_grand_id = greatGrand.nx_distributer_father_goods_id
 			<where>
@@ -400,9 +412,13 @@
 				<if test="hasCartonUnit != null and hasCartonUnit == 1">
 					and ndg.nx_dg_carton_unit is not null and TRIM(ndg.nx_dg_carton_unit) != ''
 				</if>
-				<if test="hasCartonUnit != null and hasCartonUnit == 0">
-					and (ndg.nx_dg_carton_unit is null or TRIM(ndg.nx_dg_carton_unit) = '')
-				</if>
+			<if test="hasCartonUnit != null and hasCartonUnit == 0">
+				and (ndg.nx_dg_carton_unit is null or TRIM(ndg.nx_dg_carton_unit) = '')
+			</if>
+			<if test="hasTraceReport != null and hasTraceReport == 1">
+				and greatGrand_count.cnt > 0
+				and father_count.cnt > 0
+			</if>
 
 			</where>
 

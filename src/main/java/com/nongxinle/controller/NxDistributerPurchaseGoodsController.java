@@ -75,6 +75,8 @@ public class NxDistributerPurchaseGoodsController {
     private NxDistributerPurchaseBatchService batchService;
     @Autowired
     private NxDistributerGoodsShelfStockReduceService nxDisGoodsShelfStockReduceService;
+    @Autowired
+    private NxTraceReportService nxTraceReportService;
 
 
 
@@ -305,7 +307,7 @@ public class NxDistributerPurchaseGoodsController {
         purchaseGoodsEntity.setNxDpgInputType(0);
         purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
         purchaseGoodsEntity.setNxDpgPayType(-1);
-        purchaseGoodsEntity.setNxDpgPurchaseType(-1); // 直接入库的采购
+        purchaseGoodsEntity.setNxDpgPurchaseType(getGbPurchaseGoodsTypeShelfRuku()); // 直接入库的采购
         System.out.println("[disSavePurGoodsSaveStock] 保存采购商品");
         nxDisPurcGoodsService.save(purchaseGoodsEntity);
 
@@ -362,7 +364,7 @@ public class NxDistributerPurchaseGoodsController {
             } else {
                 // 如果采购规格不是外包装单位，说明前端传入的数量已经是按最小单位的
                 // 需要计算实际箱数（用于成本计算）
-                actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                 weightInMinUnit = buyQuantity;
                 System.out.println("[disSavePurGoodsSaveStock] 采购规格不是外包装单位，数量=" + buyQuantity 
                     + "个，折合" + actualCartonCount + "箱");
@@ -377,13 +379,13 @@ public class NxDistributerPurchaseGoodsController {
                 BigDecimal priceCarton = new BigDecimal(nxDgssPriceCarton);
                 stockEntity.setNxDgssPriceCarton(priceCarton.stripTrailingZeros().toPlainString());
                 // 计算最小单位单价
-                BigDecimal priceInMinUnit = priceCarton.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                BigDecimal priceInMinUnit = priceCarton.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                 stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
             } else if (isCartonStandard) {
                 // 采购规格是外包装单位，采购单价是外包装单价
                 stockEntity.setNxDgssPriceCarton(buyPrice.stripTrailingZeros().toPlainString());
                 // 计算最小单位单价
-                BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                 stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
             } else {
                 // 采购规格不是外包装单位，采购单价是最小单位单价
@@ -400,13 +402,13 @@ public class NxDistributerPurchaseGoodsController {
                     BigDecimal sellingPriceCarton = new BigDecimal(nxDgssSellingPriceCarton);
                     stockEntity.setNxDgssSellingPriceCarton(sellingPriceCarton.stripTrailingZeros().toPlainString());
                     // 计算最小单位建议零售价
-                    BigDecimal sellingPriceInMinUnit = sellingPriceCarton.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal sellingPriceInMinUnit = sellingPriceCarton.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                 } else if (isCartonStandard) {
                     // 采购规格是外包装单位，期望价格是外包装建议零售价
                     stockEntity.setNxDgssSellingPriceCarton(expectPrice.stripTrailingZeros().toPlainString());
                     // 计算最小单位建议零售价
-                    BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                 } else {
                     // 采购规格不是外包装单位，期望价格是最小单位建议零售价
@@ -584,7 +586,7 @@ public class NxDistributerPurchaseGoodsController {
         purchaseGoodsEntity.setNxDpgInputType(0);
         purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
         purchaseGoodsEntity.setNxDpgPayType(-1);
-        purchaseGoodsEntity.setNxDpgPurchaseType(-1); // 直接入库的采购
+        purchaseGoodsEntity.setNxDpgPurchaseType(getGbPurchaseGoodsTypeShelfRuku()); // 直接入库的采购
         System.out.println("[disSavePurGoodsSaveStockSunHola] 保存采购商品");
         nxDisPurcGoodsService.save(purchaseGoodsEntity);
 
@@ -641,7 +643,7 @@ public class NxDistributerPurchaseGoodsController {
             } else {
                 // 如果采购规格不是外包装单位，说明前端传入的数量已经是按最小单位的
                 // 需要计算实际箱数（用于成本计算）
-                actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                 weightInMinUnit = buyQuantity;
                 System.out.println("[disSavePurGoodsSaveStockSunHola] 采购规格不是外包装单位，数量=" + buyQuantity 
                     + "个，折合" + actualCartonCount + "箱");
@@ -656,13 +658,13 @@ public class NxDistributerPurchaseGoodsController {
                 BigDecimal priceCarton = new BigDecimal(nxDgssPriceCarton);
                 stockEntity.setNxDgssPriceCarton(priceCarton.stripTrailingZeros().toPlainString());
                 // 计算最小单位单价
-                BigDecimal priceInMinUnit = priceCarton.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                BigDecimal priceInMinUnit = priceCarton.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                 stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
             } else if (isCartonStandard) {
                 // 采购规格是外包装单位，采购单价是外包装单价
                 stockEntity.setNxDgssPriceCarton(buyPrice.stripTrailingZeros().toPlainString());
                 // 计算最小单位单价
-                BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                 stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
             } else {
                 // 采购规格不是外包装单位，采购单价是最小单位单价
@@ -679,13 +681,13 @@ public class NxDistributerPurchaseGoodsController {
                     BigDecimal sellingPriceCarton = new BigDecimal(nxDgssSellingPriceCarton);
                     stockEntity.setNxDgssSellingPriceCarton(sellingPriceCarton.stripTrailingZeros().toPlainString());
                     // 计算最小单位建议零售价
-                    BigDecimal sellingPriceInMinUnit = sellingPriceCarton.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal sellingPriceInMinUnit = sellingPriceCarton.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                 } else if (isCartonStandard) {
                     // 采购规格是外包装单位，期望价格是外包装建议零售价
                     stockEntity.setNxDgssSellingPriceCarton(expectPrice.stripTrailingZeros().toPlainString());
                     // 计算最小单位建议零售价
-                    BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                 } else {
                     // 采购规格不是外包装单位，期望价格是最小单位建议零售价
@@ -795,81 +797,278 @@ public class NxDistributerPurchaseGoodsController {
     }
 
     /**
-     * 首衡项目：保存采购商品并入库（包含库存图片和说明）- 支持文件上传
+     * 保存采购商品入库并生成溯源报告
+     * 支持上传图片或PDF格式的溯源报告文件
      */
-    @RequestMapping(value = "/disSavePurGoodsSaveStockSunHolaWithFile", method = RequestMethod.POST)
+    @RequestMapping(value = "/disSavePurGoodsSaveStockWithTraceReport", method = RequestMethod.POST)
     @ResponseBody
-    public R disSavePurGoodsSaveStockSunHolaWithFile(
-            @RequestParam(value = "file", required = false) MultipartFile file,
-            @RequestParam("nxDpgDisGoodsId") String nxDpgDisGoodsIdStr,
-            @RequestParam("nxDpgDistributerId") String nxDpgDistributerIdStr,
+    public R disSavePurGoodsSaveStockWithTraceReport(
+            @RequestParam(value = "traceReportFile", required = false) MultipartFile traceReportFile,
+            @RequestParam("nxDpgDisGoodsId") String nxDpgDisGoodsId,
+            @RequestParam("nxDpgDistributerId") String nxDpgDistributerId,
             @RequestParam("nxDpgQuantity") String nxDpgQuantity,
             @RequestParam("nxDpgBuyPrice") String nxDpgBuyPrice,
             @RequestParam("nxDpgBuySubtotal") String nxDpgBuySubtotal,
-            @RequestParam(value = "nxDpgDisGoodsFatherId", required = false) String nxDpgDisGoodsFatherIdStr,
-            @RequestParam(value = "nxDpgDisGoodsGrandId", required = false) String nxDpgDisGoodsGrandIdStr,
+            @RequestParam(value = "nxDpgDisGoodsFatherId", required = false) String nxDpgDisGoodsFatherId,
+            @RequestParam(value = "nxDpgDisGoodsGrandId", required = false) String nxDpgDisGoodsGrandId,
             @RequestParam(value = "nxDpgExpectPrice", required = false) String nxDpgExpectPrice,
-            @RequestParam(value = "nxDpgPurUserId", required = false) String nxDpgPurUserIdStr,
-            @RequestParam(value = "nxDpgInputType", required = false) String nxDpgInputTypeStr,
-            @RequestParam(value = "nxDpgPurchaseType", required = false) String nxDpgPurchaseTypeStr,
+            @RequestParam(value = "nxDpgPurUserId", required = false) String nxDpgPurUserId,
+            @RequestParam(value = "nxDpgInputType", required = false) String nxDpgInputType,
+            @RequestParam(value = "nxDpgPurchaseType", required = false) String nxDpgPurchaseType,
             @RequestParam(value = "nxDpgStandard", required = false) String nxDpgStandard,
             @RequestParam(value = "nxDgssPriceCarton", required = false) String nxDgssPriceCarton,
             @RequestParam(value = "nxDgssSellingPriceCarton", required = false) String nxDgssSellingPriceCarton,
-            @RequestParam(value = "nxDgssStockRemark", required = false) String nxDgssStockRemark,
-            @RequestParam(value = "nxDistributerGoodsShelfGoodsId", required = false) String nxDistributerGoodsShelfGoodsIdStr,
+            @RequestParam(value = "nxDistributerGoodsShelfGoodsId", required = false) String nxDistributerGoodsShelfGoodsId,
+            // 溯源报告相关参数
+            @RequestParam(value = "nxTrSupplierId", required = false) String nxTrSupplierId,
+            @RequestParam(value = "nxTrSupplierName", required = false) String nxTrSupplierName,
+            @RequestParam(value = "nxTrSupplierContact", required = false) String nxTrSupplierContact,
+            @RequestParam(value = "nxTrValidStartDate", required = false) String nxTrValidStartDate,
+            @RequestParam(value = "nxTrValidEndDate", required = false) String nxTrValidEndDate,
+            @RequestParam(value = "nxTrRemark", required = false) String nxTrRemark,
             HttpSession session) {
         
-        // 构建 requestMap，复用现有逻辑
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("nxDpgDisGoodsId", nxDpgDisGoodsIdStr);
-        requestMap.put("nxDpgDistributerId", nxDpgDistributerIdStr);
-        requestMap.put("nxDpgQuantity", nxDpgQuantity);
-        requestMap.put("nxDpgBuyPrice", nxDpgBuyPrice);
-        requestMap.put("nxDpgBuySubtotal", nxDpgBuySubtotal);
-        if (nxDpgDisGoodsFatherIdStr != null) requestMap.put("nxDpgDisGoodsFatherId", nxDpgDisGoodsFatherIdStr);
-        if (nxDpgDisGoodsGrandIdStr != null) requestMap.put("nxDpgDisGoodsGrandId", nxDpgDisGoodsGrandIdStr);
-        if (nxDpgExpectPrice != null) requestMap.put("nxDpgExpectPrice", nxDpgExpectPrice);
-        if (nxDpgPurUserIdStr != null) requestMap.put("nxDpgPurUserId", nxDpgPurUserIdStr);
-        if (nxDpgInputTypeStr != null) requestMap.put("nxDpgInputType", nxDpgInputTypeStr);
-        if (nxDpgPurchaseTypeStr != null) requestMap.put("nxDpgPurchaseType", nxDpgPurchaseTypeStr);
-        if (nxDpgStandard != null) requestMap.put("nxDpgStandard", nxDpgStandard);
-        if (nxDgssPriceCarton != null) requestMap.put("nxDgssPriceCarton", nxDgssPriceCarton);
-        if (nxDgssSellingPriceCarton != null) requestMap.put("nxDgssSellingPriceCarton", nxDgssSellingPriceCarton);
-        if (nxDgssStockRemark != null) requestMap.put("nxDgssStockRemark", nxDgssStockRemark);
-        if (nxDistributerGoodsShelfGoodsIdStr != null) requestMap.put("nxDistributerGoodsShelfGoodsId", nxDistributerGoodsShelfGoodsIdStr);
+        System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 开始处理采购商品入库并生成溯源报告");
         
-        // 处理文件上传
-        String nxDgssStockImage = null;
-        if (file != null && !file.isEmpty()) {
-            try {
-                // 上传图片到 stockImages 文件夹（参考 updateFatherBigNx 的实现）
-                String newUploadName = "stockImages";
-                String stockId = nxDpgDisGoodsIdStr; // 使用商品ID作为文件名的一部分
-                String originalName = "stock_" + stockId;
-                originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
-                // 注意：使用 originalName 而不是 englishKuohao，与 updateFatherBigNx 保持一致
-                // 生成文件名，去掉空格和冒号等特殊字符，便于 URL 使用
-                String timeStr = formatFullTime().replaceAll("[\\s:-]", "");
-                String lastFileName = originalName + timeStr;
-                String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
-                nxDgssStockImage = newUploadName + "/" + lastFileName + ".jpg";
-                System.out.println("[disSavePurGoodsSaveStockSunHolaWithFile] 上传图片成功: " + nxDgssStockImage);
-                System.out.println("[disSavePurGoodsSaveStockSunHolaWithFile] 文件保存路径: " + realPath);
-            } catch (Exception e) {
-                System.err.println("[disSavePurGoodsSaveStockSunHolaWithFile] 上传图片失败: " + e.getMessage());
-                e.printStackTrace();
-                return R.error("上传图片失败: " + e.getMessage());
+        try {
+            // 构建 requestMap，复用现有逻辑保存采购商品和库存
+            Map<String, Object> requestMap = new HashMap<>();
+            requestMap.put("nxDpgDisGoodsId", nxDpgDisGoodsId);
+            requestMap.put("nxDpgDistributerId", nxDpgDistributerId);
+            requestMap.put("nxDpgQuantity", nxDpgQuantity);
+            requestMap.put("nxDpgBuyPrice", nxDpgBuyPrice);
+            requestMap.put("nxDpgBuySubtotal", nxDpgBuySubtotal);
+            if (nxDpgDisGoodsFatherId != null) requestMap.put("nxDpgDisGoodsFatherId", nxDpgDisGoodsFatherId);
+            if (nxDpgDisGoodsGrandId != null) requestMap.put("nxDpgDisGoodsGrandId", nxDpgDisGoodsGrandId);
+            if (nxDpgExpectPrice != null) requestMap.put("nxDpgExpectPrice", nxDpgExpectPrice);
+            if (nxDpgPurUserId != null) requestMap.put("nxDpgPurUserId", nxDpgPurUserId);
+            if (nxDpgInputType != null) requestMap.put("nxDpgInputType", nxDpgInputType);
+            if (nxDpgPurchaseType != null) requestMap.put("nxDpgPurchaseType", nxDpgPurchaseType);
+            if (nxDpgStandard != null) requestMap.put("nxDpgStandard", nxDpgStandard);
+            if (nxDgssPriceCarton != null) requestMap.put("nxDgssPriceCarton", nxDgssPriceCarton);
+            if (nxDgssSellingPriceCarton != null) requestMap.put("nxDgssSellingPriceCarton", nxDgssSellingPriceCarton);
+            if (nxDistributerGoodsShelfGoodsId != null) requestMap.put("nxDistributerGoodsShelfGoodsId", nxDistributerGoodsShelfGoodsId);
+
+            // 调用现有方法保存采购商品和库存
+            R stockResult = disSavePurGoodsSaveStockSunHola(requestMap);
+            if (stockResult.get("code") != null && (Integer)stockResult.get("code") != 0) {
+                return stockResult; // 如果保存失败，直接返回错误
             }
+
+            // 从返回结果中获取保存的库存实体
+            NxDistributerGoodsShelfStockEntity stockEntity = (NxDistributerGoodsShelfStockEntity) stockResult.get("data");
+            if (stockEntity == null) {
+                return R.error("保存库存失败，无法获取库存信息");
+            }
+
+            // 获取采购商品ID（从库存实体中获取）
+            Integer purGoodsId = stockEntity.getNxDgssNxPurGoodsId();
+            if (purGoodsId == null) {
+                return R.error("保存失败，无法获取采购商品ID");
+            }
+
+            // 处理溯源报告文件上传
+            Integer traceReportId = null;
+            if (traceReportFile != null && !traceReportFile.isEmpty()) {
+                try {
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 开始上传溯源报告文件");
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 文件名: " + traceReportFile.getOriginalFilename());
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 文件大小: " + traceReportFile.getSize() + " bytes");
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] Content-Type: " + traceReportFile.getContentType());
+
+                    // 获取文件扩展名
+                    String originalFilename = traceReportFile.getOriginalFilename();
+                    String fileExtension = "";
+                    String reportType = "";
+                    
+                    if (originalFilename != null && originalFilename.contains(".")) {
+                        fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+                    }
+                    
+                    // 判断报告类型（image 或 pdf）
+                    if ("jpg".equals(fileExtension) || "jpeg".equals(fileExtension) || 
+                        "png".equals(fileExtension) || "gif".equals(fileExtension) || 
+                        "bmp".equals(fileExtension)) {
+                        reportType = "image";
+                    } else if ("pdf".equals(fileExtension)) {
+                        reportType = "pdf";
+                    } else {
+                        return R.error("不支持的文件格式，仅支持图片（jpg/png/gif/bmp）和PDF文件");
+                    }
+
+                    // 上传文件到服务器
+                    String uploadDir = "traceReports";
+                    String absolutePath = UploadFile.upload(session, uploadDir, traceReportFile);
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 文件上传到: " + absolutePath);
+
+                    // 获取文件路径（相对路径）
+                    String filePath = uploadDir + "/" + originalFilename;
+
+                    // 创建溯源报告实体
+                    NxTraceReportEntity traceReportEntity = new NxTraceReportEntity();
+                    
+                    // 设置基本信息
+                    if (nxTrSupplierId != null && !nxTrSupplierId.trim().isEmpty()) {
+                        traceReportEntity.setNxTrSupplierId(Integer.parseInt(nxTrSupplierId));
+                    }
+                    if (nxTrSupplierName != null) {
+                        traceReportEntity.setNxTrSupplierName(nxTrSupplierName);
+                    }
+                    if (nxTrSupplierContact != null) {
+                        traceReportEntity.setNxTrSupplierContact(nxTrSupplierContact);
+                    }
+                    
+                    // 设置日期信息
+                    traceReportEntity.setNxTrPurchaseDate(formatWhatDay(0)); // 采购日期（今天）
+                    traceReportEntity.setNxTrStockInDate(formatWhatDay(0)); // 入库日期（今天）
+                    if (nxTrValidStartDate != null && !nxTrValidStartDate.trim().isEmpty()) {
+                        traceReportEntity.setNxTrValidStartDate(nxTrValidStartDate);
+                    } else {
+                        traceReportEntity.setNxTrValidStartDate(formatWhatDay(0)); // 默认今天开始
+                    }
+                    if (nxTrValidEndDate != null && !nxTrValidEndDate.trim().isEmpty()) {
+                        traceReportEntity.setNxTrValidEndDate(nxTrValidEndDate);
+                    }
+                    
+                    // 设置文件信息
+                    traceReportEntity.setNxTrReportType(reportType);
+                    traceReportEntity.setNxTrFilePath(filePath);
+                    traceReportEntity.setNxTrFileType(fileExtension);
+                    
+                    // 设置关联信息
+                    traceReportEntity.setNxTrDistributerId(stockEntity.getNxDgssNxDistributerId());
+                    if (nxDpgPurUserId != null && !nxDpgPurUserId.trim().isEmpty()) {
+                        traceReportEntity.setNxTrCreateUserId(Integer.parseInt(nxDpgPurUserId));
+                    }
+                    traceReportEntity.setNxTrCreateTime(formatWhatYearDayTime(0));
+                    traceReportEntity.setNxTrUpdateTime(formatWhatYearDayTime(0));
+                    
+                    if (nxTrRemark != null) {
+                        traceReportEntity.setNxTrRemark(nxTrRemark);
+                    }
+
+                    // 保存溯源报告
+                    nxTraceReportService.save(traceReportEntity);
+                    traceReportId = traceReportEntity.getNxTraceReportId();
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 溯源报告保存成功，ID: " + traceReportId);
+
+                    // 更新采购商品和库存批次，关联溯源报告ID
+                    NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurcGoodsService.queryObject(purGoodsId);
+                    if (purchaseGoodsEntity != null) {
+                        purchaseGoodsEntity.setNxDpgTraceReportId(traceReportId);
+                        nxDisPurcGoodsService.update(purchaseGoodsEntity);
+                        System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 采购商品已关联溯源报告ID: " + traceReportId);
+                    }
+
+                    // 更新库存批次
+                    stockEntity.setNxDgssTraceReportId(traceReportId);
+                    shelfStockService.update(stockEntity);
+                    System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 库存批次已关联溯源报告ID: " + traceReportId);
+
+                } catch (Exception e) {
+                    System.err.println("[disSavePurGoodsSaveStockWithTraceReport] 上传溯源报告文件失败: " + e.getMessage());
+                    e.printStackTrace();
+                    return R.error("上传溯源报告文件失败: " + e.getMessage());
+                }
+            } else {
+                System.out.println("[disSavePurGoodsSaveStockWithTraceReport] 未上传溯源报告文件，仅保存采购商品和库存");
+            }
+
+            // 返回结果，包含库存信息和溯源报告ID
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("stockEntity", stockEntity);
+            if (traceReportId != null) {
+                resultData.put("traceReportId", traceReportId);
+            }
+            
+            return R.ok().put("data", resultData);
+
+        } catch (Exception e) {
+            System.err.println("[disSavePurGoodsSaveStockWithTraceReport] 处理失败: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("处理失败: " + e.getMessage());
         }
-        
-        // 设置图片路径
-        if (nxDgssStockImage != null) {
-            requestMap.put("nxDgssStockImage", nxDgssStockImage);
-        }
-        
-        // 调用现有的处理方法
-        return disSavePurGoodsSaveStockSunHola(requestMap);
     }
+
+
+
+
+//    /**
+//     * 首衡项目：保存采购商品并入库（包含库存图片和说明）- 支持文件上传
+//     */
+//    @RequestMapping(value = "/disSavePurGoodsSaveStockSunHolaWithFile", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R disSavePurGoodsSaveStockSunHolaWithFile(
+//            @RequestParam(value = "file", required = false) MultipartFile file,
+//            @RequestParam("nxDpgDisGoodsId") String nxDpgDisGoodsIdStr,
+//            @RequestParam("nxDpgDistributerId") String nxDpgDistributerIdStr,
+//            @RequestParam("nxDpgQuantity") String nxDpgQuantity,
+//            @RequestParam("nxDpgBuyPrice") String nxDpgBuyPrice,
+//            @RequestParam("nxDpgBuySubtotal") String nxDpgBuySubtotal,
+//            @RequestParam(value = "nxDpgDisGoodsFatherId", required = false) String nxDpgDisGoodsFatherIdStr,
+//            @RequestParam(value = "nxDpgDisGoodsGrandId", required = false) String nxDpgDisGoodsGrandIdStr,
+//            @RequestParam(value = "nxDpgExpectPrice", required = false) String nxDpgExpectPrice,
+//            @RequestParam(value = "nxDpgPurUserId", required = false) String nxDpgPurUserIdStr,
+//            @RequestParam(value = "nxDpgInputType", required = false) String nxDpgInputTypeStr,
+//            @RequestParam(value = "nxDpgPurchaseType", required = false) String nxDpgPurchaseTypeStr,
+//            @RequestParam(value = "nxDpgStandard", required = false) String nxDpgStandard,
+//            @RequestParam(value = "nxDgssPriceCarton", required = false) String nxDgssPriceCarton,
+//            @RequestParam(value = "nxDgssSellingPriceCarton", required = false) String nxDgssSellingPriceCarton,
+//            @RequestParam(value = "nxDgssStockRemark", required = false) String nxDgssStockRemark,
+//            @RequestParam(value = "nxDistributerGoodsShelfGoodsId", required = false) String nxDistributerGoodsShelfGoodsIdStr,
+//            HttpSession session) {
+//
+//        // 构建 requestMap，复用现有逻辑
+//        Map<String, Object> requestMap = new HashMap<>();
+//        requestMap.put("nxDpgDisGoodsId", nxDpgDisGoodsIdStr);
+//        requestMap.put("nxDpgDistributerId", nxDpgDistributerIdStr);
+//        requestMap.put("nxDpgQuantity", nxDpgQuantity);
+//        requestMap.put("nxDpgBuyPrice", nxDpgBuyPrice);
+//        requestMap.put("nxDpgBuySubtotal", nxDpgBuySubtotal);
+//        if (nxDpgDisGoodsFatherIdStr != null) requestMap.put("nxDpgDisGoodsFatherId", nxDpgDisGoodsFatherIdStr);
+//        if (nxDpgDisGoodsGrandIdStr != null) requestMap.put("nxDpgDisGoodsGrandId", nxDpgDisGoodsGrandIdStr);
+//        if (nxDpgExpectPrice != null) requestMap.put("nxDpgExpectPrice", nxDpgExpectPrice);
+//        if (nxDpgPurUserIdStr != null) requestMap.put("nxDpgPurUserId", nxDpgPurUserIdStr);
+//        if (nxDpgInputTypeStr != null) requestMap.put("nxDpgInputType", nxDpgInputTypeStr);
+//        if (nxDpgPurchaseTypeStr != null) requestMap.put("nxDpgPurchaseType", nxDpgPurchaseTypeStr);
+//        if (nxDpgStandard != null) requestMap.put("nxDpgStandard", nxDpgStandard);
+//        if (nxDgssPriceCarton != null) requestMap.put("nxDgssPriceCarton", nxDgssPriceCarton);
+//        if (nxDgssSellingPriceCarton != null) requestMap.put("nxDgssSellingPriceCarton", nxDgssSellingPriceCarton);
+//        if (nxDgssStockRemark != null) requestMap.put("nxDgssStockRemark", nxDgssStockRemark);
+//        if (nxDistributerGoodsShelfGoodsIdStr != null) requestMap.put("nxDistributerGoodsShelfGoodsId", nxDistributerGoodsShelfGoodsIdStr);
+//
+//        // 处理文件上传
+//        String nxDgssStockImage = null;
+//        if (file != null && !file.isEmpty()) {
+//            try {
+//                // 上传图片到 stockImages 文件夹（参考 updateFatherBigNx 的实现）
+//                String newUploadName = "stockImages";
+//                String stockId = nxDpgDisGoodsIdStr; // 使用商品ID作为文件名的一部分
+//                String originalName = "stock_" + stockId;
+//                originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
+//                // 注意：使用 originalName 而不是 englishKuohao，与 updateFatherBigNx 保持一致
+//                // 生成文件名，去掉空格和冒号等特殊字符，便于 URL 使用
+//                String timeStr = formatFullTime().replaceAll("[\\s:-]", "");
+//                String lastFileName = originalName + timeStr;
+//                String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
+//                nxDgssStockImage = newUploadName + "/" + lastFileName + ".jpg";
+//                System.out.println("[disSavePurGoodsSaveStockSunHolaWithFile] 上传图片成功: " + nxDgssStockImage);
+//                System.out.println("[disSavePurGoodsSaveStockSunHolaWithFile] 文件保存路径: " + realPath);
+//            } catch (Exception e) {
+//                System.err.println("[disSavePurGoodsSaveStockSunHolaWithFile] 上传图片失败: " + e.getMessage());
+//                e.printStackTrace();
+//                return R.error("上传图片失败: " + e.getMessage());
+//            }
+//        }
+//
+//        // 设置图片路径
+//        if (nxDgssStockImage != null) {
+//            requestMap.put("nxDgssStockImage", nxDgssStockImage);
+//        }
+//
+//        // 调用现有的处理方法
+//        return disSavePurGoodsSaveStockSunHola(requestMap);
+//    }
 
     @RequestMapping(value = "/purchaserGetHaveFinishedPurGoods")
     @ResponseBody
@@ -1328,6 +1527,7 @@ public class NxDistributerPurchaseGoodsController {
         map.put("offset", (page - 1) * limit);
         map.put("limit", limit);
         map.put("batchId", -1);
+        map.put("equalInputType", 1);
         logger.info("[disGetTypePreparePurGoodsPage] 查询条件 map: {}", map);
         logger.info("[disGetTypePreparePurGoodsPage] 使用超简化版查询，减少数据传输量");
         
@@ -1335,24 +1535,26 @@ public class NxDistributerPurchaseGoodsController {
         List<com.nongxinle.entity.PurchaseGoodsSimpleDTO> purchaseGoodsSimpleList = nxDisPurcGoodsService.queryPurchaseGoodsWithOrdersUltraSimple(map);
         logger.info("[disGetTypePreparePurGoodsPage] 查询结果数量: {}", purchaseGoodsSimpleList != null ? purchaseGoodsSimpleList.size() : 0);
         
-        if (purchaseGoodsSimpleList != null && !purchaseGoodsSimpleList.isEmpty()) {
-            for (int i = 0; i < Math.min(purchaseGoodsSimpleList.size(), 5); i++) {
-                com.nongxinle.entity.PurchaseGoodsSimpleDTO purGoods = purchaseGoodsSimpleList.get(i);
-                logger.info("[disGetTypePreparePurGoodsPage]   采购商品[{}]: id={}, name={}, purchaseAuto={}, 订单数量={}, 曾祖父ID={}, 曾祖父Sort={}", 
-                    i,
-                    purGoods.getNxDistributerGoodsId(),
-                    purGoods.getNxDgGoodsName(),
-                    purGoods.getNxDgPurchaseAuto(),
-                    purGoods.getOrders() != null ? purGoods.getOrders().size() : 0,
-                    purGoods.getNxDgDfgGoodsGreatGrandId(),
-                    purGoods.getNxDgDfgGoodsGreatGrandSort());
-            }
-        }
+//        if (purchaseGoodsSimpleList != null && !purchaseGoodsSimpleList.isEmpty()) {
+//            for (int i = 0; i < purchaseGoodsSimpleList.size(); i++) {
+//                com.nongxinle.entity.PurchaseGoodsSimpleDTO purGoods = purchaseGoodsSimpleList.get(i);
+//                logger.info("[disGetTypePreparePurGoodsPage]   采购商品[{}]: purchaseGoodsId={}, goodsId={}, name={}, purchaseAuto={}, 订单数量={}, 曾祖父ID={}, 曾祖父Sort={}",
+//                    i,
+//                    purGoods.getNxDistributerPurchaseGoodsId(),
+//                    purGoods.getNxDistributerGoodsId(),
+//                    purGoods.getNxDgGoodsName(),
+//                    purGoods.getNxDgPurchaseAuto(),
+//                    purGoods.getOrders() != null ? purGoods.getOrders().size() : 0,
+//                    purGoods.getNxDgDfgGoodsGreatGrandId(),
+//                    purGoods.getNxDgDfgGoodsGreatGrandSort());
+//            }
+//        }
 
         Map<String, Object> mapCount = new HashMap<>();
         mapCount.put("disId", disId);
         mapCount.put("status", 1);
         mapCount.put("batchId", -1);
+        mapCount.put("equalInputType", 1);
         Integer integer = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapCount);
         logger.info("[disGetTypePreparePurGoodsPage] 总数: {}", integer);
 
@@ -1691,36 +1893,6 @@ public class NxDistributerPurchaseGoodsController {
         nxDistributerGoodsEntity.setNxDgBuyingPriceUpdate(formatWhatDay(0));
         nxDgService.update(nxDistributerGoodsEntity);
 
-//        //update PurGoods
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("disGoodsId",disGoodsId);
-//        map.put("status", 2);
-//        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-//
-//        if(ordersEntities.size() > 0){
-//            for(NxDepartmentOrdersEntity ordersEntity: ordersEntities){
-//                BigDecimal orderWeight = new BigDecimal(ordersEntity.getNxDoWeight());
-//
-//                if(ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().equals("0") && !ordersEntity.getNxDoPrice().equals("0.0")){
-//                    BigDecimal orderPrice = new BigDecimal(ordersEntity.getNxDoPrice());
-//                    BigDecimal newSubtotal = orderWeight.multiply(orderPrice);
-//                    BigDecimal newCostPrice = new BigDecimal(nxDpgBuyPrice);
-//                    BigDecimal newScale = orderPrice.subtract(newCostPrice).divide(orderPrice, 2, BigDecimal.ROUND_HALF_UP);
-//                    BigDecimal newCostSubtotal = orderWeight.multiply(newCostPrice);
-//                    BigDecimal newProfit = newSubtotal.subtract(newCostSubtotal);
-//                    ordersEntity.setNxDoCostSubtotal(newCostSubtotal.toString());
-//                    ordersEntity.setNxDoProfitSubtotal(newProfit.toString());
-//                    ordersEntity.setNxDoProfitScale(newScale.toString());
-//                }
-//
-//                ordersEntity.setNxDoCostPrice(nxDpgBuyPrice);
-//                System.out.println("updateororroror");
-//                nxDepartmentOrdersService.update(ordersEntity);
-//
-//            }
-//        }
-
-
         List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = purchaseGoodsEntity.getNxDistributerGoodsEntity().getNxDepartmentOrdersEntities();
         for (NxDepartmentOrdersEntity orders : nxDepartmentOrdersEntities) {
             Integer nxDepartmentOrdersId = orders.getNxDepartmentOrdersId();
@@ -1736,9 +1908,16 @@ public class NxDistributerPurchaseGoodsController {
             tableOrderEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusIsPurchase());
             nxDepartmentOrdersService.update(tableOrderEntity);
         }
-        purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
-        nxDisPurcGoodsService.update(purchaseGoodsEntity);
-        return R.ok().put("data", purchaseGoodsEntity);
+
+        Integer nxDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxDistributerPurchaseGoodsId();
+        NxDistributerPurchaseGoodsEntity purchaseGoods = nxDisPurcGoodsService.queryObject(nxDistributerPurchaseGoodsId);
+
+        purchaseGoods.setNxDpgBuyPrice(purchaseGoodsEntity.getNxDpgBuyPrice());
+        purchaseGoods.setNxDpgBuyQuantity(purchaseGoodsEntity.getNxDpgBuyQuantity());
+        purchaseGoods.setNxDpgBuySubtotal(purchaseGoodsEntity.getNxDpgBuySubtotal());
+        purchaseGoods.setNxDpgPurchaseDate(formatWhatDay(0));
+        nxDisPurcGoodsService.update(purchaseGoods);
+        return R.ok().put("data", purchaseGoods);
     }
 
 
@@ -1771,10 +1950,10 @@ public class NxDistributerPurchaseGoodsController {
             purchaseGoodsEntity.setNxDpgFinishAmount(0);
             nxDisPurcGoodsService.save(purchaseGoodsEntity);
 
-            Integer nxDpgDisGoodsId = purchaseGoodsEntity.getNxDpgDisGoodsId();
-            NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDgService.queryObject(nxDpgDisGoodsId);
-            nxDistributerGoodsEntity.setNxDgPurchaseAuto(1);
-            nxDgService.update(nxDistributerGoodsEntity);
+//            Integer nxDpgDisGoodsId = purchaseGoodsEntity.getNxDpgDisGoodsId();
+//            NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDgService.queryObject(nxDpgDisGoodsId);
+//            nxDistributerGoodsEntity.setNxDgPurchaseAuto(1);
+//            nxDgService.update(nxDistributerGoodsEntity);
 
             Integer nxDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxDistributerPurchaseGoodsId();
 
@@ -1854,12 +2033,38 @@ public class NxDistributerPurchaseGoodsController {
         return R.ok();
     }
 
-    @RequestMapping(value = "/deletePlanPurchase", method = RequestMethod.POST)
+    @RequestMapping(value = "/deletePlanPurchase/{id}", method = RequestMethod.GET)
     @ResponseBody
-    public R deletePlanPurchase(@RequestBody NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
-        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = purchaseGoodsEntity.getNxDepartmentOrdersEntities();
+    public R deletePlanPurchase(@PathVariable Integer id) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("purGoodsId", id);
+        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+        
+        // 获取采购商品对象
+        NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurcGoodsService.queryObject(id);
+        if (purchaseGoodsEntity == null) {
+            return R.error("采购商品不存在");
+        }
+        
+        // 分类订单：能修改的和不能修改的
+        List<NxDepartmentOrdersEntity> canModifyOrders = new ArrayList<>();
+        List<NxDepartmentOrdersEntity> cannotModifyOrders = new ArrayList<>();
+        
         if (nxDepartmentOrdersEntities != null && nxDepartmentOrdersEntities.size() > 0) {
             for (NxDepartmentOrdersEntity orders : nxDepartmentOrdersEntities) {
+                // 判断是否能修改：nxDoPurchaseStatus < 4 && nxDoStatus < 3
+                if (orders.getNxDoPurchaseStatus() != null && orders.getNxDoPurchaseStatus() < 4 
+                    && orders.getNxDoStatus() != null && orders.getNxDoStatus() < 3) {
+                    canModifyOrders.add(orders);
+                } else {
+                    cannotModifyOrders.add(orders);
+                }
+            }
+        }
+        
+        // 处理能修改的订单
+        if (canModifyOrders.size() > 0) {
+            for (NxDepartmentOrdersEntity orders : canModifyOrders) {
                 NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orders.getNxDepartmentOrdersId());
                 ordersEntity.setNxDoPurchaseGoodsId(-1);
                 ordersEntity.setNxDoGoodsType(-1);
@@ -1867,8 +2072,75 @@ public class NxDistributerPurchaseGoodsController {
                 nxDepartmentOrdersService.update(ordersEntity);
             }
         }
-
-        nxDisPurcGoodsService.delete(purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
+        
+        // 如果有能修改的订单，需要从采购商品中减去能修改订单的数量
+        if (canModifyOrders.size() > 0) {
+            // 计算能修改订单的数量总和
+            int canModifyOrdersCount = canModifyOrders.size();
+            BigDecimal canModifyQuantityTotal = BigDecimal.ZERO;
+            
+            for (NxDepartmentOrdersEntity order : canModifyOrders) {
+                String orderQuantity = order.getNxDoQuantity();
+                if (orderQuantity != null && !orderQuantity.trim().isEmpty()) {
+                    try {
+                        canModifyQuantityTotal = canModifyQuantityTotal.add(new BigDecimal(orderQuantity));
+                    } catch (NumberFormatException e) {
+                        // 忽略无效的数量值
+                    }
+                }
+            }
+            
+            // 如果所有订单都能修改，直接删除采购商品
+            if (cannotModifyOrders.size() == 0) {
+                nxDisPurcGoodsService.delete(id);
+                return R.ok();
+            }
+            
+            // 如果有不能修改的订单，从采购商品中减去能修改订单的数量
+            // 更新采购商品的订单数量
+            Integer currentOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
+            if (currentOrdersAmount != null && currentOrdersAmount >= canModifyOrdersCount) {
+                purchaseGoodsEntity.setNxDpgOrdersAmount(currentOrdersAmount - canModifyOrdersCount);
+            }
+            
+            // 更新采购商品的数量
+            String currentQuantity = purchaseGoodsEntity.getNxDpgQuantity();
+            if (currentQuantity != null && !currentQuantity.trim().isEmpty() && canModifyQuantityTotal.compareTo(BigDecimal.ZERO) > 0) {
+                try {
+                    BigDecimal newQuantity = new BigDecimal(currentQuantity).subtract(canModifyQuantityTotal).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    purchaseGoodsEntity.setNxDpgQuantity(newQuantity.toString());
+                    purchaseGoodsEntity.setNxDpgBuyQuantity(newQuantity.toString());
+                    
+                    // 如果规格匹配，重新计算采购小计
+                    boolean needRecalculateSubtotal = false;
+                    for (NxDepartmentOrdersEntity order : canModifyOrders) {
+                        if (order.getNxDoStandard() != null && purchaseGoodsEntity.getNxDpgStandard() != null 
+                            && order.getNxDoStandard().equals(purchaseGoodsEntity.getNxDpgStandard())) {
+                            needRecalculateSubtotal = true;
+                            break;
+                        }
+                    }
+                    
+                    if (needRecalculateSubtotal && purchaseGoodsEntity.getNxDpgBuyPrice() != null 
+                        && !purchaseGoodsEntity.getNxDpgBuyPrice().trim().isEmpty()) {
+                        try {
+                            BigDecimal buyPrice = new BigDecimal(purchaseGoodsEntity.getNxDpgBuyPrice());
+                            BigDecimal newSubtotal = newQuantity.multiply(buyPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+                            purchaseGoodsEntity.setNxDpgBuySubtotal(newSubtotal.toString());
+                        } catch (NumberFormatException e) {
+                            // 忽略无效的价格值
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // 忽略无效的数量值
+                }
+            }
+            
+            nxDisPurcGoodsService.update(purchaseGoodsEntity);
+        } else {
+            // 如果所有订单都不能修改，不能删除采购商品（因为还有订单关联着），也不能修改订单
+            // 这种情况下，不执行任何操作
+        }
 
         return R.ok();
     }
@@ -2016,10 +2288,10 @@ public class NxDistributerPurchaseGoodsController {
             olePurGoods.setNxDpgExpectPrice(purchaseGoodsEntity.getNxDpgExpectPrice());
         }
 
-
         NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = batchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
-        if(nxDistributerPurchaseBatchEntity.getNxDpbPurchaseType() == 13){
+        if(nxDistributerPurchaseBatchEntity.getNxDpbPurchaseType() == 11){
            olePurGoods.setNxDpgPurchaseDate(formatWhatDay(0));
+           olePurGoods.setNxDpgPurchaseType(11);
         }
 
         //
@@ -2101,7 +2373,7 @@ public class NxDistributerPurchaseGoodsController {
                     System.out.println("  计算公式: " + buyQuantity + "箱 × " + itemsPerCarton + "个/箱 = " + weightInMinUnit + "个");
                 } else {
                     // 如果采购规格不是外包装单位，说明前端传入的数量已经是按最小单位的
-                    actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     weightInMinUnit = buyQuantity;
                     System.out.println("📦 数量转换（最小单位）:");
                     System.out.println("  采购数量: " + buyQuantity + "个");
@@ -2117,7 +2389,7 @@ public class NxDistributerPurchaseGoodsController {
                     // 采购单价是外包装单价
                     stockEntity.setNxDgssPriceCarton(buyPrice.stripTrailingZeros().toPlainString());
                     // 计算最小单位单价
-                    BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
                     System.out.println("💰 单价计算（外包装单位）:");
                     System.out.println("  采购单价: " + buyPrice + "元/箱");
@@ -2143,7 +2415,7 @@ public class NxDistributerPurchaseGoodsController {
                         // 期望价格是外包装建议零售价
                         stockEntity.setNxDgssSellingPriceCarton(expectPrice.stripTrailingZeros().toPlainString());
                         // 计算最小单位建议零售价
-                        BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                         stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                         System.out.println("💵 建议零售价计算（外包装单位）:");
                         System.out.println("  期望价格: " + expectPrice + "元/箱");
@@ -2275,11 +2547,11 @@ public class NxDistributerPurchaseGoodsController {
         if(purchaseGoodsEntity.getNxDpgBatchId() != -1 && purchaseGoodsEntity.getNxDpgBatchId() != null){
             Map<String, Object> map = new HashMap<>();
             map.put("batchId", purchaseGoodsEntity.getNxDpgBatchId());
-//            NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = batchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
 
             if(nxDistributerPurchaseBatchEntity.getNxDpbPurchaseType() == 12){
                 map.put("status", 3);
-            }else if(nxDistributerPurchaseBatchEntity.getNxDpbPurchaseType() == 13){
+            }else if(nxDistributerPurchaseBatchEntity.getNxDpbPurchaseType() == 11){
+
                 map.put("status", 2);
             }
 
@@ -2401,7 +2673,7 @@ public class NxDistributerPurchaseGoodsController {
                     System.out.println("  计算公式: " + buyQuantity + "箱 × " + itemsPerCarton + "个/箱 = " + weightInMinUnit + "个");
                 } else {
                     // 如果采购规格不是外包装单位，说明前端传入的数量已经是按最小单位的
-                    actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    actualCartonCount = buyQuantity.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     weightInMinUnit = buyQuantity;
                     System.out.println("📦 数量转换（最小单位）:");
                     System.out.println("  采购数量: " + buyQuantity + "个");
@@ -2417,7 +2689,7 @@ public class NxDistributerPurchaseGoodsController {
                     // 采购单价是外包装单价
                     stockEntity.setNxDgssPriceCarton(buyPrice.stripTrailingZeros().toPlainString());
                     // 计算最小单位单价
-                    BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
                     System.out.println("💰 单价计算（外包装单位）:");
                     System.out.println("  采购单价: " + buyPrice + "元/箱");
@@ -2443,7 +2715,7 @@ public class NxDistributerPurchaseGoodsController {
                         // 期望价格是外包装建议零售价
                         stockEntity.setNxDgssSellingPriceCarton(expectPrice.stripTrailingZeros().toPlainString());
                         // 计算最小单位建议零售价
-                        BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                         stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                         System.out.println("💵 建议零售价计算（外包装单位）:");
                         System.out.println("  期望价格: " + expectPrice + "元/箱");
@@ -2631,7 +2903,7 @@ public class NxDistributerPurchaseGoodsController {
                     
                     // 2. 单价计算
                     // 最小单位单价 = 外包装单价 ÷ 每箱数量
-                    BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal priceInMinUnit = buyPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                     stockEntity.setNxDgssPrice(priceInMinUnit.stripTrailingZeros().toPlainString());
                     // 外包装单价 = 原始采购单价（保持整数）
                     stockEntity.setNxDgssPriceCarton(buyPrice.stripTrailingZeros().toPlainString());
@@ -2639,7 +2911,7 @@ public class NxDistributerPurchaseGoodsController {
                     // 3. 建议零售价计算
                     if (expectPrice != null) {
                         // 最小单位建议零售价 = 外包装建议零售价 ÷ 每箱数量
-                        BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 4, BigDecimal.ROUND_HALF_UP);
+                        BigDecimal sellingPriceInMinUnit = expectPrice.divide(itemsPerCartonBD, 2, BigDecimal.ROUND_HALF_UP);
                         stockEntity.setNxDgssSellingPrice(sellingPriceInMinUnit.stripTrailingZeros().toPlainString());
                         // 外包装建议零售价 = 原始建议零售价（保持整数）
                         stockEntity.setNxDgssSellingPriceCarton(expectPrice.stripTrailingZeros().toPlainString());
@@ -2959,7 +3231,7 @@ public class NxDistributerPurchaseGoodsController {
             map.put("dayuStatus", 1); // 已完成的采购
 
             // 1. 自采数据 (purchaseType = 0)
-            map.put("purchaseType", 0);  // 自采：purchaseType = 0
+            map.put("purchaseType", 11);  // 自采：purchaseType = 0
             logger.info("[disGetPurchaseDate] 日期: {}, 自采查询参数: date={}, disId={}, dayuStatus={}, purchaseType={}", 
                     whichDay, map.get("date"), map.get("disId"), map.get("dayuStatus"), map.get("purchaseType"));
             Integer zicaiCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
@@ -2975,10 +3247,8 @@ public class NxDistributerPurchaseGoodsController {
             // 移除 purchaseType，以便后续查询使用
             map.remove("purchaseType");
 
-            // 2. 订货数据 (batchId is not null)
-            // 确保移除之前的 purchaseType，避免影响订货查询
-            map.remove("purchaseType");
-            map.put("batchId", 1);  // 订货：有批次
+            // 2. 订货数据
+            map.put("purchaseType", 12);
             logger.info("[disGetPurchaseDate] 日期: {}, 订货查询参数: date={}, disId={}, dayuStatus={}, batchId={}", 
                     whichDay, map.get("date"), map.get("disId"), map.get("dayuStatus"), map.get("batchId"));
             Integer dinghuoCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
@@ -2995,7 +3265,7 @@ public class NxDistributerPurchaseGoodsController {
             mapDirectStock.put("date", whichDay);
             mapDirectStock.put("disId", disId);
             mapDirectStock.put("dayuStatus", 1); // 已完成的采购
-            mapDirectStock.put("purchaseType", -1);  // 直接入库的采购
+            mapDirectStock.put("purchaseType", 10);  // 直接入库的采购
             Integer directStockCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapDirectStock);
             BigDecimal directStockTotal = new BigDecimal(0);
             if (directStockCount > 0) {
@@ -3009,6 +3279,7 @@ public class NxDistributerPurchaseGoodsController {
             Map<String, Object> mapAllStock = new HashMap<>();
             mapAllStock.put("date", whichDay);
             mapAllStock.put("disId", disId);
+            mapAllStock.put("dayuPurchaseType", 9);
             mapAllStock.put("dayuStatus", 1); // 已完成的采购
             Integer allStockCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapAllStock);
             BigDecimal allStockTotal = new BigDecimal(0);
@@ -3112,14 +3383,17 @@ public class NxDistributerPurchaseGoodsController {
         mapTotal.remove("purchaseType");
 
         // 订货总额
+        mapTotal.put("purchaseType", null);  // 订货：有批次
         mapTotal.put("batchId", 1);  // 订货：有批次
+        System.out.println("dingdhuomapappapap" + mapTotal);
         BigDecimal dinghuoTotalSum = new BigDecimal(0);
         Integer dinghuoCountSum = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapTotal);
         if (dinghuoCountSum > 0) {
+            System.out.println("mappaaptttt" + mapTotal);
             Double aDouble = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(mapTotal);
             dinghuoTotalSum = new BigDecimal(aDouble).setScale(2, BigDecimal.ROUND_HALF_UP);
         }
-        System.out.println("订货总额: " + dinghuoTotalSum);
+        System.out.println("订货总额1: " + dinghuoTotalSum);
 
         // 支出总额统计（3种类型）
         // 销售支出总额 (type = 0, 1)
@@ -3207,42 +3481,44 @@ public class NxDistributerPurchaseGoodsController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", id);
         map.put("equalStatus", 0);
-        map.put("purchaseType", 0);
+        map.put("purchaseType", 11);
         List<NxDistributerPurchaseGoodsEntity> nxDistributerPurchaseGoodsEntities = nxDisPurcGoodsService.queryPurchaseGoodsWithDetailByParams(map);
-        
+
         // 打印日志：检查货架商品列表
         System.out.println("========================================");
         System.out.println("[purchaseGetShelfPurGoods] 查询到采购商品数量: " + nxDistributerPurchaseGoodsEntities.size());
-        for (NxDistributerPurchaseGoodsEntity purchaseGoods : nxDistributerPurchaseGoodsEntities) {
-            System.out.println("--- 采购商品ID: " + purchaseGoods.getNxDistributerPurchaseGoodsId() 
-                + ", 商品ID: " + purchaseGoods.getNxDpgDisGoodsId()
-                + ", 申请货架ID: " + purchaseGoods.getNxDpgApplyShelfId());
-            
-            // 检查申请货架
-            if (purchaseGoods.getApplyShelfEntity() != null) {
-                System.out.println("  ✅ 申请货架: " + purchaseGoods.getApplyShelfEntity().getNxDistributerGoodsShelfName() 
-                    + " (ID: " + purchaseGoods.getApplyShelfEntity().getNxDistributerGoodsShelfId() + ")");
-            } else {
-                System.out.println("  ⚠️ 申请货架: null");
-            }
-            
-            // 检查货架商品列表
-            if (purchaseGoods.getShelfGoodsEntities() != null) {
-                System.out.println("  ✅ 货架商品列表数量: " + purchaseGoods.getShelfGoodsEntities().size());
-                for (NxDistributerGoodsShelfGoodsEntity shelfGoods : purchaseGoods.getShelfGoodsEntities()) {
-                    System.out.println("    - 货架商品ID: " + shelfGoods.getNxDistributerGoodsShelfGoodsId() 
-                        + ", 货架ID: " + shelfGoods.getNxDgsgShelfId()
-                        + ", 商品ID: " + shelfGoods.getNxDgsgDisGoodsId());
-                }
-            } else {
-                System.out.println("  ⚠️ 货架商品列表: null");
-            }
-        }
+//        for (NxDistributerPurchaseGoodsEntity purchaseGoods : nxDistributerPurchaseGoodsEntities) {
+//            System.out.println("--- 采购商品ID: " + purchaseGoods.getNxDistributerPurchaseGoodsId()
+//                + ", 商品ID: " + purchaseGoods.getNxDpgDisGoodsId()
+//                + ", 申请货架ID: " + purchaseGoods.getNxDpgApplyShelfId());
+//
+//            // 检查申请货架
+//            if (purchaseGoods.getApplyShelfEntity() != null) {
+//                System.out.println("  ✅ 申请货架: " + purchaseGoods.getApplyShelfEntity().getNxDistributerGoodsShelfName()
+//                    + " (ID: " + purchaseGoods.getApplyShelfEntity().getNxDistributerGoodsShelfId() + ")");
+//            } else {
+//                System.out.println("  ⚠️ 申请货架: null");
+//            }
+//
+//            // 检查货架商品列表
+//            if (purchaseGoods.getShelfGoodsEntities() != null) {
+//                System.out.println("  ✅ 货架商品列表数量: " + purchaseGoods.getShelfGoodsEntities().size());
+//                for (NxDistributerGoodsShelfGoodsEntity shelfGoods : purchaseGoods.getShelfGoodsEntities()) {
+//                    System.out.println("    - 货架商品ID: " + shelfGoods.getNxDistributerGoodsShelfGoodsId()
+//                        + ", 货架ID: " + shelfGoods.getNxDgsgShelfId()
+//                        + ", 商品ID: " + shelfGoods.getNxDgsgDisGoodsId());
+//                }
+//            } else {
+//                System.out.println("  ⚠️ 货架商品列表: null");
+//            }
+//        }
         System.out.println("========================================");
+
 
         map.put("equalStatus", null);
         map.put("dayuStatus",0);
         map.put("status",3);
+        map.put("purchaseType", 12);
         System.out.println("mmmddddd d" + map);
         int count = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
         Map<String, Object> mapR = new HashMap<>();
@@ -3285,9 +3561,8 @@ public class NxDistributerPurchaseGoodsController {
             }
             System.out.println("总采购金额: " + allDouble);
 
-            // 自采数据 (batchId == -1 且 purchaseType != -1，排除入库)
-            map.put("batchId", -1);  // 自采：没有批次
-            map.put("purchaseTypeNotEqual", -1); // 排除入库类型
+            // 自采数据
+            map.put("purchaseType", 11); // 排除入库类型
             Integer zicaiCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
             Double zicaiAmount = 0.0;
             Integer zicaiGoodsCount = 0;
@@ -3298,8 +3573,7 @@ public class NxDistributerPurchaseGoodsController {
             System.out.println("自采金额: " + zicaiAmount + ", 种类数: " + zicaiGoodsCount);
 
             // 订货数据 (batchId == 1 且 purchaseType != -1，排除入库)
-            map.put("batchId", 1);  // 订货：有批次
-            map.put("purchaseTypeNotEqual", -1); // 排除入库类型
+            map.put("purchaseType", 12); // 排除入库类型
             Integer dinghuoCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
             Double dinghuoAmount = 0.0;
             Integer dinghuoGoodsCount = 0;
@@ -3309,10 +3583,8 @@ public class NxDistributerPurchaseGoodsController {
             }
             System.out.println("订货金额: " + dinghuoAmount + ", 种类数: " + dinghuoGoodsCount);
 
-            // 入库数据 (purchaseType == -1)
-            map.remove("batchId"); // 清除 batchId 条件
-            map.remove("purchaseTypeNotEqual"); // 清除排除条件
-            map.put("purchaseType", -1);  // 入库：直接入库的采购
+            // 入库数据
+            map.put("purchaseType", 10);  // 入库：直接入库的采购
             Integer rukuCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
             Double rukuAmount = 0.0;
             Integer rukuGoodsCount = 0;
@@ -3349,6 +3621,7 @@ public class NxDistributerPurchaseGoodsController {
      * @param page 页码
      * @param limit 每页数量
      * @param greatId 最顶级分类ID（可选，用于按分类筛选）
+     * @param purchaseType 采购类型（可选，用于按采购类型筛选）
      * @return 商品列表（含采购记录）
      */
     @RequestMapping(value = "/disGetPurchaseGoodsList", method = RequestMethod.POST)
@@ -3356,9 +3629,9 @@ public class NxDistributerPurchaseGoodsController {
     public R disGetPurchaseGoodsList(Integer disId, String startDate, String stopDate,
                                      @RequestParam(defaultValue = "1") Integer page,
                                      @RequestParam(defaultValue = "10") Integer limit,
-                                     Integer greatId) {
+                                     Integer greatId, Integer purchaseType) {
         System.out.println("======== NX采购商品列表开始 ========");
-        System.out.println("批发商ID: " + disId + ", 日期: " + startDate + " ~ " + stopDate + ", 页码: " + page + ", 分类ID: " + greatId);
+        System.out.println("批发商ID: " + disId + ", 日期: " + startDate + " ~ " + stopDate + ", 页码: " + page + ", 分类ID: " + greatId + ", 采购类型: " + purchaseType);
 
         try {
             // 构建查询参数
@@ -3366,13 +3639,16 @@ public class NxDistributerPurchaseGoodsController {
             queryMap.put("disId", disId);
             queryMap.put("startDate", startDate);
             queryMap.put("stopDate", stopDate);
-            queryMap.put("dayuStatus", 1); // 已完成的采购
+            queryMap.put("dayuStatus", 2); // 已完成的采购
             queryMap.put("offset", (page - 1) * limit);
             queryMap.put("limit", limit);
-            // 排除入库数据（purchaseType == -1），只显示自采和订货
-//            queryMap.put("purchaseTypeNotEqual", -1);
             if (greatId != null && greatId != -1) {
                 queryMap.put("disGoodsGreatId", greatId);
+            }
+            if (purchaseType != null) {
+                queryMap.put("purchaseType", purchaseType);
+            }else{
+                queryMap.put("dayuPurchaseType", 9);
             }
 
             // 获取商品总数
@@ -3381,37 +3657,8 @@ public class NxDistributerPurchaseGoodsController {
             System.out.println("商品总数: " + totalCount + ", 总页数: " + totalPages);
 
             // 获取商品列表（每个商品包含采购记录）
+            System.out.println("quemepapa" + queryMap);
             List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
-            System.out.println("商品列表数量: " + (goodsList != null ? goodsList.size() : "null"));
-
-//            // 打印每个商品的采购记录详情
-//            if (goodsList != null && goodsList.size() > 0) {
-//                for (int i = 0; i < goodsList.size(); i++) {
-//                    NxDistributerGoodsEntity goods = goodsList.get(i);
-//                    System.out.println("--- 商品 " + (i + 1) + " ---");
-//                    System.out.println("商品ID: " + goods.getNxDistributerGoodsId());
-//                    System.out.println("商品名称: " + goods.getNxDgGoodsName());
-//                    System.out.println("规格: " + goods.getNxDgGoodsStandardname());
-//                    System.out.println("采购总金额(sellSubtotal): " + goods.getSellSubtotal());
-//
-//                    List<NxDistributerPurchaseGoodsEntity> purchaseList = goods.getNxDistributerPurchaseGoodsEntities();
-//                    if (purchaseList != null && purchaseList.size() > 0) {
-//                        System.out.println("采购记录数量: " + purchaseList.size());
-//                        for (int j = 0; j < purchaseList.size(); j++) {
-//                            NxDistributerPurchaseGoodsEntity purchase = purchaseList.get(j);
-//                            System.out.println("  采购记录 " + (j + 1) + ":");
-//                            System.out.println("    采购ID: " + purchase.getNxDistributerPurchaseGoodsId());
-//                            System.out.println("    采购价格: " + purchase.getNxDpgBuyPrice());
-//                            System.out.println("    采购数量: " + purchase.getNxDpgBuyQuantity());
-//                            System.out.println("    采购小计: " + purchase.getNxDpgBuySubtotal());
-//                            System.out.println("    采购日期: " + purchase.getNxDpgPurchaseDate());
-//                            System.out.println("    采购类型: " + purchase.getNxDpgPurchaseType());
-//                        }
-//                    } else {
-//                        System.out.println("⚠️ 采购记录为空或null");
-//                    }
-//                }
-//            }
 
             // 构建返回数据
             Map<String, Object> result = new HashMap<>();
@@ -3652,7 +3899,7 @@ public class NxDistributerPurchaseGoodsController {
      */
     @RequestMapping(value = "/disGetPurchaseDetailType", method = RequestMethod.POST)
     @ResponseBody
-    public R disGetPurchaseDetailType(Integer disId, String purUserIds, Integer type,
+    public R disGetPurchaseDetailType(Integer disId, String purUserIds, Integer type, Integer greatId,
                                       String startDate, String stopDate, String supplierIds) {
         System.out.println("======== NX采购分组统计开始 ========");
         System.out.println("批发商ID: " + disId + ", 类型: " + type + ", 日期: " + startDate + " ~ " + stopDate);
@@ -3661,8 +3908,10 @@ public class NxDistributerPurchaseGoodsController {
         map.put("disId", disId);
         map.put("startDate", startDate);
         map.put("stopDate", stopDate);
-        map.put("dayuStatus", 1); // 已完成的采购
-
+        map.put("dayuStatus", 2); // 已完成的采购
+        if(greatId != -1){
+            map.put("disGoodsGreatId", greatId);
+        }
         // 处理采购员IDs
         if (purUserIds != null && !purUserIds.equals("-1")) {
             String[] arrIds = purUserIds.split(",");
@@ -3690,15 +3939,14 @@ public class NxDistributerPurchaseGoodsController {
         Map<String, Object> mapR = new HashMap<>();
         List<Map<String, Object>> result = new ArrayList<>();
 
-        if (type == 0) {
+        if (type == 10 || type == 11) {
             // 自采：没有批次ID（按采购员分组）
-            System.out.println("=== 自采统计（按采购员分组） ===");
-            map.put("batchId", -1);  // 自采：没有批次
-            map.put("purchaseTypeNotEqual", -1); // 排除入库类型
+            map.put("purchaseType", type); // 排除入库类型
 
             // 计算总额
             Double totalAmount = 0.0;
-            Integer totalCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
+            Integer totalCount = nxDisPurcGoodsService.queryGoodsListCount(map);
+
             if (totalCount > 0) {
                 totalAmount = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(map);
             }
@@ -3724,8 +3972,7 @@ public class NxDistributerPurchaseGoodsController {
 
                     // 创建新的查询参数，避免污染
                     Map<String, Object> queryMap = new HashMap<>();
-                    queryMap.put("batchId", -1);  // 自采：没有批次
-                    queryMap.put("purchaseTypeNotEqual", -1); // 排除入库类型
+                    queryMap.put("purchaseType", type); // 排除入库类型
                     queryMap.put("dayuStatus", 1);
                     queryMap.put("startDate", startDate);
                     queryMap.put("stopDate", stopDate);
@@ -3733,10 +3980,14 @@ public class NxDistributerPurchaseGoodsController {
                     queryMap.put("purUserId", userEntity.getNxDistributerUserId());
                     queryMap.put("offset", 0);
                     queryMap.put("limit", 100);
+                    if(greatId != -1){
+                        queryMap.put("disGoodsGreatId", greatId);
+                    }
 
                     System.out.println("查询采购员商品: " + queryMap);
                     Integer goodsCount = nxDisPurcGoodsService.queryGoodsListCount(queryMap);
                     List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
+
                     Double subTotal = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(queryMap);
 
                     mapUser.put("arr", goodsList);
@@ -3749,11 +4000,10 @@ public class NxDistributerPurchaseGoodsController {
             mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
             mapR.put("purUserArr", result);
 
-        } else if (type == 1) {
+        } else if (type == 12) {
             // 订货：有批次ID（按供应商/批次分组）
             System.out.println("=== 订货统计（按供应商分组） ===");
-            map.put("batchId", 1);  // 订货：有批次（batchId > 0）
-            map.put("purchaseTypeNotEqual", -1); // 排除入库类型
+            map.put("purchaseType", 12); // 排除入库类型
 
             // 计算总额
             Double totalAmount = 0.0;
@@ -3774,8 +4024,7 @@ public class NxDistributerPurchaseGoodsController {
 
                     // 创建新的查询参数
                     Map<String, Object> queryMap = new HashMap<>();
-                    queryMap.put("batchId", 1);  // 订货：有批次
-                    queryMap.put("purchaseTypeNotEqual", -1); // 排除入库类型
+                    queryMap.put("purchaseType", 12); // 排除入库类型
                     queryMap.put("dayuStatus", 1);
                     queryMap.put("startDate", startDate);
                     queryMap.put("stopDate", stopDate);
@@ -3799,69 +4048,295 @@ public class NxDistributerPurchaseGoodsController {
             mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
             mapR.put("supplierArr", result);
             
-        } else if (type == -1) {
-            // 入库：purchaseType == -1（按采购员分组）
-            System.out.println("=== 入库统计（按采购员分组） ===");
-            map.remove("batchId"); // 清除 batchId 条件
-            map.put("purchaseType", -1);  // 入库：直接入库的采购
-
-            // 计算总额
-            Double totalAmount = 0.0;
-            Integer totalCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
-            if (totalCount > 0) {
-                totalAmount = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(map);
-            }
-            System.out.println("入库总额: " + totalAmount);
-
-            // 获取采购员列表（使用NxDistributerUser）
-            System.out.println("查询采购员列表，参数: " + map);
-            List<NxDistributerUserEntity> purUserList = nxDisPurcGoodsService.queryPurUserList(map);
-            System.out.println("采购员数量: " + purUserList.size());
-            if (purUserList.size() > 0) {
-                for (int i = 0; i < purUserList.size(); i++) {
-                    System.out.println("  采购员 " + (i + 1) + ": ID=" + purUserList.get(i).getNxDistributerUserId() + 
-                                     ", 姓名=" + purUserList.get(i).getNxDiuWxNickName());
-                }
-            } else {
-                System.out.println("⚠️ 没有查询到采购员，请检查SQL查询条件");
-            }
-
-            if (purUserList.size() > 0) {
-                for (NxDistributerUserEntity userEntity : purUserList) {
-                    Map<String, Object> mapUser = new HashMap<>();
-                    mapUser.put("user", userEntity);
-
-                    // 创建新的查询参数，避免污染
-                    Map<String, Object> queryMap = new HashMap<>();
-                    queryMap.remove("batchId"); // 清除 batchId 条件
-                    queryMap.put("purchaseType", -1);  // 入库：直接入库的采购
-                    queryMap.put("dayuStatus", 1);
-                    queryMap.put("startDate", startDate);
-                    queryMap.put("stopDate", stopDate);
-                    queryMap.put("disId", disId);
-                    queryMap.put("purUserId", userEntity.getNxDistributerUserId());
-                    queryMap.put("offset", 0);
-                    queryMap.put("limit", 100);
-
-                    System.out.println("查询采购员商品: " + queryMap);
-                    Integer goodsCount = nxDisPurcGoodsService.queryGoodsListCount(queryMap);
-                    List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
-                    Double subTotal = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(queryMap);
-
-                    mapUser.put("arr", goodsList);
-                    mapUser.put("count", goodsCount);
-                    mapUser.put("purSubtotal", String.format("%.1f", subTotal));
-                    result.add(mapUser);
-                }
-            }
-
-            mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
-            mapR.put("purUserArr", result);
         }
+
+//        else if (type == -1) {
+//            // 入库：purchaseType == -1（按采购员分组）
+//            System.out.println("=== 入库统计（按采购员分组） ===");
+//            map.remove("batchId"); // 清除 batchId 条件
+//            map.put("purchaseType", -1);  // 入库：直接入库的采购
+//
+//            // 计算总额
+//            Double totalAmount = 0.0;
+//            Integer totalCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
+//            if (totalCount > 0) {
+//                totalAmount = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(map);
+//            }
+//            System.out.println("入库总额: " + totalAmount);
+//
+//            // 获取采购员列表（使用NxDistributerUser）
+//            System.out.println("查询采购员列表，参数: " + map);
+//            List<NxDistributerUserEntity> purUserList = nxDisPurcGoodsService.queryPurUserList(map);
+//            System.out.println("采购员数量: " + purUserList.size());
+//            if (purUserList.size() > 0) {
+//                for (int i = 0; i < purUserList.size(); i++) {
+//                    System.out.println("  采购员 " + (i + 1) + ": ID=" + purUserList.get(i).getNxDistributerUserId() +
+//                                     ", 姓名=" + purUserList.get(i).getNxDiuWxNickName());
+//                }
+//            } else {
+//                System.out.println("⚠️ 没有查询到采购员，请检查SQL查询条件");
+//            }
+//
+//            if (purUserList.size() > 0) {
+//                for (NxDistributerUserEntity userEntity : purUserList) {
+//                    Map<String, Object> mapUser = new HashMap<>();
+//                    mapUser.put("user", userEntity);
+//
+//                    // 创建新的查询参数，避免污染
+//                    Map<String, Object> queryMap = new HashMap<>();
+//                    queryMap.remove("batchId"); // 清除 batchId 条件
+//                    queryMap.put("purchaseType", -1);  // 入库：直接入库的采购
+//                    queryMap.put("dayuStatus", 1);
+//                    queryMap.put("startDate", startDate);
+//                    queryMap.put("stopDate", stopDate);
+//                    queryMap.put("disId", disId);
+//                    queryMap.put("purUserId", userEntity.getNxDistributerUserId());
+//                    queryMap.put("offset", 0);
+//                    queryMap.put("limit", 100);
+//
+//                    System.out.println("查询采购员商品: " + queryMap);
+//                    Integer goodsCount = nxDisPurcGoodsService.queryGoodsListCount(queryMap);
+//                    List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
+//                    Double subTotal = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(queryMap);
+//
+//                    mapUser.put("arr", goodsList);
+//                    mapUser.put("count", goodsCount);
+//                    mapUser.put("purSubtotal", String.format("%.1f", subTotal));
+//                    result.add(mapUser);
+//                }
+//            }
+//
+//            mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
+//            mapR.put("purUserArr", result);
+//        }
 
         System.out.println("======== NX采购分组统计完成 ========");
         return R.ok().put("data", mapR);
     }
+
+    /**
+     * NX系统按采购员/供应商分组的采购统计
+     * @param disId 批发商ID
+     * @param type 类型：0=自采(按采购员), 1=订货(按供应商), -1=入库(按采购员)
+     * @param startDate 开始日期
+     * @param stopDate 结束日期
+     * @param purUserIds 采购员IDs（逗号分隔，可选，"-1"表示全部）
+     * @param supplierIds 供应商IDs（逗号分隔，可选，"-1"表示全部）
+     * @return 分组统计数据
+     */
+//    @RequestMapping(value = "/disGetPurchaseDetailType", method = RequestMethod.POST)
+//    @ResponseBody
+//    public R disGetPurchaseDetailType(Integer disId, String purUserIds, Integer type,
+//                                      String startDate, String stopDate, String supplierIds) {
+//        System.out.println("======== NX采购分组统计开始 ========");
+//        System.out.println("批发商ID: " + disId + ", 类型: " + type + ", 日期: " + startDate + " ~ " + stopDate);
+//
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("disId", disId);
+//        map.put("startDate", startDate);
+//        map.put("stopDate", stopDate);
+//        map.put("dayuStatus", 1); // 已完成的采购
+//
+//        // 处理采购员IDs
+//        if (purUserIds != null && !purUserIds.equals("-1")) {
+//            String[] arrIds = purUserIds.split(",");
+//            List<Integer> idsList = new ArrayList<>();
+//            for (String id : arrIds) {
+//                idsList.add(Integer.valueOf(id.trim()));
+//            }
+//            if (idsList.size() > 0) {
+//                map.put("purUserIds", idsList);
+//            }
+//        }
+//
+//        // 处理供应商IDs
+//        if (supplierIds != null && !supplierIds.equals("-1")) {
+//            String[] arrIds = supplierIds.split(",");
+//            List<Integer> idsList = new ArrayList<>();
+//            for (String id : arrIds) {
+//                idsList.add(Integer.valueOf(id.trim()));
+//            }
+//            if (idsList.size() > 0) {
+//                map.put("supplierIds", idsList);
+//            }
+//        }
+//
+//        Map<String, Object> mapR = new HashMap<>();
+//        List<Map<String, Object>> result = new ArrayList<>();
+//
+//        if (type == 0) {
+//            // 自采：没有批次ID（按采购员分组）
+//            System.out.println("=== 自采统计（按采购员分组） ===");
+//            map.put("batchId", -1);  // 自采：没有批次
+//            map.put("purchase", 0); // 排除入库类型
+//
+//            // 计算总额
+//            Double totalAmount = 0.0;
+//            Integer totalCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
+//            if (totalCount > 0) {
+//                totalAmount = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(map);
+//            }
+//            System.out.println("自采总额: " + totalAmount);
+//
+//            // 获取采购员列表（使用NxDistributerUser）
+//            System.out.println("查询采购员列表，参数: " + map);
+//            List<NxDistributerUserEntity> purUserList = nxDisPurcGoodsService.queryPurUserList(map);
+//            System.out.println("采购员数量: " + purUserList.size());
+//            if (purUserList.size() > 0) {
+//                for (int i = 0; i < purUserList.size(); i++) {
+//                    System.out.println("  采购员 " + (i + 1) + ": ID=" + purUserList.get(i).getNxDistributerUserId() +
+//                            ", 姓名=" + purUserList.get(i).getNxDiuWxNickName());
+//                }
+//            } else {
+//                System.out.println("⚠️ 没有查询到采购员，请检查SQL查询条件");
+//            }
+//
+//            if (purUserList.size() > 0) {
+//                for (NxDistributerUserEntity userEntity : purUserList) {
+//                    Map<String, Object> mapUser = new HashMap<>();
+//                    mapUser.put("user", userEntity);
+//
+//                    // 创建新的查询参数，避免污染
+//                    Map<String, Object> queryMap = new HashMap<>();
+//                    queryMap.put("batchId", -1);  // 自采：没有批次
+//                    queryMap.put("purchaseType", 0); // 排除入库类型
+////                    queryMap.put("purchaseTypeNotEqual", -1); // 排除入库类型
+//                    queryMap.put("dayuStatus", 1);
+//                    queryMap.put("startDate", startDate);
+//                    queryMap.put("stopDate", stopDate);
+//                    queryMap.put("disId", disId);
+//                    queryMap.put("purUserId", userEntity.getNxDistributerUserId());
+//                    queryMap.put("offset", 0);
+//                    queryMap.put("limit", 100);
+//
+//                    System.out.println("查询采购员商品: " + queryMap);
+//                    Integer goodsCount = nxDisPurcGoodsService.queryGoodsListCount(queryMap);
+//                    List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
+//                    Double subTotal = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(queryMap);
+//
+//                    mapUser.put("arr", goodsList);
+//                    mapUser.put("count", goodsCount);
+//                    mapUser.put("purSubtotal", String.format("%.1f", subTotal));
+//                    result.add(mapUser);
+//                }
+//            }
+//
+//            mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
+//            mapR.put("purUserArr", result);
+//
+//        } else if (type == 1) {
+//            // 订货：有批次ID（按供应商/批次分组）
+//            System.out.println("=== 订货统计（按供应商分组） ===");
+//            map.put("batchId", 1);  // 订货：有批次（batchId > 0）
+//            map.put("purchaseTypeNotEqual", -1); // 排除入库类型
+//
+//            // 计算总额
+//            Double totalAmount = 0.0;
+//            Integer totalCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
+//            if (totalCount > 0) {
+//                totalAmount = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(map);
+//            }
+//            System.out.println("订货总额: " + totalAmount);
+//
+//            // 获取供应商列表（通过批次关联）
+//            List<NxJrdhUserEntity> supplierList = nxDisPurcGoodsService.querySupplierList(map);
+//            System.out.println("供应商数量: " + supplierList.size());
+//
+//            if (supplierList.size() > 0) {
+//                for (NxJrdhUserEntity supplierEntity : supplierList) {
+//                    Map<String, Object> mapUser = new HashMap<>();
+//                    mapUser.put("user", supplierEntity);
+//
+//                    // 创建新的查询参数
+//                    Map<String, Object> queryMap = new HashMap<>();
+//                    queryMap.put("batchId", 1);  // 订货：有批次
+//                    queryMap.put("purchaseTypeNotEqual", -1); // 排除入库类型
+//                    queryMap.put("dayuStatus", 1);
+//                    queryMap.put("startDate", startDate);
+//                    queryMap.put("stopDate", stopDate);
+//                    queryMap.put("disId", disId);
+//                    queryMap.put("sellUserId", supplierEntity.getNxJrdhUserId());
+//                    queryMap.put("offset", 0);
+//                    queryMap.put("limit", 100);
+//
+//                    System.out.println("查询供应商商品: " + queryMap);
+//                    Integer goodsCount = nxDisPurcGoodsService.queryGoodsListCount(queryMap);
+//                    List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
+//                    Double subTotal = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(queryMap);
+//
+//                    mapUser.put("arr", goodsList);
+//                    mapUser.put("count", goodsCount);
+//                    mapUser.put("purSubtotal", String.format("%.1f", subTotal));
+//                    result.add(mapUser);
+//                }
+//            }
+//
+//            mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
+//            mapR.put("supplierArr", result);
+//
+//        } else if (type == -1) {
+//            // 入库：purchaseType == -1（按采购员分组）
+//            System.out.println("=== 入库统计（按采购员分组） ===");
+//            map.remove("batchId"); // 清除 batchId 条件
+//            map.put("purchaseType", -1);  // 入库：直接入库的采购
+//
+//            // 计算总额
+//            Double totalAmount = 0.0;
+//            Integer totalCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
+//            if (totalCount > 0) {
+//                totalAmount = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(map);
+//            }
+//            System.out.println("入库总额: " + totalAmount);
+//
+//            // 获取采购员列表（使用NxDistributerUser）
+//            System.out.println("查询采购员列表，参数: " + map);
+//            List<NxDistributerUserEntity> purUserList = nxDisPurcGoodsService.queryPurUserList(map);
+//            System.out.println("采购员数量: " + purUserList.size());
+//            if (purUserList.size() > 0) {
+//                for (int i = 0; i < purUserList.size(); i++) {
+//                    System.out.println("  采购员 " + (i + 1) + ": ID=" + purUserList.get(i).getNxDistributerUserId() +
+//                            ", 姓名=" + purUserList.get(i).getNxDiuWxNickName());
+//                }
+//            } else {
+//                System.out.println("⚠️ 没有查询到采购员，请检查SQL查询条件");
+//            }
+//
+//            if (purUserList.size() > 0) {
+//                for (NxDistributerUserEntity userEntity : purUserList) {
+//                    Map<String, Object> mapUser = new HashMap<>();
+//                    mapUser.put("user", userEntity);
+//
+//                    // 创建新的查询参数，避免污染
+//                    Map<String, Object> queryMap = new HashMap<>();
+//                    queryMap.remove("batchId"); // 清除 batchId 条件
+//                    queryMap.put("purchaseType", -1);  // 入库：直接入库的采购
+//                    queryMap.put("dayuStatus", 1);
+//                    queryMap.put("startDate", startDate);
+//                    queryMap.put("stopDate", stopDate);
+//                    queryMap.put("disId", disId);
+//                    queryMap.put("purUserId", userEntity.getNxDistributerUserId());
+//                    queryMap.put("offset", 0);
+//                    queryMap.put("limit", 100);
+//
+//                    System.out.println("查询采购员商品: " + queryMap);
+//                    Integer goodsCount = nxDisPurcGoodsService.queryGoodsListCount(queryMap);
+//                    List<NxDistributerGoodsEntity> goodsList = nxDisPurcGoodsService.queryGoodsListWithPurchase(queryMap);
+//                    Double subTotal = nxDisPurcGoodsService.queryPurchaseGoodsSubTotal(queryMap);
+//
+//                    mapUser.put("arr", goodsList);
+//                    mapUser.put("count", goodsCount);
+//                    mapUser.put("purSubtotal", String.format("%.1f", subTotal));
+//                    result.add(mapUser);
+//                }
+//            }
+//
+//            mapR.put("total", new BigDecimal(totalAmount).setScale(1, BigDecimal.ROUND_HALF_UP));
+//            mapR.put("purUserArr", result);
+//        }
+//
+//        System.out.println("======== NX采购分组统计完成 ========");
+//        return R.ok().put("data", mapR);
+//    }
 
     /**
      * NX系统库存商品列表（分页）
@@ -3876,6 +4351,7 @@ public class NxDistributerPurchaseGoodsController {
     @ResponseBody
     public R getNxStockGoodsList(Integer disId, String startDate, String stopDate,
                                  String type,
+                                 @RequestParam Integer greatId,
                                  @RequestParam(defaultValue = "1") Integer page,
                                  @RequestParam(defaultValue = "10") Integer limit) {
         logger.info("[getNxStockGoodsList] 查询库存商品列表，参数: disId={}, startDate={}, stopDate={}, type={}, page={}, limit={}",
@@ -3891,7 +4367,9 @@ public class NxDistributerPurchaseGoodsController {
             queryMap.put("limit", limit);
             queryMap.put("restWeight", 0);  // 只查询有剩余库存的
             queryMap.put("orderByGoodsStockTotal", 1);  // 按库存总额排序
-
+            if (greatId != -1) {
+                queryMap.put("disGoodsGreatId", greatId);
+            }
             // 根据类型设置查询条件（用于过滤支出记录）
             Integer equalType = null;
             String typesStr = null;
@@ -4156,7 +4634,7 @@ public class NxDistributerPurchaseGoodsController {
                 // 计算占比
                 BigDecimal greatPercent = new BigDecimal(0);
                 if (purchaseTotal.compareTo(new BigDecimal(0)) > 0) {
-                    greatPercent = greatPurTotal.divide(purchaseTotal, 4, BigDecimal.ROUND_HALF_UP)
+                    greatPercent = greatPurTotal.divide(purchaseTotal, 2, BigDecimal.ROUND_HALF_UP)
                             .multiply(new BigDecimal(100));
                 }
                 
@@ -4165,7 +4643,7 @@ public class NxDistributerPurchaseGoodsController {
                 cataMap.put("purTotal", purchaseTotal);
 
                 // 6.2 自采数据 (purchaseType = 0)
-                mapPur.put("purchaseType", 0);
+                mapPur.put("purchaseType", 11);
                 Integer zicaiCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapPur);
                 BigDecimal zicaiTotal = new BigDecimal(0);
                 if (zicaiCount > 0) {
@@ -4176,7 +4654,7 @@ public class NxDistributerPurchaseGoodsController {
                 mapPur.remove("purchaseType");
 
                 // 6.3 订货数据 (batchId = 1)
-                mapPur.put("batchId", 1);
+                mapPur.put("purchaseType", 12);
                 Integer dinghuoCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapPur);
                 BigDecimal dinghuoTotal = new BigDecimal(0);
                 if (dinghuoCount > 0) {
@@ -4187,7 +4665,7 @@ public class NxDistributerPurchaseGoodsController {
                 mapPur.remove("batchId");
 
                 // 6.4 直接入库数据 (purchaseType = -1)
-                mapPur.put("purchaseType", -1);
+                mapPur.put("purchaseType", 10);
                 Integer directStockCount = nxDisPurcGoodsService.queryPurchaseGoodsCount(mapPur);
                 BigDecimal directStockTotal = new BigDecimal(0);
                 if (directStockCount > 0) {
@@ -4344,7 +4822,7 @@ public class NxDistributerPurchaseGoodsController {
             map.put("disId", disId);
             map.put("startDate", startDate);
             map.put("stopDate", stopDate);
-            // map.put("purchaseTypeNotEqual", -1);  // 排除入库（purchaseType=-1）的记录
+             map.put("dayuPurchaseType", 9);  // 排除入库（purchaseType=-1）的记录
 
             Integer integer = nxDisPurcGoodsService.queryPurchaseGoodsCount(map);
             double purtotal = 0.0;
@@ -4616,7 +5094,7 @@ public class NxDistributerPurchaseGoodsController {
             NxDistributerPurchaseGoodsEntity nxDistributerPurchaseGoodsEntity = nxDisPurcGoodsService.queryObject(purchaseGoodsId);
             nxDistributerPurchaseGoodsEntity.setNxDpgQuantity("0"); // 数量为0
             nxDistributerPurchaseGoodsEntity.setNxDpgStatus(3); // 3 = 完成
-            nxDistributerPurchaseGoodsEntity.setNxDpgPurchaseType(-2); // -2 = 调出
+            nxDistributerPurchaseGoodsEntity.setNxDpgPurchaseType(getGbPurchaseGoodsTypeShelfDiaochu()); // -2 = 调出
             nxDistributerPurchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
             nxDistributerPurchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
             nxDistributerPurchaseGoodsEntity.setNxDpgBuyPrice("0"); // 单价为0

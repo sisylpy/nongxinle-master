@@ -290,5 +290,15 @@ public class NxDepartmentOrderHistoryEntity implements Serializable {
 	private List<NxDistributerGoodsEntity> nxDistributerGoodsEntityList;
 	private List<NxDistributerGoodsShelfStockEntity> outStockDisGoodsShelfStockEntities;
 	private TreeSet<NxGoodsEntity> nxGoodsEntities;
+	
+	/**
+	 * 溯源报告信息
+	 */
+	private NxTraceReportEntity nxTraceReportEntity;
+	
+	/**
+	 * 货架库存信息
+	 */
+	private NxDistributerGoodsShelfStockEntity shelfStockEntity;
 
 }

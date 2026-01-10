@@ -849,6 +849,9 @@ public class NxDistributerGoodsShelfStockController {
 			}
 		}
 
+		// 保存原始whichDay值，因为后面可能会修改
+		Integer originalWhichDay = whichDay;
+
 		//按商品显示
 		List<NxDistributerFatherGoodsEntity> greatGrandGoods = new ArrayList<>();
 		Map<String, Object> map0 = new HashMap<>();
@@ -873,48 +876,31 @@ public class NxDistributerGoodsShelfStockController {
 		}
 
 		//1，stock 剩余金额总额
-		Integer integer = nxDistributerGoodsShelfStockService.queryStockGoodsCount(map0);
+		// 【重要】总库存应该始终查询全部数据，不受whichDay影响，所以创建一个专门用于查询总库存的Map
+		Map<String, Object> map0ForTotal = new HashMap<>(map0);
+		// 确保总库存查询不包含日期条件
+		map0ForTotal.remove("date");
+		map0ForTotal.remove("stopDate");
+		map0ForTotal.remove("startDate");
+		Integer integer = nxDistributerGoodsShelfStockService.queryStockGoodsCount(map0ForTotal);
 		if (integer > 0) {
 			Map<String, Object> mapTotal = new HashMap<>();
-			Double aDouble = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(map0);
+			// 【修复】使用map0ForTotal查询总库存，确保查询的是全部数据
+			System.out.println("【总库存SQL查询】调用queryShelfStockRestTotal，参数: " + map0ForTotal);
+			System.out.println("【总库存SQL查询】参数中的日期条件: " + 
+				(map0ForTotal.containsKey("date") ? "date=" + map0ForTotal.get("date") : "无date") + 
+				(map0ForTotal.containsKey("stopDate") ? ", stopDate=" + map0ForTotal.get("stopDate") : "") +
+				(map0ForTotal.containsKey("startDate") ? ", startDate=" + map0ForTotal.get("startDate") : ""));
+			System.out.println("【总库存SQL查询】SQL参数详情 - disId: " + map0ForTotal.get("disId") + 
+				", status: " + map0ForTotal.get("status") +
+				", restWeight: " + map0ForTotal.get("restWeight"));
+			Double aDouble = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(map0ForTotal);
+			System.out.println("【总库存SQL查询】查询到的总库存金额: " + aDouble);
 			mapTotal.put("dateString", "全部");
 			mapTotal.put("restTotal", new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 			mapResult.put("total", mapTotal);
 
-			//条件判断 2
-			// whichDay = 99 表示查询全部，不设置日期条件
-			// whichDay = 0 也表示查询全部
-			// whichDay = 1-4 表示查询对应天数前的数据
-			if (whichDay != null && whichDay > 0 && whichDay < 5) {
-				whichDay = whichDay - 1;
-				map0.put("date", DateUtils.formatWhatDay(-whichDay));
-				map0W.put("date", DateUtils.formatWhatDay(-whichDay));
-			}
-			System.out.println("查询参数: " + map0);
-			System.out.println("whichDay值: " + whichDay);
-			
-			//1，获取商品
-			// whichDay = null, 0, 99 或 < 5 时，查询全部或指定日期的数据
-			// whichDay >= 5 时，查询超过4天的数据
-			if (whichDay == null || whichDay == 99 || whichDay == 0 || whichDay < 5) {
-				System.out.println("调用getStockGoodsFatherRestSubTotal查询商品树结构");
-				greatGrandGoods = getStockGoodsFatherRestSubTotal(map0, aDouble, map0W);
-			} else {
-				System.out.println("调用queryExceedData查询超过4天的数据");
-				greatGrandGoods = queryExceedData(disId, searchDepId, searchDepIds, idsNx);
-			}
-			System.out.println("获取到的商品树结构数量（应该是曾祖父级别）: " + (greatGrandGoods != null ? greatGrandGoods.size() : 0));
-			// 调试：打印返回的数据结构
-			if (greatGrandGoods != null && !greatGrandGoods.isEmpty()) {
-				for (NxDistributerFatherGoodsEntity item : greatGrandGoods) {
-					System.out.println("返回项 - ID: " + item.getNxDistributerFatherGoodsId() 
-						+ ", 名称: " + item.getNxDfgFatherGoodsName()
-						+ ", 父ID: " + item.getNxDfgFathersFatherId()
-						+ ", 包含子分类: " + (item.getFatherGoodsEntities() != null ? item.getFatherGoodsEntities().size() : 0));
-				}
-			}
-			mapResult.put("arr", greatGrandGoods);
-
+			// 先计算各期间的总额，以便后续根据whichDay选择使用哪个总额
 			//IN - 今天入库
 			Map<String, Object> mapRenZero = new HashMap<>();
 			mapRenZero.put("disId", disId);
@@ -929,7 +915,6 @@ public class NxDistributerGoodsShelfStockController {
 				}
 			}
 			Double zeroTotal = 0.0;
-			System.out.println("今天入库查询参数: " + mapRenZero);
 			Integer integerzero = nxDistributerGoodsShelfStockService.queryStockGoodsCount(mapRenZero);
 			if (integerzero > 0) {
 				zeroTotal = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(mapRenZero);
@@ -1026,10 +1011,26 @@ public class NxDistributerGoodsShelfStockController {
 				}
 			}
 
+			Map<String, Object> mapRen4W = new HashMap<>();
+			mapRen4W.put("disId", disId);
+			mapRen4W.put("status", 0);
+			mapRen4W.put("stopDate", DateUtils.formatWhatDay(-4));
+			mapRen4W.put("restWeight", 0);
+			if (searchDepId != null && !searchDepId.equals("-1")) {
+				mapRen4W.put("depFatherId", searchDepId);
+			} else {
+				if (searchDepIds != null && !searchDepIds.equals("-1")) {
+					mapRen4W.put("depFatherIds", idsNx);
+				}
+			}
+
 			Double exceedThreeTotal = 0.0;
 			Integer integer33 = nxDistributerGoodsShelfStockService.queryStockGoodsCount(mapRen4);
+			List<NxDistributerFatherGoodsEntity> exceedArr = new ArrayList<>();
 			if (integer33 > 0) {
 				exceedThreeTotal = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(mapRen4);
+				// 查询exceed期间的商品数据
+				exceedArr = getStockGoodsFatherRestSubTotal(mapRen4, exceedThreeTotal, mapRen4W);
 			}
 
 			Map<String, Object> mapExceed = new HashMap<>();
@@ -1037,11 +1038,107 @@ public class NxDistributerGoodsShelfStockController {
 			mapExceed.put("dateString", exceedDateString);
 			mapExceed.put("exceedThreeTotal", new BigDecimal(exceedThreeTotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
 			mapResult.put("exceed", mapExceed);
+			
+			// 添加exceed商品数组
+			mapResult.put("exceedArr", exceedArr);
+			mapResult.put("processedExceedArr", exceedArr); // processedExceedArr通常与exceedArr相同，或经过额外处理
+
+			//条件判断 2 - 根据whichDay设置查询参数和选择总额
+			// whichDay = 99 表示查询全部，不设置日期条件
+			// whichDay = 0 表示查询今天的数据
+			// whichDay = 1-4 表示查询对应天数前的数据
+			Double selectedTotal = aDouble; // 默认使用全部总额
+			if (originalWhichDay != null && originalWhichDay >= 0 && originalWhichDay < 5) {
+				if (originalWhichDay == 0) {
+					// whichDay = 0 时查询今天的数据
+					String todayDate = DateUtils.formatWhatDay(0);
+					map0.put("date", todayDate);
+					map0W.put("date", todayDate);
+					selectedTotal = zeroTotal;
+				} else {
+					// whichDay = 1-4 时查询对应天数前的数据
+					// whichDay = 1 表示昨天，应该使用 DateUtils.formatWhatDay(-1)
+					// whichDay = 2 表示前天，应该使用 DateUtils.formatWhatDay(-2)
+					// 所以 dayOffset = originalWhichDay
+					int dayOffset = originalWhichDay;
+					String targetDate = DateUtils.formatWhatDay(-dayOffset);
+					map0.put("date", targetDate);
+					map0W.put("date", targetDate);
+					// 根据whichDay选择对应的总额
+					if (originalWhichDay == 1) {
+						selectedTotal = oneTotal;
+					} else if (originalWhichDay == 2) {
+						selectedTotal = twoTotal;
+					} else if (originalWhichDay == 3) {
+						selectedTotal = threeTotal;
+					} else if (originalWhichDay == 4) {
+						selectedTotal = exceedThreeTotal;
+					}
+				}
+			}
+			
+			//1，获取商品
+			// whichDay = null 或 99 时，查询全部数据（使用全部总额aDouble）
+			// whichDay = 0-4 时，查询对应期间的数据（使用对应期间的总额）
+			// whichDay >= 5 时，查询超过4天的数据
+			if (originalWhichDay == null || originalWhichDay == 99) {
+				// 查询全部，使用全部总额，不设置日期条件
+				Map<String, Object> map0All = new HashMap<>(map0);
+				map0All.remove("date"); // 移除日期条件
+				Map<String, Object> map0WAll = new HashMap<>(map0W);
+				map0WAll.remove("date"); // 移除日期条件
+				greatGrandGoods = getStockGoodsFatherRestSubTotal(map0All, aDouble, map0WAll);
+			} else if (originalWhichDay >= 0 && originalWhichDay < 5) {
+				// 查询指定期间的数据
+				greatGrandGoods = getStockGoodsFatherRestSubTotal(map0, selectedTotal, map0W);
+			} else if (originalWhichDay >= 5) {
+				greatGrandGoods = queryExceedData(disId, searchDepId, searchDepIds, idsNx);
+			} else {
+				// 其他情况，使用全部总额
+				Map<String, Object> map0All = new HashMap<>(map0);
+				map0All.remove("date"); // 移除日期条件
+				Map<String, Object> map0WAll = new HashMap<>(map0W);
+				map0WAll.remove("date"); // 移除日期条件
+				greatGrandGoods = getStockGoodsFatherRestSubTotal(map0All, aDouble, map0WAll);
+			}
+			mapResult.put("arr", greatGrandGoods);
+			
+			// 再次确认exceedArr和processedExceedArr仍然存在（防止被覆盖）
+			Object exceedArrCheck = mapResult.get("exceedArr");
+			if (exceedArrCheck == null) {
+				List<NxDistributerFatherGoodsEntity> exceedArrRecheck = new ArrayList<>();
+				// 重新查询exceed数据
+				Map<String, Object> mapRen4Recheck = new HashMap<>();
+				mapRen4Recheck.put("disId", disId);
+				mapRen4Recheck.put("status", 0);
+				mapRen4Recheck.put("stopDate", DateUtils.formatWhatDay(-4));
+				mapRen4Recheck.put("restWeight", 0);
+				if (searchDepId != null && !searchDepId.equals("-1")) {
+					mapRen4Recheck.put("depFatherId", searchDepId);
+				} else {
+					if (searchDepIds != null && !searchDepIds.equals("-1")) {
+						mapRen4Recheck.put("depFatherIds", idsNx);
+					}
+				}
+				Map<String, Object> mapRen4WRecheck = new HashMap<>(mapRen4Recheck);
+				Integer integer33Recheck = nxDistributerGoodsShelfStockService.queryStockGoodsCount(mapRen4Recheck);
+				if (integer33Recheck > 0) {
+					Double exceedThreeTotalRecheck = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(mapRen4Recheck);
+					exceedArrRecheck = getStockGoodsFatherRestSubTotal(mapRen4Recheck, exceedThreeTotalRecheck, mapRen4WRecheck);
+				}
+				mapResult.put("exceedArr", exceedArrRecheck);
+				mapResult.put("processedExceedArr", exceedArrRecheck);
+			}
 
 		} else {
 			Map<String, Object> map = new HashMap<>();
 			map.put("restTotal", "0");
 			mapResult.put("total", map);
+			
+			// 即使没有库存，也要设置exceedArr和processedExceedArr为空数组，避免前端收到undefined
+			List<NxDistributerFatherGoodsEntity> exceedArr = new ArrayList<>();
+			mapResult.put("exceedArr", exceedArr);
+			mapResult.put("processedExceedArr", exceedArr);
 		}
 		
 		// 查询部门列表
@@ -1055,7 +1152,6 @@ public class NxDistributerGoodsShelfStockController {
 					mapDep.put("status", 0);
 					mapDep.put("restWeight", 0);
 					mapDep.put("depFatherId", departmentEntity.getNxDepartmentId());
-					System.out.println("部门查询参数: " + mapDep);
 					Integer integerDep = nxDistributerGoodsShelfStockService.queryStockGoodsCount(mapDep);
 					if (integerDep > 0) {
 						Double depTotal = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(mapDep);
@@ -1069,7 +1165,15 @@ public class NxDistributerGoodsShelfStockController {
 			}
 		}
 		mapResult.put("depArr", list);
-
+		
+		// 最终确认：确保exceedArr和processedExceedArr一定存在
+		if (!mapResult.containsKey("exceedArr")) {
+			mapResult.put("exceedArr", new ArrayList<>());
+		}
+		if (!mapResult.containsKey("processedExceedArr")) {
+			mapResult.put("processedExceedArr", new ArrayList<>());
+		}
+		
 		return R.ok().put("data", mapResult);
 	}
 
@@ -1081,9 +1185,12 @@ public class NxDistributerGoodsShelfStockController {
 	 * @return 商品树结构列表
 	 */
 	private List<NxDistributerFatherGoodsEntity> getStockGoodsFatherRestSubTotal(Map<String, Object> map0, Double total, Map<String, Object> map0W) {
-		map0.put("restWeight", 0);
-		List<NxDistributerFatherGoodsEntity> stockAndRecordFatherGoodsTreeSet = getStockFatherGoodsTreeSet(map0);
-		List<NxDistributerFatherGoodsEntity> stockFatherGoodsRestSubtotal = getStockFatherGoodsRestSubtotal(stockAndRecordFatherGoodsTreeSet, map0, total);
+		// 【修复】创建新的Map对象，避免修改原始map0，确保日期条件不被覆盖
+		Map<String, Object> map0Copy = new HashMap<>(map0);
+		map0Copy.put("restWeight", 0);
+		List<NxDistributerFatherGoodsEntity> stockAndRecordFatherGoodsTreeSet = getStockFatherGoodsTreeSet(map0Copy);
+		// 【修复】传递map0Copy而不是map0，确保日期条件不被后续操作覆盖
+		List<NxDistributerFatherGoodsEntity> stockFatherGoodsRestSubtotal = getStockFatherGoodsRestSubtotal(stockAndRecordFatherGoodsTreeSet, map0Copy, total);
 		return stockFatherGoodsRestSubtotal;
 	}
 
@@ -1096,13 +1203,6 @@ public class NxDistributerGoodsShelfStockController {
 		Integer integerStock = nxDistributerGoodsShelfStockService.queryStockGoodsCount(map0);
 		if (integerStock > 0) {
 			List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerGoodsShelfStockService.queryStockTreeFatherGoodsByParams(map0);
-			System.out.println("商品树结构数量（曾祖父级别）: " + fatherGoodsEntities.size());
-			// 调试：打印每个曾祖父的信息
-			for (NxDistributerFatherGoodsEntity greatGrand : fatherGoodsEntities) {
-				System.out.println("曾祖父 - ID: " + greatGrand.getNxDistributerFatherGoodsId() 
-					+ ", 名称: " + greatGrand.getNxDfgFatherGoodsName()
-					+ ", 包含爷爷数量: " + (greatGrand.getFatherGoodsEntities() != null ? greatGrand.getFatherGoodsEntities().size() : 0));
-			}
 			return fatherGoodsEntities;
 		} else {
 			return new ArrayList<>();
@@ -1126,12 +1226,24 @@ public class NxDistributerGoodsShelfStockController {
 			if (grandGoodsEntities != null) {
 				for (NxDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
 					BigDecimal stockTotalValue = new BigDecimal(0);
-					map0.put("disGoodsGrandId", grandFather.getNxDistributerFatherGoodsId());
-					System.out.println("查询参数: " + map0);
-					Integer integer = nxDistributerGoodsShelfStockService.queryStockGoodsCount(map0);
+					// 【修复】创建新的Map对象，避免污染原始map0，确保日期条件正确传递
+					Map<String, Object> mapForGrand = new HashMap<>(map0);
+					mapForGrand.put("disGoodsGrandId", grandFather.getNxDistributerFatherGoodsId());
+					Integer integer = nxDistributerGoodsShelfStockService.queryStockGoodsCount(mapForGrand);
 					if (integer > 0) {
-						Double stockTotal = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(map0);
+						System.out.println("【二级分类总额SQL查询】调用queryShelfStockRestTotal，参数: " + mapForGrand);
+						System.out.println("【二级分类总额SQL查询】参数中的日期条件: " + 
+							(mapForGrand.containsKey("date") ? "date=" + mapForGrand.get("date") : "无date") + 
+							(mapForGrand.containsKey("stopDate") ? ", stopDate=" + mapForGrand.get("stopDate") : "") +
+							(mapForGrand.containsKey("startDate") ? ", startDate=" + mapForGrand.get("startDate") : ""));
+						System.out.println("【二级分类总额SQL查询】SQL参数详情 - disId: " + mapForGrand.get("disId") + 
+							", disGoodsGrandId: " + mapForGrand.get("disGoodsGrandId") + 
+							", status: " + mapForGrand.get("status") +
+							", restWeight: " + mapForGrand.get("restWeight"));
+						Double stockTotal = nxDistributerGoodsShelfStockService.queryShelfStockRestTotal(mapForGrand);
 						stockTotalValue = new BigDecimal(stockTotal).setScale(1, BigDecimal.ROUND_HALF_UP);
+						System.out.println("【二级分类总额SQL查询】二级分类ID: " + grandFather.getNxDistributerFatherGoodsId() + 
+							", 查询到的原始总额: " + stockTotal + ", 格式化后: " + stockTotalValue);
 						greatGrandTotal = greatGrandTotal.add(stockTotalValue);
 					}
 
@@ -1143,14 +1255,13 @@ public class NxDistributerGoodsShelfStockController {
 					grandFather.setFatherStockMany(integer != null ? integer.doubleValue() : 0.0);
 					grandFather.setFatherStockManyString(integer != null ? integer.toString() : "0");
 				}
-			}
+		}
 
 			// 查询该一级分类的商品数量
 			Map<String, Object> map0ForGreat = new HashMap<>(map0);
 			map0ForGreat.put("disGoodsGreatId", greatGrandFather.getNxDistributerFatherGoodsId());
 			map0ForGreat.remove("disGoodsGrandId"); // 移除二级分类ID，使用一级分类ID
 			Integer greatInteger = nxDistributerGoodsShelfStockService.queryStockGoodsCount(map0ForGreat);
-			System.out.println("一级分类商品数量查询参数: " + map0ForGreat + ", 数量: " + greatInteger);
 
 			// 计算百分比
 			BigDecimal divide = new BigDecimal(0);

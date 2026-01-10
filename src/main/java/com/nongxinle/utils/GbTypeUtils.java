@@ -102,6 +102,15 @@ public class GbTypeUtils {
     public final static Integer GB_PURCHASE_GOODS_STATUS_PAY_FINISH = 5;  //完成支付
 
 
+    public final static Integer GB_PURCHASE_GOODS_TYPE_SHELF_DIAOCHU = -2;  //货架调货入库
+    public final static Integer GB_PURCHASE_GOODS_TYPE_FOR_ORDER = 1;  //新采购商品
+    public final static Integer GB_PURCHASE_GOODS_TYPE_SHELF_TUIHUO = 9;  //货架退货
+    public final static Integer GB_PURCHASE_GOODS_TYPE_SHELF_RUKU = 10;  //货架直接入库
+    public final static Integer GB_PURCHASE_GOODS_TYPE_SHELF_ORDER = 11;  //货架自采
+    public final static Integer GB_PURCHASE_GOODS_TYPE_SHELF_JINGHUO = 12;  //货架订货小程序
+    public final static Integer GB_PURCHASE_GOODS_TYPE_SHELF_PASTE = 13;  //货架复制
+
+
     public final static Integer GB_DIS_PURCHASE_BATCH_UN_Send = -2; //卖方未读
     public final static Integer GB_DIS_PURCHASE_BATCH_UN_READ = -1; //卖方未读
     public final static Integer GB_DIS_PURCHASE_BATCH_HAVE_READ = 0; //卖方已读
@@ -251,6 +260,18 @@ public class GbTypeUtils {
     public static Integer getGbPurchaseGoodsStatusWaitReceive(){ return GB_PURCHASE_GOODS_STATUS_WAIT_RECEIVE; }
     public static Integer getGbPurchaseGoodsStatusStockFinish(){ return GB_PURCHASE_GOODS_STATUS_STOCK_FINISH; }
     public static Integer getGbPurchaseGoodsStatusPayFinish(){ return GB_PURCHASE_GOODS_STATUS_PAY_FINISH; }
+
+
+    public static Integer getGbPurchaseGoodsTypeForOrder(){ return  GB_PURCHASE_GOODS_TYPE_FOR_ORDER ;}
+    public static Integer getGbPurchaseGoodsTypeShelfDiaochu(){ return GB_PURCHASE_GOODS_TYPE_SHELF_DIAOCHU; }
+
+    public static Integer getGbPurchaseGoodsTypeShelfTuihuo(){ return GB_PURCHASE_GOODS_TYPE_SHELF_TUIHUO; }
+    public static Integer getGbPurchaseGoodsTypeShelfRuku(){ return GB_PURCHASE_GOODS_TYPE_SHELF_RUKU; }
+    public static Integer getGbPurchaseGoodsTypeShelfOrder(){ return GB_PURCHASE_GOODS_TYPE_SHELF_ORDER; }
+    public static Integer getGbPurchaseGoodsTypeShelfPaste(){ return GB_PURCHASE_GOODS_TYPE_SHELF_PASTE; }
+    public static Integer getGbPurchaseGoodsTypeShelfJinghuo(){ return GB_PURCHASE_GOODS_TYPE_SHELF_JINGHUO; }
+
+
 
     public static Integer getGbWeightGoodsStatusPrepare(){ return GB_WEIGHT_GOODS_STATUS_PREPARE; }
     public static Integer getGbWeightGoodsStatusPrinted(){ return GB_WEIGHT_GOODS_STATUS_PRINTED; }

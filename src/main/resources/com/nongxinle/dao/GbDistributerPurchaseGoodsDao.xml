@@ -554,7 +554,7 @@
         left join gb_distributer_goods as dg on dg.gb_distributer_goods_id = gdpg.gb_DPG_dis_goods_id
         left join gb_distributer_goods_price as gdgp on gdgp.gb_dgp_pur_goods_id = gdpg.gb_distributer_purchase_goods_id
         left join gb_department_orders as ndo on gdpg.gb_distributer_purchase_goods_id = ndo.gb_DO_purchase_goods_id
-        left join gb_department as d on d.gb_department_id = ndo.gb_DO_department_id
+        left join gb_department as d on d.gb_department_id = ndo.gb_DO_department_id and d.gb_department_id = gdgs.gb_dgs_gb_department_id
         left join gb_department as df on d.gb_department_father_id = df.gb_department_id
         left join gb_department_user as purUser on purUser.gb_department_user_id = gdpg.gb_DPG_pur_user_id
         left join gb_department_user as recUser on recUser.gb_department_user_id = ndo.gb_DO_receive_user_id
@@ -2600,7 +2600,7 @@
         <result property="gbDgsGbPriceGoodsId" column="gb_dgs_gb_price_goods_id"/>
         <result property="gbDgsSellingPrice" column="gb_dgs_selling_price"/>
         <result property="gbDgsSellingSubtotal" column="gb_dgs_selling_subtotal"/>
-        <association property="gbDepartmentEntity" resultMap="justDepartment"/>
+        <association property="gbDepartmentEntity" resultMap="orderDepartment"/>
     </resultMap>
 
 
@@ -2820,7 +2820,9 @@
         purUser.gb_DU_wx_nick_name 'purUser_gb_DU_wx_nick_name',
         -- 库存信息
         gdgs.*,
-        gd.*
+        gd.gb_department_id 'ds_gb_department_id',
+        gd.gb_department_name 'ds_gb_department_name',
+        gd.gb_department_father_id 'ds_gb_department_father_id'
 
         FROM gb_distributer_purchase_goods AS gdpg
         LEFT JOIN gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_pur_goods_id = gdpg.gb_distributer_purchase_goods_id
@@ -2832,9 +2834,10 @@
         AND gdpg.gb_DPG_status &gt; 2
         <if test="purType != null">
             AND gdpg.gb_DPG_purchase_type = #{purType}
-        </if> <if test="batchId != null">
+        </if>
+          <if test="batchId != null">
         AND gdpg.gb_DPG_batch_id = #{batchId}
-    </if>
+        </if>
         <if test="batchId != null">
             AND gdpg.gb_DPG_batch_id = #{batchId}
         </if>

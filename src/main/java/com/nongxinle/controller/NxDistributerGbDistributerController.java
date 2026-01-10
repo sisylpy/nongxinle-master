@@ -152,6 +152,8 @@ public class NxDistributerGbDistributerController {
             departmentEntity.setNxDepartmentPayTotal("0");
             departmentEntity.setNxDepartmentProfitTotal("0");
             departmentEntity.setNxDepartmentAttrName(gbDistributerEntity.getGbDistributerName());
+            departmentEntity.setNxDepartmentOrderCode(gbDistributerEntity.getGbDistributerName());
+            departmentEntity.setNxDepartmentRecordMinutes(30);
             departmentEntity.setNxDepartmentJoinDate(formatWhatDay(0));
             departmentEntity.setNxDepartmentOrderTotal(0);
             departmentEntity.setNxDepartmentRecordMinutes(0);

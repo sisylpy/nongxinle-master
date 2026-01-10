@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import com.nongxinle.entity.*;
+import com.nongxinle.dto.NxGoodsSimpleDTO;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.Constant;
 import com.nongxinle.utils.UploadFile;
@@ -445,7 +446,7 @@ public class NxGoodsController {
         map.put("goodsStandard", standard);
         map.put("standardWeight", standardWeight);
         map.put("place", place);
-        map.put("sort", goods.getNxGoodsSort());
+//        map.put("sort", goods.getNxGoodsSort());
         map.put("unitName", goods.getNxGoodsCartonUnit());
         map.put("items", goods.getNxGoodsItemsPerCarton());
 
@@ -459,6 +460,7 @@ public class NxGoodsController {
             goods.setNxGoodsName(englishKuohao);
             goods.setNxGoodsPinyin(pinyin);
             goods.setNxGoodsPy(headPinyin);
+            goods.setNxGoodsSonsSort(goods.getNxGoodsSonsSort());
             nxGoodsService.update(goods);
             if (goods.getNxGoodsIsOldestSon() == 1) {
                 NxGoodsEntity fatherGoodsEntity = nxGoodsService.queryObject(nxGoodsFatherId);
@@ -715,6 +717,7 @@ public class NxGoodsController {
                     goods.setNxGoodsFatherId(fatherGoods.getNxGoodsId());
                     goods.setNxGoodsIsOldestSon(1);
                     goods.setNxGoodsIsHidden(0);
+                    goods.setNxGoodsSonsSort(0);
                     Integer nxGoodsGrandId = goods.getNxGoodsGrandId();
                     NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxGoodsGrandId);
                     goods.setNxGoodsGreatGrandId(nxGoodsEntity.getNxGoodsFatherId());
@@ -811,7 +814,6 @@ public class NxGoodsController {
     public R queryShelfNxGoodsWithNxDisByQuickSearch( String searchStr,Integer disId) {
         Map<String, Object> map = new HashMap<>();
         String pinyinString = searchStr;
-
         map.put("searchStr", searchStr);
         map.put("disId", disId);
         for (int i = 0; i < searchStr.length(); i++) {
@@ -900,7 +902,9 @@ public class NxGoodsController {
             goodsEntities = nxGoodsService.queryQuickSearchFatherGoods(map);
         }
         if (type == 1) {
-            goodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
+//            goodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
+
+            goodsEntities = nxGoodsService.queryQuickSearchNxGoodsAll(map);
         }
         return R.ok().put("data", goodsEntities);
     }
@@ -1042,7 +1046,7 @@ public class NxGoodsController {
         map.put("fatherId", fatherId);
 
         //查询列表数据
-        List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryListWithFatherIdDeep(map);
+        List<NxGoodsSimpleDTO> nxGoodsEntities = nxGoodsService.queryListWithFatherIdDeep(map);
         System.out.println("eedeepgoodos" + nxGoodsEntities);
         return R.ok().put("data", nxGoodsEntities);
 
@@ -1072,6 +1076,19 @@ public class NxGoodsController {
         return nxGoodsEntities;
 
     }
+
+    @RequestMapping(value = "/getLevelOneGoodsByName/{goodsName}")
+    @ResponseBody
+    public R getLevelOneGoodsByName(@PathVariable String goodsName ) {
+
+        NxGoodsEntity nxGoodsEntity =   nxGoodsService.queryLevelOneGoods(goodsName);
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", nxGoodsEntity.getNxGoodsId());
+        map.put("name", nxGoodsEntity.getNxGoodsName() );
+        return R.ok().put("data", map);
+    }
+
+
 
     /**
      * todo testData
@@ -1983,3 +2000,4 @@ public class NxGoodsController {
 //        return R.ok();
 //
 //    }
+

@@ -99,6 +99,10 @@ public class NxDistributerPurchaseGoodsEntity implements Serializable {
     private NxJrdhUserEntity buyerUserEntity;
     private NxJrdhSupplierEntity jrdhSupplierEntity;
 	private Integer nxDpgApplyShelfId;
+	/**
+	 * 溯源报告ID
+	 */
+	private Integer nxDpgTraceReportId;
 
     private List<NxDistributerGoodsShelfGoodsEntity> shelfGoodsEntities;
     private NxDistributerGoodsShelfEntity applyShelfEntity;

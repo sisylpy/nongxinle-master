@@ -38,6 +38,8 @@ public class OutGoodsSimpleDTO implements Serializable {
      */
     private String nxDgGoodsStandardWeight;
 
+    private Integer nxDgDfgGoodsFatherId;
+    private Integer nxDgDfgGoodsGrandId;
     /**
      * 品牌
      */

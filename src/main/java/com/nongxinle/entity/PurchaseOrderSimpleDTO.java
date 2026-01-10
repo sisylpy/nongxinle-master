@@ -64,6 +64,11 @@ public class PurchaseOrderSimpleDTO implements Serializable {
     private String nxDepartmentOrderCode;
 
     /**
+     * 父部门订货代号（单独返回）
+     */
+    private String fatherDepartmentOrderCode;
+
+    /**
      * 父部门属性名称（单独返回）
      */
     private String fatherDepartmentAttrName;

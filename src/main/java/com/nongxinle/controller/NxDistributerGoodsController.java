@@ -7,10 +7,12 @@ package com.nongxinle.controller;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,11 +31,24 @@ import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.*;
-import static com.nongxinle.utils.GbTypeUtils.getGbPurchaseGoodsStatusProcurement;
 import static com.nongxinle.utils.NxDistributerTypeUtils.*;
 import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisPurchaseGoodsWithBatch;
 import static com.nongxinle.utils.PinYin4jUtils.*;
@@ -44,7 +59,7 @@ import static com.nongxinle.utils.PinYin4jUtils.getXiegang;
 @RequestMapping("api/nxdistributergoods")
 public class NxDistributerGoodsController {
     private static final Logger logger = LoggerFactory.getLogger(NxDistributerGoodsController.class);
-    
+
     @Autowired
     private NxDistributerGoodsService dgService;
     @Autowired
@@ -114,13 +129,20 @@ public class NxDistributerGoodsController {
     private NxDistributerGoodsShelfStockService nxDistributerGoodsShelfStockService;
     @Autowired
     private NxDistributerGoodsShelfStockReduceService nxDistributerGoodsShelfStockReduceService;
+    @Autowired
+    private NxDistributerGoodsShelfService nxDistributerGoodsShelfService;
+    @Autowired
+    private com.nongxinle.service.AsyncGoodsDownloadService asyncGoodsDownloadService;
+    @Autowired
+    private NxTraceReportService nxTraceReportService;
+
 
     private static final String KEY = "C5HBZ-KEIW2-JXXUJ-COLGS-FQO47-WWFAK";
 
 
     @RequestMapping(value = "/getBrandForPrompts")
     @ResponseBody
-    public R getBrandForPrompts()  {
+    public R getBrandForPrompts() {
         List<String> brandList = nxGoodsService.queryNxBrand();
         List<String> disBrandList = dgService.queryDisGoodsBrand();
 
@@ -282,10 +304,10 @@ public class NxDistributerGoodsController {
                 departmentEntity.setNxDepartmentPayTotal("0");
                 departmentEntity.setNxDepartmentProfitTotal("0");
                 departmentEntity.setNxDepartmentAttrName(gbDistributerEntity.getGbDistributerName());
+                departmentEntity.setNxDepartmentOrderCode(gbDistributerEntity.getGbDistributerName());
+                departmentEntity.setNxDepartmentRecordMinutes(30);
                 departmentEntity.setNxDepartmentJoinDate(formatWhatDay(0));
                 departmentEntity.setNxDepartmentOrderTotal(0);
-                departmentEntity.setNxDepartmentRecordMinutes(0);
-
                 nxDepartmentService.saveJustDepartment(departmentEntity);
             }
 
@@ -1103,7 +1125,7 @@ public class NxDistributerGoodsController {
             resultPurGoods.setNxDpgApplyDate(formatWhatYearDayTime(0));
             resultPurGoods.setNxDpgOrdersAmount(1);
             resultPurGoods.setNxDpgFinishAmount(0);
-            resultPurGoods.setNxDpgPurchaseType(1);
+            resultPurGoods.setNxDpgPurchaseType(getGbPurchaseGoodsTypeForOrder());
             resultPurGoods.setNxDpgExpectPrice(disGoods.getNxDgBuyingPrice());
             resultPurGoods.setNxDpgBuyPrice(disGoods.getNxDgBuyingPrice());
             resultPurGoods.setNxDpgDisGoodsId(doDisGoodsId);
@@ -1207,33 +1229,33 @@ public class NxDistributerGoodsController {
         if (purchaseGoodsId == null || purchaseGoodsId == -1) {
             return;
         }
-        
+
         NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDisPurchaseGoodsService.queryObject(purchaseGoodsId);
         if (purchaseGoodsEntity == null) {
             return;
         }
-        
+
         Integer ordersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
         if (ordersAmount == null || ordersAmount <= 0) {
             return;
         }
-        
+
         if (ordersAmount > 1) {
             // 减少订单数量并更新数量
             purchaseGoodsEntity.setNxDpgOrdersAmount(ordersAmount - 1);
-            
+
             // 减少数量
-            if (orderEntity.getNxDoStandard() != null && 
-                orderEntity.getNxDoStandard().equals(purchaseGoodsEntity.getNxDpgStandard()) &&
-                purchaseGoodsEntity.getNxDpgQuantity() != null) {
+            if (orderEntity.getNxDoStandard() != null &&
+                    orderEntity.getNxDoStandard().equals(purchaseGoodsEntity.getNxDpgStandard()) &&
+                    purchaseGoodsEntity.getNxDpgQuantity() != null) {
                 try {
                     BigDecimal currentQuantity = new BigDecimal(purchaseGoodsEntity.getNxDpgQuantity());
                     BigDecimal orderQuantity = new BigDecimal(orderEntity.getNxDoQuantity());
                     BigDecimal newQuantity = currentQuantity.subtract(orderQuantity).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    
+
                     purchaseGoodsEntity.setNxDpgQuantity(newQuantity.toString());
                     purchaseGoodsEntity.setNxDpgBuyQuantity(newQuantity.toString());
-                    
+
                     // 更新小计
                     if (purchaseGoodsEntity.getNxDpgBuyPrice() != null) {
                         BigDecimal price = new BigDecimal(purchaseGoodsEntity.getNxDpgBuyPrice());
@@ -1244,12 +1266,12 @@ public class NxDistributerGoodsController {
                     logger.error("计算采购商品数量时出错", e);
                 }
             }
-            
+
             nxDisPurchaseGoodsService.update(purchaseGoodsEntity);
         } else {
             // 只有一个订单，删除采购商品
             Integer batchId = purchaseGoodsEntity.getNxDpgBatchId();
-            
+
             // 如果有关联的批次，检查批次中是否只有这一个商品
             if (batchId != null) {
                 Map<String, Object> mapBatch = new HashMap<>();
@@ -1260,7 +1282,7 @@ public class NxDistributerGoodsController {
                     nxDPBService.delete(batchId);
                 }
             }
-            
+
             // 删除采购商品
             nxDisPurchaseGoodsService.delete(purchaseGoodsId);
         }
@@ -1358,7 +1380,6 @@ public class NxDistributerGoodsController {
     }
 
 
-
     @RequestMapping(value = "/helpSaveLinshi/{id}")
     @ResponseBody
     public R helpSaveLinshi(@PathVariable Integer id) {
@@ -1434,7 +1455,7 @@ public class NxDistributerGoodsController {
             linshiGoodsEntity.setNxDgNxGreatGrandId(-1);
             linshiGoodsEntity.setNxDgIsOldestSon(1);
             linshiGoodsEntity.setNxDgGoodsSonsSort(1);
-            linshiGoodsEntity.setNxDgNxGoodsId(-1);
+            linshiGoodsEntity.setNxDgNxGoodsId(null);
             dgService.update(linshiGoodsEntity);
 
             updateLinshiGoodsData(linshiId, goods.getNxDistributerGoodsId(), goods.getNxDgDistributerId());
@@ -1520,7 +1541,7 @@ public class NxDistributerGoodsController {
             mapPrice.put("offset", (page - 1) * limit);
             mapPrice.put("limit", limit);
             List<NxDistributerGoodsEntity> distributerGoodsEntities = dgService.queryDisGoodsByParams(mapPrice);
-            
+
             // 检查是否有重复的商品ID
             Set<Integer> goodsIds = new HashSet<>();
             List<Integer> duplicateIds = new ArrayList<>();
@@ -1537,7 +1558,7 @@ public class NxDistributerGoodsController {
                 logger.warn("发现重复的商品ID: {}", duplicateIds);
             }
             logger.info("查询返回商品数量: {}, 唯一商品数量: {}", distributerGoodsEntities.size(), goodsIds.size());
-            
+
             // 查询总数
             Map<String, Object> mapTotal = new HashMap<>();
             mapTotal.put("disId", disId);
@@ -1554,7 +1575,7 @@ public class NxDistributerGoodsController {
             mapBuyPrice.put("offset", (page - 1) * limit);
             mapBuyPrice.put("limit", limit);
             List<NxDistributerGoodsEntity> distributerGoodsEntities = dgService.queryDisGoodsByParams(mapBuyPrice);
-            
+
             // 检查是否有重复的商品ID
             Set<Integer> goodsIds2 = new HashSet<>();
             List<Integer> duplicateIds2 = new ArrayList<>();
@@ -1571,7 +1592,7 @@ public class NxDistributerGoodsController {
                 logger.warn("发现重复的商品ID: {}", duplicateIds2);
             }
             logger.info("查询返回商品数量: {}, 唯一商品数量: {}", distributerGoodsEntities.size(), goodsIds2.size());
-            
+
             // 查询总数
             Map<String, Object> mapTotal = new HashMap<>();
             mapTotal.put("disId", disId);
@@ -1642,6 +1663,51 @@ public class NxDistributerGoodsController {
             }
         }
 
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/saveShelfGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R saveShelfGoods(String ids, Integer shelfId) {
+
+        Map<String, Object> map = new HashMap<>();
+        NxDistributerGoodsShelfEntity shelfEntity = nxDistributerGoodsShelfService.queryObject(shelfId);
+
+        map.put("shelfId", shelfId);
+        int count = nxDistributerGoodsShelfGoodsService.queryShelfForGoodsCount(map);
+        String[] arr = ids.split(",");
+        if (arr.length > 0) {
+            for (int i = 0; i < arr.length; i++) {
+                Integer id = Integer.valueOf(arr[i]);
+                NxDistributerGoodsEntity distributerGoodsEntity = dgService.queryObject(id);
+                distributerGoodsEntity.setNxDgPurchaseAuto(-1);
+                dgService.update(distributerGoodsEntity);
+
+                NxDistributerGoodsShelfGoodsEntity shelfGoodsEntity = new NxDistributerGoodsShelfGoodsEntity();
+                shelfGoodsEntity.setNxDgsgDisGoodsId(Integer.valueOf(id));
+                shelfGoodsEntity.setNxDgsgShelfId(shelfId);
+                shelfGoodsEntity.setNxDgsgSort(count + i + 1);
+                shelfGoodsEntity.setNxDgsgShelfSort(shelfEntity.getNxDistributerGoodsShelfSort());
+                nxDistributerGoodsShelfGoodsService.save(shelfGoodsEntity);
+            }
+        }
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/saveAutoPurchase", method = RequestMethod.POST)
+    @ResponseBody
+    public R saveAutoPurchase(String ids, Integer purchaseType) {
+        String[] arr = ids.split(",");
+        if (arr.length > 0) {
+            for (int i = 0; i < arr.length; i++) {
+                Integer id = Integer.valueOf(arr[i]);
+                NxDistributerGoodsEntity distributerGoodsEntity = dgService.queryObject(id);
+                distributerGoodsEntity.setNxDgPurchaseAuto(purchaseType);
+                dgService.update(distributerGoodsEntity);
+            }
+        }
         return R.ok();
     }
 
@@ -1875,6 +1941,7 @@ public class NxDistributerGoodsController {
         goods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
         System.out.println("savegoogog" + goods);
         goods.setNxDgOutTotalWeight("0");
+        goods.setNxDgGoodsStatus(0);
         dgService.save(goods);
 
         Integer gbDfgGoodsAmount = fatherGoodsEntity.getNxDfgGoodsAmount();
@@ -1923,7 +1990,7 @@ public class NxDistributerGoodsController {
             linshiGoods.setNxDgDfgGoodsFatherId(nxDgDfgGoodsFatherId);
             linshiGoods.setNxDgDfgGoodsGrandId(nxDgDfgGoodsGrandId);
             linshiGoods.setNxDgNxFatherId(nxDgNxFatherId);
-            linshiGoods.setNxDgNxGoodsId(-1);
+            linshiGoods.setNxDgNxGoodsId(null);
             linshiGoods.setNxDgIsOldestSon(0);
             linshiGoods.setNxDgGoodsStatus(1);
             linshiGoods.setNxDgNxGrandId(nxDistributerGoodsEntity.getNxDgNxGrandId());
@@ -2005,8 +2072,6 @@ public class NxDistributerGoodsController {
 
 
     //todo test
-
-
 
 
     //todo test
@@ -2228,7 +2293,6 @@ public class NxDistributerGoodsController {
                 nxDepartmentOrderHistoryService.update(ordersEntity);
             }
         }
-
 
 
         //depGoods
@@ -2998,19 +3062,57 @@ public class NxDistributerGoodsController {
         if (total == 1) {
             NxGoodsEntity father = nxGoodsService.queryObject(nxGoodsFatherId);
             if (father != null) {
-                logger.info("[exchangeNxGoodsFatherId] 原父商品下只有一个子商品，删除原父商品，fatherId={}, fatherName={}", 
+                logger.info("[exchangeNxGoodsFatherId] 原父商品下只有一个子商品，删除原父商品，fatherId={}, fatherName={}",
                         nxGoodsFatherId, father.getNxGoodsName());
                 nxGoodsService.delete(father.getNxGoodsId());
             }
         }
 
-        int totalTo = nxGoodsService.queryTotalByFatherId(toFatherId);
-        Integer newSort = Integer.valueOf(totalTo + 1);
+        // 获取目标父级商品信息
+        NxGoodsEntity toFatherGoods = nxGoodsService.queryObject(toFatherId);
+        if (toFatherGoods == null) {
+            logger.error("[exchangeNxGoodsFatherId] 目标父级商品不存在，toFatherId={}", toFatherId);
+            return R.error(-1, "目标父级商品不存在");
+        }
 
-        logger.info("[exchangeNxGoodsFatherId] 更新商品父ID，changeId={}, 从{}改为{}, totalTo={}, newSort={}", 
-                changeId, nxGoodsFatherId, toFatherId, totalTo, newSort);
+        // 正确获取 grandId 和 greatGrandId：应该从 toFatherId 的父级获取
+        // toGrandId = toFatherId 的 fatherId（level=2的grandId等于它的fatherId）
+        Integer toGrandId = toFatherGoods.getNxGoodsFatherId();
+        // toGreatGrandId = toFatherId 的父级的父级ID
+        Integer toGreatGrandId = null;
+        if (toGrandId != null) {
+            NxGoodsEntity grandGoods = nxGoodsService.queryObject(toGrandId);
+            if (grandGoods != null) {
+                toGreatGrandId = grandGoods.getNxGoodsFatherId();
+            }
+        }
+
+        // nxGoodsSort 应该等于父级的 sort（即 toFatherGoods 的 sort）
+        Integer toGoodsSort = toFatherGoods.getNxGoodsSort();
+
+        // 查询该父级下已有商品的最大 sonsSort，用于设置转移商品的 sonsSort
+        List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.querySubNameByFatherId(toFatherId);
+        int maxSonsSort = 0;
+        if (nxGoodsEntities != null && !nxGoodsEntities.isEmpty()) {
+            for (NxGoodsEntity existing : nxGoodsEntities) {
+                if (existing.getNxGoodsSonsSort() != null && existing.getNxGoodsSonsSort() > maxSonsSort) {
+                    maxSonsSort = existing.getNxGoodsSonsSort();
+                }
+            }
+        }
+        Integer newSort = maxSonsSort + 1;
+
+        // 更新商品信息
+        nxGoodsEntity.setNxGoodsGrandId(toGrandId);
+        nxGoodsEntity.setNxGoodsGreatGrandId(toGreatGrandId);
+        nxGoodsEntity.setNxGoodsSort(toGoodsSort);
+
+        logger.info("[exchangeNxGoodsFatherId] 更新商品父ID，changeId={}, 从{}改为{}, maxSonsSort={}, newSort={}",
+                changeId, nxGoodsFatherId, toFatherId, maxSonsSort, newSort);
         nxGoodsEntity.setNxGoodsFatherId(toFatherId);
-        nxGoodsEntity.setNxGoodsSort(newSort);
+
+        nxGoodsEntity.setNxGoodsSonsSort(newSort);
+        nxGoodsEntity.setNxGoodsIsOldestSon(0);
         nxGoodsService.update(nxGoodsEntity);
 
         //2，把配送商的商品的 nxFatherrId 换成 fatherId，
@@ -3020,41 +3122,44 @@ public class NxDistributerGoodsController {
         if (distributerGoodsEntities.size() > 0) {
             int updateCount = 0;
             for (NxDistributerGoodsEntity nxChangeGoods : distributerGoodsEntities) {
-                logger.debug("[exchangeNxGoodsFatherId] 更新分销商商品父ID，disGoodsId={}, 从{}改为{}", 
+                logger.debug("[exchangeNxGoodsFatherId] 更新分销商商品父ID，disGoodsId={}, 从{}改为{}",
                         nxChangeGoods.getNxDistributerGoodsId(), nxChangeGoods.getNxDgNxFatherId(), toFatherId);
                 nxChangeGoods.setNxDgNxFatherId(toFatherId);
+                nxChangeGoods.setNxDgNxGrandId(toGrandId);
+                nxChangeGoods.setNxDgNxGreatGrandId(toGreatGrandId);
+                nxChangeGoods.setNxDgGoodsSort(toGoodsSort);
 
                 //修改 nxDistributerGoodsFather 的 nxGoodsId
                 Integer disId = nxChangeGoods.getNxDgDistributerId();
-                
+
                 //1，查询该分销商是否已有 toFatherId 对应的 NxDistributerFatherGoodsEntity
                 Map<String, Object> map = new HashMap<>();
                 map.put("disId", disId);
                 map.put("nxGoodsId", toFatherId);
                 List<NxDistributerFatherGoodsEntity> existingFatherGoods = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
-                
+
                 NxDistributerFatherGoodsEntity targetFatherGoods = null;
                 if (existingFatherGoods != null && !existingFatherGoods.isEmpty()) {
                     // 如果已有，直接使用
                     targetFatherGoods = existingFatherGoods.get(0);
-                    logger.debug("[exchangeNxGoodsFatherId] 找到已存在的分销商父商品，disGoodsId={}, fatherGoodsId={}", 
+                    logger.debug("[exchangeNxGoodsFatherId] 找到已存在的分销商父商品，disGoodsId={}, fatherGoodsId={}",
                             nxChangeGoods.getNxDistributerGoodsId(), targetFatherGoods.getNxDistributerFatherGoodsId());
                 } else {
                     //2，如果没有，则创建新的 NxDistributerFatherGoodsEntity（按照 saveDisGoods 的逻辑）
-                    NxGoodsEntity toFatherGoods = nxGoodsService.queryObject(toFatherId);
+                    // toFatherGoods 已经在方法开始处定义，直接使用
                     if (toFatherGoods == null) {
                         logger.error("[exchangeNxGoodsFatherId] 目标父商品不存在，toFatherId={}", toFatherId);
                         continue;
                     }
-                    
-                    // 获取 grand 和 greatGrand 信息
-                    NxGoodsEntity fatherEntity = nxGoodsService.queryObject(toFatherId);
+
+                    // 获取 grand 和 greatGrand 信息（使用已定义的 toFatherGoods）
+                    NxGoodsEntity fatherEntity = toFatherGoods;
                     Integer grandFatherId = fatherEntity.getNxGoodsFatherId();
                     NxGoodsEntity grandEntity = grandFatherId != null ? nxGoodsService.queryObject(grandFatherId) : null;
                     Integer greatGrandFatherId = grandEntity != null ? grandEntity.getNxGoodsFatherId() : null;
                     String grandName = grandEntity != null ? grandEntity.getNxGoodsName() : null;
                     String greatGrandName = greatGrandFatherId != null ? nxGoodsService.queryObject(greatGrandFatherId).getNxGoodsName() : null;
-                    
+
                     // 获取颜色（根据 greatGrandId）
                     String fatherColor = null;
                     if (greatGrandFatherId != null) {
@@ -3084,7 +3189,7 @@ public class NxDistributerGoodsController {
                             fatherColor = "#0690eb";
                         }
                     }
-                    
+
                     // 创建 father (Level 2)
                     targetFatherGoods = new NxDistributerFatherGoodsEntity();
                     targetFatherGoods.setNxDfgDistributerId(disId);
@@ -3097,21 +3202,21 @@ public class NxDistributerGoodsController {
                     targetFatherGoods.setNxDfgFatherGoodsSort(toFatherGoods.getNxGoodsSort());
                     targetFatherGoods.setNxDfgNxGoodsId(toFatherId);
                     nxDistributerFatherGoodsService.save(targetFatherGoods);
-                    
+
                     // 处理 grand (Level 1)
                     if (grandName != null && grandFatherId != null) {
                         Map<String, Object> grandMap = new HashMap<>();
                         grandMap.put("disId", disId);
                         grandMap.put("fathersFatherName", grandName);
                         List<NxDistributerFatherGoodsEntity> existingGrandGoods = nxDistributerFatherGoodsService.queryHasDisFathersFather(grandMap);
-                        
+
                         if (existingGrandGoods != null && !existingGrandGoods.isEmpty()) {
                             // 如果已有 grand，直接关联
                             targetFatherGoods.setNxDfgFathersFatherId(existingGrandGoods.get(0).getNxDistributerFatherGoodsId());
                             nxDistributerFatherGoodsService.update(targetFatherGoods);
-                            logger.debug("[exchangeNxGoodsFatherId] 找到已存在的分销商祖父商品，grandGoodsId={}", 
+                            logger.debug("[exchangeNxGoodsFatherId] 找到已存在的分销商祖父商品，grandGoodsId={}",
                                     existingGrandGoods.get(0).getNxDistributerFatherGoodsId());
-                            } else {
+                        } else {
                             // 创建 grand
                             NxDistributerFatherGoodsEntity grandGoods = new NxDistributerFatherGoodsEntity();
                             grandGoods.setNxDfgDistributerId(disId);
@@ -3124,23 +3229,23 @@ public class NxDistributerGoodsController {
                             grandGoods.setNxDfgFatherGoodsImgLarge(grandEntity.getNxGoodsFileBig());
                             grandGoods.setNxDfgFatherGoodsSort(grandEntity.getNxGoodsSort());
                             nxDistributerFatherGoodsService.save(grandGoods);
-                            
+
                             targetFatherGoods.setNxDfgFathersFatherId(grandGoods.getNxDistributerFatherGoodsId());
                             nxDistributerFatherGoodsService.update(targetFatherGoods);
                             logger.debug("[exchangeNxGoodsFatherId] 创建新的分销商祖父商品，grandGoodsId={}", grandGoods.getNxDistributerFatherGoodsId());
-                            
+
                             // 处理 greatGrand (Level 0)
                             if (greatGrandName != null && greatGrandFatherId != null) {
                                 Map<String, Object> greatGrandMap = new HashMap<>();
                                 greatGrandMap.put("disId", disId);
                                 greatGrandMap.put("fathersFatherName", greatGrandName);
                                 List<NxDistributerFatherGoodsEntity> existingGreatGrandGoods = nxDistributerFatherGoodsService.queryHasDisFathersFather(greatGrandMap);
-                                
+
                                 if (existingGreatGrandGoods != null && !existingGreatGrandGoods.isEmpty()) {
                                     // 如果已有 greatGrand，直接关联
                                     grandGoods.setNxDfgFathersFatherId(existingGreatGrandGoods.get(0).getNxDistributerFatherGoodsId());
                                     nxDistributerFatherGoodsService.update(grandGoods);
-                                    logger.debug("[exchangeNxGoodsFatherId] 找到已存在的分销商曾祖父商品，greatGrandGoodsId={}", 
+                                    logger.debug("[exchangeNxGoodsFatherId] 找到已存在的分销商曾祖父商品，greatGrandGoodsId={}",
                                             existingGreatGrandGoods.get(0).getNxDistributerFatherGoodsId());
                                 } else {
                                     // 创建 greatGrand（按照 saveDisGoods 的逻辑）
@@ -3157,7 +3262,7 @@ public class NxDistributerGoodsController {
                                     greatGrandGoods.setNxDfgFatherGoodsSort(greatGrandEntity.getNxGoodsSort());
                                     greatGrandGoods.setNxDfgGoodsAmount(1);
                                     nxDistributerFatherGoodsService.save(greatGrandGoods);
-                                    
+
                                     grandGoods.setNxDfgFathersFatherId(greatGrandGoods.getNxDistributerFatherGoodsId());
                                     nxDistributerFatherGoodsService.update(grandGoods);
                                     logger.debug("[exchangeNxGoodsFatherId] 创建新的分销商曾祖父商品，greatGrandGoodsId={}", greatGrandGoods.getNxDistributerFatherGoodsId());
@@ -3165,23 +3270,82 @@ public class NxDistributerGoodsController {
                             }
                         }
                     }
-                    
-                    logger.info("[exchangeNxGoodsFatherId] 创建新的分销商父商品，disGoodsId={}, fatherGoodsId={}, toFatherId={}", 
+
+                    logger.info("[exchangeNxGoodsFatherId] 创建新的分销商父商品，disGoodsId={}, fatherGoodsId={}, toFatherId={}",
                             nxChangeGoods.getNxDistributerGoodsId(), targetFatherGoods.getNxDistributerFatherGoodsId(), toFatherId);
                 }
-                
+
                 // 更新 nxChangeGoods 的 nxDgDfgGoodsFatherId 和 nxDgDfgGoodsGrandId
                 if (targetFatherGoods != null) {
                     nxChangeGoods.setNxDgDfgGoodsFatherId(targetFatherGoods.getNxDistributerFatherGoodsId());
                     if (targetFatherGoods.getNxDfgFathersFatherId() != null) {
                         nxChangeGoods.setNxDgDfgGoodsGrandId(targetFatherGoods.getNxDfgFathersFatherId());
                     }
-                    logger.debug("[exchangeNxGoodsFatherId] 更新分销商商品的父商品ID，disGoodsId={}, nxDgDfgGoodsFatherId={}, nxDgDfgGoodsGrandId={}", 
-                            nxChangeGoods.getNxDistributerGoodsId(), targetFatherGoods.getNxDistributerFatherGoodsId(), 
-                            targetFatherGoods.getNxDfgFathersFatherId());
+
+                    // 查询该配送商下该父级目录的最大 sonsSort，用于设置转移商品的 sonsSort
+                    Map<String, Object> disMaxSortMap = new HashMap<>();
+                    disMaxSortMap.put("dgFatherId", targetFatherGoods.getNxDistributerFatherGoodsId());
+                    int disMaxSonsSort = dgService.queryNxGoodsSonsSortByParams(disMaxSortMap);
+                    int disNewSonsSort = disMaxSonsSort + 1;
+                    nxChangeGoods.setNxDgGoodsSonsSort(disNewSonsSort);
+
+                    logger.debug("[exchangeNxGoodsFatherId] 更新分销商商品的父商品ID，disGoodsId={}, nxDgDfgGoodsFatherId={}, nxDgDfgGoodsGrandId={}, sonsSort={}",
+                            nxChangeGoods.getNxDistributerGoodsId(), targetFatherGoods.getNxDistributerFatherGoodsId(),
+                            targetFatherGoods.getNxDfgFathersFatherId(), disNewSonsSort);
                 }
 
                 dgService.update(nxChangeGoods);
+
+                // 更新该配送商商品相关的订单和部门商品
+                if (targetFatherGoods != null) {
+                    Integer disGoodsId = nxChangeGoods.getNxDistributerGoodsId();
+                    Integer newFatherId = targetFatherGoods.getNxDistributerFatherGoodsId();
+                    Integer newGrandId = targetFatherGoods.getNxDfgFathersFatherId(); // 可能为null
+
+                    // 更新 nxDepartmentOrder 中的 fatherId, grandId
+                    Map<String, Object> orderMap = new HashMap<>();
+                    orderMap.put("disGoodsId", disGoodsId);
+                    List<NxDepartmentOrdersEntity> ordersEntities = depOrdersService.queryDisOrdersByParams(orderMap);
+                    if (ordersEntities != null && !ordersEntities.isEmpty()) {
+                        for (NxDepartmentOrdersEntity ordersEntity : ordersEntities) {
+                            ordersEntity.setNxDoDisGoodsFatherId(newFatherId);
+                            if (newGrandId != null) {
+                                ordersEntity.setNxDoDisGoodsGrandId(newGrandId);
+                            }
+                            depOrdersService.update(ordersEntity);
+                        }
+                        logger.debug("[exchangeNxGoodsFatherId] 已更新{}个订单记录，disGoodsId={}", 
+                                ordersEntities.size(), disGoodsId);
+                    }
+
+                    // 更新 nxDepartmentOrderHistory 中的 fatherId, grandId
+                    List<NxDepartmentOrderHistoryEntity> historyOrdersEntities = 
+                            nxDepartmentOrderHistoryService.queryDisHistoryOrdersByParams(orderMap);
+                    if (historyOrdersEntities != null && !historyOrdersEntities.isEmpty()) {
+                        for (NxDepartmentOrderHistoryEntity historyOrderEntity : historyOrdersEntities) {
+                            historyOrderEntity.setNxDoDisGoodsFatherId(newFatherId);
+                            if (newGrandId != null) {
+                                historyOrderEntity.setNxDoDisGoodsGrandId(newGrandId);
+                            }
+                            nxDepartmentOrderHistoryService.update(historyOrderEntity);
+                        }
+                        logger.debug("[exchangeNxGoodsFatherId] 已更新{}个历史订单记录，disGoodsId={}", 
+                                historyOrdersEntities.size(), disGoodsId);
+                    }
+
+                    // 更新 nxDepartDisGoods 中的 fatherId
+                    List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = 
+                            nxDepartmentDisGoodsService.queryDepDisGoodsByParams(orderMap);
+                    if (departmentDisGoodsEntities != null && !departmentDisGoodsEntities.isEmpty()) {
+                        for (NxDepartmentDisGoodsEntity depDisGoodsEntity : departmentDisGoodsEntities) {
+                            depDisGoodsEntity.setNxDdgDisGoodsFatherId(newFatherId);
+                            nxDepartmentDisGoodsService.update(depDisGoodsEntity);
+                        }
+                        logger.debug("[exchangeNxGoodsFatherId] 已更新{}个部门商品记录，disGoodsId={}", 
+                                departmentDisGoodsEntities.size(), disGoodsId);
+                    }
+                }
+
                 updateCount++;
 
             }
@@ -3195,7 +3359,7 @@ public class NxDistributerGoodsController {
 
     @RequestMapping(value = "/exchangeNxGoodsToGrandId", method = RequestMethod.POST)
     @ResponseBody
-    public R exchangeNxGoodsToGrandId(Integer changeId, Integer toGrandId,Integer sort) {
+    public R exchangeNxGoodsToGrandId(Integer changeId, Integer toGrandId, Integer sort1) {
         logger.info("[exchangeNxGoodsToGrandId] 开始修改商品祖父级ID，changeId={}, toGrandId={}", changeId, toGrandId);
 
         // 1. 通过商品ID找到父级（三级分类）
@@ -3218,7 +3382,7 @@ public class NxDistributerGoodsController {
         }
 
         Integer oldGrandId = fatherEntity.getNxGoodsGrandId();
-        logger.info("[exchangeNxGoodsToGrandId] 父级ID={}, 原祖父级ID={}, 新祖父级ID={}, 父级名称={}", 
+        logger.info("[exchangeNxGoodsToGrandId] 父级ID={}, 原祖父级ID={}, 新祖父级ID={}, 父级名称={}",
                 fatherId, oldGrandId, toGrandId, fatherEntity.getNxGoodsName());
 
         // 2. 更新该父级（三级分类）本身的 nxGoodsFatherId、nxGoodsGrandId 和排序
@@ -3229,16 +3393,59 @@ public class NxDistributerGoodsController {
             return R.error(-1, "新祖父级不存在");
         }
         Integer newGreatGrandId = newGrandEntity.getNxGoodsFatherId();
-        
+
         // 更新父级（三级分类）的关联关系
         fatherEntity.setNxGoodsFatherId(toGrandId);  // 父级ID指向新的二级分类
-        // fatherEntity.setNxGoodsGrandId(newGreatGrandId);  // 祖父级ID指向新二级分类的父级（一级分类）
-        if (sort != null) {
-            fatherEntity.setNxGoodsSort(sort);
-            logger.info("[exchangeNxGoodsToGrandId] 设置父级排序，fatherId={}, sort={}", fatherId, sort);
+        fatherEntity.setNxGoodsGrandId(toGrandId);  // 祖父级ID应该等于父级ID（level=2的grandId等于它的fatherId）
+        fatherEntity.setNxGoodsGreatGrandId(newGreatGrandId);  // 曾祖父级ID指向新二级分类的父级（一级分类）
+        if (sort1 != null) {
+            fatherEntity.setNxGoodsSort(sort1);
+            logger.info("[exchangeNxGoodsToGrandId] 设置父级排序，fatherId={}, sort={}", fatherId, sort1);
+
+            // 更新 sort 之后的其他父级商品的 sort（都加 1）
+            // 查询同一个 grand（toGrandId）下，level=2 的商品，sort >= sort1 且不是当前 fatherId 的商品
+            Map<String, Object> queryMap = new HashMap<>();
+            queryMap.put("fatherId", toGrandId);  // 查询 toGrandId 下的所有子商品（level=2）
+            List<NxGoodsEntity> otherFatherGoods = nxGoodsService.queryListWithFatherId(queryMap);
+            if (otherFatherGoods != null && !otherFatherGoods.isEmpty()) {
+                int updateCount = 0;
+                for (NxGoodsEntity otherFather : otherFatherGoods) {
+                    // 排除当前商品，且 sort >= sort1 的商品
+                    if (!otherFather.getNxGoodsId().equals(fatherId)
+                            && otherFather.getNxGoodsSort() != null
+                            && otherFather.getNxGoodsSort() >= sort1) {
+                        otherFather.setNxGoodsSort(otherFather.getNxGoodsSort() + 1);
+                        nxGoodsService.update(otherFather);
+                        updateCount++;
+
+                        // 同时更新该父级下所有子商品（level=3）的 sort
+                        Map<String, Object> childMap = new HashMap<>();
+                        childMap.put("fatherId", otherFather.getNxGoodsId());
+                        List<NxGoodsEntity> childGoods = nxGoodsService.queryListWithFatherId(childMap);
+                        if (childGoods != null && !childGoods.isEmpty()) {
+                            for (NxGoodsEntity child : childGoods) {
+                                child.setNxGoodsSort(otherFather.getNxGoodsSort());
+                                nxGoodsService.update(child);
+                            }
+                        }
+
+                        // 更新配送商相关的 sort
+                        Map<String, Object> disFatherMap = new HashMap<>();
+                        disFatherMap.put("nxGoodsId", otherFather.getNxGoodsId());
+                        List<NxDistributerFatherGoodsEntity> disFatherGoodsList = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(disFatherMap);
+                        if (disFatherGoodsList != null && !disFatherGoodsList.isEmpty()) {
+                            for (NxDistributerFatherGoodsEntity disFatherGoods : disFatherGoodsList) {
+                                disFatherGoods.setNxDfgFatherGoodsSort(otherFather.getNxGoodsSort());
+                                nxDistributerFatherGoodsService.update(disFatherGoods);
+                            }
+                        }
+                    }
+                }
+                logger.info("[exchangeNxGoodsToGrandId] 已更新{}个其他父级商品的sort（+1）", updateCount);
+            }
         }
         nxGoodsService.update(fatherEntity);
-        logger.info("[exchangeNxGoodsToGrandId] 已更新父级的关联关系，fatherId={}, newFatherId={}, newGrandId={}", 
+        logger.info("[exchangeNxGoodsToGrandId] 已更新父级的关联关系，fatherId={}, newFatherId={}, newGrandId={}",
                 fatherId, toGrandId, newGreatGrandId);
 
         // 3. 查询该父级下的所有商品（Level 3），更新它们的 nxGoodsGrandId 和 nxGoodsGreatGrandId
@@ -3247,12 +3454,40 @@ public class NxDistributerGoodsController {
         List<NxGoodsEntity> goodsList = nxGoodsService.queryListWithFatherId(map);
         logger.info("[exchangeNxGoodsToGrandId] 父级下共有{}个商品需要更新", goodsList.size());
 
+        // 获取父级的 sort（用于更新子商品的 nxGoodsSort）
+        Integer fatherSort = sort1 != null ? sort1 : fatherEntity.getNxGoodsSort();
+
+        // 查询该父级下已有商品的最大 sonsSort（包括 goodsList 中的商品）
+        // 用于设置转移商品的 sonsSort（排在最后）
+        int maxSonsSort = 0;
+        for (NxGoodsEntity existing : goodsList) {
+            if (existing.getNxGoodsSonsSort() != null && existing.getNxGoodsSonsSort() > maxSonsSort) {
+                maxSonsSort = existing.getNxGoodsSonsSort();
+            }
+        }
+        // 还需要查询该父级下其他商品的最大 sonsSort（如果有的话）
+        Map<String, Object> maxSortMap = new HashMap<>();
+        maxSortMap.put("fatherId", fatherId);
+        List<NxGoodsEntity> allGoodsInFather = nxGoodsService.queryListWithFatherId(maxSortMap);
+        if (allGoodsInFather != null && !allGoodsInFather.isEmpty()) {
+            for (NxGoodsEntity existing : allGoodsInFather) {
+                if (existing.getNxGoodsSonsSort() != null && existing.getNxGoodsSonsSort() > maxSonsSort) {
+                    maxSonsSort = existing.getNxGoodsSonsSort();
+                }
+            }
+        }
+        int newSonsSort = maxSonsSort + 1;
+        logger.info("[exchangeNxGoodsToGrandId] 父级下最大sonsSort={}, 转移商品的sonsSort从{}开始", maxSonsSort, newSonsSort);
+
         for (NxGoodsEntity goods : goodsList) {
             goods.setNxGoodsGrandId(toGrandId);  // 更新为新的二级分类ID
             goods.setNxGoodsGreatGrandId(newGreatGrandId);  // 更新为新的一级分类ID
+            goods.setNxGoodsSort(fatherSort);  // nxGoodsSort 应该等于父级的 sort
+            goods.setNxGoodsSonsSort(newSonsSort);  // sonsSort 设置为新父级下的最后一位
+            newSonsSort++;  // 每个商品递增
             nxGoodsService.update(goods);
         }
-        logger.info("[exchangeNxGoodsToGrandId] 已更新父级下所有商品的祖父级ID和曾祖父级ID");
+        logger.info("[exchangeNxGoodsToGrandId] 已更新父级下所有商品的祖父级ID、曾祖父级ID和排序");
 
         // 4. 获取新一级分类的信息（用于后续创建目录）
         NxGoodsEntity newGreatGrandEntity = newGreatGrandId != null ? nxGoodsService.queryObject(newGreatGrandId) : null;
@@ -3314,7 +3549,7 @@ public class NxDistributerGoodsController {
             if (existingGrandGoods != null && !existingGrandGoods.isEmpty()) {
                 // 如果已有二级分类目录，直接使用
                 targetGrandGoods = existingGrandGoods.get(0);
-                logger.debug("[exchangeNxGoodsToGrandId] 找到已存在的二级分类目录，disId={}, grandGoodsId={}", 
+                logger.debug("[exchangeNxGoodsToGrandId] 找到已存在的二级分类目录，disId={}, grandGoodsId={}",
                         disId, targetGrandGoods.getNxDistributerFatherGoodsId());
             } else {
                 // 如果没有，创建二级分类目录（Level 1）
@@ -3329,7 +3564,7 @@ public class NxDistributerGoodsController {
                 targetGrandGoods.setNxDfgFatherGoodsImgLarge(newGrandEntity.getNxGoodsFileBig());
                 targetGrandGoods.setNxDfgFatherGoodsSort(newGrandEntity.getNxGoodsSort());
                 nxDistributerFatherGoodsService.save(targetGrandGoods);
-                logger.debug("[exchangeNxGoodsToGrandId] 创建新的二级分类目录，disId={}, grandGoodsId={}", 
+                logger.debug("[exchangeNxGoodsToGrandId] 创建新的二级分类目录，disId={}, grandGoodsId={}",
                         disId, targetGrandGoods.getNxDistributerFatherGoodsId());
 
                 // 检查是否有一级分类目录
@@ -3343,7 +3578,7 @@ public class NxDistributerGoodsController {
                         // 如果已有一级分类目录，直接关联
                         targetGrandGoods.setNxDfgFathersFatherId(existingGreatGrandGoods.get(0).getNxDistributerFatherGoodsId());
                         nxDistributerFatherGoodsService.update(targetGrandGoods);
-                        logger.debug("[exchangeNxGoodsToGrandId] 找到已存在的一级分类目录，disId={}, greatGrandGoodsId={}", 
+                        logger.debug("[exchangeNxGoodsToGrandId] 找到已存在的一级分类目录，disId={}, greatGrandGoodsId={}",
                                 disId, existingGreatGrandGoods.get(0).getNxDistributerFatherGoodsId());
                     } else {
                         // 如果没有，创建一级分类目录（Level 0）
@@ -3360,7 +3595,7 @@ public class NxDistributerGoodsController {
 
                         targetGrandGoods.setNxDfgFathersFatherId(greatGrandGoods.getNxDistributerFatherGoodsId());
                         nxDistributerFatherGoodsService.update(targetGrandGoods);
-                        logger.debug("[exchangeNxGoodsToGrandId] 创建新的一级分类目录，disId={}, greatGrandGoodsId={}", 
+                        logger.debug("[exchangeNxGoodsToGrandId] 创建新的一级分类目录，disId={}, greatGrandGoodsId={}",
                                 disId, greatGrandGoods.getNxDistributerFatherGoodsId());
                     }
                 }
@@ -3378,15 +3613,15 @@ public class NxDistributerGoodsController {
                 targetFatherGoods = existingFatherGoods.get(0);
                 targetFatherGoods.setNxDfgFathersFatherId(targetGrandGoods.getNxDistributerFatherGoodsId());
                 // 同步更新排序，确保与 nxGoods 一致
-                if (sort != null) {
-                    targetFatherGoods.setNxDfgFatherGoodsSort(sort);
+                if (sort1 != null) {
+                    targetFatherGoods.setNxDfgFatherGoodsSort(sort1);
                 } else {
                     targetFatherGoods.setNxDfgFatherGoodsSort(fatherEntity.getNxGoodsSort());
                 }
                 nxDistributerFatherGoodsService.update(targetFatherGoods);
-                logger.debug("[exchangeNxGoodsToGrandId] 更新已存在的三级分类目录，disId={}, fatherGoodsId={}, sort={}", 
-                        disId, targetFatherGoods.getNxDistributerFatherGoodsId(), 
-                        sort != null ? sort : fatherEntity.getNxGoodsSort());
+                logger.debug("[exchangeNxGoodsToGrandId] 更新已存在的三级分类目录，disId={}, fatherGoodsId={}, sort={}",
+                        disId, targetFatherGoods.getNxDistributerFatherGoodsId(),
+                        sort1 != null ? sort1 : fatherEntity.getNxGoodsSort());
             } else {
                 // 如果没有，创建三级分类目录（Level 2）
                 targetFatherGoods = new NxDistributerFatherGoodsEntity();
@@ -3398,20 +3633,28 @@ public class NxDistributerGoodsController {
                 targetFatherGoods.setNxDfgFatherGoodsImgLarge(fatherEntity.getNxGoodsFileBig());
                 targetFatherGoods.setNxDfgFatherGoodsColor(fatherColor);
                 // 同步设置排序，确保与 nxGoods 一致
-                if (sort != null) {
-                    targetFatherGoods.setNxDfgFatherGoodsSort(sort);
+                if (sort1 != null) {
+                    targetFatherGoods.setNxDfgFatherGoodsSort(sort1);
                 } else {
                     targetFatherGoods.setNxDfgFatherGoodsSort(fatherEntity.getNxGoodsSort());
                 }
                 targetFatherGoods.setNxDfgNxGoodsId(fatherId);
                 targetFatherGoods.setNxDfgFathersFatherId(targetGrandGoods.getNxDistributerFatherGoodsId());
                 nxDistributerFatherGoodsService.save(targetFatherGoods);
-                logger.debug("[exchangeNxGoodsToGrandId] 创建新的三级分类目录，disId={}, fatherGoodsId={}, sort={}", 
+                logger.debug("[exchangeNxGoodsToGrandId] 创建新的三级分类目录，disId={}, fatherGoodsId={}, sort={}",
                         disId, targetFatherGoods.getNxDistributerFatherGoodsId(),
-                        sort != null ? sort : fatherEntity.getNxGoodsSort());
+                        sort1 != null ? sort1 : fatherEntity.getNxGoodsSort());
             }
 
             // 5.2.3 更新所有相关配送商商品的目录关联和排序
+            // 查询该配送商下该父级目录的最大 sonsSort
+            Map<String, Object> disMaxSortMap = new HashMap<>();
+            disMaxSortMap.put("dgFatherId", targetFatherGoods.getNxDistributerFatherGoodsId());
+            int disMaxSonsSort = dgService.queryNxGoodsSonsSortByParams(disMaxSortMap);
+            int disNewSonsSort = disMaxSonsSort + 1;
+            logger.debug("[exchangeNxGoodsToGrandId] 配送商disId={}下父级目录最大sonsSort={}, 新商品的sonsSort={}",
+                    disId, disMaxSonsSort, disNewSonsSort);
+
             for (NxGoodsEntity goods : goodsList) {
                 List<NxDistributerGoodsEntity> distributerGoodsList = dgService.querydisGoodsByNxGoodsId(goods.getNxGoodsId());
                 for (NxDistributerGoodsEntity disGoods : distributerGoodsList) {
@@ -3426,9 +3669,58 @@ public class NxDistributerGoodsController {
                         }
                         disGoods.setNxDgDfgGoodsFatherId(targetFatherGoods.getNxDistributerFatherGoodsId());
                         disGoods.setNxDgDfgGoodsGrandId(targetGrandGoods.getNxDistributerFatherGoodsId());
-                        // 同步更新排序，确保与 nxGoods 一致
-                        disGoods.setNxDgGoodsSort(goods.getNxGoodsSort());
+                        // 同步更新排序：nxDgGoodsSort 应该等于父级的 sort（即 fatherSort）
+                        disGoods.setNxDgGoodsSort(fatherSort);
+                        // sonsSort 设置为新父级目录下的最后一位
+                        disGoods.setNxDgGoodsSonsSort(disNewSonsSort);
+                        disNewSonsSort++;  // 每个商品递增
                         dgService.update(disGoods);
+
+                        // 更新该配送商商品相关的订单和部门商品
+                        Integer disGoodsId = disGoods.getNxDistributerGoodsId();
+                        Integer newFatherId = targetFatherGoods.getNxDistributerFatherGoodsId();
+                        Integer newGrandId = targetGrandGoods.getNxDistributerFatherGoodsId();
+
+                        // 6.1 更新 nxDepartmentOrder 中的 fatherId, grandId
+                        Map<String, Object> orderMap = new HashMap<>();
+                        orderMap.put("disGoodsId", disGoodsId);
+                        List<NxDepartmentOrdersEntity> ordersEntities = depOrdersService.queryDisOrdersByParams(orderMap);
+                        if (ordersEntities != null && !ordersEntities.isEmpty()) {
+                            for (NxDepartmentOrdersEntity ordersEntity : ordersEntities) {
+                                ordersEntity.setNxDoDisGoodsFatherId(newFatherId);
+                                ordersEntity.setNxDoDisGoodsGrandId(newGrandId);
+                                depOrdersService.update(ordersEntity);
+                            }
+                            logger.debug("[exchangeNxGoodsToGrandId] 已更新{}个订单记录，disGoodsId={}", 
+                                    ordersEntities.size(), disGoodsId);
+                        }
+
+                        // 6.2 更新 nxDepartmentOrderHistory 中的 fatherId, grandId
+                        List<NxDepartmentOrderHistoryEntity> historyOrdersEntities = 
+                                nxDepartmentOrderHistoryService.queryDisHistoryOrdersByParams(orderMap);
+                        if (historyOrdersEntities != null && !historyOrdersEntities.isEmpty()) {
+                            for (NxDepartmentOrderHistoryEntity historyOrderEntity : historyOrdersEntities) {
+                                historyOrderEntity.setNxDoDisGoodsFatherId(newFatherId);
+                                historyOrderEntity.setNxDoDisGoodsGrandId(newGrandId);
+                                nxDepartmentOrderHistoryService.update(historyOrderEntity);
+                            }
+                            logger.debug("[exchangeNxGoodsToGrandId] 已更新{}个历史订单记录，disGoodsId={}", 
+                                    historyOrdersEntities.size(), disGoodsId);
+                        }
+
+                        // 6.3 更新 nxDepartDisGoods 中的 fatherId
+                        List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = 
+                                nxDepartmentDisGoodsService.queryDepDisGoodsByParams(orderMap);
+                        if (departmentDisGoodsEntities != null && !departmentDisGoodsEntities.isEmpty()) {
+                            for (NxDepartmentDisGoodsEntity depDisGoodsEntity : departmentDisGoodsEntities) {
+                                depDisGoodsEntity.setNxDdgDisGoodsFatherId(newFatherId);
+                                nxDepartmentDisGoodsService.update(depDisGoodsEntity);
+                            }
+                            logger.debug("[exchangeNxGoodsToGrandId] 已更新{}个部门商品记录，disGoodsId={}", 
+                                    departmentDisGoodsEntities.size(), disGoodsId);
+                        }
+
+                        // 更新 GB 项目中 gbDistributerGoods,gbDistributerFatherGoods, gbDepartmentOrder, gbDepart
                     }
                 }
             }
@@ -3449,6 +3741,7 @@ public class NxDistributerGoodsController {
         }
 
         logger.info("[exchangeNxGoodsToGrandId] 修改商品祖父级ID完成，changeId={}, toGrandId={}", changeId, toGrandId);
+
         return R.ok();
     }
 
@@ -3912,7 +4205,6 @@ public class NxDistributerGoodsController {
             cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
 
 
-
             //1 ，先保存disGoods
             gbDistributerGoodsService.save(cgnGoods);
             //
@@ -3983,7 +4275,7 @@ public class NxDistributerGoodsController {
     @ResponseBody
     public R delNxDisGoods(@PathVariable Integer id) {
         logger.info("[delNxDisGoods] 开始删除商品，商品ID: {}", id);
-        
+
         try {
             // 1. 检查是否有客户使用此商品
             Map<String, Object> map4 = new HashMap<>();
@@ -3998,7 +4290,7 @@ public class NxDistributerGoodsController {
             // 2. 检查是否有采购数据
             Map<String, Object> purchaseMap = new HashMap<>();
             purchaseMap.put("disGoodsId", id);
-            System.out.println("kkkkkkkkpurggogo"  + purchaseMap);
+            System.out.println("kkkkkkkkpurggogo" + purchaseMap);
             List<NxDistributerPurchaseGoodsEntity> purchaseGoodsList = nxDisPurchaseGoodsService.queryPurchaseGoodsByDisGoodsIdAndDate(purchaseMap);
             if (purchaseGoodsList != null && purchaseGoodsList.size() > 0) {
                 logger.warn("[delNxDisGoods] 商品ID: {} 有采购数据，无法删除，采购记录数: {}", id, purchaseGoodsList.size());
@@ -4028,7 +4320,7 @@ public class NxDistributerGoodsController {
                     reduceMap.put("stockId", stock.getNxDistributerGoodsShelfStockId());
                     List<NxDistributerGoodsShelfStockReduceEntity> reduceList = nxDistributerGoodsShelfStockReduceService.queryReduceListByParams(reduceMap);
                     if (reduceList != null && reduceList.size() > 0) {
-                        logger.info("[delNxDisGoods] 批次ID: {} 有支出记录，开始删除，数量: {}", 
+                        logger.info("[delNxDisGoods] 批次ID: {} 有支出记录，开始删除，数量: {}",
                                 stock.getNxDistributerGoodsShelfStockId(), reduceList.size());
                         for (NxDistributerGoodsShelfStockReduceEntity reduce : reduceList) {
                             nxDistributerGoodsShelfStockReduceService.delete(reduce.getNxDistributerGoodsShelfStockReduceId());
@@ -4328,29 +4620,32 @@ public class NxDistributerGoodsController {
     @RequestMapping(value = "/disGetDisTypeGoodsListByFatherId", method = RequestMethod.POST)
     @ResponseBody
     public R disGetDisTypeGoodsListByFatherId(Integer fatherId, Integer goodsType,
-                                              Integer limit, Integer page, Integer hasCartonUnit) {
+                                              Integer limit, Integer page, Integer hasCartonUnit, Integer hasTraceReport) {
         System.out.println(goodsType + "fatherididiid");
 
         Map<String, Object> map = new HashMap<>();
         map.put("offset", (page - 1) * limit);
         map.put("limit", limit);
         map.put("grandId", fatherId);
-        if(goodsType != 99){
+        if (goodsType != 99) {
             map.put("autoType", goodsType);
-            if(goodsType == 11){
+            if (goodsType == 11) {
                 map.put("autoType", 1);
                 map.put("hasSupplier", 1);
             }
         }
         // 添加外包装查询条件：1-有外包装，0-无外包装，null-不筛选
-        if(hasCartonUnit != null){
+        if (hasCartonUnit != null) {
             map.put("hasCartonUnit", hasCartonUnit);
+        }
+        // 添加溯源查询条件：1-有溯源，0-无溯源，null-不筛选
+        if (hasTraceReport != null) {
+            map.put("hasTraceReport", hasTraceReport);
         }
 
         List<NxDistributerGoodsEntity> goodsEntities1;
         if (goodsType.equals(11)) {
             goodsEntities1 = dgService.querySupplierGoodsByFatherId(map);
-//            goodsEntities1 = dgService.queryDisGoodsByParams(map);
 
         } else {
             goodsEntities1 = dgService.queryDisGoodsByParams(map);
@@ -4365,12 +4660,12 @@ public class NxDistributerGoodsController {
                     logger.info("  货架商品数量: {}", goods.getNxDistributerGoodsShelfGoodsEntities().size());
                     for (int i = 0; i < goods.getNxDistributerGoodsShelfGoodsEntities().size(); i++) {
                         NxDistributerGoodsShelfGoodsEntity shelfGoods = goods.getNxDistributerGoodsShelfGoodsEntities().get(i);
-                        logger.info("    货架商品[{}]: ID={}, 货架ID={}, 货架名称={}, 库存数量={}", 
-                            i, 
-                            shelfGoods.getNxDistributerGoodsShelfGoodsId(),
-                            shelfGoods.getNxDgsgShelfId(),
-                            shelfGoods.getShelfName(),
-                            shelfGoods.getNxDisGoodsShelfStockEntities() != null ? shelfGoods.getNxDisGoodsShelfStockEntities().size() : 0);
+                        logger.info("    货架商品[{}]: ID={}, 货架ID={}, 货架名称={}, 库存数量={}",
+                                i,
+                                shelfGoods.getNxDistributerGoodsShelfGoodsId(),
+                                shelfGoods.getNxDgsgShelfId(),
+                                shelfGoods.getShelfName(),
+                                shelfGoods.getNxDisGoodsShelfStockEntities() != null ? shelfGoods.getNxDisGoodsShelfStockEntities().size() : 0);
                     }
                 } else {
                     logger.info("  该商品没有货架商品数据");
@@ -4380,12 +4675,16 @@ public class NxDistributerGoodsController {
 
         Map<String, Object> map3 = new HashMap<>();
         map3.put("grandId", fatherId);
-        if(goodsType != 99){
+        if (goodsType != 99) {
             map3.put("autoType", goodsType);
         }
         // 传递外包装查询条件到总数查询
-        if(hasCartonUnit != null){
+        if (hasCartonUnit != null) {
             map3.put("hasCartonUnit", hasCartonUnit);
+        }
+        // 传递溯源查询条件到总数查询
+        if (hasTraceReport != null) {
+            map3.put("hasTraceReport", hasTraceReport);
         }
 
         System.out.println(map3 + "map3333");
@@ -4439,7 +4738,9 @@ public class NxDistributerGoodsController {
         map4.put("disGoodsId", disGoodsId);
         map4.put("disId", disId);
         List<NxDepartmentOrdersEntity> ordersEntities = depOrdersService.queryDisOrdersByParams(map4);
-        if (ordersEntities.size() > 0) {
+
+        List<NxDepartmentOrderHistoryEntity> historyEntities = nxDepartmentOrderHistoryService.queryDisHistoryOrdersByParams(map4);
+        if (ordersEntities.size() > 0 && historyEntities.size() > 0) {
             return R.error(-1, "有客户使用此商品");
         } else {
 
@@ -4484,22 +4785,22 @@ public class NxDistributerGoodsController {
             }
 
             //删除客户商品
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("disGoodsId", disGoodsId);
-//            map.put("disId", disId);
-//            List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepDisGoodsService.queryDepDisGoodsByParams(map);
-//            if(departmentDisGoodsEntities.size() > 0){
-//                for(NxDepartmentDisGoodsEntity departmentDisGoodsEntity: departmentDisGoodsEntities){
-//                    nxDepDisGoodsService.delete(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
-//                }
-//            }
-//
-//            List<NxDepartmentOrdersHistoryEntity> nxDepartmentOrdersHistoryEntities = nxDepartmentOrdersHistoryService.queryDepHistoryOrdersByParams(map);
-//            if(nxDepartmentOrdersHistoryEntities.size() > 0){
-//                for(NxDepartmentOrdersHistoryEntity historyEntity: nxDepartmentOrdersHistoryEntities){
-//                    nxDepartmentOrdersHistoryService.delete(historyEntity.getNxDepartmentOrdersHistoryId());
-//                }
-//            }
+            Map<String, Object> map = new HashMap<>();
+            map.put("disGoodsId", disGoodsId);
+            map.put("disId", disId);
+            List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepDisGoodsService.queryDepDisGoodsByParams(map);
+            if(departmentDisGoodsEntities.size() > 0){
+                for(NxDepartmentDisGoodsEntity departmentDisGoodsEntity: departmentDisGoodsEntities){
+                    nxDepDisGoodsService.delete(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
+                }
+            }
+
+            List<NxDepartmentOrdersHistoryEntity> nxDepartmentOrdersHistoryEntities = nxDepartmentOrdersHistoryService.queryDepHistoryOrdersByParams(map);
+            if(nxDepartmentOrdersHistoryEntities.size() > 0){
+                for(NxDepartmentOrdersHistoryEntity historyEntity: nxDepartmentOrdersHistoryEntities){
+                    nxDepartmentOrdersHistoryService.delete(historyEntity.getNxDepartmentOrdersHistoryId());
+                }
+            }
 
             //删除订货单位
             List<NxDistributerStandardEntity> standardEntities = dsService.queryDisStandardByDisGoodsId(disGoodsId);
@@ -4509,6 +4810,8 @@ public class NxDistributerGoodsController {
                 }
             }
 
+
+
             //删除别名
             Map<String, Object> mapA = new HashMap<>();
             mapA.put("nxId", disGoodsId);
@@ -4516,6 +4819,16 @@ public class NxDistributerGoodsController {
             if (aliasEntities.size() > 0) {
                 for (NxDistributerAliasEntity aliasEntity : aliasEntities) {
                     disAliasService.delete(aliasEntity.getNxDistributerAliasId());
+                }
+            }
+
+            Map<String, Object> mapShelf = new HashMap<>();
+            mapShelf.put("disGoodsId", disGoodsId);
+            System.out.println("shelldldldlldserarrra"  + mapShelf);
+            List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities = nxDistributerGoodsShelfGoodsService.queryShelfForGoodsByParams(mapShelf);
+            if(nxDistributerGoodsShelfGoodsEntities.size() > 0){
+                for(NxDistributerGoodsShelfGoodsEntity shelfGoodsEntity : nxDistributerGoodsShelfGoodsEntities){
+                    nxDistributerGoodsShelfGoodsService.delete(shelfGoodsEntity.getNxDistributerGoodsShelfGoodsId());
                 }
             }
 
@@ -4538,7 +4851,16 @@ public class NxDistributerGoodsController {
     @RequestMapping(value = "/postDgnGoods", method = RequestMethod.POST)
     @ResponseBody
     public R postDgnGoods(@RequestBody NxDistributerGoodsEntity cgnGoods) {
+        return downloadGoodsForDistributer(cgnGoods);
+    }
 
+    /**
+     * 下载商品到配送商（公共方法，供Service调用）
+     *
+     * @param cgnGoods 配送商商品实体
+     * @return 结果
+     */
+    public R downloadGoodsForDistributer(NxDistributerGoodsEntity cgnGoods) {
         //判断是否已经下载
         Integer nxDgNxGoodsId = cgnGoods.getNxDgNxGoodsId();
         Integer nxDgDistributerId1 = cgnGoods.getNxDgDistributerId();
@@ -4550,41 +4872,70 @@ public class NxDistributerGoodsController {
         if (distributerGoodsEntities.size() > 0) {
             return R.error(-1, "已经下载");
         } else {
-
-            NxDistributerGoodsEntity nxDistributerGoodsEntity = saveDisGoods(cgnGoods);
-
-            //2，保存dis规格bieming
-            Integer nxCgGoodsId = cgnGoods.getNxDistributerGoodsId();
-            //2.1 根据nxGoodsId查询规格列表
-            List<NxStandardEntity> ncsEntities = nxStandardService.queryList(nxDgNxGoodsId);
-            if (ncsEntities != null && ncsEntities.size() > 0) {
-                for (NxStandardEntity standard : ncsEntities) {
-                    NxDistributerStandardEntity disStandards = new NxDistributerStandardEntity();
-                    disStandards.setNxDsDisGoodsId(nxCgGoodsId);
-                    disStandards.setNxDsStandardName(standard.getNxStandardName());
-                    disStandards.setNxDsStandardError(standard.getNxStandardError());
-                    disStandards.setNxDsStandardScale(standard.getNxStandardScale());
-                    disStandards.setNxDsStandardFilePath(standard.getNxStandardFilePath());
-                    disStandards.setNxDsStandardSort(standard.getNxStandardSort());
-                    dsService.save(disStandards);
-                }
-            }
-
-            //2.2 根据nxGoodsId查询别名列表
-            Map<String, Object> aliasMap = new HashMap<>();
-            aliasMap.put("goodsId", nxDgNxGoodsId);
-            List<NxAliasEntity> aliasEntities = nxAliasService.queryNxAliasList(aliasMap);
-            if (aliasEntities != null && aliasEntities.size() > 0) {
-                for (NxAliasEntity aliasEntity : aliasEntities) {
-                    NxDistributerAliasEntity disAlias = new NxDistributerAliasEntity();
-                    disAlias.setNxDaDisGoodsId(nxCgGoodsId);
-                    disAlias.setNxDaAliasName(aliasEntity.getNxAliasName());
-                    disAliasService.save(disAlias);
-                }
-            }
-
-            return R.ok().put("data", nxDistributerGoodsEntity);
+            return downloadGoodsForDistributerWithoutCheck(cgnGoods);
         }
+    }
+
+    /**
+     * 下载商品到配送商（跳过检查，用于全量下载）
+     * 注意：此方法不检查商品是否已下载，直接下载。适用于新注册配送商的全量下载场景。
+     *
+     * @param cgnGoods 配送商商品实体
+     * @return 结果
+     */
+    public R downloadGoodsForDistributerWithoutCheck(NxDistributerGoodsEntity cgnGoods) {
+        Integer nxDgNxGoodsId = cgnGoods.getNxDgNxGoodsId();
+
+        // 直接调用saveDisGoods保存商品（不检查是否已下载）
+        NxDistributerGoodsEntity nxDistributerGoodsEntity = saveDisGoods(cgnGoods);
+
+        //2，保存dis规格bieming
+        // 使用保存后返回的实体ID（saveDisGoods会设置ID）
+        Integer nxCgGoodsId = nxDistributerGoodsEntity.getNxDistributerGoodsId();
+        //2.1 根据nxGoodsId查询规格列表
+        List<NxStandardEntity> ncsEntities = nxStandardService.queryList(nxDgNxGoodsId);
+        if (ncsEntities != null && ncsEntities.size() > 0) {
+            for (NxStandardEntity standard : ncsEntities) {
+                NxDistributerStandardEntity disStandards = new NxDistributerStandardEntity();
+                disStandards.setNxDsDisGoodsId(nxCgGoodsId);
+                disStandards.setNxDsStandardName(standard.getNxStandardName());
+                disStandards.setNxDsStandardError(standard.getNxStandardError());
+                disStandards.setNxDsStandardScale(standard.getNxStandardScale());
+                disStandards.setNxDsStandardFilePath(standard.getNxStandardFilePath());
+                disStandards.setNxDsStandardSort(standard.getNxStandardSort());
+                dsService.save(disStandards);
+            }
+        }
+
+
+        //添加大包装
+        NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxDgNxGoodsId);
+        System.out.println("cuuruurururr" + nxGoodsEntity.getNxGoodsCartonUnit());
+        if (nxGoodsEntity.getNxGoodsCartonUnit() != null && !nxGoodsEntity.getNxGoodsCartonUnit().trim().isEmpty()) {
+            String nxGoodsCartonUnit = nxGoodsEntity.getNxGoodsCartonUnit();
+            NxDistributerStandardEntity disStandards = new NxDistributerStandardEntity();
+            disStandards.setNxDsDisGoodsId(nxCgGoodsId);
+            disStandards.setNxDsStandardName(nxGoodsCartonUnit);
+            disStandards.setNxDsStandardScale(nxGoodsEntity.getNxGoodsItemsPerCarton().toString());
+            disStandards.setNxDsStandardSort(1);
+            dsService.save(disStandards);
+        }
+
+
+        //2.2 根据nxGoodsId查询别名列表
+        Map<String, Object> aliasMap = new HashMap<>();
+        aliasMap.put("goodsId", nxDgNxGoodsId);
+        List<NxAliasEntity> aliasEntities = nxAliasService.queryNxAliasList(aliasMap);
+        if (aliasEntities != null && aliasEntities.size() > 0) {
+            for (NxAliasEntity aliasEntity : aliasEntities) {
+                NxDistributerAliasEntity disAlias = new NxDistributerAliasEntity();
+                disAlias.setNxDaDisGoodsId(nxCgGoodsId);
+                disAlias.setNxDaAliasName(aliasEntity.getNxAliasName());
+                disAliasService.save(disAlias);
+            }
+        }
+
+        return R.ok().put("data", nxDistributerGoodsEntity);
     }
 
 
@@ -4691,7 +5042,7 @@ public class NxDistributerGoodsController {
         map.put("disId", nxDgDistributerId);
         map.put("nxFatherId", nxDgNxFatherId);
         // 添加曾祖父ID限制，避免不同曾祖父分类下的同名商品混淆（如"蔬菜"下的"菌菇"和"蔬菜调理"下的"香菇"）
-        if(nxDgNxGreatGrandId != null){
+        if (nxDgNxGreatGrandId != null) {
             map.put("nxGreatGrandFatherId", nxDgNxGreatGrandId);
         }
         List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = dgService.queryDisGoodsByParams(map);
@@ -4860,7 +5211,7 @@ public class NxDistributerGoodsController {
         map1.put("offset", (page - 1) * limit);
         map1.put("limit", limit);
         map1.put("fatherId", fatherId);
-        map1.put("isHidden", 0);
+//        map1.put("isHidden", 0);
         List<NxGoodsEntity> nxGoodsEntities1 = nxGoodsService.queryNxGoodsByParams(map1);
 
         List<NxGoodsEntity> goodsEntities = new ArrayList<>();
@@ -5043,10 +5394,10 @@ public class NxDistributerGoodsController {
 
         // 同时查询配送商商品和标准商品库
         List<NxDistributerGoodsEntity> goodsEntities = dgService.queryDisGoodsQuickSearchStrWithDepOrders(map);
-        if(goodsEntities.size() < 100){
+        if (goodsEntities.size() < 100) {
             return R.ok().put("data", goodsEntities);
-        }else{
-            return R.error(-1,"请继续输入");
+        } else {
+            return R.error(-1, "请继续输入");
         }
     }
 
@@ -5078,11 +5429,11 @@ public class NxDistributerGoodsController {
         map.put("depId", depId);
         map.put("searchStr", searchStr);
         map.put("searchPinyin", pinyinString);
-        map.put("name",searchStr);
+        map.put("name", searchStr);
 
         System.out.println("wokkdeppd" + map);
         NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
-        if(departmentDisGoodsEntity != null){
+        if (departmentDisGoodsEntity != null) {
             Integer nxDdgDisGoodsId = departmentDisGoodsEntity.getNxDdgDisGoodsId();
             NxDistributerGoodsEntity nxDistributerGoodsEntity = dgService.queryObject(nxDdgDisGoodsId);
             List<NxDistributerGoodsEntity> list = new ArrayList<>();
@@ -5098,13 +5449,25 @@ public class NxDistributerGoodsController {
         }
 
         logger.info("[queryDisGoodsByQuickSearchWithDepId] 查询参数: {}", map);
-
         // 同时查询配送商商品和标准商品库
         List<NxDistributerGoodsEntity> goodsEntities = dgService.queryDisGoodsQuickSearchStrWithDepOrders(map);
+        // 对结果进行排序：完全匹配的商品名称放在最前面
+        if (goodsEntities != null && !goodsEntities.isEmpty()) {
+            final String searchStrFinal = searchStr.trim();
+            goodsEntities.sort((g1, g2) -> {
+                boolean g1ExactMatch = g1.getNxDgGoodsName() != null && g1.getNxDgGoodsName().equals(searchStrFinal);
+                boolean g2ExactMatch = g2.getNxDgGoodsName() != null && g2.getNxDgGoodsName().equals(searchStrFinal);
+                if (g1ExactMatch && !g2ExactMatch) {
+                    return -1; // g1排在前面
+                } else if (!g1ExactMatch && g2ExactMatch) {
+                    return 1; // g2排在前面
+                }
+                return 0; // 保持原有顺序
+            });
+        }
         map.put("level", 3);
         System.out.println("ddkdd" + map);
         List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
-        
         // 过滤掉 level 不等于 3 的商品
         if (nxGoodsEntities != null && !nxGoodsEntities.isEmpty()) {
             List<NxGoodsEntity> filteredByLevel = new ArrayList<>();
@@ -5340,7 +5703,7 @@ public class NxDistributerGoodsController {
                         existingGoodsIds.add(disGoods.getNxDgNxGoodsId());
                     }
                 }
-                
+
                 // 2. 使用Iterator安全删除重复的商品
                 Iterator<NxGoodsEntity> iterator = nxGoodsEntities.iterator();
                 while (iterator.hasNext()) {
@@ -5349,7 +5712,7 @@ public class NxDistributerGoodsController {
                         iterator.remove();
                     }
                 }
-                
+
                 map3.put("nxArr", nxGoodsEntities);
             } else {
                 map3.put("nxArr", new ArrayList<>());
@@ -5410,7 +5773,7 @@ public class NxDistributerGoodsController {
         map3.put("disArr", all);
         System.out.println("oneoeoneneoeneoee22222");
         List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.queryQuickSearchNxGoods(map);
-        
+
         // 过滤掉 level 不等于 3 的商品
         if (nxGoodsEntities != null && !nxGoodsEntities.isEmpty()) {
             List<NxGoodsEntity> filteredByLevel = new ArrayList<>();
@@ -5430,7 +5793,7 @@ public class NxDistributerGoodsController {
                     existingGoodsIds.add(disGoods.getNxDgNxGoodsId());
                 }
             }
-            
+
             // 2. 使用Iterator安全删除重复的商品
             Iterator<NxGoodsEntity> iterator = nxGoodsEntities.iterator();
             while (iterator.hasNext()) {
@@ -5611,10 +5974,6 @@ public class NxDistributerGoodsController {
     }
 
 
-
-
-
-
     @ResponseBody
     @RequestMapping("/disGoodsUpdate")
     public R update(@RequestBody NxDistributerGoodsEntity nxDistributerGoods) {
@@ -5624,7 +5983,7 @@ public class NxDistributerGoodsController {
         NxDistributerGoodsEntity distributerGoodsEntity = dgService.queryObject(distributerGoodsId);
         Integer oldPurchaseAuto = distributerGoodsEntity.getNxDgPurchaseAuto();
         Integer newPurchaseAuto = nxDistributerGoods.getNxDgPurchaseAuto();
-        
+
         if (!oldPurchaseAuto.equals(newPurchaseAuto)) {
             Map<String, Object> mapR = new HashMap<>();
             mapR.put("disGoodsId", distributerGoodsId);
@@ -5655,14 +6014,14 @@ public class NxDistributerGoodsController {
                         }
                     }
                 }
-                
+
                 // 更新商品信息
                 String pinyin = hanziToPinyin(nxDistributerGoods.getNxDgGoodsName());
                 String headPinyin = getHeadStringByString(nxDistributerGoods.getNxDgGoodsName(), false, null);
                 nxDistributerGoods.setNxDgGoodsPinyin(pinyin);
                 nxDistributerGoods.setNxDgGoodsPy(headPinyin);
                 dgService.update(nxDistributerGoods);
-                
+
                 // 更新GB商品信息
                 GbDistributerGoodsEntity gbDistributerGoodsEntity = gbDistributerGoodsService.queryGbGoodsByNxGoodsId(nxDistributerGoods.getNxDistributerGoodsId());
                 if (gbDistributerGoodsEntity != null) {
@@ -5690,7 +6049,7 @@ public class NxDistributerGoodsController {
                         }
                     }
                 }
-                
+
                 return R.ok().put("data", nxDistributerGoods);
             } else {
                 String pinyin = hanziToPinyin(nxDistributerGoods.getNxDgGoodsName());
@@ -5974,6 +6333,582 @@ public class NxDistributerGoodsController {
         }
         String trimmed = brand.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * 上传Excel导入配送商商品（全部存为临时商品）
+     * 优化版本：支持大批量导入，使用批量插入和分批处理
+     *
+     * @param file  Excel文件
+     * @param disId 配送商ID
+     * @return 处理结果
+     */
+    @RequestMapping(value = "/uploadGoodsExcel", method = RequestMethod.POST)
+    @ResponseBody
+    public R uploadGoodsExcel(@RequestParam("file") MultipartFile file,
+                              @RequestParam("disId") Integer disId) {
+        System.out.println("[uploadGoodsExcel] 请求导入配送商商品 disId=" + disId
+                + ", fileName=" + (file == null ? "null" : file.getOriginalFilename()));
+
+        if (disId == null) {
+            return R.error(-1, "参数错误: 缺少 disId");
+        }
+        if (file == null || file.isEmpty()) {
+            return R.error(-1, "文件不能为空");
+        }
+
+        DataFormatter formatter = new DataFormatter();
+        List<Map<String, Object>> failItems = new ArrayList<>();
+        int total = 0;
+        int success = 0;
+
+        // 批量处理配置
+        final int BATCH_SIZE = 100; // 每批处理100条
+
+        // 缓存父级分类信息（避免重复查询）
+        NxDistributerFatherGoodsEntity cachedFatherGoodsEntity = null;
+        int currentSort = 0; // 当前排序号计数器
+
+        Workbook workbook = null;
+        try {
+            workbook = WorkbookFactory.create(file.getInputStream());
+
+            // 预先查询并缓存父级分类信息
+            Map<String, Object> map = new HashMap<>();
+            map.put("disId", disId);
+            map.put("nxGoodsId", -1);
+            map.put("goodsLevel", 2);
+            List<NxDistributerFatherGoodsEntity> fatherGoodsEntities =
+                    nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
+
+            if (fatherGoodsEntities == null || fatherGoodsEntities.isEmpty()) {
+                return R.error(-1, "未找到临时父级分类");
+            }
+
+            cachedFatherGoodsEntity = fatherGoodsEntities.get(0);
+
+            // 获取初始排序号
+            Map<String, Object> sortMap = new HashMap<>();
+            sortMap.put("dgFatherId", cachedFatherGoodsEntity.getNxDistributerFatherGoodsId());
+            currentSort = dgService.queryNxGoodsSonsSortByParams(sortMap);
+
+            // 批量保存的商品列表
+            List<NxDistributerGoodsEntity> batchGoodsList = new ArrayList<>();
+
+            for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
+                Sheet sheet = workbook.getSheetAt(sheetIndex);
+                if (sheet == null) {
+                    continue;
+                }
+                int lastRowNum = sheet.getLastRowNum();
+                // 从第3行开始读取数据（第1行是提示，第2行是表头，第3行可能是示例）
+                for (int rowIndex = 2; rowIndex <= lastRowNum; rowIndex++) {
+                    Row row = sheet.getRow(rowIndex);
+                    if (row == null) {
+                        continue;
+                    }
+
+                    String goodsName = getCellString(row, 0, formatter);
+                    String standard = getCellString(row, 1, formatter);
+                    // 如果商品名称和规格都为空，跳过这一行
+                    if (isBlank(goodsName) && isBlank(standard)) {
+                        continue;
+                    }
+
+                    total++;
+                    Map<String, Object> resultItem = new HashMap<>();
+                    resultItem.put("row", rowIndex + 1);
+                    resultItem.put("goodsName", goodsName);
+                    resultItem.put("standard", standard);
+
+                    try {
+                        // 验证必填项
+                        if (isBlank(goodsName)) {
+                            throw new IllegalArgumentException("缺少商品名称");
+                        }
+                        if (isBlank(standard)) {
+                            throw new IllegalArgumentException("缺少商品规格");
+                        }
+
+                        // 读取可选项
+                        String standardWeight = getCellString(row, 2, formatter);
+                        String brand = getCellString(row, 3, formatter);
+                        String cartonUnit = getCellString(row, 4, formatter);
+                        String itemsPerCartonStr = getCellString(row, 5, formatter);
+
+                        // 创建临时商品
+                        NxDistributerGoodsEntity goods = new NxDistributerGoodsEntity();
+
+                        // 使用缓存的父级分类信息
+                        goods.setNxDgDfgGoodsFatherId(cachedFatherGoodsEntity.getNxDistributerFatherGoodsId());
+                        goods.setNxDgDfgGoodsGrandId(cachedFatherGoodsEntity.getNxDfgFathersFatherId());
+
+                        // 设置基本信息
+                        goods.setNxDgDistributerId(disId);
+                        goods.setNxDgGoodsName(goodsName.trim());
+                        goods.setNxDgGoodsStandardname(standard.trim());
+
+                        // 设置可选项
+                        if (!isBlank(standardWeight)) {
+                            goods.setNxDgGoodsStandardWeight(standardWeight.trim());
+                        }
+                        if (!isBlank(brand)) {
+                            goods.setNxDgGoodsBrand(brand.trim());
+                        }
+                        if (!isBlank(cartonUnit)) {
+                            goods.setNxDgCartonUnit(cartonUnit.trim());
+                        }
+                        if (!isBlank(itemsPerCartonStr)) {
+                            try {
+                                Integer itemsPerCarton = Integer.parseInt(itemsPerCartonStr.trim());
+                                goods.setNxDgItemsPerCarton(itemsPerCarton);
+                            } catch (NumberFormatException e) {
+                                throw new IllegalArgumentException("外包装数量格式错误，应为整数");
+                            }
+                        }
+
+                        // 生成拼音和简拼
+                        String pinyin = hanziToPinyin(goodsName.trim());
+                        String headPinyin = getHeadStringByString(goodsName.trim(), false, null);
+                        goods.setNxDgGoodsPinyin(pinyin);
+                        goods.setNxDgGoodsPy(headPinyin);
+
+                        // 设置默认值
+                        goods.setNxDgPurchaseAuto(-1);
+                        goods.setNxDgBuyingPriceIsGrade(0);
+                        goods.setNxDgBuyingPrice("0.1");
+                        goods.setNxDgWillPrice("0.1");
+                        goods.setNxDgBuyingPriceOne("0.1");
+                        goods.setNxDgBuyingPriceOneUpdate(formatWhatDate(0));
+                        goods.setNxDgWillPriceOneStandard(goods.getNxDgGoodsStandardname());
+                        goods.setNxDgWillPriceOne("0.1");
+                        goods.setNxDgWillPriceOneAboutPrice("0.1");
+                        goods.setNxDgGoodsIsHidden(0);
+                        goods.setNxDgGoodsStatus(0);
+                        goods.setNxDgPullOff(0);
+                        goods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
+                        goods.setNxDgOutTotalWeight("0");
+                        // 使用递增的排序号（避免每次查询数据库）
+                        currentSort++;
+                        goods.setNxDgGoodsSonsSort(currentSort);
+                        goods.setNxDgIsOldestSon(0);
+
+                        // 添加到批量列表
+                        batchGoodsList.add(goods);
+
+                        // 当达到批量大小时，执行批量插入
+                        if (batchGoodsList.size() >= BATCH_SIZE) {
+                            batchInsertGoods(batchGoodsList);
+                            success += batchGoodsList.size();
+                            batchGoodsList.clear();
+                            System.out.println("[uploadGoodsExcel] 已批量插入 " + BATCH_SIZE + " 条商品，当前成功数: " + success);
+                        }
+
+                    } catch (Exception e) {
+                        resultItem.put("error", e.getMessage());
+                        failItems.add(resultItem);
+                        System.err.println("[uploadGoodsExcel] 第" + (rowIndex + 1) + "行导入失败: " + e.getMessage());
+                    }
+                }
+            }
+
+            // 处理剩余的批量数据
+            if (!batchGoodsList.isEmpty()) {
+                batchInsertGoods(batchGoodsList);
+                success += batchGoodsList.size();
+                System.out.println("[uploadGoodsExcel] 最后批量插入 " + batchGoodsList.size() + " 条商品");
+            }
+
+            // 最后统一更新父级分类的商品数量（只更新一次，而不是每条都更新）
+            if (success > 0) {
+                Integer goodsAmount = cachedFatherGoodsEntity.getNxDfgGoodsAmount();
+                if (goodsAmount == null) {
+                    goodsAmount = 0;
+                }
+                cachedFatherGoodsEntity.setNxDfgGoodsAmount(goodsAmount + success);
+                nxDistributerFatherGoodsService.update(cachedFatherGoodsEntity);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("total", total);
+            result.put("success", success);
+            result.put("fail", failItems.size());
+            result.put("failItems", failItems);
+
+            System.out.println("[uploadGoodsExcel] 导入完成: 总计=" + total + ", 成功=" + success + ", 失败=" + failItems.size());
+
+            return R.ok().put("data", result);
+
+        } catch (Exception e) {
+            System.err.println("[uploadGoodsExcel] 处理异常: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("导入失败: " + e.getMessage());
+        } finally {
+            if (workbook != null) {
+                try {
+                    workbook.close();
+                } catch (IOException e) {
+                    System.err.println("[uploadGoodsExcel] 关闭工作簿异常: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * 批量插入商品（逐条插入，但减少数据库连接开销）
+     * 注意：MyBatis 默认不支持真正的批量插入，这里使用循环插入但优化了事务管理
+     */
+    private void batchInsertGoods(List<NxDistributerGoodsEntity> goodsList) {
+        if (goodsList == null || goodsList.isEmpty()) {
+            return;
+        }
+
+        for (NxDistributerGoodsEntity goods : goodsList) {
+            try {
+                dgService.save(goods);
+            } catch (Exception e) {
+                System.err.println("[batchInsertGoods] 插入商品失败: " + goods.getNxDgGoodsName() + ", 错误: " + e.getMessage());
+                throw e; // 抛出异常，让外层处理
+            }
+        }
+    }
+
+    /**
+     * 辅助方法：读取Excel单元格字符串值
+     */
+    private String getCellString(Row row, int cellIndex, DataFormatter formatter) {
+        if (row == null) {
+            return null;
+        }
+        Cell cell = row.getCell(cellIndex);
+        if (cell == null) {
+            return null;
+        }
+        String value = formatter.formatCellValue(cell);
+        return value == null ? null : value.trim();
+    }
+
+    /**
+     * 辅助方法：判断字符串是否为空
+     */
+    private boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
+    /**
+     * 批量更新曾祖父商品下的所有商品的 nxDgPurchaseAuto 字段
+     * <p>
+     * 请求体格式：
+     * {
+     * "greatGrandIds": [1, 2, 3],
+     * "type": -1  // -1 表示出库商品，1 表示采购商品
+     * }
+     *
+     * @param greatGrandIds（曾祖父ID列表）和 type（类型）
+     * @return 更新结果
+     */
+    @RequestMapping(value = "/updatePurchaseAutoByGreatGrandIds", method = RequestMethod.POST)
+    @ResponseBody
+    public R updatePurchaseAutoByGreatGrandIds(@RequestParam String greatGrandIds, @RequestParam Integer type) {
+        System.out.println("[updatePurchaseAutoByGreatGrandIds] 请求批量更新 purchaseAuto, greatGrandIds=" + greatGrandIds + ", type=" + type);
+
+        try {
+            // 验证参数
+            if (greatGrandIds == null || greatGrandIds.trim().isEmpty()) {
+                return R.error(-1, "参数错误: 缺少 greatGrandIds");
+            }
+
+            if (type == null) {
+                return R.error(-1, "参数错误: 缺少 type");
+            }
+
+            // 解析逗号分隔的 ID 字符串
+            List<Integer> greatGrandIdsList = new ArrayList<>();
+            String[] idsArray = greatGrandIds.split(",");
+            for (String idStr : idsArray) {
+                try {
+                    Integer id = Integer.parseInt(idStr.trim());
+                    greatGrandIdsList.add(id);
+                } catch (NumberFormatException e) {
+                    return R.error(-1, "参数错误: greatGrandIds 格式不正确，包含非数字: " + idStr);
+                }
+            }
+
+            if (greatGrandIdsList.isEmpty()) {
+                return R.error(-1, "参数错误: greatGrandIds 不能为空");
+            }
+
+            if (type != -1 && type != 1) {
+                return R.error(-1, "参数错误: type 必须为 -1（出库商品）或 1（采购商品）");
+            }
+
+            // 执行更新
+            Map<String, Object> map = new HashMap<>();
+            map.put("greatGrandIds", greatGrandIdsList);
+            map.put("type", type);
+
+            int updatedCount = dgService.updatePurchaseAutoByGreatGrandIds(map);
+
+            System.out.println("[updatePurchaseAutoByGreatGrandIds] 更新完成，共更新 " + updatedCount + " 条记录");
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("updatedCount", updatedCount);
+            result.put("type", type);
+            result.put("typeName", type == -1 ? "出库商品" : "采购商品");
+            result.put("greatGrandIds", greatGrandIdsList);
+
+            return R.ok().put("data", result);
+
+        } catch (Exception e) {
+            System.err.println("[updatePurchaseAutoByGreatGrandIds] 更新异常: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("更新失败: " + e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/downLoadByGreatGrandIds", method = RequestMethod.POST)
+    @ResponseBody
+    public R downLoadByGreatGrandIds(@RequestParam String greatGrandIds, @RequestParam Integer disId) {
+        System.out.println("[updatePurchaseAutoByGreatGrandIds] 请求批量下载 , greatGrandIds=" + greatGrandIds + ", disId=" + disId);
+
+        try {
+
+            // 解析逗号分隔的 ID 字符串
+            List<Integer> greatGrandIdsList = new ArrayList<>();
+            String[] idsArray = greatGrandIds.split(",");
+            for (String idStr : idsArray) {
+                try {
+                    Integer id = Integer.parseInt(idStr.trim());
+                    greatGrandIdsList.add(id);
+                } catch (NumberFormatException e) {
+                    return R.error(-1, "参数错误: greatGrandIds 格式不正确，包含非数字: " + idStr);
+                }
+            }
+
+            // 异步下载商品，不阻塞注册接口返回
+            asyncGoodsDownloadService.downloadGoodsByGreatGrandIdsAsync(disId, greatGrandIdsList);
+
+            return R.ok();
+
+        } catch (Exception e) {
+            System.err.println("[updatePurchaseAutoByGreatGrandIds] 更新异常: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("更新失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 下载配送商商品导入Excel模板
+     *
+     * @param response HTTP响应
+     * @throws IOException IO异常
+     */
+    @RequestMapping(value = "/downloadGoodsTemplate", method = RequestMethod.GET)
+    public void downloadGoodsTemplate(HttpServletResponse response) throws IOException {
+        System.out.println("[downloadGoodsTemplate] 请求下载配送商商品导入模板");
+
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        try {
+            HSSFSheet sheet = workbook.createSheet("配送商商品导入模板");
+            sheet.setDefaultColumnWidth(20);
+
+            HSSFCellStyle headerStyle = workbook.createCellStyle();
+            HSSFFont headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            int rowIndex = 0;
+            // 提示行
+            HSSFRow tipRow = sheet.createRow(rowIndex++);
+            tipRow.createCell(0).setCellValue("提示：商品名称和商品规格为必填项，其他字段为可选项。");
+
+            // 表头
+            HSSFRow headerRow = sheet.createRow(rowIndex++);
+            String[] headers = new String[]{
+                    "商品名称(必填)",
+                    "商品规格(必填)",
+                    "规格重量",
+                    "品牌",
+                    "外包装名称",
+                    "外包装数量"
+            };
+            for (int i = 0; i < headers.length; i++) {
+                HSSFCell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // 示例行（帮助用户理解格式）
+            HSSFRow exampleRow = sheet.createRow(rowIndex++);
+            exampleRow.createCell(0).setCellValue("示例：菌伯乐鹿茸菌");
+            exampleRow.createCell(1).setCellValue("桶");
+            exampleRow.createCell(2).setCellValue("5kg");
+            exampleRow.createCell(3).setCellValue("菌伯乐");
+            exampleRow.createCell(4).setCellValue("箱");
+            exampleRow.createCell(5).setCellValue("24");
+
+            String fileName = "配送商商品导入模板.xls";
+            fileName = URLEncoder.encode(fileName, "UTF-8");
+            response.setContentType("application/vnd.ms-excel");
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+            workbook.write(response.getOutputStream());
+            response.flushBuffer();
+            System.out.println("[downloadGoodsTemplate] 模板生成完成，已输出响应");
+        } catch (IOException e) {
+            System.err.println("[downloadGoodsTemplate] 生成模板异常: " + e.getMessage());
+            throw new RuntimeException("生成模板失败: " + e.getMessage(), e);
+        } finally {
+            try {
+                workbook.close();
+            } catch (IOException e) {
+                System.err.println("[downloadGoodsTemplate] 关闭工作簿异常: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * 为分销商商品添加溯源报告
+     * 支持上传图片或PDF格式的溯源报告文件
+     * 创建新的溯源报告，并将报告ID更新到商品表中
+     */
+    @RequestMapping(value = "/addTraceReportToGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R addTraceReportToGoods(
+            @RequestParam("nxDistributerGoodsId") String nxDistributerGoodsId,
+            @RequestParam(value = "traceReportFile", required = false) MultipartFile traceReportFile,
+            // 溯源报告相关参数
+            @RequestParam(value = "nxTrSupplierId", required = false) String nxTrSupplierId,
+            @RequestParam(value = "nxTrSupplierName", required = false) String nxTrSupplierName,
+            @RequestParam(value = "nxTrSupplierContact", required = false) String nxTrSupplierContact,
+            @RequestParam(value = "nxTrPurchaseDate", required = false) String nxTrPurchaseDate,
+            @RequestParam(value = "nxTrStockInDate", required = false) String nxTrStockInDate,
+            @RequestParam(value = "nxTrValidStartDate", required = false) String nxTrValidStartDate,
+            @RequestParam(value = "nxTrValidEndDate", required = false) String nxTrValidEndDate,
+            @RequestParam(value = "nxTrRemark", required = false) String nxTrRemark,
+            @RequestParam(value = "createUserId", required = false) String createUserId,
+            HttpSession session) {
+        
+        System.out.println("[addTraceReportToGoods] 开始为商品添加溯源报告，商品ID: " + nxDistributerGoodsId);
+        
+        try {
+            // 验证商品ID
+            Integer goodsId = Integer.parseInt(nxDistributerGoodsId);
+            NxDistributerGoodsEntity goodsEntity = dgService.queryObject(goodsId);
+            if (goodsEntity == null) {
+                return R.error("商品不存在，ID: " + goodsId);
+            }
+            
+            // 验证文件是否上传
+            if (traceReportFile == null || traceReportFile.isEmpty()) {
+                return R.error("请上传溯源报告文件");
+            }
+            
+            // 处理溯源报告文件上传
+            System.out.println("[addTraceReportToGoods] 开始上传溯源报告文件");
+            System.out.println("[addTraceReportToGoods] 文件名: " + traceReportFile.getOriginalFilename());
+            System.out.println("[addTraceReportToGoods] 文件大小: " + traceReportFile.getSize() + " bytes");
+            System.out.println("[addTraceReportToGoods] Content-Type: " + traceReportFile.getContentType());
+
+            // 获取文件扩展名
+            String originalFilename = traceReportFile.getOriginalFilename();
+            String fileExtension = "";
+            String reportType = "";
+            
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+            }
+            
+            // 判断报告类型（image 或 pdf）
+            if ("jpg".equals(fileExtension) || "jpeg".equals(fileExtension) || 
+                "png".equals(fileExtension) || "gif".equals(fileExtension) || 
+                "bmp".equals(fileExtension)) {
+                reportType = "image";
+            } else if ("pdf".equals(fileExtension)) {
+                reportType = "pdf";
+            } else {
+                return R.error("不支持的文件格式，仅支持图片（jpg/png/gif/bmp）和PDF文件");
+            }
+
+            // 上传文件到服务器
+            String uploadDir = "traceReports";
+            String absolutePath = UploadFile.upload(session, uploadDir, traceReportFile);
+            System.out.println("[addTraceReportToGoods] 文件上传到: " + absolutePath);
+
+            // 获取文件路径（相对路径）
+            String filePath = uploadDir + "/" + originalFilename;
+
+            // 创建溯源报告实体
+            NxTraceReportEntity traceReportEntity = new NxTraceReportEntity();
+            
+            // 设置基本信息
+            if (nxTrSupplierId != null && !nxTrSupplierId.trim().isEmpty()) {
+                traceReportEntity.setNxTrSupplierId(Integer.parseInt(nxTrSupplierId));
+            }
+            if (nxTrSupplierName != null) {
+                traceReportEntity.setNxTrSupplierName(nxTrSupplierName);
+            }
+            if (nxTrSupplierContact != null) {
+                traceReportEntity.setNxTrSupplierContact(nxTrSupplierContact);
+            }
+            
+            // 设置日期信息
+            if (nxTrPurchaseDate != null && !nxTrPurchaseDate.trim().isEmpty()) {
+                traceReportEntity.setNxTrPurchaseDate(nxTrPurchaseDate);
+            } else {
+                traceReportEntity.setNxTrPurchaseDate(formatWhatDay(0)); // 默认今天
+            }
+            if (nxTrStockInDate != null && !nxTrStockInDate.trim().isEmpty()) {
+                traceReportEntity.setNxTrStockInDate(nxTrStockInDate);
+            } else {
+                traceReportEntity.setNxTrStockInDate(formatWhatDay(0)); // 默认今天
+            }
+            if (nxTrValidStartDate != null && !nxTrValidStartDate.trim().isEmpty()) {
+                traceReportEntity.setNxTrValidStartDate(nxTrValidStartDate);
+            } else {
+                traceReportEntity.setNxTrValidStartDate(formatWhatDay(0)); // 默认今天开始
+            }
+            if (nxTrValidEndDate != null && !nxTrValidEndDate.trim().isEmpty()) {
+                traceReportEntity.setNxTrValidEndDate(nxTrValidEndDate);
+            }
+            
+            // 设置文件信息
+            traceReportEntity.setNxTrReportType(reportType);
+            traceReportEntity.setNxTrFilePath(filePath);
+            traceReportEntity.setNxTrFileType(fileExtension);
+            
+            // 设置关联信息
+            traceReportEntity.setNxTrDistributerId(goodsEntity.getNxDgDistributerId());
+            if (createUserId != null && !createUserId.trim().isEmpty()) {
+                traceReportEntity.setNxTrCreateUserId(Integer.parseInt(createUserId));
+            }
+            traceReportEntity.setNxTrCreateTime(formatWhatYearDayTime(0));
+            traceReportEntity.setNxTrUpdateTime(formatWhatYearDayTime(0));
+            
+            if (nxTrRemark != null) {
+                traceReportEntity.setNxTrRemark(nxTrRemark);
+            }
+
+            // 保存溯源报告
+            nxTraceReportService.save(traceReportEntity);
+            Integer traceReportId = traceReportEntity.getNxTraceReportId();
+            System.out.println("[addTraceReportToGoods] 溯源报告保存成功，ID: " + traceReportId);
+
+            // 更新商品，关联溯源报告ID
+            goodsEntity.setNxDgTraceReportId(traceReportId);
+            ;
+            dgService.update(goodsEntity);
+            System.out.println("[addTraceReportToGoods] 商品已关联溯源报告ID: " + traceReportId);
+
+            return R.ok().put("traceReportId", traceReportId).put("message", "溯源报告添加成功");
+
+        } catch (NumberFormatException e) {
+            System.err.println("[addTraceReportToGoods] 参数格式错误: " + e.getMessage());
+            return R.error("参数格式错误: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("[addTraceReportToGoods] 处理失败: " + e.getMessage());
+            e.printStackTrace();
+            return R.error("添加溯源报告失败: " + e.getMessage());
+        }
     }
 
 }

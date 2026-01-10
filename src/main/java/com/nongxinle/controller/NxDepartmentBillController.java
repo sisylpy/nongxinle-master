@@ -121,12 +121,6 @@ public class NxDepartmentBillController {
     @Autowired
     private GbDistributerStandardService gbDistributerStandardService;
     @Autowired
-    private NxDepartmentOrdersHistoryService nxDepartmentOrdersHistoryService;
-    @Autowired
-    private NxAiForecastLogService aiForecastLogService;
-    @Autowired
-    private RestTemplate restTemplate;
-    @Autowired
     private NxMachinePrinterDeviceService nxMachinePrinterDeviceService;
     @Autowired
     private NxMachinePrintRecordService nxMachinePrintRecordService;
@@ -574,7 +568,7 @@ public class NxDepartmentBillController {
         }
 
         map.put("status", 3);
-        map.put("equalPurStatus", 4);
+//        map.put("equalPurStatus", 4);
         map.put("disId", nxDepartmentBill.getNxDbDisId());
 
         System.out.println("nxoroossoss" + map);
@@ -766,7 +760,7 @@ public class NxDepartmentBillController {
         }
 
         map.put("status", 3);
-        map.put("equalPurStatus", 4);
+//        map.put("equalPurStatus", 4);
         map.put("disId", nxDepartmentBill.getNxDbDisId());
 
         System.out.println("nxoroossoss" + map);
@@ -1482,7 +1476,7 @@ public class NxDepartmentBillController {
             map.put("depId", nxDepartmentBill.getNxDbDepId());
         }
         map.put("equalStatus", 2);
-        map.put("equalPurStatus", 4);
+//        map.put("equalPurStatus", 4);
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
         for (NxDepartmentOrdersEntity orders : ordersEntities) {
             //0 subtotal
@@ -1552,17 +1546,9 @@ public class NxDepartmentBillController {
             orders.setNxDoStatus(3);
             orders.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishPay());
             orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
-
-
             nxDepartmentOrdersService.update(orders);
             //迁移
             nxDepartmentOrdersService.moveOrderToHistory(orders);  // ✅ 迁移
-
-            //
-//            insertAiLog(orders);
-
-
-//
 
             //updata weight
             Integer doDisGoodsId = orders.getNxDoDisGoodsId();
@@ -1573,42 +1559,6 @@ public class NxDepartmentBillController {
             distributerGoodsEntity.setNxDgOutTotalWeight(add.toString());
             dgService.update(distributerGoodsEntity);
 
-            //2. 添加订货历史
-//            NxDepartmentOrdersHistoryEntity historyEntity = new NxDepartmentOrdersHistoryEntity();
-//            historyEntity.setNxDohApplyDate(orders.getNxDoApplyDate());
-//            historyEntity.setNxDohDepDisGoodsId(orders.getNxDoDepDisGoodsId());
-//            historyEntity.setNxDohDisGoodsId(orders.getNxDoDisGoodsId());
-//            historyEntity.setNxDohDistributerId(orders.getNxDoDistributerId());
-//            historyEntity.setNxDohQuantity(orders.getNxDoQuantity());
-//            historyEntity.setNxDohApplyStandard(orders.getNxDoStandard());
-//            historyEntity.setNxDohStandard(orders.getNxDoStandard());
-//            historyEntity.setNxDohDepartmentId(orders.getNxDoDepartmentId());
-//            historyEntity.setNxDohDepartmentFatherId(orders.getNxDoDepartmentFatherId());
-//            historyEntity.setNxDohOrderUserId(orders.getNxDoOrderUserId());
-//            historyEntity.setNxDohOrderTimes(1);
-//            historyEntity.setNxDohOrder(orders.getNxDoTodayOrder());
-//            nxDepOrdersHistoryService.save(historyEntity);
-
-
-//            Integer nxDoPurchaseGoodsId = orders.getNxDoPurchaseGoodsId();
-//            if (nxDoPurchaseGoodsId != -1) {
-//                NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(nxDoPurchaseGoodsId);
-//                Integer nxDpgOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
-//                Integer nxDpgFinishAmount = purchaseGoodsEntity.getNxDpgFinishAmount();
-//                if (nxDpgOrdersAmount - nxDpgFinishAmount == 1) {
-//                    purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgOrdersAmount);
-//                    purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
-//                    if(purchaseGoodsEntity.getNxDpgBatchId() != null){
-//                        NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDisPurBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
-//                        nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinishPay());
-//                        nxDisPurBatchService.update(nxDistributerPurchaseBatchEntity);
-//                    }
-//
-//                } else {
-//                    purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgFinishAmount + 1);
-//                }
-//                nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
-//            }
 
         }
 
@@ -1641,125 +1591,8 @@ public class NxDepartmentBillController {
         BigDecimal restPoints = decimal0.subtract(decimal1).setScale(0, BigDecimal.ROUND_HALF_UP);
         nxDistributerEntity.setNxDistributerBuyQuantity(restPoints.toString());
 
-
-//        Map<String, Object> mapA = new HashMap<>();
-//        mapA.put("billId", nxDepartmentBill.getNxDepartmentBillId());
-//        mapA.put("isAgent", -1);
-//        System.out.println("anemen" + mapA);
-//        Integer integer = historyService.queryDepOrdersAcount(mapA);
-//        if(integer > 0){
-//
-//            BigDecimal decimal00 = new BigDecimal(nxDistributerEntity.getNxDistributerBuyQuantity());
-//            BigDecimal decimal11 = new BigDecimal(integer).multiply(new BigDecimal(25));
-//            BigDecimal restPoints1 = decimal00.subtract(decimal11).setScale(0, BigDecimal.ROUND_HALF_UP);
-//            nxDistributerEntity.setNxDistributerBuyQuantity(restPoints1.toString());
-//
-//
-//            NxDistributerPayListEntity payListEntityAgent = new NxDistributerPayListEntity();
-//            payListEntityAgent.setNxNdplNxDisId(nxDbDisId);
-//            payListEntityAgent.setNxNdplNxDepartmentId(nxDepartmentBill.getNxDbDepId());
-//            payListEntityAgent.setNxNdplNxDepartmentFatherId(nxDepartmentBill.getNxDbDepFatherId());
-//            payListEntityAgent.setNxNdplPaySubtotal(decimal11.toString());
-//            payListEntityAgent.setNxNdplPayTime(formatFullTime());
-//            payListEntityAgent.setNxNdplPayDate(formatWhatDay(0));
-//            payListEntityAgent.setNxNdplPayMonth(formatWhatMonth(0));
-//            payListEntityAgent.setNxNdplPayYear(formatWhatYear(0));
-//            payListEntityAgent.setNxNdplStatus(0);
-//            payListEntityAgent.setNxNdplType(getNxDisPayListOrder());
-//            payListEntityAgent.setNxNdplRestPoints(Integer.valueOf(nxDistributerEntity.getNxDistributerBuyQuantity()));
-//            payListEntityAgent.setNxNdplNxDbId(nxDepartmentBill.getNxDepartmentBillId());
-//            payListService.save(payListEntityAgent);
-//        }
-
-
         nxDistributerService.update(nxDistributerEntity);
 
-    }
-
-
-    private void insertAiLog(NxDepartmentOrdersEntity orders) {
-        // === AI预测误差日志写入 ===
-        System.out.println("insertttlll" + orders);
-        try {
-            Map<String, Object> mapLog = new HashMap<>();
-            mapLog.put("depId", orders.getNxDoDepartmentId());
-            mapLog.put("disGoodsId", orders.getNxDoDisGoodsId());
-            List<Map<String, Object>> logs = nxDepartmentOrdersHistoryService.queryLogs(mapLog);
-            logger.debug("    Lags for goodsId={}: {}", orders.getNxDoDisGoodsId(), logs);
-            // 初始化默认值
-            double lag1 = 0, lag2 = 0, lag3 = 0;
-            int lag1_dow = -1, lag2_dow = -1, lag3_dow = -1;
-
-            for (int i = 0; i < logs.size(); i++) {
-                Map<String, Object> row = logs.get(i);
-//                double qty = ((Number) row.get("nx_DOH_quantity")).doubleValue();
-//                Date date = (Date) row.get("nx_DOH_apply_date");
-//                ZoneId zone = ZoneId.systemDefault();
-//                LocalDate localDate = date.toInstant().atZone(zone).toLocalDate();
-
-                String orderQuantity = (String) row.get("nx_DOH_quantity");
-                Double qty = Double.valueOf(orderQuantity);
-                String orderDateStr = (String) row.get("nx_DOH_apply_date");
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                LocalDate orderDate = LocalDate.parse(orderDateStr, formatter);
-                int dow = orderDate.getDayOfWeek().getValue() % 7; // 周日是 0
-                if (i == 0) {
-                    lag1 = qty;
-                    lag1_dow = dow;
-                } else if (i == 1) {
-                    lag2 = qty;
-                    lag2_dow = dow;
-                } else if (i == 2) {
-                    lag3 = qty;
-                    lag3_dow = dow;
-                }
-            }
-            int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // 0~6, 周日是 0
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("department_id", orders.getNxDoDepartmentId());
-            payload.put("features", Arrays.asList(
-                    lag1, lag1_dow * 1.0,
-                    lag2, lag2_dow * 1.0,
-                    lag3, lag3_dow * 1.0,
-                    dayOfWeek * 1.0
-            ));
-            logger.debug("    Sending payload to AI service: {}", payload);
-
-
-            Double predicted = null;
-            try {
-                ResponseEntity<Map> response = restTemplate.postForEntity("http://127.0.0.1:5001/predict", payload, Map.class);
-                if (response.getStatusCode().is2xxSuccessful()) {
-                    predicted = Double.parseDouble(response.getBody().get("predicted_quantity").toString());
-                }
-            } catch (Exception e) {
-                logger.warn("调用 Flask 模型失败: {}", e.getMessage());
-            }
-
-            if (predicted != null) {
-                NxAiForecastLogEntity log = new NxAiForecastLogEntity();
-                log.setNxDepartmentId(orders.getNxDoDepartmentId());
-                log.setNxDisGoodsId(orders.getNxDoDisGoodsId());
-                log.setNxForecastDate(orders.getNxDoApplyDate());
-                log.setNxActualQuantity(new BigDecimal(orders.getNxDoQuantity()));
-                log.setNxPredictedQuantity(new BigDecimal(predicted).setScale(0, BigDecimal.ROUND_HALF_UP));
-                log.setNxLag1(new BigDecimal(lag1));
-                log.setNxLag2(new BigDecimal(lag2));
-                log.setNxLag3(new BigDecimal(lag3));
-                log.setNxLag1Dow(lag1_dow);
-                log.setNxLag2Dow(lag2_dow);
-                log.setNxLag3Dow(lag3_dow);
-                log.setNxCurrentDow(dayOfWeek);
-                double err = Math.abs(predicted - Double.valueOf(orders.getNxDoQuantity()));
-                double pctErr = (Double.valueOf(orders.getNxDoQuantity()) > 0) ? err / Double.valueOf(orders.getNxDoQuantity()) : 0.0;
-                log.setNxAiError(new BigDecimal(err));
-                log.setNxAiErrorPct(new BigDecimal(pctErr));
-                aiForecastLogService.save(log);
-            }
-        } catch (Exception e) {
-            logger.error("预测误差写入失败: {}", e.getMessage());
-        }
     }
 
     /**
@@ -1779,7 +1612,7 @@ public class NxDepartmentBillController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("depId", departmentEntity.getNxDepartmentId());
                 map.put("equalStatus", 2);
-                map.put("equalPurStatus", 4);
+//                map.put("equalPurStatus", 4);
                 System.out.println("susnamap" + map);
                 Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map);
                 if (integer > 0) {
@@ -1836,7 +1669,7 @@ public class NxDepartmentBillController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("gbDepId", departmentEntity.getGbDepartmentId());
                 map.put("equalStatus", 2);
-                map.put("equalPurStatus", 4);
+//                map.put("equalPurStatus", 4);
                 System.out.println("susnamap" + map);
                 Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map);
                 if (integer > 0) {
@@ -2260,7 +2093,6 @@ public class NxDepartmentBillController {
                 System.out.println("saveAccountBillPrintersaveAccountBillPrinter" + orders.getNxDoGbDepartmentOrderId());
                 nxDepartmentOrdersService.moveOrderToHistory(orders);  // ✅ 迁移
 
-
                 //updata weight
                 Integer doDisGoodsId = orders.getNxDoDisGoodsId();
                 NxDistributerGoodsEntity distributerGoodsEntity = dgService.queryObject(doDisGoodsId);
@@ -2269,21 +2101,6 @@ public class NxDepartmentBillController {
                 BigDecimal add = weight.add(orderWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
                 distributerGoodsEntity.setNxDgOutTotalWeight(add.toString());
                 dgService.update(distributerGoodsEntity);
-
-                //2. 添加订货历史
-//                NxDepartmentOrdersHistoryEntity historyEntity = new NxDepartmentOrdersHistoryEntity();
-//                historyEntity.setNxDohApplyDate(orders.getNxDoApplyDate());
-//                historyEntity.setNxDohDepDisGoodsId(nxDoDepDisGoodsId);
-//                historyEntity.setNxDohDisGoodsId(orders.getNxDoDisGoodsId());
-//                historyEntity.setNxDohDistributerId(orders.getNxDoDistributerId());
-//                historyEntity.setNxDohQuantity(orders.getNxDoQuantity());
-//                historyEntity.setNxDohStandard(orders.getNxDoStandard());
-//                historyEntity.setNxDohDepartmentId(orders.getNxDoDepartmentId());
-//                historyEntity.setNxDohDepartmentFatherId(orders.getNxDoDepartmentFatherId());
-//                historyEntity.setNxDohOrderUserId(orders.getNxDoOrderUserId());
-//                historyEntity.setNxDohOrderTimes(1);
-//                historyEntity.setNxDohOrder(orders.getNxDoTodayOrder());
-//                nxDepOrdersHistoryService.save(historyEntity);
 
                 Integer nxDoPurchaseGoodsId = orders.getNxDoPurchaseGoodsId();
                 if (nxDoPurchaseGoodsId != -1) {
@@ -3118,11 +2935,15 @@ public class NxDepartmentBillController {
         //order
         Map<String, Object> map = new HashMap<>();
         map.put("billId", billId);
-        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-        for (NxDepartmentOrdersEntity orders : ordersEntities) {
-            orders.setNxDoStatus(2);
-            orders.setNxDoBillId(null);
-            nxDepartmentOrdersService.update(orders);
+        List<NxDepartmentOrderHistoryEntity> ordersEntities = historyService.queryDisHistoryOrdersByParams(map);
+        for (NxDepartmentOrderHistoryEntity orders : ordersEntities) {
+            //迁移
+            historyService.moveOrderFromHistory(orders);  // ✅ 迁移
+            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orders.getNxDepartmentOrdersId());
+            ordersEntity.setNxDoStatus(2);
+            ordersEntity.setNxDoBillId(null);
+            nxDepartmentOrdersService.update(ordersEntity);
+
         }
 
         nxDepartmentBillService.delete(billId);
@@ -3804,15 +3625,16 @@ public class NxDepartmentBillController {
         mapR.put("billId", billId);
         mapR.put("equalReturnStatus", 0);
         double toReturnSubtotal = 0.0;
-        Integer count = nxDepartmentOrdersService.queryReturnOrderCount(mapR);
+//        Integer count = nxDepartmentOrdersService.queryReturnOrderCount(mapR);
+        Integer count = historyService.queryReturnOrderCount(mapR);
         if (count > 0) {
-            toReturnSubtotal = nxDepartmentOrdersService.queryReturnSubtotal(mapR);
+            toReturnSubtotal = historyService.queryReturnSubtotal(mapR);
         }
         double haveReturnSubtotal = 0.0;
         mapR.put("equalReturnStatus", 1);
-        Integer countR = nxDepartmentOrdersService.queryReturnOrderCount(mapR);
+        Integer countR = historyService.queryReturnOrderCount(mapR);
         if (countR > 0) {
-            haveReturnSubtotal = nxDepartmentOrdersService.queryReturnSubtotal(mapR);
+            haveReturnSubtotal = historyService.queryReturnSubtotal(mapR);
         }
 
 
@@ -4201,7 +4023,7 @@ public class NxDepartmentBillController {
     @ResponseBody
     public R updateBillOrders(Integer billId, Integer orderId, String billSubtotal,
                               String orderWeight, String orderPrice, String orderSubtotal) {
-        NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObjectNew(orderId);
+        NxDepartmentOrderHistoryEntity ordersEntity = historyService.queryObject(orderId);
         ordersEntity.setNxDoWeight(orderWeight);
         ordersEntity.setNxDoPrice(orderPrice);
         ordersEntity.setNxDoSubtotal(orderSubtotal);
@@ -4221,7 +4043,7 @@ public class NxDepartmentBillController {
             ordersEntity.setNxDoPriceDifferent(subtract.toString());
         }
 
-        nxDepartmentOrdersService.update(ordersEntity);
+        historyService.update(ordersEntity);
         NxDepartmentBillEntity nxDepartmentBillEntity = nxDepartmentBillService.queryObject(billId);
         nxDepartmentBillEntity.setNxDbTotal(billSubtotal);
         nxDepartmentBillService.update(nxDepartmentBillEntity);

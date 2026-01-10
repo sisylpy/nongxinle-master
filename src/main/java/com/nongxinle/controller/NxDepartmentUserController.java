@@ -364,6 +364,8 @@ public class NxDepartmentUserController {
                 NxDepartmentEntity entity = new NxDepartmentEntity();
                 entity.setNxDepartmentName(userName);
                 entity.setNxDepartmentAttrName(userName);
+                entity.setNxDepartmentOrderCode(userName);
+                entity.setNxDepartmentRecordMinutes(30);
                 entity.setNxDepartmentDisId(disId);
                 entity.setNxDepartmentIsGroupDep(1);
                 entity.setNxDepartmentWorkingStatus(0);

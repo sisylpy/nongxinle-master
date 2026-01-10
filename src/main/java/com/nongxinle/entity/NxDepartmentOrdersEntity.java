@@ -84,6 +84,16 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private Integer nxDoDepartmentId;
 
 	private Integer nxDoDepartmentFatherId;
+	
+	/**
+	 * 部门订货代号
+	 */
+	private String nxDepartmentOrderCode;
+	
+	/**
+	 * 父部门订货代号
+	 */
+	private String fatherDepartmentOrderCode;
 	private Integer nxDoDisGoodsGrandId;
 	/**
 	 *  部门订单批发商id
@@ -163,6 +173,10 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private Integer nxDoNxCommRestrauntFatherId;
 	private Integer nxDoGbDepartmentOrderId;
 	private Integer nxDoNxRestrauntOrderId;
+	/**
+	 *  训练数据ID（关联订单OCR训练数据表）
+	 */
+	private Integer nxDoTrainingDataId;
 	private Integer nxDoGoodsType;
 	private Integer nxDoTodayOrder;
 	private Integer nxDoGbDepDisGoodId;
@@ -196,8 +210,15 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private List<NxDistributerGoodsShelfStockEntity> outStockDisGoodsShelfStockEntities;
 	private TreeSet<NxGoodsEntity> nxGoodsEntities;
 
+	// 溯源报告对象（根据订单商品类型：货架商品从库存批次关联，非货架商品从采购商品关联）
+	private NxTraceReportEntity nxTraceReportEntity;
+
+	// 货架库存对象（根据订单商品ID查询该商品在货架库存中的信息）
+	private NxDistributerGoodsShelfStockEntity shelfStockEntity;
+
 //	private NxDepartmentGoodsEntity nxDepartmentGoodsEntity;
 
+	private String orcNotice;
 	private Boolean onFocus;
 
 	private Boolean hasChoice =  false;

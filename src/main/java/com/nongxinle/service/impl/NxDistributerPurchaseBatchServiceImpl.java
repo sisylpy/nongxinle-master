@@ -72,12 +72,20 @@ public class NxDistributerPurchaseBatchServiceImpl implements NxDistributerPurch
 		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatch(map);
 	}
 
-
+	@Override
+	public List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatchSimple(Map<String, Object> map) {
+		return nxDistributerPurchaseBatchDao.queryDisPurchaseBatchSimple(map);
+	}
 
     @Override
     public NxDistributerPurchaseBatchEntity queryBatchWithOrders(Integer batchId) {
 
 		return nxDistributerPurchaseBatchDao.queryBatchWithOrders(batchId);
+    }
+
+    @Override
+    public NxDistributerPurchaseBatchEntity queryBatchWithOrdersSimple(Integer batchId) {
+		return nxDistributerPurchaseBatchDao.queryBatchWithOrdersSimple(batchId);
     }
 
     @Override

@@ -44,4 +44,19 @@ public interface NxDistributerGoodsShelfGoodsDao extends BaseDao<NxDistributerGo
 
     Integer queryUnInventoriedShelfGoodsCount(Map<String, Object> map);
 
+    // 溯源报告相关方法
+    /**
+     * 查询带有溯源报告的货架商品列表
+     * @param map 查询参数（包含shelfId, status, offset, limit等）
+     * @return 带有溯源报告的货架商品列表
+     */
+    List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsWithTraceReportByParams(Map<String, Object> map);
+
+    /**
+     * 查询带有溯源报告的货架商品总数
+     * @param map 查询参数（包含shelfId等）
+     * @return 总数
+     */
+    int queryShelfForGoodsWithTraceReportCount(Map<String, Object> map);
+
 }

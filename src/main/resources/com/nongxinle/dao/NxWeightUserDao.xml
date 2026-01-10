@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxWeightUserDao">
+
+    <!-- 基础resultMap -->
+    <resultMap id="weightUser" type="NxWeightUserEntity">
+        <id property="nxWeightUserId" column="nx_weight_user_id"/>
+        <result property="nxWuUserType" column="nx_WU_user_type"/>
+        <result property="nxWuWxOpenId" column="nx_WU_wx_open_id"/>
+        <result property="nxWuWxNickName" column="nx_WU_wx_nick_name"/>
+        <result property="nxWuWxAvartraUrl" column="nx_WU_wx_avartra_url"/>
+        <result property="nxWuWxPhone" column="nx_WU_wx_phone"/>
+        <result property="nxWuLoginPhone" column="nx_WU_login_phone"/>
+        <result property="nxWuLoginTimes" column="nx_WU_login_times"/>
+        <result property="nxWuLoginCode" column="nx_WU_login_code"/>
+        <result property="nxWuNxDistributerId" column="nx_WU_nx_distributer_id"/>
+        <result property="nxWuUserId" column="nx_WU_user_id"/>
+        <result property="nxWuStatus" column="nx_WU_status"/>
+        <result property="nxWuJoinDate" column="nx_WU_join_date"/>
+        <result property="nxWuUrlChange" column="nx_WU_url_change"/>
+    </resultMap>
+
+    <!-- 带关联的resultMap -->
+    <resultMap id="weightUserWithAssociations" type="NxWeightUserEntity">
+        <id property="nxWeightUserId" column="nx_weight_user_id"/>
+        <result property="nxWuUserType" column="nx_WU_user_type"/>
+        <result property="nxWuWxOpenId" column="nx_WU_wx_open_id"/>
+        <result property="nxWuWxNickName" column="nx_WU_wx_nick_name"/>
+        <result property="nxWuWxAvartraUrl" column="nx_WU_wx_avartra_url"/>
+        <result property="nxWuWxPhone" column="nx_WU_wx_phone"/>
+        <result property="nxWuLoginPhone" column="nx_WU_login_phone"/>
+        <result property="nxWuLoginTimes" column="nx_WU_login_times"/>
+        <result property="nxWuLoginCode" column="nx_WU_login_code"/>
+        <result property="nxWuNxDistributerId" column="nx_WU_nx_distributer_id"/>
+        <result property="nxWuUserId" column="nx_WU_user_id"/>
+        <result property="nxWuStatus" column="nx_WU_status"/>
+        <result property="nxWuJoinDate" column="nx_WU_join_date"/>
+        <result property="nxWuUrlChange" column="nx_WU_url_change"/>
+        <association property="nxDistributerEntity" resultMap="distributer"/>
+        <association property="nxJrdhUserEntity" resultMap="jrdhUser"/>
+    </resultMap>
+
+    <!-- 配送商resultMap（简化版，只包含必要字段） -->
+    <resultMap id="distributer" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+    </resultMap>
+
+    <!-- 供货商resultMap（简化版，只包含必要字段） -->
+    <resultMap id="jrdhUser" type="NxJrdhUserEntity">
+        <id property="nxJrdhUserId" column="nx_jrdh_user_id"/>
+        <result property="nxJrdhWxAvartraUrl" column="nx_jrdh_wx_avartra_url"/>
+        <result property="nxJrdhWxNickName" column="nx_jrdh_wx_nick_name"/>
+        <result property="nxJrdhNxDistributerId" column="nx_jrdh_nx_distributer_id"/>
+        <result property="nxJrdhNxPurchaserUserId" column="nx_jrdh_nx_purchaser_user_id"/>
+        <result property="nxJrdhNxCommunityId" column="nx_jrdh_nx_community_id"/>
+        <result property="nxJrdhCommPurchaserUserId" column="nx_jrdh_nx_comm_purchaser_user_id"/>
+        <result property="nxJrdhUrlChange" column="nx_jrdh_url_change"/>
+        <result property="nxJrdhGbDistributerId" column="nx_jrdh_gb_distributer_id"/>
+        <result property="nxJrdhGbDepartmentId" column="nx_jrdh_gb_department_id"/>
+        <result property="nxJrdhAdmin" column="nx_jrdh_admin"/>
+        <result property="nxJrdhDeviceId" column="nx_jrdh_device_id"/>
+        <result property="nxJrdhDevicePrintId" column="nx_jrdh_device_print_id"/>
+    </resultMap>
+
+    <!-- 基础查询方法 -->
+    <select id="queryObject" resultMap="weightUser">
+        select * from nx_weight_user where nx_weight_user_id = #{value}
+    </select>
+
+    <select id="queryList" resultMap="weightUser">
+        select * from nx_weight_user
+        <where>
+            <if test="userType != null">
+                and nx_WU_user_type = #{userType}
+            </if>
+            <if test="status != null">
+                and nx_WU_status = #{status}
+            </if>
+            <if test="distributerId != null">
+                and nx_WU_nx_distributer_id = #{distributerId}
+            </if>
+            <if test="supplierId != null">
+                and nx_WU_user_id = #{supplierId}
+            </if>
+        </where>
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*) from nx_weight_user
+        <where>
+            <if test="userType != null">
+                and nx_WU_user_type = #{userType}
+            </if>
+            <if test="status != null">
+                and nx_WU_status = #{status}
+            </if>
+            <if test="distributerId != null">
+                and nx_WU_nx_distributer_id = #{distributerId}
+            </if>
+            <if test="supplierId != null">
+                and nx_WU_user_id = #{supplierId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据手机号查询 -->
+    <select id="queryUserByLoginPhone" resultMap="weightUserWithAssociations">
+        select wu.*,
+               nd.nx_distributer_id, nd.nx_distributer_name, nd.nx_distributer_show_name,
+               nd.nx_distributer_phone, nd.nx_distributer_address,
+               njs.nx_jrdh_user_id, njs.nx_jrdh_wx_nick_name
+        from nx_weight_user as wu
+        left join nx_distributer as nd on nd.nx_distributer_id = wu.nx_WU_nx_distributer_id and wu.nx_WU_user_type = 1
+        left join nx_jrdh_user as njs on njs.nx_jrdh_user_id = wu.nx_WU_user_id and wu.nx_WU_user_type = 2
+        where wu.nx_WU_login_phone = #{loginPhone}
+        and wu.nx_WU_status = 1
+    </select>
+
+    <!-- 根据微信openid查询 -->
+    <select id="queryUserByOpenId" resultMap="weightUserWithAssociations">
+        select wu.*,
+               nd.nx_distributer_id, nd.nx_distributer_name, nd.nx_distributer_show_name,
+               nd.nx_distributer_phone, nd.nx_distributer_address,
+               njs.nx_jrdh_user_id, njs.nx_jrdh_wx_nick_name
+        from nx_weight_user as wu
+        left join nx_distributer as nd on nd.nx_distributer_id = wu.nx_WU_nx_distributer_id and wu.nx_WU_user_type = 1
+        left join nx_jrdh_user as njs on njs.nx_jrdh_user_id  = wu.nx_WU_user_id and wu.nx_WU_user_type = 2
+        where wu.nx_WU_wx_open_id = #{openId}
+        and wu.nx_WU_status = 1
+    </select>
+
+    <!-- 根据配送商ID查询 -->
+    <select id="queryUsersByDistributerId" resultMap="weightUser">
+        select * from nx_weight_user
+        where nx_WU_nx_distributer_id = #{distributerId}
+        and nx_WU_user_type = 1
+        and nx_WU_status = 1
+        order by nx_WU_join_date desc
+    </select>
+
+    <!-- 根据供货商ID查询 -->
+    <select id="queryUsersBySupplierId" resultMap="weightUser">
+        select * from nx_weight_user
+        where nx_WU_user_id = #{userId}
+        and nx_WU_user_type = 2
+        and nx_WU_status = 1
+        order by nx_WU_join_date desc
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="queryUsersByParams" resultMap="weightUserWithAssociations">
+        select wu.*,
+               nd.nx_distributer_id, nd.nx_distributer_name, nd.nx_distributer_show_name,
+               nd.nx_distributer_phone, nd.nx_distributer_address,
+               njs.nx_jrdh_user_id, njs.nx_jrdh_wx_nick_name
+        from nx_weight_user as wu
+        left join nx_distributer as nd on nd.nx_distributer_id = wu.nx_WU_nx_distributer_id and wu.nx_WU_user_type = 1
+        left join nx_jrdh_user as njs on njs.nx_jrdh_user_id = = wu.nx_WU_user_id and wu.nx_WU_user_type = 2
+        <where>
+            <if test="userType != null">
+                and wu.nx_WU_user_type = #{userType}
+            </if>
+            <if test="status != null">
+                and wu.nx_WU_status = #{status}
+            </if>
+            <if test="distributerId != null">
+                and wu.nx_WU_nx_distributer_id = #{distributerId}
+            </if>
+            <if test="supplierId != null">
+                and wu.nx_WU_user_id = #{supplierId}
+            </if>
+            <if test="loginPhone != null">
+                and wu.nx_WU_login_phone = #{loginPhone}
+            </if>
+            <if test="openId != null">
+                and wu.nx_WU_wx_open_id = #{openId}
+            </if>
+        </where>
+        order by wu.nx_WU_join_date desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 根据手机号和验证码查询（用于登录验证） -->
+    <select id="queryUserByPhoneAndCode" resultMap="weightUser">
+        select * from nx_weight_user
+        where nx_WU_login_phone = #{loginPhone}
+        and nx_WU_login_code = #{loginCode}
+        and nx_WU_status = 1
+    </select>
+
+    <!-- 插入 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxWeightUserEntity"
+            useGeneratedKeys="true" keyProperty="nxWeightUserId">
+        insert into nx_weight_user
+        (`nx_weight_user_id`,
+         `nx_WU_user_type`,
+         `nx_WU_wx_open_id`,
+         `nx_WU_wx_nick_name`,
+         `nx_WU_wx_avartra_url`,
+         `nx_WU_wx_phone`,
+         `nx_WU_login_phone`,
+         `nx_WU_login_times`,
+         `nx_WU_login_code`,
+         `nx_WU_nx_distributer_id`,
+         `nx_WU_user_id`,
+         `nx_WU_status`,
+         `nx_WU_join_date`,
+         `nx_WU_url_change`)
+        values (#{nxWeightUserId},
+                #{nxWuUserType},
+                #{nxWuWxOpenId},
+                #{nxWuWxNickName},
+                #{nxWuWxAvartraUrl},
+                #{nxWuWxPhone},
+                #{nxWuLoginPhone},
+                #{nxWuLoginTimes},
+                #{nxWuLoginCode},
+                #{nxWuNxDistributerId},
+                #{nxWuUserId},
+                #{nxWuStatus},
+                #{nxWuJoinDate},
+                #{nxWuUrlChange})
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.nongxinle.entity.NxWeightUserEntity">
+        update nx_weight_user
+        <set>
+            <if test="nxWuUserType != null">`nx_WU_user_type` = #{nxWuUserType},</if>
+            <if test="nxWuWxOpenId != null">`nx_WU_wx_open_id` = #{nxWuWxOpenId},</if>
+            <if test="nxWuWxNickName != null">`nx_WU_wx_nick_name` = #{nxWuWxNickName},</if>
+            <if test="nxWuWxAvartraUrl != null">`nx_WU_wx_avartra_url` = #{nxWuWxAvartraUrl},</if>
+            <if test="nxWuWxPhone != null">`nx_WU_wx_phone` = #{nxWuWxPhone},</if>
+            <if test="nxWuLoginPhone != null">`nx_WU_login_phone` = #{nxWuLoginPhone},</if>
+            <if test="nxWuLoginTimes != null">`nx_WU_login_times` = #{nxWuLoginTimes},</if>
+            <if test="nxWuLoginCode != null">`nx_WU_login_code` = #{nxWuLoginCode},</if>
+            <if test="nxWuNxDistributerId != null">`nx_WU_nx_distributer_id` = #{nxWuNxDistributerId},</if>
+            <if test="nxWuUserId != null">`nx_WU_user_id` = #{nxWuUserId},</if>
+            <if test="nxWuStatus != null">`nx_WU_status` = #{nxWuStatus},</if>
+            <if test="nxWuJoinDate != null">`nx_WU_join_date` = #{nxWuJoinDate},</if>
+            <if test="nxWuUrlChange != null">`nx_WU_url_change` = #{nxWuUrlChange}</if>
+        </set>
+        where nx_weight_user_id = #{nxWeightUserId}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        delete from nx_weight_user where nx_weight_user_id = #{value}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="deleteBatch">
+        delete from nx_weight_user where nx_weight_user_id in
+        <foreach item="nxWeightUserId" collection="array" open="(" separator="," close=")">
+            #{nxWeightUserId}
+        </foreach>
+    </delete>
+
+</mapper>
+

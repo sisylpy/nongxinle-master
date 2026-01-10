@@ -25,8 +25,7 @@ import com.nongxinle.utils.R;
 import javax.swing.plaf.basic.BasicIconFactory;
 
 import static com.nongxinle.utils.DateUtils.*;
-import static com.nongxinle.utils.GbTypeUtils.getGbOrderStatusProcurement;
-import static com.nongxinle.utils.GbTypeUtils.getGbPurchaseGoodsStatusWeightFinished;
+import static com.nongxinle.utils.GbTypeUtils.*;
 import static com.nongxinle.utils.NxDistributerTypeUtils.*;
 import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisPurchaseBatchDisUserFinish;
 
@@ -65,10 +64,12 @@ public class NxDistributerPurchaseBatchController {
 		BigDecimal tuihuo = new BigDecimal(0);
 		List<NxDistributerPurchaseGoodsEntity> nxDPBEntities = batchEntity.getNxDPGEntities();
 		for (NxDistributerPurchaseGoodsEntity purGoods : nxDPBEntities) {
-			String gbDpgBuySubtotal = purGoods.getNxDpgBuySubtotal();
+			Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+			String gbDpgBuySubtotal = purchaseGoodsEntity.getNxDpgBuySubtotal();
 			tuihuo = tuihuo.add(new BigDecimal(gbDpgBuySubtotal));
-			purGoods.setNxDpgStatus(3);
-			dpgService.update(purGoods);
+			purchaseGoodsEntity.setNxDpgStatus(3);
+			dpgService.update(purchaseGoodsEntity);
 
 			Map<String, Object> map = new HashMap<>();
 			map.put("purGoodsId", purGoods.getNxDistributerPurchaseGoodsId());
@@ -89,25 +90,29 @@ public class NxDistributerPurchaseBatchController {
 		return R.ok();
 	}
 
-	@RequestMapping(value = "/purDelLastBatch/{batchId}")
-	@ResponseBody
-	public R purDelLastBatch(@PathVariable Integer batchId) {
-
-		NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDPBService.queryBatchWithOrders(batchId);
-		for (NxDistributerPurchaseGoodsEntity purGoods : nxDistributerPurchaseBatchEntity.getNxDPGEntities()) {
-			purGoods.setNxDpgStatus(getNxDisPurchaseGoodsFinishPay());
-			purGoods.setNxDpgBuyPrice("0.0");
-			purGoods.setNxDpgBuyQuantity("0.0");
-			purGoods.setNxDpgBuySubtotal("0.0");
-			purGoods.setNxDpgPurchaseType(-1);
-
-			dpgService.update(purGoods);
-
-		}
-
-			nxDPBService.delete(batchId);
-		return R.ok();
-	}
+//	@RequestMapping(value = "/purDelLastBatch/{batchId}")
+//	@ResponseBody
+//	public R purDelLastBatch(@PathVariable Integer batchId) {
+//
+//		NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDPBService.queryBatchWithOrders(batchId);
+//		for (NxDistributerPurchaseGoodsEntity purGoods : nxDistributerPurchaseBatchEntity.getNxDPGEntities()) {
+//
+//			Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+//			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+//
+//			purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishPay());
+//			purchaseGoodsEntity.setNxDpgBuyPrice("0.0");
+//			purchaseGoodsEntity.setNxDpgBuyQuantity("0.0");
+//			purchaseGoodsEntity.setNxDpgBuySubtotal("0.0");
+//			purchaseGoodsEntity.setNxDpgPurchaseType(-1);
+//
+//			dpgService.update(purchaseGoodsEntity);
+//
+//		}
+//
+//			nxDPBService.delete(batchId);
+//		return R.ok();
+//	}
 
 
 
@@ -241,7 +246,7 @@ public class NxDistributerPurchaseBatchController {
 		map2.put("status", 2);
 		map2.put("purchaseType", type);
 		System.out.println("map222" + map2);
-		List<NxDistributerPurchaseBatchEntity> batchEntities = nxDPBService.queryDisPurchaseBatch(map2);
+		List<NxDistributerPurchaseBatchEntity> batchEntities = nxDPBService.queryDisPurchaseBatchSimple(map2);
 
 		Map<String, Object> map111 = new HashMap<>();
 		map111.put("arr", batchEntities);
@@ -301,7 +306,7 @@ public class NxDistributerPurchaseBatchController {
 		Map<String, Object> map2 = new HashMap<>();
 		map2.put("disId", disId);
 		map2.put("status", 2);
-		map2.put("typeDayu", 10);
+//		map2.put("purchaseType", type);
 		
 		System.out.println("map222disGetPasteBatch" + map2);
 		List<NxDistributerPurchaseBatchEntity> batchEntities = nxDistributerPurchaseBatchService.queryDisPurchaseBatch(map2);
@@ -309,9 +314,10 @@ public class NxDistributerPurchaseBatchController {
 		Map<String, Object> map = new HashMap<>();
 		map.put("disId", disId);
 		map.put("equalStatus", 0);
-		map.put("purchaseType", 0);
+		map.put("purchaseType", 11);
 		int count = dpgService.queryPurchaseGoodsCount(map);
 		map.put("equalStatus", null);
+		map.put("purchaseType", 12);
 		map.put("dayuStatus",0);
 		map.put("status",3);
 		int countbuying = dpgService.queryPurchaseGoodsCount(map);
@@ -332,11 +338,9 @@ public class NxDistributerPurchaseBatchController {
 
 		Map<String, Object> map2 = new HashMap<>();
 		map2.put("disId", disId);
-//		map2.put("status", 3);
 		map2.put("batchType", type);
-//		map2.put("purStatus", 4);
 		System.out.println("map222disGetPasteBatch" + map2);
-		List<NxDistributerPurchaseBatchEntity> batchEntities = nxDepartmentOrdersService.queryDisPurchaseBatch(map2);
+		List<NxDistributerPurchaseBatchEntity> batchEntities = nxDepartmentOrdersService.queryDisPurchaseBatchDto(map2);
 
 		Map<String, Object> map111 = new HashMap<>();
 		map111.put("arr", batchEntities);
@@ -344,7 +348,6 @@ public class NxDistributerPurchaseBatchController {
 		Map<String, Object> map1 = new HashMap<>();
 		map1.put("disId", disId);
 		map1.put("status", 3);
-//		map1.put("purType", 1);
 		map1.put("purStatus", 4);
 		// 未采购
 		// 出库
@@ -480,10 +483,11 @@ public class NxDistributerPurchaseBatchController {
 		Map<String, Object> map = new HashMap<>();
 		map.put("disId", disId);
 		map.put("supplierId", supplierId);
+		map.put("notEqualPurchaseType", -1);
 		System.out.println("whwwhjwwh" +  map);
 		if (status.equals("all")) {
 			map.put("dayuStatus", 0);
-			map.put("purchaseType", 12);
+//			map.put("purchaseType", 12);
 		} else if (status.equals("allUnPay")) {
 			map.put("equalStatus", 2);
 		} else if (status.equals("havePayed")) {
@@ -988,25 +992,33 @@ public class NxDistributerPurchaseBatchController {
 		if(nxDistributerPurchaseBatchEntity.getNxDpbStatus().equals(getNxDisPurchaseBatchSellerReply())){
 			List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = batchEntity.getNxDPGEntities();
 			for (NxDistributerPurchaseGoodsEntity purGoods : purchaseGoodsEntities) {
-				purGoods.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
-				purGoods.setNxDpgPayType(batchEntity.getNxDpbPayType());
-				purGoods.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
-				dpgService.update(purGoods);
+				Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+				NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+				purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
+				purchaseGoodsEntity.setNxDpgPayType(batchEntity.getNxDpbPayType());
+				purchaseGoodsEntity.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
+				dpgService.update(purchaseGoodsEntity);
+
+				System.out.println("purtuos" + purchaseGoodsEntity.getNxDpgDisGoodsId());
 
 				if(batchEntity.getNxDpbOrderIsNotice() != null &&  batchEntity.getNxDpbOrderIsNotice() == 1){
-					Integer nxDpgDisGoodsId = purGoods.getNxDpgDisGoodsId();
+					Integer nxDpgDisGoodsId = purchaseGoodsEntity.getNxDpgDisGoodsId();
+
 					NxDistributerGoodsEntity distributerGoodsEntity = dgService.queryObject(nxDpgDisGoodsId);
-					distributerGoodsEntity.setNxDgSupplierId(batchEntity.getNxDpbSupplierId());
+					distributerGoodsEntity.setNxDgSupplierId(nxDistributerPurchaseBatchEntity.getNxDpbSupplierId());
+					System.out.println("purtuossetNxDgSupplierId" + nxDistributerPurchaseBatchEntity.getNxDpbSupplierId());
+
 					distributerGoodsEntity.setNxDgPurchaseAuto(1);
 					dgService.update(distributerGoodsEntity);
 				}
 				//
-				updateDisGoodsPriceThree(purGoods);
+				updateDisGoodsPriceThree(purchaseGoodsEntity);
 			}
 
-			batchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
-			batchEntity.setNxDpbOrderIsNotice(0);
-			nxDPBService.update(batchEntity);
+			nxDistributerPurchaseBatchEntity.setNxDpbOrderIsNotice(batchEntity.getNxDpbOrderIsNotice());
+			nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
+			nxDPBService.update(nxDistributerPurchaseBatchEntity);
 			return R.ok();
 		}else{
 			return R.error(-1,"请刷新数据");
@@ -1022,11 +1034,16 @@ public class NxDistributerPurchaseBatchController {
 //		if(nxDistributerPurchaseBatchEntity.getNxDpbStatus().equals(getNxDisPurchaseBatchSellerReply())){
 			List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = batchEntity.getNxDPGEntities();
 			for (NxDistributerPurchaseGoodsEntity purGoods : purchaseGoodsEntities) {
-				purGoods.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
-				purGoods.setNxDpgPayType(batchEntity.getNxDpbPayType());
-				purGoods.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
-				dpgService.update(purGoods);
-				updateDisGoodsPriceThree(purGoods);
+
+				Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+				NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+
+				purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
+				purchaseGoodsEntity.setNxDpgPayType(batchEntity.getNxDpbPayType());
+				purchaseGoodsEntity.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
+				dpgService.update(purchaseGoodsEntity);
+				updateDisGoodsPriceThree(purchaseGoodsEntity);
 			}
 
 			batchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
@@ -1047,11 +1064,14 @@ public class NxDistributerPurchaseBatchController {
 		if(nxDistributerPurchaseBatchEntity.getNxDpbStatus().equals(getNxDisPurchaseBatchSellerReply())){
 			List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = batchEntity.getNxDPGEntities();
 			for (NxDistributerPurchaseGoodsEntity purGoods : purchaseGoodsEntities) {
-				purGoods.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
-				purGoods.setNxDpgPayType(batchEntity.getNxDpbPayType());
-				purGoods.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
-				dpgService.update(purGoods);
-				updateDisGoodsPriceThree(purGoods);
+				Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+				NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+				purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
+				purchaseGoodsEntity.setNxDpgPayType(batchEntity.getNxDpbPayType());
+				purchaseGoodsEntity.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
+				dpgService.update(purchaseGoodsEntity);
+				updateDisGoodsPriceThree(purchaseGoodsEntity);
 
 				NxDistributerGoodsShelfStockEntity stockEntity = new NxDistributerGoodsShelfStockEntity();
 				stockEntity.setNxDgssReceiveUserId(batchEntity.getNxDpbPurUserId());
@@ -1134,17 +1154,31 @@ public class NxDistributerPurchaseBatchController {
 	public R sellerReplayPurchaseBatch(@RequestBody NxDistributerPurchaseBatchEntity batchEntity) {
 		List<NxDistributerPurchaseGoodsEntity> nxDPBEntities = batchEntity.getNxDPGEntities();
 		for (NxDistributerPurchaseGoodsEntity purGoods : nxDPBEntities) {
-			purGoods.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
-			purGoods.setNxDpgStatus(getNxDisPurchaseGoodsIsPurchase());
-			purGoods.setNxDpgPurchaseDate(formatWhatDay(0));
-			dpgService.update(purGoods);
-			Map<String, Object> map = new HashMap<>();
-			map.put("purGoodsId", purGoods.getNxDistributerPurchaseGoodsId());
-			List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+			Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+			purchaseGoodsEntity.setNxDpgSellUserId(batchEntity.getNxDpbSellUserId());
+			purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsIsPurchase());
+			purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
+			purchaseGoodsEntity.setNxDpgBuySubtotal(purGoods.getNxDpgBuySubtotal());
+			purchaseGoodsEntity.setNxDpgBuyPrice(purGoods.getNxDpgBuyPrice());
+			purchaseGoodsEntity.setNxDpgBuyQuantity(purGoods.getNxDpgBuyQuantity());
+			dpgService.update(purchaseGoodsEntity);
+
+			List<NxDepartmentOrdersEntity> ordersEntities = purGoods.getNxDistributerGoodsEntity().getNxDepartmentOrdersEntities();
+			System.out.println("ordododoododdooddo" + ordersEntities.size());
+
 			if(ordersEntities.size() > 0){
 				for(NxDepartmentOrdersEntity ordersEntity: ordersEntities){
-					ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishPurchase());
-					nxDepartmentOrdersService.update(ordersEntity);
+
+					Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+					NxDepartmentOrdersEntity oldOrderEntity = nxDepartmentOrdersService.queryObject(nxDepartmentOrdersId);
+					oldOrderEntity.setNxDoQuantity(ordersEntity.getNxDoQuantity());
+					oldOrderEntity.setNxDoCostPrice(ordersEntity.getNxDoCostPrice());
+					oldOrderEntity.setNxDoCostSubtotal(ordersEntity.getNxDoCostSubtotal());
+					oldOrderEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishPurchase());
+					System.out.println("ordododoododdooddo" + oldOrderEntity.getNxDoCostSubtotal());
+					nxDepartmentOrdersService.update(oldOrderEntity);
 					if(ordersEntity.getNxDoGbDepartmentOrderId() != null){
 						GbDepartmentOrdersEntity gbDepartmentOrdersEntity = gbDepartmentOrdersService.queryObject(ordersEntity.getNxDoGbDepartmentOrderId());
 						gbDepartmentOrdersEntity.setGbDoBuyStatus(2);
@@ -1154,8 +1188,11 @@ public class NxDistributerPurchaseBatchController {
 			}
 		}
 
-		batchEntity.setNxDpbStatus(getNxDisPurchaseBatchSellerReply());
-		nxDPBService.update(batchEntity);
+
+		NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(batchEntity.getNxDistributerPurchaseBatchId());
+
+		nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchSellerReply());
+		nxDPBService.update(nxDistributerPurchaseBatchEntity);
 
 		Map<String, TemplateData> mapNotice = new HashMap<>();
 		mapNotice.put("character_string1", new TemplateData(batchEntity.getNxDistributerPurchaseBatchId().toString()));
@@ -1175,7 +1212,6 @@ public class NxDistributerPurchaseBatchController {
 			}
 		}
 
-
 		return R.ok();
 	}
 
@@ -1193,17 +1229,24 @@ public class NxDistributerPurchaseBatchController {
 		map.put("userId", nxDpbSellUserId);
 		NxJrdhSupplierEntity supplierEntity = nxJrdhSupplierService.querySellUserSupplier(map);
 
-		if(supplierEntity != null){
-			batch.setNxDpbSupplierId(supplierEntity.getNxJrdhSupplierId());
-			batch.setNxDpbPayType(1);
-		}
-		batch.setNxDpbStatus(getNxDisPurchaseBatchHaveRead());
-		System.out.println("rererer" + batch);
-		nxDPBService.update(batch);
-
 		Integer nxDistributerPurchaseBatchId = batch.getNxDistributerPurchaseBatchId();
+
+		NxDistributerPurchaseBatchEntity batchEntity = nxDistributerPurchaseBatchService.queryObject(nxDistributerPurchaseBatchId);
+		if(supplierEntity != null){
+			batchEntity.setNxDpbSupplierId(supplierEntity.getNxJrdhSupplierId());
+			batchEntity.setNxDpbPayType(1);
+		}
+
+		batchEntity.setNxDpbStatus(getNxDisPurchaseBatchHaveRead());
+		batchEntity.setNxDpbSellUserId(batch.getNxDpbSellUserId());
+		batchEntity.setNxDpbBuyUserId(batch.getNxDpbBuyUserId());
+		batchEntity.setNxDpbSellUserOpenId(batch.getNxDpbSellUserOpenId());
+
+
+		nxDPBService.update(batchEntity);
 		NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDPBService.queryBatchWithOrders(nxDistributerPurchaseBatchId);
-		return R.ok().put("data", nxDistributerPurchaseBatchEntity);
+
+return R.ok().put("data", nxDistributerPurchaseBatchEntity);
 	}
 
 	@RequestMapping(value = "/updateBatchBuyerId", method = RequestMethod.POST)
@@ -1224,6 +1267,7 @@ public class NxDistributerPurchaseBatchController {
 
 		System.out.println("baiici" + batchId);
 		NxDistributerPurchaseBatchEntity entity = nxDPBService.queryBatchWithOrders(batchId);
+
 		System.out.println(entity);
 		if(entity != null){
 			return R.ok().put("data", entity);
@@ -1292,8 +1336,7 @@ public class NxDistributerPurchaseBatchController {
 			purGoods.setNxDpgTime(null);
 			purGoods.setNxDpgBuyUserId(null);
 			purGoods.setNxDpgPurUserId(null);
-			System.out.println("采购商品新状态: " + getNxDisPurchaseGoodsUnBuy());
-			System.out.println("批次ID已清空: " + purGoods.getNxDpgBatchId());
+			purGoods.setNxDpgPurchaseType(getGbPurchaseGoodsTypeShelfOrder());
 			dpgService.update(purGoods);
 			System.out.println("采购商品已更新");
 			
@@ -1419,13 +1462,17 @@ public class NxDistributerPurchaseBatchController {
 
 		NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDPBService.queryBatchWithOrders(batchId);
 		for (NxDistributerPurchaseGoodsEntity purGoods : nxDistributerPurchaseBatchEntity.getNxDPGEntities()) {
-			purGoods.setNxDpgBatchId(null);
-			purGoods.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
-			purGoods.setNxDpgBuyPrice("0.0");
-			purGoods.setNxDpgBuyQuantity("0.0");
-			purGoods.setNxDpgBuySubtotal("0.0");
-			dpgService.update(purGoods);
+
 			Integer nxDistributerPurchaseGoodsId = purGoods.getNxDistributerPurchaseGoodsId();
+			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+			purchaseGoodsEntity.setNxDpgBatchId(null);
+			purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
+			purchaseGoodsEntity.setNxDpgBuyPrice("0.0");
+			purchaseGoodsEntity.setNxDpgBuyQuantity("0.0");
+			purchaseGoodsEntity.setNxDpgBuySubtotal("0.0");
+			dpgService.update(purchaseGoodsEntity);
+
 			Map<String, Object> map = new HashMap<>();
 			map.put("purGoodsId", nxDistributerPurchaseGoodsId);
 			List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
@@ -1461,6 +1508,7 @@ public class NxDistributerPurchaseBatchController {
 	@RequestMapping(value = "/saveDisPurGoodsBatch", method = RequestMethod.POST)
 	@ResponseBody
 	public R saveDisPurGoodsBatch(@RequestBody NxDistributerPurchaseBatchEntity batchEntity) {
+
 		batchEntity.setNxDpbDate(formatWhatDay(0));
 		batchEntity.setNxDpbYear(formatWhatYear(0));
 		batchEntity.setNxDpbMonth(formatWhatMonth(0));
@@ -1476,15 +1524,82 @@ public class NxDistributerPurchaseBatchController {
 		batchEntity.setNxDpbStatus(getNxDisPurchaseBatchUnSend());
 		batchEntity.setNxDpbPruchaseWeek(getWeek(0));
 		batchEntity.setNxDpbPayType(0);
+
 		nxDPBService.save(batchEntity);
 		for (NxDistributerPurchaseGoodsEntity disPurGoods : batchEntity.getNxDPGEntities()) {
-			disPurGoods.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
-			disPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
-			disPurGoods.setNxDpgPurchaseDate(formatWhatDay(0));
-			disPurGoods.setNxDpgTime(formatWhatTime(0));
-			disPurGoods.setNxDpgBuyUserId(batchEntity.getNxDpbBuyUserId());
-			disPurGoods.setNxDpgPurUserId(batchEntity.getNxDpbPurUserId());
-			dpgService.update(disPurGoods);
+
+			Integer nxDistributerPurchaseGoodsId = disPurGoods.getNxDistributerPurchaseGoodsId();
+			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+			purchaseGoodsEntity.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
+			purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
+			purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
+			purchaseGoodsEntity.setNxDpgTime(formatWhatTime(0));
+			purchaseGoodsEntity.setNxDpgBuyUserId(batchEntity.getNxDpbBuyUserId());
+			purchaseGoodsEntity.setNxDpgPurUserId(batchEntity.getNxDpbPurUserId());
+			purchaseGoodsEntity.setNxDpgPurchaseType(getGbPurchaseGoodsTypeForOrder());
+			purchaseGoodsEntity.setNxDpgBuyQuantity("0");
+			purchaseGoodsEntity.setNxDpgBuyPrice("0");
+			purchaseGoodsEntity.setNxDpgBuySubtotal("0");
+			dpgService.update(purchaseGoodsEntity);
+
+			Map<String, Object> map = new HashMap<>();
+			map.put("purGoodsId", disPurGoods.getNxDistributerPurchaseGoodsId());
+			List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+			if(ordersEntities.size() > 0){
+				for(NxDepartmentOrdersEntity ordersEntity: ordersEntities){
+					ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusIsPurchase());
+					nxDepartmentOrdersService.update(ordersEntity);
+					if(ordersEntity.getNxDoGbDepartmentOrderId() != null){
+						//更新gbDepOrder
+						Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+						GbDepartmentOrdersEntity gbDepartmentOrdersEntity = gbDepartmentOrdersService.queryGbOrderByNxOrderId(nxDepartmentOrdersId);
+						if (gbDepartmentOrdersEntity != null) {
+							gbDepartmentOrdersEntity.setGbDoBuyStatus(1);
+							gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
+						}
+					}
+				}
+			}
+		}
+		return R.ok().put("data", batchEntity.getNxDistributerPurchaseBatchId());
+	}
+
+
+	@RequestMapping(value = "/purchaseSaveDisPurGoodsBatch", method = RequestMethod.POST)
+	@ResponseBody
+	public R purchaseSaveDisPurGoodsBatch(@RequestBody NxDistributerPurchaseBatchEntity batchEntity) {
+
+		batchEntity.setNxDpbDate(formatWhatDay(0));
+		batchEntity.setNxDpbYear(formatWhatYear(0));
+		batchEntity.setNxDpbMonth(formatWhatMonth(0));
+		batchEntity.setNxDpbTime(formatWhatTime(0));
+
+		LocalDateTime now = LocalDateTime.now();
+		int hour = now.getHour();
+		if( hour < 12){
+			batchEntity.setNxDpbNeedDate(formatWhatDay(0));
+		}else{
+			batchEntity.setNxDpbNeedDate(formatWhatDay(1));
+		}
+		batchEntity.setNxDpbStatus(getNxDisPurchaseBatchUnSend());
+		batchEntity.setNxDpbPruchaseWeek(getWeek(0));
+		batchEntity.setNxDpbPayType(0);
+
+		nxDPBService.save(batchEntity);
+		for (NxDistributerPurchaseGoodsEntity disPurGoods : batchEntity.getNxDPGEntities()) {
+
+			Integer nxDistributerPurchaseGoodsId = disPurGoods.getNxDistributerPurchaseGoodsId();
+			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
+			purchaseGoodsEntity.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
+			purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
+			purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
+			purchaseGoodsEntity.setNxDpgTime(formatWhatTime(0));
+			purchaseGoodsEntity.setNxDpgBuyUserId(batchEntity.getNxDpbBuyUserId());
+			purchaseGoodsEntity.setNxDpgPurUserId(batchEntity.getNxDpbPurUserId());
+			purchaseGoodsEntity.setNxDpgPurchaseType(batchEntity.getNxDpbPurchaseType());
+			dpgService.update(purchaseGoodsEntity);
 
 			Map<String, Object> map = new HashMap<>();
 			map.put("purGoodsId", disPurGoods.getNxDistributerPurchaseGoodsId());
@@ -1535,15 +1650,18 @@ public class NxDistributerPurchaseBatchController {
 		nxDPBService.save(batchEntity);
 		// 获取部门父级ID，用于过滤订单
 		Integer depFatherId = batchEntity.getNxDpbNxDepartmentFatherId();
-		
-		for (NxDistributerPurchaseGoodsEntity disPurGoods : batchEntity.getNxDPGEntities()) {
+
+		for (NxDistributerPurchaseGoodsEntity disPurGoods1 : batchEntity.getNxDPGEntities()) {
+			Integer nxDistributerPurchaseGoodsId = disPurGoods1.getNxDistributerPurchaseGoodsId();
+			NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = dpgService.queryObject(nxDistributerPurchaseGoodsId);
+
 			// 查询该采购商品关联的所有订单（不按部门过滤）
 			Map<String, Object> allOrdersMap = new HashMap<>();
-			allOrdersMap.put("purGoodsId", disPurGoods.getNxDistributerPurchaseGoodsId());
+			allOrdersMap.put("purGoodsId", purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
 			List<NxDepartmentOrdersEntity> allOrdersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(allOrdersMap);
 			
-			System.out.println("[saveDisPurGoodsBatchByDep] 采购商品ID: " + disPurGoods.getNxDistributerPurchaseGoodsId() 
-				+ ", 当前部门父级ID: " + depFatherId 
+			System.out.println("[saveDisPurGoodsBatchByDep] 采购商品ID: " + purchaseGoodsEntity.getNxDistributerPurchaseGoodsId()
+				+ ", 当前部门父级ID: " + depFatherId
 				+ ", 关联订单总数: " + (allOrdersEntities != null ? allOrdersEntities.size() : 0));
 			
 			// 检查是否有其他部门的订单
@@ -1567,24 +1685,24 @@ public class NxDistributerPurchaseBatchController {
 			if (hasOtherDepOrders) {
 				// 创建新的采购商品（复制原采购商品的信息）
 				NxDistributerPurchaseGoodsEntity newPurGoods = new NxDistributerPurchaseGoodsEntity();
-				newPurGoods.setNxDpgDisGoodsId(disPurGoods.getNxDpgDisGoodsId());
-				newPurGoods.setNxDpgDisGoodsFatherId(disPurGoods.getNxDpgDisGoodsFatherId());
-				newPurGoods.setNxDpgDisGoodsGrandId(disPurGoods.getNxDpgDisGoodsGrandId());
-				newPurGoods.setNxDpgDistributerId(disPurGoods.getNxDpgDistributerId());
-				newPurGoods.setNxDpgStandard(disPurGoods.getNxDpgStandard());
-				newPurGoods.setNxDpgQuantity(disPurGoods.getNxDpgQuantity());
+				newPurGoods.setNxDpgDisGoodsId(purchaseGoodsEntity.getNxDpgDisGoodsId());
+				newPurGoods.setNxDpgDisGoodsFatherId(purchaseGoodsEntity.getNxDpgDisGoodsFatherId());
+				newPurGoods.setNxDpgDisGoodsGrandId(purchaseGoodsEntity.getNxDpgDisGoodsGrandId());
+				newPurGoods.setNxDpgDistributerId(purchaseGoodsEntity.getNxDpgDistributerId());
+				newPurGoods.setNxDpgStandard(purchaseGoodsEntity.getNxDpgStandard());
+				newPurGoods.setNxDpgQuantity(purchaseGoodsEntity.getNxDpgQuantity());
 				newPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
 				newPurGoods.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
 				newPurGoods.setNxDpgPurchaseDate(formatWhatDay(0));
 				newPurGoods.setNxDpgTime(formatWhatTime(0));
 				newPurGoods.setNxDpgBuyUserId(batchEntity.getNxDpbBuyUserId());
 				newPurGoods.setNxDpgPurUserId(batchEntity.getNxDpbPurUserId());
-				newPurGoods.setNxDpgPurchaseType(disPurGoods.getNxDpgPurchaseType());
-				newPurGoods.setNxDpgInputType(disPurGoods.getNxDpgInputType());
-				newPurGoods.setNxDpgApplyDate(disPurGoods.getNxDpgApplyDate());
-				newPurGoods.setNxDpgExpectPrice(disPurGoods.getNxDpgExpectPrice());
-				newPurGoods.setNxDpgBuyPrice(disPurGoods.getNxDpgBuyPrice());
-				newPurGoods.setNxDpgApplyShelfId(disPurGoods.getNxDpgApplyShelfId());
+				newPurGoods.setNxDpgPurchaseType(purchaseGoodsEntity.getNxDpgPurchaseType());
+				newPurGoods.setNxDpgInputType(purchaseGoodsEntity.getNxDpgInputType());
+				newPurGoods.setNxDpgApplyDate(purchaseGoodsEntity.getNxDpgApplyDate());
+				newPurGoods.setNxDpgExpectPrice(purchaseGoodsEntity.getNxDpgExpectPrice());
+				newPurGoods.setNxDpgBuyPrice(purchaseGoodsEntity.getNxDpgBuyPrice());
+				newPurGoods.setNxDpgApplyShelfId(purchaseGoodsEntity.getNxDpgApplyShelfId());
 				
 				// 计算当前部门的订单数量
 				int currentDepOrdersCount = 0;
@@ -1601,10 +1719,10 @@ public class NxDistributerPurchaseBatchController {
 				Integer newPurGoodsId = newPurGoods.getNxDistributerPurchaseGoodsId();
 				
 				// 更新原采购商品的订单数量（减去当前部门的订单数量）
-				Integer originalOrdersAmount = disPurGoods.getNxDpgOrdersAmount();
+				Integer originalOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
 				if (originalOrdersAmount != null && originalOrdersAmount >= currentDepOrdersCount) {
-					disPurGoods.setNxDpgOrdersAmount(originalOrdersAmount - currentDepOrdersCount);
-					dpgService.update(disPurGoods);
+					purchaseGoodsEntity.setNxDpgOrdersAmount(originalOrdersAmount - currentDepOrdersCount);
+					dpgService.update(purchaseGoodsEntity);
 					System.out.println("[saveDisPurGoodsBatchByDep] 更新原采购商品订单数量: 原数量=" + originalOrdersAmount 
 						+ ", 当前部门订单数=" + currentDepOrdersCount 
 						+ ", 更新后数量=" + (originalOrdersAmount - currentDepOrdersCount));
@@ -1615,7 +1733,7 @@ public class NxDistributerPurchaseBatchController {
 				
 				// 将当前部门的订单关联到新的采购商品
 				Map<String, Object> currentDepOrdersMap = new HashMap<>();
-				currentDepOrdersMap.put("purGoodsId", disPurGoods.getNxDistributerPurchaseGoodsId());
+				currentDepOrdersMap.put("purGoodsId", purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
 				if (depFatherId != null) {
 					currentDepOrdersMap.put("depFatherId", depFatherId);
 				}
@@ -1638,17 +1756,17 @@ public class NxDistributerPurchaseBatchController {
 				}
 			} else {
 				// 如果没有其他部门的订单，直接更新采购商品和订单
-				disPurGoods.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
-				disPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
-				disPurGoods.setNxDpgPurchaseDate(formatWhatDay(0));
-				disPurGoods.setNxDpgTime(formatWhatTime(0));
-				disPurGoods.setNxDpgBuyUserId(batchEntity.getNxDpbBuyUserId());
-				disPurGoods.setNxDpgPurUserId(batchEntity.getNxDpbPurUserId());
-				dpgService.update(disPurGoods);
+				purchaseGoodsEntity.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
+				purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
+				purchaseGoodsEntity.setNxDpgPurchaseDate(formatWhatDay(0));
+				purchaseGoodsEntity.setNxDpgTime(formatWhatTime(0));
+				purchaseGoodsEntity.setNxDpgBuyUserId(batchEntity.getNxDpbBuyUserId());
+				purchaseGoodsEntity.setNxDpgPurUserId(batchEntity.getNxDpbPurUserId());
+				dpgService.update(purchaseGoodsEntity);
 				
 				// 查询和更新属于当前部门的订单
 				Map<String, Object> map = new HashMap<>();
-				map.put("purGoodsId", disPurGoods.getNxDistributerPurchaseGoodsId());
+				map.put("purGoodsId", purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
 				if (depFatherId != null) {
 					map.put("depFatherId", depFatherId);
 				}

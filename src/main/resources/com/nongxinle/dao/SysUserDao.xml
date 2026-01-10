@@ -38,7 +38,7 @@
 		select * from sys_user where username = #{username}
 	</select>
 
-	<resultMap id="nxDis" type="NxDistributerEntity">
+	<resultMap id="nxDis" type="com.nongxinle.entity.NxDistributerEntity">
 		 <id property="nxDistributerId" column="nx_distributer_id"/>
         <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
         <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
@@ -56,7 +56,7 @@
 		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 	</resultMap>
 
-	<resultMap id="nxDisUser" type="NxDistributerUserEntity">
+	<resultMap id="nxDisUser" type="com.nongxinle.entity.NxDistributerUserEntity">
 		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
         <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
 		<result property="nxDiuLoginTimes" column="nx_DIU_login_times"/>
@@ -73,12 +73,12 @@
 	</resultMap>
 
 
-	<resultMap id="disModule" type="GbDistributerModuleEntity">
+	<resultMap id="disModule" type="com.nongxinle.entity.GbDistributerModuleEntity">
 		<id property="gbDistributerModuleId" column="gb_distributer_module_id"/>
 		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
 		<result property="gbDmPurchaseNumber" column="gb_dm_purchase_number"/>
 		<result property="gbDmStockNumber" column="gb_dm_stock_number"/>
-<result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
+        <result property="gbDmAppSupplierNumber" column="gb_dm_app_supplier_number"/>
 		<result property="gbDmFixedSupplierNumber" column="gb_dm_fixed_supplier_number"/>
 		<result property="gbDmCentralKitchenNumber" column="gb_dm_central_kitchen_number"/>
 		<result property="gbDmDirectSalesNumber" column="gb_dm_direct_sales_number"/>
@@ -87,8 +87,8 @@
 	</resultMap>
 
 
-	<resultMap id="dis" type="GbDistributerEntity">
-<id property="gbDistributerId" column="gb_distributer_id"/>
+	<resultMap id="dis" type="com.nongxinle.entity.GbDistributerEntity">
+		<id property="gbDistributerId" column="gb_distributer_id"/>
         <result property="gbDistributerStockCycle" column="gb_distributer_stock_cycle"/>
 		<result property="gbDistributerRecordSeconds" column="gb_distributer_record_seconds"/>
 		<result property="gbDistributerNxDisId" column="gb_distributer_nx_dis_id"/>
@@ -110,7 +110,7 @@
 		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
 	</resultMap>
 
-	<resultMap id="qyCorpUser" type="QyGbDisCorpUserEntity">
+	<resultMap id="qyCorpUser" type="com.nongxinle.entity.QyGbDisCorpUserEntity">
 		<id property="qyGbDisCorpUserId" column="qy_gb_dis_corp_user_id"/>
 		<result property="qyGbDisCorpOpenUserId" column="qy_gb_dis_corp_open_user_id"/>
 		<result property="qyGbDisCorpQyCorpId" column="qy_gb_dis_corp_qy_corp_id"/>
@@ -119,7 +119,7 @@
 		<result property="qyGbDisCorpUserJoinDate" column="qy_gb_dis_corp_user_join_date"/>
 		<result property="qyGbDistributerId" column="qy_gb_distributer_id"/>
 	</resultMap>
-	<resultMap id="disUser" type="GbDistributerUserEntity">
+	<resultMap id="disUser" type="com.nongxinle.entity.GbDistributerUserEntity">
 		 <id property="gbDistributerUserId" column="gb_distributer_user_id"/>
         <result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
 		<result property="gbDiuLoginTimes" column="gb_DIU_login_times"/>
@@ -127,7 +127,6 @@
 		<result property="gbDiuWxNickName" column="gb_DIU_wx_nick_name"/>
 		<result property="gbDiuDistributerId" column="gb_DIU_distributer_id"/>
 		<association property="qyGbDisCorpUserEntity" resultMap="qyCorpUser"/>
-
 		<association property="gbDistributerEntity" resultMap="dis"/>
 	</resultMap>
 	<resultMap id="userWithDisInfo" type="SysUserEntity">
@@ -136,7 +135,7 @@
 		<result property="userDisUserId" column="user_dis_user_id"/>
 		<association property="gbDistributerUserEntity" resultMap="disUser"/>
 	</resultMap>
-	<resultMap id="nxUserWithDisInfo" type="SysUserEntity">
+	<resultMap id="nxUserWithDisInfo" type="com.nongxinle.entity.SysUserEntity">
 		<id property="userId" column="user_id"/>
 		<result property="username" column="user_name"/>
 		<result property="userDisUserId" column="user_dis_user_id"/>

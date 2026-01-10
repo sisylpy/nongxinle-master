@@ -62,6 +62,16 @@ public class OutOrderSimpleDTO implements Serializable {
     private String fatherDepartmentAttrName;
 
     /**
+     * 部门订货代号
+     */
+    private String nxDepartmentOrderCode;
+
+    /**
+     * 父部门订货代号
+     */
+    private String fatherDepartmentOrderCode;
+
+    /**
      * GB部门ID
      */
     private Integer nxDoGbDepartmentId;

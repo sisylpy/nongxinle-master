@@ -8,6 +8,7 @@ package com.nongxinle.dao;
  */
 
 import com.nongxinle.entity.NxGoodsEntity;
+import com.nongxinle.dto.NxGoodsSimpleDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public interface NxGoodsDao extends BaseDao<NxGoodsEntity> {
 
     List<NxGoodsEntity> queryDisGoodsQuickSearchPyWithDepOrders(Map<String, Object> map);
 
-    List<NxGoodsEntity> queryListWithFatherIdDeep(Map<String, Object> map);
+    List<NxGoodsSimpleDTO> queryListWithFatherIdDeep(Map<String, Object> map);
 
     List<NxGoodsEntity> queryNumberGoods();
 
@@ -83,4 +84,8 @@ public interface NxGoodsDao extends BaseDao<NxGoodsEntity> {
 //    List<NxGoodsEntity> queryCataNxDistribterWithPeisong(Map<String, Object> map);
 
     List<String> queryNxBrand();
+
+    NxGoodsEntity queryLevelOneGoods(String goodsName);
+
+    List<NxGoodsEntity> queryQuickSearchNxGoodsAll(Map<String, Object> map);
 }

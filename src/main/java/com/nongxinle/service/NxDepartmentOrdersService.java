@@ -5,6 +5,7 @@ package com.nongxinle.service;
  * @date 06-21 21:51
  */
 
+import com.nongxinle.dto.PasteSearchGoodsResponseDTO;
 import com.nongxinle.entity.*;
 import org.apache.ibatis.annotations.Param;
 
@@ -108,6 +109,18 @@ public interface NxDepartmentOrdersService {
 
     List<NxDepartmentOrdersEntity> queryDepWeightOrderGb(Map<String, Object> map);
 
+    /**
+     * 根据depFatherId查询订单列表（包含溯源报告信息）
+     * 如果是货架商品，从库存批次关联溯源报告；如果不是货架商品，从采购商品关联溯源报告
+     */
+    List<NxDepartmentOrdersEntity> queryDepOrdersWithTraceReport(Map<String, Object> map);
+
+    /**
+     * 根据departmentBillId查询订单列表（包含溯源报告信息）
+     * 如果是货架商品，从库存批次关联溯源报告；如果不是货架商品，从采购商品关联溯源报告
+     */
+    List<NxDepartmentOrdersEntity> queryOrdersByBillIdWithTraceReport(Map<String, Object> map);
+
 
     List<NxDistributerFatherGoodsEntity> queryFatherGoodsByParams(Map<String, Object> map1222);
 
@@ -136,10 +149,10 @@ public interface NxDepartmentOrdersService {
 
     List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map);
 
-    Map<Integer, Map<String, Integer>> batchQueryDepStats(@Param("list") List<Integer> depIds);
+    Map<Integer, Map<String, Integer>> batchQueryDepStats(@Param("list") List<Integer> depIds, @Param("params") Map<String, Object> params);
 
 
-    Map<Integer, Map<String, Integer>> batchQueryGbDepStats(@Param("list") List<Integer>  gbDepIds);
+    Map<Integer, Map<String, Integer>> batchQueryGbDepStats(@Param("list") List<Integer>  gbDepIds, @Param("params") Map<String, Object> params);
 
     Map<Integer, Integer> batchQueryFatherGoodsOrderCount(List<Integer> grandIds, Map<String, Object> params);
     
@@ -210,4 +223,34 @@ public interface NxDepartmentOrdersService {
     Map<String, Object> queryCategoryStatistics(Map<String, Object> params);
 
     Map<Integer, Map<String, Object>> batchQueryDepartmentOrderStatsSunla(List<Integer> depFatherIds);
+
+    List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatchDto(Map<String, Object> map2);
+    
+    /**
+     * 从 OCR 识别结果中搜索商品并保存订单
+     * 将业务逻辑从 Controller 层下沉到 Service 层
+     * 
+     * @param orderList 订单列表（来自 OCR 识别结果）
+     * @return 处理后的订单响应列表
+     */
+    List<PasteSearchGoodsResponseDTO> searchAndSaveOrdersFromOcr(List<NxDepartmentOrdersEntity> orderList);
+    
+    /**
+     * 保存订单（包含完整的订单保存逻辑，从 Controller 的 saveOneOrder 方法提取）
+     * 
+     * @param order 订单实体
+     * @param disGoodsEntity 分销商商品实体
+     * @return 保存后的订单实体
+     */
+    NxDepartmentOrdersEntity saveOrderWithGoods(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity);
+
+    /**
+     * 为订单添加推荐商品（参考 pasteSearchGoods 的查询方式）
+     * 用于弱查询场景，在找到唯一商品后，继续查询相似商品作为推荐
+     * 
+     * @param order 已保存的订单（状态应为 -2）
+     * @return 添加推荐商品后的订单实体（订单状态保持不变）
+     */
+    NxDepartmentOrdersEntity addCommentsGoodsForOrder(NxDepartmentOrdersEntity order);
+
 }

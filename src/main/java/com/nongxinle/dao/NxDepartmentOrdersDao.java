@@ -99,6 +99,18 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     List<NxDepartmentOrdersEntity> queryDepWeightOrderGb(Map<String, Object> map);
 
+    /**
+     * 根据depFatherId查询订单列表（包含溯源报告信息）
+     * 如果是货架商品，从库存批次关联溯源报告；如果不是货架商品，从采购商品关联溯源报告
+     */
+    List<NxDepartmentOrdersEntity> queryDepOrdersWithTraceReport(Map<String, Object> map);
+
+    /**
+     * 根据departmentBillId查询订单列表（包含溯源报告信息）
+     * 如果是货架商品，从库存批次关联溯源报告；如果不是货架商品，从采购商品关联溯源报告
+     */
+    List<NxDepartmentOrdersEntity> queryOrdersByBillIdWithTraceReport(Map<String, Object> map);
+
     List<NxDepartmentEntity> queryDistributerFatherGoodsTodayDepartments(Map<String, Object> map);
 
     List<NxDistributerFatherGoodsEntity> queryFatherGoodsByParams(Map<String, Object> map1222);
@@ -129,9 +141,9 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map);
 
-    List<Map<String, Object>> batchQueryDepStats(List<Integer> depIds);
+    List<Map<String, Object>> batchQueryDepStats(@Param("list") List<Integer> depIds, @Param("params") Map<String, Object> params);
 
-    List<Map<String, Object>> batchQueryGbDepStats(List<Integer> gbDepIds);
+    List<Map<String, Object>> batchQueryGbDepStats(@Param("list") List<Integer> gbDepIds, @Param("params") Map<String, Object> params);
 
     List<Map<String, Object>> batchQueryDepartmentStats(List<Integer> depIds);
 
@@ -173,6 +185,13 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     Integer queryShelfGoodsCount(Map<String, Object> params);
 
     /**
+     * 查询非货架订单数量
+     * @param params 查询参数
+     * @return 非货架订单数量
+     */
+    Integer queryNonShelfOrdersCount(Map<String, Object> params);
+
+    /**
      * 查询指定货架的商品详情（简化版，只返回必要字段）
      * @param params 查询参数，必须包含targetShelfId
      * @return 货架对象（包含商品和订单，但字段已简化）
@@ -182,9 +201,9 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     /**
      * 查询指定货架的商品详情（超简化版，使用DTO对象，字段扁平化）
      * @param params 查询参数，必须包含targetShelfId
-     * @return 货架详情DTO（字段已最大程度简化）
+     * @return 货架详情DTO列表（MyBatis 会自动聚合为单个对象，但返回 List 以避免 TooManyResultsException）
      */
-    ShelfDetailSimpleDTO queryShelfGoodsDetailUltraSimple(Map<String, Object> params);
+    List<ShelfDetailSimpleDTO> queryShelfGoodsDetailUltraSimple(Map<String, Object> params);
 
     /**
      * 查询类别列表（曾祖父级别，仅基本信息，不包含商品详情）
@@ -208,4 +227,6 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     CategoryDetailSimpleDTO queryCategoryGoodsDetailUltraSimple(Map<String, Object> params);
 
     List<Map<String, Object>> batchQueryDepartmentOrderStatsSunla(@Param("depFatherIds") List<Integer> depFatherIds);
+
+    List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatchDto(Map<String, Object> map2);
 }

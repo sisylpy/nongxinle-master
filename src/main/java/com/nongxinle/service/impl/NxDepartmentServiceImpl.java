@@ -87,6 +87,8 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 				subDep.setNxDepartmentFatherId(nxDepartmentId);
 				subDep.setNxDepartmentDisId(dep.getNxDepartmentDisId());
 				subDep.setNxDepartmentAttrName(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentOrderCode(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentRecordMinutes(30);
 				subDep.setNxDepartmentDisId(dep.getNxDepartmentDisId());
 				subDep.setNxDepartmentOrderTotal(0);
 				subDep.setNxDepartmentJoinDate(formatWhatDay(0));
@@ -114,6 +116,8 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 		String s = hanziToPinyin(nxDepartmentEntity.getNxDepartmentName());
 		nxDepartmentEntity.setNxDepartmentPinyin(s);
 		nxDepartmentEntity.setNxDepartmentAttrName(nxDepartmentEntity.getNxDepartmentName());
+		nxDepartmentEntity.setNxDepartmentOrderCode(nxDepartmentEntity.getNxDepartmentName());
+		nxDepartmentEntity.setNxDepartmentRecordMinutes(30);
 		Integer nxDepartmentDisId = nxDepartmentEntity.getNxDepartmentDisId();
 		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
         nxDepartmentEntity.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
@@ -187,6 +191,8 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 				subDep.setNxDepartmentWorkingStatus(0);
 				subDep.setNxDepartmentType("分店");
 				subDep.setNxDepartmentAttrName(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentOrderCode(subDep.getNxDepartmentName());
+				subDep.setNxDepartmentRecordMinutes(30);
 				subDep.setNxDepartmentOrderTotal(0);
 				subDep.setNxDepartmentJoinDate(formatWhatDay(0));
 				String ss = hanziToPinyin(subDep.getNxDepartmentName());

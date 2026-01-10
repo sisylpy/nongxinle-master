@@ -382,6 +382,11 @@ public class NxDistributerGoodsServiceImpl implements NxDistributerGoodsService 
         return nxDistributerGoodsDao.queryUnShelfDisGoodsQuickSearchStrWithNxGoodsId(map);
     }
 
+    @Override
+    public int updatePurchaseAutoByGreatGrandIds(Map<String, Object> map) {
+        return nxDistributerGoodsDao.updatePurchaseAutoByGreatGrandIds(map);
+    }
+
 
 //    @Override
 //    public List<NxDistributerFatherGoodsEntity> queryFatherDisGoodsByParams(Map<String, Object> map1) {

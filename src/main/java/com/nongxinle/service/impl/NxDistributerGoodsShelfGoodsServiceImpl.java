@@ -114,5 +114,15 @@ public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoo
         return nxDistributerGoodsShelfGoodsDao.queryUnInventoriedShelfGoodsCount(map);
     }
 
+    @Override
+    public List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsWithTraceReportByParams(Map<String, Object> map) {
+        return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsWithTraceReportByParams(map);
+    }
+
+    @Override
+    public int queryShelfForGoodsWithTraceReportCount(Map<String, Object> map) {
+        return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsWithTraceReportCount(map);
+    }
+
 
 }

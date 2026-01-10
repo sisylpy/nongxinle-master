@@ -89,6 +89,8 @@ public class GbDistributerGoodsController {
     private NxJrdhUserService nxJrdhUserService;
     @Autowired
     private GbDistributerPayListService payListService;
+    @Autowired
+    private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
 
 
     @RequestMapping(value = "/addAutoOrderGoods", method = RequestMethod.POST)
@@ -284,6 +286,8 @@ public class GbDistributerGoodsController {
         GbDistributerFatherGoodsEntity grandFather = dgfService.queryObject(fatherGoodsEntity.getGbDfgFathersFatherId());
         goods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
 
+        Integer depFatherId = goods.getGbDgGoodsSort();
+        Integer depSonsId = goods.getGbDgGoodsSonsSort();
 
         goods.setGbDgGoodsType(2);
         goods.setGbDgGbDepartmentId(toDepId);
@@ -299,6 +303,23 @@ public class GbDistributerGoodsController {
         goods.setGbDgGoodsIsHidden(0);
         goods.setGbDgGoodsStandardname(standard);
         goods.setGbDgGoodsDetail(detail);
+        goods.setGbDgNxDistributerId(-1);
+        goods.setGbDgNxDistributerGoodsId(-1);
+        goods.setGbDgGoodsStatus(0);
+        goods.setGbDgGoodsIsWeight(0);
+        goods.setGbDgGoodsIsHidden(0);
+        goods.setGbDgPullOff(0);
+        goods.setGbDgGoodsType(2);
+        goods.setGbDgGbSupplierId(-1);
+        goods.setGbDgNxDistributerId(-1);
+        goods.setGbDgNxDistributerGoodsId(-1);
+        goods.setGbDgNxDistributerGoodsPrice("0.1");
+        goods.setGbDgGbDepartmentId(toDepId);
+        goods.setGbDgControlFresh(0);
+        goods.setGbDgControlPrice(0);
+        goods.setGbDgGoodsInventoryType(1);
+        goods.setGbDgIsFranchisePrice(0);
+        goods.setGbDgIsSelfControl(0);
         System.out.println("savegoogog" + goods);
         gbDgService.save(goods);
 
@@ -339,8 +360,8 @@ public class GbDistributerGoodsController {
         disGoodsEntityDep.setGbDdgDepGoodsPinyin(goods.getGbDgGoodsPinyin());
         disGoodsEntityDep.setGbDdgDepGoodsPy(goods.getGbDgGoodsPy());
         disGoodsEntityDep.setGbDdgDepGoodsStandardname(goods.getGbDgGoodsStandardname());
-        disGoodsEntityDep.setGbDdgDepartmentId(depId);
-        disGoodsEntityDep.setGbDdgDepartmentFatherId(depId);
+        disGoodsEntityDep.setGbDdgDepartmentId(depSonsId);
+        disGoodsEntityDep.setGbDdgDepartmentFatherId(depFatherId);
         disGoodsEntityDep.setGbDdgGbDepartmentId(goods.getGbDgGbDepartmentId());
         disGoodsEntityDep.setGbDdgGoodsType(goods.getGbDgGoodsType());
         disGoodsEntityDep.setGbDdgStockTotalWeight("0.0");
@@ -1282,19 +1303,13 @@ public class GbDistributerGoodsController {
     @RequestMapping(value = "/depGetGbAppointSupplierGoods/{supplierId}")
     @ResponseBody
     public R depGetGbAppointSupplierGoods(@PathVariable Integer supplierId) {
-
-        Map<String, Object> mapSup = new HashMap<>();
-        mapSup.put("supplierId", supplierId);
-        mapSup.put("admin", 0);
-
-        GbDistributerSupplierEntity distributerSupplierEntity = gbDistributerSupplierService.queryAppointSupplierBySupplierId(mapSup);
-        Map<String, Object> map = new HashMap<>();
+  Map<String, Object> map = new HashMap<>();
         map.put("supplierId", supplierId);
-        List<GbDistributerGoodsEntity> goodsEntities = gbDgService.queryGoodsByParamsGb(map);
-        Map<String, Object> map1 = new HashMap<>();
-        map1.put("supplier", distributerSupplierEntity);
-        map1.put("goodsArr", goodsEntities);
-        return R.ok().put("data", map1);
+        map.put("limit", 10000);
+        map.put("offset", 0);
+        TreeSet<GbDistributerGoodsEntity> goodsEntities = gbDepartmentDisGoodsService.disQueryDisGoodsWithOrderForAiTree(map);
+
+        return R.ok().put("data", goodsEntities);
     }
 
 

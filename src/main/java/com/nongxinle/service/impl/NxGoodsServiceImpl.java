@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.nongxinle.dao.NxGoodsDao;
 import com.nongxinle.entity.NxGoodsEntity;
+import com.nongxinle.dto.NxGoodsSimpleDTO;
 import com.nongxinle.service.NxGoodsService;
 
 
@@ -186,7 +187,7 @@ public class NxGoodsServiceImpl implements NxGoodsService {
     }
 
     @Override
-    public List<NxGoodsEntity> queryListWithFatherIdDeep(Map<String, Object> map) {
+    public List<NxGoodsSimpleDTO> queryListWithFatherIdDeep(Map<String, Object> map) {
 
 		return nxGoodsDao.queryListWithFatherIdDeep(map);
     }
@@ -213,6 +214,18 @@ public class NxGoodsServiceImpl implements NxGoodsService {
     public List<String> queryNxBrand() {
         return nxGoodsDao.queryNxBrand();
     }
+
+    @Override
+    public NxGoodsEntity queryLevelOneGoods(String goodsName) {
+
+		return nxGoodsDao.queryLevelOneGoods(goodsName);
+    }
+
+	@Override
+	public List<NxGoodsEntity> queryQuickSearchNxGoodsAll(Map<String, Object> map) {
+
+		return nxGoodsDao.queryQuickSearchNxGoodsAll(map);
+	}
 
 
 //    @Override

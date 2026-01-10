@@ -64,6 +64,16 @@ public class CategoryOrderSimpleDTO implements Serializable {
     private String fatherDepartmentAttrName;
 
     /**
+     * 部门订货代号
+     */
+    private String nxDepartmentOrderCode;
+
+    /**
+     * 父部门订货代号
+     */
+    private String fatherDepartmentOrderCode;
+
+    /**
      * GB部门名称（扁平化字符串，格式：父GB部门.GB部门名称 或 GB部门名称）
      */
     private String gbDepName;

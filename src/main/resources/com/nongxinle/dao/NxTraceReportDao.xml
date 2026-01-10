@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxTraceReportDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxTraceReportEntity">
+		select * from nx_trace_report where nx_trace_report_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxTraceReportEntity">
+		select * from nx_trace_report
+		<where>
+			<if test="nxTrDistributerId != null">
+				and nx_TR_distributer_id = #{nxTrDistributerId}
+			</if>
+			<if test="nxTrBatchId != null">
+				and nx_TR_batch_id = #{nxTrBatchId}
+			</if>
+			<if test="nxTrSupplierId != null">
+				and nx_TR_supplier_id = #{nxTrSupplierId}
+			</if>
+		</where>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_trace_report
+		<where>
+			<if test="nxTrDistributerId != null">
+				and nx_TR_distributer_id = #{nxTrDistributerId}
+			</if>
+			<if test="nxTrBatchId != null">
+				and nx_TR_batch_id = #{nxTrBatchId}
+			</if>
+			<if test="nxTrSupplierId != null">
+				and nx_TR_supplier_id = #{nxTrSupplierId}
+			</if>
+		</where>
+	</select>
+
+	<!-- 根据条件查询溯源报告列表 -->
+	<select id="queryTraceReportList" resultType="com.nongxinle.entity.NxTraceReportEntity">
+		select * from nx_trace_report
+		<where>
+			<if test="nxTrDistributerId != null">
+				and nx_TR_distributer_id = #{nxTrDistributerId}
+			</if>
+			<if test="nxTrBatchId != null">
+				and nx_TR_batch_id = #{nxTrBatchId}
+			</if>
+			<if test="nxTrSupplierId != null">
+				and nx_TR_supplier_id = #{nxTrSupplierId}
+			</if>
+			<if test="startDate != null">
+				and nx_TR_valid_start_date &gt;= #{startDate}
+			</if>
+			<if test="endDate != null">
+				and nx_TR_valid_end_date &lt;= #{endDate}
+			</if>
+			<if test="nxTrReportType != null">
+				and nx_TR_report_type = #{nxTrReportType}
+			</if>
+		</where>
+		order by nx_trace_report_id DESC
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxTraceReportEntity"
+			useGeneratedKeys="true" keyProperty="nxTraceReportId">
+		insert into nx_trace_report
+		(
+			`nx_trace_report_id`, 
+			`nx_TR_batch_id`, 
+			`nx_TR_supplier_id`, 
+			`nx_TR_supplier_name`, 
+			`nx_TR_supplier_contact`, 
+			`nx_TR_purchase_date`, 
+			`nx_TR_stock_in_date`, 
+			`nx_TR_valid_start_date`, 
+			`nx_TR_valid_end_date`, 
+			`nx_TR_report_type`, 
+			`nx_TR_file_path`, 
+			`nx_TR_file_paths`, 
+			`nx_TR_file_type`, 
+			`nx_TR_distributer_id`, 
+			`nx_TR_create_user_id`, 
+			`nx_TR_create_time`, 
+			`nx_TR_update_time`, 
+			`nx_TR_remark`
+		)
+		values
+		(
+			#{nxTraceReportId}, 
+			#{nxTrBatchId}, 
+			#{nxTrSupplierId}, 
+			#{nxTrSupplierName}, 
+			#{nxTrSupplierContact}, 
+			#{nxTrPurchaseDate}, 
+			#{nxTrStockInDate}, 
+			#{nxTrValidStartDate}, 
+			#{nxTrValidEndDate}, 
+			#{nxTrReportType}, 
+			#{nxTrFilePath}, 
+			#{nxTrFilePaths}, 
+			#{nxTrFileType}, 
+			#{nxTrDistributerId}, 
+			#{nxTrCreateUserId}, 
+			#{nxTrCreateTime}, 
+			#{nxTrUpdateTime}, 
+			#{nxTrRemark}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxTraceReportEntity">
+		update nx_trace_report 
+		<set>
+			<if test="nxTrBatchId != null">`nx_TR_batch_id` = #{nxTrBatchId}, </if>
+			<if test="nxTrSupplierId != null">`nx_TR_supplier_id` = #{nxTrSupplierId}, </if>
+			<if test="nxTrSupplierName != null">`nx_TR_supplier_name` = #{nxTrSupplierName}, </if>
+			<if test="nxTrSupplierContact != null">`nx_TR_supplier_contact` = #{nxTrSupplierContact}, </if>
+			<if test="nxTrPurchaseDate != null">`nx_TR_purchase_date` = #{nxTrPurchaseDate}, </if>
+			<if test="nxTrStockInDate != null">`nx_TR_stock_in_date` = #{nxTrStockInDate}, </if>
+			<if test="nxTrValidStartDate != null">`nx_TR_valid_start_date` = #{nxTrValidStartDate}, </if>
+			<if test="nxTrValidEndDate != null">`nx_TR_valid_end_date` = #{nxTrValidEndDate}, </if>
+			<if test="nxTrReportType != null">`nx_TR_report_type` = #{nxTrReportType}, </if>
+			<if test="nxTrFilePath != null">`nx_TR_file_path` = #{nxTrFilePath}, </if>
+			<if test="nxTrFilePaths != null">`nx_TR_file_paths` = #{nxTrFilePaths}, </if>
+			<if test="nxTrFileType != null">`nx_TR_file_type` = #{nxTrFileType}, </if>
+			<if test="nxTrDistributerId != null">`nx_TR_distributer_id` = #{nxTrDistributerId}, </if>
+			<if test="nxTrCreateUserId != null">`nx_TR_create_user_id` = #{nxTrCreateUserId}, </if>
+			<if test="nxTrCreateTime != null">`nx_TR_create_time` = #{nxTrCreateTime}, </if>
+			<if test="nxTrUpdateTime != null">`nx_TR_update_time` = #{nxTrUpdateTime}, </if>
+			<if test="nxTrRemark != null">`nx_TR_remark` = #{nxTrRemark}</if>
+		</set>
+		where nx_trace_report_id = #{nxTraceReportId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_trace_report where nx_trace_report_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_trace_report where nx_trace_report_id in 
+		<foreach item="nxTraceReportId" collection="array" open="(" separator="," close=")">
+			#{nxTraceReportId}
+		</foreach>
+	</delete>
+
+</mapper>
+

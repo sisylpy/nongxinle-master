@@ -258,10 +258,12 @@
         <result property="nxDoReturnBillId" column="nx_DO_return_bill_id"/>
         <association property="nxDepartmentUserEntity" resultMap="orderUser"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
-        <association property="nxDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
+<!--        <association property="nxDepartmentDisGoodsEntity" resultMap="depDisGoods"/>-->
         <association property="purchaseGoodsEntity" resultMap="onlyPurGoods"/>
         <association property="nxAgentUserEntity" resultMap="disUser"/>
-        <association property="gbDepartmentOrdersEntity" resultMap="gbOrder"/>
+<!--        <association property="gbDepartmentOrdersEntity" resultMap="gbOrder"/>-->
+        <association property="nxTraceReportEntity" resultMap="traceReport" columnPrefix="traceReport_"/>
+        <association property="shelfStockEntity" resultMap="disStock" columnPrefix="shelfStock_"/>
         <!--        <association property="orderPurGoods" resultMap="purGoods"/>-->
         <!--        <association property="nxDistributerWeightEntity" resultMap="weight"/>-->
     </resultMap>
@@ -1643,6 +1645,64 @@
              ) t
     </select>
 
+    <select id="queryReturnOrderCount" resultType="java.lang.Integer">
+        select COUNT(*) from nx_department_order_history
+
+        <where>
+            <if test="disId != null">
+                and nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="gbDepFatherId != null">
+                and nx_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="equalStatus != null">
+                and nx_DO_status = #{equalStatus}
+            </if>
+            <if test="grandId != null">
+                and dor.nx_DO_dis_goods_grand_id = #{grandId}
+            </if>
+            <if test="arriveDate != null">
+                and dor.nx_DO_arrive_date = #{arriveDate}
+            </if>
+            <if test="startDate != null">
+                and dor.nx_DO_arrive_date &gt;= #{startDate}
+            </if>
+
+            <if test="stopDate != null">
+                and dor.nx_DO_arrive_date &lt;= #{stopDate}
+            </if>
+            <if test="depFatherId != null">
+                and nx_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="billId != null">
+                and nx_DO_bill_id = #{billId}
+            </if>
+            <if test="equalReturnStatus != null">
+                and nx_DO_return_status = #{equalReturnStatus}
+            </if>
+            <if test="returnWeight != null and returnWeight == 1">
+                and nx_DO_return_weight is not null
+            </if>
+
+        </where>
+
+    </select>
+    <select id="queryReturnSubtotal" resultType="java.lang.Double">
+        select SUM(nx_DO_return_subtotal) from nx_department_order_history as ndo
+        <where>
+            <if test="billId != null">
+                and nx_DO_bill_id = #{billId}
+            </if>
+            <if test="equalReturnStatus != null">
+                and nx_DO_return_status = #{equalReturnStatus}
+            </if>
+            <if test="returnWeight != null and returnWeight == 1">
+                and nx_DO_return_weight is not null
+            </if>
+        </where>
+
+    </select>
+
 
     <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentOrderHistoryEntity">
         insert into nx_department_order_history
@@ -1855,5 +1915,143 @@
             #{nxDepartmentOrdersId}
         </foreach>
     </delete>
+
+    <!-- 溯源报告 resultMap -->
+    <resultMap id="traceReport" type="NxTraceReportEntity">
+        <id property="nxTraceReportId" column="nx_trace_report_id"/>
+        <result property="nxTrBatchId" column="nx_TR_batch_id"/>
+        <result property="nxTrSupplierId" column="nx_TR_supplier_id"/>
+        <result property="nxTrSupplierName" column="nx_TR_supplier_name"/>
+        <result property="nxTrSupplierContact" column="nx_TR_supplier_contact"/>
+        <result property="nxTrPurchaseDate" column="nx_TR_purchase_date"/>
+        <result property="nxTrStockInDate" column="nx_TR_stock_in_date"/>
+        <result property="nxTrValidStartDate" column="nx_TR_valid_start_date"/>
+        <result property="nxTrValidEndDate" column="nx_TR_valid_end_date"/>
+        <result property="nxTrReportType" column="nx_TR_report_type"/>
+        <result property="nxTrFilePath" column="nx_TR_file_path"/>
+        <result property="nxTrFilePaths" column="nx_TR_file_paths"/>
+        <result property="nxTrFileType" column="nx_TR_file_type"/>
+        <result property="nxTrDistributerId" column="nx_TR_distributer_id"/>
+        <result property="nxTrCreateUserId" column="nx_TR_create_user_id"/>
+        <result property="nxTrCreateTime" column="nx_TR_create_time"/>
+        <result property="nxTrUpdateTime" column="nx_TR_update_time"/>
+        <result property="nxTrRemark" column="nx_TR_remark"/>
+    </resultMap>
+
+    <!-- 货架库存 resultMap -->
+    <resultMap id="disStock" type="NxDistributerGoodsShelfStockEntity">
+        <id property="nxDistributerGoodsShelfStockId" column="nx_distributer_goods_shelf_stock_id"/>
+        <result property="nxDgssSellingPriceCarton" column="nx_dgss_selling_price_carton"/>
+        <result property="nxDgssPriceCarton" column="nx_dgss_price_carton"/>
+        <result property="nxDgssNxDisGoodsId" column="nx_dgss_nx_dis_goods_id"/>
+        <result property="nxDgssNxDistributerId" column="nx_dgss_nx_distributer_id"/>
+        <result property="nxDgssWeight" column="nx_dgss_weight"/>
+        <result property="nxDgssRestWeight" column="nx_dgss_rest_weight"/>
+        <result property="nxDgssDate" column="nx_dgss_date"/>
+        <result property="nxDgssFullTime" column="nx_dgss_full_time"/>
+        <result property="nxDgssLossSubtotal" column="nx_dgss_loss_subtotal"/>
+        <result property="nxDgssNxDisGoodsFatherId" column="nx_dgss_nx_dis_goods_father_id"/>
+        <result property="nxDgssNxPurGoodsId" column="nx_dgss_nx_pur_goods_id"/>
+        <result property="nxDgssPrice" column="nx_dgss_price"/>
+        <result property="nxDgssStatus" column="nx_dgss_status"/>
+        <result property="nxDgssRestSubtotal" column="nx_dgss_rest_subtotal"/>
+        <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
+        <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
+        <result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
+    </resultMap>
+
+    <!-- 根据departmentBillId查询历史订单列表（包含溯源报告信息） -->
+    <select id="queryOrdersByBillIdWithTraceReport" resultMap="historyApplys">
+        select * ,
+        ndg.nx_dg_trace_report_id as debug_ndg_trace_report_id,
+        ndgss_goods.nx_dgss_trace_report_id as debug_ndgss_trace_report_id,
+        ndpg.nx_DPG_trace_report_id as debug_ndpg_trace_report_id,
+        ntr_goods.nx_trace_report_id as debug_ntr_goods_id,
+        ntr_goods_stock.nx_trace_report_id as debug_ntr_goods_stock_id,
+        ntr_pur.nx_trace_report_id as debug_ntr_pur_id,
+        sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
+        sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
+        sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
+        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change',
+        -- 溯源报告字段（优先级：商品 > 库存 > 采购商品）
+        -- 使用 COALESCE 选择：优先使用商品级别的溯源报告，其次使用库存批次的溯源报告，最后使用采购商品的溯源报告
+        COALESCE(ntr_goods.nx_trace_report_id, ntr_goods_stock.nx_trace_report_id, ntr_pur.nx_trace_report_id) as traceReport_nx_trace_report_id,
+        COALESCE(ntr_goods.nx_TR_batch_id, ntr_goods_stock.nx_TR_batch_id, ntr_pur.nx_TR_batch_id) as traceReport_nx_TR_batch_id,
+        COALESCE(ntr_goods.nx_TR_supplier_id, ntr_goods_stock.nx_TR_supplier_id, ntr_pur.nx_TR_supplier_id) as traceReport_nx_TR_supplier_id,
+        COALESCE(ntr_goods.nx_TR_supplier_name, ntr_goods_stock.nx_TR_supplier_name, ntr_pur.nx_TR_supplier_name) as traceReport_nx_TR_supplier_name,
+        COALESCE(ntr_goods.nx_TR_supplier_contact, ntr_goods_stock.nx_TR_supplier_contact, ntr_pur.nx_TR_supplier_contact) as traceReport_nx_TR_supplier_contact,
+        COALESCE(ntr_goods.nx_TR_purchase_date, ntr_goods_stock.nx_TR_purchase_date, ntr_pur.nx_TR_purchase_date) as traceReport_nx_TR_purchase_date,
+        COALESCE(ntr_goods.nx_TR_stock_in_date, ntr_goods_stock.nx_TR_stock_in_date, ntr_pur.nx_TR_stock_in_date) as traceReport_nx_TR_stock_in_date,
+        COALESCE(ntr_goods.nx_TR_valid_start_date, ntr_goods_stock.nx_TR_valid_start_date, ntr_pur.nx_TR_valid_start_date) as traceReport_nx_TR_valid_start_date,
+        COALESCE(ntr_goods.nx_TR_valid_end_date, ntr_goods_stock.nx_TR_valid_end_date, ntr_pur.nx_TR_valid_end_date) as traceReport_nx_TR_valid_end_date,
+        COALESCE(ntr_goods.nx_TR_report_type, ntr_goods_stock.nx_TR_report_type, ntr_pur.nx_TR_report_type) as traceReport_nx_TR_report_type,
+        COALESCE(ntr_goods.nx_TR_file_path, ntr_goods_stock.nx_TR_file_path, ntr_pur.nx_TR_file_path) as traceReport_nx_TR_file_path,
+        COALESCE(ntr_goods.nx_TR_file_paths, ntr_goods_stock.nx_TR_file_paths, ntr_pur.nx_TR_file_paths) as traceReport_nx_TR_file_paths,
+        COALESCE(ntr_goods.nx_TR_file_type, ntr_goods_stock.nx_TR_file_type, ntr_pur.nx_TR_file_type) as traceReport_nx_TR_file_type,
+        COALESCE(ntr_goods.nx_TR_distributer_id, ntr_goods_stock.nx_TR_distributer_id, ntr_pur.nx_TR_distributer_id) as traceReport_nx_TR_distributer_id,
+        COALESCE(ntr_goods.nx_TR_create_user_id, ntr_goods_stock.nx_TR_create_user_id, ntr_pur.nx_TR_create_user_id) as traceReport_nx_TR_create_user_id,
+        COALESCE(ntr_goods.nx_TR_create_time, ntr_goods_stock.nx_TR_create_time, ntr_pur.nx_TR_create_time) as traceReport_nx_TR_create_time,
+        COALESCE(ntr_goods.nx_TR_update_time, ntr_goods_stock.nx_TR_update_time, ntr_pur.nx_TR_update_time) as traceReport_nx_TR_update_time,
+        COALESCE(ntr_goods.nx_TR_remark, ntr_goods_stock.nx_TR_remark, ntr_pur.nx_TR_remark) as traceReport_nx_TR_remark,
+        -- 货架库存字段（根据订单商品ID查询）
+        ndgss_goods.nx_distributer_goods_shelf_stock_id as shelfStock_nx_distributer_goods_shelf_stock_id,
+        ndgss_goods.nx_dgss_selling_price_carton as shelfStock_nx_dgss_selling_price_carton,
+        ndgss_goods.nx_dgss_price_carton as shelfStock_nx_dgss_price_carton,
+        ndgss_goods.nx_dgss_nx_dis_goods_id as shelfStock_nx_dgss_nx_dis_goods_id,
+        ndgss_goods.nx_dgss_nx_distributer_id as shelfStock_nx_dgss_nx_distributer_id,
+        ndgss_goods.nx_dgss_weight as shelfStock_nx_dgss_weight,
+        ndgss_goods.nx_dgss_rest_weight as shelfStock_nx_dgss_rest_weight,
+        ndgss_goods.nx_dgss_date as shelfStock_nx_dgss_date,
+        ndgss_goods.nx_dgss_full_time as shelfStock_nx_dgss_full_time,
+        ndgss_goods.nx_dgss_loss_subtotal as shelfStock_nx_dgss_loss_subtotal,
+        ndgss_goods.nx_dgss_nx_dis_goods_father_id as shelfStock_nx_dgss_nx_dis_goods_father_id,
+        ndgss_goods.nx_dgss_nx_pur_goods_id as shelfStock_nx_dgss_nx_pur_goods_id,
+        ndgss_goods.nx_dgss_price as shelfStock_nx_dgss_price,
+        ndgss_goods.nx_dgss_status as shelfStock_nx_dgss_status,
+        ndgss_goods.nx_dgss_rest_subtotal as shelfStock_nx_dgss_rest_subtotal,
+        ndgss_goods.nx_dgss_stock_image as shelfStock_nx_dgss_stock_image,
+        ndgss_goods.nx_dgss_stock_remark as shelfStock_nx_dgss_stock_remark,
+        ndgss_goods.nx_dgss_trace_report_id as shelfStock_nx_dgss_trace_report_id
+        from nx_department_order_history as dor
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id =
+        dor.nx_DO_dis_goods_grand_id
+        left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
+        ndfg.nx_dfg_fathers_father_id
+        left join nx_goods as ng_ndg_queryDepWeightOrder on ng_ndg_queryDepWeightOrder.nx_goods_id = ndg.nx_dg_nx_goods_id
+        left join nx_goods as ng_ndfg_queryDepWeightOrder on ng_ndfg_queryDepWeightOrder.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        left join nx_goods as ng_great_queryDepWeightOrder on ng_great_queryDepWeightOrder.nx_goods_id = great.nx_dfg_nx_goods_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = dor.nx_DO_department_id
+        left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+        left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id =
+        dor.nx_DO_purchase_goods_id
+        left join nx_jrdh_user as sell_user on sell_user.nx_jrdh_user_id = ndpg.nx_DPG_sell_user_id
+        left join nx_jrdh_user as buyer on buyer.nx_jrdh_user_id = ndpg.nx_DPG_buy_user_id
+        left join nx_distributer_user as ndu on ndu.nx_distributer_user_id = dor.nx_DO_is_agent
+        -- 关联下单用户（分拣用户）
+        left join nx_department_user as du on du.nx_department_user_id = dor.nx_DO_order_user_id
+        -- 根据订单的商品ID，查询该商品在货架库存中是否有库存
+        left join nx_distributer_goods_shelf_stock as ndgss_goods on ndgss_goods.nx_dgss_nx_dis_goods_id = dor.nx_DO_dis_goods_id
+            and ndgss_goods.nx_dgss_rest_weight &gt; 0
+            and ndgss_goods.nx_dgss_status = 0
+        -- 关联溯源报告（优先级：商品 > 库存 > 采购商品）
+        -- 1. 商品级别的溯源报告（从商品表关联）
+        left join nx_trace_report as ntr_goods on ntr_goods.nx_trace_report_id = ndg.nx_dg_trace_report_id
+        -- 2. 库存批次的溯源报告（从商品库存关联）
+        left join nx_trace_report as ntr_goods_stock on ntr_goods_stock.nx_trace_report_id = ndgss_goods.nx_dgss_trace_report_id
+        -- 3. 采购商品的溯源报告（从采购商品关联）
+        left join nx_trace_report as ntr_pur on ntr_pur.nx_trace_report_id = ndpg.nx_DPG_trace_report_id
+            and dor.nx_DO_purchase_goods_id != -1
+        <where>
+            <if test="billId != null">
+                and dor.nx_DO_bill_id = #{billId}
+            </if>
+        </where>
+        order by COALESCE(ng_great_queryDepWeightOrder.nx_goods_sort, great.nx_dfg_father_goods_sort),
+                 COALESCE(ng_ndfg_queryDepWeightOrder.nx_goods_sort, ndfg.nx_dfg_father_goods_sort),
+                 COALESCE(ng_ndg_queryDepWeightOrder.nx_goods_sort, ndg.nx_dg_goods_sort),
+                 COALESCE(ng_ndg_queryDepWeightOrder.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
+    </select>
 
 </mapper>

@@ -26,6 +26,7 @@ import java.util.*;
 import static com.nongxinle.utils.CommonUtils.generateBillTradeNo;
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.*;
+import static com.nongxinle.utils.GbTypeUtils.getGbPurchaseGoodsTypeForOrder;
 import static com.nongxinle.utils.NxDistributerTypeUtils.*;
 import static com.nongxinle.utils.ParseObject.myRandom;
 import static com.nongxinle.utils.PinYin4jUtils.getHeadStringByString;
@@ -1658,7 +1659,7 @@ public class NxDepartmentBillController000 {
             purchaseGoodsEntity.setNxDpgApplyDate(formatWhatYearDayTime(0));
             purchaseGoodsEntity.setNxDpgOrdersAmount(1);
             purchaseGoodsEntity.setNxDpgFinishAmount(0);
-            purchaseGoodsEntity.setNxDpgPurchaseType(1);
+            purchaseGoodsEntity.setNxDpgPurchaseType(getGbPurchaseGoodsTypeForOrder());
             purchaseGoodsEntity.setNxDpgExpectPrice(disGoods.getNxDgBuyingPrice());
             purchaseGoodsEntity.setNxDpgBuyPrice(disGoods.getNxDgBuyingPrice());
             purchaseGoodsEntity.setNxDpgDisGoodsId(doDisGoodsId);

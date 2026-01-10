@@ -6725,8 +6725,8 @@ public class GbDepartmentGoodsStockController {
             mapDisGoods.put("startDate", startDate);
             mapDisGoods.put("stopDate", stopDate);
             System.out.println("mapdddffafdasnnnnnn333333333" + mapDisGoods);
-            List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockByParams(mapDisGoods);
-//            List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockWithReduceList(mapDisGoods);
+//            List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockByParams(mapDisGoods);
+            List<GbDepartmentGoodsStockEntity> stockEntities = gbDepGoodsStockService.queryGoodsStockWithReduceList(mapDisGoods);
             System.out.println("stoennenenene" + stockEntities.size());
             return R.ok().put("data", stockEntities);
         } catch (Exception e) {
@@ -9095,28 +9095,41 @@ public class GbDepartmentGoodsStockController {
             gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
 
         }
-        if (stock.getGbDgsPurUserId() != null) {
+//        if (stock.getGbDgsPurUserId() != null && stock.getGbDgsPurUserId() != -1) {
 
-            Integer gbDgsPurUserId = stock.getGbDgsPurUserId();
-            GbDepartmentUserEntity departmentUserEntity1 = gbDepartmentUserService.queryObject(gbDgsPurUserId);
-            StringBuilder pathBuilder = new StringBuilder("subPackage-charts/pages/management/purGoodsStars/purGoodsStars");
-            pathBuilder.append("?purUserId=").append(gbDgsPurUserId);
-            pathBuilder.append("&goodsId=").append("-1");
-            String path = pathBuilder.toString();
-            System.out.println("Encoded URLARRRRRR: " + path);
-
-            Map<String, TemplateData> mapNotice = new HashMap<>();
-            mapNotice.put("thing5", new TemplateData(goodsEntity.getGbDgGoodsName()));
-            mapNotice.put("thing6", new TemplateData("退货"));
-            mapNotice.put("time7", new TemplateData(order.getGbDoApplyDate()));
-
-            GbDepartmentUserEntity gbDepartmentUserEntity = gbDepartmentUserService.queryObject(stock.getGbDgsReturnUserId());
-
-            mapNotice.put("thing10", new TemplateData(gbDepartmentUserEntity.getGbDuWxNickName()));
-            mapNotice.put("time11", new TemplateData(formatWhatYearDayTime(0)));
-            WeNoticeService.tuihuoGbSuppliertixingMessageJj(departmentUserEntity1.getGbDuWxOpenId(), path, mapNotice);
-
-        }
+//            Integer gbDgsPurUserId = stock.getGbDgsPurUserId();
+//            GbDepartmentUserEntity departmentUserEntity1 = gbDepartmentUserService.queryObject(gbDgsPurUserId);
+            
+            // 检查采购员用户是否存在，且openId不为空
+//            if (departmentUserEntity1 != null && departmentUserEntity1.getGbDuWxOpenId() != null) {
+//                StringBuilder pathBuilder = new StringBuilder("subPackage-charts/pages/management/purGoodsStars/purGoodsStars");
+//                pathBuilder.append("?purUserId=").append(gbDgsPurUserId);
+//                pathBuilder.append("&goodsId=").append("-1");
+//                String path = pathBuilder.toString();
+//                System.out.println("Encoded URLARRRRRR: " + path);
+//
+//                Map<String, TemplateData> mapNotice = new HashMap<>();
+//                mapNotice.put("thing5", new TemplateData(goodsEntity.getGbDgGoodsName()));
+//                mapNotice.put("thing6", new TemplateData("退货"));
+//                mapNotice.put("time7", new TemplateData(order.getGbDoApplyDate()));
+//
+//                // 检查退货员用户是否存在
+//                if (stock.getGbDgsReturnUserId() != null) {
+//                    GbDepartmentUserEntity gbDepartmentUserEntity = gbDepartmentUserService.queryObject(stock.getGbDgsReturnUserId());
+//                    if (gbDepartmentUserEntity != null && gbDepartmentUserEntity.getGbDuWxNickName() != null) {
+//                        mapNotice.put("thing10", new TemplateData(gbDepartmentUserEntity.getGbDuWxNickName()));
+//                    } else {
+//                        mapNotice.put("thing10", new TemplateData(""));
+//                    }
+//                } else {
+//                    mapNotice.put("thing10", new TemplateData(""));
+//                }
+//
+//                mapNotice.put("time11", new TemplateData(formatWhatYearDayTime(0)));
+//                WeNoticeService.tuihuoGbSuppliertixingMessageJj(departmentUserEntity1.getGbDuWxOpenId(), path, mapNotice);
+//            }
+//
+//        }
 
         gbDepOrdersService.update(order);
 
@@ -9289,7 +9302,7 @@ public class GbDepartmentGoodsStockController {
         pathBuilder.append("&from=notification"); // 添加这个参数
 
         String path = pathBuilder.toString();
-        System.out.println("Encoded URLARRRRRR: " + path);
+        System.out.println("Encoded URLARRRRRRRRRR: " + path);
 
         Map<String, TemplateData> mapNotice = new HashMap<>();
         Integer gbDoDisGoodsId = ordersEntity.getGbDoDisGoodsId();

@@ -1025,6 +1025,9 @@
             <if test="pull != null">
                 and dg.gb_dg_pull_off = #{pull}
             </if>
+            <if test="supplierId != null">
+                and dg.gb_dg_gb_supplier_id = #{supplierId}
+            </if>
            <if test="disId != null">
                and g.gb_dfg_distributer_id = #{disId} and gg.gb_dfg_distributer_id = #{disId}
            </if>
@@ -1964,7 +1967,8 @@
     <select id="queryDepartmentGoodsForAi" resultMap="depDisGoodsForAi">
         select * from gb_department_dis_goods as gddg
         left join gb_distributer_goods as gdg  on gdg.gb_distributer_goods_id = gddg.gb_DDG_dis_goods_id
-         left join gb_department_orders as dor on gddg.gb_department_dis_goods_id = dor.gb_DO_dep_dis_goods_id and gb_Do_status &lt; #{orderStatus}
+         left join gb_department_orders as dor on gddg.gb_department_dis_goods_id = dor.gb_DO_dep_dis_goods_id
+                                                      and gb_Do_status &lt; #{orderStatus} and gb_Do_order_type != 9
           left join gb_department_goods_stock as gdgs on gdgs.gb_dgs_gb_dis_goods_id = gdg.gb_distributer_goods_id and gb_dgs_rest_weight &gt; #{restWeight}
         <where>
             <if test="disGoodsId != null">
@@ -1976,10 +1980,8 @@
             <if test="depId != null">
                 and gb_DDG_department_id = #{depId}
             </if>
-
-
-
         </where>
+        order by gdgs.gb_department_goods_stock_id
     </select>
 
     <select id="disQueryDisGoodsWithOrderForAiTree" resultMap="disGoodsForAi">
@@ -2030,6 +2032,9 @@
             </if>
             <if test="fresh != null">
                 and dg.gb_dg_control_fresh = #{fresh}
+            </if>
+            <if test="supplierId != null">
+                and dg.gb_dg_gb_supplier_id = #{supplierId}
             </if>
 
             <if test="pull != null">

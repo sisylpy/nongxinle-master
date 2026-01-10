@@ -31,7 +31,11 @@ public interface NxDistributerPurchaseBatchService {
 
 	List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object> map);
 
+	List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatchSimple(Map<String, Object> map);
+
     NxDistributerPurchaseBatchEntity queryBatchWithOrders(Integer batchId);
+
+    NxDistributerPurchaseBatchEntity queryBatchWithOrdersSimple(Integer batchId);
 
 
 	int queryDisPurchaseBatchCount(Map<String, Object> map);

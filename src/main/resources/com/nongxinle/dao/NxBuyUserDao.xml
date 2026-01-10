@@ -267,7 +267,6 @@
 
 	<resultMap id="purBatch" type="NxDistributerPurchaseBatchEntity">
 		 <id property="nxDistributerPurchaseBatchId" column="nx_distributer_purchase_batch_id"/>
-        <result property="nxDpbNxDepartmentFatherId" column="nx_DPB_nx_department_father_id"/>
 		<result property="nxDpbPasteContent" column="nx_DPB_paste_content"/>
 		<result property="nxDpbPasteContent" column="nx_DPB_paste_content"/>
         <result property="nxDpbNeedDate" column="nx_DPB_need_date"/>

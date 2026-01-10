@@ -7,6 +7,7 @@ package com.nongxinle.service;
  * @date 05-11 21:54
  */
 
+import com.nongxinle.entity.NxDistributerEntity;
 import com.nongxinle.entity.NxJrdhSupplierEntity;
 
 import java.util.List;
@@ -37,4 +38,7 @@ public interface NxJrdhSupplierService {
 	List<NxJrdhSupplierEntity> querySupplierByUserId(Integer sellerId);
 
     int queryJrdhSupplierCount(Map<String, Object> map);
+
+
+	List<NxDistributerEntity> queryNxDisByJrdhUserId(Integer userId);
 }

@@ -18,6 +18,10 @@ public interface NxDistributerPurchaseBatchDao extends BaseDao<NxDistributerPurc
 
     List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatch(Map<String, Object> map);
 
+    List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatchSimple(Map<String, Object> map);
+
+    NxDistributerPurchaseBatchEntity queryBatchWithOrdersSimple(Integer batchId);
+
     void delateBatchId(Integer purchaseBatchId);
 
     NxDistributerPurchaseBatchEntity queryBatchWithOrders(Integer batchId);

@@ -453,7 +453,7 @@ public class NxDistributerFatherGoodsController {
 
     @RequestMapping(value = "/getDisGoodsByGreatGrandIdWithCount", method = RequestMethod.POST)
     @ResponseBody
-    public R getDisGoodsByGreatGrandIdWithCount(Integer fatherId, Integer limit, Integer page, Integer disId, Integer goodsType, Integer hasCartonUnit) {
+    public R getDisGoodsByGreatGrandIdWithCount(Integer fatherId, Integer limit, Integer page, Integer disId, Integer goodsType, Integer hasCartonUnit, Integer hasTraceReport) {
         Map<String, Object> map = new HashMap<>();
         map.put("grandId", fatherId);
         map.put("offset", (page - 1) * limit);
@@ -469,6 +469,10 @@ public class NxDistributerFatherGoodsController {
         if(hasCartonUnit != null){
             map.put("hasCartonUnit", hasCartonUnit);
         }
+        // 添加溯源查询条件：1-有溯源，0-无溯源，null-不筛选
+        if(hasTraceReport != null){
+            map.put("hasTraceReport", hasTraceReport);
+        }
         map.put("limit", limit);
         System.out.println("mapappapapapaGGGG" + map);
         List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.querySupplierGoodsByGreatId(map);
@@ -479,6 +483,10 @@ public class NxDistributerFatherGoodsController {
         // 传递外包装查询条件到总数查询
         if(hasCartonUnit != null){
             mapCount.put("hasCartonUnit", hasCartonUnit);
+        }
+        // 传递溯源查询条件到总数查询
+        if(hasTraceReport != null){
+            mapCount.put("hasTraceReport", hasTraceReport);
         }
         int total = distributerGoodsService.queryDisGoodsTotal(mapCount);
         PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
@@ -718,7 +726,7 @@ public class NxDistributerFatherGoodsController {
 
     @RequestMapping(value = "/getDisGoodsCataWithCount")
     @ResponseBody
-    public R getDisGoodsCataWithCount(Integer disId, Integer goodsType, Integer hasCartonUnit) {
+    public R getDisGoodsCataWithCount(Integer disId, Integer goodsType, Integer hasCartonUnit, Integer hasTraceReport) {
 
         Map<String, Object> returnData = new HashMap<>();
 
@@ -736,9 +744,13 @@ public class NxDistributerFatherGoodsController {
         if(hasCartonUnit != null){
             mapG.put("hasCartonUnit", hasCartonUnit);
         }
+        // 添加溯源查询条件：1-有溯源，0-无溯源，null-不筛选
+        if(hasTraceReport != null){
+            mapG.put("hasTraceReport", hasTraceReport);
+        }
 
         System.out.println("mapdgGg" + mapG);
-        // 总数查询也需要传递外包装条件
+        // 总数查询也需要传递外包装条件和溯源条件
         int count =  distributerGoodsService.queryDisGoodsTotal(mapG);
 
         if(count > 0){

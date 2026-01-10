@@ -1,5 +1,6 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.entity.NxDistributerEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -81,5 +82,11 @@ public class NxJrdhSupplierServiceImpl implements NxJrdhSupplierService {
 
 		return nxJrdhSupplierDao.queryJrdhSupplierCount(map);
     }
+
+	@Override
+	public List<NxDistributerEntity> queryNxDisByJrdhUserId(Integer userId) {
+		return nxJrdhSupplierDao.queryNxDisByJrdhUserId(userId);
+	}
+
 
 }

@@ -19,7 +19,6 @@ public class NxDistributerTypeUtils {
     public final static Integer NX_DIS_USER_ADMIN = 0; //管理员
     public final static Integer NX_DIS_USER_STAFF = 1; //文员
     public final static Integer NX_DIS_USER_KUFNG = 2; //库房管理员
-    public final static Integer NX_DIS_USER_WEIGHTER = 3; //称重员
     public final static Integer NX_DIS_USER_PURCHASE = 4; //采购员
     public final static Integer NX_DIS_USER_DRIVER = 5; //司机
 
@@ -71,6 +70,8 @@ public class NxDistributerTypeUtils {
     public final static Integer NX_ORDER_AGENT_DEP = 3; //web
     public final static Integer NX_ORDER_AGENT_DIS = 4; //web
 
+
+
     public static Integer getNxDisPayListWeb() {
         return NX_DIS_PAY_LIST_WEB;
     }
@@ -102,9 +103,6 @@ public class NxDistributerTypeUtils {
     }
     public static Integer getNxDisUserDriver() {
         return NX_DIS_USER_DRIVER;
-    }
-    public static Integer getNxDisUserWeighter() {
-        return NX_DIS_USER_WEIGHTER;
     }
     public static Integer getNxDisUserKufng() {
         return NX_DIS_USER_KUFNG;

@@ -549,4 +549,5 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 		return nxDistributerDao.queryByMarketId(marketId);
 	}
 
+
 }

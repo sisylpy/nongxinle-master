@@ -235,10 +235,21 @@ public class NxDistributerGoodsShelfStockEntity implements Serializable {
 	 *  积分返还时间（关联查询返回，用于显示）
 	 */
 	private String pointsReturnTime;
+	/**
+	 *  货架名称（关联查询返回，用于显示）
+	 */
+	private String shelfName;
+	/**
+	 * 溯源报告ID
+	 */
+	private Integer nxDgssTraceReportId;
 
 	private List<NxDistributerGoodsShelfStockReduceEntity> reduceEntityList;
 
 	// 采购商品对象（该库存批次对应的采购商品）
 	private NxDistributerPurchaseGoodsEntity nxDistributerPurchaseGoodsEntity;
+
+	// 溯源报告对象（该库存批次对应的溯源报告）
+	private NxTraceReportEntity nxTraceReportEntity;
 
 }

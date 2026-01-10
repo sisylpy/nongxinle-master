@@ -49,12 +49,12 @@
 
 	<select id="queryShelfByParams" resultMap="shelfDetail">
 		select * from nx_distributer_goods_shelf as gs
-		left join nx_distributer_goods_shelf_goods as gsg on gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
-		left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = gsg.nx_DGSG_dis_goods_id
-		left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id =
-		dg.nx_distributer_goods_id
-		left join nx_distributer_purchase_goods as ndpg on ndpg.nx_DPG_dis_goods_id = dg.nx_distributer_goods_id
-		                                                       and ndpg.nx_DPG_status &lt; 3
+# 		left join nx_distributer_goods_shelf_goods as gsg on gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+# 		left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = gsg.nx_DGSG_dis_goods_id
+# 		left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id =
+# 		dg.nx_distributer_goods_id
+# 		left join nx_distributer_purchase_goods as ndpg on ndpg.nx_DPG_dis_goods_id = dg.nx_distributer_goods_id
+# 		                                                       and ndpg.nx_DPG_status &lt; 3
 		left join nx_distributer_user as ru on ru.nx_distributer_user_id = gs.nx_distributer_goods_shelf_user_id
 		<where>
 			<if test="shelfId != null">
@@ -67,7 +67,7 @@
 				and gs.nx_distributer_goods_shelf_user_id = #{userId}
 			</if>
 		</where>
-		order by gs.nx_distributer_goods_shelf_sort, gsg.nx_DGSG_sort
+		order by gs.nx_distributer_goods_shelf_sort
 	</select>
 	<resultMap id="neednNotBuyDeps" type="NxDepartmentEntity">
 		<id property="nxDepartmentId" column="nds_nx_department_id"/>
@@ -191,7 +191,7 @@
 		<result property="nxDistributerGoodsShelfSort" column="nx_distributer_goods_shelf_sort"/>
 		<result property="nxDistributerGoodsShelfUserId" column="nx_distributer_goods_shelf_user_id"/>
 		<association property="responsibleUser" resultMap="responsibleUser"/>
-		<collection property="nxDisGoodsShelfGoodsEntities" resultMap="shelfGoods"/>
+<!--		<collection property="nxDisGoodsShelfGoodsEntities" resultMap="shelfGoods"/>-->
 	</resultMap>
 
 	<select id="queryShelfGoodsByParams" resultMap="shelfDetail">

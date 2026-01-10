@@ -638,6 +638,25 @@ public class GbDepartmentDisGoodsController {
         return R.ok().put("data", mapR);
     }
 
+    @RequestMapping(value = "/disGetDepGoodsCataGbWithSupplier")
+    @ResponseBody
+    public R disGetDepGoodsCataGbWithSupplier(Integer disId, Integer supplierId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("supplierId", supplierId);
+
+        System.out.println("cattaktktktkktk");
+        List<GbDistributerFatherGoodsEntity> disGoodsEntities = gbDepartmentDisGoodsService.disGetDepDisGoodsCataGb(map);
+
+        System.out.println("iddmdpdpddpdpd" + map);
+        List<Integer > disGoodsIds =   gbDepartmentDisGoodsService.queryOnlyDisGoodsIds(map);
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("cataArr",disGoodsEntities);
+        mapR.put("disGoodsArr", disGoodsIds);
+
+        return R.ok().put("data", mapR);
+    }
+
 
     @RequestMapping(value = "/depGetDepGoodsCataGb")
     @ResponseBody
@@ -984,6 +1003,40 @@ public class GbDepartmentDisGoodsController {
         return R.ok().put("page", pageUtil);
     }
 
+
+
+    @RequestMapping(value = "/disGetDepGoodsGbPageWithSupplier")
+    @ResponseBody
+    public R disGetDepGoodsGbPageWithSupplier(Integer limit, Integer page, Integer disId, Integer supplierId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("supplierId", supplierId);
+
+        // 1. 获取总数
+        List<Integer > disGoodsIds =   gbDepartmentDisGoodsService.queryOnlyDisGoodsIds(map);
+//        log.info("总记录数: {}", disGoodsIds.size());
+
+        // 2. 获取当前页数据
+        map.put("status", 4);
+        map.put("date", formatWhatDay(0));
+        map.put("limit", limit);
+        map.put("offset", (page - 1) * limit);
+        log.info("查询参数: limit={}, offset={}", limit, (page - 1) * limit);
+        log.info("map查询: {}", map);
+        TreeSet<GbDistributerGoodsEntity> currentPageSet = gbDepartmentDisGoodsService.disQueryDisGoodsWithOrderForAiTree(map);
+        log.info("当前页数据量Tree: {}", currentPageSet.size());
+
+        // 4. 处理每个商品的提示文本
+        for(GbDistributerGoodsEntity distributerGoodsEntity: currentPageSet){
+            gbDistributerGoodsService.getStockTotal(distributerGoodsEntity);
+        }
+        log.info("最终返回数据量: {}", currentPageSet.size());
+        // 5. 返回分页数据
+        List<GbDistributerGoodsEntity> currentPageList = new ArrayList<>(currentPageSet);
+
+        PageUtils pageUtil = new PageUtils(currentPageList, disGoodsIds.size(), limit, page);
+        return R.ok().put("page", pageUtil);
+    }
 
 //    @RequestMapping(value = "/depGetDepGoodsGbCata/{depId}")
 //    @ResponseBody

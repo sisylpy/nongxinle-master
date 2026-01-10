@@ -191,6 +191,7 @@ public class NxDepartmentController {
         Map<String, Object> map = new HashMap<>();
         map.put("depFatherId", nxDepartmentId);
         map.put("status", 3);
+        System.out.println("mapapa"  + map);
         Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(map);
         if(integer > 0){
             return R.error(-1,"有未完成订单，不能修改部门");
@@ -200,6 +201,7 @@ public class NxDepartmentController {
         if (nxDepartmentEntities.size() > 0) {
             for (NxDepartmentEntity departmentEntity : nxDepartmentEntities) {
                 departmentEntity.setNxDepartmentAttrName(departmentEntity.getNxDepartmentName());
+                departmentEntity.setNxDepartmentRecordMinutes(30);
                 nxDepartmentService.saveJustDepartment(departmentEntity);
             }
         }
@@ -381,6 +383,8 @@ public class NxDepartmentController {
             departmentEntity.setNxDepartmentPayTotal("0");
             departmentEntity.setNxDepartmentProfitTotal("0");
             departmentEntity.setNxDepartmentAttrName(depName);
+            departmentEntity.setNxDepartmentOrderCode(depName);
+            departmentEntity.setNxDepartmentRecordMinutes(30);
             departmentEntity.setNxDepartmentJoinDate(formatWhatDay(0));
             departmentEntity.setNxDepartmentOrderTotal(0);
             departmentEntity.setNxDepartmentRecordMinutes(0);
@@ -503,6 +507,8 @@ public class NxDepartmentController {
         nxDepartmentEntity.setNxDepartmentFilePath(filePath);
         nxDepartmentEntity.setNxDepartmentName(name);
         nxDepartmentEntity.setNxDepartmentAttrName(name);
+        nxDepartmentEntity.setNxDepartmentOrderCode(name);
+        nxDepartmentEntity.setNxDepartmentRecordMinutes(30);
         nxDepartmentEntity.setNxDepartmentDisId(disId);
         nxDepartmentEntity.setNxDepartmentFatherId(0);
         nxDepartmentEntity.setNxDepartmentSubAmount(0);
@@ -654,6 +660,8 @@ public class NxDepartmentController {
                 sub.setNxDepartmentDisId(nxDepartmentEntity.getNxDepartmentDisId());
                 sub.setNxDepartmentType(nxDepartmentEntity.getNxDepartmentType());
                 sub.setNxDepartmentAttrName(sub.getNxDepartmentName());
+                sub.setNxDepartmentOrderCode(sub.getNxDepartmentName());
+                sub.setNxDepartmentRecordMinutes(30);
                 sub.setNxDepartmentWorkingStatus(0);
                 sub.setNxDepartmentJoinDate(formatWhatDay(0));
                 sub.setNxDepartmentOrderTotal(0);
@@ -729,18 +737,18 @@ public class NxDepartmentController {
     public R updateGroupName(@RequestBody NxDepartmentEntity departmentEntity) {
 
         departmentEntity.setNxDepartmentPinyin(hanziToPinyin(departmentEntity.getNxDepartmentName()));
-        System.out.println("upddiadpririicci" + departmentEntity.getNxDepartmentPickName());
-        System.out.println("upddiadpririicci" + departmentEntity.getNxDepartmentLat());
-        System.out.println("upddiadpririicci" + departmentEntity.getNxDepartmentLatestDeliveryTime());
+
         nxDepartmentService.update(departmentEntity);
         if (departmentEntity.getNxDepartmentEntities().size() > 0) {
             for (NxDepartmentEntity subdep : departmentEntity.getNxDepartmentEntities()) {
-                subdep.setNxDepartmentPrintName(departmentEntity.getNxDepartmentPrintName());
-                subdep.setNxDepartmentSettleType(departmentEntity.getNxDepartmentSettleType());
-                subdep.setNxDepartmentType(departmentEntity.getNxDepartmentType());
-                subdep.setNxDepartmentPinyin(hanziToPinyin(subdep.getNxDepartmentName()));
+                Integer nxDepartmentId = subdep.getNxDepartmentId();
+                NxDepartmentEntity nxDepartmentEntity = nxDepartmentService.queryObject(nxDepartmentId);
+                nxDepartmentEntity.setNxDepartmentPrintName(departmentEntity.getNxDepartmentPrintName());
+                nxDepartmentEntity.setNxDepartmentSettleType(departmentEntity.getNxDepartmentSettleType());
+                nxDepartmentEntity.setNxDepartmentType(departmentEntity.getNxDepartmentType());
+                nxDepartmentEntity.setNxDepartmentPinyin(hanziToPinyin(subdep.getNxDepartmentName()));
 
-                nxDepartmentService.update(subdep);
+                nxDepartmentService.update(nxDepartmentEntity);
             }
 
         }

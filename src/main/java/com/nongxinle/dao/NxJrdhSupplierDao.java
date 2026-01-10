@@ -7,6 +7,7 @@ package com.nongxinle.dao;
  * @date 05-11 21:54
  */
 
+import com.nongxinle.entity.NxDistributerEntity;
 import com.nongxinle.entity.NxJrdhSupplierEntity;
 
 import java.util.List;
@@ -24,4 +25,6 @@ public interface NxJrdhSupplierDao extends BaseDao<NxJrdhSupplierEntity> {
     List<NxJrdhSupplierEntity> querySupplierByUserId(Integer sellerId);
 
     int queryJrdhSupplierCount(Map<String, Object> map);
+
+    List<NxDistributerEntity> queryNxDisByJrdhUserId(Integer userId);
 }

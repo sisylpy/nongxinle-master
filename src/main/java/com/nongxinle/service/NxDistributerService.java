@@ -47,4 +47,5 @@ public interface NxDistributerService {
      * @return 配送商列表
      */
     List<NxDistributerEntity> queryByMarketId(Integer marketId);
+
 }

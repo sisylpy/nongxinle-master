@@ -463,7 +463,7 @@ public class NxJrdhUserController {
             mapUser.put("admin", 1);
             NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryJrdhUserById(mapUser);
             if (nxJrdhUserEntity  != null) {
-                map.put("userInfo", nxJrdhUserEntity);
+                map.put("jrdhUserInfo", nxJrdhUserEntity);
                 map.put("buyUser", true);
                 map.put("supplierInfo", null);
                 System.out.println("woshiscuao=ogugdmmdmamfamdsf" + map);
@@ -491,7 +491,7 @@ public class NxJrdhUserController {
                             map.put("supplierInfo", nxJrdhSupplierEntity);
                         }
                         map.put("buyUser", false);
-                        map.put("userInfo", jrdhUserEntitySell);
+                        map.put("jrdhUserInfo", jrdhUserEntitySell);
                         System.out.println("reeurururururr" + map);
                         map.put("code", 0);
                         return R.ok().put("data", map);

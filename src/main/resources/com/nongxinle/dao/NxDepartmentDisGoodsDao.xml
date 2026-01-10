@@ -185,9 +185,11 @@
                            on g.nx_distributer_father_goods_id = ddg.nx_DDG_dis_goods_grand_id
                  left join nx_distributer_father_goods as gg
                            on gg.nx_distributer_father_goods_id = g.nx_dfg_fathers_father_id
+                 left join nx_goods as ng_g on ng_g.nx_goods_id = g.nx_dfg_nx_goods_id
+                 left join nx_goods as ng_gg on ng_gg.nx_goods_id = gg.nx_dfg_nx_goods_id
         where ddg.nx_DDG_department_id = #{depId}
           and g.nx_dfg_distributer_id = #{disId}
-        order by gg.nx_dfg_father_goods_sort, g.nx_dfg_father_goods_sort
+        order by COALESCE(ng_gg.nx_goods_sort, gg.nx_dfg_father_goods_sort), COALESCE(ng_g.nx_goods_sort, g.nx_dfg_father_goods_sort)
     </select>
 
 
@@ -581,12 +583,15 @@
         dfg.nx_dfg_fathers_father_id
         left join nx_department_order_history as dor on dor.nx_DO_dis_goods_id = ddg.nx_DDG_dis_goods_id
         and dor.nx_DO_status &lt; #{status} and dor.nx_DO_department_id = #{depId}
+        left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        left join nx_goods as ng_dfg on ng_dfg.nx_goods_id = dfg.nx_dfg_nx_goods_id
+        left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
         <where>
             <if test="depId !=null">
                 and ddg.nx_DDG_department_id = #{depId}
             </if>
         </where>
-        order by great.nx_dfg_father_goods_sort, dfg.nx_dfg_father_goods_sort, dg.nx_dg_goods_sons_sort
+        order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), COALESCE(ng_dfg.nx_goods_sort, dfg.nx_dfg_father_goods_sort), COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
     </select>
     <resultMap id="depWithDepDisGoods" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
@@ -779,6 +784,9 @@
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
         ndfg.nx_dfg_fathers_father_id
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = nddg.nx_DDG_dis_goods_id
+        left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        left join nx_goods as ng_ndfg on ng_ndfg.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        left join nx_goods as ng_ndg on ng_ndg.nx_goods_id = ndg.nx_dg_nx_goods_id
         <where>
             <if test="depFatherId != null">
                 and nddg.nx_DDG_department_father_id = #{depFatherId}
@@ -789,8 +797,8 @@
         </where>
 
 
-        order by great.nx_dfg_father_goods_sort, ndfg.nx_dfg_father_goods_sort,
-        ndg.nx_dg_goods_sons_sort
+        order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), COALESCE(ng_ndfg.nx_goods_sort, ndfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_ndg.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
     </select>
 
     <select id="queryDepartmentGoods" resultType="com.nongxinle.entity.NxDepartmentDisGoodsEntity">
@@ -904,6 +912,10 @@
         on g.nx_distributer_father_goods_id = f.nx_dfg_fathers_father_id
         left join nx_distributer_father_goods as gg
         on gg.nx_distributer_father_goods_id = g.nx_dfg_fathers_father_id
+        left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
+        left join nx_goods as ng_f on ng_f.nx_goods_id = f.nx_dfg_nx_goods_id
+        left join nx_goods as ng_g on ng_g.nx_goods_id = g.nx_dfg_nx_goods_id
+        left join nx_goods as ng_gg on ng_gg.nx_goods_id = gg.nx_dfg_nx_goods_id
 
         <where>
             <if test="depId != null">
@@ -926,10 +938,10 @@
         </where>
 
         ORDER BY
-        gg.nx_dfg_father_goods_sort,
-        g.nx_dfg_father_goods_sort,
-        f.nx_dfg_father_goods_sort,
-        dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort
+        COALESCE(ng_gg.nx_goods_sort, gg.nx_dfg_father_goods_sort),
+        COALESCE(ng_g.nx_goods_sort, g.nx_dfg_father_goods_sort),
+        COALESCE(ng_f.nx_goods_sort, f.nx_dfg_father_goods_sort),
+        COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort),COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
 
 
     </select>
@@ -963,6 +975,10 @@
         ON great.nx_distributer_father_goods_id = dfg.nx_dfg_fathers_father_id
         LEFT JOIN nx_distributer_father_goods AS greatGrand
         ON greatGrand.nx_distributer_father_goods_id = great.nx_dfg_fathers_father_id
+        LEFT JOIN nx_goods AS ng_dg_sub ON ng_dg_sub.nx_goods_id = dg.nx_dg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_dfg_sub ON ng_dfg_sub.nx_goods_id = dfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great_sub ON ng_great_sub.nx_goods_id = great.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_greatGrand_sub ON ng_greatGrand_sub.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
 
         <where>
             <if test="depId != null">
@@ -983,10 +999,10 @@
 
         ORDER BY
 
-        greatGrand.nx_dfg_father_goods_sort,
-        great.nx_dfg_father_goods_sort,
-        dfg.nx_dfg_father_goods_sort,
-        dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort
+        COALESCE(ng_greatGrand_sub.nx_goods_sort, greatGrand.nx_dfg_father_goods_sort),
+        COALESCE(ng_great_sub.nx_goods_sort, great.nx_dfg_father_goods_sort),
+        COALESCE(ng_dfg_sub.nx_goods_sort, dfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_dg_sub.nx_goods_sort, dg.nx_dg_goods_sort),COALESCE(ng_dg_sub.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
 
         LIMIT #{limit} OFFSET #{offset}
         ) AS base
@@ -1042,12 +1058,16 @@
 
         LEFT JOIN nx_distributer_goods AS ndg
         ON ndg.nx_distributer_goods_id = ddg.nx_DDG_dis_goods_id
+        LEFT JOIN nx_goods AS ng_dg ON ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_dfg ON ng_dfg.nx_goods_id = dfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great ON ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_greatGrand ON ng_greatGrand.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
         ORDER BY
 
-        greatGrand.nx_dfg_father_goods_sort,
-        great.nx_dfg_father_goods_sort,
-        dfg.nx_dfg_father_goods_sort,
-        dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort
+        COALESCE(ng_greatGrand.nx_goods_sort, greatGrand.nx_dfg_father_goods_sort),
+        COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort),
+        COALESCE(ng_dfg.nx_goods_sort, dfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort),COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
     </select>
 
 
@@ -1158,6 +1178,10 @@
         ON great.nx_distributer_father_goods_id = dfg.nx_dfg_fathers_father_id
         LEFT JOIN nx_distributer_father_goods AS greatGrand
         ON greatGrand.nx_distributer_father_goods_id = great.nx_dfg_fathers_father_id
+        LEFT JOIN nx_goods AS ng_dg_sub ON ng_dg_sub.nx_goods_id = dg.nx_dg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_dfg_sub ON ng_dfg_sub.nx_goods_id = dfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great_sub ON ng_great_sub.nx_goods_id = great.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_greatGrand_sub ON ng_greatGrand_sub.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
 
         <where>
             <if test="depId != null">
@@ -1174,10 +1198,10 @@
             </if>
         </where>
         ORDER BY
-        greatGrand.nx_dfg_father_goods_sort,
-        great.nx_dfg_father_goods_sort,
-        dfg.nx_dfg_father_goods_sort,
-        dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort
+        COALESCE(ng_greatGrand_sub.nx_goods_sort, greatGrand.nx_dfg_father_goods_sort),
+        COALESCE(ng_great_sub.nx_goods_sort, great.nx_dfg_father_goods_sort),
+        COALESCE(ng_dfg_sub.nx_goods_sort, dfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_dg_sub.nx_goods_sort, dg.nx_dg_goods_sort),COALESCE(ng_dg_sub.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
         LIMIT #{limit} OFFSET #{offset}
         ) AS base
 
@@ -1216,12 +1240,16 @@
 
         LEFT JOIN nx_distributer_goods AS ndg
         ON ndg.nx_distributer_goods_id = ddg.nx_DDG_dis_goods_id
+        LEFT JOIN nx_goods AS ng_dg ON ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_dfg ON ng_dfg.nx_goods_id = dfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great ON ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_greatGrand ON ng_greatGrand.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
         ORDER BY
 
-        greatGrand.nx_dfg_father_goods_sort,
-        great.nx_dfg_father_goods_sort,
-        dfg.nx_dfg_father_goods_sort,
-        dg.nx_dg_goods_sort,dg.nx_dg_goods_sons_sort
+        COALESCE(ng_greatGrand.nx_goods_sort, greatGrand.nx_dfg_father_goods_sort),
+        COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort),
+        COALESCE(ng_dfg.nx_goods_sort, dfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort),COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
 
     </select>
     <select id="queryDepartmentGoodsOnly" resultType="com.nongxinle.entity.NxDepartmentDisGoodsEntity">

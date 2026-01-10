@@ -5211,7 +5211,7 @@ public class GbDistributerPurchaseBatchController {
             resultPurGoods.setNxDpgApplyDate(formatWhatYearDayTime(0));
             resultPurGoods.setNxDpgOrdersAmount(1);
             resultPurGoods.setNxDpgFinishAmount(0);
-            resultPurGoods.setNxDpgPurchaseType(1);
+            resultPurGoods.setNxDpgPurchaseType(getGbPurchaseGoodsTypeForOrder());
             resultPurGoods.setNxDpgExpectPrice(disGoods.getNxDgBuyingPrice());
             resultPurGoods.setNxDpgBuyPrice(disGoods.getNxDgBuyingPrice());
             resultPurGoods.setNxDpgDisGoodsId(doDisGoodsId);

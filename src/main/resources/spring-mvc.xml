@@ -36,7 +36,8 @@
 	<mvc:resources mapping="/stockImages/**"
 				   location="file:///opt/tomcat/latest/app-data/images/stockImages/"/>
 
-
+	<mvc:resources mapping="/traceReports/**"
+				   location="file:///opt/tomcat/latest/app-data/images/traceReports/"/>
 	<!-- 下面标签可以不加 等价于所有component-scan-->
 	<context:annotation-config />
 	<!-- 这个重点，标注必须加，websocket用到-->

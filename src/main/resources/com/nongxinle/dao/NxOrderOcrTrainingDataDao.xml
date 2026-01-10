@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxOrderOcrTrainingDataDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
+		select * from nx_order_ocr_training_data where nx_otd_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
+		select * from nx_order_ocr_training_data
+		<where>
+			<if test="nxOtdOrderId != null">
+				and nx_otd_order_id = #{nxOtdOrderId}
+			</if>
+			<if test="nxOtdDepartmentId != null">
+				and nx_otd_department_id = #{nxOtdDepartmentId}
+			</if>
+			<if test="nxOtdDistributerId != null">
+				and nx_otd_distributer_id = #{nxOtdDistributerId}
+			</if>
+			<if test="nxOtdDataSource != null and nxOtdDataSource != ''">
+				and nx_otd_data_source = #{nxOtdDataSource}
+			</if>
+		</where>
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				order by ${sidx} ${order}
+			</when>
+			<otherwise>
+				order by nx_otd_id desc
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="queryTotal" resultType="int">
+		select count(*) from nx_order_ocr_training_data
+		<where>
+			<if test="nxOtdOrderId != null">
+				and nx_otd_order_id = #{nxOtdOrderId}
+			</if>
+			<if test="nxOtdDepartmentId != null">
+				and nx_otd_department_id = #{nxOtdDepartmentId}
+			</if>
+			<if test="nxOtdDistributerId != null">
+				and nx_otd_distributer_id = #{nxOtdDistributerId}
+			</if>
+			<if test="nxOtdDataSource != null and nxOtdDataSource != ''">
+				and nx_otd_data_source = #{nxOtdDataSource}
+			</if>
+		</where>
+	</select>
+
+	<select id="queryByOrderId" resultType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
+		select * from nx_order_ocr_training_data where nx_otd_order_id = #{orderId} limit 1
+	</select>
+
+	<select id="queryTrainingDataList" resultType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
+		select * from nx_order_ocr_training_data
+		<where>
+			<if test="nxOtdOrderId != null">
+				and nx_otd_order_id = #{nxOtdOrderId}
+			</if>
+			<if test="nxOtdDepartmentId != null">
+				and nx_otd_department_id = #{nxOtdDepartmentId}
+			</if>
+			<if test="nxOtdDistributerId != null">
+				and nx_otd_distributer_id = #{nxOtdDistributerId}
+			</if>
+			<if test="nxOtdDataSource != null and nxOtdDataSource != ''">
+				and nx_otd_data_source = #{nxOtdDataSource}
+			</if>
+		</where>
+		order by nx_otd_id desc
+	</select>
+
+	<select id="queryByMatchFields" resultType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
+		select * from nx_order_ocr_training_data
+		<where>
+			<if test="departmentId != null">
+				and nx_otd_department_id = #{departmentId}
+			</if>
+			<if test="goodsName != null and goodsName != ''">
+				and (nx_otd_original_goods_name = #{goodsName} or nx_otd_final_goods_name = #{goodsName})
+			</if>
+			<if test="quantity != null and quantity != ''">
+				and nx_otd_original_quantity = #{quantity}
+			</if>
+			<if test="standard != null and standard != ''">
+				and nx_otd_original_standard = #{standard}
+			</if>
+			<if test="disGoodsId != null and disGoodsId ==  1">
+				and nx_otd_dis_goods_id is not null
+			</if>
+
+			<!-- 不再使用 standardWeight 作为查询条件，避免因为 standardWeight 的限制导致查询不到已有的训练数据 -->
+			<!-- <if test="standardWeight != null and standardWeight != ''">
+				and nx_otd_original_standard_weight = #{standardWeight}
+			</if>
+			<if test="standardWeight == null or standardWeight == ''">
+				and (nx_otd_original_standard_weight IS NULL OR nx_otd_original_standard_weight = '')
+			</if> -->
+
+		</where>
+		order by nx_otd_id desc
+		limit 1
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity"
+			useGeneratedKeys="true" keyProperty="nxOtdId">
+		insert into nx_order_ocr_training_data
+		(
+			`nx_otd_order_id`,
+			`nx_otd_department_id`,
+			`nx_otd_department_father_id`,
+			`nx_otd_distributer_id`,
+			`nx_otd_dis_goods_id`,
+			`nx_otd_original_goods_name`,
+			`nx_otd_is_name_manually_annotated`,
+			`nx_otd_final_goods_name`,
+			`nx_otd_deepseek_recommended_name`,
+			`nx_otd_original_quantity`,
+			`nx_otd_is_quantity_manually_annotated`,
+			`nx_otd_final_quantity`,
+			`nx_otd_original_standard`,
+			`nx_otd_is_standard_manually_annotated`,
+			`nx_otd_final_standard`,
+			`nx_otd_original_standard_weight`,
+			`nx_otd_is_standard_weight_manually_annotated`,
+			`nx_otd_final_standard_weight`,
+			`nx_otd_original_remark`,
+			`nx_otd_is_remark_manually_annotated`,
+			`nx_otd_final_remark`,
+			`nx_otd_data_source`,
+			`nx_otd_create_date`,
+			`nx_otd_update_date`,
+			`nx_otd_create_user_id`
+		)
+		values
+		(
+			#{nxOtdOrderId},
+			#{nxOtdDepartmentId},
+			#{nxOtdDepartmentFatherId},
+			#{nxOtdDistributerId},
+			#{nxOtdDisGoodsId},
+			#{nxOtdOriginalGoodsName},
+			#{nxOtdIsNameManuallyAnnotated},
+			#{nxOtdFinalGoodsName},
+			#{nxOtdDeepseekRecommendedName},
+			#{nxOtdOriginalQuantity},
+			#{nxOtdIsQuantityManuallyAnnotated},
+			#{nxOtdFinalQuantity},
+			#{nxOtdOriginalStandard},
+			#{nxOtdIsStandardManuallyAnnotated},
+			#{nxOtdFinalStandard},
+			#{nxOtdOriginalStandardWeight},
+			#{nxOtdIsStandardWeightManuallyAnnotated},
+			#{nxOtdFinalStandardWeight},
+			#{nxOtdOriginalRemark},
+			#{nxOtdIsRemarkManuallyAnnotated},
+			#{nxOtdFinalRemark},
+			#{nxOtdDataSource},
+			#{nxOtdCreateDate},
+			#{nxOtdUpdateDate},
+			#{nxOtdCreateUserId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
+		update nx_order_ocr_training_data 
+		<set>
+			<if test="nxOtdOrderId != null">`nx_otd_order_id` = #{nxOtdOrderId}, </if>
+			<if test="nxOtdDepartmentId != null">`nx_otd_department_id` = #{nxOtdDepartmentId}, </if>
+			<if test="nxOtdDepartmentFatherId != null">`nx_otd_department_father_id` = #{nxOtdDepartmentFatherId}, </if>
+			<if test="nxOtdDistributerId != null">`nx_otd_distributer_id` = #{nxOtdDistributerId}, </if>
+			<if test="nxOtdDisGoodsId != null">`nx_otd_dis_goods_id` = #{nxOtdDisGoodsId}, </if>
+			<if test="nxOtdOriginalGoodsName != null">`nx_otd_original_goods_name` = #{nxOtdOriginalGoodsName}, </if>
+			<if test="nxOtdIsNameManuallyAnnotated != null">`nx_otd_is_name_manually_annotated` = #{nxOtdIsNameManuallyAnnotated}, </if>
+			<if test="nxOtdFinalGoodsName != null">`nx_otd_final_goods_name` = #{nxOtdFinalGoodsName}, </if>
+			<if test="nxOtdDeepseekRecommendedName != null">`nx_otd_deepseek_recommended_name` = #{nxOtdDeepseekRecommendedName}, </if>
+			<if test="nxOtdOriginalQuantity != null">`nx_otd_original_quantity` = #{nxOtdOriginalQuantity}, </if>
+			<if test="nxOtdIsQuantityManuallyAnnotated != null">`nx_otd_is_quantity_manually_annotated` = #{nxOtdIsQuantityManuallyAnnotated}, </if>
+			<if test="nxOtdFinalQuantity != null">`nx_otd_final_quantity` = #{nxOtdFinalQuantity}, </if>
+			<if test="nxOtdOriginalStandard != null">`nx_otd_original_standard` = #{nxOtdOriginalStandard}, </if>
+			<if test="nxOtdIsStandardManuallyAnnotated != null">`nx_otd_is_standard_manually_annotated` = #{nxOtdIsStandardManuallyAnnotated}, </if>
+			<if test="nxOtdFinalStandard != null">`nx_otd_final_standard` = #{nxOtdFinalStandard}, </if>
+			<if test="nxOtdOriginalStandardWeight != null">`nx_otd_original_standard_weight` = #{nxOtdOriginalStandardWeight}, </if>
+			<if test="nxOtdIsStandardWeightManuallyAnnotated != null">`nx_otd_is_standard_weight_manually_annotated` = #{nxOtdIsStandardWeightManuallyAnnotated}, </if>
+			<if test="nxOtdFinalStandardWeight != null">`nx_otd_final_standard_weight` = #{nxOtdFinalStandardWeight}, </if>
+			<if test="nxOtdOriginalRemark != null">`nx_otd_original_remark` = #{nxOtdOriginalRemark}, </if>
+			<if test="nxOtdIsRemarkManuallyAnnotated != null">`nx_otd_is_remark_manually_annotated` = #{nxOtdIsRemarkManuallyAnnotated}, </if>
+			<if test="nxOtdFinalRemark != null">`nx_otd_final_remark` = #{nxOtdFinalRemark}, </if>
+			<if test="nxOtdDataSource != null">`nx_otd_data_source` = #{nxOtdDataSource}, </if>
+			<if test="nxOtdUpdateDate != null">`nx_otd_update_date` = #{nxOtdUpdateDate}, </if>
+			<if test="nxOtdCreateUserId != null">`nx_otd_create_user_id` = #{nxOtdCreateUserId}</if>
+		</set>
+		where nx_otd_id = #{nxOtdId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_order_ocr_training_data where nx_otd_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_order_ocr_training_data where nx_otd_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+</mapper>

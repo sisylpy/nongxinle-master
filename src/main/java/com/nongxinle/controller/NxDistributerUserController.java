@@ -41,6 +41,9 @@ public class NxDistributerUserController {
     private QyNxDisCropUserService qyNxDisCropUserService;
     @Autowired
     private QyNxDisCorpService qyNxDisCorpService;
+    @Autowired
+    private NxWeightUserService nxWeightUserService;
+
 
 
 
@@ -393,19 +396,20 @@ public class NxDistributerUserController {
         List<NxDistributerUserEntity> oneList = nxDistributerUserService.getAdminUserByParams(map);
         zeroList.addAll(oneList);
 
-        map.put("admin",  getNxDisUserWeighter());
-        List<NxDistributerUserEntity> weighter = nxDistributerUserService.getAdminUserByParams(map);
+        //        List<NxDistributerUserEntity> weighter = nxDistributerUserService.getAdminUserByParams(map);
 
-        map.put("admin",  getNxDisUserKufng());
-        List<NxDistributerUserEntity> kufang = nxDistributerUserService.getAdminUserByParams(map);
-        map.put("admin",  getNxDisUserDriver());
-        List<NxDistributerUserEntity> diriver = nxDistributerUserService.getAdminUserByParams(map);
+        List<NxWeightUserEntity> nxWeightUserEntities = nxWeightUserService.queryUsersByDistributerId(disId);
+
+//        map.put("admin",  getNxDisUserKufng());
+//        List<NxDistributerUserEntity> kufang = nxDistributerUserService.getAdminUserByParams(map);
+//        map.put("admin",  getNxDisUserDriver());
+//        List<NxDistributerUserEntity> diriver = nxDistributerUserService.getAdminUserByParams(map);
 
         Map<String, Object> mapRe = new HashMap<>();
         mapRe.put("zero", zeroList);
-        mapRe.put("one",  weighter);
-        mapRe.put("two",  kufang);
-        mapRe.put("three",  diriver);
+        mapRe.put("one",  nxWeightUserEntities);
+//        mapRe.put("two",  kufang);
+//        mapRe.put("three",  diriver);
 
         return R.ok().put("data", mapRe);
     }
@@ -436,6 +440,15 @@ public class NxDistributerUserController {
         nxDistributerUserService.delete(userId);
         return R.ok();
     }
+
+
+    @RequestMapping(value = "/deleteWeightUser/{userId}")
+    @ResponseBody
+    public R deleteWeightUser(@PathVariable Integer userId) {
+        nxWeightUserService.delete(userId);
+        return R.ok();
+    }
+
 
 
     @RequestMapping(value = "/disAndroidLoginWork/{phone}")
@@ -683,6 +696,61 @@ public class NxDistributerUserController {
         } else {
             return R.error(-1, "用户不存在");
         }
+    }
+
+    /**
+     * 称重员工登录接口（支持配送商和供货商两种类型）
+     * @param weightUserEntity 称重员工实体（包含微信登录code）
+     * @return 登录结果，包含用户信息和配送商/供货商信息
+     */
+    @RequestMapping(value = "/weighterLoginKf", method = RequestMethod.POST)
+    @ResponseBody
+    public R weighterLoginKf(@RequestBody NxWeightUserEntity weightUserEntity) {
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getShanghuoAppID() + "&secret=" +
+                myAPPIDConfig.getShanghuoScreat() + "&js_code=" + weightUserEntity.getNxWuLoginCode() +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        // 检查是否有错误
+        if (jsonObject.containsKey("errcode")) {
+            return R.error(-1, "微信登录失败：" + jsonObject.getString("errmsg"));
+        }
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        
+        // 查询称重员工
+        NxWeightUserEntity weightUser = nxWeightUserService.queryUserByOpenId(openid);
+        if (weightUser == null) {
+            return R.error(-1, "用户不存在，请先注册");
+        }
+
+        // 检查用户状态
+        if (weightUser.getNxWuStatus() != null && weightUser.getNxWuStatus() == 0) {
+            return R.error(-1, "用户已被禁用，请联系管理员");
+        }
+
+        // 更新登录次数
+        Integer loginTimes = weightUser.getNxWuLoginTimes();
+        if (loginTimes == null) {
+            loginTimes = 0;
+        }
+        weightUser.setNxWuLoginTimes(loginTimes + 1);
+        nxWeightUserService.update(weightUser);
+
+        // 查询用户及其关联的配送商或供货商信息
+        Map<String, Object> userInfoMap = nxWeightUserService.queryWeightUserAndInfo(weightUser.getNxWeightUserId());
+        
+        if (userInfoMap == null) {
+            return R.error(-1, "查询用户信息失败");
+        }
+
+        return R.ok().put("data", userInfoMap);
     }
 
     @RequestMapping(value = "/disLoginAdmin", method = RequestMethod.POST)
@@ -1019,16 +1087,23 @@ public class NxDistributerUserController {
 //    }
 
     /**
-     * 门店管理端，采购端，库房端注册用户
-     * @param
-     * @return 用户
+     * 称重员工注册接口（支持配送商和供货商两种类型）
+     * @param file 头像文件
+     * @param userName 用户昵称
+     * @param code 微信登录code
+     * @param userType 用户类型：1=配送商员工, 2=供货商员工
+     * @param disId 配送商ID（当userType=1时必填）
+     * @param session HttpSession
+     * @return 注册结果
      */
-    @RequestMapping(value = "/disKfUserSaveWithFile",produces = "text/html;charset=UTF-8")
+    @RequestMapping(value = "/weighterKfUserSaveWithFile",produces = "text/html;charset=UTF-8")
     @ResponseBody
-    public R disKfUserSaveWithFile(@RequestParam("file") MultipartFile file,
+    public R weighterKfUserSaveWithFile(@RequestParam("file") MultipartFile file,
                                  @RequestParam("userName") String userName,
                                  @RequestParam("code") String code,
-                                 @RequestParam("disId") Integer disId,
+                                 @RequestParam(value = "userType", defaultValue = "1") Integer userType,
+                                 @RequestParam(value = "disId", required = false) Integer disId,
+                                 @RequestParam(value = "userId", required = false) Integer userId,
                                  HttpSession session) {
 
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
@@ -1039,38 +1114,121 @@ public class NxDistributerUserController {
         // 转成Json对象 获取openid
         JSONObject jsonObject = JSONObject.parseObject(str);
 
-        // 我们需要的openid，在一个小程序中，openid是唯一的
-        String openid = jsonObject.get("openid").toString();
-        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
-        if (distributerUser != null) {
-            return R.error(-1, "用户已存在，请直接登陆");
-        } else {
-            NxDistributerUserEntity distributerUserEntity = new NxDistributerUserEntity();
-            distributerUserEntity.setNxDiuPrintDeviceId("-1");
-            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
-            distributerUserEntity.setNxDiuLoginTimes(0);
-            distributerUserEntity.setNxDiuWxOpenId(openid);
-            String newUploadName = "uploadImage";
-            String realPath = UploadFile.upload(session, newUploadName, file);
-
-            String filename = file.getOriginalFilename();
-            String filePath = newUploadName + "/" + filename;
-            distributerUserEntity.setNxDiuWxAvartraUrl(filePath);
-            distributerUserEntity.setNxDiuUrlChange(1);
-            distributerUserEntity.setNxDiuWxOpenId(openid);
-            distributerUserEntity.setNxDiuPrintDeviceId("-1");
-            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
-            distributerUserEntity.setNxDiuWxNickName(userName);
-            distributerUserEntity.setNxDiuDistributerId(disId);
-            distributerUserEntity.setNxDiuAdmin(getNxDisUserWeighter());
-            nxDistributerUserService.save(distributerUserEntity);
-
-            return R.ok();
+        // 检查是否有错误
+        if (jsonObject.containsKey("errcode")) {
+            return R.error(-1, "微信登录失败：" + jsonObject.getString("errmsg"));
         }
 
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+        
+        // 检查称重员工是否已存在（通过openid）
+        NxWeightUserEntity existWeightUser = nxWeightUserService.queryUserByOpenId(openid);
+        if (existWeightUser != null) {
+            return R.error(-1, "用户已存在，请直接登录");
+        }
+        
+        // 同时检查配送商用户是否已存在（保持兼容性）
+        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+        if (distributerUser != null) {
+            return R.error(-1, "用户已存在，请直接登录");
+        }
 
+        // 验证参数
+        if (userType == 1 && disId == null) {
+            return R.error(-1, "配送商员工注册必须提供配送商ID");
+        }
+        if (userType == 2 && userId == null) {
+            return R.error(-1, "供货商员工注册必须提供供货商ID");
+        }
+        if (userType != 1 && userType != 2) {
+            return R.error(-1, "用户类型错误，必须是1（配送商员工）或2（供货商员工）");
+        }
 
+        // 创建称重员工实体
+        NxWeightUserEntity weightUserEntity = new NxWeightUserEntity();
+        
+        // 设置基本信息
+        weightUserEntity.setNxWuUserType(userType);
+        weightUserEntity.setNxWuWxOpenId(openid);
+        weightUserEntity.setNxWuWxNickName(userName);
+        weightUserEntity.setNxWuLoginTimes(0);
+        weightUserEntity.setNxWuStatus(1); // 默认启用
+        weightUserEntity.setNxWuUrlChange(1);
+        
+        // 上传头像
+        String newUploadName = "uploadImage";
+        String realPath = UploadFile.upload(session, newUploadName, file);
+        String filename = file.getOriginalFilename();
+        String filePath = newUploadName + "/" + filename;
+        weightUserEntity.setNxWuWxAvartraUrl(filePath);
+        
+        // 根据用户类型设置关联ID
+        if (userType == 1) {
+            // 配送商员工
+            weightUserEntity.setNxWuNxDistributerId(disId);
+            weightUserEntity.setNxWuUserId(null);
+        } else {
+            // 供货商员工
+            weightUserEntity.setNxWuUserId(userId);
+            weightUserEntity.setNxWuNxDistributerId(null);
+        }
+        
+        // 保存用户
+        nxWeightUserService.save(weightUserEntity);
+
+        return R.ok().put("data", weightUserEntity);
     }
+
+
+//    @RequestMapping(value = "/disKfUserSaveWithFile",produces = "text/html;charset=UTF-8")
+//    @ResponseBody
+//    public R disKfUserSaveWithFile(@RequestParam("file") MultipartFile file,
+//                                   @RequestParam("userName") String userName,
+//                                   @RequestParam("code") String code,
+//                                   @RequestParam("disId") Integer disId,
+//                                   HttpSession session) {
+//
+//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getShanghuoAppID() + "&secret=" +
+//                myAPPIDConfig.getShanghuoScreat() + "&js_code=" + code +  "&grant_type=authorization_code";
+//        // 发送请求，返回Json字符串
+//        String str = WeChatUtil.httpRequest(url, "GET", null);
+//        // 转成Json对象 获取openid
+//        JSONObject jsonObject = JSONObject.parseObject(str);
+//
+//        // 我们需要的openid，在一个小程序中，openid是唯一的
+//        String openid = jsonObject.get("openid").toString();
+//        NxDistributerUserEntity distributerUser = nxDistributerUserService.queryUserByOpenId(openid);
+//        if (distributerUser != null) {
+//            return R.error(-1, "用户已存在，请直接登陆");
+//        } else {
+//            NxDistributerUserEntity distributerUserEntity = new NxDistributerUserEntity();
+//            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+//            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+//            distributerUserEntity.setNxDiuLoginTimes(0);
+//            distributerUserEntity.setNxDiuWxOpenId(openid);
+//            String newUploadName = "uploadImage";
+//            String realPath = UploadFile.upload(session, newUploadName, file);
+//
+//            String filename = file.getOriginalFilename();
+//            String filePath = newUploadName + "/" + filename;
+//            distributerUserEntity.setNxDiuWxAvartraUrl(filePath);
+//            distributerUserEntity.setNxDiuUrlChange(1);
+//            distributerUserEntity.setNxDiuWxOpenId(openid);
+//            distributerUserEntity.setNxDiuPrintDeviceId("-1");
+//            distributerUserEntity.setNxDiuPrintBillDeviceId("-1");
+//            distributerUserEntity.setNxDiuWxNickName(userName);
+//            distributerUserEntity.setNxDiuDistributerId(disId);
+//            distributerUserEntity.setNxDiuAdmin(getNxDisUserWeighter());
+//            nxDistributerUserService.save(distributerUserEntity);
+//
+//            return R.ok();
+//        }
+//
+//
+//
+//    }
 
 //    @RequestMapping(value = "/disLoginOld", method = RequestMethod.POST)
 //    @ResponseBody
@@ -1124,6 +1282,19 @@ public class NxDistributerUserController {
         return R.ok().put("data", nxDistributerUserEntity1);
     }
 
+    @RequestMapping(value = "/updateWeightUser", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateWeightUser(String userName, Integer userId, String phone, String deviceId) {
+        NxWeightUserEntity nxDistributerUserEntity = nxWeightUserService.queryObject(userId);
+        nxDistributerUserEntity.setNxWuWxNickName(userName);
+        nxDistributerUserEntity.setNxWuWxPhone(phone);
+        System.out.println("apddd" + phone);
+        nxWeightUserService.update(nxDistributerUserEntity);
+
+        NxDistributerUserEntity nxDistributerUserEntity1 = nxDistributerUserService.queryUserInfo(userId);
+        return R.ok().put("data", nxDistributerUserEntity1);
+    }
+
 
     @RequestMapping(value = "/updateDisUserWithFile", produces = "text/html;charset=UTF-8")
     @ResponseBody
@@ -1142,6 +1313,29 @@ public class NxDistributerUserController {
         nxDistributerUserEntity.setNxDiuWxAvartraUrl(filePath);
         nxDistributerUserEntity.setNxDiuUrlChange(1);
         nxDistributerUserService.update(nxDistributerUserEntity);
+
+        return R.ok();
+
+    }
+
+
+    @RequestMapping(value = "/updateWeighterWithFile", produces = "text/html;charset=UTF-8")
+    @ResponseBody
+    public R updateWeighterWithFile(@RequestParam("file") MultipartFile file,
+                                   @RequestParam("userName") String userName,
+                                   @RequestParam("userId") Integer userId,
+                                   HttpSession session) {
+        //1,上传图片
+        String newUploadName = "uploadImage";
+        String realPath = UploadFile.upload(session, newUploadName, file);
+
+        String filename = file.getOriginalFilename();
+        String filePath = newUploadName + "/" + filename;
+        NxWeightUserEntity nxDistributerUserEntity = nxWeightUserService.queryObject(userId);
+        nxDistributerUserEntity.setNxWuWxNickName(userName);
+        nxDistributerUserEntity.setNxWuWxAvartraUrl(filePath);
+        nxDistributerUserEntity.setNxWuUrlChange(1);
+        nxWeightUserService.update(nxDistributerUserEntity);
 
         return R.ok();
 

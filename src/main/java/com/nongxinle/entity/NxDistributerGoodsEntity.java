@@ -209,6 +209,9 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	// 库存批次集合
 	private List<NxDistributerGoodsShelfStockEntity> nxDisGoodsShelfStockEntities;
 
+	// 溯源报告ID（商品级别的溯源报告）
+	private Integer nxDgTraceReportId;
+
 	List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities;
 
 	/**

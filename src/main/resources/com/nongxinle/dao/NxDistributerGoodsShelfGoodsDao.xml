@@ -120,7 +120,7 @@
         ndpg.nx_DPG_pay_type
         from nx_distributer_purchase_goods as ndpg
         where ndpg.nx_DPG_dis_goods_id = #{disGoodsId}
-        and ndpg.nx_DPG_purchase_type = 0
+        and ndpg.nx_DPG_purchase_type != -1
         and ndpg.nx_DPG_status &lt; #{status}
         <if test="shelfId != null">
             and ndpg.nx_DPG_apply_shelf_id = #{shelfId}
@@ -343,6 +343,112 @@
         </where>
     </select>
 
+    <!-- 查询货架商品列表（包含溯源报告信息，返回所有商品，有溯源报告的库存批次会显示溯源信息） -->
+    <select id="queryShelfForGoodsWithTraceReportByParams" resultMap="shelfGoods">
+        select 
+        ndgsg.*,
+        ndg.*,
+        #{status} as statusParam,
+        #{shelfId} as shelfIdParam,
+        ndgss.*,
+        ntr.nx_trace_report_id as traceReport_nx_trace_report_id,
+        ntr.nx_TR_batch_id as traceReport_nx_TR_batch_id,
+        ntr.nx_TR_supplier_id as traceReport_nx_TR_supplier_id,
+        ntr.nx_TR_supplier_name as traceReport_nx_TR_supplier_name,
+        ntr.nx_TR_supplier_contact as traceReport_nx_TR_supplier_contact,
+        ntr.nx_TR_purchase_date as traceReport_nx_TR_purchase_date,
+        ntr.nx_TR_stock_in_date as traceReport_nx_TR_stock_in_date,
+        ntr.nx_TR_valid_start_date as traceReport_nx_TR_valid_start_date,
+        ntr.nx_TR_valid_end_date as traceReport_nx_TR_valid_end_date,
+        ntr.nx_TR_report_type as traceReport_nx_TR_report_type,
+        ntr.nx_TR_file_path as traceReport_nx_TR_file_path,
+        ntr.nx_TR_file_paths as traceReport_nx_TR_file_paths,
+        ntr.nx_TR_file_type as traceReport_nx_TR_file_type,
+        ntr.nx_TR_distributer_id as traceReport_nx_TR_distributer_id,
+        ntr.nx_TR_create_user_id as traceReport_nx_TR_create_user_id,
+        ntr.nx_TR_create_time as traceReport_nx_TR_create_time,
+        ntr.nx_TR_update_time as traceReport_nx_TR_update_time,
+        ntr.nx_TR_remark as traceReport_nx_TR_remark,
+        stockPurGoods.nx_distributer_purchase_goods_id as stockPurGoods_nx_distributer_purchase_goods_id,
+        stockPurGoods.nx_DPG_finish_amount as stockPurGoods_nx_DPG_finish_amount,
+        stockPurGoods.nx_DPG_dis_goods_id as stockPurGoods_nx_DPG_dis_goods_id,
+        stockPurGoods.nx_DPG_dis_goods_father_id as stockPurGoods_nx_DPG_dis_goods_father_id,
+        stockPurGoods.nx_DPG_dis_goods_grand_id as stockPurGoods_nx_DPG_dis_goods_grand_id,
+        stockPurGoods.nx_DPG_nx_weight_id as stockPurGoods_nx_DPG_nx_weight_id,
+        stockPurGoods.nx_DPG_batch_id as stockPurGoods_nx_DPG_batch_id,
+        stockPurGoods.nx_DPG_quantity as stockPurGoods_nx_DPG_quantity,
+        stockPurGoods.nx_DPG_buy_quantity as stockPurGoods_nx_DPG_buy_quantity,
+        stockPurGoods.nx_DPG_buy_subtotal as stockPurGoods_nx_DPG_buy_subtotal,
+        stockPurGoods.nx_DPG_standard as stockPurGoods_nx_DPG_standard,
+        stockPurGoods.nx_DPG_status as stockPurGoods_nx_DPG_status,
+        stockPurGoods.nx_DPG_buy_price as stockPurGoods_nx_DPG_buy_price,
+        stockPurGoods.nx_DPG_purchase_type as stockPurGoods_nx_DPG_purchase_type,
+        stockPurGoods.nx_DPG_orders_amount as stockPurGoods_nx_DPG_orders_amount,
+        stockPurGoods.nx_DPG_type_add_user_id as stockPurGoods_nx_DPG_type_add_user_id,
+        stockPurGoods.nx_DPG_input_type as stockPurGoods_nx_DPG_input_type,
+        stockPurGoods.nx_DPG_time as stockPurGoods_nx_DPG_time,
+        stockPurGoods.nx_DPG_purchase_date as stockPurGoods_nx_DPG_purchase_date,
+        stockPurGoods.nx_DPG_distributer_id as stockPurGoods_nx_DPG_distributer_id,
+        stockPurGoods.nx_DPG_sell_user_id as stockPurGoods_nx_DPG_sell_user_id,
+        stockPurGoods.nx_DPG_buy_user_id as stockPurGoods_nx_DPG_buy_user_id,
+        stockPurGoods.nx_DPG_pur_user_id as stockPurGoods_nx_DPG_pur_user_id,
+        stockPurGoods.nx_DPG_cost_level as stockPurGoods_nx_DPG_cost_level,
+        stockPurGoods.nx_DPG_pay_type as stockPurGoods_nx_DPG_pay_type,
+        stockPurUser.nx_distributer_user_id as stockPurUser_nx_distributer_user_id,
+        stockPurUser.nx_DIU_wx_nick_name as stockPurUser_nx_DIU_wx_nick_name,
+        stockPurUser.nx_DIU_wx_avartra_url as stockPurUser_nx_DIU_wx_avartra_url,
+        stockPurUser.nx_DIU_wx_open_id as stockPurUser_nx_DIU_wx_open_id,
+        stockPurUser.nx_DIU_wx_phone as stockPurUser_nx_DIU_wx_phone,
+        stockPurUser.nx_DIU_distributer_id as stockPurUser_nx_DIU_distributer_id,
+        stockPurUser.nx_DIU_admin as stockPurUser_nx_DIU_admin
+        from (
+        select 
+        ndgsg.nx_distributer_goods_shelf_goods_id
+        from nx_distributer_goods_shelf_goods as ndgsg
+        <where>
+            <if test="shelfId !=null">
+                and nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+        </where>
+        order by nx_DGSG_sort asc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+        ) as t1
+        inner join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = t1.nx_distributer_goods_shelf_goods_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+            and ndgss.nx_dgss_rest_weight &gt; 0
+            and ndgss.nx_dgss_status = 0
+        left join nx_distributer_purchase_goods as stockPurGoods on stockPurGoods.nx_distributer_purchase_goods_id = ndgss.nx_dgss_nx_pur_goods_id
+        left join nx_distributer_user as stockPurUser on stockPurUser.nx_distributer_user_id = stockPurGoods.nx_DPG_pur_user_id
+        left join nx_trace_report as ntr on ntr.nx_trace_report_id = ndgss.nx_dgss_trace_report_id
+        order by ndgsg.nx_DGSG_sort asc
+    </select>
+
+    <!-- 查询货架商品总数（包含溯源报告信息，返回所有商品） -->
+    <select id="queryShelfForGoodsWithTraceReportCount" resultType="java.lang.Integer">
+        select count(*)
+        from nx_distributer_goods_shelf_goods as ndgsg
+        <where>
+            <if test="shelfId !=null">
+                and nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+        </where>
+    </select>
+
     <select id="queryShelfGoodsCount" resultType="java.lang.Integer">
         select COUNT(DISTINCT ndgsg.nx_distributer_goods_shelf_goods_id)
         from nx_distributer_goods_shelf_goods as ndgsg
@@ -404,7 +510,31 @@
         <result property="nxDgssRestSubtotal" column="nx_dgss_rest_subtotal"/>
         <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
         <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
+        <result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
         <association property="nxDistributerPurchaseGoodsEntity" resultMap="onlyPurGoods" columnPrefix="stockPurGoods_"/>
+        <association property="nxTraceReportEntity" resultMap="traceReport" columnPrefix="traceReport_"/>
+    </resultMap>
+
+    <!-- 溯源报告 resultMap -->
+    <resultMap id="traceReport" type="NxTraceReportEntity">
+        <id property="nxTraceReportId" column="nx_trace_report_id"/>
+        <result property="nxTrBatchId" column="nx_TR_batch_id"/>
+        <result property="nxTrSupplierId" column="nx_TR_supplier_id"/>
+        <result property="nxTrSupplierName" column="nx_TR_supplier_name"/>
+        <result property="nxTrSupplierContact" column="nx_TR_supplier_contact"/>
+        <result property="nxTrPurchaseDate" column="nx_TR_purchase_date"/>
+        <result property="nxTrStockInDate" column="nx_TR_stock_in_date"/>
+        <result property="nxTrValidStartDate" column="nx_TR_valid_start_date"/>
+        <result property="nxTrValidEndDate" column="nx_TR_valid_end_date"/>
+        <result property="nxTrReportType" column="nx_TR_report_type"/>
+        <result property="nxTrFilePath" column="nx_TR_file_path"/>
+        <result property="nxTrFilePaths" column="nx_TR_file_paths"/>
+        <result property="nxTrFileType" column="nx_TR_file_type"/>
+        <result property="nxTrDistributerId" column="nx_TR_distributer_id"/>
+        <result property="nxTrCreateUserId" column="nx_TR_create_user_id"/>
+        <result property="nxTrCreateTime" column="nx_TR_create_time"/>
+        <result property="nxTrUpdateTime" column="nx_TR_update_time"/>
+        <result property="nxTrRemark" column="nx_TR_remark"/>
     </resultMap>
     <resultMap id="disStandards" type="NxDistributerStandardEntity">
         <id property="nxDistributerStandardId" column="nx_distributer_standard_id"/>

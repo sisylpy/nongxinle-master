@@ -306,6 +306,7 @@
 	<select id="querySupplierByUserId" resultMap="jrdhSupplier">
 		select * from nx_jrdh_supplier as njs
 		left join gb_department_user as gdu on gdu.gb_department_user_id = njs.nx_jrdhs_nx_jrdh_buy_user_id
+		left join nx_distributer as dis on dis.nx_distributer_id = njs.nx_jrdhs_nx_distributer_id
 		where nx_jrdhs_user_id = #{sellerId}
 	</select>
 	<select id="queryJrdhSupplierCount" resultType="java.lang.Integer">
@@ -323,6 +324,14 @@
 	  </where>
 
 
+	</select>
+
+	<select id="queryNxDisByJrdhUserId" resultType="com.nongxinle.entity.NxDistributerEntity">
+
+ 	select * from nx_jrdh_supplier as supplier
+ 	    left join nx_jrdh_user as user on user.nx_jrdh_user_id = supplier.nx_jrdhs_user_id
+ 	left join nx_distributer as dis on dis.nx_distributer_id = supplier.nx_jrdhs_nx_distributer_id
+ 	where  user.nx_jrdh_user_id = #{userId}
 	</select>
 
 
