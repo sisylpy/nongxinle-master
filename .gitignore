@@ -57,6 +57,9 @@ tmp_*
 application.properties
 application-local.properties
 application-dev.properties
+db.properties
+wx.properties
+keys/
 
 # Images
 *.jpg
