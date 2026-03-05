@@ -5,6 +5,7 @@ package com.nongxinle.service;
  * @date 06-21 21:51
  */
 
+import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 import com.nongxinle.dto.PasteSearchGoodsResponseDTO;
 import com.nongxinle.entity.*;
 import org.apache.ibatis.annotations.Param;
@@ -64,6 +65,18 @@ public interface NxDepartmentOrdersService {
     List<NxDepartmentOrdersEntity> queryDepWeightOrder(Map<String, Object> map);
 
     List<NxDepartmentOrdersEntity> queryNotWeightDisOrdersByParams(Map<String, Object> map1);
+
+    /**
+     * 查询订单列表（简化版，返回DTO，只包含必要字段）
+     * 用于phoneGetToFillDepOrders接口优化
+     */
+    List<NxDepartmentOrdersSimpleDTO> queryNotWeightDisOrdersSimpleByParams(Map<String, Object> map1);
+
+    /**
+     * 批量查询多个部门的订单列表（简化版，返回DTO）
+     * 用于优化子部门订单查询，避免N+1问题
+     */
+    List<NxDepartmentOrdersSimpleDTO> queryDisOrdersSimpleByDepIds(Map<String, Object> map1);
 
     List<GbDistributerEntity> queryOrderGbDistributerList(Map<String, Object> map1);
 
@@ -233,11 +246,11 @@ public interface NxDepartmentOrdersService {
      * @param orderList 订单列表（来自 OCR 识别结果）
      * @return 处理后的订单响应列表
      */
-    List<PasteSearchGoodsResponseDTO> searchAndSaveOrdersFromOcr(List<NxDepartmentOrdersEntity> orderList);
+    List<NxDepartmentOrdersEntity> searchAndSaveOrdersFromOcr(List<NxDepartmentOrdersEntity> orderList);
     
     /**
      * 保存订单（包含完整的订单保存逻辑，从 Controller 的 saveOneOrder 方法提取）
-     * 
+     *
      * @param order 订单实体
      * @param disGoodsEntity 分销商商品实体
      * @return 保存后的订单实体
@@ -247,10 +260,74 @@ public interface NxDepartmentOrdersService {
     /**
      * 为订单添加推荐商品（参考 pasteSearchGoods 的查询方式）
      * 用于弱查询场景，在找到唯一商品后，继续查询相似商品作为推荐
-     * 
+     *
      * @param order 已保存的订单（状态应为 -2）
      * @return 添加推荐商品后的订单实体（订单状态保持不变）
      */
     NxDepartmentOrdersEntity addCommentsGoodsForOrder(NxDepartmentOrdersEntity order);
+
+    void  processOrderPrice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity);
+
+    void savePurGoodsAuto(NxDepartmentOrdersEntity ordersEntity, Integer inputType, Integer purchaseType);
+
+    int queryMaxTodayOrder(Integer depIdForTodayOrder);
+    
+    /**
+     * 根据OCR任务ID查询订单列表
+     * @param ocrTaskId OCR任务ID
+     * @return 订单列表
+     */
+    List<NxDepartmentOrdersEntity> queryListByOcrTaskId(Integer ocrTaskId);
+
+    /**
+     * 根据OCR任务ID分页查询订单列表
+     * @param map 查询参数，包含ocrTaskId、offset、limit
+     * @return 订单列表
+     */
+    List<NxDepartmentOrdersEntity> queryListByOcrTaskIdWithPage(Map<String, Object> map);
+
+    /**
+     * 根据OCR任务ID查询订单总数
+     * @param ocrTaskId OCR任务ID
+     * @return 订单总数
+     */
+    Integer queryTotalByOcrTaskId(Integer ocrTaskId);
+
+    /**
+     * 根据OCR任务ID一次性查询各状态订单数量（status=0已完成, status=-2待修正）
+     * @param ocrTaskId OCR任务ID
+     * @return int[0]=completedCount, int[1]=pendingCount
+     */
+    int[] queryCountByOcrTaskIdGroupByStatus(Integer ocrTaskId);
+
+    NxDepartmentOrdersEntity depSaveLinshiGoodsForPasteOrder(NxDepartmentOrdersEntity ordersEntity);
+
+    NxDepartmentOrdersEntity updateOneOrderForChoice(NxDepartmentOrdersEntity ordersEntity, NxDistributerGoodsEntity disGoodsEntity);
+
+    NxDepartmentOrdersEntity saveXiezuoOrderWithGoods(NxDepartmentOrdersEntity xiezuoOrder, NxDistributerGoodsEntity nxDistributerGoodsEntity);
+
+    /**
+     * 保存协作订单（完整流程）：当商品所属配送商 != 订单配送商时，创建并保存协作订单，
+     * 执行价格处理、采购商品自动创建，并将主订单关联到协作订单。
+     *
+     * @param mainOrder 主订单（下单配送商的订单）
+     * @param disGoodsEntity 商品实体
+     * @return 已保存的协作订单，若非协作场景则返回 null
+     */
+    NxDepartmentOrdersEntity saveCollaborativeOrderWhenNeeded(NxDepartmentOrdersEntity mainOrder, NxDistributerGoodsEntity disGoodsEntity);
+
+    List<NxDistributerEntity> queryOfferOrderNxDistributer(Map<String, Object> mapOffer);
+
+    List<NxDepartmentEntity> queryCollDisDeps(Map<String, Object> map);
+
+    NxDepartmentOrdersEntity querycollOrder(Map<String, Object> map);
+
+    List<NxDistributerEntity> queryOfferOrderNxDistributerWithOrder(Map<String, Object> map);
+
+    Integer queryCollReplyPartnerCount(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map);
+
+    NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId);
 
 }

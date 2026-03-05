@@ -39,7 +39,11 @@ public class NxDistributerFatherGoodsController {
     @Autowired
     private NxGoodsService nxGoodsService;
    @Autowired
-   private NxDepartmentBillService nxDepartmentBillService;
+   private NxDistributerNxDistributerService nxDistributerNxDistributerService;
+    @Autowired
+    private NxDistributerBlockService nxDistributerBlockService;
+    @Autowired
+    private NxDistributerService nxDistributerService;
 
     @RequestMapping(value = "/updateNxFatherGoodsSort", method = RequestMethod.POST)
     @ResponseBody
@@ -453,41 +457,122 @@ public class NxDistributerFatherGoodsController {
 
     @RequestMapping(value = "/getDisGoodsByGreatGrandIdWithCount", method = RequestMethod.POST)
     @ResponseBody
-    public R getDisGoodsByGreatGrandIdWithCount(Integer fatherId, Integer limit, Integer page, Integer disId, Integer goodsType, Integer hasCartonUnit, Integer hasTraceReport) {
+    public R getDisGoodsByGreatGrandIdWithCount(Integer fatherId, Integer limit, Integer page, Integer disId, Integer goodsType, Integer hasCartonUnit,Integer hasPerCarton, Integer hasTraceReport) {
         Map<String, Object> map = new HashMap<>();
+        List<Integer> ids = new ArrayList<>();
+
         map.put("grandId", fatherId);
         map.put("offset", (page - 1) * limit);
         map.put("limit", limit);
         if(goodsType != 99){
-            map.put("goodsType", goodsType);
+            if(goodsType == 13){
+                // 商品分页查询协作商户和自己的商品，构建多个配送商 id 列表
+                Map<String, Object> mapGroup = new HashMap<>();
+                mapGroup.put("orderDisId", disId);
+                List<NxDistributerEntity> nxDistributerEntities = nxDistributerNxDistributerService.queryOfferNxDisByParams(mapGroup);
+                if(nxDistributerEntities.size() > 0){
+                    Set<Integer> blockedIds = new HashSet<>(nxDistributerBlockService.queryBlockedDisIdsByBlocker(disId));
+                    for(NxDistributerEntity nxDistributerEntity: nxDistributerEntities){
+                        Integer partnerId = nxDistributerEntity.getNxDistributerId();
+                        if (!blockedIds.contains(partnerId)) {
+                            ids.add(partnerId);
+                        }
+                    }
+                }
+                map.put("disIds", ids);
+
+            }
             if(goodsType == 11){
                 map.put("goodsType", 1);
                 map.put("hasSupplier", 1);
+                map.put("isHidden", 0);
+                map.put("disId", disId);
+            } else if(goodsType == -2){
+                map.put("isHidden", 1);
+                map.put("disId", disId);
             }
+            else{
+                map.put("goodsType", goodsType);
+                map.put("disId", disId);
+                map.put("isHidden", 0);
+            }
+        }else{
+            map.put("disId", disId);
+            map.put("isHidden", 0);
+        }
+        NxDistributerEntity distributerEntity = nxDistributerService.queryObject(disId);
+        if(distributerEntity.getNxDistributerBusinessTypeId() > 5){
+            // 查询协作商户和自己的商品，构建多个配送商 id 列表
+            Map<String, Object> mapGroup = new HashMap<>();
+            mapGroup.put("orderDisId", disId);
+            System.out.println("mapggou" + mapGroup);
+            List<NxDistributerEntity> nxDistributerEntities = nxDistributerNxDistributerService.queryOfferNxDisByParams(mapGroup);
+            if(nxDistributerEntities.size() > 0){
+                Set<Integer> blockedIds = new HashSet<>(nxDistributerBlockService.queryBlockedDisIdsByBlocker(disId));
+                for(NxDistributerEntity nxDistributerEntity: nxDistributerEntities){
+                    Integer partnerId = nxDistributerEntity.getNxDistributerId();
+                    if (!blockedIds.contains(partnerId)) {
+                        ids.add(partnerId);
+                    }
+                }
+            }
+            if (goodsType != 13){
+                ids.add(disId);
+            }
+            map.put("disIds", ids);
         }
         // 添加外包装查询条件：1-有外包装，0-无外包装，null-不筛选
         if(hasCartonUnit != null){
             map.put("hasCartonUnit", hasCartonUnit);
+        }
+        // 添加外包装查询条件：1-有外包装，0-无外包装，null-不筛选
+        if(hasPerCarton != null){
+            map.put("hasCartonUnit", 1);
+            map.put("hasPerCarton", hasPerCarton);
         }
         // 添加溯源查询条件：1-有溯源，0-无溯源，null-不筛选
         if(hasTraceReport != null){
             map.put("hasTraceReport", hasTraceReport);
         }
         map.put("limit", limit);
-        System.out.println("mapappapapapaGGGG" + map);
+
+
+
         List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.querySupplierGoodsByGreatId(map);
+        
 
         Map<String, Object> mapCount = new HashMap<>();
-        mapCount.put("greatGrandId", fatherId);
-//        mapCount.put("isHidden", 0);
+        mapCount.put("disId", disId);
+        mapCount.put("greatFatherId", fatherId);
+        mapCount.put("isHidden", goodsType == -2 ? 1 : 0);
+        if(goodsType != 99){
+            mapCount.put("goodsType", goodsType);
+            if(goodsType == 11){
+                mapCount.put("goodsType", 1);
+                mapCount.put("hasSupplier", 1);
+            }else if(goodsType == 13){
+                mapCount.put("disIds", ids);
+            }
+        }
+        // 协作商户时，list 用 disIds，count 也需一致
+        if(ids.size() > 0){
+            mapCount.put("disIds", ids);
+        }
         // 传递外包装查询条件到总数查询
         if(hasCartonUnit != null){
             mapCount.put("hasCartonUnit", hasCartonUnit);
+        }
+        if(hasPerCarton != null){
+            mapCount.put("hasCartonUnit", 1);
+            mapCount.put("hasPerCarton", hasPerCarton);
         }
         // 传递溯源查询条件到总数查询
         if(hasTraceReport != null){
             mapCount.put("hasTraceReport", hasTraceReport);
         }
+        System.out.println("toototototot" + mapCount);
+
+
         int total = distributerGoodsService.queryDisGoodsTotal(mapCount);
         PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
 
@@ -503,7 +588,6 @@ public class NxDistributerFatherGoodsController {
 
         map111.put("goodsType", 1);
         int purCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-
         returnData.put("stockCount", stockCount);
         returnData.put("purCount", purCount);
         returnData.put("is", pageUtil);
@@ -726,42 +810,97 @@ public class NxDistributerFatherGoodsController {
 
     @RequestMapping(value = "/getDisGoodsCataWithCount")
     @ResponseBody
-    public R getDisGoodsCataWithCount(Integer disId, Integer goodsType, Integer hasCartonUnit, Integer hasTraceReport) {
+    public R getDisGoodsCataWithCount(Integer disId, Integer goodsType, Integer hasCartonUnit, Integer hasPerCarton, Integer hasTraceReport) {
 
         Map<String, Object> returnData = new HashMap<>();
 
+        List<Integer> ids = new ArrayList<>();
 
         Map<String, Object> mapG = new HashMap<>();
-        mapG.put("disId", disId);
+
         if(goodsType != 99){
-            mapG.put("goodsType", goodsType);
+
+            if(goodsType == 13){
+                // 查询协作商户和自己的商品，构建多个配送商 id 列表
+                Map<String, Object> mapGroup = new HashMap<>();
+                mapGroup.put("orderDisId", disId);
+                System.out.println("mapggou" + mapGroup);
+                List<NxDistributerEntity> nxDistributerEntities = nxDistributerNxDistributerService.queryOfferNxDisByParams(mapGroup);
+                if(nxDistributerEntities.size() > 0){
+                    Set<Integer> blockedIds = new HashSet<>(nxDistributerBlockService.queryBlockedDisIdsByBlocker(disId));
+                    for(NxDistributerEntity nxDistributerEntity: nxDistributerEntities){
+                        Integer partnerId = nxDistributerEntity.getNxDistributerId();
+                        if (!blockedIds.contains(partnerId)) {
+                            ids.add(partnerId);
+                        }                    }
+                }
+                mapG.put("disIds", ids);
+            }
             if(goodsType == 11){
                 mapG.put("goodsType", 1);
                 mapG.put("hasSupplier", 1);
+                mapG.put("isHidden", 0);
+                mapG.put("disId", disId);
+            } else if(goodsType == -2){
+                mapG.put("isHidden", 1);
+                mapG.put("disId", disId);
             }
+            else{
+                mapG.put("goodsType", goodsType);
+                mapG.put("disId", disId);
+                mapG.put("isHidden", 0);
+            }
+        }else{
+            mapG.put("disId", disId);
+            mapG.put("isHidden", 0);
         }
+        NxDistributerEntity distributerEntity = nxDistributerService.queryObject(disId);
+        if(distributerEntity.getNxDistributerBusinessTypeId() > 5){
+            // 查询协作商户和自己的商品，构建多个配送商 id 列表
+            Map<String, Object> mapGroup = new HashMap<>();
+            mapGroup.put("orderDisId", disId);
+            System.out.println("mapggou" + mapGroup);
+            List<NxDistributerEntity> nxDistributerEntities = nxDistributerNxDistributerService.queryOfferNxDisByParams(mapGroup);
+            if(nxDistributerEntities.size() > 0){
+                Set<Integer> blockedIds = new HashSet<>(nxDistributerBlockService.queryBlockedDisIdsByBlocker(disId));
+                for(NxDistributerEntity nxDistributerEntity: nxDistributerEntities){
+                    Integer partnerId = nxDistributerEntity.getNxDistributerId();
+                    if (!blockedIds.contains(partnerId)) {
+                        ids.add(partnerId);
+                    }
+                }
+            }
+            if (goodsType != 13){
+                ids.add(disId);
+            }
+            mapG.put("disIds", ids);
+
+        }
+
         // 添加外包装查询条件：1-有外包装，0-无外包装，null-不筛选
         if(hasCartonUnit != null){
             mapG.put("hasCartonUnit", hasCartonUnit);
+        }
+        // 添加外包装查询条件：1-有外包装，0-无外包装，null-不筛选
+        if(hasPerCarton != null){
+            mapG.put("hasCartonUnit", 1);
+            mapG.put("hasPerCarton", hasPerCarton);
         }
         // 添加溯源查询条件：1-有溯源，0-无溯源，null-不筛选
         if(hasTraceReport != null){
             mapG.put("hasTraceReport", hasTraceReport);
         }
 
-        System.out.println("mapdgGg" + mapG);
-        // 总数查询也需要传递外包装条件和溯源条件
-        int count =  distributerGoodsService.queryDisGoodsTotal(mapG);
 
+
+        // 总数查询也需要传递外包装条件、溯源条件和多个配送商 id
+        int count =  distributerGoodsService.queryDisGoodsTotal(mapG);
         if(count > 0){
             List<NxDistributerFatherGoodsEntity> greatGrandGoods = nxDistributerFatherGoodsService.queryDisGreatGrandListWithType(mapG);
             if(greatGrandGoods.size() > 0){
-                System.out.println("greatrradn" + greatGrandGoods.size());
                 for(NxDistributerFatherGoodsEntity greatGrand : greatGrandGoods){
                     List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = greatGrand.getFatherGoodsEntities();
-                    System.out.println("fafaaaaa" + fatherGoodsEntities.size());
-
-                    if(fatherGoodsEntities.size() > 0){
+                    if(fatherGoodsEntities != null && fatherGoodsEntities.size() > 0){
                         for(NxDistributerFatherGoodsEntity fatherGoodsEntity: fatherGoodsEntities){
                             fatherGoodsEntity.setNxDistributerGoodsEntities(null);
                         }
@@ -787,8 +926,7 @@ public class NxDistributerFatherGoodsController {
         mapBuyPrice.put("buyPrice", 0.1);
         int  buyPriceCount = distributerGoodsService.queryDisGoodsTotal(mapBuyPrice);
 
-
-
+        
         returnData.put("lishiCount", wxCountAuto1);
         returnData.put("priceCount", priceCount);
         returnData.put("buyPriceCount", buyPriceCount);

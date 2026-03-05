@@ -15,8 +15,14 @@ import java.util.Map;
 
 public interface NxDistributerGoodsLinshiDao extends BaseDao<NxDistributerGoodsLinshiEntity> {
 
-    List<NxDistributerGoodsLinshiEntity> disGetLinshiGoodsList(Map<String, Object> map);
+	List<NxDistributerGoodsLinshiEntity> disGetLinshiGoodsList(Map<String, Object> map);
 
-    int disGetLinshiGoodsTotal(Map<String, Object> map);
+	int disGetLinshiGoodsTotal(Map<String, Object> map);
+
+	NxDistributerGoodsLinshiEntity queryLinshiByFromGoodsId(Integer fromGoodsId);
+
+	List<NxDistributerGoodsLinshiEntity> queryLinshiListByStatus(Map<String, Object> map);
+
+	List<Integer> queryFromGoodsIdsByDisId(Integer disId);
 
 }

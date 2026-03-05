@@ -10,6 +10,7 @@ package com.nongxinle.dao;
 import com.nongxinle.entity.DailyUsage;
 import com.nongxinle.entity.NxDepartmentOrderHistoryEntity;
 import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
+import com.nongxinle.entity.NxDistributerGoodsEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -52,4 +53,6 @@ public interface NxDepartmentOrderHistoryDao extends BaseDao<NxDepartmentOrderHi
      * 如果是货架商品，从库存批次关联溯源报告；如果不是货架商品，从采购商品关联溯源报告
      */
     List<NxDepartmentOrderHistoryEntity> queryOrdersByBillIdWithTraceReport(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map);
 }

@@ -125,5 +125,11 @@ public class NxDistributerPurchaseBatchServiceImpl implements NxDistributerPurch
 		return nxDistributerPurchaseBatchDao.queryBatchItemByParams(mapB);
     }
 
+    @Override
+    public List<NxDistributerEntity> queryOfferNxDistributer(Map<String, Object> map) {
+
+		return  nxDistributerPurchaseBatchDao.queryOfferNxDistributer(map);
+    }
+
 
 }

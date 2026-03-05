@@ -58,10 +58,24 @@ public class NxDistributerGoodsLinshiServiceImpl implements NxDistributerGoodsLi
 		return nxDistributerGoodsLinshiDao.disGetLinshiGoodsList(map);
     }
 
-    @Override
-    public int disGetLinshiGoodsTotal(Map<String, Object> map) {
-
+	@Override
+	public int disGetLinshiGoodsTotal(Map<String, Object> map) {
 		return nxDistributerGoodsLinshiDao.disGetLinshiGoodsTotal(map);
-    }
+	}
+
+	@Override
+	public NxDistributerGoodsLinshiEntity queryLinshiByFromGoodsId(Integer fromGoodsId) {
+		return nxDistributerGoodsLinshiDao.queryLinshiByFromGoodsId(fromGoodsId);
+	}
+
+	@Override
+	public List<NxDistributerGoodsLinshiEntity> queryLinshiListByStatus(Map<String, Object> map) {
+		return nxDistributerGoodsLinshiDao.queryLinshiListByStatus(map);
+	}
+
+	@Override
+	public List<Integer> queryFromGoodsIdsByDisId(Integer disId) {
+		return nxDistributerGoodsLinshiDao.queryFromGoodsIdsByDisId(disId);
+	}
 
 }

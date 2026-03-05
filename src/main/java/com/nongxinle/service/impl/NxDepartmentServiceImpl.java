@@ -115,8 +115,8 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 		nxDepartmentEntity.setNxDepartmentOrderTotal(0);
 		String s = hanziToPinyin(nxDepartmentEntity.getNxDepartmentName());
 		nxDepartmentEntity.setNxDepartmentPinyin(s);
-		nxDepartmentEntity.setNxDepartmentAttrName(nxDepartmentEntity.getNxDepartmentName());
-		nxDepartmentEntity.setNxDepartmentOrderCode(nxDepartmentEntity.getNxDepartmentName());
+//		nxDepartmentEntity.setNxDepartmentAttrName(nxDepartmentEntity.getNxDepartmentName());
+//		nxDepartmentEntity.setNxDepartmentOrderCode(nxDepartmentEntity.getNxDepartmentName());
 		nxDepartmentEntity.setNxDepartmentRecordMinutes(30);
 		Integer nxDepartmentDisId = nxDepartmentEntity.getNxDepartmentDisId();
 		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);

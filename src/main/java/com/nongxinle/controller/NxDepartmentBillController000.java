@@ -844,6 +844,7 @@ public class NxDepartmentBillController000 {
         BigDecimal billProfit = new BigDecimal(0);
 
         Map<String, Object> map = new HashMap<>();
+        map.put("disId", nxDepartmentBill.getNxDbDisId());
         map.put("depFatherId", nxDepartmentBill.getNxDbDepFatherId());
         if(!nxDepartmentBill.getNxDbDepFatherId().equals(nxDepartmentBill.getNxDbDepId())){
             map.put("depId", nxDepartmentBill.getNxDbDepId());

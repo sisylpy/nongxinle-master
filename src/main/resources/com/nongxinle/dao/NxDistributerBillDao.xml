@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerBillDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerBillEntity">
+		select * from nx_distributer_bill where nx_distributer_bill_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerBillEntity">
+		select * from nx_distributer_bill 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_bill 
+	</select>
+
+    <select id="queryDisPurchaseBatchCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_distributer_bill
+		<where>
+
+		<if test="orderDisId != null">
+			and nx_DBD_order_dis_id = #{orderDisId}
+		</if>
+		
+		<if test="status != null">
+			and nx_DBD_status &lt; #{status}
+		</if>
+		<if test="equalStatus != null">
+			and nx_DBD_status = #{equalStatus}
+		</if>
+		<if test="dayuStatus != null">
+			and nx_DBD_status &gt; #{dayuStatus}
+		</if>
+		<if test="buyerId != null">
+			and nx_DBD_buy_user_id = #{buyerId}
+		</if>
+		<if test="offerDisId != null">
+			and nx_DBD_offer_nx_dis_id = #{offerDisId}
+		</if>
+		<if test="payType != null">
+			and nx_DBD_pay_type = #{payType}
+		</if>
+		<if test="month != null">
+			and nx_DBD_month = #{month}
+		</if>
+		<if test="startDate != null">
+			and nx_DBD_date &gt;= #{startDate}
+		</if>
+		<if test="stopDate != null">
+			and nx_DBD_date &lt;= #{stopDate}
+		</if>
+
+		<if test="equalDate != null">
+			and nx_DBD_date = #{equalDate}
+		</if>
+		<if test="year != null">
+			and nx_DBD_year = #{year}
+		</if>
+
+		</where>
+	</select>
+	<select id="querySupplierUnSettleSubtotal" resultType="java.lang.Double">
+		select sum(COALESCE(DBD.nx_DBD_total, 0)) from nx_distributer_bill as DBD
+		<where>
+			<if test="orderDisId != null">
+				and nx_DBD_order_dis_id = #{orderDisId}
+			</if>
+			<if test="supplierId != null">
+				and DBD.nx_DBD_offer_nx_dis_id = #{supplierId}
+			</if>
+			<if test="equalStatus != null">
+				and DBD.nx_DBD_status = #{equalStatus}
+			</if>
+			<if test="status != null">
+				and DBD.nx_DBD_status &lt; #{status}
+			</if>
+			<if test="dayuStatus != null">
+				and DBD.nx_DBD_status &gt; #{dayuStatus}
+			</if>
+
+			<if test="month != null">
+				and DBD.nx_DBD_month = #{month}
+			</if>
+			<if test="year != null">
+				and DBD.nx_DBD_year = #{year}
+			</if>
+		</where>
+
+	</select>
+
+	<!-- 查询两个协作伙伴之间的账单总金额（双向合计：A欠B + B欠A） -->
+	<select id="queryPartnerMutualBillTotal" resultType="java.lang.Double">
+		select COALESCE(SUM(COALESCE(DBD.nx_DBD_total, 0)), 0) from nx_distributer_bill as DBD
+		<where>
+			(
+				(DBD.nx_DBD_order_dis_id = #{disId1} AND DBD.nx_DBD_offer_nx_dis_id = #{disId2})
+				OR (DBD.nx_DBD_order_dis_id = #{disId2} AND DBD.nx_DBD_offer_nx_dis_id = #{disId1})
+			)
+			<if test="startDate != null and startDate != ''">
+				and DBD.nx_DBD_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null and stopDate != ''">
+				and DBD.nx_DBD_date &lt;= #{stopDate}
+			</if>
+			<if test="equalStatus != null">
+				and DBD.nx_DBD_status = #{equalStatus}
+			</if>
+			<if test="status != null">
+				and DBD.nx_DBD_status &lt; #{status}
+			</if>
+		</where>
+	</select>
+
+	<!-- 查询两个协作伙伴之间的账单数量（双向合计） -->
+	<select id="queryPartnerMutualBillCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_distributer_bill as DBD
+		<where>
+			(
+				(DBD.nx_DBD_order_dis_id = #{disId1} AND DBD.nx_DBD_offer_nx_dis_id = #{disId2})
+				OR (DBD.nx_DBD_order_dis_id = #{disId2} AND DBD.nx_DBD_offer_nx_dis_id = #{disId1})
+			)
+			<if test="startDate != null and startDate != ''">
+				and DBD.nx_DBD_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null and stopDate != ''">
+				and DBD.nx_DBD_date &lt;= #{stopDate}
+			</if>
+			<if test="orderDisId != null">
+				and DBD.nx_DBD_order_dis_id = #{orderDisId}
+			</if>
+			<if test="offerDisId != null">
+				and DBD.nx_DBD_offer_nx_dis_id = #{offerDisId}
+			</if>
+			<if test="equalStatus != null">
+				and DBD.nx_DBD_status = #{equalStatus}
+			</if>
+			<if test="status != null">
+				and DBD.nx_DBD_status &lt; #{status}
+			</if>
+		</where>
+	</select>
+
+	<resultMap id="billDetail" type="NxDistributerBillEntity">
+		<id property="nxDistributerBillId" column="nx_distributer_bill_id"/>
+		<result property="nxDbdDate" column="nx_DBD_date"/>
+		<result property="nxDbdOfferNxDisId" column="nx_DBD_offer_nx_dis_id"/>
+		<result property="nxDbdOrderDisId" column="nx_DBD_order_dis_id"/>
+		<result property="nxDbdTotal" column="nx_DBD_total"/>
+		<result property="nxDbdStatus" column="nx_DBD_status"/>
+		<association property="offerNxDistributer" column="nx_DBD_offer_nx_dis_id" select="com.nongxinle.dao.NxDistributerDao.queryObject"/>
+		<association property="orderNxDistributer" column="nx_DBD_order_dis_id" select="com.nongxinle.dao.NxDistributerDao.queryObject"/>
+	</resultMap>
+
+	<!-- 查询协作伙伴账单列表，支持 type 筛选，按日期排序 -->
+	<select id="queryDisBillsWithStatus" resultMap="billDetail">
+		select * from nx_distributer_bill as DBD
+		<where>
+			<choose>
+				<when test="disId != null and collNxDisId != null">
+					(
+						(DBD.nx_DBD_order_dis_id = #{disId} AND DBD.nx_DBD_offer_nx_dis_id = #{collNxDisId})
+						OR (DBD.nx_DBD_order_dis_id = #{collNxDisId} AND DBD.nx_DBD_offer_nx_dis_id = #{disId})
+					)
+				</when>
+				<when test="disId != null">
+					(DBD.nx_DBD_order_dis_id = #{disId} OR DBD.nx_DBD_offer_nx_dis_id = #{disId})
+				</when>
+				<otherwise>
+					1=0
+				</otherwise>
+			</choose>
+			<if test="offerDisId != null">
+				and DBD.nx_DBD_offer_nx_dis_id = #{offerDisId}
+			</if>
+			<if test="orderDisId != null">
+				and DBD.nx_DBD_order_dis_id = #{orderDisId}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and DBD.nx_DBD_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null and stopDate != ''">
+				and DBD.nx_DBD_date &lt;= #{stopDate}
+			</if>
+			<if test="type != null and type != ''">
+				<choose>
+					<when test="'all'.equals(type)">
+						<!-- 全部，无额外条件 -->
+					</when>
+					<when test="'allUnPay'.equals(type)">
+						and DBD.nx_DBD_status &lt; 2
+					</when>
+					<when test="'havePayed'.equals(type)">
+						and DBD.nx_DBD_status = 3
+					</when>
+					<when test="'unPayBills'.equals(type)">
+						and ((DBD.nx_DBD_status = 0 and (DBD.nx_DBD_total is null or CAST(DBD.nx_DBD_total AS DECIMAL(20,2)) &gt;= 0)) or DBD.nx_DBD_status = 2)
+					</when>
+					<when test="'unPayReturnBills'.equals(type)">
+						and DBD.nx_DBD_status = 0 and DBD.nx_DBD_total is not null and CAST(DBD.nx_DBD_total AS DECIMAL(20,2)) &lt; 0
+					</when>
+				</choose>
+			</if>
+		</where>
+		order by DBD.nx_DBD_date DESC, DBD.nx_distributer_bill_id DESC
+	</select>
+	<select id="queryDisBillsDetail" 	resultMap="billDetail">
+		select * from nx_distributer_bill as DBD
+		<where>
+
+			<if test="offerDisId != null">
+				and DBD.nx_DBD_offer_nx_dis_id = #{offerDisId}
+			</if>
+			<if test="orderDisId != null">
+				and DBD.nx_DBD_order_dis_id = #{orderDisId}
+			</if>
+			<if test="startDate != null and startDate != ''">
+				and DBD.nx_DBD_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null and stopDate != ''">
+				and DBD.nx_DBD_date &lt;= #{stopDate}
+			</if>
+
+			<if test="equalStatus != null">
+				and DBD.nx_DBD_status = #{equalStatus}
+			</if>
+			<if test="status != null">
+				and DBD.nx_DBD_status &lt; #{status}
+			</if>
+			<if test="type != null and type != ''">
+				<choose>
+					<when test="'all'.equals(type)">
+						<!-- 全部，无额外条件 -->
+					</when>
+					<when test="'allUnPay'.equals(type)">
+						and DBD.nx_DBD_status &lt; 2
+					</when>
+					<when test="'havePayed'.equals(type)">
+						and DBD.nx_DBD_status = 3
+					</when>
+					<when test="'unPayBills'.equals(type)">
+						and ((DBD.nx_DBD_status = 0 and (DBD.nx_DBD_total is null or CAST(DBD.nx_DBD_total AS DECIMAL(20,2)) &gt;= 0)) or DBD.nx_DBD_status = 2)
+					</when>
+					<when test="'unPayReturnBills'.equals(type)">
+						and DBD.nx_DBD_status = 0 and DBD.nx_DBD_total is not null and CAST(DBD.nx_DBD_total AS DECIMAL(20,2)) &lt; 0
+					</when>
+				</choose>
+			</if>
+
+		</where>
+		order by DBD.nx_DBD_date DESC, DBD.nx_distributer_bill_id DESC
+	</select>
+	<select id="queryDisBillsDetailCount" resultType="java.lang.Integer">
+		select COUNT(*) from nx_distributer_bill as DBD
+		<where>
+
+			<if test="startDate != null and startDate != ''">
+				and DBD.nx_DBD_date &gt;= #{startDate}
+			</if>
+			<if test="stopDate != null and stopDate != ''">
+				and DBD.nx_DBD_date &lt;= #{stopDate}
+			</if>
+			<if test="orderDisId != null">
+				and DBD.nx_DBD_order_dis_id = #{orderDisId}
+			</if>
+			<if test="offerDisId != null">
+				and DBD.nx_DBD_offer_nx_dis_id = #{offerDisId}
+			</if>
+			<if test="equalStatus != null">
+				and DBD.nx_DBD_status = #{equalStatus}
+			</if>
+			<if test="status != null">
+				and DBD.nx_DBD_status &lt; #{status}
+			</if>
+			<if test="type != null and type != ''">
+				<choose>
+					<when test="'all'.equals(type)">
+						<!-- 全部，无额外条件 -->
+					</when>
+					<when test="'allUnPay'.equals(type)">
+						and DBD.nx_DBD_status &lt; 2
+					</when>
+					<when test="'havePayed'.equals(type)">
+						and DBD.nx_DBD_status = 3
+					</when>
+					<when test="'unPayBills'.equals(type)">
+						and ((DBD.nx_DBD_status = 0 and (DBD.nx_DBD_total is null or CAST(DBD.nx_DBD_total AS DECIMAL(20,2)) &gt;= 0)) or DBD.nx_DBD_status = 2)
+					</when>
+					<when test="'unPayReturnBills'.equals(type)">
+						and DBD.nx_DBD_status = 0 and DBD.nx_DBD_total is not null and CAST(DBD.nx_DBD_total AS DECIMAL(20,2)) &lt; 0
+					</when>
+				</choose>
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerBillEntity"
+			useGeneratedKeys="true" keyProperty="nxDistributerBillId">
+		insert into nx_distributer_bill
+		(
+			`nx_distributer_bill_id`, 
+			`nx_DBD_order_dis_id`, 
+			`nx_DBD_offer_nx_dis_id`,
+			`nx_DBD_total`, 
+			`nx_DBD_status`, 
+			`nx_DBD_time`, 
+			`nx_DBD_issue_user_id`, 
+			`nx_DBD_date`, 
+			`nx_DBD_month`, 
+			`nx_DBD_week`, 
+			`nx_DBD_trade_no`, 
+			`nx_DBD_print_times`, 
+			`nx_DBD_day`, 
+			`nx_DBD_profit_total`, 
+			`nx_DBD_profit_scale`, 
+			`nx_DBD_pay_cash`, 
+			`nx_DBD_cost_total`, 
+			`nx_DBD_wx_out_trade_no`, 
+			`nx_DBD_year`
+		)
+		values
+		(
+			#{nxDistributerBillId}, 
+			#{nxDbdOrderDisId}, 
+			#{nxDbdOfferNxDisId},
+			#{nxDbdTotal}, 
+			#{nxDbdStatus}, 
+			#{nxDbdTime}, 
+			#{nxDbdIssueUserId}, 
+			#{nxDbdDate}, 
+			#{nxDbdMonth}, 
+			#{nxDbdWeek}, 
+			#{nxDbdTradeNo}, 
+			#{nxDbdPrintTimes}, 
+			#{nxDbdDay}, 
+			#{nxDbdProfitTotal}, 
+			#{nxDbdProfitScale}, 
+			#{nxDbdPayCash}, 
+			#{nxDbdCostTotal}, 
+			#{nxDbdWxOutTradeNo}, 
+			#{nxDbdYear}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerBillEntity">
+		update nx_distributer_bill 
+		<set>
+			<if test="nxDbdOrderDisId != null">`nx_DBD_order_dis_id` = #{nxDbdOrderDisId}, </if>
+			<if test="nxDbdOfferNxDisId != null">`nx_DBD_offer_nx_dis_id` = #{nxDbdOfferNxDisId}, </if>
+			<if test="nxDbdTotal != null">`nx_DBD_total` = #{nxDbdTotal}, </if>
+			<if test="nxDbdStatus != null">`nx_DBD_status` = #{nxDbdStatus}, </if>
+			<if test="nxDbdTime != null">`nx_DBD_time` = #{nxDbdTime}, </if>
+			<if test="nxDbdIssueUserId != null">`nx_DBD_issue_user_id` = #{nxDbdIssueUserId}, </if>
+			<if test="nxDbdDate != null">`nx_DBD_date` = #{nxDbdDate}, </if>
+			<if test="nxDbdMonth != null">`nx_DBD_month` = #{nxDbdMonth}, </if>
+			<if test="nxDbdWeek != null">`nx_DBD_week` = #{nxDbdWeek}, </if>
+			<if test="nxDbdTradeNo != null">`nx_DBD_trade_no` = #{nxDbdTradeNo}, </if>
+			<if test="nxDbdPrintTimes != null">`nx_DBD_print_times` = #{nxDbdPrintTimes}, </if>
+			<if test="nxDbdDay != null">`nx_DBD_day` = #{nxDbdDay}, </if>
+			<if test="nxDbdProfitTotal != null">`nx_DBD_profit_total` = #{nxDbdProfitTotal}, </if>
+			<if test="nxDbdProfitScale != null">`nx_DBD_profit_scale` = #{nxDbdProfitScale}, </if>
+			<if test="nxDbdPayCash != null">`nx_DBD_pay_cash` = #{nxDbdPayCash}, </if>
+			<if test="nxDbdCostTotal != null">`nx_DBD_cost_total` = #{nxDbdCostTotal}, </if>
+			<if test="nxDbdWxOutTradeNo != null">`nx_DBD_wx_out_trade_no` = #{nxDbdWxOutTradeNo}, </if>
+			<if test="nxDbdYear != null">`nx_DBD_year` = #{nxDbdYear}</if>
+		</set>
+		where nx_distributer_bill_id = #{nxDistributerBillId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_distributer_bill where nx_distributer_bill_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_bill where nx_distributer_bill_id in 
+		<foreach item="nxDistributerBillId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerBillId}
+		</foreach>
+	</delete>
+
+</mapper>

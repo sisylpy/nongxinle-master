@@ -89,4 +89,12 @@ public interface NxDepartmentDisGoodsService {
 	PageUtils computeReorder(Integer depId, Integer page, Integer limit);
 
     NxDepartmentDisGoodsEntity queryDepartmentGoodsOnly(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
+
+	/**
+	 * 批量查询部门商品（按配送商商品ID列表+部门）
+	 */
+	List<NxDepartmentDisGoodsEntity> queryByDisGoodsIdsAndDep(Map<String, Object> map);
+
 }

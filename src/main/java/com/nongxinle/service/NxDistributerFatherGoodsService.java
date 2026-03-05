@@ -58,6 +58,7 @@ public interface NxDistributerFatherGoodsService {
 	List<NxDistributerFatherGoodsEntity> queryListByFatherId(Integer id);
 
 
+
 //
 //	List<NxDistributerFatherGoodsEntity> queryList(Map<String, Object> map);
 //

@@ -123,5 +123,9 @@ public class NxOrderOcrTrainingDataEntity implements Serializable {
 	 *  创建人ID
 	 */
 	private Integer nxOtdCreateUserId;
+	/**
+	 *  OCR原文（该商品对应的OCR文本行，清洗后）
+	 */
+	private String nxOtdOcrText;
 
 }

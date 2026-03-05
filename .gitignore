@@ -54,6 +54,7 @@ tmp_*
 *.rar
 
 # Application specific
+application.properties
 application-local.properties
 application-dev.properties
 

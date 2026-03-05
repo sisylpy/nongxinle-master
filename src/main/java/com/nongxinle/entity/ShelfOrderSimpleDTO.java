@@ -85,5 +85,15 @@ public class ShelfOrderSimpleDTO implements Serializable {
      * 拣货详情（按货架显示时需要）
      */
     private String pickDetail;
+
+    /**
+     * 协作订单标识：-1=主订单，其他=协作订单（协作伙伴配送商id）
+     */
+    private Integer nxDoCollaborativeNxDisId;
+
+    /**
+     * 协作配送商名称（协作订单时，nx_DO_collaborative_nx_dis_id 对应的配送商名称）
+     */
+    private String nxDoCollaborativeDistributerName;
 }
 

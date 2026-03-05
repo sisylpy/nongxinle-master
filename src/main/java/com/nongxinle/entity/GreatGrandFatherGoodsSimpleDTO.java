@@ -46,5 +46,10 @@ public class GreatGrandFatherGoodsSimpleDTO implements Serializable {
      * 订单数量
      */
     private Integer newOrderCount;
+
+    /**
+     * 配送商名称（来自 nx_distributer 表，优先 nx_distributer_show_name）
+     */
+    private String nxDfgDistributerName;
 }
 

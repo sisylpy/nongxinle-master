@@ -161,7 +161,11 @@
 
 
     <resultMap id="nxOrder" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>

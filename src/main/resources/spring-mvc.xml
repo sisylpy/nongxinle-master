@@ -38,6 +38,24 @@
 
 	<mvc:resources mapping="/traceReports/**"
 				   location="file:///opt/tomcat/latest/app-data/images/traceReports/"/>
+	<!-- OCR图片映射 -->
+	<!-- 生产环境路径 -->
+	<mvc:resources mapping="/ocrImages/**"
+				   location="file:///opt/tomcat/latest/app-data/images/ocrImages/"/>
+	<!-- 开发环境路径（如果生产环境路径不存在，代码会自动使用项目根目录下的 ocrImages） -->
+	<!-- 注意：实际文件保存路径由代码中的 getOcrImageDirectory() 方法动态决定 -->
+	<!-- 开发环境下，如果 /opt/tomcat/latest/app-data/images/ocrImages/ 不存在，代码会在项目根目录创建 ocrImages 文件夹 -->
+	<!-- 开发环境请取消下面的注释，并修改为你的项目实际路径 -->
+	<!-- <mvc:resources mapping="/ocrImages/**" location="file:///Users/lpy/Documents/javaWeb/kuangjia/nongxinle-master/ocrImages/"/> -->
+	<!-- TTS 音频文件映射 -->
+	<!-- 生产环境路径 -->
+	<mvc:resources mapping="/ttsAudio/**"
+				   location="file:///opt/tomcat/latest/app-data/images/ttsAudio/"/>
+	<!-- 开发环境路径（如果生产环境路径不存在，代码会自动使用项目根目录下的 ttsAudio） -->
+	<!-- 注意：实际文件保存路径由代码中的 getAudioDirectory() 方法动态决定 -->
+	<!-- 开发环境下，如果 /opt/tomcat/latest/app-data/images/ttsAudio/ 不存在，代码会在项目根目录创建 ttsAudio 文件夹 -->
+	<!-- 开发环境请取消下面的注释，并修改为你的项目实际路径 -->
+	<!-- <mvc:resources mapping="/ttsAudio/**" location="file:///Users/lpy/Documents/javaWeb/kuangjia/nongxinle-master/ttsAudio/"/> -->
 	<!-- 下面标签可以不加 等价于所有component-scan-->
 	<context:annotation-config />
 	<!-- 这个重点，标注必须加，websocket用到-->

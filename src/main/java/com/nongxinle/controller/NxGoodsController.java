@@ -77,6 +77,50 @@ public class NxGoodsController {
 
 
 
+
+    @RequestMapping(value = "/updateSorts", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateSorts(@RequestBody Integer[] ids) {
+        if (ids == null || ids.length == 0) {
+            return R.error("商品ID列表不能为空");
+        }
+
+        // 按照前台传入的ids顺序，从1开始设置nxGoodsSonsSort
+        for (int i = 0; i < ids.length; i++) {
+            Integer goodsId = ids[i];
+            if (goodsId != null) {
+                NxGoodsEntity goods = nxGoodsService.queryObject(goodsId);
+                if (goods != null) {
+                    Integer sortValue = i + 1; // 从1开始
+                    goods.setNxGoodsSonsSort(sortValue);
+                    nxGoodsService.update(goods);
+
+                    // 同步更新NxDistributerGoods的排序
+                    List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = nxDistributerGoodsService.querydisGoodsByNxGoodsId(goodsId);
+                    if (nxDistributerGoodsEntities.size() > 0) {
+                        for (NxDistributerGoodsEntity distributerGoodsEntity : nxDistributerGoodsEntities) {
+                            distributerGoodsEntity.setNxDgGoodsSonsSort(sortValue);
+                            nxDistributerGoodsService.update(distributerGoodsEntity);
+                        }
+                    }
+
+                    // 同步更新GbDistributerGoods的排序
+                    List<GbDistributerGoodsEntity> gbDistributerGoodsEntities = gbDistributerGoodsService.querydisGoodsByNxGoodsId(goodsId);
+                    if (gbDistributerGoodsEntities.size() > 0) {
+                        for (GbDistributerGoodsEntity gbDistributerGoodsEntity : gbDistributerGoodsEntities) {
+                            gbDistributerGoodsEntity.setGbDgGoodsSonsSort(sortValue);
+                            gbDistributerGoodsService.update(gbDistributerGoodsEntity);
+                        }
+                    }
+                }
+            }
+        }
+
+        return R.ok();
+    }
+
+
+
     @RequestMapping(value = "/getNxGoodsIdsByGreatId/{id}")
     @ResponseBody
     public R getNxGoodsIdsByGreatId(@PathVariable Integer id) {

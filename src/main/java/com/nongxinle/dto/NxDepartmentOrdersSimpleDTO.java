@@ -1,0 +1,186 @@
+package com.nongxinle.dto;
+
+import com.nongxinle.entity.NxGoodsEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.TreeSet;
+
+/**
+ * 部门订单简化DTO
+ * 用于phoneGetToFillDepOrders接口，只包含页面需要的字段，减少数据传输量
+ * 
+ * @author lpy
+ */
+@Setter
+@Getter
+@ToString
+public class NxDepartmentOrdersSimpleDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 部门订单ID
+     */
+    private Integer nxDepartmentOrdersId;
+
+    /**
+     * 订单商品名称
+     */
+    private String nxDoGoodsName;
+    private String nxDoGoodsOriginalName;
+
+    /**
+     * 订单数量
+     */
+    private String nxDoQuantity;
+
+    /**
+     * 订单规格
+     */
+    private String nxDoStandard;
+
+    /**
+     * 订单备注
+     */
+    private String nxDoRemark;
+
+    /**
+     * 订单状态
+     */
+    private Integer nxDoStatus;
+
+    /**
+     * 订单重量
+     */
+    private String nxDoWeight;
+
+    /**
+     * 订单单价
+     */
+    private String nxDoPrice;
+
+    /**
+     * 订单小计
+     */
+    private String nxDoSubtotal;
+
+    /**
+     * 打印规格
+     */
+    private String nxDoPrintStandard;
+
+    /**
+     * 采购状态
+     */
+    private Integer nxDoPurchaseStatus;
+
+    /**
+     * 分销商商品ID
+     */
+    private Integer nxDoDisGoodsId;
+    private Integer nxDoOcrTaskId;
+
+    /**
+     * 部门ID
+     */
+    private Integer nxDoDepartmentId;
+
+    /**
+     * 商品信息（简化版）
+     */
+    private DistributerGoodsSimpleDTO nxDistributerGoodsEntity;
+
+    List<DistributerGoodsSimpleDTO> nxDistributerGoodsEntityList;
+    private TreeSet<NxGoodsEntity> nxGoodsEntities;
+
+
+
+    /**
+     * 部门商品信息（简化版）
+     */
+    private DepartmentDisGoodsSimpleDTO nxDepartmentDisGoodsEntity;
+
+    /**
+     * 分销商商品简化DTO
+     */
+    @Setter
+    @Getter
+    @ToString
+    public static class DistributerGoodsSimpleDTO implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * 分销商商品ID
+         */
+        private Integer nxDistributerGoodsId;
+
+        /**
+         * 商品名称
+         */
+        private String nxDgGoodsName;
+
+        /**
+         * 商品品牌
+         */
+        private String nxDgGoodsBrand;
+
+        /**
+         * 商品产地
+         */
+        private String nxDgGoodsPlace;
+
+        /**
+         * 商品详情
+         */
+        private String nxDgGoodsDetail;
+
+        /**
+         * 商品规格名称
+         */
+        private String nxDgGoodsStandardname;
+
+        /**
+         * 商品标准重量
+         */
+        private String nxDgGoodsStandardWeight;
+
+        /**
+         * 外箱单位
+         */
+        private String nxDgCartonUnit;
+
+        /**
+         * 每箱数量
+         */
+        private Integer nxDgItemsPerCarton;
+
+        /**
+         * 商品父级颜色
+         */
+        private String nxDgNxGoodsFatherColor;
+
+        private String nxDgDistributerName;
+        private String nxDgDistributerId;
+
+        private String goodsNxDistributerName;
+    }
+
+    /**
+     * 部门商品简化DTO
+     */
+    @Setter
+    @Getter
+    @ToString
+    public static class DepartmentDisGoodsSimpleDTO implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * 订单商品名称
+         */
+        private String nxDdgOrderGoodsName;
+    }
+}
+

@@ -75,6 +75,9 @@
 	</resultMap>
 	<resultMap id="multiDepartment" type="NxDepartmentEntity">
 		 <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>

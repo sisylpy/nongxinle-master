@@ -151,6 +151,7 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private Integer gbDisGoodsType;
 	private Integer gbDisGoodsToDepId;
 	private String perPrice;
+	private String nxDgDistributerName;
 
 	private NxGoodsEntity nxGoodsEntity;
 	private NxDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity;
@@ -193,6 +194,7 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private String nxDgWillPriceOneAboutPrice;
 	private String nxDgWillPriceTwoAboutPrice;
 	private String nxDgWillPriceThreeAboutPrice;
+	private String goodsNxDistributerName;
 
 	// 出货统计字段
 	private Double goodsSalesTotal;   // 销售总额
@@ -239,6 +241,11 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	 * 采购总金额
 	 */
 	private String goodsPurTotalSubtotal;
+
+	/**
+	 * 推荐商品列表（nxGoods），用于临时商品-推荐tab展示
+	 */
+	private List<NxGoodsEntity> nxGoodsList;
 
 	@Override
 	public int compareTo(Object o) {

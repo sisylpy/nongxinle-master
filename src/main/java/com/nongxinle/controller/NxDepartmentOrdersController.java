@@ -20,8 +20,10 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 import com.nongxinle.dto.PasteSearchGoodsResponseDTO;
 import com.nongxinle.dto.DistributerGoodsCandidateDTO;
 import com.nongxinle.dto.NxGoodsCandidateDTO;
@@ -63,7 +65,9 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 import com.nongxinle.utils.R;
@@ -88,7 +92,7 @@ import static com.nongxinle.utils.PinYin4jUtils.*;
 @RequestMapping("api/nxdepartmentorders")
 public class NxDepartmentOrdersController {
     private static final Logger logger = LoggerFactory.getLogger(NxDepartmentOrdersController.class);
-    
+
     @Autowired
     private NxDepartmentOrdersService nxDepartmentOrdersService;
     @Autowired
@@ -114,10 +118,6 @@ public class NxDepartmentOrdersController {
     @Autowired
     private NxDepartmentDisGoodsService nxDepartmentDisGoodsService;
     @Autowired
-    private NxJrdhSupplierService jrdhSupplierService;
-    @Autowired
-    private NxJrdhUserService nxJrdhUserService;
-    @Autowired
     private NxDistributerStandardService nxDistributerStandardService;
     @Autowired
     private NxDistributerGoodsShelfStockService nxDisGoodsShelfStockService;
@@ -125,8 +125,6 @@ public class NxDepartmentOrdersController {
     private NxDistributerGoodsShelfStockReduceService nxDisGoodsShelfStockReduceService;
     @Autowired
     private NxDistributerFatherGoodsService nxDistributerFatherGoodsService;
-    @Autowired
-    private NxDepartmentUserService nxDepartmentUserService;
     @Autowired
     private NxDepartmentOrderHistoryService historyService;
     @Autowired
@@ -142,25 +140,157 @@ public class NxDepartmentOrdersController {
     @Autowired
     private NxGoodsService nxGoodsService;
     @Autowired
-    private NxAliasService nxAliasService;
-    @Autowired
-    private NxDepartmentOrdersHistoryService ordersHistoryService;
-    @Autowired
     private NxDistributerGoodsShelfGoodsService shelfGoodsService;
     @Autowired
     private NxDistributerGoodsShelfService nxDistributerGoodsShelfService;
     @Autowired
     private NxOrderOcrTrainingDataService nxOrderOcrTrainingDataService;
     @Autowired
+    private NxOcrTaskService nxOcrTaskService;
+    @Autowired
     private NxDistributerGoodsLinshiService linshiService;
+    @Autowired
+    private NxDistributerBillService nxDistributerBillService;
+
+    @Value("${external.images.path:file:///opt/tomcat/latest/app-data/images/}")
+    private String externalImagesPath;
+
+
+
+    @RequestMapping(value = "/saveDepartmentOrdersToHistory", method = RequestMethod.POST)
+    @ResponseBody
+    public R saveDepartmentOrdersToHistory(Integer depFatherId, String date) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("depFatherId", depFatherId);
+        map.put("status", 3);
+        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+
+        if (nxDepartmentOrdersEntities.size() > 0) {
+            for (NxDepartmentOrdersEntity orders : nxDepartmentOrdersEntities) {
+                orders.setNxDoApplyDate(date);
+                orders.setNxDoArriveDate(date);
+
+                Map<String, Object> mapDG = new HashMap<>();
+                mapDG.put("disGoodsId", orders.getNxDoDisGoodsId());
+                mapDG.put("depId", orders.getNxDoDepartmentId());
+                System.out.println("dedigodo" + mapDG);
+                NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(mapDG);
+                NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(orders.getNxDoDisGoodsId());
+
+                //1，配送商自己的客户
+                if (nxDepartmentDisGoodsEntity != null) {
+                    orders.setNxDoDepDisGoodsId(nxDepartmentDisGoodsEntity.getNxDepartmentDisGoodsId());
+                    if (orders.getNxDoTrainingDataId() != null) {
+                        NxOrderOcrTrainingDataEntity dataEntity = nxOrderOcrTrainingDataService.queryObject(orders.getNxDoTrainingDataId());
+                        nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(dataEntity.getNxOtdOriginalGoodsName());
+                    }
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderPrice(orders.getNxDoPrice());
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderCostPrice(orders.getNxDoCostPrice());
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderQuantity(orders.getNxDoQuantity());
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderRemark(orders.getNxDoRemark());
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
+                    if (orders.getNxDoGoodsName() != null) {
+                        nxDepartmentDisGoodsEntity.setNxDdgDepGoodsName(orders.getNxDoGoodsName());
+                    }
+
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
+                    nxDepartmentDisGoodsService.update(nxDepartmentDisGoodsEntity);
+
+                } else {
+                    System.out.println("new Depdiiddid");
+                    NxDepartmentDisGoodsEntity disGoodsEntity = new NxDepartmentDisGoodsEntity();
+                    if (orders.getNxDoGoodsName() != null) {
+                        disGoodsEntity.setNxDdgDepGoodsName(orders.getNxDoGoodsName());
+                    }
+                    if (orders.getNxDoTrainingDataId() != null) {
+                        NxOrderOcrTrainingDataEntity dataEntity = nxOrderOcrTrainingDataService.queryObject(orders.getNxDoTrainingDataId());
+                        disGoodsEntity.setNxDdgOrderGoodsName(dataEntity.getNxOtdOriginalGoodsName());
+                    } else {
+                        disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                    }
+                    disGoodsEntity.setNxDdgDisGoodsId(orders.getNxDoDisGoodsId());
+                    disGoodsEntity.setNxDdgDisGoodsFatherId(nxDistributerGoodsEntity.getNxDgDfgGoodsFatherId());
+                    disGoodsEntity.setNxDdgDisGoodsGrandId(nxDistributerGoodsEntity.getNxDgDfgGoodsGrandId());
+
+                    NxDistributerFatherGoodsEntity fatherGoodsEntity = nxDistributerFatherGoodsService.queryObject(nxDistributerGoodsEntity.getNxDgDfgGoodsGrandId());
+                    Integer greatFatherId = fatherGoodsEntity.getNxDfgFathersFatherId();
+                    disGoodsEntity.setNxDdgDisGoodsGreatId(greatFatherId);
+
+                    disGoodsEntity.setNxDdgDepGoodsPinyin(nxDistributerGoodsEntity.getNxDgGoodsPinyin());
+                    disGoodsEntity.setNxDdgDepGoodsPy(nxDistributerGoodsEntity.getNxDgGoodsPy());
+                    disGoodsEntity.setNxDdgDepGoodsStandardname(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
+                    disGoodsEntity.setNxDdgDepartmentId(orders.getNxDoDepartmentId());
+                    disGoodsEntity.setNxDdgDepartmentFatherId(orders.getNxDoDepartmentFatherId());
+                    disGoodsEntity.setNxDdgNxDistributerId(orders.getNxDoDistributerId());
+                    //orderData
+                    disGoodsEntity.setNxDdgOrderPrice(orders.getNxDoPrice());
+                    disGoodsEntity.setNxDdgOrderCostPrice(orders.getNxDoCostPrice());
+                    disGoodsEntity.setNxDdgOrderQuantity(orders.getNxDoQuantity());
+                    disGoodsEntity.setNxDdgOrderRemark(orders.getNxDoRemark());
+                    disGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
+                    disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
+                    disGoodsEntity.setNxDdgGbDistributerId(orders.getNxDoGbDistributerId());
+                    disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
+                    disGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
+                    nxDepartmentDisGoodsService.save(disGoodsEntity);
+                    orders.setNxDoDepDisGoodsId(disGoodsEntity.getNxDepartmentDisGoodsId());
+                }
+
+
+                orders.setNxDoStatus(3);
+                orders.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishPay());
+//                orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
+                nxDepartmentOrdersService.update(orders);
+                //迁移
+                System.out.println("xunlianjieshu" + orders.getNxDoGoodsName());
+                nxDepartmentOrdersService.moveOrderToHistory(orders);  // ✅ 迁移
+
+
+            }
+        }
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/clearDisTestData/{id}")
+    @ResponseBody
+    public R clearDisTestData(@PathVariable Integer id) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", id);
+        map.put("status", 3);
+        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+        if (nxDepartmentOrdersEntities.size() > 0) {
+            for (NxDepartmentOrdersEntity ordersEntity : nxDepartmentOrdersEntities) {
+                deleteOrderInternal(ordersEntity.getNxDepartmentOrdersId());
+            }
+        }
+
+        List<NxDistributerPurchaseGoodsEntity> nxDistributerPurchaseGoodsEntities = nxDistributerPurchaseGoodsService.queryPurchaseGoodsByParams(map);
+        if (nxDistributerPurchaseGoodsEntities.size() > 0) {
+            for (NxDistributerPurchaseGoodsEntity purchaseGoodsEntity : nxDistributerPurchaseGoodsEntities) {
+                nxDistributerPurchaseGoodsService.delete(purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
+            }
+        }
+        return R.ok().put("data", nxDepartmentOrdersEntities.size());
+    }
 
 
     @RequestMapping(value = "/updateOrderPrint", method = RequestMethod.POST)
     @ResponseBody
-    public R updateOrderPrint (Integer orderId, String printName) {
+    public R updateOrderPrint(Integer orderId, String printName) {
         NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.queryObject(orderId);
         nxDepartmentOrdersEntity.setNxDoPrintStandard(printName);
         nxDepartmentOrdersService.update(nxDepartmentOrdersEntity);
+
+        if (nxDepartmentOrdersEntity.getNxDoTrainingDataId() != null) {
+            NxOrderOcrTrainingDataEntity dataEntity = nxOrderOcrTrainingDataService.queryObject(nxDepartmentOrdersEntity.getNxDoTrainingDataId());
+            dataEntity.setNxOtdFinalStandard(printName);
+            dataEntity.setNxOtdIsStandardManuallyAnnotated(1);
+            nxOrderOcrTrainingDataService.update(dataEntity);
+        }
         return R.ok();
     }
 
@@ -170,17 +300,24 @@ public class NxDepartmentOrdersController {
     public R disGetLinshiOrders(@PathVariable Integer id) {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", id);
-        map.put("status", -1);
-        map.put("agent", 1);
+        map.put("equalStatus", -1);
+        map.put("agent", 3);
+        System.out.println("mapappa" + map);
         List<NxDepartmentEntity> nxDepartmentEntities = nxDepartmentOrdersService.queryDistributerTodayDepartments(map);
         return R.ok().put("data", nxDepartmentEntities);
     }
 
+    /**
+     * 配送商确定临时订单为临时商品
+     *
+     * @param
+     * @return
+     * @date 2026-01-10
+     */
     @RequestMapping(value = "/confirmDepApplyGoods/{id}")
     @ResponseBody
     public R confirmDepApplyGoods(@PathVariable Integer id) {
         NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.queryObject(id);
-
         nxDepartmentOrdersEntity.setNxDoStatus(0);
         nxDepartmentOrdersService.update(nxDepartmentOrdersEntity);
         return R.ok();
@@ -241,6 +378,7 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map = new HashMap<>();
         map.put("disGoodsId", goodsId);
         map.put("depId", nxDepartmentOrdersEntity.getNxDoDepartmentId());
+        map.put("standard", nxDepartmentOrdersEntity.getNxDoStandard());
         NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
         if (departmentDisGoodsEntity != null) {
             String nxDdgOrderPrice = departmentDisGoodsEntity.getNxDdgOrderPrice();
@@ -315,7 +453,7 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrdersService.update(nxDepartmentOrdersEntity);
 
         if (exChangeGoodsEntity.getNxDgPurchaseAuto() != -1) {
-            savePurGoodsAuto(nxDepartmentOrdersEntity);
+            nxDepartmentOrdersService.savePurGoodsAuto(nxDepartmentOrdersEntity, getNxPurchaseGoodsInputTypeOrder(), getNxPurchaseGoodsTypeForSelf());
         }
 
         return R.ok();
@@ -368,7 +506,7 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrdersEntity.setNxDoStatus(0);
         nxDepartmentOrdersEntity.setNxDoGoodsType(toNxdisGoodsEnitity.getNxDgPurchaseAuto());
 
-        processOrderPrice(nxDepartmentOrdersEntity, toNxdisGoodsEnitity);
+        nxDepartmentOrdersService.processOrderPrice(nxDepartmentOrdersEntity, toNxdisGoodsEnitity);
         Map<String, Object> map = new HashMap<>();
         map.put("depId", nxDepartmentOrdersEntity.getNxDoDepartmentId());
         map.put("disGoodsId", toNxdisGoodsEnitity.getNxDistributerGoodsId());
@@ -394,8 +532,8 @@ public class NxDepartmentOrdersController {
 
             nxDepartmentOrdersEntity.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
             //如果有重量和单价，则计算 subtotal
-            if(nxDepartmentOrdersEntity.getNxDoWeight() != null && !nxDepartmentOrdersEntity.getNxDoWeight().trim().isEmpty()
-                    && nxDepartmentOrdersEntity.getNxDoPrice() != null && !nxDepartmentOrdersEntity.getNxDoPrice().trim().isEmpty()){
+            if (nxDepartmentOrdersEntity.getNxDoWeight() != null && !nxDepartmentOrdersEntity.getNxDoWeight().trim().isEmpty()
+                    && nxDepartmentOrdersEntity.getNxDoPrice() != null && !nxDepartmentOrdersEntity.getNxDoPrice().trim().isEmpty()) {
                 try {
                     BigDecimal weight = new BigDecimal(nxDepartmentOrdersEntity.getNxDoWeight());
                     BigDecimal price = new BigDecimal(nxDepartmentOrdersEntity.getNxDoPrice());
@@ -408,7 +546,7 @@ public class NxDepartmentOrdersController {
                 }
             }
             nxDepartmentOrdersEntity.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
-        }else{
+        } else {
             map.put("standard", null);
             System.out.println("depmapapapappapa" + map);
             NxDepartmentDisGoodsEntity departmentDisGoodsEntityO = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
@@ -416,31 +554,11 @@ public class NxDepartmentOrdersController {
                 nxDepartmentOrdersEntity.setNxDoDepDisGoodsId(departmentDisGoodsEntityO.getNxDepartmentDisGoodsId());
             }
         }
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("disGoodsId", goodsId);
-//        map.put("depId", nxDepartmentOrdersEntity.getNxDoDepartmentId());
-//        map.put("standard", nxDepartmentOrdersEntity.getNxDoStandard());
-//        System.out.println("depto");
-//        NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
-//        if (departmentDisGoodsEntity != null) {
-//            String nxDdgOrderPrice = departmentDisGoodsEntity.getNxDdgOrderPrice();
-//            nxDepartmentOrdersEntity.setNxDoPrice(nxDdgOrderPrice);
-//            nxDepartmentOrdersEntity.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
-//            nxDepartmentOrdersEntity.setNxDoDepDisGoodsPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
-//                BigDecimal doQuantity = new BigDecimal(nxDepartmentOrdersEntity.getNxDoQuantity());
-//                BigDecimal willPrice = new BigDecimal(nxDdgOrderPrice);
-//                BigDecimal subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                    nxDepartmentOrdersEntity.setNxDoSubtotal(subtotal.toString());
-//        }
-//
-//        if(nxDepartmentOrdersEntity.getNxDoStandard().equals(toNxdisGoodsEnitity.getNxDgGoodsStandardname())){
-//            nxDepartmentOrdersEntity.setNxDoWeight(nxDepartmentOrdersEntity.getNxDoQuantity());
-//        }
         nxDepartmentOrdersEntity.setNxDoPurchaseGoodsId(-1);
         nxDepartmentOrdersService.update(nxDepartmentOrdersEntity);
 
         if (toNxdisGoodsEnitity.getNxDgPurchaseAuto() != -1) {
-            savePurGoodsAuto(nxDepartmentOrdersEntity);
+            nxDepartmentOrdersService.savePurGoodsAuto(nxDepartmentOrdersEntity, getNxPurchaseGoodsInputTypeOrder(), getNxPurchaseGoodsTypeForSelf());
         }
 
 
@@ -465,317 +583,6 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrdersEntity.setNxDoPurchaseStatus(5);
         nxDepartmentOrdersService.update(nxDepartmentOrdersEntity);
         return R.ok();
-    }
-
-    @RequestMapping(value = "/getNxDisDepPdf")
-    @ResponseBody
-    public R getNxDisDepPdf(Integer depFatherId, String startDate, String stopDate) {
-
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("startDate", startDate);
-        map.put("stopDate", stopDate);
-        map.put("depFatherId", depFatherId);
-        List<NxDistributerFatherGoodsEntity> greatGrand = historyService.queryGrandGoodsOrder(map);
-        double total = 0.0;
-        if (greatGrand.size() > 0) {
-//            total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
-            total = historyService.queryDepOrdersSubtotal(map);
-
-            for (NxDistributerFatherGoodsEntity grandGoods : greatGrand) {
-                Integer grandId = grandGoods.getNxDistributerFatherGoodsId();
-                map.put("grandId", grandId);
-                System.out.println("fammamamamamamma" + map);
-//                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map);
-                Integer integer = historyService.queryDepOrdersAcount(map);
-                Double aDouble = 0.0;
-                BigDecimal v = new BigDecimal("0.0");
-                if (integer > 0) {
-                    System.out.println("fammamamamamamma" + map);
-                    aDouble = historyService.queryDepOrdersSubtotal(map);
-                    double pie = aDouble / total;
-                    v = new BigDecimal(pie).setScale(2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-
-                }
-
-                Random random = new Random();
-                // 生成随机的红色、绿色和蓝色分量
-                // 限制 RGB 分量的范围（0 到 128），确保颜色较深
-                int red = random.nextInt(128);    // 0 到 127
-                int green = random.nextInt(128);  // 0 到 127
-                int blue = random.nextInt(128);   // 0 到 127
-
-                // 将RGB值转换为十六进制格式
-                String hexRed = Integer.toHexString(red);
-                String hexGreen = Integer.toHexString(green);
-                String hexBlue = Integer.toHexString(blue);
-
-                // 确保每个分量都是两位的十六进制数
-                hexRed = hexRed.length() == 1 ? "0" + hexRed : hexRed;
-                hexGreen = hexGreen.length() == 1 ? "0" + hexGreen : hexGreen;
-                hexBlue = hexBlue.length() == 1 ? "0" + hexBlue : hexBlue;
-
-                String color = "#" + hexRed + hexGreen + hexBlue;
-                grandGoods.setNxDfgFatherGoodsColor(color);
-                grandGoods.setFatherProfitScaleString(v.toString());
-                grandGoods.setFatherSubtotalTotalString(String.format("%.1f", aDouble));
-
-                List<NxDistributerGoodsEntity> nxDistributerGoodsEntities = grandGoods.getNxDistributerGoodsEntities();
-
-                if (nxDistributerGoodsEntities.size() > 0) {
-                    for (NxDistributerGoodsEntity goodsEntity : nxDistributerGoodsEntities) {
-                        Integer goodsId = goodsEntity.getNxDistributerGoodsId();
-                        Map<String, Object> mapFather = new HashMap<>();
-                        mapFather.put("startDate", startDate);
-                        mapFather.put("stopDate", stopDate);
-                        mapFather.put("depFatherId", depFatherId);
-                        mapFather.put("disGoodsId", goodsId);
-                        System.out.println("weighththmap" + mapFather);
-                        double vG = historyService.queryDisGoodsOrderWeightTotal(mapFather);
-//                        double vG = nxDepartmentOrdersService.queryDisGoodsOrderWeightTotal(mapFather);
-//                        double vC = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapFather);
-                        double vC = historyService.queryDepOrdersSubtotal(mapFather);
-                        goodsEntity.setNxDgOutTotalWeight(new BigDecimal(vG).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-//                        goodsEntity.setSellSubtotal(new BigDecimal(vC).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                        double v1 = vC / vG;
-                        goodsEntity.setPerPrice(new BigDecimal(v1).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                    }
-
-                }
-
-            }
-        }
-
-        Map<String, Object> mapres = new HashMap<>();
-        mapres.put("arr", greatGrand);
-        mapres.put("total", String.format("%.1f", total));
-        return R.ok().put("data", mapres);
-    }
-
-
-    @RequestMapping("/downloadReportPdfNx")
-    public void downloadReportPdfNx(HttpServletResponse response, Integer depFatherId, String startDate, String stopDate) {
-
-        System.out.println("starr" + startDate + "stopddat" + stopDate + "doepdi" + depFatherId);
-        response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=restaurant_report.pdf");
-
-        try {
-            System.out.println("开始加载字体...");
-            String fontPath = "fonts/Hiragino Sans GB.ttc";
-
-            InputStream fontStream = getClass().getClassLoader().getResourceAsStream(fontPath);
-            if (fontStream == null) {
-                System.err.println("字体文件未找到，路径：" + fontPath);
-                throw new IOException("字体文件未找到");
-            }
-            byte[] fontData = IOUtils.toByteArray(fontStream);
-            System.out.println("字体文件已加载，大小：" + fontData.length + " 字节");
-
-            // ✅ 加载字体
-            PdfFont font = PdfFontFactory.createTtcFont(fontData, 0, PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED, true);
-            System.out.println("字体创建成功：" + font.getFontProgram().getFontNames().getFontName());
-
-            // ✅ 创建 PDF 文档
-            try (OutputStream out = response.getOutputStream();
-                 PdfWriter writer = new PdfWriter(out);
-                 PdfDocument pdf = new PdfDocument(writer);
-                 Document document = new Document(pdf, PageSize.A4)) {
-
-                // ✅ 添加标题
-                document.add(new Paragraph("餐馆原料采购成本分析报表")
-                        .setFont(font)
-                        .setFontSize(18)
-                        .setBold()
-                        .setTextAlignment(TextAlignment.CENTER));
-
-                document.add(new Paragraph("\n"));
-
-                // 1， 生成饼状图（此处可以换成真实的图像）
-                ImageData pieChartImage = createDepPieChart(depFatherId, startDate, stopDate);
-                document.add(new Image(pieChartImage).setAutoScale(true));
-
-                // 2. 生成每个类别的详细列表
-                Map<String, Object> map = new HashMap<>();
-                map.put("startDate", startDate);
-                map.put("stopDate", stopDate);
-                map.put("depFatherId", depFatherId);
-                List<NxDistributerFatherGoodsEntity> greatGrand = nxDepartmentOrdersService.queryGrandGoodsOrder(map);
-                double total = 0.0;
-                if (greatGrand.size() > 0) {
-                    total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
-                }
-                for (NxDistributerFatherGoodsEntity grand : greatGrand) {
-                    // 📌 1. 显示大类名称（模拟小程序 `wx:for` 大类标题）
-                    document.add(new Paragraph(grand.getNxDfgFatherGoodsName())
-                            .setFont(font)
-                            .setFontSize(16)
-                            .setBold()
-                            .setTextAlignment(TextAlignment.CENTER));
-
-                    document.add(new Paragraph("\n"));
-
-                    // 📌 2. 添加表头（模拟 `wx:for` 商品信息表头）
-                    float[] columnWidths = {3, 2, 2, 2};
-                    Table tableHead = new Table(UnitValue.createPercentArray(columnWidths)).useAllAvailableWidth();
-                    tableHead.addCell(new Paragraph("商品").setFont(font));
-                    tableHead.addCell(new Paragraph("数量").setFont(font));
-                    tableHead.addCell(new Paragraph("总额").setFont(font));
-                    tableHead.addCell(new Paragraph("均价").setFont(font));
-                    document.add(tableHead);
-
-                    List<NxDistributerGoodsEntity> goodsList = grand.getNxDistributerGoodsEntities();
-
-                    // 📌 3. 遍历商品列表（模拟 `wx:for` 渲染 `goods`）
-                    if (!goodsList.isEmpty()) {
-                        for (NxDistributerGoodsEntity goods : goodsList) {
-                            Table tableRow = new Table(UnitValue.createPercentArray(columnWidths)).useAllAvailableWidth();
-                            Integer goodsId = goods.getNxDistributerGoodsId();
-                            Map<String, Object> mapFather = new HashMap<>();
-                            mapFather.put("startDate", startDate);
-                            mapFather.put("stopDate", stopDate);
-                            mapFather.put("depFatherId", depFatherId);
-                            mapFather.put("disGoodsId", goodsId);
-                            String goodsName = goods.getNxDgGoodsName();
-                            if (goodsName == null || goodsName.isEmpty()) {
-                                goodsName = "未知商品";
-                            }
-                            double vG = nxDepartmentOrdersService.queryDisGoodsOrderWeightTotal(mapFather);
-                            double vC = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapFather);
-                            double v1 = vC / vG;
-                            // 添加商品名称（使用支持中文的字体）
-                            tableRow.addCell(new Paragraph(goodsName).setFont(font)); // 商品名
-                            tableRow.addCell(new Paragraph(new BigDecimal(vG).setScale(1, BigDecimal.ROUND_HALF_UP).toString() + goods.getNxDgGoodsStandardname()).setFont(font)); // 数量 + 单位
-                            tableRow.addCell(new Paragraph(new BigDecimal(vC).setScale(1, BigDecimal.ROUND_HALF_UP).toString() + "元").setFont(font)); // 总额
-                            tableRow.addCell(new Paragraph(new BigDecimal(v1).setScale(1, BigDecimal.ROUND_HALF_UP).toString() + "元/" + goods.getNxDgGoodsStandardname()).setFont(font)); // 均价
-
-                            document.add(tableRow);
-                        }
-                    } else {
-                        // ✅ 如果没有商品数据，显示 "暂无数据"
-                        Table emptyTable = new Table(UnitValue.createPercentArray(new float[]{1})).useAllAvailableWidth();
-                        emptyTable.addCell(new Paragraph("wu")); // 均价
-                        document.add(emptyTable);
-                    }
-
-                    document.add(new Paragraph("\n"));
-                }
-
-
-                document.close();
-
-                response.getOutputStream().flush();
-                response.getOutputStream().close();
-            }
-
-            System.out.println("PDF 生成成功！");
-        } catch (IOException e) {
-            System.err.println("生成 PDF 时发生错误：");
-            e.printStackTrace();
-        }
-    }
-
-    public ImageData createDepPieChart(Integer depFatherId, String startDate, String stopDate) {
-        try {
-            // ✅ 1. 查询数据
-            Map<String, Object> map = new HashMap<>();
-            map.put("startDate", startDate);
-            map.put("stopDate", stopDate);
-            map.put("depFatherId", depFatherId);
-            List<NxDistributerFatherGoodsEntity> greatGrand = nxDepartmentOrdersService.queryGrandGoodsOrder(map);
-
-            // ✅ 2. 计算总成本
-            double total = 0.0;
-            if (greatGrand.size() > 0) {
-                total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
-            }
-
-            // ✅ 3. 构建饼状图数据
-            DefaultPieDataset dataset = new DefaultPieDataset();
-            for (NxDistributerFatherGoodsEntity grandGoods : greatGrand) {
-                Integer grandId = grandGoods.getNxDistributerFatherGoodsId();
-                map.put("grandId", grandId);
-                double subtotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
-                if (subtotal > 0 && total > 0) {
-                    double percentage = subtotal / total * 100;
-                    if (grandGoods.getNxDfgFatherGoodsName() != null) {
-                        System.out.println("grandGoodsName====" + grandGoods.getNxDfgFatherGoodsName());
-                        dataset.setValue(grandGoods.getNxDfgFatherGoodsName(), percentage);
-                    } else {
-                        System.err.println("警告：尝试插入空键到饼图数据集中！");
-                    }
-                }
-            }
-
-            // ✅ 4. 生成 JFreeChart 饼状图
-            JFreeChart chart = ChartFactory.createPieChart(null, dataset, false, false, false);
-            PiePlot plot = (PiePlot) chart.getPlot();
-            plot.setCircular(true);
-            plot.setBackgroundPaint(Color.WHITE);  // 背景色
-            plot.setOutlineVisible(false);  // 隐藏边框
-
-            // 设置随机颜色
-            // ✅ 5. 设置颜色
-            Color[] colors = {
-                    new Color(255, 99, 132), new Color(54, 162, 235),
-                    new Color(255, 206, 86), new Color(75, 192, 192),
-                    new Color(153, 102, 255), new Color(255, 159, 64)
-            };
-
-            int colorIndex = 0;
-
-            // 创建颜色映射
-            Map<Comparable<?>, Color> colorMap = new HashMap<>();
-// 遍历数据集并存储颜色
-            for (Object keyObj : dataset.getKeys()) {
-                if (keyObj instanceof Comparable) {
-                    Comparable<?> key = (Comparable<?>) keyObj;
-                    colorMap.put(key, colors[colorIndex % colors.length]);
-                    colorIndex++;
-                } else {
-                    System.err.println("警告：数据集中包含非 Comparable 类型：" + keyObj);
-                }
-            }
-
-// 使用颜色映射设置颜色
-            for (Map.Entry<Comparable<?>, Color> entry : colorMap.entrySet()) {
-                plot.setSectionPaint(entry.getKey(), entry.getValue());
-                // 设置数据标签格式：商品名\n金额 元 占比%
-                plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}\n{1} 元 {2}",
-                        new DecimalFormat("#,##0.0"), new DecimalFormat("0.0%")));
-            }
-
-            // 标签字体设置
-            plot.setLabelFont(new Font("Hiragino Sans GB", Font.PLAIN, 14));
-
-
-            // ✅ 6. 设置图表样式
-            // 创建 BufferedImage 画布
-            int width = 500, height = 500;
-            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2 = image.createGraphics();
-
-            // 设置抗锯齿
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // 绘制饼图
-            chart.draw(g2, new Rectangle(width, height));
-
-            // 画一个白色的圆，实现环形效果
-            int innerSize = (int) (width * 0.3);  // 内圈大小
-            g2.setColor(Color.WHITE);
-            g2.fill(new Ellipse2D.Double((width - innerSize) / 2.0, (height - innerSize) / 2.0, innerSize, innerSize));
-
-            g2.dispose();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "png", baos);
-            return ImageDataFactory.create(baos.toByteArray());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
 
@@ -842,114 +649,6 @@ public class NxDepartmentOrdersController {
         return R.ok();
     }
 
-
-    @RequestMapping(value = "/delNx/{id}")
-    @ResponseBody
-    public R delNx(@PathVariable Integer id) {
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", id);
-        List<NxDepartmentEntity> departmentEntities = nxDepartmentService.queryDepartmentListByParams(map);
-        if (departmentEntities.size() > 0) {
-            for (NxDepartmentEntity departmentEntity : departmentEntities) {
-                Integer departmentId = departmentEntity.getNxDepartmentId();
-                map.put("depId", departmentId);
-                List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepartmentDisGoodsService.queryDepDisGoodsByParams(map);
-                if (departmentDisGoodsEntities.size() > 0) {
-                    for (NxDepartmentDisGoodsEntity disGoodsEntity : departmentDisGoodsEntities) {
-                        nxDepartmentDisGoodsService.delete(disGoodsEntity.getNxDepartmentDisGoodsId());
-                    }
-                }
-
-                List<NxDepartmentUserEntity> userEntities = nxDepartmentUserService.queryAllUsersByDepId(departmentId);
-                if (userEntities.size() > 0) {
-                    for (NxDepartmentUserEntity userEntity : userEntities) {
-                        nxDepartmentUserService.delete(userEntity.getNxDepartmentUserId());
-                    }
-                }
-
-
-                List<NxDepartmentOrdersHistoryEntity> nxDepartmentOrdersHistoryEntities = ordersHistoryService.queryDepHistoryOrdersByParams(map);
-                if (nxDepartmentOrdersHistoryEntities.size() > 0) {
-                    for (NxDepartmentOrdersHistoryEntity userEntity : nxDepartmentOrdersHistoryEntities) {
-                        historyService.delete(userEntity.getNxDepartmentOrdersHistoryId());
-                    }
-                }
-
-                nxDepartmentService.delete(departmentEntity.getNxDepartmentId());
-
-            }
-        }
-
-        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-        if (ordersEntities.size() > 0) {
-            for (NxDepartmentOrdersEntity ordersEntity : ordersEntities) {
-                nxDepartmentOrdersService.delete(ordersEntity.getNxDepartmentOrdersId());
-            }
-        }
-
-        List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = nxDistributerPurchaseGoodsService.queryPurchaseGoodsByParams(map);
-        if (purchaseGoodsEntities.size() > 0) {
-            for (NxDistributerPurchaseGoodsEntity NxDistributerPurchase : purchaseGoodsEntities) {
-                nxDistributerPurchaseGoodsService.delete(NxDistributerPurchase.getNxDistributerPurchaseGoodsId());
-            }
-        }
-
-        List<NxDistributerPurchaseBatchEntity> batchEntities = nxDistributerPurchaseBatchService.queryDisPurchaseBatch(map);
-        if (batchEntities.size() > 0) {
-            for (NxDistributerPurchaseBatchEntity batchEntity : batchEntities) {
-                nxDistributerPurchaseBatchService.delete(batchEntity.getNxDistributerPurchaseBatchId());
-            }
-        }
-
-        List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.queryDisGoodsByParams(map);
-        if (distributerGoodsEntities.size() > 0) {
-            for (NxDistributerGoodsEntity batchEntity : distributerGoodsEntities) {
-
-                map.put("disGoodsId", batchEntity.getNxDistributerGoodsId());
-                List<NxDistributerAliasEntity> aliasEntities = nxDistributerAliasService.queryAliasByParmas(map);
-                if (aliasEntities.size() > 0) {
-                    for (NxDistributerAliasEntity ordersEntity : aliasEntities) {
-                        nxDistributerAliasService.delete(ordersEntity.getNxDistributerAliasId());
-                    }
-                }
-
-                List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(map);
-                if (distributerStandardEntities.size() > 0) {
-                    for (NxDistributerStandardEntity ordersEntity : distributerStandardEntities) {
-                        nxDistributerStandardService.delete(ordersEntity.getNxDistributerStandardId());
-                    }
-                }
-
-                nxDistributerGoodsService.delete(batchEntity.getNxDistributerGoodsId());
-            }
-        }
-
-        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
-        if (fatherGoodsEntities.size() > 0) {
-            for (NxDistributerFatherGoodsEntity batchEntity : fatherGoodsEntities) {
-                nxDistributerFatherGoodsService.delete(batchEntity.getNxDistributerFatherGoodsId());
-            }
-        }
-
-        List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryBillsListByParams(map);
-        if (billEntityList.size() > 0) {
-            for (NxDepartmentBillEntity batchEntity : billEntityList) {
-                nxDepartmentBillService.delete(batchEntity.getNxDepartmentBillId());
-            }
-        }
-        nxDistributerService.delteNxDis(id);
-
-        return R.ok();
-    }
-
-
-    @ResponseBody
-    @RequestMapping("/deleteNxOrders")
-    public R deleteNxOrders(@RequestBody Integer[] nxOrdersSubIds) {
-        nxDepartmentOrdersService.deleteBatch(nxOrdersSubIds);
-        return R.ok();
-    }
 
     @RequestMapping(value = "/disUpdateBuyingPrice", method = RequestMethod.POST)
     @ResponseBody
@@ -1045,3223 +744,269 @@ public class NxDepartmentOrdersController {
         return R.ok();
     }
 
-    @RequestMapping(value = "/disGetProfitTotalByGoodsFatherId", method = RequestMethod.POST)
-    @ResponseBody
-    public R disGetProfitTotalByGoodsFatherId(Integer fatherId, String startDate, String stopDate) {
-        Integer howManyDaysInPeriod = 0;
-        if (!startDate.equals(stopDate)) {
-            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
-        }
-        Map<String, Object> map1222 = new HashMap<>();
-        map1222.put("grandId", fatherId);
-        map1222.put("depFatherId", -1);
-        if (howManyDaysInPeriod > 0) {
-            map1222.put("startDate", startDate);
-//            map1222.put("stopDate", stopDate);
-        } else {
-            map1222.put("date", startDate);
-        }
-
-
-        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.queryFatherGoodsByParams(map1222);
-
-        if (fatherGoodsEntities.size() > 0) {
-            for (NxDistributerFatherGoodsEntity fatherGoodsEntity : fatherGoodsEntities) {
-
-                map1222.put("fatherId", fatherGoodsEntity.getNxDistributerFatherGoodsId());
-                System.out.println("faheriid" + map1222);
-                Double grandDouble = nxDepartmentOrdersService.queryDepOrdersProfitSubtotal(map1222);
-
-                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1222);
-                double total = nxDepartmentOrdersService.queryCostSubtotal(map1222);
-                double scaleTotal = nxDepartmentOrdersService.queryDepOrdersProfitScale(map1222);
-                BigDecimal averScale = new BigDecimal(scaleTotal).divide(new BigDecimal(integer), 2, BigDecimal.ROUND_HALF_UP);
-
-                fatherGoodsEntity.setFatherProfitTotal(grandDouble);
-                fatherGoodsEntity.setFatherProfitScaleString(averScale.toString());
-                fatherGoodsEntity.setFatherSubtotalTotalString(new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                fatherGoodsEntity.setFatherProfitTotalString(new BigDecimal(grandDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-            }
-        }
-        return R.ok().put("data", fatherGoodsEntities);
-    }
-
-    @RequestMapping(value = "/disGetProfitTotal", method = RequestMethod.POST)
-    @ResponseBody
-    public R disGetProfitTotal(Integer disId, String startDate, String stopDate) {
-
-        Integer howManyDaysInPeriod = 0;
-        if (!startDate.equals(stopDate)) {
-            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
-        }
-
-
-        Map<String, Object> map1222 = new HashMap<>();
-        map1222.put("disId", disId);
-        map1222.put("depFatherId", -1);
-        if (howManyDaysInPeriod > 0) {
-            map1222.put("startDate", startDate);
-//            map1222.put("stopDate", stopDate);
-        } else {
-            map1222.put("date", startDate);
-        }
-
-        System.out.println("arrr" + map1222);
-        Integer count122 = nxDepartmentOrdersService.queryDepOrdersAcount(map1222);
-        List<NxDistributerFatherGoodsEntity> greatGrandGoodsCost = new ArrayList<>();
-        if (count122 > 0) {
-            System.out.println("coun122222" + count122);
-
-
-            double greatGrandDouble = 0.0;
-            greatGrandGoodsCost = nxDepartmentOrdersService.queryGreatGrandOrderFatherGoods(map1222);
-            for (NxDistributerFatherGoodsEntity greatGrandFather : greatGrandGoodsCost) {
-                System.out.println("greattttttgreatGrandFather" + greatGrandFather.getNxDfgFatherGoodsName());
-
-                List<NxDistributerFatherGoodsEntity> grandGoodsEntities = greatGrandFather.getFatherGoodsEntities();
-                for (NxDistributerFatherGoodsEntity grandFather : grandGoodsEntities) {
-                    System.out.println("greatttttt" + grandFather.getNxDfgFatherGoodsName());
-                    Integer nxDistributerFatherGoodsId = grandFather.getNxDistributerFatherGoodsId();
-                    map1222.put("grandId", nxDistributerFatherGoodsId);
-                    Double grandDouble = nxDepartmentOrdersService.queryDepOrdersProfitSubtotal(map1222);
-                    greatGrandDouble = greatGrandDouble + grandDouble;
-
-                    grandFather.setFatherProfitTotal(grandDouble);
-                    grandFather.setFatherProfitTotalString(new BigDecimal(grandDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                }
-                greatGrandFather.setFatherGoodsEntities(grandGoodsEntities);
-                greatGrandFather.setFatherProfitTotal(greatGrandDouble);
-                greatGrandFather.setFatherProfitTotalString(new BigDecimal(greatGrandDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-            }
-
-        } else {
-            return R.error(-1, "meiou");
-        }
-
-        Map<String, Object> mapCost = new HashMap<>();
-//        mapCost.put("date", dateList);
-//        mapCost.put("list", list);
-//        mapCost.put("total", String.format("%.1f", aDoutble));
-//        mapCost.put("salesTotal", String.format("%.1f", saleDouble));
-//        mapCost.put("lossTotal", String.format("%.1f", lossDouble));
-//        mapCost.put("wasteTotal", String.format("%.1f", wasteDouble));
-
-        mapCost.put("arr", greatGrandGoodsCost);
-//        mapCost.put("code", "0");
-        return R.ok().put("data", mapCost);
-    }
-
 
     @RequestMapping(value = "/choiceGoodsForApply", method = RequestMethod.POST)
     @ResponseBody
-    public R choiceGoodsForApply(@RequestBody NxDepartmentOrdersEntity orders) {
-        logger.info("[choiceGoodsForApply] 开始处理商品选择申请，订单ID: {}, 商品名称: {}, 分销商商品ID: {}", 
-                orders.getNxDepartmentOrdersId(), orders.getNxDoGoodsName(), orders.getNxDoDisGoodsId());
-        
-        // 保存原始订单的JSON字符串和原始商品名称（用于转换为精简字段）
-        String originalOrderJson = JSONObject.toJSONString(orders);
-        String originalGoodsName = orders.getNxDoGoodsName();
-        
-        Integer doDisGoodsId = orders.getNxDoDisGoodsId();
-        if (doDisGoodsId == null) {
-            logger.warn("[choiceGoodsForApply] 分销商商品ID为空，无法处理");
-            return R.error(-1, "分销商商品ID不能为空");
+    public R choiceGoodsForApply(@RequestBody NxDepartmentOrdersEntity ordersEntity) {
+        logger.info("[choiceGoodsForApply] 开始处理商品选择申请，接收到的订单数据: {}", ordersEntity);
+
+        NxDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsService.queryObject(ordersEntity.getNxDoDisGoodsId());
+        System.out.println("orrdis" + disGoodsEntity);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
+        map.put("standardName", "个" );
+        List<NxDistributerStandardEntity> nxDistributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(map);
+
+        if (ordersEntity.getNxDoStandard().equals("个") && nxDistributerStandardEntities.size() == 0) {
+            ordersEntity.setNxDoStandard(disGoodsEntity.getNxDgGoodsStandardname());
         }
-        
-        NxDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsService.queryObject(doDisGoodsId);
-        if (disGoodsEntity == null) {
-            logger.warn("[choiceGoodsForApply] 未找到分销商商品，ID: {}", doDisGoodsId);
-            return R.error(-1, "未找到指定的分销商商品");
-        }
-        
-        logger.info("[choiceGoodsForApply] 查询到分销商商品，商品ID: {}, 商品名称: {}, 规格: {}", 
-                disGoodsEntity.getNxDistributerGoodsId(), disGoodsEntity.getNxDgGoodsName(), 
-                disGoodsEntity.getNxDgGoodsStandardname());
-        
-        NxDepartmentOrdersEntity aaa = choiceGoodsOrder(orders, disGoodsEntity);
-        logger.info("[choiceGoodsForApply] 商品选择订单处理完成，订单ID: {}, 状态: {}", 
+
+        // 协作伙伴商品：完整保存协作订单（含价格处理、采购商品自动创建），并关联主订单
+        nxDepartmentOrdersService.saveCollaborativeOrderWhenNeeded(ordersEntity, disGoodsEntity);
+
+        NxDepartmentOrdersEntity aaa = nxDepartmentOrdersService.updateOneOrderForChoice(ordersEntity, disGoodsEntity);
+        logger.info("[choiceGoodsForApply] 商品选择订单处理完成，订单ID: {}, 状态: {}",
                 aaa.getNxDepartmentOrdersId(), aaa.getNxDoStatus());
 
         // 更新训练数据（如果订单有关联的训练数据）
         // 从数据库重新查询订单，确保获取最新的训练数据ID
+        NxOcrTaskEntity nxOcrTaskEntity = null;
         if (aaa.getNxDepartmentOrdersId() != null) {
-            NxDepartmentOrdersEntity savedOrder = nxDepartmentOrdersService.queryObject(aaa.getNxDepartmentOrdersId());
-            if (savedOrder != null && savedOrder.getNxDoTrainingDataId() != null) {
-                logger.info("[choiceGoodsForApply] 订单关联了训练数据，训练数据ID: {}", savedOrder.getNxDoTrainingDataId());
-                NxOrderOcrTrainingDataEntity trainingData = nxOrderOcrTrainingDataService.queryObject(savedOrder.getNxDoTrainingDataId());
-            
-            if (trainingData != null) {
-                // 手动标注标志设为 2（自动识别是 1，手动识别是 2）
-                trainingData.setNxOtdDisGoodsId(aaa.getNxDoDisGoodsId());
-                trainingData.setNxOtdOrderId(aaa.getNxDepartmentOrdersId());
-                
-                // 填充最终确认字段（手动标注）
-                trainingData.setNxOtdFinalGoodsName(aaa.getNxDoGoodsName());
-                trainingData.setNxOtdFinalQuantity(aaa.getNxDoQuantity());
-                trainingData.setNxOtdFinalStandard(aaa.getNxDoStandard());
-                trainingData.setNxOtdFinalRemark(aaa.getNxDoRemark() != null ? aaa.getNxDoRemark() : "");
-                
-                // 手动标注标志设为 2
-                trainingData.setNxOtdIsNameManuallyAnnotated(2);
-                trainingData.setNxOtdIsQuantityManuallyAnnotated(2);
-                trainingData.setNxOtdIsStandardManuallyAnnotated(2);
-                trainingData.setNxOtdIsStandardWeightManuallyAnnotated(2);
-                trainingData.setNxOtdIsRemarkManuallyAnnotated(2);
-                
-                // 更新标准重量（如果有的话，从原始数据中获取）
-                if (trainingData.getNxOtdOriginalStandardWeight() != null) {
-                    trainingData.setNxOtdFinalStandardWeight(trainingData.getNxOtdOriginalStandardWeight());
-                }
-                
-                trainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
-                
-                // 更新训练数据
-                nxOrderOcrTrainingDataService.update(trainingData);
-                
-                logger.info("[choiceGoodsForApply] 训练数据已更新（手动标注），训练数据ID: {}, 订单ID: {}, 商品ID: {}", 
-                        trainingData.getNxOtdId(), aaa.getNxDepartmentOrdersId(), aaa.getNxDoDisGoodsId());
-            } else {
-                logger.warn("[choiceGoodsForApply] 未找到训练数据，训练数据ID: {}", savedOrder.getNxDoTrainingDataId());
-            }
-            }
-        }
+            if (ordersEntity.getNxDoTrainingDataId() != null) {
+                NxOrderOcrTrainingDataEntity trainingData = nxOrderOcrTrainingDataService.queryObject(ordersEntity.getNxDoTrainingDataId());
 
-        aaa.setNxDistributerGoodsEntityList(new ArrayList<NxDistributerGoodsEntity>());
-        
-        // 转换为精简字段的DTO，与pasteSearchGoods保持一致
-        PasteSearchGoodsResponseDTO responseDTO = convertToResponseDTO(aaa, originalOrderJson, originalGoodsName);
-        logger.info("[choiceGoodsForApply] 处理完成，返回精简字段的订单数据");
-        return R.ok().put("data", responseDTO);
-    }
-
-    @ResponseBody
-    @RequestMapping(value = "/uploadDepOrderData", produces = "text/html;charset=UTF-8")
-    public R uploadDepOrderData(@RequestParam("file") MultipartFile file,
-                                @RequestParam("depFatherId") Integer depFatherId,
-                                @RequestParam("depId") Integer depId,
-                                @RequestParam("disId") Integer disId,
-                                @RequestParam("disUserId") Integer disUserId,
-                                HttpSession session) {
-
-        System.out.println(file.getName());
-        System.out.println(file.getName() + "depId====" + depId);
-        List<NxDepartmentOrdersEntity> returnList = new ArrayList<>();
-        HSSFWorkbook wb = null;
-        try {
-            wb = new HSSFWorkbook(file.getInputStream());
-            HSSFSheet sheet = null;
-            for (int j = 0; j < wb.getNumberOfSheets(); j++) {
-                sheet = wb.getSheetAt(j);
-                int lastRowNum = sheet.getLastRowNum();
-                Row goodsRow = null;
-                for (int i = 1; i <= lastRowNum; i++) {
-                    goodsRow = sheet.getRow(i);
-                    String goodsName = (String) getCellValue(goodsRow.getCell(1));
-                    String quantity = (String) getCellValue(goodsRow.getCell(2));
-                    String standard = (String) getCellValue(goodsRow.getCell(3));
-                    String remark = (String) getCellValue(goodsRow.getCell(4));
-
-                    NxDepartmentOrdersEntity ordersEntity = new NxDepartmentOrdersEntity();
-                    ordersEntity.setNxDoDepartmentId(depId);
-                    ordersEntity.setNxDoDepartmentFatherId(depFatherId);
-                    ordersEntity.setNxDoGoodsName(goodsName);
-                    ordersEntity.setNxDoQuantity(quantity);
-                    ordersEntity.setNxDoStandard(standard);
-                    ordersEntity.setNxDoRemark(remark);
-                    ordersEntity.setNxDoDistributerId(disId);
-                    ordersEntity.setNxDoIsAgent(1);
-                    ordersEntity.setNxDoStatus(-2);
-                    ordersEntity.setNxDistributerGoodsEntityList(new ArrayList<NxDistributerGoodsEntity>());
-
-                    //
-//                    String goodsName = ordersEntity.getNxDoGoodsName();
-                    Map<String, Object> mapZero = new HashMap<>();
-                    mapZero.put("disId", ordersEntity.getNxDoDistributerId());
-                    mapZero.put("searchStr", goodsName);
-                    mapZero.put("standard", ordersEntity.getNxDoStandard());
-                    System.out.println("mapzreororororor" + mapZero);
-                    List<NxDistributerGoodsEntity> distributerGoodsEntitiesZero = nxDistributerGoodsService.queryDisGoodsByName(mapZero);
-                    System.out.println("resultteslsutltlt----zero" + distributerGoodsEntitiesZero.size());
-                    // 一级 完全相同
-                    if (distributerGoodsEntitiesZero.size() == 0) {
-                        Map<String, Object> mapOne = new HashMap<>();
-                        mapOne.put("disId", ordersEntity.getNxDoDistributerId());
-                        mapOne.put("searchStr", goodsName);
-                        List<NxDistributerGoodsEntity> distributerGoodsEntitiesOne = nxDistributerGoodsService.queryDisGoodsByName(mapOne);
-                        System.out.println("resultteslsutltlt----one" + distributerGoodsEntitiesOne.size());
-                        // 二级 相同
-                        if (distributerGoodsEntitiesOne.size() == 0) {
-                            //1, 查拼音
-                            String pinyinString = goodsName;
-// 如果包含汉字才转换，否则直接用原名
-                            if (goodsName.matches(".*[\u4E00-\u9FFF]+.*")) {
-                                pinyinString = hanziToPinyin(goodsName);
-                            }
-                            Map<String, Object> mapTwo = new HashMap<>();
-                            mapTwo.put("disId", ordersEntity.getNxDoDistributerId());
-                            mapTwo.put("searchPinyin", pinyinString);
-                            List<NxDistributerGoodsEntity> disGoodsByNamePinyin = nxDistributerGoodsService.queryDisGoodsByNamePinyin(mapTwo);
-                            System.out.println("resultteslsutltlt----pinyin11111" + disGoodsByNamePinyin.size());
-
-                            // 三级 相同
-                            if (disGoodsByNamePinyin.size() == 0) {
-                                //查别名
-                                Map<String, Object> mapA = new HashMap<>();
-                                mapA.put("disId", ordersEntity.getNxDoDistributerId());
-                                mapA.put("alias", goodsName);
-                                List<NxDistributerGoodsEntity> distributerGoodsEntitiesA = nxDistributerGoodsService.queryDisGoodsByAlias(mapA);
-                                System.out.println("resultteslsutltlt----aila" + distributerGoodsEntitiesA.size());
-                                // 四级 相同
-                                if (distributerGoodsEntitiesA.size() == 0) {
-                                    returnList.add(aaaTemp(ordersEntity));
-                                } else {
-
-                                    if (distributerGoodsEntitiesA.size() == 1) {
-                                        // 1.保存订单
-                                        NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesA.get(0);
-
-                                        //2.添加规格
-//                                        if (!disGoodsEntity.getNxDgGoodsStandardname().equals(ordersEntity.getNxDoStandard())) {
-//                                            Map<String, Object> mapStand = new HashMap<>();
-//                                            mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-//                                            mapStand.put("standardName", ordersEntity.getNxDoStandard());
-//                                            List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-//                                            if (distributerStandardEntities.size() == 0) {
-//                                                NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-//                                                standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-//                                                standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-//                                                nxDistributerStandardService.save(standardEntity);
-//                                            }
-//                                        }
-                                        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                        returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                                    } else {
-                                        ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesA);
-                                        returnList.add(aaaTemp(ordersEntity));
-                                    }
-                                }
-
-                            } else {
-
-                                if (disGoodsByNamePinyin.size() == 1) {
-                                    //1 保存订单
-                                    NxDistributerGoodsEntity disGoodsEntity = disGoodsByNamePinyin.get(0);
-
-                                    //2.添加规格
-//                                    if (!disGoodsEntity.getNxDgGoodsStandardname().equals(ordersEntity.getNxDoStandard())) {
-//                                        Map<String, Object> mapStand = new HashMap<>();
-//                                        mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-//                                        mapStand.put("standardName", ordersEntity.getNxDoStandard());
-//                                        List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-//                                        if (distributerStandardEntities.size() == 0) {
-//                                            NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-//                                            standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-//                                            standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-//                                            nxDistributerStandardService.save(standardEntity);
-//                                        }
-//                                    }
-
-                                    NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                    returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                                } else {
-                                    ordersEntity.setNxDistributerGoodsEntityList(disGoodsByNamePinyin);
-                                    returnList.add(aaaTemp(ordersEntity));
-                                }
-                            }
-
-
-                        } else {
-
-                            if (distributerGoodsEntitiesOne.size() == 1) {
-                                //1 保存订单
-                                NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesOne.get(0);
-                                //添加规格
-//                                Map<String, Object> mapStand = new HashMap<>();
-//                                mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-//                                mapStand.put("standardName", ordersEntity.getNxDoStandard());
-//                                List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-//                                if (distributerStandardEntities.size() == 0) {
-//                                    NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-//                                    standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-//                                    standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-//                                    nxDistributerStandardService.save(standardEntity);
-//                                }
-                                System.out.println("oneoneneee=====111111111");
-
-                                NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                            } else {
-                                System.out.println("oneoneneee=====mrororoororoororooror");
-                                ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesOne);
-                                returnList.add(aaaTemp(ordersEntity));
-                            }
-                        }
-
-                    } else {
-                        if (distributerGoodsEntitiesZero.size() == 1) {
-                            System.out.println("zeooo=====111111111");
-                            NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesZero.get(0);
-                            returnList.add(saveOneOrder(ordersEntity, disGoodsEntity));
-                        } else {
-                            System.out.println("zeooo=====mrororoororoororooror");
-                            ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesZero);
-                            returnList.add(aaaTemp(ordersEntity));
-                        }
-                    }
-
-//                    //////
-
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("rrrrrrlisisdidi" + returnList.size());
-        return R.ok().put("data", returnList);
-    }
-
-
-    private Object getCellValue(Cell cell) {
-        System.out.println(cell.getCellType() + "typepepep???????");
-        String value = "";
-
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getRichStringCellValue().getString();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue();
-                } else {
-//                    double numericCellValue = cell.getNumericCellValue();
-//                    String s = String.valueOf(numericCellValue);
-//                    int i1 = Integer.parseInt(s.replace(".0", ""));
-//                    return i1;
-                    DecimalFormat df = new DecimalFormat("#.#");
-                    value = df.format(cell.getNumericCellValue());
-                    return value;
-                }
-            case BOOLEAN:
-                return cell.getBooleanCellValue();
-            case FORMULA:
-                return cell.getCellFormula();
-        }
-
-        return cell;
-
-    }
-
-
-
-
-    @RequestMapping(value = "/pasteSearchGoodsForShelf", method = RequestMethod.POST)
-    @ResponseBody
-    public R pasteSearchGoodsForShelf(@RequestBody JSONObject payload) {
-        Integer disId = payload.getInteger("disId");
-        Integer shelfId = payload.getInteger("shelfId");
-        Integer startSort = payload.getInteger("startSort");
-        JSONArray itemsArray = payload.getJSONArray("items");
-
-        System.out.println("[pasteSearchGoodsForShelf] disId=" + disId + ", shelfId=" + shelfId
-                + ", startSort=" + startSort + ", itemsSize=" + (itemsArray == null ? 0 : itemsArray.size()));
-        if (itemsArray != null) {
-            System.out.println("[pasteSearchGoodsForShelf] 原始 items=" + itemsArray.toJSONString());
-        }
-
-        if (disId == null || shelfId == null || itemsArray == null || itemsArray.isEmpty()) {
-            return R.error(-1, "参数错误: 缺少 disId/shelfId/items");
-        }
-
-        int currentSort = calculateShelfStartSort(shelfId, startSort);
-        List<JSONObject> resultItems = new ArrayList<>();
-
-        for (int index = 0; index < itemsArray.size(); index++) {
-            JSONObject item = itemsArray.getJSONObject(index);
-            JSONObject resultItem = new JSONObject();
-            if (item != null) {
-                resultItem.putAll(item);
-            }
-
-            String goodsName = item == null ? null : item.getString("nxDgGoodsName");
-            String standard = item == null ? null : item.getString("nxDgGoodsStandardname");
-            String standardWeight = item == null ? null : item.getString("nxDgGoodsStandardWeight");
-            System.out.println("[pasteSearchGoodsForShelf] 处理第" + (index + 1) + "条, goodsName=" + goodsName
-                    + ", targetSort=" + currentSort);
-
-            if (isBlank(goodsName)) {
-                resultItem.put("status", "failed");
-                resultItem.put("message", "缺少商品名称");
-                resultItems.add(resultItem);
-                continue;
-            }
-
-            if (isBlank(standard)) {
-                resultItem.put("status", "failed");
-                resultItem.put("message", "缺少规格 standard");
-                resultItems.add(resultItem);
-                continue;
-            }
-
-            if (item != null) {
-
-                item.put("nxDgGoodsStandardname", standard.trim());
-                item.put("nxDgGoodsStandardWeight", blankToNull(standardWeight));
-                System.out.println("woyaokkkkkk" + item);
-            }
-
-            GoodsMatchResult disMatch = matchDistributerGoods(disId, item);
-            if (disMatch.status == MatchStatus.ERROR) {
-                resultItem.put("status", "failed");
-                resultItem.put("message", disMatch.message);
-                resultItems.add(resultItem);
-                continue;
-            }
-            if (disMatch.status == MatchStatus.CONFLICT) {
-                resultItem.put("status", "conflict");
-                resultItem.put("message", disMatch.message);
-                resultItem.put("candidates", buildDisCandidateArray(disMatch.candidates));
-                resultItems.add(resultItem);
-                continue;
-            }
-
-            NxDistributerGoodsEntity disGoods = disMatch.disGoods;
-            boolean downloaded = false;
-            boolean createdTemp = false;
-
-            if (disGoods == null) {
-                GoodsMatchResult nxMatch = matchNxGoods(item);
-                if (nxMatch.status == MatchStatus.CONFLICT) {
-                    resultItem.put("status", "conflict");
-                    resultItem.put("message", nxMatch.message);
-                    resultItem.put("candidates", buildNxCandidateArray(nxMatch.nxCandidates));
-                    resultItems.add(resultItem);
-                    continue;
-                }
-                if (nxMatch.nxGoods != null) {
-                    try {
-                        disGoods = downloadNxGoods(disId, nxMatch.nxGoods, resultItem);
-                        downloaded = true;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        resultItem.put("status", "failed");
-                        resultItem.put("message", "下载系统商品失败:" + e.getMessage());
-                        resultItems.add(resultItem);
-                        continue;
-                    }
-                }
-            }
-
-            if (disGoods == null) {
-                try {
-                    disGoods = createTemporaryGoods(disId, item, resultItem);
-                    createdTemp = true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    resultItem.put("status", "failed");
-                    resultItem.put("message", "创建临时商品失败:" + e.getMessage());
-                    resultItems.add(resultItem);
-                    continue;
-                }
-            }
-
-            if (disGoods == null || disGoods.getNxDistributerGoodsId() == null) {
-                resultItem.put("status", "failed");
-                resultItem.put("message", "未找到可用商品");
-                resultItems.add(resultItem);
-                continue;
-            }
-
-            ShelfInsertResult shelfResult;
-            try {
-                shelfResult = insertShelfGoods(disGoods.getNxDistributerGoodsId(), shelfId, currentSort);
-            } catch (Exception e) {
-                e.printStackTrace();
-                resultItem.put("status", "failed");
-                resultItem.put("message", "添加货架商品失败:" + e.getMessage());
-                resultItems.add(resultItem);
-                continue;
-            }
-
-            if (shelfResult == null || shelfResult.shelfGoods == null) {
-                resultItem.put("status", "failed");
-                resultItem.put("message", "添加货架商品失败: 未返回有效结果");
-                resultItems.add(resultItem);
-                continue;
-            }
-
-            if (!shelfResult.existed) {
-                currentSort++;
-            }
-
-            resultItem.put("disGoodsId", disGoods.getNxDistributerGoodsId());
-            resultItem.put("shelfGoodsId", shelfResult.shelfGoods.getNxDistributerGoodsShelfGoodsId());
-            if (shelfResult.existed) {
-                resultItem.put("status", "exists");
-                resultItem.put("message", "货架上已存在该商品，未重复添加");
-            } else {
-                resultItem.put("status", createdTemp ? "created_temp" : (downloaded ? "downloaded" : "success"));
-                resultItem.put("message", createdTemp ? "已创建临时商品并上架" : (downloaded ? "已下载系统商品并上架" : "已上架现有商品"));
-            }
-            resultItems.add(resultItem);
-        }
-
-        return R.ok()
-                .put("items", resultItems)
-                .put("nextSort", currentSort);
-    }
-
-    /**
-     * 下载货架商品导入模板
-     * 生成空的 Excel 模板，包含表头和示例说明
-     */
-    @RequestMapping(value = "/downloadShelfGoodsTemplate", method = RequestMethod.GET)
-    public void downloadShelfGoodsTemplate(HttpServletResponse response) throws IOException {
-        System.out.println("[downloadShelfGoodsTemplate] 请求下载模板");
-
-        HSSFWorkbook workbook = new HSSFWorkbook();
-        try {
-            HSSFSheet sheet = workbook.createSheet("货架商品导入模板");
-            sheet.setDefaultColumnWidth(20);
-
-            HSSFCellStyle headerStyle = workbook.createCellStyle();
-            HSSFFont headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerStyle.setFont(headerFont);
-
-            int rowIndex = 0;
-            // 提示行
-            HSSFRow tipRow = sheet.createRow(rowIndex++);
-            tipRow.createCell(0).setCellValue("提示：商品名称和规格为必填项，其他字段为可选项。");
-
-            // 表头
-            HSSFRow headerRow = sheet.createRow(rowIndex++);
-            String[] headers = new String[]{
-                    "商品名称(必填)",
-                    "规格(必填)",
-                    "规格重量",
-                    "品牌",
-                    "外包装",
-                    "包装数量"
-            };
-            for (int i = 0; i < headers.length; i++) {
-                HSSFCell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerStyle);
-            }
-
-            // 示例行（可选，帮助用户理解格式）
-            HSSFRow exampleRow = sheet.createRow(rowIndex++);
-            exampleRow.createCell(0).setCellValue("示例：菌伯乐鹿茸菌");
-            exampleRow.createCell(1).setCellValue("桶");
-            exampleRow.createCell(2).setCellValue("5kg");
-            exampleRow.createCell(3).setCellValue("菌伯乐");
-            exampleRow.createCell(4).setCellValue("箱");
-            exampleRow.createCell(5).setCellValue("24");
-
-            String fileName = "货架商品导入模板.xls";
-            fileName = URLEncoder.encode(fileName, "UTF-8");
-            response.setContentType("application/vnd.ms-excel");
-            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
-            workbook.write(response.getOutputStream());
-            response.flushBuffer();
-            System.out.println("[downloadShelfGoodsTemplate] 模板生成完成，已输出响应");
-        } catch (IOException e) {
-            System.err.println("[downloadShelfGoodsTemplate] 生成模板异常: " + e.getMessage());
-            throw new RRException("生成模板失败");
-        } finally {
-            try {
-                workbook.close();
-            } catch (IOException e) {
-                System.err.println("[downloadShelfGoodsTemplate] 关闭工作簿异常: " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Excel 导入货架商品
-     * 从 Excel 文件读取商品信息，匹配或创建商品后添加到货架
-     */
-    @RequestMapping(value = "/importShelfGoodsFromExcel", method = RequestMethod.POST)
-    @ResponseBody
-    public R importShelfGoodsFromExcel(@RequestParam("file") MultipartFile file,
-                                       @RequestParam("disId") Integer disId,
-                                       @RequestParam("shelfId") Integer shelfId,
-                                       @RequestParam(value = "startSort", required = false) Integer startSort) {
-        System.out.println("[importShelfGoodsFromExcel] 请求导入货架商品 disId=" + disId
-                + ", shelfId=" + shelfId + ", startSort=" + startSort
-                + ", fileName=" + (file == null ? "null" : file.getOriginalFilename()));
-
-        if (disId == null || shelfId == null) {
-            return R.error(-1, "参数错误: 缺少 disId/shelfId");
-        }
-        if (file == null || file.isEmpty()) {
-            return R.error(-1, "文件不能为空");
-        }
-
-        DataFormatter formatter = new DataFormatter();
-        List<Map<String, Object>> failItems = new ArrayList<>();
-        List<JSONObject> resultItems = new ArrayList<>();
-        int total = 0;
-        int success = 0;
-
-        // 初始化排序号
-        int currentSort = calculateShelfStartSort(shelfId, startSort);
-
-        Workbook workbook = null;
-        try {
-            workbook = WorkbookFactory.create(file.getInputStream());
-            for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
-                Sheet sheet = workbook.getSheetAt(sheetIndex);
-                if (sheet == null) {
-                    continue;
-                }
-                int lastRowNum = sheet.getLastRowNum();
-                // 从第3行开始读取数据（第1行是提示，第2行是表头，第3行可能是示例）
-                for (int rowIndex = 2; rowIndex <= lastRowNum; rowIndex++) {
-                    Row row = sheet.getRow(rowIndex);
-                    if (row == null) {
-                        continue;
-                    }
-
-                    String goodsName = getCellString(row, 0, formatter);
-                    String standard = getCellString(row, 1, formatter);
-                    // 如果商品名称和规格都为空，跳过这一行
-                    if (isBlank(goodsName) && isBlank(standard)) {
-                        continue;
-                    }
-
-                    total++;
-                    JSONObject resultItem = new JSONObject();
-                    resultItem.put("row", rowIndex + 1);
-                    resultItem.put("goodsName", goodsName);
-                    resultItem.put("standard", standard);
-
-                    try {
-                        // 验证必填项
-                        if (isBlank(goodsName)) {
-                            throw new IllegalArgumentException("缺少商品名称");
-                        }
-                        if (isBlank(standard)) {
-                            throw new IllegalArgumentException("缺少规格");
-                        }
-
-                        // 构建商品信息 JSONObject
-                        JSONObject item = new JSONObject();
-                        item.put("nxDgGoodsName", goodsName.trim());
-                        item.put("nxDgGoodsStandardname", standard.trim());
-                        
-                        String standardWeight = getCellString(row, 2, formatter);
-                        if (!isBlank(standardWeight)) {
-                            item.put("nxDgGoodsStandardWeight", standardWeight.trim());
-                        }
-                        
-                        String brand = getCellString(row, 3, formatter);
-                        if (!isBlank(brand)) {
-                            item.put("nxDgGoodsBrand", brand.trim());
-                        }
-                        
-                        String cartonUnit = getCellString(row, 4, formatter);
-                        if (!isBlank(cartonUnit)) {
-                            item.put("nxDgCartonUnit", cartonUnit.trim());
-                        }
-                        
-                        String itemsPerCarton = getCellString(row, 5, formatter);
-                        if (!isBlank(itemsPerCarton)) {
-                            try {
-                                Integer itemsPerCartonInt = Integer.parseInt(itemsPerCarton.trim());
-                                item.put("nxDgItemsPerCarton", itemsPerCartonInt);
-                            } catch (NumberFormatException e) {
-                                throw new IllegalArgumentException("包装数量格式错误，应为整数");
-                            }
-                        }
-
-                        resultItem.put("targetSort", currentSort);
-
-                        GoodsMatchResult disMatch = matchDistributerGoods(disId, item);
-                        if (disMatch.status == MatchStatus.ERROR) {
-                            throw new IllegalArgumentException(disMatch.message);
-                        }
-                        if (disMatch.status == MatchStatus.CONFLICT) {
-                            resultItem.put("status", "conflict");
-                            resultItem.put("message", disMatch.message);
-                            resultItem.put("candidates", buildDisCandidateArray(disMatch.candidates));
-                            resultItems.add(resultItem);
-                            continue;
-                        }
-
-                        NxDistributerGoodsEntity disGoods = disMatch.disGoods;
-                        boolean downloaded = false;
-                        boolean createdTemp = false;
-
-                        if (disGoods == null) {
-                            GoodsMatchResult nxMatch = matchNxGoods(item);
-                            if (nxMatch.status == MatchStatus.CONFLICT) {
-                                resultItem.put("status", "conflict");
-                                resultItem.put("message", nxMatch.message);
-                                resultItem.put("candidates", buildNxCandidateArray(nxMatch.nxCandidates));
-                                resultItems.add(resultItem);
-                                continue;
-                            }
-                            if (nxMatch.nxGoods != null) {
-                                disGoods = downloadNxGoods(disId, nxMatch.nxGoods, resultItem);
-                                downloaded = true;
-                            }
-                        }
-
-                        if (disGoods == null) {
-                            disGoods = createTemporaryGoods(disId, item, resultItem);
-                            createdTemp = true;
-                        }
-
-                        if (disGoods == null || disGoods.getNxDistributerGoodsId() == null) {
-                            throw new IllegalArgumentException("未找到可用商品");
-                        }
-
-                        ShelfInsertResult shelfResult = insertShelfGoods(disGoods.getNxDistributerGoodsId(), shelfId, currentSort);
-                        if (shelfResult == null || shelfResult.shelfGoods == null) {
-                            throw new IllegalArgumentException("添加货架商品失败: 未返回有效结果");
-                        }
-
-                        if (!shelfResult.existed) {
-                            // 只有成功添加新商品时才递增排序号
-                            currentSort++;
-                        }
-
-                        resultItem.put("disGoodsId", disGoods.getNxDistributerGoodsId());
-                        resultItem.put("shelfGoodsId", shelfResult.shelfGoods.getNxDistributerGoodsShelfGoodsId());
-                        if (shelfResult.existed) {
-                            resultItem.put("status", "exists");
-                            resultItem.put("message", "货架上已存在该商品，未重复添加");
-                        } else {
-                            resultItem.put("status", createdTemp ? "created_temp" : (downloaded ? "downloaded" : "success"));
-                            resultItem.put("message", createdTemp ? "已创建临时商品并上架" : (downloaded ? "已下载系统商品并上架" : "已上架现有商品"));
-                        }
-                        resultItems.add(resultItem);
-                        success++;
-
-                    } catch (Exception rowEx) {
-                        Map<String, Object> fail = new HashMap<>();
-                        fail.put("row", rowIndex + 1);
-                        fail.put("goodsName", goodsName);
-                        fail.put("standard", standard);
-                        fail.put("message", rowEx.getMessage());
-                        failItems.add(fail);
-                        resultItem.put("status", "failed");
-                        resultItem.put("message", rowEx.getMessage());
-                        resultItems.add(resultItem);
-                        System.err.println("[importShelfGoodsFromExcel] 行导入失败 row=" + (rowIndex + 1)
-                                + ", 原因=" + rowEx.getMessage());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("[importShelfGoodsFromExcel] 读取文件失败: " + e.getMessage());
-            return R.error(-1, "文件读取失败: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("[importShelfGoodsFromExcel] 解析文件失败: " + e.getMessage());
-            return R.error(-1, "文件格式不支持，请使用模板导出的 Excel");
-        } finally {
-            if (workbook != null) {
-                try {
-                    workbook.close();
-                } catch (IOException e) {
-                    System.err.println("[importShelfGoodsFromExcel] 关闭工作簿异常: " + e.getMessage());
-                }
-            }
-        }
-
-        System.out.println("[importShelfGoodsFromExcel] 导入完成 total=" + total + ", success=" + success + ", failed=" + failItems.size());
-        return R.ok()
-                .put("total", total)
-                .put("success", success)
-                .put("failed", failItems.size())
-                .put("items", resultItems)
-                .put("failItems", failItems);
-    }
-
-    /**
-     * 从 Excel 行中获取字符串值
-     */
-    private String getCellString(Row row, int cellIndex, DataFormatter formatter) {
-        if (row == null) {
-            return null;
-        }
-        Cell cell = row.getCell(cellIndex);
-        if (cell == null) {
-            return null;
-        }
-        String value = formatter.formatCellValue(cell);
-        return value == null ? null : value.trim();
-    }
-
-    /**
-     * 临时商品修改后重新查询系统商品
-     * 当临时商品修改了名称、规格或规格重量后，调用此接口重新查询系统商品
-     * 如果找到系统商品，则下载并更新临时商品
-     */
-    @RequestMapping(value = "/reSearchNxGoodsForTempGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R reSearchNxGoodsForTempGoods(@RequestBody JSONObject payload) {
-        Integer disGoodsId = payload.getInteger("disGoodsId");
-        String goodsName = payload.getString("nxDgGoodsName");
-        String standard = payload.getString("nxDgGoodsStandardname");
-        String standardWeight = payload.getString("nxDgGoodsStandardWeight");
-        String brand = payload.getString("nxDgGoodsBrand");
-        String place = payload.getString("nxDgGoodsPlace");
-
-        System.out.println("[reSearchNxGoodsForTempGoods] disGoodsId=" + disGoodsId + ", goodsName=" + goodsName
-                + ", standard=" + standard + ", standardWeight=" + standardWeight);
-
-        if (disGoodsId == null) {
-            return R.error(-1, "参数错误: 缺少 disGoodsId");
-        }
-
-        // 查询临时商品
-        NxDistributerGoodsEntity tempGoods = nxDistributerGoodsService.queryObject(disGoodsId);
-        if (tempGoods == null) {
-            return R.error(-1, "商品不存在");
-        }
-
-        // 验证是否为临时商品（临时商品的 nxDgNxGoodsId 为 null）
-        if (tempGoods.getNxDgNxGoodsId() != null) {
-            return R.error(-1, "该商品不是临时商品，无需重新查询");
-        }
-
-        // 使用传入的参数或临时商品的当前信息
-        String searchName = isBlank(goodsName) ? tempGoods.getNxDgGoodsName() : goodsName;
-        String searchStandard = isBlank(standard) ? tempGoods.getNxDgGoodsStandardname() : standard;
-        String searchWeight = isBlank(standardWeight) ? tempGoods.getNxDgGoodsStandardWeight() : standardWeight;
-        String searchBrand = isBlank(brand) ? tempGoods.getNxDgGoodsBrand() : brand;
-        String searchPlace = isBlank(place) ? tempGoods.getNxDgGoodsPlace() : place;
-
-        // 如果名称或规格为空，更新临时商品的其他字段后返回
-        if (isBlank(searchName)) {
-            // 更新其他字段
-            if (!isBlank(searchStandard)) {
-                tempGoods.setNxDgGoodsStandardname(searchStandard);
-            }
-            if (!isBlank(searchWeight)) {
-                tempGoods.setNxDgGoodsStandardWeight(searchWeight);
-            }
-            if (!isBlank(searchBrand)) {
-                tempGoods.setNxDgGoodsBrand(searchBrand);
-            }
-            if (!isBlank(searchPlace)) {
-                tempGoods.setNxDgGoodsPlace(searchPlace);
-            }
-            nxDistributerGoodsService.update(tempGoods);
-            return R.ok()
-                    .put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                    .put("message", "商品名称不能为空，已更新临时商品的其他字段");
-        }
-        if (isBlank(searchStandard)) {
-            // 更新其他字段
-            if (!isBlank(searchName)) {
-                tempGoods.setNxDgGoodsName(searchName);
-            }
-            if (!isBlank(searchWeight)) {
-                tempGoods.setNxDgGoodsStandardWeight(searchWeight);
-            }
-            if (!isBlank(searchBrand)) {
-                tempGoods.setNxDgGoodsBrand(searchBrand);
-            }
-            if (!isBlank(searchPlace)) {
-                tempGoods.setNxDgGoodsPlace(searchPlace);
-            }
-            nxDistributerGoodsService.update(tempGoods);
-            return R.ok()
-                    .put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                    .put("message", "商品规格不能为空，已更新临时商品的其他字段");
-        }
-
-        // 构建查询参数
-        JSONObject searchItem = new JSONObject();
-        searchItem.put("nxDgGoodsName", searchName);
-        searchItem.put("nxDgGoodsStandardname", searchStandard);
-        searchItem.put("nxDgGoodsStandardWeight", searchWeight);
-        searchItem.put("nxDgGoodsBrand", searchBrand);
-        searchItem.put("nxDgGoodsPlace", searchPlace);
-
-        // 查询系统商品
-        GoodsMatchResult nxMatch = matchNxGoods(searchItem);
-        if (nxMatch.status == MatchStatus.CONFLICT) {
-            // 匹配到多条，保存为临时商品，名称后添加"系统多条"
-            String newGoodsName = searchName + "系统多条";
-            tempGoods.setNxDgGoodsName(newGoodsName);
-            if (!isBlank(searchStandard)) {
-                tempGoods.setNxDgGoodsStandardname(searchStandard);
-            }
-            if (!isBlank(searchWeight)) {
-                tempGoods.setNxDgGoodsStandardWeight(searchWeight);
-            }
-            if (!isBlank(searchBrand)) {
-                tempGoods.setNxDgGoodsBrand(searchBrand);
-            }
-            if (!isBlank(searchPlace)) {
-                tempGoods.setNxDgGoodsPlace(searchPlace);
-            }
-            nxDistributerGoodsService.update(tempGoods);
-            return R.ok()
-                    .put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                    .put("candidates", buildNxCandidateArray(nxMatch.nxCandidates))
-                    .put("message", "系统商品匹配多条，已保存为临时商品（名称已添加'系统多条'）");
-        }
-        if (nxMatch.status == MatchStatus.ERROR) {
-            // 匹配错误，保存为临时商品
-            if (!isBlank(searchName)) {
-                tempGoods.setNxDgGoodsName(searchName);
-            }
-            if (!isBlank(searchStandard)) {
-                tempGoods.setNxDgGoodsStandardname(searchStandard);
-            }
-            if (!isBlank(searchWeight)) {
-                tempGoods.setNxDgGoodsStandardWeight(searchWeight);
-            }
-            if (!isBlank(searchBrand)) {
-                tempGoods.setNxDgGoodsBrand(searchBrand);
-            }
-            if (!isBlank(searchPlace)) {
-                tempGoods.setNxDgGoodsPlace(searchPlace);
-            }
-            nxDistributerGoodsService.update(tempGoods);
-            return R.ok()
-                    .put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                    .put("message", "系统商品匹配错误，已保存为临时商品: " + nxMatch.message);
-        }
-        if (nxMatch.nxGoods == null) {
-            // 未找到匹配的系统商品，保存为临时商品
-            if (!isBlank(searchName)) {
-                tempGoods.setNxDgGoodsName(searchName);
-            }
-            if (!isBlank(searchStandard)) {
-                tempGoods.setNxDgGoodsStandardname(searchStandard);
-            }
-            if (!isBlank(searchWeight)) {
-                tempGoods.setNxDgGoodsStandardWeight(searchWeight);
-            }
-            if (!isBlank(searchBrand)) {
-                tempGoods.setNxDgGoodsBrand(searchBrand);
-            }
-            if (!isBlank(searchPlace)) {
-                tempGoods.setNxDgGoodsPlace(searchPlace);
-            }
-            nxDistributerGoodsService.update(tempGoods);
-            return R.ok()
-                    .put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                    .put("message", "未找到匹配的系统商品，已保存为临时商品");
-        }
-
-        // 找到系统商品，检查是否已下载
-        Integer disId = tempGoods.getNxDgDistributerId();
-        Map<String, Object> checkParams = new HashMap<>();
-        checkParams.put("disId", disId);
-        checkParams.put("goodsId", nxMatch.nxGoods.getNxGoodsId());
-        List<NxDistributerGoodsEntity> exists = nxDistributerGoodsService.queryDisGoodsByParams(checkParams);
-        
-        NxGoodsEntity detail = nxGoodsService.queryObject(nxMatch.nxGoods.getNxGoodsId());
-        
-        if (exists != null && !exists.isEmpty()) {
-            // 系统商品已下载，直接更新临时商品为系统商品
-            System.out.println("[reSearchNxGoodsForTempGoods] 系统商品已下载，直接更新临时商品");
-            updateTempGoodsToSystemGoods(tempGoods, detail);
-            nxDistributerGoodsService.update(tempGoods);
-            // 复制规格和别名（如果还没有的话）
-            copyStandardsAndAlias(tempGoods, detail);
-            return R.ok().put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                    .put("nxGoodsId", nxMatch.nxGoods.getNxGoodsId())
-                    .put("message", "已更新临时商品为系统商品（系统商品已存在）");
-        } else {
-            // 系统商品未下载，先下载系统商品
-            try {
-                JSONObject resultItem = new JSONObject();
-                NxDistributerGoodsEntity downloadedGoods = downloadNxGoods(disId, nxMatch.nxGoods, resultItem);
-                System.out.println("[reSearchNxGoodsForTempGoods] 下载系统商品成功，disGoodsId=" + downloadedGoods.getNxDistributerGoodsId());
-                
-                // 如果下载的商品就是临时商品本身（理论上不会发生，因为临时商品没有 nxDgNxGoodsId）
-                // 但 downloadNxGoods 会检查是否已存在，如果临时商品已存在同名商品，可能会返回临时商品
-                // 所以我们需要更新临时商品
-                if (downloadedGoods.getNxDistributerGoodsId().equals(disGoodsId)) {
-                    // 临时商品就是下载的商品，已经更新好了
-                    return R.ok().put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                            .put("nxGoodsId", nxMatch.nxGoods.getNxGoodsId())
-                            .put("message", "已更新临时商品为系统商品");
-                } else {
-                    // 下载的商品是新商品，更新临时商品关联到系统商品
-                    updateTempGoodsToSystemGoods(tempGoods, detail);
-                    nxDistributerGoodsService.update(tempGoods);
-                    // 复制规格和别名
-                    copyStandardsAndAlias(tempGoods, detail);
-                    return R.ok().put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                            .put("nxGoodsId", nxMatch.nxGoods.getNxGoodsId())
-                            .put("message", "已更新临时商品为系统商品");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                // 下载失败，保存为临时商品
-                if (!isBlank(searchName)) {
-                    tempGoods.setNxDgGoodsName(searchName);
-                }
-                if (!isBlank(searchStandard)) {
-                    tempGoods.setNxDgGoodsStandardname(searchStandard);
-                }
-                if (!isBlank(searchWeight)) {
-                    tempGoods.setNxDgGoodsStandardWeight(searchWeight);
-                }
-                if (!isBlank(searchBrand)) {
-                    tempGoods.setNxDgGoodsBrand(searchBrand);
-                }
-                if (!isBlank(searchPlace)) {
-                    tempGoods.setNxDgGoodsPlace(searchPlace);
-                }
-                nxDistributerGoodsService.update(tempGoods);
-                return R.ok()
-                        .put("disGoodsId", tempGoods.getNxDistributerGoodsId())
-                        .put("message", "下载系统商品失败，已保存为临时商品: " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * 更新临时商品为系统商品
-     */
-    private void updateTempGoodsToSystemGoods(NxDistributerGoodsEntity tempGoods, NxGoodsEntity detail) {
-        tempGoods.setNxDgNxGoodsId(detail.getNxGoodsId());
-        tempGoods.setNxDgGoodsName(detail.getNxGoodsName());
-        tempGoods.setNxDgGoodsStandardname(detail.getNxGoodsStandardname());
-        tempGoods.setNxDgGoodsStandardWeight(detail.getNxGoodsStandardWeight());
-        tempGoods.setNxDgGoodsBrand(detail.getNxGoodsBrand());
-        tempGoods.setNxDgGoodsPlace(detail.getNxGoodsPlace());
-        tempGoods.setNxDgGoodsDetail(detail.getNxGoodsDetail());
-        tempGoods.setNxDgGoodsFile(detail.getNxGoodsFile());
-        tempGoods.setNxDgGoodsFileLarge(detail.getNxGoodsFileBig());
-        tempGoods.setNxDgGoodsPinyin(detail.getNxGoodsPinyin());
-        tempGoods.setNxDgGoodsPy(detail.getNxGoodsPy());
-        tempGoods.setNxDgGoodsStatus(1);
-        tempGoods.setNxDgQuantityDays(detail.getNxGoodsQuantityDays());
-        tempGoods.setNxDgGoodsSort(detail.getNxGoodsSort());
-        tempGoods.setNxDgGoodsSonsSort(detail.getNxGoodsSonsSort());
-
-        if (detail.getFatherGoods() != null) {
-            tempGoods.setNxDgNxFatherId(detail.getFatherGoods().getNxGoodsId());
-            tempGoods.setNxDgNxFatherName(detail.getFatherGoods().getNxGoodsName());
-            tempGoods.setNxDgNxFatherImg(detail.getFatherGoods().getNxGoodsFile());
-        }
-        if (detail.getGrandGoods() != null) {
-            tempGoods.setNxDgNxGrandId(detail.getGrandGoods().getNxGoodsId());
-            tempGoods.setNxDgNxGrandName(detail.getGrandGoods().getNxGoodsName());
-        }
-        if (detail.getGreatGrandGoods() != null) {
-            tempGoods.setNxDgNxGreatGrandId(detail.getGreatGrandGoods().getNxGoodsId());
-            tempGoods.setNxDgNxGreatGrandName(detail.getGreatGrandGoods().getNxGoodsName());
-            tempGoods.setNxDgNxGoodsFatherColor(detail.getGreatGrandGoods().getColor());
-        }
-
-        // 更新层级关系
-        assignDistributerHierarchy(tempGoods, detail);
-    }
-
-    private int calculateShelfStartSort(Integer shelfId, Integer startSort) {
-        if (startSort != null && startSort > 0) {
-            return startSort;
-        }
-        Map<String, Object> map = new HashMap<>();
-        map.put("shelfId", shelfId);
-        List<NxDistributerGoodsShelfGoodsEntity> shelfGoodsEntities = shelfGoodsService.queryShelfForGoodsByParams(map);
-        if (shelfGoodsEntities == null || shelfGoodsEntities.isEmpty()) {
-            return 1;
-        }
-        NxDistributerGoodsShelfGoodsEntity last = shelfGoodsEntities.get(shelfGoodsEntities.size() - 1);
-        return last.getNxDgsgSort() == null ? 1 : last.getNxDgsgSort() + 1;
-    }
-
-    private GoodsMatchResult matchDistributerGoods(Integer disId, JSONObject item) {
-        GoodsMatchResult result = new GoodsMatchResult();
-        String name = item.getString("nxDgGoodsName");
-        String standard = item.getString("nxDgGoodsStandardname");
-        String weight = item.getString("nxDgGoodsStandardWeight");
-        String brand = item.getString("nxDgGoodsBrand");
-        
-        // 用于判断是否为同一商品的4个字段：商品名称、规格、规格重量、品牌
-        String matchName = isBlank(name) ? null : name.trim();
-        String matchStandard = isBlank(standard) ? null : standard.trim();
-        String matchWeight = isBlank(weight) ? null : weight.trim();
-        String matchBrand = isBlank(brand) ? null : brand.trim();
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("disId", disId);
-        params.put("searchStr", name);
-        // 规格是必填字段，完全匹配
-        if (!isBlank(standard)) {
-            params.put("standard", standard.trim());
-        }
-        if (!isBlank(weight)) {
-            params.put("standardWeight", weight.trim());
-        }
-        if (!isBlank(brand)) {
-            params.put("brand", brand.trim());
-        }
-
-        System.out.println("[matchDisGoods] 精准查询参数=" + params);
-        List<NxDistributerGoodsEntity> exactList = nxDistributerGoodsService.queryDisGoodsByName(params);
-        System.out.println("[matchDisGoods] 精准查询结果条数=" + (exactList == null ? 0 : exactList.size()));
-        // 使用pickDisGoods进行严格匹配（名称、规格、规格重量、品牌都要匹配）
-        NxDistributerGoodsEntity pick = pickDisGoods(exactList, matchName, matchStandard, matchWeight, matchBrand);
-        if (pick != null) {
-            result.status = MatchStatus.FOUND;
-            result.disGoods = pick;
-            result.message = "名称+规格匹配";
-            return result;
-        }
-        // 如果经过严格匹配后有多条，才返回CONFLICT
-        List<NxDistributerGoodsEntity> filteredExactList = filterDisGoodsStrict(exactList, matchName, matchStandard, matchWeight, matchBrand);
-        if (filteredExactList != null && filteredExactList.size() > 1) {
-            result.status = MatchStatus.CONFLICT;
-            result.message = "名称+规格匹配多条";
-            result.candidates = filteredExactList;
-            return result;
-        }
-
-        String pinyin = hanziToPinyin(name);
-        Map<String, Object> pinyinParams = new HashMap<>();
-        pinyinParams.put("disId", disId);
-        pinyinParams.put("searchPinyin", pinyin);
-        // 规格是必填字段，完全匹配
-        if (!isBlank(standard)) {
-            pinyinParams.put("standard", standard.trim());
-        }
-        // 规格重量和品牌也要一起查询，如果不同，则视为新商品
-        if (!isBlank(weight)) {
-            pinyinParams.put("standardWeight", weight.trim());
-        }
-        if (!isBlank(brand)) {
-            pinyinParams.put("brand", brand.trim());
-        }
-        System.out.println("[matchDisGoods] 拼音查询参数=" + pinyinParams);
-        List<NxDistributerGoodsEntity> pinyinList = nxDistributerGoodsService.queryDisGoodsByNamePinyin(pinyinParams);
-        System.out.println("[matchDisGoods] 拼音查询结果条数=" + (pinyinList == null ? 0 : pinyinList.size()));
-        // 使用pickDisGoods进行严格匹配（名称、规格、规格重量、品牌都要匹配）
-        pick = pickDisGoods(pinyinList, matchName, matchStandard, matchWeight, matchBrand);
-        if (pick != null) {
-            result.status = MatchStatus.FOUND;
-            result.disGoods = pick;
-            result.message = "拼音匹配";
-            return result;
-        }
-        // 如果经过严格匹配后有多条，才返回CONFLICT
-        List<NxDistributerGoodsEntity> filteredPinyinList = filterDisGoodsStrict(pinyinList, matchName, matchStandard, matchWeight, matchBrand);
-        if (filteredPinyinList != null && filteredPinyinList.size() > 1) {
-            result.status = MatchStatus.CONFLICT;
-            result.message = "拼音匹配多条";
-            result.candidates = filteredPinyinList;
-            return result;
-        }
-
-        Map<String, Object> aliasParams = new HashMap<>();
-        aliasParams.put("disId", disId);
-        aliasParams.put("alias", name);
-        System.out.println("[matchDisGoods] 别名查询参数=" + aliasParams);
-        List<NxDistributerGoodsEntity> aliasList = nxDistributerGoodsService.queryDisGoodsByAlias(aliasParams);
-        System.out.println("[matchDisGoods] 别名查询结果条数=" + (aliasList == null ? 0 : aliasList.size()));
-        // 使用pickDisGoods进行严格匹配（名称、规格、规格重量、品牌都要匹配）
-        pick = pickDisGoods(aliasList, matchName, matchStandard, matchWeight, matchBrand);
-        if (pick != null) {
-            result.status = MatchStatus.FOUND;
-            result.disGoods = pick;
-            result.message = "配送商别名匹配";
-            return result;
-        }
-        // 如果经过严格匹配后有多条，才返回CONFLICT
-        List<NxDistributerGoodsEntity> filteredAliasList = filterDisGoodsStrict(aliasList, matchName, matchStandard, matchWeight, matchBrand);
-        if (filteredAliasList != null && filteredAliasList.size() > 1) {
-            result.status = MatchStatus.CONFLICT;
-            result.message = "配送商别名匹配多条";
-            result.candidates = filteredAliasList;
-            return result;
-        }
-
-        result.status = MatchStatus.NOT_FOUND;
-        result.message = "配送商商品未命中";
-        return result;
-    }
-
-    private GoodsMatchResult matchNxGoods(JSONObject item) {
-        GoodsMatchResult result = new GoodsMatchResult();
-        String name = item.getString("nxDgGoodsName");
-        String standard = item.getString("nxDgGoodsStandardname");
-        String weight = item.getString("nxDgGoodsStandardWeight");
-        String brand = item.getString("nxDgGoodsBrand");
-        String place = item.getString("nxDgGoodsPlace");
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("name", name);
-        params.put("level", 3);
-        if (!isBlank(standard)) {
-            params.put("standard", standard.trim());
-        }
-        if (!isBlank(weight)) {
-            params.put("standardWeight", weight.trim());
-        }
-        if (!isBlank(brand)) {
-            params.put("brand", brand.trim());
-        }
-
-
-        System.out.println("[matchNxGoods] 精准查询参数=" + params);
-        List<NxGoodsEntity> list = nxGoodsService.queryNxGoodsByParams(params);
-        System.out.println("[matchNxGoods] 精准查询结果条数=" + (list == null ? 0 : list.size()));
-        if (list == null || list.isEmpty()) {
-            Map<String, Object> fallbackParams = new HashMap<>(params);
-            fallbackParams.remove("level");
-            System.out.println("[matchNxGoods] 精准查询(无level)参数=" + fallbackParams);
-            list = nxGoodsService.queryNxGoodsByParams(fallbackParams);
-            System.out.println("[matchNxGoods] 精准查询(无level)结果条数=" + (list == null ? 0 : list.size()));
-        }
-
-        NxGoodsEntity pick = pickNxGoods(list, standard, weight, brand);
-        if (pick != null) {
-            result.status = MatchStatus.FOUND;
-            result.nxGoods = pick;
-            result.message = "系统商品命中";
-            return result;
-        }
-        if (list != null && list.size() > 1) {
-            result.status = MatchStatus.CONFLICT;
-            result.message = "系统商品匹配多条";
-            result.nxCandidates = list;
-            return result;
-        }
-
-        Map<String, Object> aliasParams = new HashMap<>();
-        aliasParams.put("name", name);
-        System.out.println("[matchNxGoods] 别名查询参数=" + aliasParams);
-        List<NxGoodsEntity> aliasList = nxAliasService.queryNxGoodsByName(aliasParams);
-        System.out.println("[matchNxGoods] 别名查询结果条数=" + (aliasList == null ? 0 : aliasList.size()));
-        pick = pickNxGoods(aliasList, standard, weight, brand);
-        if (pick != null) {
-            result.status = MatchStatus.FOUND;
-            result.nxGoods = pick;
-            result.message = "系统别名命中";
-            return result;
-        }
-        if (aliasList != null && aliasList.size() > 1) {
-            result.status = MatchStatus.CONFLICT;
-            result.message = "系统别名匹配多条";
-            result.nxCandidates = aliasList;
-            return result;
-        }
-
-        result.status = MatchStatus.NOT_FOUND;
-        result.message = "系统商品未命中";
-        return result;
-    }
-
-    private NxDistributerGoodsEntity downloadNxGoods(Integer disId, NxGoodsEntity nxGoods, JSONObject resultItem) {
-        System.out.println("[pasteSearchGoodsForShelf] 下载系统商品 nxGoodsId=" + nxGoods.getNxGoodsId());
-
-        Map<String, Object> checkParams = new HashMap<>();
-        checkParams.put("disId", disId);
-        checkParams.put("goodsId", nxGoods.getNxGoodsId());
-        List<NxDistributerGoodsEntity> exists = nxDistributerGoodsService.queryDisGoodsByParams(checkParams);
-        if (exists != null && !exists.isEmpty()) {
-            resultItem.put("message", "商品已下载，直接使用");
-            return exists.get(0);
-        }
-
-        NxGoodsEntity detail = nxGoodsService.queryObject(nxGoods.getNxGoodsId());
-        NxDistributerGoodsEntity goods = buildBaseDisGoods(detail, disId);
-        assignDistributerHierarchy(goods, detail);
-        persistDisGoods(goods, detail);
-        copyStandardsAndAlias(goods, detail);
-
-        resultItem.put("downloadFromNxGoodsId", detail.getNxGoodsId());
-        return goods;
-    }
-
-    private NxDistributerGoodsEntity buildBaseDisGoods(NxGoodsEntity detail, Integer disId) {
-        NxDistributerGoodsEntity goods = new NxDistributerGoodsEntity();
-        goods.setNxDgDistributerId(disId);
-        goods.setNxDgNxGoodsId(detail.getNxGoodsId());
-        goods.setNxDgGoodsName(detail.getNxGoodsName());
-        goods.setNxDgGoodsStandardname(detail.getNxGoodsStandardname());
-        goods.setNxDgGoodsStandardWeight(detail.getNxGoodsStandardWeight());
-        goods.setNxDgGoodsBrand(detail.getNxGoodsBrand());
-        goods.setNxDgGoodsPlace(detail.getNxGoodsPlace());
-        goods.setNxDgGoodsDetail(detail.getNxGoodsDetail());
-        goods.setNxDgGoodsFile(detail.getNxGoodsFile());
-        goods.setNxDgGoodsFileLarge(detail.getNxGoodsFileBig());
-        goods.setNxDgGoodsPinyin(detail.getNxGoodsPinyin());
-        goods.setNxDgGoodsPy(detail.getNxGoodsPy());
-        goods.setNxDgGoodsStatus(1);
-        goods.setNxDgPullOff(0);
-        goods.setNxDgGoodsIsHidden(0);
-        goods.setNxDgPurchaseAuto(-1);
-        goods.setNxDgBuyingPrice("0.1");
-        goods.setNxDgWillPrice("0.1");
-        goods.setNxDgBuyingPriceOne("0.1");
-        goods.setNxDgBuyingPriceOneUpdate(formatWhatDate(0));
-        goods.setNxDgWillPriceOneStandard(goods.getNxDgGoodsStandardname());
-        goods.setNxDgWillPriceOne("0.1");
-        goods.setNxDgWillPriceOneAboutPrice("0.1");
-        goods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
-        goods.setNxDgQuantityDays(detail.getNxGoodsQuantityDays());
-        goods.setNxDgGoodsSort(detail.getNxGoodsSort());
-        goods.setNxDgGoodsSonsSort(detail.getNxGoodsSonsSort());
-        goods.setNxDgOutTotalWeight("0");
-        goods.setNxDgCartonUnit(detail.getNxGoodsCartonUnit());
-        goods.setNxDgItemsPerCarton(detail.getNxGoodsItemsPerCarton());
-
-        if (detail.getFatherGoods() != null) {
-            goods.setNxDgNxFatherId(detail.getFatherGoods().getNxGoodsId());
-            goods.setNxDgNxFatherName(detail.getFatherGoods().getNxGoodsName());
-            goods.setNxDgNxFatherImg(detail.getFatherGoods().getNxGoodsFile());
-        }
-        if (detail.getGrandGoods() != null) {
-            goods.setNxDgNxGrandId(detail.getGrandGoods().getNxGoodsId());
-            goods.setNxDgNxGrandName(detail.getGrandGoods().getNxGoodsName());
-        }
-        if (detail.getGreatGrandGoods() != null) {
-            goods.setNxDgNxGreatGrandId(detail.getGreatGrandGoods().getNxGoodsId());
-            goods.setNxDgNxGreatGrandName(detail.getGreatGrandGoods().getNxGoodsName());
-            goods.setNxDgNxGoodsFatherColor(detail.getGreatGrandGoods().getColor());
-        }
-        return goods;
-    }
-
-    private void assignDistributerHierarchy(NxDistributerGoodsEntity goods, NxGoodsEntity detail) {
-        Integer disId = goods.getNxDgDistributerId();
-        Integer nxFatherId = goods.getNxDgNxFatherId();
-
-        if (nxFatherId == null) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("disId", disId);
-            map.put("nxGoodsId", -1);
-            map.put("goodsLevel", 2);
-            List<NxDistributerFatherGoodsEntity> fallback = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
-            if (fallback == null || fallback.isEmpty()) {
-                throw new RuntimeException("未找到配送商默认父级类目");
-            }
-            NxDistributerFatherGoodsEntity entity = fallback.get(0);
-            goods.setNxDgDfgGoodsFatherId(entity.getNxDistributerFatherGoodsId());
-            goods.setNxDgDfgGoodsGrandId(entity.getNxDfgFathersFatherId());
-            entity.setNxDfgGoodsAmount((entity.getNxDfgGoodsAmount() == null ? 0 : entity.getNxDfgGoodsAmount()) + 1);
-            nxDistributerFatherGoodsService.update(entity);
-            return;
-        }
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("nxFatherId", nxFatherId);
-        List<NxDistributerGoodsEntity> sameFatherGoods = nxDistributerGoodsService.queryDisGoodsByParams(map);
-
-        if (sameFatherGoods != null && !sameFatherGoods.isEmpty()) {
-            NxDistributerGoodsEntity sample = sameFatherGoods.get(0);
-            Integer fatherId = sample.getNxDgDfgGoodsFatherId();
-            NxDistributerFatherGoodsEntity father = nxDistributerFatherGoodsService.queryObject(fatherId);
-            if (father != null) {
-                father.setNxDfgGoodsAmount((father.getNxDfgGoodsAmount() == null ? 0 : father.getNxDfgGoodsAmount()) + 1);
-                nxDistributerFatherGoodsService.update(father);
-            }
-            goods.setNxDgDfgGoodsFatherId(fatherId);
-            goods.setNxDgDfgGoodsGrandId(sample.getNxDgDfgGoodsGrandId());
-        } else {
-            createHierarchyForDisGoods(goods, detail);
-        }
-    }
-
-    private void createHierarchyForDisGoods(NxDistributerGoodsEntity goods, NxGoodsEntity detail) {
-        Integer disId = goods.getNxDgDistributerId();
-        NxDistributerFatherGoodsEntity father = new NxDistributerFatherGoodsEntity();
-        father.setNxDfgDistributerId(disId);
-        father.setNxDfgFatherGoodsName(goods.getNxDgNxFatherName());
-        father.setNxDfgFatherGoodsLevel(2);
-        father.setNxDfgGoodsAmount(1);
-        father.setNxDfgFatherGoodsImg(goods.getNxDgNxFatherImg());
-        father.setNxDfgFatherGoodsColor(goods.getNxDgNxGoodsFatherColor());
-        father.setNxDfgFatherGoodsSort(detail.getFatherGoods() == null ? 0 : detail.getFatherGoods().getNxGoodsSort());
-        father.setNxDfgNxGoodsId(goods.getNxDgNxFatherId());
-        nxDistributerFatherGoodsService.save(father);
-
-        NxDistributerFatherGoodsEntity grand = ensureFatherHierarchy(disId, goods.getNxDgNxGrandName(),
-                goods.getNxDgNxGrandId(), goods.getNxDgNxGoodsFatherColor(),
-                detail.getGrandGoods() == null ? 0 : detail.getGrandGoods().getNxGoodsSort(), father);
-
-        ensureGreatGrandHierarchy(disId, goods, detail, grand);
-
-        goods.setNxDgDfgGoodsFatherId(father.getNxDistributerFatherGoodsId());
-        goods.setNxDgDfgGoodsGrandId(grand.getNxDistributerFatherGoodsId());
-    }
-    private NxDistributerFatherGoodsEntity ensureFatherHierarchy(Integer disId, String name, Integer nxGoodsId,
-                                                                 String color, Integer sort,
-                                                                 NxDistributerFatherGoodsEntity father) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("fathersFatherName", name);
-        List<NxDistributerFatherGoodsEntity> existed = nxDistributerFatherGoodsService.queryHasDisFathersFather(map);
-        if (existed != null && !existed.isEmpty()) {
-            NxDistributerFatherGoodsEntity grand = existed.get(0);
-            father.setNxDfgFathersFatherId(grand.getNxDistributerFatherGoodsId());
-            nxDistributerFatherGoodsService.update(father);
-            return grand;
-        }
-
-        NxDistributerFatherGoodsEntity grand = new NxDistributerFatherGoodsEntity();
-        grand.setNxDfgFatherGoodsName(name);
-        grand.setNxDfgDistributerId(disId);
-        grand.setNxDfgFatherGoodsLevel(1);
-        grand.setNxDfgGoodsAmount(1);
-        grand.setNxDfgFatherGoodsColor(color);
-        grand.setNxDfgNxGoodsId(nxGoodsId);
-        grand.setNxDfgFatherGoodsSort(sort);
-        nxDistributerFatherGoodsService.save(grand);
-
-        father.setNxDfgFathersFatherId(grand.getNxDistributerFatherGoodsId());
-        nxDistributerFatherGoodsService.update(father);
-        return grand;
-    }
-
-    private void ensureGreatGrandHierarchy(Integer disId, NxDistributerGoodsEntity goods,
-                                            NxGoodsEntity detail, NxDistributerFatherGoodsEntity grand) {
-        String greatName = goods.getNxDgNxGreatGrandName();
-        if (greatName == null) {
-            return;
-        }
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("fathersFatherName", greatName);
-        List<NxDistributerFatherGoodsEntity> existed = nxDistributerFatherGoodsService.queryHasDisFathersFather(map);
-        if (existed != null && !existed.isEmpty()) {
-            NxDistributerFatherGoodsEntity great = existed.get(0);
-            grand.setNxDfgFathersFatherId(great.getNxDistributerFatherGoodsId());
-            nxDistributerFatherGoodsService.update(grand);
-            return;
-        }
-
-        NxDistributerFatherGoodsEntity great = new NxDistributerFatherGoodsEntity();
-        great.setNxDfgFatherGoodsName(greatName);
-        great.setNxDfgDistributerId(disId);
-        great.setNxDfgFatherGoodsLevel(0);
-        great.setNxDfgFatherGoodsColor(goods.getNxDgNxGoodsFatherColor());
-        great.setNxDfgNxGoodsId(goods.getNxDgNxGreatGrandId());
-        if (detail.getGreatGrandGoods() != null && detail.getGreatGrandGoods().getFatherGoods() != null) {
-            great.setNxDfgFatherGoodsImg(detail.getGreatGrandGoods().getFatherGoods().getNxGoodsFile());
-            great.setNxDfgFatherGoodsSort(detail.getGreatGrandGoods().getFatherGoods().getNxGoodsSort());
-        }
-        great.setNxDfgGoodsAmount(1);
-        nxDistributerFatherGoodsService.save(great);
-
-        grand.setNxDfgFathersFatherId(great.getNxDistributerFatherGoodsId());
-        nxDistributerFatherGoodsService.update(grand);
-    }
-
-    private void persistDisGoods(NxDistributerGoodsEntity goods, NxGoodsEntity detail) {
-        nxDistributerGoodsService.save(goods);
-    }
-
-    private void copyStandardsAndAlias(NxDistributerGoodsEntity goods, NxGoodsEntity detail) {
-        if (detail.getNxGoodsStandardEntities() != null) {
-            for (NxStandardEntity standardEntity : detail.getNxGoodsStandardEntities()) {
-                NxDistributerStandardEntity disStandard = new NxDistributerStandardEntity();
-                disStandard.setNxDsDisGoodsId(goods.getNxDistributerGoodsId());
-                disStandard.setNxDsStandardName(standardEntity.getNxStandardName());
-                disStandard.setNxDsStandardError(standardEntity.getNxStandardError());
-                disStandard.setNxDsStandardScale(standardEntity.getNxStandardScale());
-                disStandard.setNxDsStandardFilePath(standardEntity.getNxStandardFilePath());
-                disStandard.setNxDsStandardSort(standardEntity.getNxStandardSort());
-                nxDistributerStandardService.save(disStandard);
-            }
-        }
-        if (detail.getNxAliasEntities() != null) {
-            for (NxAliasEntity aliasEntity : detail.getNxAliasEntities()) {
-                NxDistributerAliasEntity disAlias = new NxDistributerAliasEntity();
-                disAlias.setNxDaDisGoodsId(goods.getNxDistributerGoodsId());
-                disAlias.setNxDaAliasName(aliasEntity.getNxAliasName());
-                nxDistributerAliasService.save(disAlias);
-            }
-        }
-    }
-
-    private NxDistributerGoodsEntity createTemporaryGoods(Integer disId, JSONObject item, JSONObject resultItem) {
-        String goodsName = item.getString("nxDgGoodsName");
-        System.out.println("[pasteSearchGoodsForShelf] 创建临时商品 " + goodsName);
-
-        // 检查是否已存在相同商品（需要匹配：名称、规格、规格重量、品牌）
-        Map<String, Object> checkParams = new HashMap<>();
-        checkParams.put("disId", disId);
-        checkParams.put("searchStr", goodsName);
-        checkParams.put("standard", item.getString("nxDgGoodsStandardname"));
-        String standardWeight = blankToNull(item.getString("nxDgGoodsStandardWeight"));
-        String brand = blankToNull(item.getString("nxDgGoodsBrand"));
-        if (standardWeight != null) {
-            checkParams.put("standardWeight", standardWeight);
-        }
-        if (brand != null) {
-            checkParams.put("brand", brand);
-        }
-        List<NxDistributerGoodsEntity> existing = nxDistributerGoodsService.queryDisGoodsByName(checkParams);
-        // 使用pickDisGoods的逻辑进行严格匹配
-        NxDistributerGoodsEntity matched = pickDisGoods(existing, goodsName, 
-                item.getString("nxDgGoodsStandardname"), standardWeight, brand);
-        if (matched != null) {
-            System.out.println("[pasteSearchGoodsForShelf] 配送商已存在相同商品，商品ID=" + matched.getNxDistributerGoodsId() + 
-                    ", 名称=" + matched.getNxDgGoodsName() + ", 规格=" + matched.getNxDgGoodsStandardname() + 
-                    ", 规格重量=" + matched.getNxDgGoodsStandardWeight() + ", 品牌=" + matched.getNxDgGoodsBrand());
-            throw new RuntimeException("配送商已存在相同商品");
-        }
-
-        NxDistributerGoodsEntity goods = new NxDistributerGoodsEntity();
-        goods.setNxDgDistributerId(disId);
-        goods.setNxDgGoodsName(goodsName);
-        goods.setNxDgGoodsStandardname(item.getString("nxDgGoodsStandardname"));
-        goods.setNxDgGoodsStandardWeight(blankToNull(item.getString("nxDgGoodsStandardWeight")));
-        goods.setNxDgGoodsBrand(blankToNull(item.getString("nxDgGoodsBrand")));
-        goods.setNxDgGoodsPlace(blankToNull(item.getString("nxDgGoodsPlace")));
-        // 外包装相关字段
-        goods.setNxDgCartonUnit(blankToNull(item.getString("nxDgCartonUnit")));
-        Object itemsPerCartonObj = item.get("nxDgItemsPerCarton");
-        if (itemsPerCartonObj != null) {
-            if (itemsPerCartonObj instanceof Integer) {
-                goods.setNxDgItemsPerCarton((Integer) itemsPerCartonObj);
-            } else if (itemsPerCartonObj instanceof String) {
-                String itemsPerCartonStr = ((String) itemsPerCartonObj).trim();
-                if (!itemsPerCartonStr.isEmpty()) {
-                    try {
-                        goods.setNxDgItemsPerCarton(Integer.parseInt(itemsPerCartonStr));
-                    } catch (NumberFormatException e) {
-                        // 忽略格式错误，不设置该字段
-                    }
-                }
-            }
-        }
-        goods.setNxDgGoodsStatus(0);
-        goods.setNxDgPullOff(0);
-        goods.setNxDgGoodsIsHidden(0);
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("nxGoodsId", -1);
-        map.put("goodsLevel", 2);
-        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
-        if (fatherGoodsEntities == null || fatherGoodsEntities.isEmpty()) {
-            throw new RuntimeException("未找到可用的配送商父级类目");
-        }
-        NxDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsEntities.get(0);
-        goods.setNxDgDfgGoodsFatherId(fatherGoodsEntity.getNxDistributerFatherGoodsId());
-        goods.setNxDgDfgGoodsGrandId(fatherGoodsEntity.getNxDfgFathersFatherId());
-
-        goods.setNxDgPurchaseAuto(-1);
-        goods.setNxDgWillPrice("0.1");
-        goods.setNxDgBuyingPrice("0.1");
-        goods.setNxDgBuyingPriceOne("0.1");
-        goods.setNxDgBuyingPriceOneUpdate(formatWhatDate(0));
-        goods.setNxDgWillPriceOneStandard(goods.getNxDgGoodsStandardname());
-        goods.setNxDgWillPriceOne("0.1");
-        goods.setNxDgWillPriceOneAboutPrice("0.1");
-        goods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
-        goods.setNxDgOutTotalWeight("0");
-
-        String englishKuohao = getEnglishKuohao(goodsName);
-        String pinyin = hanziToPinyin(englishKuohao);
-        String headPinyin = getHeadStringByString(englishKuohao, false, null);
-        goods.setNxDgGoodsPinyin(pinyin);
-        goods.setNxDgGoodsPy(headPinyin);
-
-        nxDistributerGoodsService.save(goods);
-
-        Integer amount = fatherGoodsEntity.getNxDfgGoodsAmount();
-        fatherGoodsEntity.setNxDfgGoodsAmount((amount == null ? 0 : amount) + 1);
-        nxDistributerFatherGoodsService.update(fatherGoodsEntity);
-
-        resultItem.put("createdTemp", true);
-        return goods;
-    }
-    private ShelfInsertResult insertShelfGoods(Integer disGoodsId, Integer shelfId, int targetSort) {
-        ShelfInsertResult result = new ShelfInsertResult();
-
-        Map<String, Object> checkMap = new HashMap<>();
-        checkMap.put("disGoodsId", disGoodsId);
-        checkMap.put("shelfId", shelfId);
-        List<NxDistributerGoodsShelfGoodsEntity> existed = shelfGoodsService.queryShelfForGoodsByParams(checkMap);
-        if (existed != null && !existed.isEmpty()) {
-            System.out.println("[pasteSearchGoodsForShelf] 货架已存在商品 disGoodsId=" + disGoodsId);
-            result.existed = true;
-            result.shelfGoods = existed.get(0);
-            return result;
-        }
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("dayuSort", targetSort - 1);
-        map.put("shelfId", shelfId);
-        List<NxDistributerGoodsShelfGoodsEntity> needAdjust = shelfGoodsService.queryShelfForGoodsByParams(map);
-        if (needAdjust != null) {
-            for (int i = 0; i < needAdjust.size(); i++) {
-                NxDistributerGoodsShelfGoodsEntity entity = needAdjust.get(i);
-                entity.setNxDgsgSort(targetSort + i + 1);
-                shelfGoodsService.update(entity);
-            }
-        }
-
-        NxDistributerGoodsEntity disGoods = nxDistributerGoodsService.queryObject(disGoodsId);
-        if (disGoods != null) {
-            disGoods.setNxDgPurchaseAuto(-1);
-            nxDistributerGoodsService.update(disGoods);
-        }
-
-        NxDistributerGoodsShelfGoodsEntity shelfGoods = new NxDistributerGoodsShelfGoodsEntity();
-        shelfGoods.setNxDgsgShelfId(shelfId);
-        shelfGoods.setNxDgsgDisGoodsId(disGoodsId);
-        shelfGoods.setNxDgsgSort(targetSort);
-        shelfGoodsService.save(shelfGoods);
-        result.shelfGoods = shelfGoods;
-        result.existed = false;
-        
-        // 更新该商品的重复标记（新添加后需要重新计算）
-        shelfGoodsService.updateDuplicateFlagForGoods(disGoodsId);
-        
-        return result;
-    }
-
-    private static class ShelfInsertResult {
-        NxDistributerGoodsShelfGoodsEntity shelfGoods;
-        boolean existed;
-    }
-
-    private JSONArray buildDisCandidateArray(List<NxDistributerGoodsEntity> candidates) {
-        JSONArray array = new JSONArray();
-        if (candidates != null) {
-            for (NxDistributerGoodsEntity candidate : candidates) {
-                JSONObject obj = new JSONObject();
-                obj.put("disGoodsId", candidate.getNxDistributerGoodsId());
-                obj.put("name", candidate.getNxDgGoodsName());
-                obj.put("standard", candidate.getNxDgGoodsStandardname());
-                obj.put("brand", candidate.getNxDgGoodsBrand());
-                obj.put("place", candidate.getNxDgGoodsPlace());
-                array.add(obj);
-            }
-        }
-        return array;
-    }
-
-    private JSONArray buildNxCandidateArray(List<NxGoodsEntity> candidates) {
-        JSONArray array = new JSONArray();
-        if (candidates != null) {
-            for (NxGoodsEntity candidate : candidates) {
-                JSONObject obj = new JSONObject();
-                obj.put("nxGoodsId", candidate.getNxGoodsId());
-                obj.put("name", candidate.getNxGoodsName());
-                obj.put("standard", candidate.getNxGoodsStandardname());
-                obj.put("brand", candidate.getNxGoodsBrand());
-                obj.put("place", candidate.getNxGoodsPlace());
-                array.add(obj);
-            }
-        }
-        return array;
-    }
-
-    /**
-     * 从商品列表中挑选匹配的配送商品
-     * 判断规则：
-     * 1. 商品名称（必填）：必须相同
-     * 2. 规格（必填）：必须相同
-     * 3. 规格重量（可选）：如果有值，必须相同；如果查询的商品为空，数据库商品也必须为空
-     * 4. 品牌（可选）：如果有值，必须相同；如果查询的商品为空，数据库商品也必须为空
-     * 只要有一个字段不匹配，就视为不同的商品
-     */
-    private NxDistributerGoodsEntity pickDisGoods(List<NxDistributerGoodsEntity> list,
-                                                  String name, String standard, String weight, String brand) {
-        List<NxDistributerGoodsEntity> filtered = filterDisGoodsStrict(list, name, standard, weight, brand);
-        return filtered != null && filtered.size() == 1 ? filtered.get(0) : null;
-    }
-
-    /**
-     * 从商品列表中过滤出严格匹配的配送商品列表
-     * 判断规则同pickDisGoods，但返回所有匹配的商品列表
-     */
-    private List<NxDistributerGoodsEntity> filterDisGoodsStrict(List<NxDistributerGoodsEntity> list,
-                                                                 String name, String standard, String weight, String brand) {
-        if (list == null || list.isEmpty()) {
-            return null;
-        }
-        // 商品名称和规格是必填的，必须相同
-        // 规格重量和品牌：如果有值，必须相同；如果查询的商品为空，数据库商品也必须为空
-        List<NxDistributerGoodsEntity> filtered = list.stream()
-                .filter(item -> {
-                    // 商品名称必须相同（必填，不应为空）
-                    if (isBlank(name) || isBlank(item.getNxDgGoodsName())) {
-                        return false;
-                    }
-                    return name.trim().equals(item.getNxDgGoodsName().trim());
-                })
-                .filter(item -> {
-                    // 规格必须相同（必填，不应为空）
-                    if (isBlank(standard) || isBlank(item.getNxDgGoodsStandardname())) {
-                        return false;
-                    }
-                    return standard.trim().equals(item.getNxDgGoodsStandardname().trim());
-                })
-                .filter(item -> matchStringStrict(item.getNxDgGoodsStandardWeight(), weight))  // 规格重量：有则相同，无则都无
-                .filter(item -> matchStringStrict(item.getNxDgGoodsBrand(), brand))  // 品牌：有则相同，无则都无
-                .collect(Collectors.toList());
-        return filtered.isEmpty() ? null : filtered;
-    }
-
-    private NxGoodsEntity pickNxGoods(List<NxGoodsEntity> list,
-                                      String standard, String weight, String brand) {
-        if (list == null || list.isEmpty()) {
-            return null;
-        }
-        if (list.size() == 1) {
-            return list.get(0);
-        }
-        List<NxGoodsEntity> filtered = list.stream()
-                .filter(item -> matchString(item.getNxGoodsStandardname(), standard))
-                .filter(item -> matchString(item.getNxGoodsStandardWeight(), weight))
-                .filter(item -> matchString(item.getNxGoodsBrand(), brand))
-                .collect(Collectors.toList());
-        return filtered.size() == 1 ? filtered.get(0) : null;
-    }
-
-    private boolean matchString(String actual, String expected) {
-        if (isBlank(expected)) {
-            return true;
-        }
-        return actual != null && actual.trim().equals(expected.trim());
-    }
-
-    /**
-     * 严格匹配字符串：用于判断商品的可选字段（规格重量、品牌）是否为同一个
-     * 规则：
-     * - 如果查询的商品字段有值，数据库商品字段也必须有相同值才匹配
-     * - 如果查询的商品字段为空，数据库商品字段也必须为空才匹配
-     * - 如果查询的商品字段有值但数据库商品字段为空，或不匹配，返回false
-     * 
-     * @param actual 数据库中的实际值
-     * @param expected 查询时传入的期望值
-     * @return true表示匹配，false表示不匹配
-     */
-    private boolean matchStringStrict(String actual, String expected) {
-        // 如果查询的商品字段为空，数据库商品字段也必须为空才匹配
-        if (isBlank(expected)) {
-            return isBlank(actual);
-        }
-        // 如果查询的商品字段有值，数据库商品字段也必须有相同值才匹配
-        if (isBlank(actual)) {
-            return false;  // 查询有值但数据库为空，不匹配
-        }
-        return actual.trim().equals(expected.trim());  // 都有值，必须内容相同
-    }
-
-    private String blankToNull(String source) {
-        return isBlank(source) ? null : source.trim();
-    }
-
-    private boolean isBlank(String str) {
-        return str == null || str.trim().isEmpty();
-    }
-
-    private enum MatchStatus {
-        FOUND,
-        CONFLICT,
-        NOT_FOUND,
-        ERROR
-    }
-
-    private static class GoodsMatchResult {
-        MatchStatus status = MatchStatus.NOT_FOUND;
-        NxDistributerGoodsEntity disGoods;
-        List<NxDistributerGoodsEntity> candidates;
-        NxGoodsEntity nxGoods;
-        List<NxGoodsEntity> nxCandidates;
-        String message;
-    }
-
-
-    @RequestMapping(value = "/depPasteSearchGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R depPasteSearchGoods(@RequestBody List<NxDepartmentOrdersEntity> orderList) {
-        List<NxDepartmentOrdersEntity> returnList = new ArrayList<>();
-        for (NxDepartmentOrdersEntity ordersEntity : orderList) {
-
-
-            if (ordersEntity.getNxDoRemark().equals("-1")) {
-                ordersEntity.setNxDoRemark(null);
-            }
-
-            // 第一条件：部门商品搜索
-            Map<String, Object> map = new HashMap<>();
-            map.put("depId", ordersEntity.getNxDoDepartmentId());
-            map.put("name", ordersEntity.getNxDoGoodsName());
-            System.out.println("部门商品搜索" + map);
-            List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepartmentDisGoodsService.queryDepDisGoodsByParams(map);
-            if (departmentDisGoodsEntities.size() == 1) {
-                NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity = departmentDisGoodsEntities.get(0);
-                Integer nxDdgDisGoodsId = nxDepartmentDisGoodsEntity.getNxDdgDisGoodsId();
-                NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(nxDdgDisGoodsId);
-                returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-            } else {
-                // 第二条件：商品名称+规格搜索
-                Map<String, Object> mapZero = new HashMap<>();
-                String goodsName = ordersEntity.getNxDoGoodsName();
-                mapZero.put("disId", ordersEntity.getNxDoDistributerId());
-                mapZero.put("searchStr", goodsName);
-                mapZero.put("standard", ordersEntity.getNxDoStandard());
-                mapZero.put("nxGoodsId", 1);
-                System.out.println("商品名称+规格搜索brand" + mapZero + "ordername--------------------" + ordersEntity.getNxDoGoodsName());
-                List<NxDistributerGoodsEntity> distributerGoodsEntitiesZero = nxDistributerGoodsService.queryDisGoodsByName(mapZero);
-                System.out.println("resultteslsutltlt----zero" + distributerGoodsEntitiesZero.size());
-                // 一级 没有修改商品
-                if (distributerGoodsEntitiesZero.size() == 0) {
-                    //别名搜索
-                    Map<String, Object> mapAlias = new HashMap<>();
-                    mapAlias.put("disId", ordersEntity.getNxDoDistributerId());
-                    mapAlias.put("alias", goodsName);
-                    System.out.println("别名搜索" + mapAlias);
-                    List<NxDistributerGoodsEntity> distributerGoodsEntitiesOne = nxDistributerGoodsService.queryDisGoodsByAlias(mapAlias);
-                    if (distributerGoodsEntitiesOne.size() == 0) {
-                        mapZero.put("standard", null);
-                        System.out.println("仅商品名称搜索" + mapZero);
-                        List<NxDistributerGoodsEntity> distributerGoodsEntitiesTwo = nxDistributerGoodsService.queryDisGoodsByName(mapZero);
-                        if (distributerGoodsEntitiesTwo.size() == 0) {
-                            System.out.println("商品名称拼音相同" + mapZero);
-                            //1, 查拼音
-                            String pinyinString = goodsName;
-// 如果包含汉字才转换，否则直接用原名
-                            if (goodsName.matches(".*[\u4E00-\u9FFF]+.*")) {
-                                pinyinString = hanziToPinyin(goodsName);
-                            }
-                            Map<String, Object> mapTwo = new HashMap<>();
-                            mapTwo.put("disId", ordersEntity.getNxDoDistributerId());
-                            mapTwo.put("searchPinyin", pinyinString);
-                            mapTwo.put("nxGoodsId", 1);
-                            List<NxDistributerGoodsEntity> distributerGoodsEntitiesThree = nxDistributerGoodsService.queryDisGoodsByNamePinyin(mapTwo);
-                            if (distributerGoodsEntitiesThree.size() == 0) {
-                                returnList.add(saveLinshiGoodsForPasteOrder(ordersEntity));
-                            } else if (distributerGoodsEntitiesThree.size() == 1) {
-                                NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesThree.get(0);
-                                NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                            } else {
-                                System.out.println("多个distributerGoodsEntitiesThree拼音相同");
-                                returnList.add(saveLinshiGoodsForPasteOrder(ordersEntity));
-                            }
-
-                        } else if (distributerGoodsEntitiesTwo.size() == 1) {
-                            //1 保存订单
-                            NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesTwo.get(0);
-                            NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                            returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-                        } else {
-                            System.out.println("多个distributerGoodsEntitiesTwo相同");
-                            returnList.add(saveLinshiGoodsForPasteOrder(ordersEntity));
-                        }
-
-                    } else if (distributerGoodsEntitiesOne.size() == 1) {
-                        System.out.println("zeooo=====111111111");
-                        NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesOne.get(0);
-                        returnList.add(saveOneOrder(ordersEntity, disGoodsEntity));
-                    } else {
-                        System.out.println("多个distributerGoodsEntitiesOne相同");
-                        returnList.add(saveLinshiGoodsForPasteOrder(ordersEntity));
-                    }
-
-                } else {
-                    if (distributerGoodsEntitiesZero.size() == 1) {
-                        System.out.println("zeooo=====111111111");
-                        NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesZero.get(0);
-                        returnList.add(saveOneOrder(ordersEntity, disGoodsEntity));
-                    } else {
-                        System.out.println("多个mapZero结果商品名称+规格搜索");
-                        returnList.add(saveLinshiGoodsForPasteOrder(ordersEntity));
-                    }
-                }
-            }
-
-        }
-
-        return R.ok().put("data", returnList);
-    }
-
-
-    private NxDepartmentOrdersEntity saveLinshiGoodsForPasteOrder(NxDepartmentOrdersEntity ordersEntity) {
-
-        String goodsName = ordersEntity.getNxDoGoodsName();
-        String goodsStandard = ordersEntity.getNxDoStandard();
-        Integer disId = ordersEntity.getNxDoDistributerId();
-
-
-        NxDistributerGoodsEntity goods = new NxDistributerGoodsEntity();
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("nxGoodsId", -1);
-        map.put("goodsLevel", 2);
-        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDistributerFatherGoodsService.queryDisFathersGoodsByParams(map);
-        NxDistributerFatherGoodsEntity fatherGoodsEntity = fatherGoodsEntities.get(0);
-        goods.setNxDgDfgGoodsFatherId(fatherGoodsEntity.getNxDistributerFatherGoodsId());
-        goods.setNxDgDfgGoodsGrandId(fatherGoodsEntity.getNxDfgFathersFatherId());
-        goods.setNxDgPurchaseAuto(-1);
-        goods.setNxDgDistributerId(disId);
-        goods.setNxDgGoodsFile("logo.jpg");
-        goods.setNxDgGoodsFileLarge("");
-        goods.setNxDgGoodsName(goodsName);
-        String pinyin = hanziToPinyin(goodsName);
-        String headPinyin = getHeadStringByString(goodsName, false, null);
-        goods.setNxDgGoodsPinyin(pinyin);
-        goods.setNxDgGoodsPy(headPinyin);
-        goods.setNxDgDistributerId(disId);
-        goods.setNxDgBuyingPriceIsGrade(0);
-        goods.setNxDgBuyingPrice("0.1");
-        goods.setNxDgWillPrice("0.1");
-        goods.setNxDgBuyingPriceOne("0.1");
-        goods.setNxDgBuyingPriceOneUpdate(formatWhatDate(0));
-        goods.setNxDgWillPriceOneStandard(goods.getNxDgGoodsStandardname());
-        goods.setNxDgWillPriceOne("0.1");
-        goods.setNxDgWillPriceOneAboutPrice("0.1");
-        goods.setNxDgGoodsIsHidden(0);
-        goods.setNxDgGoodsStandardname(ordersEntity.getNxDoStandard());
-        goods.setNxDgBuyingPriceUpdate(formatWhatDay(0));
-        System.out.println("savegoogog" + goods);
-        goods.setNxDgOutTotalWeight("0");
-        goods.setNxDgPullOff(0);
-        goods.setNxDgGoodsStatus(0);
-        nxDistributerGoodsService.save(goods);
-
-        Integer gbDfgGoodsAmount = fatherGoodsEntity.getNxDfgGoodsAmount();
-        fatherGoodsEntity.setNxDfgGoodsAmount(gbDfgGoodsAmount + 1);
-        nxDistributerFatherGoodsService.update(fatherGoodsEntity);
-
-        ordersEntity.setNxDoDisGoodsId(goods.getNxDistributerGoodsId());
-        ordersEntity.setNxDoDisGoodsFatherId(fatherGoodsEntity.getNxDistributerFatherGoodsId());
-        ordersEntity.setNxDoDisGoodsGrandId(fatherGoodsEntity.getNxDfgFathersFatherId());
-        ordersEntity.setNxDoStatus(-2);
-        ordersEntity.setNxDoArriveDate(formatWhatDate(0));
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-        ordersEntity.setNxDoApplyDate(formatWhatDay(0));
-        ordersEntity.setNxDoArriveOnlyDate(formatWhatDate(0));
-        ordersEntity.setNxDoArriveWeeksYear(getWeekOfYear(0));
-        ordersEntity.setNxDoArriveDate(formatWhatDay(0));
-        ordersEntity.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        ordersEntity.setNxDoApplyOnlyTime(formatWhatTime(0));
-        ordersEntity.setNxDoGbDistributerId(-1);
-        ordersEntity.setNxDoGbDepartmentFatherId(-1);
-        ordersEntity.setNxDoGbDepartmentId(-1);
-        ordersEntity.setNxDoNxCommunityId(-1);
-        ordersEntity.setNxDoNxCommRestrauntFatherId(-1);
-        ordersEntity.setNxDoNxCommRestrauntId(-1);
-        ordersEntity.setNxDoProfitSubtotal("0");
-        ordersEntity.setNxDoProfitScale("0");
-        ordersEntity.setNxDoCostPriceLevel("1");
-        ordersEntity.setNxDoCostPrice("0.1");
-        ordersEntity.setNxDoPrice("0.1");
-        ordersEntity.setNxDoPurchaseGoodsId(-1);
-        ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-        ordersEntity.setNxDoPrintStandard(ordersEntity.getNxDoStandard());
-        ordersEntity.setNxDoExpectPrice("0.1");
-        ordersEntity.setNxDoCostPriceUpdate(formatWhatDay(0));
-        ordersEntity.setNxDoDepDisGoodsId(-1);
-        ordersEntity.setNxDoGoodsType(1);
-        ordersEntity.setNxDoProfitSubtotal("0.0");
-        ordersEntity.setNxDoProfitScale("0");
-        BigDecimal bigDecimal = new BigDecimal(ordersEntity.getNxDoQuantity()).multiply(new BigDecimal(0.1)).setScale(1, BigDecimal.ROUND_HALF_UP);
-        ordersEntity.setNxDoSubtotal(bigDecimal.toString());
-        ordersEntity.setNxDoCostSubtotal(bigDecimal.toString());
-
-        Map<String, Object> mapss = new HashMap<>();
-        mapss.put("depId", ordersEntity.getNxDoDepartmentId());
-        mapss.put("status", 3);
-        int orderOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapss);
-        ordersEntity.setNxDoTodayOrder(orderOrder + 1);
-        System.out.println("savellinshssigogogo" + ordersEntity.getNxDoTodayOrder());
-        nxDepartmentOrdersService.save(ordersEntity);
-
-        savePurGoodsAuto(ordersEntity);
-        return ordersEntity;
-    }
-
-    private NxDepartmentOrdersEntity aaaTemp(NxDepartmentOrdersEntity order) {
-
-        //1.查询 nxGoods 如果有完全一个的，就下载
-        // 1.1 搜索商品名称+规格完全相同
-        List<NxGoodsEntity> nxGoodsEntities = new ArrayList<>();
-        Map<String, Object> map = new HashMap<>();
-        map.put("name", order.getNxDoGoodsName());
-        map.put("level", 3);
-        List<NxGoodsEntity> nxGoodsEntitiesEx = nxGoodsService.queryNxGoodsByParams(map);
-
-        List<NxGoodsEntity> nxGoodsEntitiesA = nxAliasService.queryNxGoodsByName(map);
-
-        String pinyinString = order.getNxDoGoodsName();
-        for (int i = 0; i < order.getNxDoGoodsName().length(); i++) {
-            String str = order.getNxDoGoodsName().substring(i, i + 1);
-            if (str.matches("[\u4E00-\u9FFF]")) {
-                pinyinString = hanziToPinyin(order.getNxDoGoodsName());
-            }
-        }
-        Map<String, Object> mapSame = new HashMap<>();
-        mapSame.put("level", 3);
-        mapSame.put("searchStr", order.getNxDoGoodsName());
-        mapSame.put("searchPinyin", pinyinString);
-        List<NxGoodsEntity> nxGoodsEntitiesSame = nxGoodsService.queryQuickSearchNxGoods(mapSame);
-
-        TreeSet<NxGoodsEntity> all = new TreeSet();
-        all.addAll(nxGoodsEntitiesEx);
-        all.addAll(nxGoodsEntitiesA);
-        all.addAll(nxGoodsEntitiesSame);
-
-        // 1.2 商品名称相同
-
-        // 如果没有完全一样的，则视为临时
-        if (all.size() > 0) {
-            // 获取分销商ID，用于检查商品是否已下载
-            Integer disId = order.getNxDoDistributerId();
-                
-                // 1. 收集所有分销商商品对应的系统商品ID（非null的）
-                Set<Integer> distributerGoodsNxGoodsIds = new HashSet<>();
-            List<NxDistributerGoodsEntity> distributerGoodsList = order.getNxDistributerGoodsEntityList();
-            if (distributerGoodsList != null && distributerGoodsList.size() > 0) {
-                logger.info("[aaaTemp] 已有分销商商品候选列表（数量: {}），需要去除系统商品中已出现的商品", distributerGoodsList.size());
-                for (NxDistributerGoodsEntity distributerGoods : distributerGoodsList) {
-                    if (distributerGoods.getNxDgNxGoodsId() != null) {
-                        distributerGoodsNxGoodsIds.add(distributerGoods.getNxDgNxGoodsId());
-                    }
-                }
-                logger.info("[aaaTemp] 分销商商品对应的系统商品ID集合: {}", distributerGoodsNxGoodsIds);
-            }
-                
-            // 2. 过滤系统商品：只保留从未下载过的商品
-            //    如果商品已下载，需要将其对应的分销商商品加入到候选列表中
-                TreeSet<NxGoodsEntity> filteredNxGoodsSet = new TreeSet<>();
-            List<NxDistributerGoodsEntity> distributerGoodsToAdd = new ArrayList<>();
-            
-                for (NxGoodsEntity nxGoods : all) {
-                if (nxGoods.getNxGoodsId() == null) {
-                    continue;
-                }
-                
-                Integer nxGoodsId = nxGoods.getNxGoodsId();
-                
-                // 2.1 检查是否已在候选列表中
-                boolean inCandidateList = distributerGoodsNxGoodsIds.contains(nxGoodsId);
-                
-                // 2.2 检查是否已在数据库中下载过（需要分销商ID）
-                boolean alreadyDownloaded = false;
-                NxDistributerGoodsEntity downloadedGoods = null;
-                if (disId != null) {
-                    Map<String, Object> checkParams = new HashMap<>();
-                    checkParams.put("disId", disId);
-                    checkParams.put("goodsId", nxGoodsId);
-                    List<NxDistributerGoodsEntity> downloadedGoodsList = nxDistributerGoodsService.queryDisGoodsByParams(checkParams);
-                    if (downloadedGoodsList != null && !downloadedGoodsList.isEmpty()) {
-                        alreadyDownloaded = true;
-                        downloadedGoods = downloadedGoodsList.get(0);
-                        logger.info("[aaaTemp] 系统商品 nxGoodsId={} 已在数据库中下载过，对应的分销商商品ID={}", 
-                                nxGoodsId, downloadedGoods.getNxDistributerGoodsId());
-                    }
-                }
-                
-                // 2.3 如果已下载或已在候选列表中，不加入系统商品列表
-                if (inCandidateList || alreadyDownloaded) {
-                    // 如果已下载但不在候选列表中，需要加入到候选列表
-                    if (alreadyDownloaded && !inCandidateList && downloadedGoods != null) {
-                        // 检查是否已经在候选列表中（通过ID比较）
-                        boolean existsInList = false;
-                        if (distributerGoodsList != null) {
-                            for (NxDistributerGoodsEntity existing : distributerGoodsList) {
-                                if (existing.getNxDistributerGoodsId() != null && 
-                                    existing.getNxDistributerGoodsId().equals(downloadedGoods.getNxDistributerGoodsId())) {
-                                    existsInList = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!existsInList) {
-                            distributerGoodsToAdd.add(downloadedGoods);
-                            logger.info("[aaaTemp] 将已下载的分销商商品（ID={}）加入到候选列表", downloadedGoods.getNxDistributerGoodsId());
-                        }
-                    }
-                } else {
-                    // 从未下载过，加入系统商品列表
-                        filteredNxGoodsSet.add(nxGoods);
-                    }
-                }
-                
-            // 3. 将已下载的商品加入到候选列表（如果候选列表存在）
-            if (!distributerGoodsToAdd.isEmpty() && distributerGoodsList != null) {
-                distributerGoodsList.addAll(distributerGoodsToAdd);
-                logger.info("[aaaTemp] 已将 {} 个已下载的分销商商品加入到候选列表", distributerGoodsToAdd.size());
-            } else if (!distributerGoodsToAdd.isEmpty()) {
-                // 如果候选列表不存在，创建新的列表
-                order.setNxDistributerGoodsEntityList(distributerGoodsToAdd);
-                logger.info("[aaaTemp] 创建新的候选列表，包含 {} 个已下载的分销商商品", distributerGoodsToAdd.size());
-            }
-            
-            // 4. 设置过滤后的系统商品列表
-                if (filteredNxGoodsSet.size() > 0) {
-                logger.info("[aaaTemp] 过滤后，系统商品列表数量: {}（原始数量: {}），这些商品都是从未下载过的", 
-                        filteredNxGoodsSet.size(), all.size());
-                    order.setNxGoodsEntities(filteredNxGoodsSet);
-                } else {
-                logger.info("[aaaTemp] 过滤后，系统商品列表为空（所有系统商品都已下载过或已在候选列表中）");
-            }
-        }
-
-        order.setNxDoStatus(-2);
-        order.setNxDoArriveDate(formatWhatDate(0));
-        order.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-        order.setNxDoApplyDate(formatWhatDay(0));
-        order.setNxDoArriveOnlyDate(formatWhatDate(0));
-        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
-        order.setNxDoArriveDate(formatWhatDay(0));
-        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        order.setNxDoApplyOnlyTime(formatWhatTime(0));
-        order.setNxDoGbDistributerId(-1);
-        order.setNxDoGbDepartmentFatherId(-1);
-        order.setNxDoGbDepartmentId(-1);
-        order.setNxDoNxCommunityId(-1);
-        order.setNxDoNxCommRestrauntFatherId(-1);
-        order.setNxDoNxCommRestrauntId(-1);
-        order.setNxDoProfitSubtotal("0");
-        order.setNxDoProfitScale("0");
-        order.setNxDoCostPrice("0.1");
-        order.setNxDoCostPriceLevel("1");
-        order.setNxDoArriveWhatDay(getWeek(0));
-        Map<String, Object> mapss = new HashMap<>();
-        mapss.put("depId", order.getNxDoDepartmentId());
-        mapss.put("status", 3);
-        int orderOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapss);
-        order.setNxDoTodayOrder(orderOrder + 1);
-        System.out.println("costrpriririrririr" + order.getNxDoCostPrice());
-        nxDepartmentOrdersService.save(order);
-
-        // 创建或关联训练数据（未找到商品的情况）
-        // 如果订单已经关联了训练数据ID，直接返回，不重复创建
-        if (order.getNxDoTrainingDataId() != null) {
-            logger.info("[aaaTemp] 订单已关联训练数据ID: {}, 订单ID: {}, 跳过创建训练数据", 
-                    order.getNxDoTrainingDataId(), order.getNxDepartmentOrdersId());
-            return order;
-        }
-
-        // 查询是否已有匹配的训练数据
-        Map<String, Object> matchParams = new HashMap<>();
-        matchParams.put("departmentId", order.getNxDoDepartmentId());
-        matchParams.put("goodsName", order.getNxDoGoodsName());
-        // 不再使用 standard 和 standardWeight 作为查询条件
-
-        NxOrderOcrTrainingDataEntity matchedTrainingData = nxOrderOcrTrainingDataService.queryByMatchFields(matchParams);
-
-        if (matchedTrainingData != null) {
-            // 如果找到了匹配的训练数据，关联到订单
-            order.setNxDoTrainingDataId(matchedTrainingData.getNxOtdId());
-            nxDepartmentOrdersService.update(order);
-            logger.info("[aaaTemp] 关联已有训练数据到订单，训练数据ID: {}, 订单ID: {}", 
-                    matchedTrainingData.getNxOtdId(), order.getNxDepartmentOrdersId());
-        } else {
-            // 如果没有找到匹配的训练数据，创建新的训练数据
-            NxOrderOcrTrainingDataEntity trainingData = new NxOrderOcrTrainingDataEntity();
-            trainingData.setNxOtdDepartmentId(order.getNxDoDepartmentId());
-            trainingData.setNxOtdDepartmentFatherId(order.getNxDoDepartmentFatherId());
-            trainingData.setNxOtdDistributerId(order.getNxDoDistributerId());
-            trainingData.setNxOtdOriginalGoodsName(order.getNxDoGoodsName());
-            trainingData.setNxOtdOriginalQuantity(order.getNxDoQuantity());
-            trainingData.setNxOtdOriginalStandard(order.getNxDoStandard());
-            trainingData.setNxOtdOriginalStandardWeight(null); // 订单实体中没有 standardWeight 字段
-            trainingData.setNxOtdOriginalRemark(order.getNxDoRemark() != null ? order.getNxDoRemark() : "");
-            trainingData.setNxOtdIsNameManuallyAnnotated(0);
-            trainingData.setNxOtdIsQuantityManuallyAnnotated(0);
-            trainingData.setNxOtdIsStandardManuallyAnnotated(0);
-            trainingData.setNxOtdIsStandardWeightManuallyAnnotated(0);
-            trainingData.setNxOtdIsRemarkManuallyAnnotated(0);
-            // 最终确认字段不提前赋值，等待用户手动标注
-            trainingData.setNxOtdFinalGoodsName(null);
-            trainingData.setNxOtdFinalQuantity(null);
-            trainingData.setNxOtdFinalStandard(null);
-            trainingData.setNxOtdFinalStandardWeight(null);
-            trainingData.setNxOtdFinalRemark(null);
-            trainingData.setNxOtdOrderId(order.getNxDepartmentOrdersId());
-            trainingData.setNxOtdDataSource("PASTE_SEARCH");
-            trainingData.setNxOtdCreateDate(formatWhatYearDayTime(0));
-            trainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
-            trainingData.setNxOtdCreateUserId(order.getNxDoOrderUserId() != null ? order.getNxDoOrderUserId() : -1);
-
-            nxOrderOcrTrainingDataService.save(trainingData);
-            logger.info("[aaaTemp] 创建训练数据（未找到商品），训练数据ID: {}, 订单ID: {}", 
-                    trainingData.getNxOtdId(), order.getNxDepartmentOrdersId());
-            // 关联训练数据ID到订单
-            order.setNxDoTrainingDataId(trainingData.getNxOtdId());
-            nxDepartmentOrdersService.update(order);
-        }
-
-        return order;
-    }
-
-
-    @RequestMapping(value = "/searchGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R searchGoods(@RequestBody List<NxDepartmentOrdersEntity> orderList) {
-        List<NxDepartmentOrdersEntity> returnList = new ArrayList<>();
-        for (NxDepartmentOrdersEntity ordersEntity : orderList) {
-            System.out.println("zahuishsishs" + ordersEntity.getNxDoGoodsName());
-            if (ordersEntity.getNxDoStatus() == -2) {
-
-                //没有修改商品
-                if (ordersEntity.getNxDoDisGoodsId() == null) {
-
-                    String goodsName = ordersEntity.getNxDoGoodsName();
-                    Map<String, Object> mapZero = new HashMap<>();
-                    mapZero.put("disId", ordersEntity.getNxDoDistributerId());
-                    mapZero.put("searchStr", goodsName);
-                    mapZero.put("standard", ordersEntity.getNxDoStandard());
-                    System.out.println("mapzreorororor" + mapZero);
-                    List<NxDistributerGoodsEntity> distributerGoodsEntitiesZero = nxDistributerGoodsService.queryDisGoodsByName(mapZero);
-                    System.out.println("resultteslsutltlt----zero" + distributerGoodsEntitiesZero.size());
-                    // 一级 完全相同
-                    if (distributerGoodsEntitiesZero.size() == 0) {
-                        Map<String, Object> mapOne = new HashMap<>();
-                        mapOne.put("disId", ordersEntity.getNxDoDistributerId());
-                        mapOne.put("searchStr", goodsName);
-                        List<NxDistributerGoodsEntity> distributerGoodsEntitiesOne = nxDistributerGoodsService.queryDisGoodsByName(mapOne);
-                        System.out.println("resultteslsutltlt----one" + distributerGoodsEntitiesOne.size());
-                        // 二级 相同
-                        if (distributerGoodsEntitiesOne.size() == 0) {
-                            //1, 查拼音
-                            String pinyinString = goodsName;
-// 如果包含汉字才转换，否则直接用原名
-                            if (goodsName.matches(".*[\u4E00-\u9FFF]+.*")) {
-                                pinyinString = hanziToPinyin(goodsName);
-                            }
-                            Map<String, Object> mapTwo = new HashMap<>();
-                            mapTwo.put("disId", ordersEntity.getNxDoDistributerId());
-                            mapTwo.put("searchPinyin", pinyinString);
-                            List<NxDistributerGoodsEntity> disGoodsByNamePinyin = nxDistributerGoodsService.queryDisGoodsByNamePinyin(mapTwo);
-                            System.out.println("resultteslsutltlt----pinyin" + disGoodsByNamePinyin.size());
-
-                            // 三级 相同
-                            if (disGoodsByNamePinyin.size() == 0) {
-                                //查别名
-                                Map<String, Object> mapA = new HashMap<>();
-                                mapA.put("disId", ordersEntity.getNxDoDistributerId());
-                                mapA.put("alias", goodsName);
-                                List<NxDistributerGoodsEntity> distributerGoodsEntitiesA = nxDistributerGoodsService.queryDisGoodsByAlias(mapA);
-                                System.out.println("resultteslsutltlt----aila" + distributerGoodsEntitiesA.size());
-                                // 四级 相同
-                                if (distributerGoodsEntitiesA.size() == 0) {
-
-                                    //查询 depGoosName
-                                    Map<String, Object> mapDep = new HashMap<>();
-                                    mapDep.put("depId", ordersEntity.getNxDoDepartmentId());
-                                    mapDep.put("name", goodsName);
-                                    System.out.println("depserareekkekekeekke" + mapDep);
-                                    List<NxDepartmentDisGoodsEntity> nxDepartmentDisGoodsEntityList = nxDepartmentDisGoodsService.queryDepartmentGoods(mapDep);
-                                    if (nxDepartmentDisGoodsEntityList.size() == 0) {
-
-                                        ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesOne);
-                                        returnList.add(aaaTemp(ordersEntity));
-
-
-                                    } else if (nxDepartmentDisGoodsEntityList.size() == 1) {
-                                        NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsEntityList.get(0);
-                                        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-                                        returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-                                    } else {
-                                        List<NxDistributerGoodsEntity> list = new ArrayList<>();
-                                        for (NxDepartmentDisGoodsEntity departmentDisGoodsEntity : nxDepartmentDisGoodsEntityList) {
-                                            Integer nxDdgDisGoodsId = departmentDisGoodsEntity.getNxDdgDisGoodsId();
-                                            NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDdgDisGoodsId);
-                                            list.add(distributerGoodsEntity);
-                                        }
-                                        ordersEntity.setNxDistributerGoodsEntityList(list);
-                                        returnList.add(aaaTemp(ordersEntity));
-
-                                    }
-                                } else {
-
-                                    if (distributerGoodsEntitiesA.size() == 1) {
-                                        // 1.保存订单
-                                        NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesA.get(0);
-
-                                        //2.添加规格
-                                        if (!disGoodsEntity.getNxDgGoodsStandardname().equals(ordersEntity.getNxDoStandard())) {
-                                            Map<String, Object> mapStand = new HashMap<>();
-                                            mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-                                            mapStand.put("standardName", ordersEntity.getNxDoStandard());
-                                            List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-                                            if (distributerStandardEntities.size() == 0) {
-                                                NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-                                                standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-                                                standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-                                                nxDistributerStandardService.save(standardEntity);
-                                            }
-                                        }
-                                        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                        returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                                    } else {
-                                        ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesA);
-                                        returnList.add(aaaTemp(ordersEntity));
-                                    }
-                                }
-
-                            } else {
-
-                                if (disGoodsByNamePinyin.size() == 1) {
-                                    //1 保存订单
-                                    NxDistributerGoodsEntity disGoodsEntity = disGoodsByNamePinyin.get(0);
-
-                                    //2.添加规格
-                                    if (!disGoodsEntity.getNxDgGoodsStandardname().equals(ordersEntity.getNxDoStandard())) {
-                                        Map<String, Object> mapStand = new HashMap<>();
-                                        mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-                                        mapStand.put("standardName", ordersEntity.getNxDoStandard());
-                                        List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-                                        if (distributerStandardEntities.size() == 0) {
-                                            NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-                                            standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-                                            standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-                                            nxDistributerStandardService.save(standardEntity);
-                                        }
-                                    }
-
-                                    NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                    returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                                } else {
-                                    ordersEntity.setNxDistributerGoodsEntityList(disGoodsByNamePinyin);
-                                    returnList.add(aaaTemp(ordersEntity));
-                                }
-                            }
-
-
-                        } else {
-
-                            if (distributerGoodsEntitiesOne.size() == 1) {
-                                //1 保存订单
-                                NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesOne.get(0);
-                                //添加规格
-                                Map<String, Object> mapStand = new HashMap<>();
-                                mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-                                mapStand.put("standardName", ordersEntity.getNxDoStandard());
-                                List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-                                if (distributerStandardEntities.size() == 0) {
-                                    NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-                                    standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-                                    standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-                                    nxDistributerStandardService.save(standardEntity);
-                                }
-                                System.out.println("oneoneneee=====111111111");
-
-                                NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                                returnList.add(saveOneOrder(ordersEntity, distributerGoodsEntity));
-
-                            } else {
-                                System.out.println("oneoneneee=====mrororoororoororooror");
-                                ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesOne);
-                                returnList.add(aaaTemp(ordersEntity));
-                            }
-                        }
-
-                    } else {
-                        if (distributerGoodsEntitiesZero.size() == 1) {
-                            System.out.println("zeooo=====111111111");
-                            NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesZero.get(0);
-                            returnList.add(saveOneOrder(ordersEntity, disGoodsEntity));
-                        } else {
-                            System.out.println("zeooo=====mrororoororoororooror");
-                            ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesZero);
-                            returnList.add(aaaTemp(ordersEntity));
-                        }
-                    }
-
-                } else {
-                    //已修改商品，按照商品 id 保存订单；
-                    Integer doDisGoodsId = ordersEntity.getNxDoDisGoodsId();
-                    NxDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsService.queryObject(doDisGoodsId);
-                    //2.添加规格
-                    if (!disGoodsEntity.getNxDgGoodsStandardname().equals(ordersEntity.getNxDoStandard())) {
-                        Map<String, Object> mapStand = new HashMap<>();
-                        mapStand.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-                        mapStand.put("standardName", ordersEntity.getNxDoStandard());
-                        List<NxDistributerStandardEntity> distributerStandardEntities = nxDistributerStandardService.queryDisStandardByParams(mapStand);
-                        if (distributerStandardEntities.size() == 0) {
-                            NxDistributerStandardEntity standardEntity = new NxDistributerStandardEntity();
-                            standardEntity.setNxDsDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-                            standardEntity.setNxDsStandardName(ordersEntity.getNxDoStandard());
-                            nxDistributerStandardService.save(standardEntity);
-                        }
-                    }
-                    NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-                    returnList.add(choiceGoodsOrder(ordersEntity, distributerGoodsEntity));
-                }
-            } else {
-                returnList.add(ordersEntity);
-            }
-        }
-
-        return R.ok().put("data", returnList);
-    }
-
-    private NxDepartmentOrdersEntity saveOneOrderCash(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
-        System.out.println("saveONeOrderereerereeqonenenneorere");
-        order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
-        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
-        order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-        order.setNxDoArriveDate(formatWhatDate(0));
-        order.setNxDoGoodsType(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoNxGoodsId(disGoodsEntity.getNxDgNxGoodsId());
-        order.setNxDoNxGoodsFatherId(disGoodsEntity.getNxDgNxFatherId());
-        order.setNxDoApplyDate(formatWhatDay(0));
-        order.setNxDoArriveOnlyDate(formatWhatDate(0));
-        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
-        order.setNxDoArriveDate(formatWhatDay(0));
-        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        order.setNxDoApplyOnlyTime(formatWhatTime(0));
-        order.setNxDoGbDistributerId(-1);
-        order.setNxDoGbDepartmentFatherId(-1);
-        order.setNxDoGbDepartmentId(-1);
-        order.setNxDoNxCommunityId(-1);
-        order.setNxDoNxCommRestrauntFatherId(-1);
-        order.setNxDoNxCommRestrauntId(-1);
-        order.setNxDoPurchaseGoodsId(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoArriveWhatDay(getWeek(0));
-        order.setNxDoCostPriceLevel("1");
-
-        // 使用完善的价格处理逻辑（平台型/非平台型分支、货架库存查询、规格匹配等）
-//        processOrderPrice(order, disGoodsEntity);
-
-        nxDepartmentOrdersService.save(order);
-
-        //auto
-        if (disGoodsEntity.getNxDgPurchaseAuto() != -1) {
-            savePurGoodsAuto(order);
-        }
-        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-        order.setNxDistributerGoodsEntity(distributerGoodsEntity);
-        return order;
-    }
-
-    public NxDepartmentOrdersEntity saveOneOrder(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
-        System.out.println("saveONeOrderereerereeqonenenneorere");
-        order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
-        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
-        order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-        // 保存订单的原始状态（如果已经是 -2 待修正，则保持，否则设置为 0）
-        Integer originalStatus = order.getNxDoStatus();
-        if (originalStatus == null || originalStatus != -2) {
-            order.setNxDoStatus(0);
-        }
-        order.setNxDoArriveDate(formatWhatDate(0));
-        order.setNxDoGoodsType(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoNxGoodsId(disGoodsEntity.getNxDgNxGoodsId());
-        order.setNxDoNxGoodsFatherId(disGoodsEntity.getNxDgNxFatherId());
-        order.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-        order.setNxDoApplyDate(formatWhatDay(0));
-        order.setNxDoArriveOnlyDate(formatWhatDate(0));
-        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
-        order.setNxDoArriveDate(formatWhatDay(0));
-        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        order.setNxDoApplyOnlyTime(formatWhatTime(0));
-        order.setNxDoGbDistributerId(-1);
-        order.setNxDoGbDepartmentFatherId(-1);
-        order.setNxDoGbDepartmentId(-1);
-        order.setNxDoNxCommunityId(-1);
-        order.setNxDoNxCommRestrauntFatherId(-1);
-        order.setNxDoNxCommRestrauntId(-1);
-        order.setNxDoPurchaseGoodsId(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoArriveWhatDay(getWeek(0));
-        order.setNxDoCostPriceLevel("1");
-
-
-        // 使用完善的价格处理逻辑（平台型/非平台型分支、货架库存查询、规格匹配等）
-        processOrderPrice(order, disGoodsEntity);
-
-        System.out.println("jieghuasu11111" + order.getNxDoPrice());
-
-        System.out.println("jieghuasu11111" + order.getNxDoPrice());
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("depId", order.getNxDoDepartmentId());
-        map.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-        map.put("standard", order.getNxDoStandard());
-        System.out.println("depmapapmmdmmdd" + map);
-        NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
-        if (departmentDisGoodsEntity != null) {
-            System.out.println("prinstnan" + departmentDisGoodsEntity.getNxDdgOrderStandard());
-            // 判断是否使用了大包装单价，如果是则设置打印规格为大包装单位（支持智能匹配：件=箱）
-            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-
-            if (isUsingCartonPrice) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
-            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-            } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-            }
-
-            order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
-            //如果有重量和单价，则计算 subtotal
-            if(order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()
-                    && order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty()){
-                try {
-                    BigDecimal weight = new BigDecimal(order.getNxDoWeight());
-                    BigDecimal price = new BigDecimal(order.getNxDoPrice());
-                    BigDecimal subtotal = weight.multiply(price).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    order.setNxDoSubtotal(subtotal.toString());
-                } catch (NumberFormatException e) {
-                    // 如果转换失败，不设置subtotal
-                    logger.warn("[saveOneOrder] 计算subtotal失败，重量或单价格式错误: weight={}, price={}, error={}",
-                                order.getNxDoWeight(), order.getNxDoPrice(), e.getMessage());
-                }
-            }
-            order.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
-        }else{
-            map.put("standard", null);
-            System.out.println("depmapapapappapa" + map);
-            NxDepartmentDisGoodsEntity departmentDisGoodsEntityO = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
-            if (departmentDisGoodsEntityO != null) {
-                order.setNxDoDepDisGoodsId(departmentDisGoodsEntityO.getNxDepartmentDisGoodsId());
-            }
-        }
-
-
-        System.out.println("orderrwhwidiidic" + order.getNxDoGoodsName() + "getNxDoTodayOrder" + order.getNxDoTodayOrder());
-        if (order.getNxDoTodayOrder() == null) {
-            Map<String, Object> mapss = new HashMap<>();
-            mapss.put("depId", order.getNxDoDepartmentId());
-            mapss.put("status", 3);
-            mapss.put("todayOrder", 1);
-            int orderOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapss);
-            order.setNxDoTodayOrder(orderOrder + 1);
-        }
-
-        System.out.println("jieghuasu2222" + order.getNxDoPrice());
-        nxDepartmentOrdersService.save(order);
-
-        //auto
-        if (disGoodsEntity.getNxDgPurchaseAuto() != -1) {
-            savePurGoodsAuto(order);
-        }
-        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-        order.setNxDistributerGoodsEntity(distributerGoodsEntity);
-        
-        // 确保返回的订单状态正确
-        logger.info("[saveOneOrder] 返回订单: 商品名称={}, 订单ID={}, 状态={}, 分销商商品ID={}", 
-                order.getNxDoGoodsName(), order.getNxDepartmentOrdersId(), 
-                order.getNxDoStatus(), order.getNxDoDisGoodsId());
-        
-        // 找到商品后，设置为0（已保存），但如果订单状态是 -2（待修正），则保持 -2
-        if (order.getNxDoStatus() == null || (order.getNxDoStatus() != 0 && order.getNxDoStatus() != -2)) {
-            order.setNxDoStatus(0);
-        }
-        
-        return order;
-    }
-
-    /**
-     * 创建或更新训练数据（当订单保存成功后）
-     * 如果订单没有关联训练数据ID，则创建新的训练数据；如果已关联，则更新训练数据
-     * 
-     * @param order 订单实体（已保存，包含订单ID）
-     * @param originalGoodsName 原始商品名称（可选，如果为null则使用订单中的商品名称）
-     * @param originalQuantity 原始数量（可选，如果为null则使用订单中的数量）
-     * @param originalStandard 原始规格（可选，如果为null则使用订单中的规格）
-     * @param originalRemark 原始备注（可选，如果为null则使用订单中的备注）
-     */
-    private void createOrUpdateTrainingDataAfterOrderSaved(NxDepartmentOrdersEntity order, 
-            String originalGoodsName, String originalQuantity, String originalStandard, String originalRemark) {
-        try {
-            // 如果订单对象中没有 trainingDataId，从数据库中重新查询订单（确保获取最新的数据）
-            Integer trainingDataId = order.getNxDoTrainingDataId();
-            if (trainingDataId == null && order.getNxDepartmentOrdersId() != null) {
-                NxDepartmentOrdersEntity savedOrder = nxDepartmentOrdersService.queryObjectNew(order.getNxDepartmentOrdersId());
-                if (savedOrder != null && savedOrder.getNxDoTrainingDataId() != null) {
-                    trainingDataId = savedOrder.getNxDoTrainingDataId();
-                    order.setNxDoTrainingDataId(trainingDataId);
-                    logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 从数据库查询到训练数据ID: {}, 订单ID: {}", 
-                            trainingDataId, order.getNxDepartmentOrdersId());
-                }
-            }
-            
-            // 如果订单已经关联了训练数据ID，则更新训练数据
-            if (trainingDataId != null) {
-                NxOrderOcrTrainingDataEntity trainingData = nxOrderOcrTrainingDataService.queryObject(trainingDataId);
                 if (trainingData != null) {
-                    // 更新训练数据：自动识别标志=1，填充商品ID和final字段
-                    if (trainingData.getNxOtdDisGoodsId() == null && order.getNxDoDisGoodsId() != null) {
-                        trainingData.setNxOtdDisGoodsId(order.getNxDoDisGoodsId());
-                        trainingData.setNxOtdOrderId(order.getNxDepartmentOrdersId());
-                        trainingData.setNxOtdFinalGoodsName(order.getNxDoGoodsName());
-                        trainingData.setNxOtdFinalQuantity(order.getNxDoQuantity());
-                        trainingData.setNxOtdFinalStandard(order.getNxDoStandard());
-                        trainingData.setNxOtdFinalRemark(order.getNxDoRemark() != null ? order.getNxDoRemark() : "");
-                        // 自动识别标志设为 1
-                        trainingData.setNxOtdIsNameManuallyAnnotated(1);
-                        trainingData.setNxOtdIsQuantityManuallyAnnotated(1);
-                        trainingData.setNxOtdIsStandardManuallyAnnotated(1);
-                        trainingData.setNxOtdIsRemarkManuallyAnnotated(1);
-                        trainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
-                        nxOrderOcrTrainingDataService.update(trainingData);
-                        logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 更新训练数据（自动识别），训练数据ID: {}, 订单ID: {}, 商品ID: {}", 
-                                trainingData.getNxOtdId(), order.getNxDepartmentOrdersId(), order.getNxDoDisGoodsId());
+                    // 手动标注标志设为 2（自动识别是 1，手动识别是 2）
+                    trainingData.setNxOtdDisGoodsId(aaa.getNxDoDisGoodsId());
+                    trainingData.setNxOtdOrderId(aaa.getNxDepartmentOrdersId());
+
+                    // 填充最终确认字段（手动标注）
+                    trainingData.setNxOtdFinalGoodsName(aaa.getNxDoGoodsName());
+                    trainingData.setNxOtdFinalQuantity(aaa.getNxDoQuantity());
+                    trainingData.setNxOtdFinalStandard(aaa.getNxDoStandard());
+                    trainingData.setNxOtdFinalRemark(aaa.getNxDoRemark() != null ? aaa.getNxDoRemark() : "");
+
+                    // 手动标注标志设为 2
+                    trainingData.setNxOtdIsNameManuallyAnnotated(2);
+                    trainingData.setNxOtdIsQuantityManuallyAnnotated(2);
+                    trainingData.setNxOtdIsStandardManuallyAnnotated(2);
+                    trainingData.setNxOtdIsStandardWeightManuallyAnnotated(2);
+                    trainingData.setNxOtdIsRemarkManuallyAnnotated(2);
+
+                    // 更新标准重量（如果有的话，从原始数据中获取）
+                    if (trainingData.getNxOtdOriginalStandardWeight() != null) {
+                        trainingData.setNxOtdFinalStandardWeight(trainingData.getNxOtdOriginalStandardWeight());
                     }
+
+                    trainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
+
+                    // 更新训练数据
+                    nxOrderOcrTrainingDataService.update(trainingData);
+
+                    logger.info("[choiceGoodsForApply] 训练数据已更新（手动标注），训练数据ID: {}, 订单ID: {}, 商品ID: {}",
+                            trainingData.getNxOtdId(), aaa.getNxDepartmentOrdersId(), aaa.getNxDoDisGoodsId());
                 }
-                return;
             }
 
-            // 如果订单没有关联训练数据ID，查询是否已有匹配的训练数据
-            Map<String, Object> matchParams = new HashMap<>();
-            matchParams.put("departmentId", order.getNxDoDepartmentId());
-            matchParams.put("goodsName", originalGoodsName != null ? originalGoodsName : order.getNxDoGoodsName());
-            // 不再使用 standard 和 standardWeight 作为查询条件
+            // 更新OCR任务（独立于训练数据更新，只要订单有OCR任务ID就更新）
+            if (ordersEntity.getNxDoOcrTaskId() != null) {
+                Integer nxDoOcrTaskId = ordersEntity.getNxDoOcrTaskId();
+                logger.info("[choiceGoodsForApply] 开始更新OCR任务，任务ID: {}, 订单ID: {}", nxDoOcrTaskId, aaa.getNxDepartmentOrdersId());
 
-            NxOrderOcrTrainingDataEntity matchedTrainingData = nxOrderOcrTrainingDataService.queryByMatchFields(matchParams);
-
-            if (matchedTrainingData != null) {
-                // 如果找到了匹配的训练数据，先关联到订单（避免重复创建）
-                logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 找到匹配的训练数据，训练数据ID: {}, 订单ID: {}", 
-                        matchedTrainingData.getNxOtdId(), order.getNxDepartmentOrdersId());
-                
-                // 关联训练数据ID到订单（无论是否有商品ID都要关联，避免重复创建）
-                order.setNxDoTrainingDataId(matchedTrainingData.getNxOtdId());
-                nxDepartmentOrdersService.update(order);
-                
-                // 如果训练数据没有商品ID，且有商品ID，则更新训练数据
-                if (matchedTrainingData.getNxOtdDisGoodsId() == null && order.getNxDoDisGoodsId() != null) {
-                    matchedTrainingData.setNxOtdDisGoodsId(order.getNxDoDisGoodsId());
-                    matchedTrainingData.setNxOtdOrderId(order.getNxDepartmentOrdersId());
-                    matchedTrainingData.setNxOtdFinalGoodsName(order.getNxDoGoodsName());
-                    matchedTrainingData.setNxOtdFinalQuantity(order.getNxDoQuantity());
-                    matchedTrainingData.setNxOtdFinalStandard(order.getNxDoStandard());
-                    matchedTrainingData.setNxOtdFinalRemark(order.getNxDoRemark() != null ? order.getNxDoRemark() : "");
-                    // 自动识别标志设为 1
-                    matchedTrainingData.setNxOtdIsNameManuallyAnnotated(1);
-                    matchedTrainingData.setNxOtdIsQuantityManuallyAnnotated(1);
-                    matchedTrainingData.setNxOtdIsStandardManuallyAnnotated(1);
-                    matchedTrainingData.setNxOtdIsRemarkManuallyAnnotated(1);
-                    matchedTrainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
-                    nxOrderOcrTrainingDataService.update(matchedTrainingData);
-                    logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 更新匹配的训练数据（自动识别），训练数据ID: {}, 订单ID: {}, 商品ID: {}", 
-                            matchedTrainingData.getNxOtdId(), order.getNxDepartmentOrdersId(), order.getNxDoDisGoodsId());
+                nxOcrTaskEntity = nxOcrTaskService.queryObject(nxDoOcrTaskId);
+                if (nxOcrTaskEntity == null) {
+                    logger.warn("[choiceGoodsForApply] OCR任务不存在，任务ID: {}", nxDoOcrTaskId);
                 } else {
-                    logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 匹配的训练数据已有商品ID或订单无商品ID，仅关联到订单，训练数据ID: {}, 订单ID: {}", 
-                            matchedTrainingData.getNxOtdId(), order.getNxDepartmentOrdersId());
-                }
-                return; // 找到匹配的训练数据，关联后直接返回，不创建新的
-            } else {
-                // 如果没有找到匹配的训练数据，再次尝试通过订单关联的训练数据ID查询（避免重复创建）
-                // 这种情况可能发生在：训练数据使用 rawName 创建，但查询时使用了 name（纠错后的名称）
-                if (order.getNxDoTrainingDataId() != null) {
-                    NxOrderOcrTrainingDataEntity existingTrainingData = nxOrderOcrTrainingDataService.queryObject(order.getNxDoTrainingDataId());
-                    if (existingTrainingData != null) {
-                        logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 通过订单关联的训练数据ID找到训练数据，训练数据ID: {}, 订单ID: {}", 
-                                existingTrainingData.getNxOtdId(), order.getNxDepartmentOrdersId());
-                        // 如果训练数据没有商品ID，且有商品ID，则更新训练数据
-                        if (existingTrainingData.getNxOtdDisGoodsId() == null && order.getNxDoDisGoodsId() != null) {
-                            existingTrainingData.setNxOtdDisGoodsId(order.getNxDoDisGoodsId());
-                            existingTrainingData.setNxOtdOrderId(order.getNxDepartmentOrdersId());
-                            existingTrainingData.setNxOtdFinalGoodsName(order.getNxDoGoodsName());
-                            existingTrainingData.setNxOtdFinalQuantity(order.getNxDoQuantity());
-                            existingTrainingData.setNxOtdFinalStandard(order.getNxDoStandard());
-                            existingTrainingData.setNxOtdFinalRemark(order.getNxDoRemark() != null ? order.getNxDoRemark() : "");
-                            existingTrainingData.setNxOtdIsNameManuallyAnnotated(1);
-                            existingTrainingData.setNxOtdIsQuantityManuallyAnnotated(1);
-                            existingTrainingData.setNxOtdIsStandardManuallyAnnotated(1);
-                            existingTrainingData.setNxOtdIsRemarkManuallyAnnotated(1);
-                            existingTrainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
-                            nxOrderOcrTrainingDataService.update(existingTrainingData);
-                            logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 更新已关联的训练数据（自动识别），训练数据ID: {}, 订单ID: {}, 商品ID: {}", 
-                                    existingTrainingData.getNxOtdId(), order.getNxDepartmentOrdersId(), order.getNxDoDisGoodsId());
-                        }
-                        return; // 找到已关联的训练数据，直接返回，不创建新的
-                    }
-                }
-                
-                // 确实没有找到匹配的训练数据，创建新的训练数据
-                logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 未找到匹配的训练数据，创建新的训练数据，订单ID: {}, 商品名称: {}", 
-                        order.getNxDepartmentOrdersId(), originalGoodsName != null ? originalGoodsName : order.getNxDoGoodsName());
-                
-                NxOrderOcrTrainingDataEntity trainingData = new NxOrderOcrTrainingDataEntity();
-                trainingData.setNxOtdDepartmentId(order.getNxDoDepartmentId());
-                trainingData.setNxOtdDepartmentFatherId(order.getNxDoDepartmentFatherId());
-                trainingData.setNxOtdDistributerId(order.getNxDoDistributerId());
-                trainingData.setNxOtdOriginalGoodsName(originalGoodsName != null ? originalGoodsName : order.getNxDoGoodsName());
-                trainingData.setNxOtdOriginalQuantity(originalQuantity != null ? originalQuantity : order.getNxDoQuantity());
-                trainingData.setNxOtdOriginalStandard(originalStandard != null ? originalStandard : order.getNxDoStandard());
-                trainingData.setNxOtdOriginalStandardWeight(null); // 订单实体中没有 standardWeight 字段
-                trainingData.setNxOtdOriginalRemark(originalRemark != null ? originalRemark : (order.getNxDoRemark() != null ? order.getNxDoRemark() : ""));
-                trainingData.setNxOtdDisGoodsId(order.getNxDoDisGoodsId());
-                trainingData.setNxOtdOrderId(order.getNxDepartmentOrdersId());
-                trainingData.setNxOtdFinalGoodsName(order.getNxDoGoodsName());
-                trainingData.setNxOtdFinalQuantity(order.getNxDoQuantity());
-                trainingData.setNxOtdFinalStandard(order.getNxDoStandard());
-                trainingData.setNxOtdFinalRemark(order.getNxDoRemark() != null ? order.getNxDoRemark() : "");
-                // 自动识别标志设为 1
-                trainingData.setNxOtdIsNameManuallyAnnotated(1);
-                trainingData.setNxOtdIsQuantityManuallyAnnotated(1);
-                trainingData.setNxOtdIsStandardManuallyAnnotated(1);
-                trainingData.setNxOtdIsStandardWeightManuallyAnnotated(1);
-                trainingData.setNxOtdIsRemarkManuallyAnnotated(1);
-                trainingData.setNxOtdDataSource("PASTE_SEARCH");
-                trainingData.setNxOtdCreateDate(formatWhatYearDayTime(0));
-                trainingData.setNxOtdUpdateDate(formatWhatYearDayTime(0));
-                trainingData.setNxOtdCreateUserId(order.getNxDoOrderUserId() != null ? order.getNxDoOrderUserId() : -1);
+                    int oldCompletedOrders = nxOcrTaskEntity.getNxOcrTaskCompletedOrders() != null ? nxOcrTaskEntity.getNxOcrTaskCompletedOrders() : 0;
+                    int oldPendingOrders = nxOcrTaskEntity.getNxOcrTaskPendingOrders() != null ? nxOcrTaskEntity.getNxOcrTaskPendingOrders() : 0;
 
-                nxOrderOcrTrainingDataService.save(trainingData);
-                logger.info("[createOrUpdateTrainingDataAfterOrderSaved] 创建训练数据（自动识别），训练数据ID: {}, 订单ID: {}, 商品ID: {}", 
-                        trainingData.getNxOtdId(), order.getNxDepartmentOrdersId(), order.getNxDoDisGoodsId());
-                // 关联训练数据ID到订单
-                order.setNxDoTrainingDataId(trainingData.getNxOtdId());
-                nxDepartmentOrdersService.update(order);
+                    logger.info("[choiceGoodsForApply] OCR任务更新前状态 - 任务ID: {}, 已完成订单: {}, 待修正订单: {}, 任务状态: {}",
+                            nxDoOcrTaskId, oldCompletedOrders, oldPendingOrders, nxOcrTaskEntity.getNxOcrTaskStatus());
+
+                    nxOcrTaskEntity.setNxOcrTaskCompletedOrders(oldCompletedOrders + 1);
+                    nxOcrTaskEntity.setNxOcrTaskPendingOrders(oldPendingOrders - 1);
+
+                    int newPendingOrders = nxOcrTaskEntity.getNxOcrTaskPendingOrders();
+                    logger.info("[choiceGoodsForApply] OCR任务更新后 - 已完成订单: {}, 待修正订单: {}",
+                            nxOcrTaskEntity.getNxOcrTaskCompletedOrders(), newPendingOrders);
+
+                    // 如果待修正订单数为0，设置任务状态为已完成（状态1）
+                    if (newPendingOrders == 0) {
+                        nxOcrTaskEntity.setNxOcrTaskStatus(2);
+                        logger.info("[choiceGoodsForApply] 所有订单已完成，设置OCR任务状态为1（已完成），任务ID: {}", nxDoOcrTaskId);
+                    }
+
+                    nxOcrTaskService.update(nxOcrTaskEntity);
+                    logger.info("[choiceGoodsForApply] OCR任务更新完成，任务ID: {}, 更新结果: {}, 最终状态 - 已完成订单: {}, 待修正订单: {}, 任务状态: {}",
+                            nxDoOcrTaskId,
+                            nxOcrTaskEntity.getNxOcrTaskCompletedOrders(),
+                            nxOcrTaskEntity.getNxOcrTaskPendingOrders(),
+                            nxOcrTaskEntity.getNxOcrTaskStatus());
+                }
+            } else {
+                logger.debug("[choiceGoodsForApply] 订单没有关联OCR任务，订单ID: {}", aaa.getNxDepartmentOrdersId());
             }
-        } catch (Exception e) {
-            logger.error("[createOrUpdateTrainingDataAfterOrderSaved] 创建或更新训练数据失败: {}", e.getMessage(), e);
-            // 不抛出异常，避免影响订单保存流程
+
+            nxDepartmentOrdersService.processOrderPrice(ordersEntity, disGoodsEntity);
+            //
         }
+
+        return R.ok().put("data", aaa)
+                .put("task", nxOcrTaskEntity);
     }
 
-    /**
-     * 处理订单价格逻辑（平台型/非平台型分支、货架库存查询、规格匹配等）
-     * 从 saveOneOrder 方法中提取的价格处理逻辑，供多个方法复用
-     * 
-     * @param order 订单实体
-     * @param disGoodsEntity 分销商商品实体
-     */
-    private void processOrderPrice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
-        Integer nxDoDistributerId = order.getNxDoDistributerId();
-        NxDistributerEntity distributerEntity = nxDistributerService.queryObject(nxDoDistributerId);
-        //平台型
-        if (distributerEntity.getNxDistributerBusinessTypeId() > 6) {
-            if (disGoodsEntity.getNxDgWillPriceTwo() != null
-                    && !disGoodsEntity.getNxDgWillPriceTwo().trim().isEmpty()
-                    && order.getNxDoStandard().equals(disGoodsEntity.getNxDgWillPriceTwoStandard())) {
-                System.out.println("levlellelelelel111222222222222222");
-                BigDecimal doQuantity = new BigDecimal(order.getNxDoQuantity());
-                BigDecimal cosPrice = new BigDecimal(disGoodsEntity.getNxDgBuyingPriceTwo());
-                BigDecimal willPrice = new BigDecimal(disGoodsEntity.getNxDgWillPriceTwo());
-                BigDecimal costSubtotal = doQuantity.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                BigDecimal subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                BigDecimal profit = subtotal.subtract(costSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
-                BigDecimal scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-
-                // 判断是否使用大包装单价，如果是则设置打印规格为大包装单位
-                if (disGoodsEntity.getNxDgCartonUnit() != null 
-                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                        && order.getNxDoStandard() != null
-                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgCartonUnit().trim())) {
-                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                    System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
-                } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-                }
-                order.setNxDoPrice(disGoodsEntity.getNxDgWillPriceTwo());
-                order.setNxDoExpectPrice(disGoodsEntity.getNxDgWillPriceTwo());
-                order.setNxDoCostPrice(disGoodsEntity.getNxDgBuyingPriceTwo());
-                order.setNxDoSubtotal(subtotal.toString());
-                order.setNxDoCostSubtotal(costSubtotal.toString());
-                order.setNxDoCostPriceLevel("2");
-                order.setNxDoCostPriceUpdate(disGoodsEntity.getNxDgBuyingPriceTwoUpdate());
-                order.setNxDoProfitSubtotal(profit.toString());
-                order.setNxDoProfitScale(scaleB.toString());
-
-            } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-                order.setNxDoCostPriceLevel("1");
-                order.setNxDoSubtotal("0");
-                order.setNxDoCostSubtotal("0");
-                System.out.println("jimimhuaaa" + disGoodsEntity.getNxDgWillPriceOne());
-                if (disGoodsEntity.getNxDgWillPriceOne() != null && !disGoodsEntity.getNxDgWillPriceOne().trim().isEmpty()) {
-                    System.out.println("jieghuasu?????????" + order.getNxDoPrice());
-                    order.setNxDoPrice(disGoodsEntity.getNxDgWillPriceOne());
-                    order.setNxDoExpectPrice(disGoodsEntity.getNxDgWillPriceOne());
-                }
-                if (disGoodsEntity.getNxDgBuyingPriceOne() != null && !disGoodsEntity.getNxDgBuyingPriceOne().trim().isEmpty()) {
-                    order.setNxDoCostPriceUpdate(disGoodsEntity.getNxDgBuyingPriceOneUpdate());
-                    order.setNxDoCostPrice(disGoodsEntity.getNxDgBuyingPriceOne());
-                }
-            }
-        } else {
-            // 初始设置打印规格：如果订单规格等于大包装单位，则设置为大包装单位
-            // 支持智能匹配：件=箱，盒=箱等同义词
-            System.out.println("======== 设置打印规格(printStandard)开始 ========");
-            System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
-            System.out.println("订单规格(nxDoStandard): " + order.getNxDoStandard());
-            System.out.println("商品大包装单位(nxDgCartonUnit): " + disGoodsEntity.getNxDgCartonUnit());
-            System.out.println("商品标准规格(nxDgGoodsStandardname): " + disGoodsEntity.getNxDgGoodsStandardname());
-            System.out.println("设置前 printStandard: " + order.getNxDoPrintStandard());
-            
-            if (disGoodsEntity.getNxDgCartonUnit() != null 
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                System.out.println("✅ [printStandard] 已设置为大包装单位: " + disGoodsEntity.getNxDgCartonUnit());
-            } else {
-            order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-                System.out.println("✅ [printStandard] 已设置为商品标准规格: " + disGoodsEntity.getNxDgGoodsStandardname());
-            }
-            System.out.println("设置后 printStandard: " + order.getNxDoPrintStandard());
-            System.out.println("======== 设置打印规格(printStandard)结束 ========");
-            System.out.println("======== 从货架获取价格开始 ========");
-            System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
-            System.out.println("商品ID: " + disGoodsEntity.getNxDistributerGoodsId());
-            System.out.println("商品名称: " + disGoodsEntity.getNxDgGoodsName());
-            System.out.println("商品名称12: " + disGoodsEntity.getNxDgCartonUnit());
-            System.out.println("商品名称3333: " + disGoodsEntity.getNxDgCartonUnit());
-            System.out.println("订单规格: " + order.getNxDoStandard());
-            System.out.println("订单规格ppppp: " + order.getNxDoPrintStandard());
-            System.out.println("商品规格: " + disGoodsEntity.getNxDgGoodsStandardname());
-
-            Integer nxDistributerGoodsId = disGoodsEntity.getNxDistributerGoodsId();
-            Map<String, Object> map = new HashMap<>();
-            map.put("disGoodsId", nxDistributerGoodsId);
-            map.put("restWeight", 0);
-
-            System.out.println("查询货架库存参数: " + map);
-            List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
-            System.out.println("查询到库存批次数量: " + stockEntities.size());
-
-            if (stockEntities.size() > 0) {
-                NxDistributerGoodsShelfStockEntity nxDistributerGoodsShelfStockEntity = stockEntities.get(stockEntities.size() - 1);
-                System.out.println("--- 最后一个库存批次信息 ---");
-                System.out.println("库存批次ID: " + nxDistributerGoodsShelfStockEntity.getNxDistributerGoodsShelfStockId());
-                System.out.println("成本价(nxDgssPrice): " + nxDistributerGoodsShelfStockEntity.getNxDgssPrice());
-                System.out.println("外包装成本价(nxDgssPriceCarton): " + nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton());
-                System.out.println("销售价(nxDgssSellingPrice): " + nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice());
-                System.out.println("外包装销售价(nxDgssSellingPriceCarton): " + nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton());
-                System.out.println("剩余重量: " + nxDistributerGoodsShelfStockEntity.getNxDgssRestWeight());
-                System.out.println("订单规格: " + order.getNxDoStandard());
-                System.out.println("商品外包装单位: " + disGoodsEntity.getNxDgCartonUnit());
-
-                // 判断订单规格是否与外包装单位匹配
-                boolean useCartonPrice = false;
-                if (disGoodsEntity.getNxDgCartonUnit() != null 
-                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                        && order.getNxDoStandard() != null
-                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgCartonUnit().trim())) {
-                    useCartonPrice = true;
-                    System.out.println("✅ 订单规格与外包装单位匹配，将使用外包装单价");
-                }
-
-                // 根据匹配情况选择对应的单价
-                String sellingPrice = null;
-                String costPrice = null;
-                
-                if (useCartonPrice) {
-                    // 使用外包装单价
-                    if (nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton() != null 
-                            && !nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton().trim().isEmpty()) {
-                        sellingPrice = nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton();
-                        System.out.println("使用外包装建议零售价: " + sellingPrice);
-                    }
-                    if (nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton() != null 
-                            && !nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton().trim().isEmpty()) {
-                        costPrice = nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton();
-                        System.out.println("使用外包装采购单价: " + costPrice);
-                    }
-                } else {
-                    // 使用最小单位单价
-                    if (nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice() != null 
-                            && !nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice().trim().isEmpty()) {
-                        sellingPrice = nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice();
-                        System.out.println("使用最小单位建议零售价: " + sellingPrice);
-                    }
-                    if (nxDistributerGoodsShelfStockEntity.getNxDgssPrice() != null 
-                            && !nxDistributerGoodsShelfStockEntity.getNxDgssPrice().trim().isEmpty()) {
-                        costPrice = nxDistributerGoodsShelfStockEntity.getNxDgssPrice();
-                        System.out.println("使用最小单位采购单价: " + costPrice);
-                    }
-                }
-
-                // 设置订单价格
-                if (sellingPrice != null) {
-                    System.out.println("✅ 找到销售价，开始设置订单价格");
-                    order.setNxDoPrice(sellingPrice);
-                    if (costPrice != null) {
-                        order.setNxDoCostPrice(costPrice);
-                    }
-                    // 如果使用了大包装单价，设置打印规格为大包装单位
-                    if (useCartonPrice && disGoodsEntity.getNxDgCartonUnit() != null 
-                            && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()) {
-                        order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                        System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
-                    }
-                    System.out.println("订单销售价已设置为: " + order.getNxDoPrice());
-                    System.out.println("订单成本价已设置为: " + order.getNxDoCostPrice());
-                } else {
-
-                    System.out.println("⚠️ 销售价为null，不设置价格");
-                }
-            }
-
-            System.out.println("rodstntn" + order.getNxDoStandard() + "disganttt" + disGoodsEntity.getNxDgGoodsStandardname());
-            // 检查订单规格是否等于商品标准规格，或者订单规格是否匹配大包装单位（智能匹配：件=箱）
-            boolean isStandardMatch = order.getNxDoStandard() != null 
-                    && order.getNxDoStandard().equals(disGoodsEntity.getNxDgGoodsStandardname());
-            boolean isCartonMatch = disGoodsEntity.getNxDgCartonUnit() != null 
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-            
-            if (isStandardMatch || isCartonMatch) {
-                System.out.println("订单规格匹配: isStandardMatch=" + isStandardMatch + ", isCartonMatch=" + isCartonMatch);
-                order.setNxDoWeight(order.getNxDoQuantity());
-
-                // 检查价格是否已设置
-                if (order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty()) {
-
-                    BigDecimal doQuantity = new BigDecimal(order.getNxDoQuantity());
-                    BigDecimal willPrice = new BigDecimal(order.getNxDoPrice());
-
-                    // 判断是否使用外包装单价计算（支持智能匹配：件=箱）
-                    boolean useCartonPriceForCalc = false;
-                    Integer itemsPerCartonForCalc = null;
-                    if (disGoodsEntity.getNxDgCartonUnit() != null 
-                            && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                            && order.getNxDoStandard() != null
-                            && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())
-                            && disGoodsEntity.getNxDgItemsPerCarton() != null 
-                            && disGoodsEntity.getNxDgItemsPerCarton() > 0) {
-                        useCartonPriceForCalc = true;
-                        itemsPerCartonForCalc = disGoodsEntity.getNxDgItemsPerCarton();
-                        System.out.println("订单规格匹配外包装单位（智能匹配），计算时将数量转换为箱数: " + doQuantity + "个 ÷ " + itemsPerCartonForCalc + " = " + doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP) + "箱");
-                    }
-
-                    BigDecimal subtotal;
-                    BigDecimal costSubtotal = null;
-                    if (useCartonPriceForCalc && itemsPerCartonForCalc != null) {
-                        // 使用外包装单价：需要将数量转换为箱数
-                        BigDecimal cartonCount = doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP);
-                        subtotal = cartonCount.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        System.out.println("使用外包装单价计算: " + cartonCount + "箱 × " + willPrice + "元/箱 = " + subtotal + "元");
-
-                    if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
-                        BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
-                            costSubtotal = cartonCount.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                            System.out.println("使用外包装成本价计算: " + cartonCount + "箱 × " + cosPrice + "元/箱 = " + costSubtotal + "元");
-                        }
-                    } else {
-                        // 使用最小单位单价：直接相乘
-                        subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        System.out.println("使用最小单位单价计算: " + doQuantity + " × " + willPrice + " = " + subtotal);
-                        
-                        if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
-                            BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
-                            costSubtotal = doQuantity.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        }
-                    }
-                    
-                    order.setNxDoSubtotal(subtotal.toString());
-
-                    if (costSubtotal != null) {
-                        BigDecimal profit = subtotal.subtract(costSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        BigDecimal scaleB = BigDecimal.ZERO;
-                        if (subtotal.compareTo(BigDecimal.ZERO) != 0) {
-                            scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-                        }
-                        System.out.println("成本小计: " + costSubtotal);
-                        System.out.println("销售小计: " + subtotal);
-                        System.out.println("利润: " + profit);
-                        System.out.println("利润率: " + scaleB + "%");
-                        order.setNxDoCostSubtotal(costSubtotal.toString());
-                        order.setNxDoProfitSubtotal(profit.toString());
-                        order.setNxDoProfitScale(scaleB.toString());
-                    }
-                    System.out.println("✅ 订单金额计算完成");
-                }
-            }
-        }
-    }
-
-    /**
-     * 将订单添加到返回列表，同时保存对应的原始订单索引
-     * 
-     * @param returnList 返回列表
-     * @param returnListOrderIndexList 返回列表对应的原始订单索引列表
-     * @param order 订单实体
-     * @param orderIndex 原始订单索引
-     */
-    private void addToReturnList(List<NxDepartmentOrdersEntity> returnList, 
-                                  List<Integer> returnListOrderIndexList,
-                                  NxDepartmentOrdersEntity order, 
-                                  int orderIndex) {
-        returnList.add(order);
-        returnListOrderIndexList.add(orderIndex);
-    }
 
     /**
      * 将 NxDepartmentOrdersEntity 转换为 PasteSearchGoodsResponseDTO
      * 只包含前端需要的字段，减少数据传输量
-     * 
-     * @param order 订单实体
-     * @param originalOrderJson 原始订单的JSON字符串（保留参数以保持方法签名兼容性）
-     * @param originalGoodsName 原始商品名称（客户录入的原始内容，不可修改）
+     *
      * @return DTO对象
      */
-    private PasteSearchGoodsResponseDTO convertToResponseDTO(NxDepartmentOrdersEntity order, String originalOrderJson, String originalGoodsName) {
-        PasteSearchGoodsResponseDTO dto = new PasteSearchGoodsResponseDTO();
-        
-        dto.setNxDepartmentOrdersId(order.getNxDepartmentOrdersId());
-        dto.setNxDoGoodsName(order.getNxDoGoodsName());
-        // 设置原始商品名称（与商品名称相同）
-        dto.setNxDoGoodsNameOriginal(order.getNxDoGoodsName());
-        dto.setNxDoQuantity(order.getNxDoQuantity());
-        // 规格默认值为"斤"
-        dto.setNxDoStandard(order.getNxDoStandard() != null && !order.getNxDoStandard().trim().isEmpty() 
-                ? order.getNxDoStandard() : "斤");
-        dto.setNxDoRemark(order.getNxDoRemark());
-        // 是否有备注：remark不为null且trim后不为空
-        dto.setNxDoAddRemark(order.getNxDoRemark() != null && !order.getNxDoRemark().trim().isEmpty());
-        dto.setNxDoStatus(order.getNxDoStatus());
-        dto.setNxDoDepartmentId(order.getNxDoDepartmentId());
-        dto.setNxDoDepartmentFatherId(order.getNxDoDepartmentFatherId());
-        dto.setNxDoDisGoodsId(order.getNxDoDisGoodsId());
-        // 默认值：0
-        dto.setNxDoStandardWarn(0);
-        dto.setGoodsNameWarn(0);
-        dto.setNxDoDistributerId(order.getNxDoDistributerId());
-        // 采购用户ID默认值为-1
-        dto.setNxDoPurchaseUserId(order.getNxDoPurchaseUserId() != null ? order.getNxDoPurchaseUserId() : -1);
-        dto.setNxDoOrderUserId(order.getNxDoOrderUserId());
-        // 是否代理默认值为-1
-        dto.setNxDoIsAgent(order.getNxDoIsAgent() != null ? order.getNxDoIsAgent() : -1);
-        // 今日订单序号
-        dto.setNxDoTodayOrder(order.getNxDoTodayOrder());
-        
-        // 处理候选商品列表
-        // 分销商商品候选列表（优先显示）
-        if (order.getNxDistributerGoodsEntityList() != null && !order.getNxDistributerGoodsEntityList().isEmpty()) {
-            logger.info("[convertToResponseDTO] 转换分销商商品候选列表，数量: {}", order.getNxDistributerGoodsEntityList().size());
-            List<DistributerGoodsCandidateDTO> distributerGoodsList = new ArrayList<>();
-            for (NxDistributerGoodsEntity goods : order.getNxDistributerGoodsEntityList()) {
-                DistributerGoodsCandidateDTO candidateDTO = new DistributerGoodsCandidateDTO();
-                candidateDTO.setNxDistributerGoodsId(goods.getNxDistributerGoodsId());
-                candidateDTO.setNxDgGoodsName(goods.getNxDgGoodsName());
-                candidateDTO.setNxDgGoodsStandardname(goods.getNxDgGoodsStandardname());
-                candidateDTO.setNxDgGoodsStandardWeight(goods.getNxDgGoodsStandardWeight());
-                candidateDTO.setNxDgCartonUnit(goods.getNxDgCartonUnit());
-                candidateDTO.setNxDgGoodsBrand(goods.getNxDgGoodsBrand());
-                candidateDTO.setNxDgGoodsFile(goods.getNxDgGoodsFile());
-                candidateDTO.setNxDgNxGoodsId(goods.getNxDgNxGoodsId());
-                distributerGoodsList.add(candidateDTO);
-            }
-            dto.setNxDistributerGoodsEntityList(distributerGoodsList);
-            logger.info("[convertToResponseDTO] 分销商商品候选列表转换完成，返回数量: {}", distributerGoodsList.size());
-            // 验证DTO中是否成功设置了候选列表
-            if (dto.getNxDistributerGoodsEntityList() != null) {
-                logger.info("[convertToResponseDTO] DTO中分销商商品候选列表已设置，数量: {}", dto.getNxDistributerGoodsEntityList().size());
-            } else {
-                logger.error("[convertToResponseDTO] DTO中分销商商品候选列表为null！");
-            }
-        }
-        
-        // 系统商品候选列表（即使有分销商商品候选列表，也要显示系统商品，但已去除重复的）
-        if (order.getNxGoodsEntities() != null && !order.getNxGoodsEntities().isEmpty()) {
-            logger.info("[convertToResponseDTO] 转换系统商品候选列表，数量: {}", order.getNxGoodsEntities().size());
-            List<NxGoodsCandidateDTO> nxGoodsList = new ArrayList<>();
-            for (NxGoodsEntity goods : order.getNxGoodsEntities()) {
-                NxGoodsCandidateDTO candidateDTO = new NxGoodsCandidateDTO();
-                candidateDTO.setNxGoodsId(goods.getNxGoodsId());
-                candidateDTO.setNxGoodsName(goods.getNxGoodsName());
-                candidateDTO.setNxGoodsStandardname(goods.getNxGoodsStandardname());
-                candidateDTO.setNxGoodsStandardWeight(goods.getNxGoodsStandardWeight());
-                candidateDTO.setNxGoodsCartonUnit(goods.getNxGoodsCartonUnit());
-                candidateDTO.setNxGoodsBrand(goods.getNxGoodsBrand());
-                candidateDTO.setNxGoodsFile(goods.getNxGoodsFile());
-                candidateDTO.setNxGoodsFatherId(goods.getNxGoodsFatherId());
-                nxGoodsList.add(candidateDTO);
-            }
-            dto.setNxGoodsEntities(nxGoodsList);
-            logger.info("[convertToResponseDTO] 系统商品候选列表转换完成，返回数量: {}", nxGoodsList.size());
-        }
-        
-        return dto;
-    }
-
-    private NxDepartmentOrdersEntity updateOneOrderForChoice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
-        System.out.println("saveONeOrderereerereeqonenenneorere");
-        order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
-        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
-        order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-        order.setNxDoStatus(0);
-        order.setNxDoArriveDate(formatWhatDate(0));
-        order.setNxDoGoodsType(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
-        order.setNxDoNxGoodsId(disGoodsEntity.getNxDgNxGoodsId());
-        order.setNxDoNxGoodsFatherId(disGoodsEntity.getNxDgNxFatherId());
-        order.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-        order.setNxDoApplyDate(formatWhatDay(0));
-        order.setNxDoArriveOnlyDate(formatWhatDate(0));
-        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
-        order.setNxDoArriveDate(formatWhatDay(0));
-        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        order.setNxDoApplyOnlyTime(formatWhatTime(0));
-        order.setNxDoGbDistributerId(-1);
-        order.setNxDoGbDepartmentFatherId(-1);
-        order.setNxDoGbDepartmentId(-1);
-        order.setNxDoNxCommunityId(-1);
-        order.setNxDoNxCommRestrauntFatherId(-1);
-        order.setNxDoNxCommRestrauntId(-1);
-        //todo
-        order.setNxDoPurchaseGoodsId(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoArriveWhatDay(getWeek(0));
-        order.setNxDoCostPriceLevel("1");
-
-        // 使用完善的价格处理逻辑（平台型/非平台型分支、货架库存查询、规格匹配等）
-        processOrderPrice(order, disGoodsEntity);
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("depId", order.getNxDoDepartmentId());
-        map.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
-        map.put("standard", order.getNxDoStandard());
-        System.out.println("depmapapmmdmmdd" + map);
-        NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
-        if (departmentDisGoodsEntity != null) {
-            System.out.println("prinstnan" + departmentDisGoodsEntity.getNxDdgOrderStandard());
-            // 判断是否使用了大包装单价，如果是则设置打印规格为大包装单位（支持智能匹配：件=箱）
-            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-
-            if (isUsingCartonPrice) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
-            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-            } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-            }
-
-            order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
-            //如果有重量和单价，则计算 subtotal
-            if(order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()
-                    && order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty()){
-                try {
-                    BigDecimal weight = new BigDecimal(order.getNxDoWeight());
-                    BigDecimal price = new BigDecimal(order.getNxDoPrice());
-                    BigDecimal subtotal = weight.multiply(price).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    order.setNxDoSubtotal(subtotal.toString());
-                } catch (NumberFormatException e) {
-                    // 如果转换失败，不设置subtotal
-                    logger.warn("[saveOneOrder] 计算subtotal失败，重量或单价格式错误: weight={}, price={}, error={}",
-                            order.getNxDoWeight(), order.getNxDoPrice(), e.getMessage());
-                }
-            }
-            order.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
-        }else{
-            map.put("standard", null);
-            System.out.println("depmapapapappapa" + map);
-            NxDepartmentDisGoodsEntity departmentDisGoodsEntityO = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
-            if (departmentDisGoodsEntityO != null) {
-                order.setNxDoDepDisGoodsId(departmentDisGoodsEntityO.getNxDepartmentDisGoodsId());
-            }
-        }
+//    private PasteSearchGoodsResponseDTO convertToResponseDTO(NxDepartmentOrdersEntity order, String originalOrderJson, String originalGoodsName,
+//                                                             String standardWeight, String itemUnit, String itemsPerCarton, String cartonUnit) {
+//        PasteSearchGoodsResponseDTO dto = new PasteSearchGoodsResponseDTO();
+//
+//        dto.setNxDepartmentOrdersId(order.getNxDepartmentOrdersId());
+//        dto.setNxDoGoodsName(order.getNxDoGoodsName());
+//        // 设置原始商品名称（与商品名称相同）
+//        dto.setNxDoGoodsNameOriginal(order.getNxDoGoodsName());
+//        dto.setNxDoQuantity(order.getNxDoQuantity());
+//        // 规格默认值为"斤"
+//        dto.setNxDoStandard(order.getNxDoStandard() != null && !order.getNxDoStandard().trim().isEmpty()
+//                ? order.getNxDoStandard() : "斤");
+//        dto.setNxDoRemark(order.getNxDoRemark());
+//        // 是否有备注：remark不为null且trim后不为空
+//        dto.setNxDoAddRemark(order.getNxDoRemark() != null && !order.getNxDoRemark().trim().isEmpty());
+//        dto.setNxDoStatus(order.getNxDoStatus());
+//        dto.setNxDoDepartmentId(order.getNxDoDepartmentId());
+//        dto.setNxDoDepartmentFatherId(order.getNxDoDepartmentFatherId());
+//        dto.setNxDoDisGoodsId(order.getNxDoDisGoodsId());
+//        // 默认值：0
+//        dto.setNxDoStandardWarn(0);
+//        dto.setGoodsNameWarn(0);
+//        dto.setNxDoDistributerId(order.getNxDoDistributerId());
+//        // 采购用户ID默认值为-1
+//        dto.setNxDoPurchaseUserId(order.getNxDoPurchaseUserId() != null ? order.getNxDoPurchaseUserId() : -1);
+//        dto.setNxDoOrderUserId(order.getNxDoOrderUserId());
+//        // 是否代理默认值为-1
+//        dto.setNxDoIsAgent(order.getNxDoIsAgent() != null ? order.getNxDoIsAgent() : -1);
+//        // 今日订单序号？？？
+//        dto.setNxDoTodayOrder(order.getNxDoTodayOrder());
+//
+//        // 设置包装结构字段（确保字段始终存在，即使为空字符串）
+//        logger.info("[convertToResponseDTO] 设置包装结构字段: standardWeight={}, itemUnit={}, itemsPerCarton={}, cartonUnit={}",
+//                standardWeight, itemUnit, itemsPerCarton, cartonUnit);
+//        dto.setStandardWeight(standardWeight != null ? standardWeight : "");
+//        dto.setItemUnit(itemUnit != null ? itemUnit : "");
+//        dto.setItemsPerCarton(itemsPerCarton != null ? itemsPerCarton : "");
+//        dto.setCartonUnit(cartonUnit != null ? cartonUnit : "");
+//        logger.info("[convertToResponseDTO] 设置后的DTO字段值: standardWeight={}, itemUnit={}, itemsPerCarton={}, cartonUnit={}",
+//                dto.getStandardWeight(), dto.getItemUnit(), dto.getItemsPerCarton(), dto.getCartonUnit());
+//
+//        // 处理候选商品列表
+//        // 分销商商品候选列表（优先显示）
+//        if (order.getNxDistributerGoodsEntityList() != null && !order.getNxDistributerGoodsEntityList().isEmpty()) {
+//            List<DistributerGoodsCandidateDTO> distributerGoodsList = new ArrayList<>();
+//            for (NxDistributerGoodsEntity goods : order.getNxDistributerGoodsEntityList()) {
+//                DistributerGoodsCandidateDTO candidateDTO = new DistributerGoodsCandidateDTO();
+//                candidateDTO.setNxDistributerGoodsId(goods.getNxDistributerGoodsId());
+//                candidateDTO.setNxDgGoodsName(goods.getNxDgGoodsName());
+//                candidateDTO.setNxDgGoodsStandardname(goods.getNxDgGoodsStandardname());
+//                candidateDTO.setNxDgGoodsStandardWeight(goods.getNxDgGoodsStandardWeight());
+//                candidateDTO.setNxDgCartonUnit(goods.getNxDgCartonUnit());
+//                candidateDTO.setNxDgGoodsBrand(goods.getNxDgGoodsBrand());
+//                candidateDTO.setNxDgGoodsFile(goods.getNxDgGoodsFile());
+//                candidateDTO.setNxDgNxGoodsId(goods.getNxDgNxGoodsId());
+//                distributerGoodsList.add(candidateDTO);
+//            }
+//            dto.setNxDistributerGoodsEntityList(distributerGoodsList);
+//
+//        }
+//
+//        // 系统商品候选列表（即使有分销商商品候选列表，也要显示系统商品，但已去除重复的）
+//        if (order.getNxGoodsEntities() != null && !order.getNxGoodsEntities().isEmpty()) {
+//            List<NxGoodsCandidateDTO> nxGoodsList = new ArrayList<>();
+//            for (NxGoodsEntity goods : order.getNxGoodsEntities()) {
+//                NxGoodsCandidateDTO candidateDTO = new NxGoodsCandidateDTO();
+//                candidateDTO.setNxGoodsId(goods.getNxGoodsId());
+//                candidateDTO.setNxGoodsName(goods.getNxGoodsName());
+//                candidateDTO.setNxGoodsStandardname(goods.getNxGoodsStandardname());
+//                candidateDTO.setNxGoodsStandardWeight(goods.getNxGoodsStandardWeight());
+//                candidateDTO.setNxGoodsCartonUnit(goods.getNxGoodsCartonUnit());
+//                candidateDTO.setNxGoodsBrand(goods.getNxGoodsBrand());
+//                candidateDTO.setNxGoodsFile(goods.getNxGoodsFile());
+//                candidateDTO.setNxGoodsFatherId(goods.getNxGoodsFatherId());
+//                nxGoodsList.add(candidateDTO);
+//            }
+//            dto.setNxGoodsEntities(nxGoodsList);
+//        }
+//
+//        return dto;
+//    }
+//
+//    private NxDepartmentOrdersEntity updateOneOrderForChoice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
+//        System.out.println("saveONeOrderereerereeqonenenneorere" + order.getNxDepartmentOrdersId());
+//        order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
+//        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
+//        order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
+//        order.setNxDoStatus(0);
+//        order.setNxDoArriveDate(formatWhatDate(0));
+//        order.setNxDoGoodsType(disGoodsEntity.getNxDgPurchaseAuto());
+//        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
+//        order.setNxDoNxGoodsId(disGoodsEntity.getNxDgNxGoodsId());
+//        order.setNxDoNxGoodsFatherId(disGoodsEntity.getNxDgNxFatherId());
+//        order.setNxDoApplyDate(formatWhatDay(0));
+//        order.setNxDoArriveOnlyDate(formatWhatDate(0));
+//        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
+//        order.setNxDoArriveDate(formatWhatDay(0));
+//        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
+//        order.setNxDoApplyOnlyTime(formatWhatTime(0));
+//        order.setNxDoGbDistributerId(-1);
+//        order.setNxDoGbDepartmentFatherId(-1);
+//        order.setNxDoGbDepartmentId(-1);
+//        order.setNxDoNxCommunityId(-1);
+//        order.setNxDoNxCommRestrauntFatherId(-1);
+//        order.setNxDoNxCommRestrauntId(-1);
+//        order.setNxDoCollaborativeNxDisId(-1);
+//        //todo
+//        order.setNxDoArriveWhatDay(getWeek(0));
+//        order.setNxDoCostPriceLevel("1");
+//
+//        //auto
+//        Integer nxDepartmentOrdersId = order.getNxDepartmentOrdersId();
+//        NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(nxDepartmentOrdersId);
+//
+//        System.out.println("updattepurrrr" + disGoodsEntity.getNxDgPurchaseAuto());
+//        System.out.println("ordersEntity.getNxDoPurchaseGoodsId()" + ordersEntity.getNxDoPurchaseGoodsId());
+//        if (disGoodsEntity.getNxDgPurchaseAuto() != -1) {
+//
+//            if (ordersEntity.getNxDoPurchaseGoodsId() != null && ordersEntity.getNxDoPurchaseGoodsId() != -1) {
+//                NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(ordersEntity.getNxDoPurchaseGoodsId());
+//                System.out.println("updattepurrrr" + purchaseGoodsEntity.getNxDpgOrdersAmount());
+//                if (purchaseGoodsEntity.getNxDpgOrdersAmount() == 1) {
+//                    nxDistributerPurchaseGoodsService.delete(purchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
+//                    nxDepartmentOrdersService.savePurGoodsAuto(order, getNxPurchaseGoodsInputTypeOrder(), getNxPurchaseGoodsTypeForSelf());
+//                } else {
+//                    BigDecimal bigDecimal = new BigDecimal(purchaseGoodsEntity.getNxDpgQuantity()).subtract(new BigDecimal(ordersEntity.getNxDoQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                    purchaseGoodsEntity.setNxDpgQuantity(bigDecimal.toString());
+//                    if (purchaseGoodsEntity.getNxDpgBuyQuantity() != null && purchaseGoodsEntity.getNxDpgBuyPrice() != null) {
+//                        BigDecimal bigDecimal1 = bigDecimal.subtract(new BigDecimal(purchaseGoodsEntity.getNxDpgBuyPrice())).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                        purchaseGoodsEntity.setNxDpgBuyQuantity(bigDecimal.toString());
+//                        purchaseGoodsEntity.setNxDpgBuySubtotal(bigDecimal1.toString());
+//                        nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+//                    }
+//                }
+//            } else {
+//                nxDepartmentOrdersService.savePurGoodsAuto(order, getNxPurchaseGoodsInputTypeOrder(), getNxPurchaseGoodsTypeForSelf());
+//            }
+//        } else {
+//            order.setNxDoPurchaseGoodsId(-1);
+//        }
+//
+//        // 使用完善的价格处理逻辑（平台型/非平台型分支、货架库存查询、规格匹配等）
+//        nxDepartmentOrdersService.processOrderPrice(order, disGoodsEntity);
+//
 //        Map<String, Object> map = new HashMap<>();
 //        map.put("depId", order.getNxDoDepartmentId());
 //        map.put("disGoodsId", disGoodsEntity.getNxDistributerGoodsId());
@@ -4270,105 +1015,98 @@ public class NxDepartmentOrdersController {
 //        NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
 //        if (departmentDisGoodsEntity != null) {
 //            System.out.println("prinstnan" + departmentDisGoodsEntity.getNxDdgOrderStandard());
-//            order.setNxDoPrintStandard(departmentDisGoodsEntity.getNxDdgOrderStandard());
-//            order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
-//            BigDecimal costPrice = new BigDecimal(0);
-//            if (order.getNxDoCostPriceLevel().equals("1")) {
-//                costPrice = new BigDecimal(disGoodsEntity.getNxDgBuyingPriceOne());
-//                order.setNxDoCostPrice(costPrice.toString());
-//                order.setNxDoCostPriceUpdate(disGoodsEntity.getNxDgBuyingPriceOneUpdate());
-//                if (order.getNxDoStandard().equals(departmentDisGoodsEntity.getNxDdgOrderStandard())) {
-//                    BigDecimal price = new BigDecimal(departmentDisGoodsEntity.getNxDdgOrderPrice());
-//                    BigDecimal subtotal = price.multiply(new BigDecimal(order.getNxDoQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                    BigDecimal costDecimal = costPrice.multiply(new BigDecimal(order.getNxDoQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                    BigDecimal profit = subtotal.subtract(costDecimal).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                    BigDecimal scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+//            // 判断是否使用了大包装单价，如果是则设置打印规格为大包装单位（支持智能匹配：件=箱）
+//            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
+//                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                    && order.getNxDoStandard() != null
+//                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
 //
-//                    order.setNxDoSubtotal(subtotal.toString());
-//                    order.setNxDoCostSubtotal(costDecimal.toString());
-//                    order.setNxDoProfitSubtotal(profit.toString());
-//                    order.setNxDoProfitScale(scaleB.toString());
-//                }
+//            if (isUsingCartonPrice) {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
+//                System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
+//            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
 //            } else {
-//                BigDecimal price = new BigDecimal(departmentDisGoodsEntity.getNxDdgOrderPrice());
-//                costPrice = new BigDecimal(disGoodsEntity.getNxDgBuyingPriceTwo());
-//                BigDecimal costDecimal = costPrice.multiply(new BigDecimal(order.getNxDoWeight())).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                BigDecimal subtotal = price.multiply(new BigDecimal(order.getNxDoWeight())).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                BigDecimal profit = subtotal.subtract(costDecimal).setScale(1, BigDecimal.ROUND_HALF_UP);
-//                BigDecimal scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-//
-//                order.setNxDoCostPrice(costPrice.toString());
-//                order.setNxDoSubtotal(subtotal.toString());
-//                order.setNxDoCostSubtotal(costDecimal.toString());
-//                order.setNxDoProfitSubtotal(profit.toString());
-//                order.setNxDoProfitScale(scaleB.toString());
-//                order.setNxDoCostPriceUpdate(disGoodsEntity.getNxDgBuyingPriceTwoUpdate());
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
 //            }
 //
-//            order.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
+//            order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
+//            //如果有重量和单价，则计算 subtotal
+//            if (order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()
+//                    && order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty()) {
+//                try {
+//                    BigDecimal weight = new BigDecimal(order.getNxDoWeight());
+//                    BigDecimal price = new BigDecimal(order.getNxDoPrice());
+//                    BigDecimal subtotal = weight.multiply(price).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                    order.setNxDoSubtotal(subtotal.toString());
+//                } catch (NumberFormatException e) {
 //
+//                }
+//            }
+//            order.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
+//        } else {
+//            map.put("standard", null);
+//            System.out.println("depmapapapappapa" + map);
+//            NxDepartmentDisGoodsEntity departmentDisGoodsEntityO = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
+//            if (departmentDisGoodsEntityO != null) {
+//                order.setNxDoDepDisGoodsId(departmentDisGoodsEntityO.getNxDepartmentDisGoodsId());
+//            }
 //        }
-
-        nxDepartmentOrdersService.update(order);
-
-        //auto
-        if (disGoodsEntity.getNxDgPurchaseAuto() != -1) {
-            savePurGoodsAuto(order);
-        }
-        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
-        order.setNxDistributerGoodsEntity(distributerGoodsEntity);
-        
-        // 确保返回的订单状态正确
-        logger.info("[saveOneOrder] 返回订单: 商品名称={}, 订单ID={}, 状态={}, 分销商商品ID={}", 
-                order.getNxDoGoodsName(), order.getNxDepartmentOrdersId(), 
-                order.getNxDoStatus(), order.getNxDoDisGoodsId());
-        
-        // 找到商品后，设置为0（已保存），但如果订单状态是 -2（待修正），则保持 -2
-        if (order.getNxDoStatus() == null || (order.getNxDoStatus() != 0 && order.getNxDoStatus() != -2)) {
-            order.setNxDoStatus(0);
-        }
-        
-        return order;
-    }
+//
+//
+//        nxDepartmentOrdersService.update(order);
+//
+//        NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
+//        order.setNxDistributerGoodsEntity(distributerGoodsEntity);
+//
+//        // 确保返回的订单状态正确
+//        logger.info("[saveOneOrder] 返回订单: 商品名称={}, 订单ID={}, 状态={}, 分销商商品ID={}",
+//                order.getNxDoGoodsName(), order.getNxDepartmentOrdersId(),
+//                order.getNxDoStatus(), order.getNxDoDisGoodsId());
+//
+//        // 找到商品后，设置为0（已保存），但如果订单状态是 -2（待修正），则保持 -2
+//        if (order.getNxDoStatus() == null || (order.getNxDoStatus() != 0 && order.getNxDoStatus() != -2)) {
+//            order.setNxDoStatus(0);
+//        }
+//
+//        return order;
+//    }
 
 
-    private NxDepartmentOrdersEntity choiceGoodsOrder(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
-        logger.info("choiceGoodsOrderNw" , order.getNxDoGoodsName());
-        logger.info("choiceGoodsOrderNw" , order.getNxDoStandard());
-        order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
-        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
-        order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
-        order.setNxDoStatus(0);
-        order.setNxDoArriveDate(formatWhatDate(0));
-        order.setNxDoGoodsType(disGoodsEntity.getNxDgPurchaseAuto());
-        order.setNxDoNxGoodsId(disGoodsEntity.getNxDgNxGoodsId());
-        order.setNxDoNxGoodsFatherId(disGoodsEntity.getNxDgNxFatherId());
-        order.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-        order.setNxDoApplyDate(formatWhatDay(0));
-        order.setNxDoArriveOnlyDate(formatWhatDate(0));
-        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
-        order.setNxDoArriveDate(formatWhatDay(0));
-        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        order.setNxDoApplyOnlyTime(formatWhatTime(0));
-        order.setNxDoGbDistributerId(-1);
-        order.setNxDoGbDepartmentFatherId(-1);
-        order.setNxDoGbDepartmentId(-1);
-        order.setNxDoNxCommunityId(-1);
-        order.setNxDoNxCommRestrauntFatherId(-1);
-        order.setNxDoNxCommRestrauntId(-1);
-        order.setNxDoPurchaseGoodsId(disGoodsEntity.getNxDgPurchaseAuto());
-
-        order.setNxDoArriveWhatDay(getWeek(0));
-
-        Integer nxDoDisGoodsId = order.getNxDoDisGoodsId();
-
-        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = updateOneOrderForChoice(order, nxDistributerGoodsEntity);
-
-        nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
-        return order;
-    }
+    //    private NxDepartmentOrdersEntity choiceGoodsOrder(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
+//        logger.info("choiceGoodsOrderNw" , order.getNxDoGoodsName());
+//        order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
+//        order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
+//        order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
+//        order.setNxDoStatus(0);
+//        order.setNxDoArriveDate(formatWhatDate(0));
+//        order.setNxDoGoodsType(disGoodsEntity.getNxDgPurchaseAuto());
+//        order.setNxDoNxGoodsId(disGoodsEntity.getNxDgNxGoodsId());
+//        order.setNxDoNxGoodsFatherId(disGoodsEntity.getNxDgNxFatherId());
+//        order.setNxDoApplyDate(formatWhatDay(0));
+//        order.setNxDoArriveOnlyDate(formatWhatDate(0));
+//        order.setNxDoArriveWeeksYear(getWeekOfYear(0));
+//        order.setNxDoArriveDate(formatWhatDay(0));
+//        order.setNxDoApplyFullTime(formatWhatYearDayTime(0));
+//        order.setNxDoApplyOnlyTime(formatWhatTime(0));
+//        order.setNxDoGbDistributerId(-1);
+//        order.setNxDoGbDepartmentFatherId(-1);
+//        order.setNxDoGbDepartmentId(-1);
+//        order.setNxDoNxCommunityId(-1);
+//        order.setNxDoNxCommRestrauntFatherId(-1);
+//        order.setNxDoNxCommRestrauntId(-1);
+//        order.setNxDoPurchaseGoodsId(disGoodsEntity.getNxDgPurchaseAuto());
+//
+//        order.setNxDoArriveWhatDay(getWeek(0));
+//
+//        Integer nxDoDisGoodsId = order.getNxDoDisGoodsId();
+//        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
+//
+//        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = updateOneOrderForChoice(order, nxDistributerGoodsEntity);
+//
+//        nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
+//        return order;
+//    }
     // not good
     @RequestMapping(value = "/stokerGetToStockGoodsWithDepIds", method = RequestMethod.POST)
     @ResponseBody
@@ -4654,7 +1392,6 @@ public class NxDepartmentOrdersController {
     }
 
 
-
     @RequestMapping("/downloadApplysExcel")
     @ResponseBody
     public void downloadApplysExcel(HttpServletResponse response, HttpServletRequest request) {
@@ -4735,8 +1472,9 @@ public class NxDepartmentOrdersController {
         map.put("depFatherId", depFatherId);
         map.put("resFatherId", resFatherId);
         map.put("gbDepFatherId", gbDepFatherId);
-        if(supplierId != null && supplierId != -1){
+        if (supplierId != null && supplierId != -1) {
             map.put("nxSupplierId", supplierId);
+            map.put("purStatus", 2);
         }
         System.out.println("mappapapapap" + map);
         List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.queryGreatGrandOrderFatherGoods(map);
@@ -4751,6 +1489,59 @@ public class NxDepartmentOrdersController {
         return R.ok().put("data", mapR);
     }
 
+    @RequestMapping(value = "/stokerHaveNotCollOutCataGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R stokerHaveNotCollOutCataGoods(Integer collNxDisId, Integer nxDisId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("status", 3);
+        map.put("purStatus", 4);
+        map.put("disId", nxDisId);
+        map.put("collNxDisId", collNxDisId);
+
+        System.out.println("mappapapapap" + map);
+        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.queryGreatGrandOrderFatherGoods(map);
+        Integer notInteger = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        map.put("purStatus", null);
+        map.put("dayuPurStatus", 3);
+        Integer haveInteger = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("arr", fatherGoodsEntities);
+        mapR.put("haveCount", haveInteger);
+        mapR.put("notCount", notInteger);
+        return R.ok().put("data", mapR);
+    }
+
+    @RequestMapping(value = "/stockerGetHaveOutCollCataGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R stockerGetHaveOutCollCataGoods(Integer collNxDisId, Integer nxDisId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", nxDisId);
+        map.put("status", 3);
+        map.put("dayuPurStatus", 3);
+        map.put("collNxDisId", collNxDisId);
+
+
+        System.out.println("getHaveOutCataGoodsstockerGetHaveOutCataGoods" + map);
+        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.queryGreatGrandOrderFatherGoods(map);
+
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("status", 3);
+        mapCount.put("purStatus", 4);
+        mapCount.put("collNxDisId", collNxDisId);
+
+        Integer notInteger = nxDepartmentOrdersService.queryDepOrdersAcount(mapCount);
+        mapCount.put("purStatus", null);
+        mapCount.put("dayuPurStatus", 3);
+        Integer haveInteger = nxDepartmentOrdersService.queryDepOrdersAcount(mapCount);
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("arr", fatherGoodsEntities);
+        mapR.put("haveCount", haveInteger);
+        mapR.put("notCount", notInteger);
+        return R.ok().put("data", mapR);
+
+    }
+
+
     @RequestMapping(value = "/stockerGetHaveOutCataGoods", method = RequestMethod.POST)
     @ResponseBody
     public R stockerGetHaveOutCataGoods(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, Integer supplierId, Integer batchSupplierId) {
@@ -4760,18 +1551,30 @@ public class NxDepartmentOrdersController {
         map.put("depFatherId", depFatherId);
         map.put("resFatherId", resFatherId);
         map.put("gbDepFatherId", gbDepFatherId);
-        if(supplierId != null && supplierId != -1){
+        if (supplierId != null && supplierId != -1) {
             map.put("nxSupplierId", supplierId);
+            map.put("dayuPurStatus", 2);
         }
 
 
         System.out.println("getHaveOutCataGoodsstockerGetHaveOutCataGoods" + map);
         List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.queryGreatGrandOrderFatherGoods(map);
 
-        Integer haveInteger = nxDepartmentOrdersService.queryDepOrdersAcount(map);
-        map.put("purStatus", 4);
-        map.put("equalPurStatus", null);
-        Integer notInteger = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("status", 3);
+        mapCount.put("purStatus", 4);
+        mapCount.put("depFatherId", depFatherId);
+        mapCount.put("resFatherId", resFatherId);
+        mapCount.put("gbDepFatherId", gbDepFatherId);
+        if (supplierId != null && supplierId != -1) {
+            mapCount.put("nxSupplierId", supplierId);
+            mapCount.put("purStatus", 2);
+        }
+
+        Integer notInteger = nxDepartmentOrdersService.queryDepOrdersAcount(mapCount);
+        mapCount.put("purStatus", null);
+        mapCount.put("dayuPurStatus", 3);
+        Integer haveInteger = nxDepartmentOrdersService.queryDepOrdersAcount(mapCount);
         Map<String, Object> mapR = new HashMap<>();
         mapR.put("arr", fatherGoodsEntities);
         mapR.put("haveCount", haveInteger);
@@ -4962,6 +1765,24 @@ public class NxDepartmentOrdersController {
 
     }
 
+
+
+    @RequestMapping(value = "/stockerGetToStockGoodsWithCollDisId", method = RequestMethod.POST)
+    @ResponseBody
+    public R stockerGetToStockGoodsWithCollDisId(Integer collNxDisId, Integer nxDisId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("disId", nxDisId);
+        params.put("collNxDisId", collNxDisId);
+        params.put("purStatus", 4);
+        params.put("dayuOrderStatus", -2);
+
+        // 获取所有数据
+        Map<String, Object> result = nxDepartmentOrdersService.queryStockGoodsData(params);
+
+        return R.ok().put("data", result);
+    }
+
+
     @RequestMapping(value = "/stockerGetToStockGoodsWithDepIdsKf", method = RequestMethod.POST)
     @ResponseBody
     @Cacheable(value = "stockGoods", key = "#nxDisId + '_' + #nxDepIds + '_' + #gbDepIds")
@@ -4969,6 +1790,7 @@ public class NxDepartmentOrdersController {
         Map<String, Object> params = new HashMap<>();
         params.put("disId", nxDisId);
         params.put("purStatus", 4);
+        params.put("dayuOrderStatus", -2);
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
         List<String> idsNx = parseDepIds(nxDepIds);
@@ -4995,9 +1817,10 @@ public class NxDepartmentOrdersController {
 
     /**
      * 获取货架列表（仅基本信息，不包含商品详情）
+     *
      * @param nxDepIds 部门ID列表（String类型），"0"表示全部，多个用逗号分隔
      * @param gbDepIds GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param nxDisId 分销商ID
+     * @param nxDisId  分销商ID
      * @return 包含货架列表、部门列表、统计数据的Map
      */
     @RequestMapping(value = "/stockerGetShelfListWithDepIds", method = RequestMethod.POST)
@@ -5007,7 +1830,8 @@ public class NxDepartmentOrdersController {
         params.put("disId", nxDisId);
         params.put("status", 3);
         params.put("purStatus", 4);
-        
+        params.put("dayuOrderStatus", -2);
+
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
         List<String> idsNx = parseDepIds(nxDepIds);
@@ -5027,10 +1851,11 @@ public class NxDepartmentOrdersController {
 
     /**
      * 获取指定货架的商品详情（包含订单信息）
-     * @param shelfId 货架ID
+     *
+     * @param shelfId  货架ID
      * @param nxDepIds 部门ID列表（String类型），"0"表示全部，多个用逗号分隔
      * @param gbDepIds GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param nxDisId 分销商ID
+     * @param nxDisId  分销商ID
      * @return 完整的货架对象（包含商品列表和订单）
      */
     @RequestMapping(value = "/stockerGetShelfGoodsDetail", method = RequestMethod.POST)
@@ -5041,7 +1866,8 @@ public class NxDepartmentOrdersController {
         params.put("status", 3);
         params.put("purStatus", 4);
         params.put("shelfId", shelfId);
-        
+        params.put("dayuOrderStatus", -2);
+
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
         List<String> idsNx = parseDepIds(nxDepIds);
@@ -5061,32 +1887,32 @@ public class NxDepartmentOrdersController {
             logger.info("========= stockerGetShelfGoodsDetail 返回数据检查 =========");
             logger.info("货架ID: {}, 货架名称: {}", shelf.getNxDistributerGoodsShelfId(), shelf.getNxDistributerGoodsShelfName());
             logger.info("商品数量: {}", shelf.getGoodsList().size());
-            
+
             int orderCount = 0;
             int hasAttrNameCount = 0;
             int nullAttrNameCount = 0;
-            
+
             for (ShelfGoodsShelfGoodsSimpleDTO shelfGoods : shelf.getGoodsList()) {
                 if (shelfGoods.getGoods() != null && shelfGoods.getGoods().getOrders() != null) {
                     for (ShelfOrderSimpleDTO order : shelfGoods.getGoods().getOrders()) {
                         orderCount++;
                         if (order.getNxDepartmentAttrName() != null && !order.getNxDepartmentAttrName().isEmpty()) {
                             hasAttrNameCount++;
-                            logger.info("订单ID: {}, nxDepartmentAttrName: {}, depName: {}", 
-                                    order.getNxDepartmentOrdersId(), 
-                                    order.getNxDepartmentAttrName(), 
+                            logger.info("订单ID: {}, nxDepartmentAttrName: {}, depName: {}",
+                                    order.getNxDepartmentOrdersId(),
+                                    order.getNxDepartmentAttrName(),
                                     order.getDepName());
                         } else {
                             nullAttrNameCount++;
-                            logger.warn("订单ID: {}, nxDepartmentAttrName 为 NULL 或空, depName: {}", 
-                                    order.getNxDepartmentOrdersId(), 
+                            logger.warn("订单ID: {}, nxDepartmentAttrName 为 NULL 或空, depName: {}",
+                                    order.getNxDepartmentOrdersId(),
                                     order.getDepName());
                         }
                     }
                 }
             }
-            
-            logger.info("总订单数: {}, 有 nxDepartmentAttrName 的订单数: {}, nxDepartmentAttrName 为 NULL 的订单数: {}", 
+
+            logger.info("总订单数: {}, 有 nxDepartmentAttrName 的订单数: {}, nxDepartmentAttrName 为 NULL 的订单数: {}",
                     orderCount, hasAttrNameCount, nullAttrNameCount);
             logger.info("========= stockerGetShelfGoodsDetail 数据检查完成 =========");
         } else {
@@ -5098,9 +1924,10 @@ public class NxDepartmentOrdersController {
 
     /**
      * 获取统计数据（不包含货架和商品数据）
+     *
      * @param nxDepIds 部门ID列表（String类型），"0"表示全部，多个用逗号分隔
      * @param gbDepIds GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param nxDisId 分销商ID
+     * @param nxDisId  分销商ID
      * @return 包含部门列表和统计数据的Map
      */
     @RequestMapping(value = "/stockerGetShelfStatistics", method = RequestMethod.POST)
@@ -5110,7 +1937,7 @@ public class NxDepartmentOrdersController {
         params.put("disId", nxDisId);
         params.put("status", 3);
         params.put("purStatus", 4);
-        
+
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
         List<String> idsNx = parseDepIds(nxDepIds);
@@ -5130,9 +1957,10 @@ public class NxDepartmentOrdersController {
 
     /**
      * 获取类别列表（曾祖父级别，仅基本信息，不包含商品详情）
+     *
      * @param nxDepIds 部门ID列表（String类型），"0"表示全部，多个用逗号分隔
      * @param gbDepIds GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param nxDisId 分销商ID
+     * @param nxDisId  分销商ID
      * @return 包含类别列表、部门列表和统计数据的Map
      */
     @RequestMapping(value = "/stockerGetCategoryListWithDepIds", method = RequestMethod.POST)
@@ -5142,10 +1970,12 @@ public class NxDepartmentOrdersController {
         params.put("disId", nxDisId);
         params.put("status", 3);
         params.put("purStatus", 4);
-        if(supplierId != null && supplierId != -1){
+        params.put("dayuOrderStatus", -2);
+        if (supplierId != null && supplierId != -1) {
             params.put("nxSupplierId", supplierId);
+            params.put("purStatus", 2);
         }
-        
+
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
         List<String> idsNx = parseDepIds(nxDepIds);
@@ -5163,12 +1993,30 @@ public class NxDepartmentOrdersController {
         return R.ok().put("data", result);
     }
 
+
+    @RequestMapping(value = "/stockerGetCategoryListWithCollNxDisId", method = RequestMethod.POST)
+    @ResponseBody
+    public R stockerGetCategoryListWithCollNxDisId(Integer collNxDisId, Integer nxDisId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("disId", nxDisId);
+        params.put("collNxDisId", collNxDisId);
+        params.put("status", 3);
+        params.put("purStatus", 4);
+        params.put("dayuOrderStatus", -2);
+
+        // 获取类别列表和统计数据
+        Map<String, Object> result = nxDepartmentOrdersService.queryCategoryListWithDepIds(params);
+
+        return R.ok().put("data", result);
+    }
+
     /**
      * 获取指定类别的商品详情（包含订单信息）
+     *
      * @param categoryId 类别ID（Integer类型，必填）- 曾祖父级别ID
-     * @param nxDepIds 部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param gbDepIds GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param nxDisId 分销商ID
+     * @param nxDepIds   部门ID列表（String类型），"0"表示全部，多个用逗号分隔
+     * @param gbDepIds   GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
+     * @param nxDisId    分销商ID
      * @return 完整的类别对象（包含商品列表和订单）
      */
     @RequestMapping(value = "/stockerGetCategoryGoodsDetail", method = RequestMethod.POST)
@@ -5179,8 +2027,9 @@ public class NxDepartmentOrdersController {
         params.put("status", 3);
         params.put("purStatus", 4);
         params.put("categoryId", categoryId);
-        if(supplierId != null && supplierId != -1){
+        if (supplierId != null && supplierId != -1) {
             params.put("nxSupplierId", supplierId);
+            params.put("purStatus", 2);
         }
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
@@ -5199,11 +2048,29 @@ public class NxDepartmentOrdersController {
         return R.ok().put("data", category);
     }
 
+
+    @RequestMapping(value = "/stockerGetCategoryGoodsDetailWithCooNxDisId", method = RequestMethod.POST)
+    @ResponseBody
+    public R stockerGetCategoryGoodsDetailWithCooNxDisId(Integer categoryId,  Integer nxDisId, Integer collNxDisId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("collNxDisId", collNxDisId);
+        params.put("disId", nxDisId);
+        params.put("status", 3);
+        params.put("purStatus", 4);
+        params.put("categoryId", categoryId);
+
+
+        // 使用超简化版查询，字段扁平化，大幅减少数据传输量
+        CategoryDetailSimpleDTO category = nxDepartmentOrdersService.queryCategoryGoodsDetailUltraSimple(params);
+
+        return R.ok().put("data", category);
+    }
     /**
      * 获取统计数据（不包含类别和商品数据）
+     *
      * @param nxDepIds 部门ID列表（String类型），"0"表示全部，多个用逗号分隔
      * @param gbDepIds GB部门ID列表（String类型），"0"表示全部，多个用逗号分隔
-     * @param nxDisId 分销商ID
+     * @param nxDisId  分销商ID
      * @return 包含部门列表和统计数据的Map
      */
     @RequestMapping(value = "/stockerGetCategoryStatistics", method = RequestMethod.POST)
@@ -5213,7 +2080,7 @@ public class NxDepartmentOrdersController {
         params.put("disId", nxDisId);
         params.put("status", 3);
         params.put("purStatus", 4);
-        
+
         // 处理部门ID
         List<String> idsGb = parseDepIds(gbDepIds);
         List<String> idsNx = parseDepIds(nxDepIds);
@@ -5230,7 +2097,6 @@ public class NxDepartmentOrdersController {
 
         return R.ok().put("data", result);
     }
-
 
 
     @RequestMapping(value = "/disOutOrdersWithWeightFinish", method = RequestMethod.POST)
@@ -5292,6 +2158,7 @@ public class NxDepartmentOrdersController {
 
         return R.ok();
     }
+
     @RequestMapping(value = "/disGetStockGoodsOrdersFatherGoods", method = RequestMethod.POST)
     @ResponseBody
     public R disGetStockGoodsOrdersFatherGoods(Integer fatherId, Integer disId, Integer goodsType) {
@@ -5482,9 +2349,11 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("purStatus", 4);
+        map.put("dayuOrderStatus", -2);
         System.out.println("mapappapa" + map);
         Integer count = nxDepartmentOrdersService.queryDepOrdersAcount(map);
 
+        map.put("isSelfOrder", -1);
         // 1. 获取部门列表
         List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryPureOrderNxDepartmentSimple(map);
         List<GbDepartmentEntity> gbDepartmentEntityList = nxDepartmentOrdersService.queryPureOrderGbDepartment(map);
@@ -5541,11 +2410,58 @@ public class NxDepartmentOrdersController {
             }
         }
 
+
+        //协作订单
+        Map<String, Object> mapOffer = new HashMap<>();
+        mapOffer.put("disId", disId);
+        mapOffer.put("isSelfOrder", 1);
+//        mapOffer.put("purStatus", 4);
+        mapOffer.put("status", 3);
+        System.out.println("enennenenennemapOffer" + mapOffer);
+        List<NxDistributerEntity> offerNxDistributer = nxDepartmentOrdersService.queryOfferOrderNxDistributer(mapOffer);
+        if(offerNxDistributer.size() > 0){
+            for(NxDistributerEntity distributerEntity: offerNxDistributer){
+                // 每个协作商独立查询，需传入 collNxDisId
+                Map<String, Object> mapColl = new HashMap<>();
+                mapColl.put("disId", disId);
+                mapColl.put("isSelfOrder", 1);
+                mapColl.put("status", 3);
+                mapColl.put("collNxDisId", distributerEntity.getNxDistributerId());
+
+                int orderCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapColl);
+                Map<String, Object> mapPick = new HashMap<>(mapColl);
+                mapPick.put("equalPurStatus", 4);
+                int pickCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapPick);
+
+                // totalCount、hasPrice、hasWeight、twoSubtotal 四个字段
+                int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasPrice", 1);
+                int hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasPrice", null);
+                mapColl.put("hasWeight", 1);
+                int hasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasWeight", null);
+                Double subtotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapColl);
+                String twoSubtotal = subtotal != null && subtotal > 0
+                        ? new BigDecimal(subtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString()
+                        : "0";
+
+                Map<String, Object> mapItem = new HashMap<>();
+                mapItem.put("orderCount", orderCount);
+                mapItem.put("pickCount", pickCount);
+                mapItem.put("totalCount", totalCount);
+                mapItem.put("twoSubtotal", twoSubtotal);
+                mapItem.put("hasPrice", hasPrice);
+                mapItem.put("hasWeight", hasWeight);
+                distributerEntity.setAaa(mapItem);
+            }
+        }
+
         Map<String, Object> mapR = new HashMap<>();
         mapR.put("nxDep", departmentEntities);
         mapR.put("gbDep", gbDepartmentEntityList);
-        mapR.put("depOrdersWait", count);
-
+        mapR.put("depOrdersWait", count  );
+        mapR.put("offerArr", offerNxDistributer);
 
         return R.ok().put("data", mapR);
     }
@@ -5555,7 +2471,7 @@ public class NxDepartmentOrdersController {
     public R supplierGetWaitStockGoodsDeps(Integer disId, Integer supplierId) {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
-        map.put("purStatus", 4);
+        map.put("purStatus", 2);
         map.put("nxSupplierId", supplierId);
         System.out.println("mapappapasuppleerr" + map);
         Integer count = nxDepartmentOrdersService.queryDepOrdersAcount(map);
@@ -5632,15 +2548,15 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("status", 3);
-        if(supplierId != null && supplierId != -1){
+        map.put("isSelfOrder", -1);
+        map.put("dayuOrderStatus", -2);
+        if (supplierId != null && supplierId != -1) {
             map.put("nxSupplierId", supplierId);
+            map.put("purStatus", 2);
         }
 
-//        map.put("euqalPurStatus", 4);
-        List<NxDepartmentEntity> resultNx = new ArrayList<>();
-
         // 1. 获取部门列表
-        System.out.println("dkfkjakfdas;fkasd;stockerGetFinishStockGoodsDepsstockerGetFinishStockGoodsDepsfas" + map);
+        System.out.println("whhshshhwwh" + map);
         List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryPureOrderNxDepartmentSimple(map);
         List<GbDepartmentEntity> gbDepartmentEntityList = nxDepartmentOrdersService.queryPureOrderGbDepartment(map);
 
@@ -5665,9 +2581,6 @@ public class NxDepartmentOrdersController {
                     dept.setNxDepartmentAddCount(stats.get("count0"));
                     dept.setNxDepartmentPurOrderCount(stats.get("count1"));
                     dept.setNxDepartmentNeedNotPurOrderCount(stats.get("count2"));
-//                    if (stats.get("count1") == 0) {
-//                        resultNx.add(dept);
-//                    }
                 }
             }
         }
@@ -5694,9 +2607,6 @@ public class NxDepartmentOrdersController {
                     dept.setGbDepartmentAddCount(stats.get("count0"));
                     dept.setGbDepartmentPurOrderCount(stats.get("count1"));
                     dept.setGbDepartmentNeedNotPurOrderCount(stats.get("count2"));
-//                    if (stats.get("count1") == 0) {
-//                        resultGb.add(dept);
-//                    }
                 }
             }
         }
@@ -5706,15 +2616,60 @@ public class NxDepartmentOrdersController {
                 .filter(Objects::nonNull)
                 .filter(dept -> dept.getNxDepartmentId() != null)
                 .collect(Collectors.toList());
-        
+
         List<GbDepartmentEntity> filteredGbDep = gbDepartmentEntityList.stream()
                 .filter(Objects::nonNull)
                 .filter(dept -> dept.getGbDepartmentId() != null)
                 .collect(Collectors.toList());
-        
+
+//协作订单
+        Map<String, Object> mapOffer = new HashMap<>();
+        mapOffer.put("disId", disId);
+        mapOffer.put("isSelfOrder", 1);
+        mapOffer.put("status", 3);
+        System.out.println("enennenenennemapOffer" + mapOffer);
+        List<NxDistributerEntity> offerNxDistributer = nxDepartmentOrdersService.queryOfferOrderNxDistributer(mapOffer);
+        if(offerNxDistributer.size() > 0){
+            for(NxDistributerEntity distributerEntity: offerNxDistributer){
+                Map<String, Object> mapColl = new HashMap<>();
+                mapColl.put("disId", disId);
+                mapColl.put("isSelfOrder", 1);
+                mapColl.put("status", 3);
+                mapColl.put("collNxDisId", distributerEntity.getNxDistributerId());
+
+                int orderCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapColl);
+                Map<String, Object> mapPick = new HashMap<>(mapColl);
+                mapPick.put("equalPurStatus", 4);
+                int pickCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapPick);
+
+                int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasPrice", 1);
+                int hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasPrice", null);
+                mapColl.put("hasWeight", 1);
+                int hasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasWeight", null);
+                Double subtotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapColl);
+                String twoSubtotal = subtotal != null && subtotal > 0
+                        ? new BigDecimal(subtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString()
+                        : "0";
+
+                Map<String, Object> mapItem = new HashMap<>();
+                mapItem.put("orderCount", orderCount);
+                mapItem.put("pickCount", pickCount);
+                mapItem.put("totalCount", totalCount);
+                mapItem.put("twoSubtotal", twoSubtotal);
+                mapItem.put("hasPrice", hasPrice);
+                mapItem.put("hasWeight", hasWeight);
+                distributerEntity.setAaa(mapItem);
+            }
+        }
+
+
         Map<String, Object> mapR = new HashMap<>();
         mapR.put("nxDep", filteredNxDep);
         mapR.put("gbDep", filteredGbDep);
+        mapR.put("offerArr", offerNxDistributer);
         return R.ok().put("data", mapR);
     }
 
@@ -5866,7 +2821,7 @@ public class NxDepartmentOrdersController {
     /**
      * 根据tradeNo查询账单信息和订单列表（包含溯源报告信息）
      * 如果是货架商品，从库存批次关联溯源报告；如果不是货架商品，从采购商品关联溯源报告
-     * 
+     *
      * @param tradeNo 账单交易号（nx_DB_trade_no）
      * @return 账单信息和订单列表，每个订单包含下单用户、下单时间、溯源报告等信息
      */
@@ -5874,34 +2829,34 @@ public class NxDepartmentOrdersController {
     @ResponseBody
     public R getOrdersByTradeNoWithTraceReport(@PathVariable String tradeNo, HttpServletRequest request) {
         System.out.println("[getOrdersByTradeNoWithTraceReport] 开始查询账单和订单溯源报告，tradeNo: " + tradeNo);
-        
+
         if (tradeNo == null || tradeNo.trim().isEmpty()) {
             return R.error("tradeNo 不能为空");
         }
-        
+
         // 通过 tradeNo 查询账单信息
         NxDepartmentBillEntity billEntity = nxDepartmentBillService.queryDepartBillByJustTradeNo(tradeNo);
         if (billEntity == null) {
             return R.error("账单不存在，tradeNo: " + tradeNo);
         }
-        
+
         Integer departmentBillId = billEntity.getNxDepartmentBillId();
         if (departmentBillId == null) {
             return R.error("账单ID为空，tradeNo: " + tradeNo);
         }
-        
+
         // 查询历史订单列表（包含溯源报告信息）
         Map<String, Object> map = new HashMap<>();
         map.put("billId", departmentBillId);
-        
+
         List<NxDepartmentOrderHistoryEntity> ordersEntities = historyService.queryOrdersByBillIdWithTraceReport(map);
-        
-        System.out.println("[getOrdersByTradeNoWithTraceReport] 查询完成，tradeNo: " + tradeNo + 
-            ", 账单ID: " + departmentBillId + ", 订单数量: " + ordersEntities.size());
-        
+
+        System.out.println("[getOrdersByTradeNoWithTraceReport] 查询完成，tradeNo: " + tradeNo +
+                ", 账单ID: " + departmentBillId + ", 订单数量: " + ordersEntities.size());
+
         // 构建基础URL（用于文件下载）
         String baseUrl = buildBaseUrl(request);
-        
+
         // 处理溯源报告的下载地址
         for (NxDepartmentOrderHistoryEntity order : ordersEntities) {
             NxTraceReportEntity traceReport = order.getNxTraceReportEntity();
@@ -5912,7 +2867,7 @@ public class NxDepartmentOrdersController {
                     String downloadUrl = buildDownloadUrl(baseUrl, filePath);
                     traceReport.setNxTrFilePath(downloadUrl); // 将相对路径替换为完整URL
                 }
-                
+
                 // 处理多个文件路径（JSON格式）
                 String filePaths = traceReport.getNxTrFilePaths();
                 if (filePaths != null && !filePaths.trim().isEmpty()) {
@@ -5934,26 +2889,15 @@ public class NxDepartmentOrdersController {
                     }
                 }
             }
-            
-            System.out.println("[getOrdersByTradeNoWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() + 
-                ", 商品名称: " + order.getNxDoGoodsName() +
-                ", 下单时间: " + order.getNxDoTodayOrder() +
-                ", 下单用户: " + (order.getNxDepartmentUserEntity() != null ?
-                    order.getNxDepartmentUserEntity().getNxDuWxNickName() : "null") +
-                ", 溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
-            if (traceReport != null) {
-                System.out.println("[getOrdersByTradeNoWithTraceReport]   溯源报告详情 - 供应商: " + traceReport.getNxTrSupplierName() + 
-                    ", 采购日期: " + traceReport.getNxTrPurchaseDate() +
-                    ", 有效期: " + traceReport.getNxTrValidStartDate() + " ~ " + traceReport.getNxTrValidEndDate() +
-                    ", 文件路径: " + traceReport.getNxTrFilePath());
-            }
+
+
         }
-        
+
         // 构建返回结果
         Map<String, Object> result = new HashMap<>();
         result.put("bill", billEntity);
         result.put("orders", ordersEntities);
-        
+
         return R.ok().put("data", result);
     }
 
@@ -5965,24 +2909,25 @@ public class NxDepartmentOrdersController {
         String serverName = request.getServerName(); // 服务器名称或IP
         int serverPort = request.getServerPort(); // 端口号
         String contextPath = request.getContextPath(); // 上下文路径，如 /nongxinle_master_war_exploded
-        
+
         StringBuilder baseUrl = new StringBuilder();
         baseUrl.append(scheme).append("://").append(serverName);
-        
+
         // 如果是标准端口（80或443），不需要添加端口号
-        if ((scheme.equals("http") && serverPort != 80) || 
-            (scheme.equals("https") && serverPort != 443)) {
+        if ((scheme.equals("http") && serverPort != 80) ||
+                (scheme.equals("https") && serverPort != 443)) {
             baseUrl.append(":").append(serverPort);
         }
-        
+
         baseUrl.append(contextPath);
-        
+
         return baseUrl.toString();
     }
 
     /**
      * 构建文件下载URL
-     * @param baseUrl 基础URL（如 http://192.168.0.101:8080/nongxinle_master_war_exploded）
+     *
+     * @param baseUrl  基础URL（如 http://192.168.0.101:8080/nongxinle_master_war_exploded）
      * @param filePath 文件相对路径（如 traceReports/xxx.pdf）
      * @return 完整的下载URL
      */
@@ -5990,15 +2935,15 @@ public class NxDepartmentOrdersController {
         if (filePath == null || filePath.trim().isEmpty()) {
             return null;
         }
-        
+
         // 如果已经是完整URL，直接返回
         if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
             return filePath;
         }
-        
+
         // 确保路径以 / 开头
         String normalizedPath = filePath.startsWith("/") ? filePath : "/" + filePath;
-        
+
         // 构建完整URL
         return baseUrl + normalizedPath;
     }
@@ -6738,7 +3683,6 @@ public class NxDepartmentOrdersController {
             NxDistributerFatherGoodsEntity greatGrandsEntity = greatGrandGoods.get(0);
             Integer greatGarndGoodsId = greatGrandsEntity.getNxDistributerFatherGoodsId();
             map.put("fathersFatherId", greatGarndGoodsId);
-//            distributerGoodsEntities = nxDepartmentOrdersService.disGetOutStockGoodsApplyForStock(map);
             distributerGoodsEntities = nxDepartmentOrdersService.disGetOutStockGoodsApplyForStock(map);
 
             mapR.put("cataArr", greatGrandGoods);
@@ -6851,11 +3795,6 @@ public class NxDepartmentOrdersController {
         map.put("status", 3);
         map.put("purStatus", 4);
         map.put("purType", 0);
-//        System.out.println("aaoaoaooaoaaooa" + map);
-//        List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.disGetOutStockGoodsApplyForStock(map);
-//        //countOrderStatus
-//        fatherGoodsEntities = everyStockFatherGoodsOrderStatus(fatherGoodsEntities, disId, map);
-
 
         System.out.println("cattaktktktkktk");
         List<NxDistributerFatherGoodsEntity> disGoodsEntities = nxDepartmentOrdersService.queryGrandGoodsOrder(map);
@@ -6976,9 +3915,6 @@ public class NxDepartmentOrdersController {
         int wxCountAuto = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
         int wxCountPur = wxCount + wxCountAuto;
 
-        map111.put("goodsType", 0);
-        int zicaiCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-
         //ok
         Map<String, Object> mapOk = new HashMap<>();
         mapOk.put("disId", disId);
@@ -7023,13 +3959,14 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("status", 3);
+        map.put("dayuOrderStatus", -2);
         map.put("purStatus", 4);
         map.put("purType", 0);
         map.put("offset", (page - 1) * limit);
         map.put("limit", limit);
         logger.info("[disGetTypePrepareOutPage] 查询条件 map: {}", map);
         logger.info("[disGetTypePrepareOutPage] 使用超简化版查询，只返回前端需要的字段");
-        
+
         // 使用超简化版查询，只返回前端需要的字段，大幅减少数据传输量
         List<com.nongxinle.entity.OutGoodsSimpleDTO> outGoodsSimpleList = nxDepartmentOrdersService.queryOutGoodsWithOrdersUltraSimple(map);
         logger.info("[disGetTypePrepareOutPage] 查询结果数量: {}", outGoodsSimpleList != null ? outGoodsSimpleList.size() : 0);
@@ -7040,6 +3977,40 @@ public class NxDepartmentOrdersController {
         mapCount.put("purStatus", 4);
         mapCount.put("purType", 0);
         mapCount.put("type", -1);
+        mapCount.put("dayuOrderStatus", -2);
+        Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(mapCount);
+
+        PageUtils pageUtil = new PageUtils(outGoodsSimpleList, integer, limit, page);
+
+        return R.ok().put("page", pageUtil);
+    }
+
+    @RequestMapping(value = "/disGetCollPrepareOutPage", method = RequestMethod.POST)
+    @ResponseBody
+    public R disGetCollPrepareOutPage(
+                                      Integer disId,
+                                      Integer page,
+                                      Integer limit) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderDisId", disId);
+        map.put("purStatus", 1);
+        map.put("status", 3);
+        map.put("offset", (page - 1) * limit);
+        map.put("limit", limit);
+        map.put("hasCollOrder", 1);
+        logger.info("[disGetCollPrepareOutPage] 查询条件 map: {}", map);
+        logger.info("[disGetCollPrepareOutPage] 使用超简化版查询，只返回前端需要的字段");
+
+        // 使用超简化版查询，只返回前端需要的字段，大幅减少数据传输量
+        List<com.nongxinle.entity.OutGoodsSimpleDTO> outGoodsSimpleList = nxDepartmentOrdersService.queryOutGoodsWithOrdersUltraSimple(map);
+        logger.info("[disGetTypePrepareOutPage] 查询结果数量: {}", outGoodsSimpleList != null ? outGoodsSimpleList.size() : 0);
+
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("orderDisId", disId);
+        mapCount.put("status", 3);
+        mapCount.put("purStatus", 1);
+        mapCount.put("hasCollOrder", 1);
         Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(mapCount);
 
         PageUtils pageUtil = new PageUtils(outGoodsSimpleList, integer, limit, page);
@@ -7054,19 +4025,33 @@ public class NxDepartmentOrdersController {
         map.put("disId", disId);
         map.put("depFatherId", depId);
         map.put("status", 3);
+        map.put("dayuOrderStatus", -2);
         map.put("purStatus", 4);
         map.put("purType", 0);
-        logger.info("[disGetTypePrepareOutByDep] 查询参数: {}", map);
-        logger.info("[disGetTypePrepareOutByDep] 使用超简化版查询，只返回前端需要的字段");
-        
+
         // 使用超简化版查询，只返回前端需要的字段，大幅减少数据传输量
         List<com.nongxinle.entity.OutGoodsSimpleDTO> outGoodsSimpleList = nxDepartmentOrdersService.disGetNxGoodsApplyUltraSimple(map);
         logger.info("[disGetTypePrepareOutByDep] 查询结果数量: {}", outGoodsSimpleList != null ? outGoodsSimpleList.size() : 0);
         return R.ok().put("data", outGoodsSimpleList);
     }
 
+    @RequestMapping(value = "/disGetTypePrepareOutByCollDis", method = RequestMethod.POST)
+    @ResponseBody
+    public R disGetTypePrepareOutByCollDis(Integer disId, Integer collDisId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("collNxDisId", collDisId);
+        map.put("status", 3);
+        map.put("dayuOrderStatus", -2);
+        map.put("purStatus", 4);
+        map.put("purType", 0);
+        logger.info("[disGetTypePrepareOutByCollDis]{}" ,map);
 
-
+        // 使用超简化版查询，只返回前端需要的字段，大幅减少数据传输量
+        List<com.nongxinle.entity.OutGoodsSimpleDTO> outGoodsSimpleList = nxDepartmentOrdersService.disGetNxGoodsApplyUltraSimple(map);
+        logger.info("[disGetTypePrepareOutByCollDis] 查询结果数量: {}", outGoodsSimpleList != null ? outGoodsSimpleList.size() : 0);
+        return R.ok().put("data", outGoodsSimpleList);
+    }
 
 
     @RequestMapping(value = "/disGetTypePrepareOutCata", method = RequestMethod.POST)
@@ -7075,9 +4060,10 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
 //        map.put("status", 3);
-        map.put("purStatus", 2);
+        map.put("dayuOrderStatus", -2);
+        map.put("purStatus", 1);
         map.put("orderGoodsType", purType);
-        
+
 
         // 使用超简化版查询，只返回曾祖父对象基本信息，不包含嵌套对象，大幅减少数据传输量
         System.out.println("ormapapa" + map);
@@ -7089,20 +4075,138 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map111 = new HashMap<>();
         map111.put("disId", disId);
         map111.put("purStatus", 4);
+        map111.put("dayuOrderStatus", -2);
         // 出库
         map111.put("goodsType", -1);
         int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
 
         map111.put("goodsType", 1);
+//
+        int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+
         map111.put("batchId", 0);
         int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
         map111.put("batchId", 1);
-        int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+        int havePurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
 
+        //协作订单数量
+        Map<String, Object> mapcoll = new HashMap<>();
+        mapcoll.put("disId", disId);
+        mapcoll.put("purStatus", 4);
+        mapcoll.put("status", 3);
+        mapcoll.put("hasCollOrder", 1);
+
+        Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(mapcoll);
+
+        mapR.put("collCount", integer);
         mapR.put("stockCount", stockCount);
         mapR.put("unPurCount", unPurCount);
+        mapR.put("havePurCount", havePurCount);
         mapR.put("puringCount", puringCount);
         mapR.put("arr", greatGrandList);
+        System.out.println("grnalisiisis" + greatGrandList.size());
+        logger.info("[disGetTypePrepareOutCata] 返回数据完成（使用简化DTO，数据传输量大幅减少）");
+        return R.ok().put("data", mapR);
+
+    }
+
+
+    @RequestMapping(value = "/disGetCollReplyOutPage", method = RequestMethod.POST)
+    @ResponseBody
+    public R disGetCollReplyOutPage(
+            Integer disId,
+            Integer page,
+            Integer limit) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("hasCollOrder", 1);
+        map.put("status", 3);
+        map.put("dayuPurStatus", 0);
+        map.put("offset", (page - 1) * limit);
+        map.put("limit", limit);
+        logger.info("[disGetCollReplyOutPage] 查询条件 map: {}", map);
+
+        List<NxDistributerEntity> nxDistributerEntities = nxDepartmentOrdersService.queryOfferOrderNxDistributerWithOrder(map);
+        logger.info("[disGetCollReplyOutPage] 查询结果数量(协作伙伴数): {}", nxDistributerEntities != null ? nxDistributerEntities.size() : 0);
+
+        Map<String, Object> mapCount = new HashMap<>();
+        mapCount.put("disId", disId);
+        mapCount.put("hasCollOrder", 1);
+        mapCount.put("status", 3);
+        mapCount.put("dayuPurStatus", 0);
+        Integer integer = nxDepartmentOrdersService.queryCollReplyPartnerCount(mapCount);
+
+        PageUtils pageUtil = new PageUtils(nxDistributerEntities, integer, limit, page);
+
+        return R.ok().put("page", pageUtil);
+    }
+
+
+
+    @RequestMapping(value = "/disGetCollNxPrepareOutCata", method = RequestMethod.POST)
+    @ResponseBody
+    public R disGetCollNxPrepareOutCata(Integer orderDisId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderDisId", orderDisId);
+        map.put("status", 3);
+        map.put("purStatus", 1);
+        map.put("hasCollOrder", 1);
+
+        // 使用超简化版查询，只返回曾祖父对象基本信息，不包含嵌套对象，大幅减少数据传输量
+        System.out.println("ormapapadisGetCollNxPrepareOutCata" + map);
+        List<com.nongxinle.entity.GreatGrandFatherGoodsSimpleDTO> greatGrandList = nxDepartmentOrdersService.queryGreatGrandOrderFatherGoodsUltraSimple(map);
+        logger.info("[disGetTypePrepareOutCata] 查询结果数量: {}", greatGrandList != null ? greatGrandList.size() : 0);
+
+        Map<String, Object> mapR = new HashMap<>();
+
+        Map<String, Object> map111 = new HashMap<>();
+        map111.put("disId", orderDisId);
+        map111.put("purStatus", 4);
+        map111.put("dayuOrderStatus", -2);
+        // 出库
+        map111.put("goodsType", -1);
+        int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+
+        map111.put("goodsType", 1);
+//
+        int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+
+        map111.put("batchId", 0);
+        int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+        map111.put("batchId", 1);
+        int havePurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+
+        //协作订单数量
+        Map<String, Object> mapcoll = new HashMap<>();
+        mapcoll.put("disId", orderDisId);
+        mapcoll.put("purStatus", 4);
+        mapcoll.put("status", 3);
+        mapcoll.put("hasCollOrder", 1);
+
+        Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(mapcoll);
+
+        mapR.put("collCount", integer);
+        mapR.put("stockCount", stockCount);
+        mapR.put("unPurCount", unPurCount);
+        mapR.put("havePurCount", havePurCount);
+        mapR.put("puringCount", puringCount);
+        mapR.put("arr", greatGrandList);
+
+        Map<String, Object> mapUnPick = new HashMap<>();
+        mapUnPick.put("disId", orderDisId);
+        mapUnPick.put("purStatus", 1);
+        mapUnPick.put("status", 3);
+        mapUnPick.put("hasCollOrder", 1);
+        Integer unPickCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapUnPick);
+        mapUnPick.put("purStatus", null);
+        mapUnPick.put("dayuPurStatus", 0);
+        System.out.println("mappapaunun" + mapUnPick);
+        Integer havePickCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapUnPick);
+
+        mapR.put("unPickCount", unPickCount);
+        mapR.put("havePickCount", havePickCount);
+
         System.out.println("grnalisiisis" + greatGrandList.size());
         logger.info("[disGetTypePrepareOutCata] 返回数据完成（使用简化DTO，数据传输量大幅减少）");
         return R.ok().put("data", mapR);
@@ -7123,15 +4227,83 @@ public class NxDepartmentOrdersController {
         map.put("disId", disId);
         map.put("status", 3);
         map.put("purStatus", 4);
+        map.put("dayuOrderStatus", -2);
         map.put("orderGoodsType", purType);
+        map.put("isSelfOrder", -1);
         if (purType == 1) {
             map.put("batchId", 0);
         }
-        
+
         // 1. 查询有订单的部门列表
-        System.out.println("查询部门map" +  map);
+        System.out.println("查询部门map" + map);
         List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryPureOrderNxDepartmentSimple(map);
-        
+
+
+        //协作订单
+        Map<String, Object> mapOffer = new HashMap<>();
+        mapOffer.put("disId", disId);
+        mapOffer.put("isSelfOrder", 1);
+        mapOffer.put("status", 3);
+        System.out.println("enennenenennemapOffer" + mapOffer);
+        List<NxDistributerEntity> offerNxDistributer = nxDepartmentOrdersService.queryOfferOrderNxDistributer(mapOffer);
+
+        // 统计每个协作配送商的订单数量等信息
+        if (offerNxDistributer != null && !offerNxDistributer.isEmpty()) {
+            for (NxDistributerEntity distributerEntity : offerNxDistributer) {
+                Map<String, Object> mapColl = new HashMap<>();
+                mapColl.put("disId", disId);
+                mapColl.put("isSelfOrder", 1);
+                mapColl.put("status", 3);
+                mapColl.put("purStatus", 4);
+                mapColl.put("dayuOrderStatus", -2);
+                mapColl.put("collNxDisId", distributerEntity.getNxDistributerId());
+                if (purType != null) {
+                    mapColl.put("orderGoodsType", purType);
+                    mapColl.put("goodsType", purType == 0 ? -1 : purType); // 0出库->-1, 1采购->1
+                    if (purType == 1) {
+                        mapColl.put("batchId", 0);
+                    }
+                }
+
+                int orderCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapColl);
+//                Map<String, Object> mapPick = new HashMap<>(mapColl);
+//                mapPick.put("equalPurStatus", 4);
+//                int pickCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapPick);
+//                int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+//                mapColl.put("hasPrice", 1);
+//                int hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+//                mapColl.put("hasPrice", null);
+//                mapColl.put("hasWeight", 1);
+//                int hasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+//                mapColl.put("hasWeight", null);
+//                Double subtotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapColl);
+//                String twoSubtotal = subtotal != null && subtotal > 0
+//                        ? new BigDecimal(subtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString()
+//                        : "0";
+//
+//                Map<String, Object> mapUnDo = new HashMap<>(mapColl);
+//                mapUnDo.put("equalStatus", -2);
+//                int unDo = nxDepartmentOrdersService.queryDepOrdersAcount(mapUnDo);
+//                Map<String, Object> mapFinish = new HashMap<>(mapColl);
+//                mapFinish.put("equalStatus", 2);
+//                mapFinish.put("dayuPurStatus", 3);
+//                mapFinish.put("hasPrice", 1);
+//                mapFinish.put("subtotal", 0);
+//                int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(mapFinish);
+
+                Map<String, Object> mapItem = new HashMap<>();
+                mapItem.put("orderCount", orderCount);
+//                mapItem.put("pickCount", pickCount);
+//                mapItem.put("totalCount", totalCount);
+//                mapItem.put("twoSubtotal", twoSubtotal);
+//                mapItem.put("hasPrice", hasPrice);
+//                mapItem.put("hasWeight", hasWeight);
+//                mapItem.put("unDo", unDo);
+//                mapItem.put("finishCount", finishCount);
+                distributerEntity.setAaa(mapItem);
+            }
+        }
+
         // 2. 统计每个部门的订单数量，并按订单数量排序
         List<Map<String, Object>> departmentList = new ArrayList<>();
         for (NxDepartmentEntity department : departmentEntities) {
@@ -7158,10 +4330,10 @@ public class NxDepartmentOrdersController {
             System.out.println("orercount" + countMap);
             Integer orderCount = nxDepartmentOrdersService.queryDepOrdersAcount(countMap);
             depMap.put("orderCount", orderCount != null ? orderCount : 0);
-            
+
             departmentList.add(depMap);
         }
-        
+
         // 3. 按部门名称拼音排序
         departmentList.sort((a, b) -> {
             String pinyinA = (String) a.get("depPinyin");
@@ -7177,26 +4349,42 @@ public class NxDepartmentOrdersController {
             }
             return pinyinA.compareTo(pinyinB); // 升序排序
         });
-        
+
         // 4. 全局统计
         Map<String, Object> map111 = new HashMap<>();
         map111.put("disId", disId);
         map111.put("purStatus", 4);
+        map111.put("dayuOrderStatus", -2);
         // 出库
         map111.put("goodsType", -1);
         int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
 
         map111.put("goodsType", 1);
+        int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
         map111.put("batchId", 0);
         int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
         map111.put("batchId", 1);
-        int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+        int havePurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+
 
         Map<String, Object> mapR = new HashMap<>();
+
+        //协作订单数量
+        Map<String, Object> mapcoll = new HashMap<>();
+        mapcoll.put("disId", disId);
+        mapcoll.put("purStatus", 4);
+        mapcoll.put("status", 3);
+        mapcoll.put("hasCollOrder", 1);
+
+        Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(mapcoll);
+
+        mapR.put("collCount", integer);
         mapR.put("stockCount", stockCount);
         mapR.put("unPurCount", unPurCount);
+        mapR.put("havePurCount", havePurCount);
         mapR.put("puringCount", puringCount);
         mapR.put("arr", departmentList);
+        mapR.put("offArr", offerNxDistributer);
         return R.ok().put("data", mapR);
     }
 
@@ -7209,64 +4397,31 @@ public class NxDepartmentOrdersController {
     @ResponseBody
     public R disGetTypePrepareOutDepGoodsPage(Integer disId, Integer depId, Integer purType) {
         logger.info("[disGetTypePrepareOutDepGoodsPage] 开始查询，参数: disId={}, depId={}, purType={}", disId, depId, purType);
-        
+
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("depFatherId", depId);
         map.put("status", 3);
+        map.put("dayuOrderStatus", -2);
         map.put("purStatus", 4);
         map.put("purType", purType);
-        
-        // 参考 disGetTypePreparePurGoodsPage 接口的逻辑
         // 不设置 purchaseAuto，查询所有有采购商品的订单（包括 purchaseAuto=-1 但被添加了采购商品的）
         // 只根据 purType 设置 batchId
         if (purType != null && purType == 1) {
-            // 采购商品：查询未批次的采购商品
             map.put("batchId", 0);
-        } else {
-            // 出库商品：查询所有有采购商品的订单（包括已批次和未批次的）
-            // 不设置 batchId，让SQL不进行过滤
         }
-        
+
+
         logger.info("[disGetTypePrepareOutDepGoodsPage] 查询条件 map: {}", map);
         logger.info("[disGetTypePrepareOutDepGoodsPage] 注意：未设置 purchaseAuto，将查询所有有采购商品的订单");
-        
+
         // 查询该部门下的商品分类（按大类sort排序），每个分类下包含商品和订单
         List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = nxDepartmentOrdersService.disGetOutStockGoodsApplyForStock(map);
-        logger.info("[disGetTypePrepareOutDepGoodsPage] 查询结果分类数量: {}", fatherGoodsEntities != null ? fatherGoodsEntities.size() : 0);
-        
-//        if (fatherGoodsEntities != null && !fatherGoodsEntities.isEmpty()) {
-//            for (int i = 0; i < fatherGoodsEntities.size(); i++) {
-//                NxDistributerFatherGoodsEntity fatherGoods = fatherGoodsEntities.get(i);
-//                logger.info("[disGetTypePrepareOutDepGoodsPage] 分类[{}]: id={}, name={}, 采购商品数量={}",
-//                    i,
-//                    fatherGoods.getNxDistributerFatherGoodsId(),
-//                    fatherGoods.getNxDfgFatherGoodsName(),
-//                    fatherGoods.getNxDistributerPurchaseGoodsEntities() != null ? fatherGoods.getNxDistributerPurchaseGoodsEntities().size() : 0);
-//
-//                if (fatherGoods.getNxDistributerPurchaseGoodsEntities() != null && !fatherGoods.getNxDistributerPurchaseGoodsEntities().isEmpty()) {
-//                    for (int j = 0; j < fatherGoods.getNxDistributerPurchaseGoodsEntities().size(); j++) {
-//                        NxDistributerPurchaseGoodsEntity purGoods = fatherGoods.getNxDistributerPurchaseGoodsEntities().get(j);
-//                        if (purGoods.getNxDistributerGoodsEntity() != null) {
-//                            NxDistributerGoodsEntity goods = purGoods.getNxDistributerGoodsEntity();
-//                            logger.info("[disGetTypePrepareOutDepGoodsPage]   采购商品[{}]: id={}, name={}, purchaseAuto={}, 订单数量={}",
-//                                j,
-//                                goods.getNxDistributerGoodsId(),
-//                                goods.getNxDgGoodsName(),
-//                                goods.getNxDgPurchaseAuto(),
-//                                purGoods.getNxDepartmentOrdersEntities() != null ? purGoods.getNxDepartmentOrdersEntities().size() : 0);
-//                        }
-//                    }
-//                }
-//            }
-//        } else {
-//            logger.warn("[disGetTypePrepareOutDepGoodsPage] 查询结果为空！");
-//        }
-        
+
         // 统计订单状态
         fatherGoodsEntities = everyStockFatherGoodsOrderStatus(fatherGoodsEntities, disId, map);
         logger.info("[disGetTypePrepareOutDepGoodsPage] 统计订单状态后分类数量: {}", fatherGoodsEntities != null ? fatherGoodsEntities.size() : 0);
-        
+
         Map<String, Object> mapR = new HashMap<>();
         mapR.put("arr", fatherGoodsEntities);
         logger.info("[disGetTypePrepareOutDepGoodsPage] 返回数据完成");
@@ -7327,6 +4482,7 @@ public class NxDepartmentOrdersController {
         Map<String, Object> queryParams = new HashMap<>(map);
         queryParams.put("disId", disId);
         queryParams.put("purStatus", 4);
+        queryParams.put("dayuOrderStatus", -2);
         System.out.println("ididisisis" + grandIds);
 
         // 批量查询订单数量
@@ -7455,19 +4611,7 @@ public class NxDepartmentOrdersController {
         BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
         ordersEntity.setNxDoCostSubtotal(decimal.toString());
         nxDepartmentOrdersService.update(ordersEntity);
-        //weight
-//        if (ordersEntity.getNxDoWeightId() != null && !getNxDoWeightId().trim().isEmpty()) {
-//            NxDistributerWeightEntity weightEntity = nxDistributerWeightService.queryObject(ordersEntity.getNxDoWeightId());
-//            Integer nxDwItemCount = weightEntity.getNxDwItemCount();
-//            Integer nxDwItemFinishCount = weightEntity.getNxDwItemFinishCount();
-//            if (nxDwItemCount - nxDwItemFinishCount > 1) {
-//                weightEntity.setNxDwItemFinishCount(nxDwItemFinishCount + 1);
-//            } else {
-//                weightEntity.setNxDwItemFinishCount(nxDwItemCount);
-//                weightEntity.setNxDwStatus(1);
-//            }
-//            nxDistributerWeightService.update(weightEntity);
-//        }
+
         return R.ok();
     }
 
@@ -7477,11 +4621,13 @@ public class NxDepartmentOrdersController {
     public R updateOrderWeight(Integer orderId, String weight) {
         NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orderId);
         ordersEntity.setNxDoWeight(weight);
-        String nxDoPrice = ordersEntity.getNxDoPrice();
-        if (nxDoPrice != null) {
+        if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
+            String nxDoPrice = ordersEntity.getNxDoPrice();
             BigDecimal subtotalB = new BigDecimal(nxDoPrice).multiply(new BigDecimal(weight)).setScale(1, BigDecimal.ROUND_HALF_UP);
             ordersEntity.setNxDoSubtotal(subtotalB.toString());
-            if (ordersEntity.getNxDoCostSubtotal() != null) {
+            if (ordersEntity.getNxDoCostSubtotal() != null && !ordersEntity.getNxDoCostSubtotal().trim().isEmpty()
+                    && ordersEntity.getNxDoCostPrice() != null && !ordersEntity.getNxDoCostPrice().trim().isEmpty()) {
+                System.out.println("weidhht" + weight);
                 BigDecimal weightB = new BigDecimal(weight);
                 BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
                 BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
@@ -7605,7 +4751,9 @@ public class NxDepartmentOrdersController {
                 BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
                 BigDecimal profitB = subtotalB.subtract(decimal).setScale(1, BigDecimal.ROUND_HALF_UP);
                 System.out.println("subsbsbbssbbsbbbbb" + subtotalB);
-                BigDecimal scaleB = profitB.divide(subtotalB, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                BigDecimal scaleB = subtotalB.compareTo(BigDecimal.ZERO) != 0
+                        ? profitB.divide(subtotalB, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100))
+                        : BigDecimal.ZERO;
                 ordersEntity.setNxDoProfitScale(scaleB.toString());
                 ordersEntity.setNxDoProfitSubtotal(profitB.toString());
             }
@@ -7613,6 +4761,69 @@ public class NxDepartmentOrdersController {
 
         nxDepartmentOrdersService.update(ordersEntity);
 
+
+        return R.ok();
+    }
+
+    @RequestMapping(value = "/giveOrderPriceColl", method = RequestMethod.POST)
+    @ResponseBody
+    public R giveOrderPriceColl(Integer orderId, String price) {
+
+        NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orderId);
+        ordersEntity.setNxDoPrice(price);
+        System.out.println("odididiididi==" + orderId + "priciiei===" + price);
+        //try
+        if (ordersEntity.getNxDoWeight() != null && !ordersEntity.getNxDoWeight().trim().isEmpty() && new BigDecimal(ordersEntity.getNxDoWeight()).compareTo(BigDecimal.ZERO) == 1) {
+            BigDecimal weightB = new BigDecimal(ordersEntity.getNxDoWeight());
+            BigDecimal subtotalB = weightB.multiply(new BigDecimal(price)).setScale(1, BigDecimal.ROUND_HALF_UP);
+            ordersEntity.setNxDoSubtotal(subtotalB.toString());
+            ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
+
+            //profit
+            if (ordersEntity.getNxDoExpectPrice() != null && !ordersEntity.getNxDoExpectPrice().trim().isEmpty() && !ordersEntity.getNxDoExpectPrice().isEmpty()) {
+                BigDecimal expectPrice = new BigDecimal(ordersEntity.getNxDoExpectPrice());
+                BigDecimal doPrice = new BigDecimal(ordersEntity.getNxDoPrice());
+                BigDecimal subtract = doPrice.subtract(expectPrice);
+                System.out.println("exxxxxxxx" + subtract);
+                ordersEntity.setNxDoPriceDifferent(subtract.toString());
+
+            }
+            System.out.println("cosrprice" + ordersEntity.getNxDoCostPrice());
+            if (ordersEntity.getNxDoCostPrice() != null && !ordersEntity.getNxDoCostPrice().isEmpty()) {
+                BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
+                BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
+                BigDecimal profitB = subtotalB.subtract(decimal).setScale(1, BigDecimal.ROUND_HALF_UP);
+                System.out.println("subsbsbbssbbsbbbbb" + subtotalB);
+                BigDecimal scaleB = subtotalB.compareTo(BigDecimal.ZERO) != 0
+                        ? profitB.divide(subtotalB, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100))
+                        : BigDecimal.ZERO;
+                ordersEntity.setNxDoProfitScale(scaleB.toString());
+                ordersEntity.setNxDoProfitSubtotal(profitB.toString());
+            }
+        }
+
+        nxDepartmentOrdersService.update(ordersEntity);
+
+        //更新协作订单
+        System.out.println("colllllmap" + ordersEntity.getNxDoCollaborativeNxDisId());
+        if(ordersEntity.getNxDoCollaborativeNxDisId() != -1){
+            Integer nxDoCollaborativeNxDisId = ordersEntity.getNxDoCollaborativeNxDisId();
+            Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+            Map<String, Object> mapColl = new HashMap<>();
+            mapColl.put("disId", nxDoCollaborativeNxDisId);
+            mapColl.put("restrauntId", nxDepartmentOrdersId);
+            System.out.println("colllllmap" + mapColl);
+            NxDepartmentOrdersEntity collOrder =  nxDepartmentOrdersService.querycollOrder(mapColl);
+            if(collOrder != null && collOrder.getNxDoStatus() < 2){
+                collOrder.setNxDoCostPrice(ordersEntity.getNxDoPrice());
+                if (collOrder.getNxDoWeight() != null && !collOrder.getNxDoWeight().trim().isEmpty() && new BigDecimal(collOrder.getNxDoWeight()).compareTo(BigDecimal.ZERO) == 1) {
+                    BigDecimal weightB = new BigDecimal(collOrder.getNxDoWeight());
+                    BigDecimal subtotalB = weightB.multiply(new BigDecimal(price)).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    collOrder.setNxDoCostSubtotal(subtotalB.toString());
+                }
+                nxDepartmentOrdersService.update(collOrder);
+            }
+        }
 
         return R.ok();
     }
@@ -7647,169 +4858,20 @@ public class NxDepartmentOrdersController {
     @RequestMapping(value = "/giveOrderWeightListForStockAndFinish", method = RequestMethod.POST)
     @ResponseBody
     public R giveOrderWeightListForStockAndFinish(@RequestBody List<NxDepartmentOrdersEntity> ordersEntityList) {
-        System.out.println("giveOrderWeightListForStockAndFinishgiveOrderWeightListForStockAndFinish" + ordersEntityList);
-        List<Map<String, Object>> shortages = new ArrayList<>();
         for (NxDepartmentOrdersEntity ordersEntityOld : ordersEntityList) {
-            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObjectNew(ordersEntityOld.getNxDepartmentOrdersId());
+            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(ordersEntityOld.getNxDepartmentOrdersId());
             ordersEntity.setNxDoPickUserId(ordersEntityOld.getNxDoPickUserId());
+            ordersEntity.setNxDoWeight(ordersEntityOld.getNxDoWeight());
             System.out.println("oslsllslsls" + ordersEntityOld.getNxDoWeight());
-            if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
+            if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty() && !ordersEntity.getNxDoPrice().equals("0.1")) {
                 BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(ordersEntityOld.getNxDoWeight())).setScale(1, BigDecimal.ROUND_HALF_UP);
                 ordersEntity.setNxDoSubtotal(subtotal.toString());
                 ordersEntity.setNxDoWeight(ordersEntityOld.getNxDoWeight());
                 ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
-                //查询是否有库存（按日期排序，实现FIFO先进先出）
-                Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsId", ordersEntity.getNxDoDisGoodsId());
-                map.put("restWeight", 0);
-                List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
-
-                if (stockEntities.size() > 0) {
-                    // 需要出货的重量
-                    BigDecimal needWeight = new BigDecimal(ordersEntityOld.getNxDoWeight());
-                    BigDecimal totalCost = BigDecimal.ZERO; // 总成本
-                    BigDecimal remainingWeight = needWeight; // 剩余需要扣减的重量
-
-                    System.out.println("开始FIFO扣减库存 - 订单重量: " + needWeight);
-
-                    // 查询商品信息，判断出库单位
-                    NxDistributerGoodsEntity disGoodsForOut = nxDistributerGoodsService.queryObject(ordersEntity.getNxDoDisGoodsId());
-                    boolean useCartonPrice = false;
-                    Integer itemsPerCartonForOut = null;
-                    if (disGoodsForOut != null 
-                            && disGoodsForOut.getNxDgCartonUnit() != null 
-                            && !disGoodsForOut.getNxDgCartonUnit().trim().isEmpty()
-                            && ordersEntity.getNxDoStandard() != null
-                            && isStandardMatch(ordersEntity.getNxDoStandard(), disGoodsForOut.getNxDgCartonUnit())) {
-                        // 订单规格与外包装单位匹配（支持"箱"和"件"等同义词），使用外包装单价
-                        useCartonPrice = true;
-                        itemsPerCartonForOut = disGoodsForOut.getNxDgItemsPerCarton();
-                        System.out.println("出库单位与外包装单位匹配，使用外包装单价: " + disGoodsForOut.getNxDgCartonUnit() 
-                                + ", 每箱" + itemsPerCartonForOut + "个");
-                    }
-
-                    for (NxDistributerGoodsShelfStockEntity stockEntity : stockEntities) {
-                        if (remainingWeight.compareTo(BigDecimal.ZERO) <= 0) {
-                            break; // 已经扣减完毕
-                        }
-
-                        BigDecimal stockRestWeight = new BigDecimal(stockEntity.getNxDgssRestWeight());
-
-                        if (stockRestWeight.compareTo(BigDecimal.ZERO) <= 0) {
-                            continue; // 跳过没有库存的批次
-                        }
-
-                        // 计算本批次可以扣减的重量（最小单位）
-                        BigDecimal deductWeight;
-                        if (remainingWeight.compareTo(stockRestWeight) <= 0) {
-                            // 本批次够用
-                            deductWeight = remainingWeight;
-                        } else {
-                            // 本批次不够，全部扣减
-                            deductWeight = stockRestWeight;
-                        }
-
-                        // 根据出库单位选择对应的单价和计算方式
-                        BigDecimal stockPrice;
-                        BigDecimal deductWeightForCalc; // 用于成本计算的扣减数量
-                        if (useCartonPrice && stockEntity.getNxDgssPriceCarton() != null 
-                                && !stockEntity.getNxDgssPriceCarton().trim().isEmpty()
-                                && itemsPerCartonForOut != null && itemsPerCartonForOut > 0) {
-                            // 使用外包装单价，需要将最小单位数量转换为箱数
-                            deductWeightForCalc = deductWeight.divide(new BigDecimal(itemsPerCartonForOut), 4, BigDecimal.ROUND_HALF_UP);
-                            stockPrice = new BigDecimal(stockEntity.getNxDgssPriceCarton());
-                            System.out.println("批次ID: " + stockEntity.getNxDistributerGoodsShelfStockId() +
-                                    ", 剩余: " + stockRestWeight + ", 扣减: " + deductWeight + "个(" + deductWeightForCalc + "箱)"
-                                    + ", 使用外包装单价: " + stockPrice + "元/箱");
-                        } else {
-                            // 使用最小单位单价
-                            String priceStr = stockEntity.getNxDgssPrice();
-                            stockPrice = (priceStr == null || priceStr.trim().isEmpty())
-                                    ? BigDecimal.ZERO
-                                    : new BigDecimal(priceStr);
-                            deductWeightForCalc = deductWeight;
-                            System.out.println("批次ID: " + stockEntity.getNxDistributerGoodsShelfStockId() +
-                                    ", 剩余: " + stockRestWeight + ", 扣减: " + deductWeight
-                                    + ", 使用最小单位单价: " + stockPrice);
-                        }
-
-                        // 计算本批次的成本（使用对应的单价和数量）
-                        BigDecimal batchCost = deductWeightForCalc.multiply(stockPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        totalCost = totalCost.add(batchCost);
-
-                        // 更新库存批次的剩余数量
-                        BigDecimal newRestWeight = stockRestWeight.subtract(deductWeight);
-                        stockEntity.setNxDgssRestWeight(newRestWeight.toString());
-
-                        // 更新库存批次的剩余成本（使用最小单位单价计算）
-                        String priceStrForRest = stockEntity.getNxDgssPrice();
-                        BigDecimal stockPriceForRest = (priceStrForRest == null || priceStrForRest.trim().isEmpty())
-                                ? BigDecimal.ZERO
-                                : new BigDecimal(priceStrForRest);
-                        BigDecimal newRestSubtotal = newRestWeight.multiply(stockPriceForRest).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        stockEntity.setNxDgssRestSubtotal(newRestSubtotal.toString());
-
-                        // 保存库存批次更新
-                        nxDisGoodsShelfStockService.update(stockEntity);
-
-                        // 创建库存扣减记录
-                        NxDistributerGoodsShelfStockReduceEntity reduceEntity = new NxDistributerGoodsShelfStockReduceEntity();
-                        reduceEntity.setNxDgssrNxDistributerId(ordersEntity.getNxDoDistributerId());
-                        reduceEntity.setNxDgssrNxDisGoodsId(ordersEntity.getNxDoDisGoodsId());
-                        reduceEntity.setNxDgssrNxDisGoodsFatherId(stockEntity.getNxDgssNxDisGoodsFatherId());
-                        reduceEntity.setNxDgssrNxStockId(stockEntity.getNxDistributerGoodsShelfStockId());
-                        reduceEntity.setNxDgssrDate(formatWhatDay(0));
-                        reduceEntity.setNxDgssrWeek(getWeek(0));
-                        reduceEntity.setNxDgssrMonth(formatWhatMonth(0));
-                        reduceEntity.setNxDgssrFullTime(formatWhatYearDayTime(0));
-                        reduceEntity.setNxDgssrType(0); // 0=销售扣减
-                        reduceEntity.setNxDgssrDoUserId(ordersEntity.getNxDoPickUserId());
-                        reduceEntity.setNxDgssrCostWeight(deductWeight.toString());
-                        reduceEntity.setNxDgssrCostSubtotal(batchCost.toString());
-                        reduceEntity.setNxDgssrNxPurGoodsId(stockEntity.getNxDgssNxPurGoodsId());
-                        reduceEntity.setNxDgssrNxDepOrderId(ordersEntity.getNxDepartmentOrdersId());
-                        reduceEntity.setNxDgssrStatus(0);
-                        reduceEntity.setNxDgssrProduceWeight(deductWeight.toString());
-                        reduceEntity.setNxDgssrProduceSubtotal(batchCost.toString());
-                        nxDisGoodsShelfStockReduceService.save(reduceEntity);
-
-                        System.out.println("扣减批次 " + stockEntity.getNxDistributerGoodsShelfStockId() +
-                                " - 扣减重量: " + deductWeight + ", 本批次成本: " + batchCost +
-                                ", 新剩余: " + newRestWeight + ", 已保存扣减记录");
-
-                        // 减少剩余需要扣减的重量
-                        remainingWeight = remainingWeight.subtract(deductWeight);
-                    }
-
-                    // 计算加权平均成本价（保留1位小数）
-                    // 如果使用外包装单价，needWeight应该是箱数，avgCostPrice是每箱的平均成本价
-                    BigDecimal avgCostPrice = totalCost.divide(needWeight, 1, BigDecimal.ROUND_HALF_UP);
-                    ordersEntity.setNxDoCostPrice(avgCostPrice.setScale(1, BigDecimal.ROUND_HALF_UP).toPlainString());
-                    ordersEntity.setNxDoCostSubtotal(totalCost.toString());
-
-                    // 计算利润
-                    BigDecimal sellPrice = new BigDecimal(ordersEntity.getNxDoPrice());
-                    BigDecimal profit = sellPrice.subtract(avgCostPrice);
-                    BigDecimal profitSubtotal = profit.multiply(needWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    ordersEntity.setNxDoProfitSubtotal(profitSubtotal.toString());
-
-                    System.out.println("FIFO扣减完成 - 总成本: " + totalCost +
-                            ", 平均成本价: " + avgCostPrice +
-                            ", 利润小计: " + profitSubtotal);
-
-                    if (remainingWeight.compareTo(BigDecimal.ZERO) > 0) {
-                        System.out.println("警告：库存不足，还需要: " + remainingWeight);
-                        Map<String, Object> shortage = new HashMap<>();
-                        shortage.put("orderId", ordersEntity.getNxDepartmentOrdersId());
-                        shortage.put("shortage", remainingWeight);
-                        shortages.add(shortage);
-                    }
-                }
             }
 
             ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
             nxDepartmentOrdersService.update(ordersEntity);
-
 
             Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
             if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
@@ -7825,13 +4887,13 @@ public class NxDepartmentOrdersController {
 //查询商品如有有采购批次nxDistributerPurchaseBatch
                             // 并且该批次下的全部采购商品nxDistributerGoods的 nxDpgStatus == getNxDisPurchaseGoodsFinishBuy 的数量
                             //是所有采购商品数量减去 1 ，那么就认为该采购批次也是完成。
-                            if(purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1){
+                            if (purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1) {
                                 Map<String, Object> map = new HashMap<>();
-                                map.put("batchId",purchaseGoodsEntity.getNxDpgBatchId() );
+                                map.put("batchId", purchaseGoodsEntity.getNxDpgBatchId());
                                 int count = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                map.put("equalStatus",getNxDisPurchaseGoodsFinishBuy());
+                                map.put("equalStatus", getNxDisPurchaseGoodsFinishBuy());
                                 int finishCount = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                if(count - finishCount == 1){
+                                if (count - finishCount == 1) {
                                     NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
                                     nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
                                     nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
@@ -7892,6 +4954,23 @@ public class NxDepartmentOrdersController {
 
             }
 
+            //更新协作订单
+            System.out.println("colllllmap" + ordersEntity.getNxDoCollaborativeNxDisId());
+
+            if(ordersEntity.getNxDoCollaborativeNxDisId() != -1){
+                Integer nxDoCollaborativeNxDisId = ordersEntity.getNxDoCollaborativeNxDisId();
+                Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", nxDoCollaborativeNxDisId);
+                map.put("restrauntId", nxDepartmentOrdersId);
+                System.out.println("colllllmap" + map);
+                NxDepartmentOrdersEntity collOrder =  nxDepartmentOrdersService.querycollOrder(map);
+                if(collOrder != null && collOrder.getNxDoStatus() < 2){
+                    collOrder.setNxDoPurchaseStatus(1);
+                    collOrder.setNxDoWeight(ordersEntityOld.getNxDoWeight());
+                    nxDepartmentOrdersService.update(collOrder);
+                }
+            }
         }
 
         return R.ok();
@@ -7901,97 +4980,95 @@ public class NxDepartmentOrdersController {
     @RequestMapping(value = "/pickerGiveOrderWeight", method = RequestMethod.POST)
     @ResponseBody
     public R pickerGiveOrderWeight(Integer orderId, String orderWeight, Integer pickerUserId) {
-            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObjectNew(orderId);
+        NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orderId);
 
-            ordersEntity.setNxDoPickUserId(pickerUserId);
+        ordersEntity.setNxDoPickUserId(pickerUserId);
 
-            ordersEntity.setNxDoWeight(orderWeight);
-            if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
-                BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(orderWeight)).setScale(1, BigDecimal.ROUND_HALF_UP);
-                ordersEntity.setNxDoSubtotal(subtotal.toString());
-                ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
-            }
-             ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-            nxDepartmentOrdersService.update(ordersEntity);
+        ordersEntity.setNxDoWeight(orderWeight);
+        if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
+            BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(orderWeight)).setScale(1, BigDecimal.ROUND_HALF_UP);
+            ordersEntity.setNxDoSubtotal(subtotal.toString());
+            ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
+        }
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
+        nxDepartmentOrdersService.update(ordersEntity);
 
-            Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
-            if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
-                NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(nxDoPurchaseGoodsId);
-                if (purchaseGoodsEntity != null) {
-                    Integer nxDpgOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
-                    Integer nxDpgFinishAmount = purchaseGoodsEntity.getNxDpgFinishAmount();
-                    System.out.println("purGoodsss" + nxDpgFinishAmount);
-                    if (nxDpgOrdersAmount != null && nxDpgFinishAmount != null) {
-                        if (nxDpgOrdersAmount - nxDpgFinishAmount == 1) {
-                            purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgOrdersAmount);
-                            purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
+        Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
+        if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
+            NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(nxDoPurchaseGoodsId);
+            if (purchaseGoodsEntity != null) {
+                Integer nxDpgOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
+                Integer nxDpgFinishAmount = purchaseGoodsEntity.getNxDpgFinishAmount();
+                System.out.println("purGoodsss" + nxDpgFinishAmount);
+                if (nxDpgOrdersAmount != null && nxDpgFinishAmount != null) {
+                    if (nxDpgOrdersAmount - nxDpgFinishAmount == 1) {
+                        purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgOrdersAmount);
+                        purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
 //查询商品如有有采购批次nxDistributerPurchaseBatch
-                            // 并且该批次下的全部采购商品nxDistributerGoods的 nxDpgStatus == getNxDisPurchaseGoodsFinishBuy 的数量
-                            //是所有采购商品数量减去 1 ，那么就认为该采购批次也是完成。
-                            if(purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1){
-                                Map<String, Object> map = new HashMap<>();
-                                map.put("batchId",purchaseGoodsEntity.getNxDpgBatchId() );
-                                int count = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                map.put("equalStatus",getNxDisPurchaseGoodsFinishBuy());
-                                int finishCount = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                if(count - finishCount == 1){
-                                    NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
-                                    nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
-                                    nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
-                                }
+                        // 并且该批次下的全部采购商品nxDistributerGoods的 nxDpgStatus == getNxDisPurchaseGoodsFinishBuy 的数量
+                        //是所有采购商品数量减去 1 ，那么就认为该采购批次也是完成。
+                        if (purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1) {
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("batchId", purchaseGoodsEntity.getNxDpgBatchId());
+                            int count = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
+                            map.put("equalStatus", getNxDisPurchaseGoodsFinishBuy());
+                            int finishCount = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
+                            if (count - finishCount == 1) {
+                                NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
+                                nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
+                                nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
                             }
-                        } else {
-                            purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgFinishAmount + 1);
                         }
-                        nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+                    } else {
+                        purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgFinishAmount + 1);
                     }
-                } else {
-                    System.out.println("警告：采购商品不存在，ID: " + nxDoPurchaseGoodsId);
+                    nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+                }
+            } else {
+                System.out.println("警告：采购商品不存在，ID: " + nxDoPurchaseGoodsId);
+            }
+        }
+
+
+        System.out.println("xnordidiididid" + ordersEntity.getNxDoGbDepartmentOrderId());
+        if (ordersEntity.getNxDoGbDepartmentOrderId() != null) {
+            GbDepartmentOrdersEntity gbDepartmentOrdersEntity = gbDepartmentOrdersService.queryGbOrderByNxOrderId(ordersEntity.getNxDepartmentOrdersId());
+            gbDepartmentOrdersEntity.setGbDoBuyStatus(getGbOrderBuyStatusHasWeightAndPrice());
+            gbDepartmentOrdersEntity.setGbDoStatus(getGbOrderStatusProcurement());
+            gbDepartmentOrdersEntity.setGbDoWeight(ordersEntity.getNxDoWeight());
+
+            if (gbDepartmentOrdersEntity.getGbDoPrice() != null && !gbDepartmentOrdersEntity.getGbDoPrice().trim().isEmpty() && !gbDepartmentOrdersEntity.getGbDoPrice().equals("0.0") && gbDepartmentOrdersEntity.getGbDoWeight() != null) {
+                BigDecimal decimal1 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoPrice());
+                BigDecimal decimal2 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoWeight());
+                BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
+                gbDepartmentOrdersEntity.setGbDoSubtotal(decimal3.toString());
+            }
+            gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
+
+            Integer purchaseGoodsId = gbDepartmentOrdersEntity.getGbDoPurchaseGoodsId();
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("purGoodsId", purchaseGoodsId);
+            List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
+            BigDecimal purWeight = new BigDecimal(0);
+            if (gbDepartmentOrdersEntities.size() > 0) {
+                for (GbDepartmentOrdersEntity gbOrder : gbDepartmentOrdersEntities) {
+                    if (gbOrder.getGbDoWeight() != null) {
+                        purWeight = purWeight.add(new BigDecimal(gbOrder.getGbDoWeight()));
+                    }
                 }
             }
-
-
-            System.out.println("xnordidiididid" + ordersEntity.getNxDoGbDepartmentOrderId());
-            if (ordersEntity.getNxDoGbDepartmentOrderId() != null) {
-                GbDepartmentOrdersEntity gbDepartmentOrdersEntity = gbDepartmentOrdersService.queryGbOrderByNxOrderId(ordersEntity.getNxDepartmentOrdersId());
-                gbDepartmentOrdersEntity.setGbDoBuyStatus(getGbOrderBuyStatusHasWeightAndPrice());
-                gbDepartmentOrdersEntity.setGbDoStatus(getGbOrderStatusProcurement());
-                gbDepartmentOrdersEntity.setGbDoWeight(ordersEntity.getNxDoWeight());
-
-                if (gbDepartmentOrdersEntity.getGbDoPrice() != null && !gbDepartmentOrdersEntity.getGbDoPrice().trim().isEmpty() && !gbDepartmentOrdersEntity.getGbDoPrice().equals("0.0") && gbDepartmentOrdersEntity.getGbDoWeight() != null) {
-                    BigDecimal decimal1 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoPrice());
-                    BigDecimal decimal2 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoWeight());
-                    BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    gbDepartmentOrdersEntity.setGbDoSubtotal(decimal3.toString());
-                }
-                gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
-                System.out.println("xnordidiididid" + gbDepartmentOrdersEntity.getGbDepartmentOrdersId());
-
-
-                Integer purchaseGoodsId = gbDepartmentOrdersEntity.getGbDoPurchaseGoodsId();
-
-                Map<String, Object> map = new HashMap<>();
-                map.put("purGoodsId", purchaseGoodsId);
-                List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
-                BigDecimal purWeight = new BigDecimal(0);
-                if (gbDepartmentOrdersEntities.size() > 0) {
-                    for (GbDepartmentOrdersEntity gbOrder : gbDepartmentOrdersEntities) {
-                        if (gbOrder.getGbDoWeight() != null) {
-                            purWeight = purWeight.add(new BigDecimal(gbOrder.getGbDoWeight()));
-                        }
-                    }
-                }
-                GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(purchaseGoodsId);
-                purchaseGoodsEntity.setGbDpgBuyQuantity(purWeight.toString());
-                if (purchaseGoodsEntity.getGbDpgBuyPrice() != null && !purchaseGoodsEntity.getGbDpgBuyPrice().trim().isEmpty()) {
-                    BigDecimal decimal1 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyPrice());
-                    BigDecimal decimal2 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyQuantity());
-                    BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    purchaseGoodsEntity.setGbDpgBuySubtotal(decimal3.toString());
-                }
-                purchaseGoodsEntity.setGbDpgStatus(getNxDisPurchaseGoodsIsPurchase());
-                System.out.println("purpprur" + purchaseGoodsEntity);
-                gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+            GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(purchaseGoodsId);
+            purchaseGoodsEntity.setGbDpgBuyQuantity(purWeight.toString());
+            if (purchaseGoodsEntity.getGbDpgBuyPrice() != null && !purchaseGoodsEntity.getGbDpgBuyPrice().trim().isEmpty()) {
+                BigDecimal decimal1 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyPrice());
+                BigDecimal decimal2 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyQuantity());
+                BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
+                purchaseGoodsEntity.setGbDpgBuySubtotal(decimal3.toString());
+            }
+            purchaseGoodsEntity.setGbDpgStatus(getNxDisPurchaseGoodsIsPurchase());
+            System.out.println("purpprur" + purchaseGoodsEntity);
+            gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
 
         }
 
@@ -7999,20 +5076,335 @@ public class NxDepartmentOrdersController {
     }
 
 
-
     @RequestMapping(value = "/pickerGiveOrderWeightUpdateShelfStock", method = RequestMethod.POST)
     @ResponseBody
     public R pickerGiveOrderWeightUpdateShelfStock(Integer orderId, String orderWeight, Integer pickerUserId, Integer shelfId) {
-            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObjectNew(orderId);
-            ordersEntity.setNxDoPickUserId(pickerUserId);
+        NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(orderId);
+        ordersEntity.setNxDoPickUserId(pickerUserId);
+
+        // 无论价格是否为空，都要设置正确的重量
+        ordersEntity.setNxDoWeight(orderWeight);
+
+        if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
+            BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(orderWeight)).setScale(1, BigDecimal.ROUND_HALF_UP);
+            ordersEntity.setNxDoSubtotal(subtotal.toString());
+            ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
+            //查询是否有库存（按日期排序，实现FIFO先进先出）
+            Map<String, Object> map = new HashMap<>();
+            map.put("disGoodsId", ordersEntity.getNxDoDisGoodsId());
+            map.put("restWeight", 0);
+            // 如果订单有出库货架ID，则只查询该货架的库存
+            if (shelfId != -1) {
+                map.put("shelfId", shelfId);
+            }
+            List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
+
+            if (stockEntities.size() > 0) {
+                // 查询商品信息，判断出库单位（需要先判断，才能正确转换数量）
+                NxDistributerGoodsEntity disGoodsForOut = nxDistributerGoodsService.queryObject(ordersEntity.getNxDoDisGoodsId());
+                boolean useCartonPrice = false;
+                Integer itemsPerCartonForOut = null;
+                if (disGoodsForOut != null
+                        && disGoodsForOut.getNxDgCartonUnit() != null
+                        && !disGoodsForOut.getNxDgCartonUnit().trim().isEmpty()
+                        && ordersEntity.getNxDoPrintStandard() != null
+                        && ordersEntity.getNxDoPrintStandard().trim().equals(disGoodsForOut.getNxDgCartonUnit().trim())) {
+                    // 订单规格与外包装单位匹配，使用外包装单价
+                    useCartonPrice = true;
+                    itemsPerCartonForOut = disGoodsForOut.getNxDgItemsPerCarton();
+                    System.out.println("✅ 出库单位与外包装单位匹配，使用外包装单价: " + disGoodsForOut.getNxDgCartonUnit()
+                            + ", 每箱" + itemsPerCartonForOut + "个");
+                } else {
+                    System.out.println("⚠️ 出库单位不匹配 - 订单规格: " + ordersEntity.getNxDoStandard()
+                            + ", 商品外包装单位: " + (disGoodsForOut != null ? disGoodsForOut.getNxDgCartonUnit() : "null"));
+                }
+
+                // 需要出货的重量（使用确定的重量值）
+                BigDecimal needWeightRaw = new BigDecimal(orderWeight);
+                BigDecimal needWeight; // 转换为最小单位后的重量
+                BigDecimal totalCost = BigDecimal.ZERO; // 总成本
+
+                System.out.println("🔍 调试信息 - 前台提交的重量: " + needWeightRaw + ", 订单规格: " + ordersEntity.getNxDoStandard());
+                System.out.println("🔍 调试信息 - useCartonPrice: " + useCartonPrice + ", itemsPerCartonForOut: " + itemsPerCartonForOut);
+
+                // 如果使用大包装单位，需要将箱数转换为最小单位数量
+                if (useCartonPrice && itemsPerCartonForOut != null && itemsPerCartonForOut > 0) {
+                    // 前台提交的是箱数，需要转换为最小单位数量
+                    needWeight = needWeightRaw.multiply(new BigDecimal(itemsPerCartonForOut));
+                    System.out.println("✅ 开始FIFO扣减库存 - 订单箱数: " + needWeightRaw + "箱, 转换为最小单位: " + needWeight + "个");
+                } else {
+                    // 前台提交的已经是最小单位数量
+                    needWeight = needWeightRaw;
+                    System.out.println("✅ 开始FIFO扣减库存 - 订单重量: " + needWeight + "个（未使用大包装单位）");
+                }
+
+                BigDecimal remainingWeight = needWeight; // 剩余需要扣减的重量（最小单位）
+                System.out.println("🔍 调试信息 - remainingWeight（剩余需要扣减）: " + remainingWeight + "个");
+
+                for (NxDistributerGoodsShelfStockEntity stockEntity : stockEntities) {
+                    if (remainingWeight.compareTo(BigDecimal.ZERO) <= 0) {
+                        break; // 已经扣减完毕
+                    }
+
+                    BigDecimal stockRestWeight = new BigDecimal(stockEntity.getNxDgssRestWeight());
+
+                    // 计算本批次可以扣减的重量（最小单位）
+                    BigDecimal deductWeight;
+                    if (remainingWeight.compareTo(stockRestWeight) <= 0) {
+                        // 本批次够用
+                        deductWeight = remainingWeight;
+                    } else {
+                        // 本批次不够，全部扣减
+                        deductWeight = stockRestWeight;
+                    }
+
+                    // 根据出库单位选择对应的单价和计算方式
+                    BigDecimal stockPrice;
+                    BigDecimal deductWeightForCalc; // 用于成本计算的扣减数量
+                    if (useCartonPrice && stockEntity.getNxDgssPriceCarton() != null
+                            && !stockEntity.getNxDgssPriceCarton().trim().isEmpty()
+                            && itemsPerCartonForOut != null && itemsPerCartonForOut > 0) {
+                        // 使用外包装单价，需要将最小单位数量转换为箱数
+                        deductWeightForCalc = deductWeight.divide(new BigDecimal(itemsPerCartonForOut), 4, BigDecimal.ROUND_HALF_UP);
+                        stockPrice = new BigDecimal(stockEntity.getNxDgssPriceCarton());
+                        System.out.println("批次ID: " + stockEntity.getNxDistributerGoodsShelfStockId() +
+                                ", 剩余: " + stockRestWeight + ", 扣减: " + deductWeight + "个(" + deductWeightForCalc + "箱)"
+                                + ", 使用外包装单价: " + stockPrice + "元/箱");
+                    } else {
+                        // 使用最小单位单价
+                        String priceStr = stockEntity.getNxDgssPrice();
+                        stockPrice = (priceStr == null || priceStr.trim().isEmpty())
+                                ? BigDecimal.ZERO
+                                : new BigDecimal(priceStr);
+                        deductWeightForCalc = deductWeight;
+                        System.out.println("批次ID: " + stockEntity.getNxDistributerGoodsShelfStockId() +
+                                ", 剩余: " + stockRestWeight + ", 扣减: " + deductWeight
+                                + ", 使用最小单位单价: " + stockPrice);
+                    }
+
+                    if (stockRestWeight.compareTo(BigDecimal.ZERO) <= 0) {
+                        continue; // 跳过没有库存的批次
+                    }
+
+                    // 计算本批次的成本（使用对应的单价和数量）
+                    BigDecimal batchCost = deductWeightForCalc.multiply(stockPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    totalCost = totalCost.add(batchCost);
+
+                    // 更新库存批次的剩余数量
+                    BigDecimal newRestWeight = stockRestWeight.subtract(deductWeight);
+                    stockEntity.setNxDgssRestWeight(newRestWeight.toString());
+
+                    // 更新库存批次的剩余成本（使用最小单位单价计算）
+                    String priceStrForRest = stockEntity.getNxDgssPrice();
+                    BigDecimal stockPriceForRest = (priceStrForRest == null || priceStrForRest.trim().isEmpty())
+                            ? BigDecimal.ZERO
+                            : new BigDecimal(priceStrForRest);
+                    BigDecimal newRestSubtotal = newRestWeight.multiply(stockPriceForRest).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    stockEntity.setNxDgssRestSubtotal(newRestSubtotal.toString());
+
+                    // 保存库存批次更新
+                    nxDisGoodsShelfStockService.update(stockEntity);
+
+                    // 创建库存扣减记录
+                    NxDistributerGoodsShelfStockReduceEntity reduceEntity = new NxDistributerGoodsShelfStockReduceEntity();
+                    reduceEntity.setNxDgssrNxDistributerId(ordersEntity.getNxDoDistributerId());
+                    reduceEntity.setNxDgssrNxDisGoodsId(ordersEntity.getNxDoDisGoodsId());
+                    reduceEntity.setNxDgssrNxDisGoodsFatherId(stockEntity.getNxDgssNxDisGoodsFatherId());
+                    reduceEntity.setNxDgssrNxStockId(stockEntity.getNxDistributerGoodsShelfStockId());
+                    reduceEntity.setNxDgssrDate(formatWhatDay(0));
+                    reduceEntity.setNxDgssrWeek(getWeek(0));
+                    reduceEntity.setNxDgssrMonth(formatWhatMonth(0));
+                    reduceEntity.setNxDgssrFullTime(formatWhatYearDayTime(0));
+                    reduceEntity.setNxDgssrType(0); // 0=销售扣减
+                    reduceEntity.setNxDgssrDoUserId(ordersEntity.getNxDoPickUserId());
+                    reduceEntity.setNxDgssrCostWeight(deductWeight.toString());
+                    reduceEntity.setNxDgssrCostSubtotal(batchCost.toString());
+                    reduceEntity.setNxDgssrNxPurGoodsId(stockEntity.getNxDgssNxPurGoodsId());
+                    reduceEntity.setNxDgssrNxDepOrderId(ordersEntity.getNxDepartmentOrdersId());
+                    reduceEntity.setNxDgssrStatus(0);
+                    reduceEntity.setNxDgssrProduceWeight(deductWeight.toString());
+                    reduceEntity.setNxDgssrProduceSubtotal(batchCost.toString());
+                    nxDisGoodsShelfStockReduceService.save(reduceEntity);
+
+                    System.out.println("扣减批次 " + stockEntity.getNxDistributerGoodsShelfStockId() +
+                            " - 扣减重量: " + deductWeight + ", 本批次成本: " + batchCost +
+                            ", 新剩余: " + newRestWeight + ", 已保存扣减记录");
+
+                    // 减少剩余需要扣减的重量
+                    remainingWeight = remainingWeight.subtract(deductWeight);
+                }
+
+                // 计算加权平均成本价（保留1位小数）
+                // 如果使用外包装单价，needWeight应该是箱数，avgCostPrice是每箱的平均成本价
+                BigDecimal avgCostPrice = totalCost.divide(needWeight, 1, BigDecimal.ROUND_HALF_UP);
+                ordersEntity.setNxDoCostPrice(avgCostPrice.setScale(1, BigDecimal.ROUND_HALF_UP).toPlainString());
+                ordersEntity.setNxDoCostSubtotal(totalCost.toString());
+
+                // 计算利润
+                BigDecimal sellPrice = new BigDecimal(ordersEntity.getNxDoPrice());
+                BigDecimal profit = sellPrice.subtract(avgCostPrice);
+                BigDecimal profitSubtotal = profit.multiply(needWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+                ordersEntity.setNxDoProfitSubtotal(profitSubtotal.toString());
+
+            }
+        }
+
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
+        nxDepartmentOrdersService.update(ordersEntity);
+
+
+        Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
+        if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
+            NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(nxDoPurchaseGoodsId);
+            if (purchaseGoodsEntity != null) {
+                Integer nxDpgOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
+                Integer nxDpgFinishAmount = purchaseGoodsEntity.getNxDpgFinishAmount();
+                System.out.println("purGoodsss" + nxDpgFinishAmount);
+                if (nxDpgOrdersAmount != null && nxDpgFinishAmount != null) {
+                    if (nxDpgOrdersAmount - nxDpgFinishAmount == 1) {
+                        purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgOrdersAmount);
+                        purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
+//查询商品如有有采购批次nxDistributerPurchaseBatch
+                        // 并且该批次下的全部采购商品nxDistributerGoods的 nxDpgStatus == getNxDisPurchaseGoodsFinishBuy 的数量
+                        //是所有采购商品数量减去 1 ，那么就认为该采购批次也是完成。
+                        if (purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1) {
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("batchId", purchaseGoodsEntity.getNxDpgBatchId());
+                            int count = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
+                            map.put("equalStatus", getNxDisPurchaseGoodsFinishBuy());
+                            int finishCount = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
+                            if (count - finishCount == 1) {
+                                NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
+                                nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
+                                nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
+                            }
+                        }
+                    } else {
+                        purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgFinishAmount + 1);
+                    }
+                    nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+                }
+            } else {
+                System.out.println("警告：采购商品不存在，ID: " + nxDoPurchaseGoodsId);
+            }
+        }
+
+
+        System.out.println("xnordidiididid" + ordersEntity.getNxDoGbDepartmentOrderId());
+        if (ordersEntity.getNxDoGbDepartmentOrderId() != null) {
+            GbDepartmentOrdersEntity gbDepartmentOrdersEntity = gbDepartmentOrdersService.queryGbOrderByNxOrderId(ordersEntity.getNxDepartmentOrdersId());
+            gbDepartmentOrdersEntity.setGbDoBuyStatus(getGbOrderBuyStatusHasWeightAndPrice());
+            gbDepartmentOrdersEntity.setGbDoStatus(getGbOrderStatusProcurement());
+            gbDepartmentOrdersEntity.setGbDoWeight(ordersEntity.getNxDoWeight());
+
+            if (gbDepartmentOrdersEntity.getGbDoPrice() != null && !gbDepartmentOrdersEntity.getGbDoPrice().trim().isEmpty() && !gbDepartmentOrdersEntity.getGbDoPrice().equals("0.0") && gbDepartmentOrdersEntity.getGbDoWeight() != null) {
+                BigDecimal decimal1 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoPrice());
+                BigDecimal decimal2 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoWeight());
+                BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
+                gbDepartmentOrdersEntity.setGbDoSubtotal(decimal3.toString());
+            }
+            gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
+            System.out.println("xnordidiididid" + gbDepartmentOrdersEntity.getGbDepartmentOrdersId());
+
+
+            Integer purchaseGoodsId = gbDepartmentOrdersEntity.getGbDoPurchaseGoodsId();
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("purGoodsId", purchaseGoodsId);
+            List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
+            BigDecimal purWeight = new BigDecimal(0);
+            if (gbDepartmentOrdersEntities.size() > 0) {
+                for (GbDepartmentOrdersEntity gbOrder : gbDepartmentOrdersEntities) {
+                    if (gbOrder.getGbDoWeight() != null) {
+                        purWeight = purWeight.add(new BigDecimal(gbOrder.getGbDoWeight()));
+                    }
+                }
+            }
+            GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(purchaseGoodsId);
+            purchaseGoodsEntity.setGbDpgBuyQuantity(purWeight.toString());
+            if (purchaseGoodsEntity.getGbDpgBuyPrice() != null && !purchaseGoodsEntity.getGbDpgBuyPrice().trim().isEmpty()) {
+                BigDecimal decimal1 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyPrice());
+                BigDecimal decimal2 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyQuantity());
+                BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
+                purchaseGoodsEntity.setGbDpgBuySubtotal(decimal3.toString());
+            }
+            purchaseGoodsEntity.setGbDpgStatus(getNxDisPurchaseGoodsIsPurchase());
+            System.out.println("purpprur" + purchaseGoodsEntity);
+            gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
+
+        }
+
+        //更新协商订单
+        //更新协作订单
+        System.out.println("colllllmap" + ordersEntity.getNxDoCollaborativeNxDisId());
+
+        if(ordersEntity.getNxDoCollaborativeNxDisId() != -1){
+            Integer nxDoCollaborativeNxDisId = ordersEntity.getNxDoCollaborativeNxDisId();
+            Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+            Map<String, Object> map = new HashMap<>();
+            map.put("disId", nxDoCollaborativeNxDisId);
+            map.put("restrauntId", nxDepartmentOrdersId);
+            System.out.println("colllllmap" + map);
+            NxDepartmentOrdersEntity collOrder =  nxDepartmentOrdersService.querycollOrder(map);
+            if(collOrder != null && collOrder.getNxDoStatus() < 2){
+                collOrder.setNxDoPurchaseStatus(1);
+                collOrder.setNxDoWeight(ordersEntity.getNxDoWeight());
+                nxDepartmentOrdersService.update(collOrder);
+            }
+        }
+
+        return R.ok();
+    }
+
+
+    @RequestMapping(value = "/giveOrderWeightListForStockShelfGoods", method = RequestMethod.POST)
+    @ResponseBody
+    public R giveOrderWeightListForStockShelfGoods(@RequestBody List<NxDepartmentOrdersEntity> ordersEntityList) {
+        List<Map<String, Object>> shortages = new ArrayList<>();
+        for (NxDepartmentOrdersEntity ordersEntityOld : ordersEntityList) {
+            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(ordersEntityOld.getNxDepartmentOrdersId());
+            ordersEntity.setNxDoPickUserId(ordersEntityOld.getNxDoPickUserId());
+
+            // 确定使用的重量：优先使用前台传入的重量，如果为空则使用订单数量
+            String weightToUse = null;
+            if (ordersEntityOld.getNxDoWeight() != null && !ordersEntityOld.getNxDoWeight().trim().isEmpty()) {
+                weightToUse = ordersEntityOld.getNxDoWeight();
+                logger.info("[giveOrderWeightListForStockShelfGoods] 使用前台传入的重量: {}", weightToUse);
+            } else if (ordersEntity.getNxDoQuantity() != null && !ordersEntity.getNxDoQuantity().trim().isEmpty()) {
+                // 如果前台没有传入重量，使用订单数量作为重量
+                weightToUse = ordersEntity.getNxDoQuantity();
+                logger.warn("[giveOrderWeightListForStockShelfGoods] 前台未传入重量，使用订单数量作为重量: {}", weightToUse);
+            } else {
+                // 如果都没有，使用数据库中的重量（但记录警告）
+                weightToUse = ordersEntity.getNxDoWeight();
+                logger.warn("[giveOrderWeightListForStockShelfGoods] 前台未传入重量且订单数量为空，使用数据库中的重量: {} (订单ID: {})",
+                        weightToUse, ordersEntity.getNxDepartmentOrdersId());
+            }
+
+            // 记录调试信息
+            logger.info("[giveOrderWeightListForStockShelfGoods] 订单ID: {}, 订单数量: {}, 数据库重量: {}, 前台传入重量: {}, 最终使用重量: {}",
+                    ordersEntity.getNxDepartmentOrdersId(),
+                    ordersEntity.getNxDoQuantity(),
+                    ordersEntity.getNxDoWeight(),
+                    ordersEntityOld.getNxDoWeight(),
+                    weightToUse);
 
             // 无论价格是否为空，都要设置正确的重量
-            ordersEntity.setNxDoWeight(orderWeight);
+            ordersEntity.setNxDoWeight(weightToUse);
 
             if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
-                BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(orderWeight)).setScale(1, BigDecimal.ROUND_HALF_UP);
+                BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(weightToUse)).setScale(1, BigDecimal.ROUND_HALF_UP);
                 ordersEntity.setNxDoSubtotal(subtotal.toString());
                 ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
+                if (ordersEntity.getNxDoCostPrice() != null && !ordersEntity.getNxDoCostPrice().isEmpty()) {
+                    BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
+                    BigDecimal decimal = nxDoCostPriceB.multiply(new BigDecimal(weightToUse)).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    BigDecimal profitB = subtotal.subtract(decimal).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    System.out.println("subsbsbbssbbsbbbbb" + subtotal);
+                    BigDecimal scaleB = profitB.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+                    ordersEntity.setNxDoProfitScale(scaleB.toString());
+                    ordersEntity.setNxDoProfitSubtotal(profitB.toString());
+                }
                 System.out.println("subsbbsbsbbsbs" + subtotal.toString());
                 System.out.println("subsbbsbsbbsbs" + ordersEntity.getNxDoCostPrice());
 
@@ -8021,9 +5413,9 @@ public class NxDepartmentOrdersController {
                 map.put("disGoodsId", ordersEntity.getNxDoDisGoodsId());
                 map.put("restWeight", 0);
                 // 如果订单有出库货架ID，则只查询该货架的库存
-                if (shelfId != -1) {
-                    map.put("shelfId", shelfId);
-                    System.out.println("🔍 查询指定货架的库存 - 货架ID: " + shelfId);
+                if (ordersEntityOld.getOutShelfId() != null) {
+                    map.put("shelfId", ordersEntityOld.getOutShelfId());
+                    System.out.println("🔍 查询指定货架的库存 - 货架ID: " + ordersEntityOld.getOutShelfId());
                 }
                 List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
 
@@ -8048,7 +5440,7 @@ public class NxDepartmentOrdersController {
                     }
 
                     // 需要出货的重量（使用确定的重量值）
-                    BigDecimal needWeightRaw = new BigDecimal(orderWeight);
+                    BigDecimal needWeightRaw = new BigDecimal(weightToUse);
                     BigDecimal needWeight; // 转换为最小单位后的重量
                     BigDecimal totalCost = BigDecimal.ZERO; // 总成本
 
@@ -8174,300 +5566,6 @@ public class NxDepartmentOrdersController {
                     BigDecimal profitSubtotal = profit.multiply(needWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
                     ordersEntity.setNxDoProfitSubtotal(profitSubtotal.toString());
 
-                }
-            }
-
-            ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-            nxDepartmentOrdersService.update(ordersEntity);
-
-
-            Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
-            if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
-                NxDistributerPurchaseGoodsEntity purchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(nxDoPurchaseGoodsId);
-                if (purchaseGoodsEntity != null) {
-                    Integer nxDpgOrdersAmount = purchaseGoodsEntity.getNxDpgOrdersAmount();
-                    Integer nxDpgFinishAmount = purchaseGoodsEntity.getNxDpgFinishAmount();
-                    System.out.println("purGoodsss" + nxDpgFinishAmount);
-                    if (nxDpgOrdersAmount != null && nxDpgFinishAmount != null) {
-                        if (nxDpgOrdersAmount - nxDpgFinishAmount == 1) {
-                            purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgOrdersAmount);
-                            purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
-//查询商品如有有采购批次nxDistributerPurchaseBatch
-                            // 并且该批次下的全部采购商品nxDistributerGoods的 nxDpgStatus == getNxDisPurchaseGoodsFinishBuy 的数量
-                            //是所有采购商品数量减去 1 ，那么就认为该采购批次也是完成。
-                            if(purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1){
-                                Map<String, Object> map = new HashMap<>();
-                                map.put("batchId",purchaseGoodsEntity.getNxDpgBatchId() );
-                                int count = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                map.put("equalStatus",getNxDisPurchaseGoodsFinishBuy());
-                                int finishCount = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                if(count - finishCount == 1){
-                                    NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
-                                    nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
-                                    nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
-                                }
-                            }
-                        } else {
-                            purchaseGoodsEntity.setNxDpgFinishAmount(nxDpgFinishAmount + 1);
-                        }
-                        nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
-                    }
-                } else {
-                    System.out.println("警告：采购商品不存在，ID: " + nxDoPurchaseGoodsId);
-                }
-            }
-
-
-            System.out.println("xnordidiididid" + ordersEntity.getNxDoGbDepartmentOrderId());
-            if (ordersEntity.getNxDoGbDepartmentOrderId() != null) {
-                GbDepartmentOrdersEntity gbDepartmentOrdersEntity = gbDepartmentOrdersService.queryGbOrderByNxOrderId(ordersEntity.getNxDepartmentOrdersId());
-                gbDepartmentOrdersEntity.setGbDoBuyStatus(getGbOrderBuyStatusHasWeightAndPrice());
-                gbDepartmentOrdersEntity.setGbDoStatus(getGbOrderStatusProcurement());
-                gbDepartmentOrdersEntity.setGbDoWeight(ordersEntity.getNxDoWeight());
-
-                if (gbDepartmentOrdersEntity.getGbDoPrice() != null && !gbDepartmentOrdersEntity.getGbDoPrice().trim().isEmpty() && !gbDepartmentOrdersEntity.getGbDoPrice().equals("0.0") && gbDepartmentOrdersEntity.getGbDoWeight() != null) {
-                    BigDecimal decimal1 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoPrice());
-                    BigDecimal decimal2 = new BigDecimal(gbDepartmentOrdersEntity.getGbDoWeight());
-                    BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    gbDepartmentOrdersEntity.setGbDoSubtotal(decimal3.toString());
-                }
-                gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
-                System.out.println("xnordidiididid" + gbDepartmentOrdersEntity.getGbDepartmentOrdersId());
-
-
-                Integer purchaseGoodsId = gbDepartmentOrdersEntity.getGbDoPurchaseGoodsId();
-
-                Map<String, Object> map = new HashMap<>();
-                map.put("purGoodsId", purchaseGoodsId);
-                List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersListByParams(map);
-                BigDecimal purWeight = new BigDecimal(0);
-                if (gbDepartmentOrdersEntities.size() > 0) {
-                    for (GbDepartmentOrdersEntity gbOrder : gbDepartmentOrdersEntities) {
-                        if (gbOrder.getGbDoWeight() != null) {
-                            purWeight = purWeight.add(new BigDecimal(gbOrder.getGbDoWeight()));
-                        }
-                    }
-                }
-                GbDistributerPurchaseGoodsEntity purchaseGoodsEntity = gbDistributerPurchaseGoodsService.queryObject(purchaseGoodsId);
-                purchaseGoodsEntity.setGbDpgBuyQuantity(purWeight.toString());
-                if (purchaseGoodsEntity.getGbDpgBuyPrice() != null && !purchaseGoodsEntity.getGbDpgBuyPrice().trim().isEmpty()) {
-                    BigDecimal decimal1 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyPrice());
-                    BigDecimal decimal2 = new BigDecimal(purchaseGoodsEntity.getGbDpgBuyQuantity());
-                    BigDecimal decimal3 = decimal1.multiply(decimal2).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    purchaseGoodsEntity.setGbDpgBuySubtotal(decimal3.toString());
-                }
-                purchaseGoodsEntity.setGbDpgStatus(getNxDisPurchaseGoodsIsPurchase());
-                System.out.println("purpprur" + purchaseGoodsEntity);
-                gbDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
-
-            }
-
-        return R.ok();
-    }
-
-
-
-    @RequestMapping(value = "/giveOrderWeightListForStockShelfGoods", method = RequestMethod.POST)
-    @ResponseBody
-    public R giveOrderWeightListForStockShelfGoods(@RequestBody List<NxDepartmentOrdersEntity> ordersEntityList) {
-        System.out.println("giveOrderWeightListForStockAndFinishgiveOrderWeightListForStockAndFinish" + ordersEntityList);
-        List<Map<String, Object>> shortages = new ArrayList<>();
-        for (NxDepartmentOrdersEntity ordersEntityOld : ordersEntityList) {
-            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObjectNew(ordersEntityOld.getNxDepartmentOrdersId());
-            ordersEntity.setNxDoPickUserId(ordersEntityOld.getNxDoPickUserId());
-            
-            // 确定使用的重量：优先使用前台传入的重量，如果为空则使用订单数量
-            String weightToUse = null;
-            if (ordersEntityOld.getNxDoWeight() != null && !ordersEntityOld.getNxDoWeight().trim().isEmpty()) {
-                weightToUse = ordersEntityOld.getNxDoWeight();
-                logger.info("[giveOrderWeightListForStockShelfGoods] 使用前台传入的重量: {}", weightToUse);
-            } else if (ordersEntity.getNxDoQuantity() != null && !ordersEntity.getNxDoQuantity().trim().isEmpty()) {
-                // 如果前台没有传入重量，使用订单数量作为重量
-                weightToUse = ordersEntity.getNxDoQuantity();
-                logger.warn("[giveOrderWeightListForStockShelfGoods] 前台未传入重量，使用订单数量作为重量: {}", weightToUse);
-            } else {
-                // 如果都没有，使用数据库中的重量（但记录警告）
-                weightToUse = ordersEntity.getNxDoWeight();
-                logger.warn("[giveOrderWeightListForStockShelfGoods] 前台未传入重量且订单数量为空，使用数据库中的重量: {} (订单ID: {})", 
-                        weightToUse, ordersEntity.getNxDepartmentOrdersId());
-            }
-            
-            // 记录调试信息
-            logger.info("[giveOrderWeightListForStockShelfGoods] 订单ID: {}, 订单数量: {}, 数据库重量: {}, 前台传入重量: {}, 最终使用重量: {}", 
-                    ordersEntity.getNxDepartmentOrdersId(), 
-                    ordersEntity.getNxDoQuantity(), 
-                    ordersEntity.getNxDoWeight(), 
-                    ordersEntityOld.getNxDoWeight(), 
-                    weightToUse);
-            
-            // 无论价格是否为空，都要设置正确的重量
-            ordersEntity.setNxDoWeight(weightToUse);
-            
-            if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
-                BigDecimal subtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(weightToUse)).setScale(1, BigDecimal.ROUND_HALF_UP);
-                ordersEntity.setNxDoSubtotal(subtotal.toString());
-                ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
-                System.out.println("subsbbsbsbbsbs" + subtotal.toString());
-                System.out.println("subsbbsbsbbsbs" + ordersEntity.getNxDoCostPrice());
-
-                //查询是否有库存（按日期排序，实现FIFO先进先出）
-                Map<String, Object> map = new HashMap<>();
-                map.put("disGoodsId", ordersEntity.getNxDoDisGoodsId());
-                map.put("restWeight", 0);
-                // 如果订单有出库货架ID，则只查询该货架的库存
-                if (ordersEntityOld.getOutShelfId() != null) {
-                    map.put("shelfId", ordersEntityOld.getOutShelfId());
-                    System.out.println("🔍 查询指定货架的库存 - 货架ID: " + ordersEntityOld.getOutShelfId());
-                }
-                List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
-
-                if (stockEntities.size() > 0) {
-                    // 查询商品信息，判断出库单位（需要先判断，才能正确转换数量）
-                    NxDistributerGoodsEntity disGoodsForOut = nxDistributerGoodsService.queryObject(ordersEntity.getNxDoDisGoodsId());
-                    boolean useCartonPrice = false;
-                    Integer itemsPerCartonForOut = null;
-                    if (disGoodsForOut != null 
-                            && disGoodsForOut.getNxDgCartonUnit() != null 
-                            && !disGoodsForOut.getNxDgCartonUnit().trim().isEmpty()
-                            && ordersEntity.getNxDoPrintStandard() != null
-                            && ordersEntity.getNxDoPrintStandard().trim().equals(disGoodsForOut.getNxDgCartonUnit().trim())) {
-                        // 订单规格与外包装单位匹配，使用外包装单价
-                        useCartonPrice = true;
-                        itemsPerCartonForOut = disGoodsForOut.getNxDgItemsPerCarton();
-                        System.out.println("✅ 出库单位与外包装单位匹配，使用外包装单价: " + disGoodsForOut.getNxDgCartonUnit() 
-                                + ", 每箱" + itemsPerCartonForOut + "个");
-                    } else {
-                        System.out.println("⚠️ 出库单位不匹配 - 订单规格: " + ordersEntity.getNxDoStandard() 
-                                + ", 商品外包装单位: " + (disGoodsForOut != null ? disGoodsForOut.getNxDgCartonUnit() : "null"));
-                    }
-
-                    // 需要出货的重量（使用确定的重量值）
-                    BigDecimal needWeightRaw = new BigDecimal(weightToUse);
-                    BigDecimal needWeight; // 转换为最小单位后的重量
-                    BigDecimal totalCost = BigDecimal.ZERO; // 总成本
-                    
-                    System.out.println("🔍 调试信息 - 前台提交的重量: " + needWeightRaw + ", 订单规格: " + ordersEntity.getNxDoStandard());
-                    System.out.println("🔍 调试信息 - useCartonPrice: " + useCartonPrice + ", itemsPerCartonForOut: " + itemsPerCartonForOut);
-                    
-                    // 如果使用大包装单位，需要将箱数转换为最小单位数量
-                    if (useCartonPrice && itemsPerCartonForOut != null && itemsPerCartonForOut > 0) {
-                        // 前台提交的是箱数，需要转换为最小单位数量
-                        needWeight = needWeightRaw.multiply(new BigDecimal(itemsPerCartonForOut));
-                        System.out.println("✅ 开始FIFO扣减库存 - 订单箱数: " + needWeightRaw + "箱, 转换为最小单位: " + needWeight + "个");
-                    } else {
-                        // 前台提交的已经是最小单位数量
-                        needWeight = needWeightRaw;
-                        System.out.println("✅ 开始FIFO扣减库存 - 订单重量: " + needWeight + "个（未使用大包装单位）");
-                    }
-                    
-                    BigDecimal remainingWeight = needWeight; // 剩余需要扣减的重量（最小单位）
-                    System.out.println("🔍 调试信息 - remainingWeight（剩余需要扣减）: " + remainingWeight + "个");
-
-                    for (NxDistributerGoodsShelfStockEntity stockEntity : stockEntities) {
-                        if (remainingWeight.compareTo(BigDecimal.ZERO) <= 0) {
-                            break; // 已经扣减完毕
-                        }
-
-                        BigDecimal stockRestWeight = new BigDecimal(stockEntity.getNxDgssRestWeight());
-                        
-                        // 计算本批次可以扣减的重量（最小单位）
-                        BigDecimal deductWeight;
-                        if (remainingWeight.compareTo(stockRestWeight) <= 0) {
-                            // 本批次够用
-                            deductWeight = remainingWeight;
-                        } else {
-                            // 本批次不够，全部扣减
-                            deductWeight = stockRestWeight;
-                        }
-
-                        // 根据出库单位选择对应的单价和计算方式
-                        BigDecimal stockPrice;
-                        BigDecimal deductWeightForCalc; // 用于成本计算的扣减数量
-                        if (useCartonPrice && stockEntity.getNxDgssPriceCarton() != null 
-                                && !stockEntity.getNxDgssPriceCarton().trim().isEmpty()
-                                && itemsPerCartonForOut != null && itemsPerCartonForOut > 0) {
-                            // 使用外包装单价，需要将最小单位数量转换为箱数
-                            deductWeightForCalc = deductWeight.divide(new BigDecimal(itemsPerCartonForOut), 4, BigDecimal.ROUND_HALF_UP);
-                            stockPrice = new BigDecimal(stockEntity.getNxDgssPriceCarton());
-                            System.out.println("批次ID: " + stockEntity.getNxDistributerGoodsShelfStockId() +
-                                    ", 剩余: " + stockRestWeight + ", 扣减: " + deductWeight + "个(" + deductWeightForCalc + "箱)"
-                                    + ", 使用外包装单价: " + stockPrice + "元/箱");
-                        } else {
-                            // 使用最小单位单价
-                            String priceStr = stockEntity.getNxDgssPrice();
-                            stockPrice = (priceStr == null || priceStr.trim().isEmpty())
-                                    ? BigDecimal.ZERO
-                                    : new BigDecimal(priceStr);
-                            deductWeightForCalc = deductWeight;
-                            System.out.println("批次ID: " + stockEntity.getNxDistributerGoodsShelfStockId() +
-                                    ", 剩余: " + stockRestWeight + ", 扣减: " + deductWeight
-                                    + ", 使用最小单位单价: " + stockPrice);
-                        }
-
-                        if (stockRestWeight.compareTo(BigDecimal.ZERO) <= 0) {
-                            continue; // 跳过没有库存的批次
-                        }
-
-                        // 计算本批次的成本（使用对应的单价和数量）
-                        BigDecimal batchCost = deductWeightForCalc.multiply(stockPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        totalCost = totalCost.add(batchCost);
-
-                        // 更新库存批次的剩余数量
-                        BigDecimal newRestWeight = stockRestWeight.subtract(deductWeight);
-                        stockEntity.setNxDgssRestWeight(newRestWeight.toString());
-
-                        // 更新库存批次的剩余成本（使用最小单位单价计算）
-                        String priceStrForRest = stockEntity.getNxDgssPrice();
-                        BigDecimal stockPriceForRest = (priceStrForRest == null || priceStrForRest.trim().isEmpty())
-                                ? BigDecimal.ZERO
-                                : new BigDecimal(priceStrForRest);
-                        BigDecimal newRestSubtotal = newRestWeight.multiply(stockPriceForRest).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        stockEntity.setNxDgssRestSubtotal(newRestSubtotal.toString());
-
-                        // 保存库存批次更新
-                        nxDisGoodsShelfStockService.update(stockEntity);
-
-                        // 创建库存扣减记录
-                        NxDistributerGoodsShelfStockReduceEntity reduceEntity = new NxDistributerGoodsShelfStockReduceEntity();
-                        reduceEntity.setNxDgssrNxDistributerId(ordersEntity.getNxDoDistributerId());
-                        reduceEntity.setNxDgssrNxDisGoodsId(ordersEntity.getNxDoDisGoodsId());
-                        reduceEntity.setNxDgssrNxDisGoodsFatherId(stockEntity.getNxDgssNxDisGoodsFatherId());
-                        reduceEntity.setNxDgssrNxStockId(stockEntity.getNxDistributerGoodsShelfStockId());
-                        reduceEntity.setNxDgssrDate(formatWhatDay(0));
-                        reduceEntity.setNxDgssrWeek(getWeek(0));
-                        reduceEntity.setNxDgssrMonth(formatWhatMonth(0));
-                        reduceEntity.setNxDgssrFullTime(formatWhatYearDayTime(0));
-                        reduceEntity.setNxDgssrType(0); // 0=销售扣减
-                        reduceEntity.setNxDgssrDoUserId(ordersEntity.getNxDoPickUserId());
-                        reduceEntity.setNxDgssrCostWeight(deductWeight.toString());
-                        reduceEntity.setNxDgssrCostSubtotal(batchCost.toString());
-                        reduceEntity.setNxDgssrNxPurGoodsId(stockEntity.getNxDgssNxPurGoodsId());
-                        reduceEntity.setNxDgssrNxDepOrderId(ordersEntity.getNxDepartmentOrdersId());
-                        reduceEntity.setNxDgssrStatus(0);
-                        reduceEntity.setNxDgssrProduceWeight(deductWeight.toString());
-                        reduceEntity.setNxDgssrProduceSubtotal(batchCost.toString());
-                        nxDisGoodsShelfStockReduceService.save(reduceEntity);
-
-                        System.out.println("扣减批次 " + stockEntity.getNxDistributerGoodsShelfStockId() +
-                                " - 扣减重量: " + deductWeight + ", 本批次成本: " + batchCost +
-                                ", 新剩余: " + newRestWeight + ", 已保存扣减记录");
-
-                        // 减少剩余需要扣减的重量
-                        remainingWeight = remainingWeight.subtract(deductWeight);
-                    }
-
-                    // 计算加权平均成本价（保留1位小数）
-                    // 如果使用外包装单价，needWeight应该是箱数，avgCostPrice是每箱的平均成本价
-                    BigDecimal avgCostPrice = totalCost.divide(needWeight, 1, BigDecimal.ROUND_HALF_UP);
-                    ordersEntity.setNxDoCostPrice(avgCostPrice.setScale(1, BigDecimal.ROUND_HALF_UP).toPlainString());
-                    ordersEntity.setNxDoCostSubtotal(totalCost.toString());
-
-                    // 计算利润
-                    BigDecimal sellPrice = new BigDecimal(ordersEntity.getNxDoPrice());
-                    BigDecimal profit = sellPrice.subtract(avgCostPrice);
-                    BigDecimal profitSubtotal = profit.multiply(needWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    ordersEntity.setNxDoProfitSubtotal(profitSubtotal.toString());
-
                     System.out.println("FIFO扣减完成 - 总成本: " + totalCost +
                             ", 平均成本价: " + avgCostPrice +
                             ", 利润小计: " + profitSubtotal);
@@ -8500,14 +5598,14 @@ public class NxDepartmentOrdersController {
                             // 并且该批次下的全部采购商品nxDistributerGoods的 nxDpgStatus == getNxDisPurchaseGoodsFinishBuy 的数量
                             //是所有采购商品数量减去 1 ，那么就认为该采购批次也是完成。
                             System.out.println("gengixathciid" + purchaseGoodsEntity.getNxDpgBatchId());
-                            if(purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1){
+                            if (purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1) {
                                 Map<String, Object> map = new HashMap<>();
-                                map.put("batchId",purchaseGoodsEntity.getNxDpgBatchId() );
+                                map.put("batchId", purchaseGoodsEntity.getNxDpgBatchId());
                                 int count = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
-                                map.put("equalStatus",getNxDisPurchaseGoodsFinishBuy());
+                                map.put("equalStatus", getNxDisPurchaseGoodsFinishBuy());
                                 int finishCount = nxDistributerPurchaseGoodsService.queryPurchaseGoodsCount(map);
                                 System.out.println("fincoundfdafdafadfat" + finishCount);
-                                if(count - finishCount == 1){
+                                if (count - finishCount == 1) {
                                     NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
                                     nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchDisUserFinish());
                                     nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
@@ -8523,7 +5621,6 @@ public class NxDepartmentOrdersController {
                     System.out.println("警告：采购商品不存在，ID: " + nxDoPurchaseGoodsId);
                 }
             }
-
 
             System.out.println("xnordidiididid" + ordersEntity.getNxDoGbDepartmentOrderId());
             if (ordersEntity.getNxDoGbDepartmentOrderId() != null) {
@@ -8569,10 +5666,49 @@ public class NxDepartmentOrdersController {
 
             }
 
+
+            //更新协作订单
+            System.out.println("colllllmap" + ordersEntity.getNxDoCollaborativeNxDisId());
+
+            if(ordersEntity.getNxDoCollaborativeNxDisId() != -1){
+                Integer nxDoCollaborativeNxDisId = ordersEntity.getNxDoCollaborativeNxDisId();
+                Integer nxDepartmentOrdersId = ordersEntity.getNxDepartmentOrdersId();
+                Map<String, Object> map = new HashMap<>();
+                map.put("disId", nxDoCollaborativeNxDisId);
+                map.put("restrauntId", nxDepartmentOrdersId);
+                System.out.println("colllllmap" + map);
+                NxDepartmentOrdersEntity collOrder =  nxDepartmentOrdersService.querycollOrder(map);
+                if(collOrder != null && collOrder.getNxDoStatus() < 2){
+                    collOrder.setNxDoPurchaseStatus(1);
+                    collOrder.setNxDoWeight(weightToUse);
+                    //
+                    if (collOrder.getNxDoPrice() != null && !collOrder.getNxDoPrice().trim().isEmpty()
+                            && ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
+                        BigDecimal costSubtotal = new BigDecimal(ordersEntity.getNxDoPrice()).multiply(new BigDecimal(weightToUse)).setScale(1, BigDecimal.ROUND_HALF_UP);
+
+                        BigDecimal subtotal = new BigDecimal(collOrder.getNxDoPrice()).multiply(new BigDecimal(weightToUse)).setScale(1, BigDecimal.ROUND_HALF_UP);
+                        collOrder.setNxDoCostPrice(ordersEntity.getNxDoPrice());
+                        collOrder.setNxDoCostSubtotal(costSubtotal.toString());
+                        collOrder.setNxDoSubtotal(subtotal.toString());
+                        System.out.println("subtollllll=" + subtotal + "costsubtallalal==" + costSubtotal);
+                        BigDecimal profitSubtotal = subtotal.subtract(costSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
+
+                        collOrder.setNxDoProfitSubtotal(profitSubtotal.toString());
+                        BigDecimal multiply = subtotal.compareTo(BigDecimal.ZERO) != 0
+                                ? profitSubtotal.divide(subtotal, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP)
+                                : BigDecimal.ZERO;
+                        collOrder.setNxDoProfitScale(multiply.toString());
+
+                    }
+                        nxDepartmentOrdersService.update(collOrder);
+                }
+            }
+
         }
 
         return R.ok().put("shortages", shortages);
     }
+
 
     @RequestMapping(value = "/giveOrderWeightListForStock", method = RequestMethod.POST)
     @ResponseBody
@@ -8846,19 +5982,23 @@ public class NxDepartmentOrdersController {
         return R.ok();
     }
 
-    @RequestMapping(value = "/phoneGetToFillDepOrders", method = RequestMethod.POST)
+
+    @RequestMapping(value = "/getCollectionDisDepOrders", method = RequestMethod.POST)
     @ResponseBody
-    public R phoneGetToFillDepOrders(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, Integer disId) {
+    public R getCollectionDisDepOrders(Integer collDisId, Integer disId) {
 
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("status", 3);
-        map.put("depFatherId", depFatherId);
-        map.put("gbDepFatherId", gbDepFatherId);
-        map.put("resFatherId", resFatherId);
-        System.out.println("abncnncnnnc" + map);
-        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersByParams(map);
+        map.put("collNxDisId", collDisId);
+        System.out.println("depmapapapppa" + map);
+        List<NxDepartmentEntity> deps = nxDepartmentOrdersService.queryCollDisDeps(map);
+        System.out.println("depmapapapppasize" + deps.size());
 
+        // 优化：合并统计查询，减少数据库查询次数
+        int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        // 优化：合并统计查询，减少数据库查询次数
         map.put("hasPrice", 1);
         int hasPriceCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
         map.put("hasPrice", null);
@@ -8868,29 +6008,244 @@ public class NxDepartmentOrdersController {
         map.put("status", null);
         map.put("equalStatus", 2);
         map.put("dayuPurStatus", 3);
-        System.out.println("elqlqlqlql" + map);
         int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
 
         NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(disId);
         String headPinyin = getHeadStringByString(nxDistributerEntity.getNxDistributerName(), true, null);
-        System.out.println("disnamme" + nxDistributerEntity.getNxDistributerName());
         String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
+
         List<Map<String, Object>> mapList = new ArrayList<>();
+        for (NxDepartmentEntity dep : deps) {
+            Map<String, Object> mapDepQuery = new HashMap<>();
+            mapDepQuery.put("depFatherId", dep.getNxDepartmentId());
+            mapDepQuery.put("disId", disId);
+            mapDepQuery.put("status", 3);
+            mapDepQuery.put("collNxDisId", collDisId);
+            // 使用简化版DTO查询，只查询必要字段
+            System.out.println("queyryyrryryr" + mapDepQuery);
+            List<NxDepartmentOrdersSimpleDTO> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersSimpleByParams(mapDepQuery);
+            Map<String, Object> mapDep = new HashMap<>();
+
+            mapDep.put("depOrders", ordersEntities);
+            mapDep.put("depName", dep.getNxDepartmentOrderCode());
+            mapDep.put("depId", dep.getNxDepartmentId());
+
+            // 计算该部门的小计
+            Map<String, Object> map1 = new HashMap<>();
+            map1.put("status", 3);
+            map1.put("depId", dep.getNxDepartmentId());
+            map1.put("subtotal", 0);
+            map1.put("collNxDisId", collDisId);
+            Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
+            Double sutotal = 0.0;
+            if (integer > 0) {
+                sutotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(map1);
+            }
+            mapDep.put("depSubtotal", new BigDecimal(sutotal).setScale(1, BigDecimal.ROUND_HALF_UP));
+            mapDep.put("depSubtotalHanzi", convertDoubleToChineseCurrency(sutotal));
+            mapList.add(mapDep);
+        }
+
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("subAmount", deps.size());
+        mapR.put("arr", mapList);
+        mapR.put("tradeNo", s);
+        double total = 0.0;
+        map.put("subtotal", 0);
+        Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        if (twoTotal > 0) {
+            total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
+        }
+
+        mapR.put("totalCount", totalCount );
+        mapR.put("finishCount", finishCount);
+        mapR.put("hasPriceCount", hasPriceCount);
+        mapR.put("hasWeightCount", hasWeightCount);
+        mapR.put("totalHanzi", convertDoubleToChineseCurrency(total));
+        mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
+
+        return R.ok().put("data", mapR);
+
+    }
+
+  @RequestMapping(value = "/getCollectionDisOrders", method = RequestMethod.POST)
+    @ResponseBody
+    public R getCollectionDisOrders(Integer collDisId, Integer disId) {
+
+
+        Map<String, Object> mapDepQuery = new HashMap<>();
+        mapDepQuery.put("disId", disId);
+        mapDepQuery.put("status", 3);
+        mapDepQuery.put("collNxDisId", collDisId);
+        // 使用简化版DTO查询，只查询必要字段
+        System.out.println("queyryyrryryr" + mapDepQuery);
+        List<NxDepartmentOrdersSimpleDTO> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersSimpleByParams(mapDepQuery);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("status", 3);
+        map.put("collNxDisId", collDisId);
+        System.out.println("depmapapapppa" + map);
+
+        // 优化：合并统计查询，减少数据库查询次数
+        int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        // 优化：合并统计查询，减少数据库查询次数
+        map.put("hasPrice", 1);
+        int hasPriceCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        map.put("hasPrice", null);
+        map.put("hasWeight", 1);
+        int hasWeightCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        map.put("status", null);
+        map.put("equalStatus", 2);
+        map.put("dayuPurStatus", 3);
+        int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        Map<String, Object> mapR = new HashMap<>();
+        double total = 0.0;
+        map.put("subtotal", 0);
+        Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        if (twoTotal > 0) {
+            total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
+        }
+
+        mapR.put("arr", ordersEntities );
+        mapR.put("totalCount", totalCount );
+        mapR.put("finishCount", finishCount);
+        mapR.put("hasPriceCount", hasPriceCount);
+        mapR.put("hasWeightCount", hasWeightCount);
+        mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
+
+        return R.ok().put("data", mapR);
+
+    }
+
+    @RequestMapping(value = "/getCollectionDisDepOrdersFinish", method = RequestMethod.POST)
+    @ResponseBody
+    public R getCollectionDisDepOrdersFinish(Integer collDisId, Integer disId) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", disId);
+        map.put("equalStatus", 2);
+        map.put("equalPurStatus", 4);
+        map.put("collNxDisId", collDisId);
+        System.out.println("depmapapapppa" + map);
+
+        List<NxDistributerGoodsEntity> goodsEntities = nxDepartmentOrdersService.queryOfferOrdersGoods(map);
+
+        // 优化：合并统计查询，减少数据库查询次数
+        int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        // 优化：合并统计查询，减少数据库查询次数
+        map.put("hasPrice", 1);
+        int hasPriceCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        map.put("hasPrice", null);
+        map.put("hasWeight", 1);
+        int hasWeightCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        map.put("status", null);
+        map.put("equalStatus", 2);
+        map.put("dayuPurStatus", 3);
+        int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(disId);
+        String headPinyin = getHeadStringByString(nxDistributerEntity.getNxDistributerName(), true, null);
+        String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
+
+        Map<String, Object> mapR = new HashMap<>();
+        mapR.put("tradeNo", s);
+        double total = 0.0;
+        map.put("subtotal", 0);
+        Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        if (twoTotal > 0) {
+            total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
+        }
+
+        mapR.put("arr", goodsEntities );
+        mapR.put("totalCount", totalCount );
+        mapR.put("finishCount", finishCount);
+        mapR.put("hasPriceCount", hasPriceCount);
+        mapR.put("hasWeightCount", hasWeightCount);
+        mapR.put("totalHanzi", convertDoubleToChineseCurrency(total));
+        mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
+
+        return R.ok().put("data", mapR);
+
+    }
+
+
+    /**
+     * 配送商获取客户订单
+     *
+     * @param
+     * @return
+     * @date 2026-01-10
+     */
+    @RequestMapping(value = "/phoneGetToFillDepOrders", method = RequestMethod.POST)
+    @ResponseBody
+    public R phoneGetToFillDepOrders(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, Integer disId) {
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderDisId", disId);
+        map.put("status", 3);
+        map.put("depFatherId", depFatherId);
+        map.put("gbDepFatherId", gbDepFatherId);
+        map.put("resFatherId", resFatherId);
+
+        // 使用简化版DTO查询，只查询必要字段
+        List<NxDepartmentOrdersSimpleDTO> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersSimpleByParams(map);
+
+        // 优化：合并统计查询，减少数据库查询次数
+        map.put("hasPrice", 1);
+        System.out.println("haspricieiee" + map);
+        int hasPriceCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+        map.put("hasPrice", null);
+        map.put("hasWeight", 1);
+        int hasWeightCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        map.put("status", null);
+        map.put("equalStatus", 2);
+        map.put("dayuPurStatus", 3);
+        int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+
+        NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(disId);
+        String headPinyin = getHeadStringByString(nxDistributerEntity.getNxDistributerName(), true, null);
+        String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
+
         List<NxDepartmentEntity> entities = nxDepartmentService.querySubDepartments(depFatherId);
-        System.out.println("depdiidid" + entities.size());
         if (entities.size() > 0) {
+            // 优化：批量查询所有子部门的订单，避免N+1问题
+            List<Integer> depIds = entities.stream()
+                    .map(NxDepartmentEntity::getNxDepartmentId)
+                    .collect(Collectors.toList());
+
+            Map<String, Object> batchMap = new HashMap<>();
+            batchMap.put("orderDisId", disId);
+            batchMap.put("status", 3);
+            batchMap.put("depIds", depIds);
+            List<NxDepartmentOrdersSimpleDTO> allDepOrders = nxDepartmentOrdersService.queryDisOrdersSimpleByDepIds(batchMap);
+
+            // 按部门分组订单
+            Map<Integer, List<NxDepartmentOrdersSimpleDTO>> ordersByDep = allDepOrders.stream()
+                    .collect(Collectors.groupingBy(NxDepartmentOrdersSimpleDTO::getNxDoDepartmentId));
+
+            List<Map<String, Object>> mapList = new ArrayList<>();
             for (NxDepartmentEntity dep : entities) {
                 Map<String, Object> mapDep = new HashMap<>();
                 mapDep.put("depId", dep.getNxDepartmentId());
                 mapDep.put("depName", dep.getNxDepartmentName());
+
+                // 从批量查询结果中获取该部门的订单
+                List<NxDepartmentOrdersSimpleDTO> depOrders = ordersByDep.getOrDefault(dep.getNxDepartmentId(), new ArrayList<>());
+                mapDep.put("depOrders", depOrders);
+
+                // 计算该部门的小计
                 Map<String, Object> map1 = new HashMap<>();
                 map1.put("status", 3);
                 map1.put("depId", dep.getNxDepartmentId());
-                map1.put("orderBy", "time");
-                List<NxDepartmentOrdersEntity> depOrders = nxDepartmentOrdersService.queryDisOrdersByParams(map1);
-                mapDep.put("depOrders", depOrders);
                 map1.put("subtotal", 0);
-                System.out.println("map111aaa" + map1);
+                map1.put("isSelfOrder", 1);
                 Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
                 Double sutotal = 0.0;
                 if (integer > 0) {
@@ -8946,9 +6301,10 @@ public class NxDepartmentOrdersController {
         }
     }
 
+
     @RequestMapping(value = "/phoneGetToFillDepOrdersSunla", method = RequestMethod.POST)
     @ResponseBody
-    public R phoneGetToFillDepOrdersSunla(Integer depFatherId,Integer disId) {
+    public R phoneGetToFillDepOrdersSunla(Integer depFatherId, Integer disId) {
 
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
@@ -8963,7 +6319,7 @@ public class NxDepartmentOrdersController {
         Map<String, Object> mapR = new HashMap<>();
 
         mapR.put("oneArr", ordersEntitiesFirst);
-        mapR.put("twoArr", ordersEntitiesTwo );
+        mapR.put("twoArr", ordersEntitiesTwo);
 
         List<Map<String, Object>> mapList = new ArrayList<>();
         List<NxDepartmentEntity> entities = nxDepartmentService.querySubDepartments(depFatherId);
@@ -9016,13 +6372,14 @@ public class NxDepartmentOrdersController {
         map.put("depFatherId", depFatherId);
         map.put("gbDepFatherId", gbDepFatherId);
         map.put("resFatherId", resFatherId);
-        System.out.println("phoneGetToFillDepOrdersWithKg - abncnncnnnc" + map);
+
+        // 先查询Entity进行转换和保存（需要修改数据库）
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersByParams(map);
-        // 转换订单的Kg单价和重量（直接修改 nxDoPrice 和 nxDoWeight）
-        // 只转换商品规格是"斤"的订单，返回被转换的订单列表
         List<NxDepartmentOrdersEntity> convertedOrders = convertOrdersPriceToKg(ordersEntities);
-        // 批量保存转换后的订单到数据库（只保存被转换的订单）
         saveOrders(convertedOrders);
+
+        // 转换为DTO用于返回（减少数据传输）
+        List<NxDepartmentOrdersSimpleDTO> ordersDTOs = convertEntitiesToSimpleDTOs(ordersEntities);
 
         map.put("hasPrice", 1);
         int hasPriceCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
@@ -9033,34 +6390,51 @@ public class NxDepartmentOrdersController {
         map.put("status", null);
         map.put("equalStatus", 2);
         map.put("dayuPurStatus", 3);
-        System.out.println("phoneGetToFillDepOrdersWithKg - elqlqlqlql" + map);
         int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
 
         NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(disId);
         String headPinyin = getHeadStringByString(nxDistributerEntity.getNxDistributerName(), true, null);
-        System.out.println("phoneGetToFillDepOrdersWithKg - disnamme" + nxDistributerEntity.getNxDistributerName());
         String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
-        List<Map<String, Object>> mapList = new ArrayList<>();
+
         List<NxDepartmentEntity> entities = nxDepartmentService.querySubDepartments(depFatherId);
-        System.out.println("phoneGetToFillDepOrdersWithKg - depdiidid" + entities.size());
         if (entities.size() > 0) {
+            // 收集所有子部门的订单Entity（用于转换和保存）
+            List<NxDepartmentOrdersEntity> allDepOrdersEntities = new ArrayList<>();
             for (NxDepartmentEntity dep : entities) {
-                Map<String, Object> mapDep = new HashMap<>();
-                mapDep.put("depId", dep.getNxDepartmentId());
-                mapDep.put("depName", dep.getNxDepartmentName());
                 Map<String, Object> map1 = new HashMap<>();
                 map1.put("status", 3);
                 map1.put("depId", dep.getNxDepartmentId());
                 map1.put("orderBy", "time");
                 List<NxDepartmentOrdersEntity> depOrders = nxDepartmentOrdersService.queryDisOrdersByParams(map1);
-                // 转换订单的Kg单价和重量（直接修改 nxDoPrice 和 nxDoWeight）
-                // 只转换商品规格是"斤"的订单，返回被转换的订单列表
-                List<NxDepartmentOrdersEntity> convertedDepOrders = convertOrdersPriceToKg(depOrders);
-                // 批量保存转换后的订单到数据库（只保存被转换的订单）
-                saveOrders(convertedDepOrders);
+                allDepOrdersEntities.addAll(depOrders);
+            }
+
+            // 批量转换订单的Kg单价和重量
+            List<NxDepartmentOrdersEntity> convertedDepOrders = convertOrdersPriceToKg(allDepOrdersEntities);
+            saveOrders(convertedDepOrders);
+
+            // 转换为DTO
+            List<NxDepartmentOrdersSimpleDTO> allDepOrdersDTOs = convertEntitiesToSimpleDTOs(allDepOrdersEntities);
+
+            // 按部门分组订单
+            Map<Integer, List<NxDepartmentOrdersSimpleDTO>> ordersByDep = allDepOrdersDTOs.stream()
+                    .collect(Collectors.groupingBy(NxDepartmentOrdersSimpleDTO::getNxDoDepartmentId));
+
+            List<Map<String, Object>> mapList = new ArrayList<>();
+            for (NxDepartmentEntity dep : entities) {
+                Map<String, Object> mapDep = new HashMap<>();
+                mapDep.put("depId", dep.getNxDepartmentId());
+                mapDep.put("depName", dep.getNxDepartmentName());
+
+                // 从批量查询结果中获取该部门的订单
+                List<NxDepartmentOrdersSimpleDTO> depOrders = ordersByDep.getOrDefault(dep.getNxDepartmentId(), new ArrayList<>());
                 mapDep.put("depOrders", depOrders);
+
+                // 计算该部门的小计
+                Map<String, Object> map1 = new HashMap<>();
+                map1.put("status", 3);
+                map1.put("depId", dep.getNxDepartmentId());
                 map1.put("subtotal", 0);
-                System.out.println("phoneGetToFillDepOrdersWithKg - map111aaa" + map1);
                 Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
                 Double sutotal = 0.0;
                 if (integer > 0) {
@@ -9082,7 +6456,7 @@ public class NxDepartmentOrdersController {
                 total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
             }
 
-            mapR.put("totalCount", ordersEntities.size());
+            mapR.put("totalCount", ordersDTOs.size());
             mapR.put("finishCount", finishCount);
             mapR.put("hasPriceCount", hasPriceCount);
             mapR.put("hasWeightCount", hasWeightCount);
@@ -9104,28 +6478,27 @@ public class NxDepartmentOrdersController {
                 total = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapS);
             }
             mapR.put("subAmount", 0);
-            mapR.put("arr", ordersEntities);
+            mapR.put("arr", ordersDTOs);
             mapR.put("totalHanzi", convertDoubleToChineseCurrency(total));
             mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
             mapR.put("tradeNo", s);
             mapR.put("finishCount", finishCount);
             mapR.put("hasPriceCount", hasPriceCount);
             mapR.put("hasWeightCount", hasWeightCount);
-            mapR.put("totalCount", ordersEntities.size());
+            mapR.put("totalCount", ordersDTOs.size());
             return R.ok().put("data", mapR);
         }
     }
 
 
-    
-
     /**
      * 将订单的单价和重量从公斤转换为斤
      * 直接修改 nxDoPrice 和 nxDoWeight 字段
-     * @param depFatherId 部门父ID
+     *
+     * @param depFatherId   部门父ID
      * @param gbDepFatherId GB部门父ID
-     * @param resFatherId 餐厅父ID
-     * @param disId 批发商ID
+     * @param resFatherId   餐厅父ID
+     * @param disId         批发商ID
      * @return
      */
     @RequestMapping(value = "/phoneGetToFillDepOrdersWithJin", method = RequestMethod.POST)
@@ -9138,13 +6511,14 @@ public class NxDepartmentOrdersController {
         map.put("depFatherId", depFatherId);
         map.put("gbDepFatherId", gbDepFatherId);
         map.put("resFatherId", resFatherId);
-        System.out.println("phoneGetToFillDepOrdersWithJin - abncnncnnnc" + map);
+
+        // 先查询Entity进行转换和保存（需要修改数据库）
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersByParams(map);
-        // 转换订单的斤单价和重量（直接修改 nxDoPrice 和 nxDoWeight）
-        // 只转换商品规格是"Kg"的订单，返回被转换的订单列表
         List<NxDepartmentOrdersEntity> convertedOrders = convertOrdersPriceToJin(ordersEntities);
-        // 批量保存转换后的订单到数据库（只保存被转换的订单）
         saveOrders(convertedOrders);
+
+        // 转换为DTO用于返回（减少数据传输）
+        List<NxDepartmentOrdersSimpleDTO> ordersDTOs = convertEntitiesToSimpleDTOs(ordersEntities);
 
         map.put("hasPrice", 1);
         int hasPriceCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
@@ -9155,34 +6529,51 @@ public class NxDepartmentOrdersController {
         map.put("status", null);
         map.put("equalStatus", 2);
         map.put("dayuPurStatus", 3);
-        System.out.println("phoneGetToFillDepOrdersWithJin - elqlqlqlql" + map);
         int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(map);
 
         NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(disId);
         String headPinyin = getHeadStringByString(nxDistributerEntity.getNxDistributerName(), true, null);
-        System.out.println("phoneGetToFillDepOrdersWithJin - disnamme" + nxDistributerEntity.getNxDistributerName());
         String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
-        List<Map<String, Object>> mapList = new ArrayList<>();
+
         List<NxDepartmentEntity> entities = nxDepartmentService.querySubDepartments(depFatherId);
-        System.out.println("phoneGetToFillDepOrdersWithJin - depdiidid" + entities.size());
         if (entities.size() > 0) {
+            // 收集所有子部门的订单Entity（用于转换和保存）
+            List<NxDepartmentOrdersEntity> allDepOrdersEntities = new ArrayList<>();
             for (NxDepartmentEntity dep : entities) {
-                Map<String, Object> mapDep = new HashMap<>();
-                mapDep.put("depId", dep.getNxDepartmentId());
-                mapDep.put("depName", dep.getNxDepartmentName());
                 Map<String, Object> map1 = new HashMap<>();
                 map1.put("status", 3);
                 map1.put("depId", dep.getNxDepartmentId());
                 map1.put("orderBy", "time");
                 List<NxDepartmentOrdersEntity> depOrders = nxDepartmentOrdersService.queryDisOrdersByParams(map1);
-                // 转换订单的斤单价和重量（直接修改 nxDoPrice 和 nxDoWeight）
-                // 只转换商品规格是"Kg"的订单，返回被转换的订单列表
-                List<NxDepartmentOrdersEntity> convertedDepOrders = convertOrdersPriceToJin(depOrders);
-                // 批量保存转换后的订单到数据库（只保存被转换的订单）
-                saveOrders(convertedDepOrders);
+                allDepOrdersEntities.addAll(depOrders);
+            }
+
+            // 批量转换订单的斤单价和重量
+            List<NxDepartmentOrdersEntity> convertedDepOrders = convertOrdersPriceToJin(allDepOrdersEntities);
+            saveOrders(convertedDepOrders);
+
+            // 转换为DTO
+            List<NxDepartmentOrdersSimpleDTO> allDepOrdersDTOs = convertEntitiesToSimpleDTOs(allDepOrdersEntities);
+
+            // 按部门分组订单
+            Map<Integer, List<NxDepartmentOrdersSimpleDTO>> ordersByDep = allDepOrdersDTOs.stream()
+                    .collect(Collectors.groupingBy(NxDepartmentOrdersSimpleDTO::getNxDoDepartmentId));
+
+            List<Map<String, Object>> mapList = new ArrayList<>();
+            for (NxDepartmentEntity dep : entities) {
+                Map<String, Object> mapDep = new HashMap<>();
+                mapDep.put("depId", dep.getNxDepartmentId());
+                mapDep.put("depName", dep.getNxDepartmentName());
+
+                // 从批量查询结果中获取该部门的订单
+                List<NxDepartmentOrdersSimpleDTO> depOrders = ordersByDep.getOrDefault(dep.getNxDepartmentId(), new ArrayList<>());
                 mapDep.put("depOrders", depOrders);
+
+                // 计算该部门的小计
+                Map<String, Object> map1 = new HashMap<>();
+                map1.put("status", 3);
+                map1.put("depId", dep.getNxDepartmentId());
                 map1.put("subtotal", 0);
-                System.out.println("phoneGetToFillDepOrdersWithJin - map111aaa" + map1);
                 Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
                 Double sutotal = 0.0;
                 if (integer > 0) {
@@ -9204,7 +6595,7 @@ public class NxDepartmentOrdersController {
                 total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
             }
 
-            mapR.put("totalCount", ordersEntities.size());
+            mapR.put("totalCount", ordersDTOs.size());
             mapR.put("finishCount", finishCount);
             mapR.put("hasPriceCount", hasPriceCount);
             mapR.put("hasWeightCount", hasWeightCount);
@@ -9225,14 +6616,14 @@ public class NxDepartmentOrdersController {
                 total = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapS);
             }
             mapR.put("subAmount", 0);
-            mapR.put("arr", ordersEntities);
+            mapR.put("arr", ordersDTOs);
             mapR.put("totalHanzi", convertDoubleToChineseCurrency(total));
             mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
             mapR.put("tradeNo", s);
             mapR.put("finishCount", finishCount);
             mapR.put("hasPriceCount", hasPriceCount);
             mapR.put("hasWeightCount", hasWeightCount);
-            mapR.put("totalCount", ordersEntities.size());
+            mapR.put("totalCount", ordersDTOs.size());
             return R.ok().put("data", mapR);
         }
     }
@@ -9377,6 +6768,8 @@ public class NxDepartmentOrdersController {
         System.out.println("rmamammam" + mapR);
         return R.ok().put("data", mapR);
     }
+
+
     @RequestMapping(value = "/getToFillDepOrdersReturn", method = RequestMethod.POST)
     @ResponseBody
     public R getToFillDepOrdersReturn(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, Integer disId) {
@@ -9809,17 +7202,19 @@ public class NxDepartmentOrdersController {
         return R.ok().put("data", retrunList);
     }
 
-    @RequestMapping(value = "/getOrderPageToOutWeight", method = RequestMethod.POST)
+    @RequestMapping(value = "/getOrderPageToOutWeightByDis", method = RequestMethod.POST)
     @ResponseBody
-    public R getOrderPageToOutWeight(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, String orderBy) {
+    public R getOrderPageToOutWeightByDis(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, String orderBy, Integer disId) {
         Map<String, Object> mapResult = new HashMap<>();
 
         Map<String, Object> map = new HashMap<>();
         map.put("status", 3);
+        map.put("disId", disId);
         map.put("depFatherId", depFatherId);
         map.put("resFatherId", resFatherId);
         map.put("gbDepFatherId", gbDepFatherId);
         map.put("orderBy", orderBy);
+        map.put("dayuOrderStatus", -2);
 
         List<NxDepartmentEntity> departmentEntities = nxDepartmentService.querySubDepartments(depFatherId);
         List<Map<String, Object>> list = new ArrayList<>();
@@ -9847,6 +7242,46 @@ public class NxDepartmentOrdersController {
         mapResult.put("subDep", departmentEntities.size());
         return R.ok().put("data", mapResult);
     }
+    @RequestMapping(value = "/getOrderPageToOutWeight", method = RequestMethod.POST)
+    @ResponseBody
+    public R getOrderPageToOutWeight(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, String orderBy) {
+        Map<String, Object> mapResult = new HashMap<>();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("status", 3);
+        map.put("depFatherId", depFatherId);
+        map.put("resFatherId", resFatherId);
+        map.put("gbDepFatherId", gbDepFatherId);
+        map.put("orderBy", orderBy);
+        map.put("dayuOrderStatus", -2);
+
+        List<NxDepartmentEntity> departmentEntities = nxDepartmentService.querySubDepartments(depFatherId);
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (departmentEntities.size() > 0) {
+            for (NxDepartmentEntity departmentEntity : departmentEntities) {
+                map.put("depId", departmentEntity.getNxDepartmentId());
+                map.put("purchaseStatus", 4);
+                List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDepWeightOrder(map);
+                Map<String, Object> mapDep = new HashMap<>();
+                mapDep.put("depId", departmentEntity.getNxDepartmentId());
+                mapDep.put("depName", departmentEntity.getNxDepartmentName());
+                mapDep.put("list", ordersEntities);
+                list.add(mapDep);
+            }
+
+            mapResult.put("arr", list);
+            mapResult.put("depHasSubs", departmentEntities.size());
+        } else {
+            map.put("purchaseStatus", 4);
+            List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDepWeightOrder(map);
+            mapResult.put("arr", ordersEntities);
+            mapResult.put("depHasSubs", 0);
+        }
+
+        mapResult.put("subDep", departmentEntities.size());
+        return R.ok().put("data", mapResult);
+    }
+
 
     @RequestMapping(value = "/getOrderPageToOutWeightGb", method = RequestMethod.POST)
     @ResponseBody
@@ -9900,6 +7335,7 @@ public class NxDepartmentOrdersController {
         map.put("resFatherId", resFatherId);
         map.put("gbDepFatherId", gbDepFatherId);
         map.put("orderBy", orderBy);
+        map.put("dayuOrderStatus", -2);
 
         List<NxDepartmentEntity> departmentEntities = nxDepartmentService.querySubDepartments(depFatherId);
         List<Map<String, Object>> list = new ArrayList<>();
@@ -9925,6 +7361,47 @@ public class NxDepartmentOrdersController {
         mapResult.put("subDep", departmentEntities.size());
         return R.ok().put("data", mapResult);
     }
+
+
+    @RequestMapping(value = "/getOrderPageByDis", method = RequestMethod.POST)
+    @ResponseBody
+    public R getOrderPageByDis(Integer depFatherId, Integer gbDepFatherId, Integer resFatherId, String orderBy, Integer disId) {
+        Map<String, Object> mapResult = new HashMap<>();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("status", 3);
+        map.put("disId", disId);
+        map.put("depFatherId", depFatherId);
+        map.put("resFatherId", resFatherId);
+        map.put("gbDepFatherId", gbDepFatherId);
+        map.put("orderBy", orderBy);
+        map.put("dayuOrderStatus", -2);
+
+        List<NxDepartmentEntity> departmentEntities = nxDepartmentService.querySubDepartments(depFatherId);
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (departmentEntities.size() > 0) {
+            for (NxDepartmentEntity departmentEntity : departmentEntities) {
+                map.put("depId", departmentEntity.getNxDepartmentId());
+                List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDepWeightOrder(map);
+                Map<String, Object> mapDep = new HashMap<>();
+                mapDep.put("depId", departmentEntity.getNxDepartmentId());
+                mapDep.put("depName", departmentEntity.getNxDepartmentName());
+                mapDep.put("list", ordersEntities);
+                list.add(mapDep);
+            }
+            mapResult.put("arr", list);
+            mapResult.put("depHasSubs", departmentEntities.size());
+        } else {
+
+            List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDepWeightOrder(map);
+            mapResult.put("arr", ordersEntities);
+            mapResult.put("depHasSubs", 0);
+        }
+
+        mapResult.put("subDep", departmentEntities.size());
+        return R.ok().put("data", mapResult);
+    }
+
 
     @RequestMapping(value = "/getOrderPagePicture", method = RequestMethod.POST)
     @ResponseBody
@@ -9961,50 +7438,6 @@ public class NxDepartmentOrdersController {
             for (NxDepartmentEntity departmentEntity : departmentEntities) {
                 map.put("depId", departmentEntity.getNxDepartmentId());
                 List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDepOrdersWithTraceReport(map);
-                System.out.println("[getOrderPageWithTraceReport] 部门ID: " + departmentEntity.getNxDepartmentId() + 
-                    ", 部门名称: " + departmentEntity.getNxDepartmentName() + ", 订单数量: " + ordersEntities.size());
-                
-                // 打印每个订单的溯源报告信息
-                for (NxDepartmentOrdersEntity order : ordersEntities) {
-                    NxTraceReportEntity traceReport = order.getNxTraceReportEntity();
-                    NxDistributerGoodsShelfStockEntity shelfStock = order.getShelfStockEntity();
-                    // 查询商品信息，检查商品表中的溯源报告ID
-                    if (order.getNxDoDisGoodsId() != null) {
-                        NxDistributerGoodsEntity goods = nxDistributerGoodsService.queryObject(order.getNxDoDisGoodsId());
-                        System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() + 
-                            ", 商品ID: " + order.getNxDoDisGoodsId() + 
-                            ", 商品名称: " + order.getNxDoGoodsName() +
-                            ", 商品表中的溯源报告ID: " + (goods != null ? goods.getNxDgTraceReportId() : "null") +
-                            ", 订单对象中的溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
-                    } else {
-                        System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() + 
-                            ", 商品名称: " + order.getNxDoGoodsName() +
-                            ", 订单对象中的溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
-                    }
-                    if (traceReport != null) {
-                        System.out.println("[getOrderPageWithTraceReport]   溯源报告详情 - 供应商: " + traceReport.getNxTrSupplierName() + 
-                            ", 采购日期: " + traceReport.getNxTrPurchaseDate());
-                    }
-                }
-//                for (NxDepartmentOrdersEntity order : ordersEntities) {
-//                    NxTraceReportEntity traceReport = order.getNxTraceReportEntity();
-//                    NxDistributerGoodsShelfStockEntity shelfStock = order.getShelfStockEntity();
-//                    System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() +
-//                        ", 商品ID: " + order.getNxDoDisGoodsId() +
-//                        ", 商品名称: " + order.getNxDoGoodsName() +
-//                        ", 采购商品ID: " + order.getNxDoPurchaseGoodsId() +
-//                        ", 溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null") +
-//                        ", 货架库存: " + (shelfStock != null ? "存在(ID:" + shelfStock.getNxDistributerGoodsShelfStockId() + ",剩余重量:" + shelfStock.getNxDgssRestWeight() + ")" : "null"));
-//                    if (traceReport != null) {
-//                        System.out.println("[getOrderPageWithTraceReport]   溯源报告详情 - 供应商: " + traceReport.getNxTrSupplierName() +
-//                            ", 采购日期: " + traceReport.getNxTrPurchaseDate() +
-//                            ", 有效期: " + traceReport.getNxTrValidStartDate() + " ~ " + traceReport.getNxTrValidEndDate());
-//                    }
-//                    if (shelfStock != null && shelfStock.getNxDgssTraceReportId() != null) {
-//                        System.out.println("[getOrderPageWithTraceReport]   货架库存溯源报告ID: " + shelfStock.getNxDgssTraceReportId());
-//                    }
-//                }
-                
                 Map<String, Object> mapDep = new HashMap<>();
                 mapDep.put("depId", departmentEntity.getNxDepartmentId());
                 mapDep.put("depName", departmentEntity.getNxDepartmentName());
@@ -10016,7 +7449,7 @@ public class NxDepartmentOrdersController {
         } else {
             List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDepOrdersWithTraceReport(map);
             System.out.println("[getOrderPageWithTraceReport] 无子部门，订单数量: " + ordersEntities.size());
-            
+
             // 打印每个订单的溯源报告信息
             for (NxDepartmentOrdersEntity order : ordersEntities) {
                 NxTraceReportEntity traceReport = order.getNxTraceReportEntity();
@@ -10024,19 +7457,19 @@ public class NxDepartmentOrdersController {
                 // 查询商品信息，检查商品表中的溯源报告ID
                 if (order.getNxDoDisGoodsId() != null) {
                     NxDistributerGoodsEntity goods = nxDistributerGoodsService.queryObject(order.getNxDoDisGoodsId());
-                    System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() + 
-                        ", 商品ID: " + order.getNxDoDisGoodsId() + 
-                        ", 商品名称: " + order.getNxDoGoodsName() +
-                        ", 商品表中的溯源报告ID: " + (goods != null ? goods.getNxDgTraceReportId() : "null") +
-                        ", 订单对象中的溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
+                    System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() +
+                            ", 商品ID: " + order.getNxDoDisGoodsId() +
+                            ", 商品名称: " + order.getNxDoGoodsName() +
+                            ", 商品表中的溯源报告ID: " + (goods != null ? goods.getNxDgTraceReportId() : "null") +
+                            ", 订单对象中的溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
                 } else {
-                    System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() + 
-                        ", 商品名称: " + order.getNxDoGoodsName() +
-                        ", 订单对象中的溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
+                    System.out.println("[getOrderPageWithTraceReport] 订单ID: " + order.getNxDepartmentOrdersId() +
+                            ", 商品名称: " + order.getNxDoGoodsName() +
+                            ", 订单对象中的溯源报告: " + (traceReport != null ? "存在(ID:" + traceReport.getNxTraceReportId() + ")" : "null"));
                 }
                 if (traceReport != null) {
-                    System.out.println("[getOrderPageWithTraceReport]   溯源报告详情 - 供应商: " + traceReport.getNxTrSupplierName() + 
-                        ", 采购日期: " + traceReport.getNxTrPurchaseDate());
+                    System.out.println("[getOrderPageWithTraceReport]   溯源报告详情 - 供应商: " + traceReport.getNxTrSupplierName() +
+                            ", 采购日期: " + traceReport.getNxTrPurchaseDate());
                 }
             }
             mapResult.put("arr", ordersEntities);
@@ -10453,11 +7886,6 @@ public class NxDepartmentOrdersController {
             Map<String, Object> map = new HashMap<>();
             map.put("status", 3);
             map.put("depFatherId", depFatherId);
-//            Map<String, Object> mapD = new HashMap<>();
-//            mapD.put("depId", depFatherId);
-//            int i = nxDepartmentDisGoodsService.queryDepGoodsCount(mapD);
-//
-//            mapR.put("depGoodsCount", i);
             List<NxDistributerFatherGoodsEntity> nxDistributerFatherGoodsEntities = nxDepartmentOrdersService.queryGrandGoodsOrder(map);
 
             mapR.put("arr", nxDistributerFatherGoodsEntities);
@@ -10730,58 +8158,6 @@ public class NxDepartmentOrdersController {
             }
         }
 
-
-        System.out.println("gbbgbgbgbgbgbgbgbbgbgbbgnaaa" + map1);
-//        List<GbDepartmentEntity> gbDepartmentEntityList = nxDepartmentOrdersService.queryqueryOrderGbDepartmentList(map1);
-//        System.out.println("eneneeneisisisisisissGGGGGGGGGG" + gbDepartmentEntityList.size());
-//        List<GbDepartmentEntity> resultGb = new ArrayList<>();
-//        if (gbDepartmentEntityList.size() > 0) {
-//            for (GbDepartmentEntity departmentEntity : gbDepartmentEntityList) {
-//                Integer departmentId = departmentEntity.getGbDepartmentId();
-//                Map<String, Object> mapDep = new HashMap<>();
-//                mapDep.put("gbDepFatherId", departmentId);
-//                mapDep.put("status", 3);
-//                System.out.println("whsnsussususlsllslslslss" + mapDep);
-//                Integer integer = nxDepartmentOrdersService.queryTotalByParams(mapDep);
-//                mapDep.put("equalStatus", 2);
-//                mapDep.put("status", null);
-//                mapDep.put("dayuPurStatus", 3);
-//                System.out.println("depmapappaaforoofofofoGGGGGGG" + mapDep);
-//                Integer integerFinish = nxDepartmentOrdersService.queryTotalByParams(mapDep);
-//                System.out.println("reususlslt" + departmentEntity.getGbDepartmentAttrName() + "d" + integer + "fins" + integerFinish);
-//
-//                if (integer.equals(integerFinish) && integer > 0) {
-//
-//                    if (departmentEntity.getGbDepartmentEntityList().size() > 0) {
-//                        System.out.println("susususuuususuususokkokkkk" + departmentEntity.getGbDepartmentName());
-//                        List<GbDepartmentEntity> subList = new ArrayList<>();
-//                        for (GbDepartmentEntity sub : departmentEntity.getGbDepartmentEntityList()) {
-//
-//                            mapDep.put("gbDepFatherId", departmentId);
-//                            mapDep.put("gbDepId", sub.getGbDepartmentId());
-//                            mapDep.put("equalStatus", 2);
-//                            mapDep.put("dayuPurStatus", 3);
-//                            System.out.println("depmapappaasusuusussuusu" + mapDep);
-//                            System.out.println("depmapappaasusuusussuusu" + sub.getGbDepartmentName());
-//                            Integer integerFinishsub = nxDepartmentOrdersService.queryDepOrdersAcount(mapDep);
-//                            if (integerFinishsub > 0) {
-//                                subList.add(sub);
-//                                System.out.println("sulisiis.elel" + subList.size());
-//                            }
-//                        }
-//                        departmentEntity.setGbDepartmentEntityList(subList);
-//                        resultGb.add(departmentEntity);
-//
-//                    } else {
-//                        resultGb.add(departmentEntity);
-//                    }
-//
-//                }
-//            }
-//        }
-
-
-        //gbBatch
         //GbData
         Map<String, Object> mapPB = new HashMap<>();
         mapPB.put("nxDisId", disId);
@@ -10794,533 +8170,14 @@ public class NxDepartmentOrdersController {
         map.put("gbArr", new ArrayList<>());
         map.put("gbBatchArr", entities);
 
-        return R.ok().put("data", map);
+        Map<String, Object> mapTask = new HashMap<>();
+        mapTask.put("disId", disId);
+        mapTask.put("xiaoyuStatus", 2);
+        int total = nxOcrTaskService.queryTotalByDepartmentAndStatus(mapTask);
+        return R.ok().put("data", map)
+                .put("taskCount", total);
 
     }
-
-
-    private static final String KEY = "C5HBZ-KEIW2-JXXUJ-COLGS-FQO47-WWFAK";
-
-    // 修复后的代码片段，替换原有的路线优化逻辑
-// 在 NxDepartmentOrdersController.java 的 disGetTodayOrderCustomerRoute 方法中
-// 修复后的代码片段，替换原有的路线优化逻辑
-// 在 NxDepartmentOrdersController.java 的 disGetTodayOrderCustomerRoute 方法中
-
-    @RequestMapping(value = "/disGetTodayOrderCustomerRoute", method = RequestMethod.POST)
-    @ResponseBody
-    public R disGetTodayOrderCustomerRoute(Integer disId, String fromLat, String fromLng) {
-        try {
-            //今天订货
-            Map<String, Object> map1 = new HashMap<>();
-            map1.put("disId", disId);
-            map1.put("status", 3);
-            List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
-            System.out.println("disGetTodayOrderCustomerRoute 参数: disId=" + disId + ", fromLat=" + fromLat + ", fromLng=" + fromLng);
-
-            if (departmentEntities.size() == 0) {
-                return R.error(-1, "没有订单");
-            }
-
-            // 过滤有效坐标的客户
-            List<NxDepartmentEntity> validCustomers = new ArrayList<>();
-            StringBuilder stringBuilder = new StringBuilder();
-
-            for (NxDepartmentEntity departmentEntity : departmentEntities) {
-                map1.put("depFatherId", departmentEntity.getNxDepartmentId());
-                System.out.println("counddd" + map1);
-                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
-                departmentEntity.setNxDepartmentOrderTotal(integer);
-
-                String nxDepartmentLat = departmentEntity.getNxDepartmentLat();
-                String nxDepartmentLng = departmentEntity.getNxDepartmentLng();
-
-                // 检查坐标是否有效
-                if (isValidCoordinate(nxDepartmentLat, nxDepartmentLng)) {
-                    validCustomers.add(departmentEntity);
-                    String item = nxDepartmentLat + "," + nxDepartmentLng;
-                    stringBuilder.append(item + ";");
-                } else {
-                    System.out.println("跳过无效坐标客户: " + departmentEntity.getNxDepartmentName() +
-                            " 坐标: (" + nxDepartmentLat + ", " + nxDepartmentLng + ")");
-                }
-            }
-
-            System.out.println("有效坐标客户数量: " + validCustomers.size());
-
-            if (validCustomers.isEmpty()) {
-                System.out.println("没有有效的客户坐标，返回原始数据");
-                return R.ok().put("data", departmentEntities);
-            }
-
-            // 移除最后一个分号
-            String coordinates = stringBuilder.toString();
-            if (coordinates.endsWith(";")) {
-                coordinates = coordinates.substring(0, coordinates.length() - 1);
-            }
-
-            String from = fromLat + "," + fromLng;
-            String urlString = "http://apis.map.qq.com/ws/distance/v1/optimal_order?mode=driving&from="
-                    + from + "&to=" + coordinates + "&key=" + KEY;
-
-            System.out.println("腾讯地图API请求URL: " + urlString);
-
-            // 发送请求，返回Json字符串
-            String result = "";
-            try {
-                URL url = new URL(urlString);
-                System.out.println(url);
-                System.out.println("----");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                String line;
-                // 获取地址解析结果
-                System.out.println(in);
-                while ((line = in.readLine()) != null) {
-                    result += line + "\n";
-                }
-                in.close();
-
-                System.out.println("腾讯地图API响应: " + result);
-
-                // 转JSON格式
-                JSONObject jsonObject = JSONObject.parseObject(result);
-                if (jsonObject == null) {
-                    System.err.println("API响应解析失败，返回有效客户数据");
-                    return R.ok().put("data", validCustomers);
-                }
-
-                String optimal_order = jsonObject.getString("result");
-                if (optimal_order == null) {
-                    System.err.println("API响应中没有result字段，返回有效客户数据");
-                    return R.ok().put("data", validCustomers);
-                }
-
-                System.out.println(optimal_order);
-                System.out.println("optimal_orderoptimal_order");
-
-                //获取排序
-                JSONObject optimalOrderJson = JSONObject.parseObject(optimal_order);
-                if (optimalOrderJson == null) {
-                    System.err.println("optimal_order解析失败，返回有效客户数据");
-                    return R.ok().put("data", validCustomers);
-                }
-
-                String order = optimalOrderJson.getString("optimal_order");
-                if (order == null || order.isEmpty()) {
-                    System.err.println("optimal_order字段为空，返回有效客户数据");
-                    return R.ok().put("data", validCustomers);
-                }
-
-                System.out.println(order);
-                String substring2 = order.substring(0);
-                String substring3 = substring2.substring(1, substring2.length() - 1);
-                String[] split = substring3.split(",");
-
-                List<NxDepartmentEntity> treeSet = new ArrayList<>();
-
-                String elements = optimalOrderJson.getString("elements");
-                if (elements == null) {
-                    System.err.println("elements字段为空，返回有效客户数据");
-                    return R.ok().put("data", validCustomers);
-                }
-
-                List<NxDepartmentEntity> list = new ArrayList<>();
-                try {
-                    list = JSONObject.parseArray(elements, NxDepartmentEntity.class);
-                } catch (Exception e) {
-                    System.err.println("解析elements失败: " + e.getMessage());
-                    return R.ok().put("data", validCustomers);
-                }
-
-                System.out.println(list);
-                System.out.println("list");
-
-                // 使用validCustomers而不是departmentEntities
-                System.out.println("开始处理排序结果，split长度: " + split.length);
-                for (int i = 0; i < split.length; i++) {
-                    try {
-                        Integer integer = Integer.valueOf(split[i]);
-                        System.out.println("处理第" + (i + 1) + "个索引: " + integer);
-
-                        // 确保索引在有效范围内
-                        if (integer > 0 && integer <= validCustomers.size()) {
-                            NxDepartmentEntity nxRestrauntEntity = validCustomers.get(integer - 1);
-                            System.out.println("获取客户: " + nxRestrauntEntity.getNxDepartmentName());
-
-                            if (i < list.size()) {
-                                NxDepartmentEntity listEnitity = list.get(i);
-                                String distance = listEnitity.getDistance();
-                                String duration = listEnitity.getDuration();
-                                nxRestrauntEntity.setDistance(distance);
-                                nxRestrauntEntity.setDuration(duration);
-                                System.out.println("设置距离: " + distance + ", 时间: " + duration);
-                            }
-                            treeSet.add(nxRestrauntEntity);
-                        } else {
-                            System.err.println("索引超出范围: " + integer + ", 有效客户数量: " + validCustomers.size());
-                        }
-                    } catch (NumberFormatException e) {
-                        System.err.println("解析索引失败: " + split[i] + ", 错误: " + e.getMessage());
-                    } catch (Exception e) {
-                        System.err.println("处理第" + (i + 1) + "个索引时出错: " + e.getMessage());
-                    }
-                }
-
-                System.out.println("最终返回客户数量: " + treeSet.size());
-
-                return R.ok().put("data", treeSet);
-
-            } catch (Exception e) {
-                System.err.println("调用腾讯地图API失败: " + e.getMessage());
-                e.printStackTrace();
-                // API调用失败时返回有效客户数据
-                return R.ok().put("data", validCustomers);
-            }
-
-        } catch (Exception e) {
-            System.err.println("disGetTodayOrderCustomerRoute 异常: " + e.getMessage());
-            e.printStackTrace();
-            return R.error("获取客户数据失败: " + e.getMessage());
-        }
-    }
-
-
-    @RequestMapping(value = "/disGetDriversOptimalRoute", method = RequestMethod.POST)
-    @ResponseBody
-    public R disGetDriversOptimalRoute(@RequestBody Map<String, Object> paramMap) {
-        System.out.println("disGetDriversOptimalRoute" + paramMap);
-        try {
-            List<Map<String, Object>> driverRoutes = (List<Map<String, Object>>) paramMap.get("driverRoutes");
-            List<Map<String, Object>> resultList = new ArrayList<>();
-
-            for (Map<String, Object> driverRoute : driverRoutes) {
-                Integer driverId = (Integer) driverRoute.get("driverId");
-                String fromLat = (String) driverRoute.get("fromLat");
-                String fromLng = (String) driverRoute.get("fromLng");
-
-                List<Map<String, Object>> customers = (List<Map<String, Object>>) driverRoute.get("customers");
-                if (customers == null || customers.isEmpty()) continue;
-
-                // 拼接 to 坐标
-                StringBuilder sb = new StringBuilder();
-                for (Map<String, Object> customer : customers) {
-                    String lat = (String) customer.get("lat");
-                    String lng = (String) customer.get("lng");
-                    sb.append(lat).append(",").append(lng).append(";");
-                }
-                String coordinates = sb.toString();
-                if (coordinates.endsWith(";")) coordinates = coordinates.substring(0, coordinates.length() - 1);
-
-                String from = fromLat + "," + fromLng;
-                String urlString = "http://apis.map.qq.com/ws/distance/v1/optimal_order?mode=driving&from="
-                        + from + "&to=" + coordinates + "&key=" + KEY;
-
-                System.out.println("apiaiaiaiiai" + urlString);
-                // 请求腾讯API
-                String result = "";
-                try {
-                    URL url = new URL(urlString);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                    String line;
-                    while ((line = in.readLine()) != null) {
-                        result += line + "\n";
-                    }
-                    in.close();
-
-                    // 解析API结果
-                    JSONObject jsonObject = JSONObject.parseObject(result);
-                    String optimal_order = jsonObject.getString("result");
-                    JSONObject optimalOrderJson = JSONObject.parseObject(optimal_order);
-
-                    // 最优顺序索引
-                    String order = optimalOrderJson.getString("optimal_order");
-                    String substring3 = order.substring(1, order.length() - 1);
-                    String[] split = substring3.split(",");
-
-                    // 每一段距离/时长
-                    String elements = optimalOrderJson.getString("elements");
-                    List<NxDepartmentEntity> sortedCustomers = new ArrayList<>();
-                    List<NxDepartmentEntity> elementsList = JSONObject.parseArray(elements, NxDepartmentEntity.class);
-
-                    for (int i = 0; i < split.length; i++) {
-                        int idx = Integer.parseInt(split[i]) - 1;
-                        if (idx >= 0 && idx < customers.size()) {
-                            Map<String, Object> customerMap = customers.get(idx);
-                            NxDepartmentEntity nxEntity = new NxDepartmentEntity();
-                            // 复制你关心的字段
-                            nxEntity.setNxDepartmentId((Integer) customerMap.get("customerId"));
-                            nxEntity.setNxDepartmentLat((String) customerMap.get("lat"));
-                            nxEntity.setNxDepartmentLng((String) customerMap.get("lng"));
-                            if (i < elementsList.size()) {
-                                NxDepartmentEntity ele = elementsList.get(i);
-                                nxEntity.setDistance(ele.getDistance());
-                                nxEntity.setDuration(ele.getDuration());
-                            }
-                            sortedCustomers.add(nxEntity);
-                        }
-                    }
-
-                    Map<String, Object> driverResult = new HashMap<>();
-                    driverResult.put("driverId", driverId);
-                    driverResult.put("sortedCustomers", sortedCustomers);
-                    resultList.add(driverResult);
-
-                } catch (Exception e) {
-                    // 一个司机失败也能返回别的司机的结果
-                    e.printStackTrace();
-                }
-
-                // 腾讯API限流，建议加sleep
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                }
-            }
-
-            return R.ok().put("data", resultList);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return R.error("系统异常: " + e.getMessage());
-        }
-    }
-
-
-    @RequestMapping(value = "/disGetCustomerDistanceMatrix", method = RequestMethod.POST)
-    @ResponseBody
-    public R disGetCustomerDistanceMatrix(Integer disId, String fromLat, String fromLng) {
-        try {
-            // 今天订货
-            Map<String, Object> map1 = new HashMap<>();
-            map1.put("disId", disId);
-            map1.put("status", 3);
-            List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
-
-            if (departmentEntities.isEmpty()) {
-                return R.error(-1, "没有订单");
-            }
-
-            // 过滤有效坐标客户
-            List<NxDepartmentEntity> validCustomers = new ArrayList<>();
-            StringBuilder toBuilder = new StringBuilder();
-
-            System.out.println("departmentEntitiesdepartmentEntities" + departmentEntities.size());
-            for (NxDepartmentEntity departmentEntity : departmentEntities) {
-                String lat = departmentEntity.getNxDepartmentLat();
-                String lng = departmentEntity.getNxDepartmentLng();
-                if (isValidCoordinate(lat, lng)) {
-                    validCustomers.add(departmentEntity);
-                    toBuilder.append(lat).append(",").append(lng).append(";");
-                }
-            }
-
-            if (validCustomers.isEmpty()) {
-                return R.ok().put("data", departmentEntities);
-            }
-
-            // 移除最后一个分号
-            String to = toBuilder.toString();
-            if (to.endsWith(";")) {
-                to = to.substring(0, to.length() - 1);
-            }
-
-            // 腾讯 distance matrix接口（from只能1个，to多个）
-            String from = fromLat + "," + fromLng;
-            String urlString = "https://apis.map.qq.com/ws/distance/v1/matrix?mode=driving&from=" + from
-                    + "&to=" + to + "&key=" + KEY;
-
-            System.out.println("请求腾讯Matrix接口URL: " + urlString);
-
-            String result = "";
-            try {
-                URL url = new URL(urlString);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                String line;
-                while ((line = in.readLine()) != null) {
-                    result += line + "\n";
-                }
-                in.close();
-            } catch (Exception e) {
-                System.err.println("腾讯matrix接口请求失败: " + e.getMessage());
-                return R.ok().put("data", validCustomers);
-            }
-
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if (jsonObject == null || jsonObject.getInteger("status") != 0) {
-                System.err.println("腾讯matrix接口响应解析失败: " + result);
-                return R.ok().put("data", validCustomers);
-            }
-
-            // 解析距离/时长
-            JSONObject resObj = jsonObject.getJSONObject("result");
-            JSONArray rows = resObj.getJSONArray("rows");
-            if (rows == null || rows.size() == 0) {
-                System.err.println("腾讯matrix rows为空: " + result);
-                return R.ok().put("data", validCustomers);
-            }
-
-            // 只取第一行（单起点对多终点）
-            JSONArray elements = rows.getJSONObject(0).getJSONArray("elements");
-
-            for (int i = 0; i < validCustomers.size(); i++) {
-                NxDepartmentEntity customer = validCustomers.get(i);
-                if (i < elements.size()) {
-                    JSONObject element = elements.getJSONObject(i);
-                    System.out.println("sttieonenoeneoneoeneoenoneo" + element.getString("duration") + element.getString("distance"));
-                    customer.setDistance(element.getString("distance")); // 单位: 米
-                    customer.setDuration(element.getString("duration")); // 单位: 秒
-                }
-            }
-
-            return R.ok().put("data", validCustomers);
-
-        } catch (Exception e) {
-            System.err.println("disGetCustomerDistanceMatrix 异常: " + e.getMessage());
-            e.printStackTrace();
-            return R.error("获取客户距离数据失败: " + e.getMessage());
-        }
-    }
-
-    private boolean isValidCoordinate(String lat, String lng) {
-        if (lat == null || lng == null || lat.trim().isEmpty() || lng.trim().isEmpty()) {
-            return false;
-        }
-
-        try {
-            double latValue = Double.parseDouble(lat);
-            double lngValue = Double.parseDouble(lng);
-
-            // 检查坐标范围（中国大致范围）
-            return latValue >= 18.0 && latValue <= 54.0 &&
-                    lngValue >= 73.0 && lngValue <= 135.0;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-//    @RequestMapping(value = "/disGetTodayOrderCustomerRoute", method = RequestMethod.POST)
-//    @ResponseBody
-//    public R disGetTodayOrderCustomerRoute(Integer disId, String fromLat, String fromLng) {
-//        //今天订货
-//        Map<String, Object> map1 = new HashMap<>();
-//        map1.put("disId", disId);
-//        map1.put("status", 3);
-//        List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
-//        System.out.println("disGetTodayOrderCustomerRoutedisGetTodayOrderCustomerRoute" + map1);
-//        StringBuilder stringBuilder = new StringBuilder();
-//        List<NxDepartmentEntity> validCustomers = new ArrayList<>();
-//        if (departmentEntities.size() > 0) {
-//
-//            for (NxDepartmentEntity departmentEntity : departmentEntities) {
-//
-//                String nxDepartmentLat = departmentEntity.getNxDepartmentLat();
-//                String nxDepartmentLng = departmentEntity.getNxDepartmentLng();
-//
-//                // 检查坐标是否有效
-//                if (isValidCoordinate(nxDepartmentLat, nxDepartmentLng)) {
-//                    validCustomers.add(departmentEntity);
-//                    String item = nxDepartmentLat + "," + nxDepartmentLng;
-//                    stringBuilder.append(item + ";");
-//                } else {
-//                    System.out.println("跳过无效坐标客户: " + departmentEntity.getNxDepartmentName() +
-//                            " 坐标: (" + nxDepartmentLat + ", " + nxDepartmentLng + ")");
-//                }
-//                String nxRestrauntLat = departmentEntity.getNxDepartmentLat();
-//                String nxRestrauntLng = departmentEntity.getNxDepartmentLng();
-//                String item = nxRestrauntLat + "," + nxRestrauntLng;
-//                stringBuilder.append(item + ";");
-//            }
-//            String substring = stringBuilder.substring(0, stringBuilder.length() - 1);
-//            String from = fromLat + "," + fromLng;
-//            String urlString = "http://apis.map.qq.com/ws/distance/v1/optimal_order?mode=driving&from="
-//                    + from + "&to=" + substring + "&key=" + KEY;
-//            // 发送请求，返回Json字符串
-//            String result = "";
-//            try {
-//                URL url = new URL(urlString);
-//                System.out.println(url);
-//                System.out.println("----");
-//                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//                conn.setDoOutput(true);
-//                // 腾讯地图使用GET
-//                conn.setRequestMethod("GET");
-//                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-//                String line;
-//                // 获取地址解析结果
-//                System.out.println(in);
-//                while ((line = in.readLine()) != null) {
-//                    result += line + "\n";
-//                }
-//                in.close();
-//            } catch (Exception e) {
-//                e.getMessage();
-//            }
-//
-//
-////		// 转JSON格式
-//            JSONObject jsonObject = JSONObject.parseObject(result);
-//            String optimal_order = (String) jsonObject.getString("result");
-//            System.out.println(optimal_order);
-//            System.out.println("optimal_orderoptimal_order");
-//
-//            //获取排序
-//            String order = JSONObject.parseObject(optimal_order).getString("optimal_order");
-//            System.out.println(order);
-//            String substring2 = order.substring(0);
-//            String substring3 = substring2.substring(1, substring2.length() - 1);
-//            String[] split = substring3.split(",");
-//
-//            List<NxDepartmentEntity> treeSet = new ArrayList<>();
-//
-//            String elements = JSONObject.parseObject(optimal_order).getString("elements");
-//            List<NxDepartmentEntity> list = new ArrayList<>();
-//            list = JSONObject.parseArray(elements, NxDepartmentEntity.class);
-//
-//            System.out.println(list);
-//            System.out.println("list");
-//
-//            for (int i = 0; i < split.length; i++) {
-//                Integer integer = Integer.valueOf(split[i]);
-//
-//                NxDepartmentEntity nxRestrauntEntity = departmentEntities.get(integer - 1);
-//                NxDepartmentEntity listEnitity = list.get(i);
-//                String distance = listEnitity.getDistance();
-//                String duration = listEnitity.getDuration();
-//                nxRestrauntEntity.setDistance(distance);
-//                nxRestrauntEntity.setDuration(duration);
-//                treeSet.add(nxRestrauntEntity);
-//            }
-//
-//            return R.ok().put("data", treeSet);
-//        }else{
-//            return R.error(-1,"没有订单");
-//        }
-//
-//
-//    }
-//
-//
-//    private boolean isValidCoordinate(String lat, String lng) {
-//        if (lat == null || lng == null || lat.trim().isEmpty() || lng.trim().isEmpty()) {
-//            return false;
-//        }
-//
-//        try {
-//            double latValue = Double.parseDouble(lat);
-//            double lngValue = Double.parseDouble(lng);
-//
-//            // 检查坐标范围（中国大致范围）
-//            return latValue >= 18.0 && latValue <= 54.0 &&
-//                    lngValue >= 73.0 && lngValue <= 135.0;
-//        } catch (NumberFormatException e) {
-//            return false;
-//        }
-//    }
 
 
     @RequestMapping(value = "/webNxDisGetTodayReturnCustomer/{disId}")
@@ -11338,7 +8195,13 @@ public class NxDepartmentOrdersController {
     }
 
 
-    //
+    /**
+     * 配送商获取订货客户
+     *
+     * @param
+     * @return
+     * @date 2026-01-10
+     */
     @RequestMapping(value = "/disGetTodayOrderCustomer/{disId}")
     @ResponseBody
     public R disGetTodayOrderCustomer(@PathVariable Integer disId) {
@@ -11347,6 +8210,8 @@ public class NxDepartmentOrdersController {
         Map<String, Object> map1 = new HashMap<>();
         map1.put("disId", disId);
         map1.put("status", 3);
+        map1.put("isSelfOrder", -1);
+
         List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
         System.out.println("mapapapapapddiidididi" + map1);
         List<GbDistributerEntity> distributerEntitiesAA = nxDepartmentOrdersService.queryOrderGbDistributerList(map1);
@@ -11434,14 +8299,9 @@ public class NxDepartmentOrdersController {
             }
 
             // 批量查询所有统计数据
-            System.out.println("=== 批量查询统计数据 ===");
-            System.out.println("商家ID列表: " + gbDisIds);
-            System.out.println("部门ID列表: " + gbDepIds);
+
             Map<String, Map<String, Object>> statsMap = nxDepartmentOrdersService.batchQueryGbDistributerDepartmentStats(gbDisIds, gbDepIds);
-            System.out.println("查询到的统计数据Map大小: " + statsMap.size());
-            System.out.println("统计数据Map的key列表: " + statsMap.keySet());
-            System.out.println("统计数据Map内容: " + statsMap);
-            System.out.println("=== 批量查询完成 ===\n");
+
 
             for (GbDistributerEntity gbDis : distributerEntitiesAA) {
                 List<Map<String, Object>> gbDisDepArrMap = new ArrayList<>();
@@ -11459,11 +8319,6 @@ public class NxDepartmentOrdersController {
                 for (GbDepartmentEntity gbDepartmentEntity : gbpartmentEntities) {
                     String key = gbDis.getGbDistributerId() + "_" + gbDepartmentEntity.getGbDepartmentId();
                     Map<String, Object> stats = statsMap.get(key);
-
-                    System.out.println("--- 处理部门: " + gbDepartmentEntity.getGbDepartmentId() + " ---");
-                    System.out.println("部门名称: " + gbDepartmentEntity.getGbDepartmentName());
-                    System.out.println("查询key: " + key);
-                    System.out.println("统计数据: " + stats);
 
                     if (stats != null) {
                         Integer newOrder = (Integer) stats.get("newOrder");
@@ -11529,6 +8384,62 @@ public class NxDepartmentOrdersController {
 
         System.out.println("gbDisArrapp" + mapData);
 
+        //协作订单
+        Map<String, Object> mapOffer = new HashMap<>();
+        mapOffer.put("disId", disId);
+        mapOffer.put("isSelfOrder", 1);
+        mapOffer.put("status", 3);
+        System.out.println("enennenenennemapOffer" + mapOffer);
+        List<NxDistributerEntity> offerNxDistributer = nxDepartmentOrdersService.queryOfferOrderNxDistributer(mapOffer);
+        if(offerNxDistributer.size() > 0){
+            for(NxDistributerEntity distributerEntity: offerNxDistributer){
+                Map<String, Object> mapColl = new HashMap<>();
+                mapColl.put("disId", disId);
+                mapColl.put("isSelfOrder", 1);
+                mapColl.put("status", 3);
+                mapColl.put("collNxDisId", distributerEntity.getNxDistributerId());
+
+                int orderCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapColl);
+                Map<String, Object> mapPick = new HashMap<>(mapColl);
+                mapPick.put("equalPurStatus", 4);
+                int pickCount = nxDepartmentOrdersService.queryOrderGoodsCount(mapPick);
+
+                int totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasPrice", 1);
+                int hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasPrice", null);
+                mapColl.put("hasWeight", 1);
+                int hasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapColl);
+                mapColl.put("hasWeight", null);
+                Double subtotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(mapColl);
+                String twoSubtotal = subtotal != null && subtotal > 0
+                        ? new BigDecimal(subtotal).setScale(1, BigDecimal.ROUND_HALF_UP).toString()
+                        : "0";
+
+                // unDo: 待修正订单数 (status=-2)
+                Map<String, Object> mapUnDo = new HashMap<>(mapColl);
+                mapUnDo.put("equalStatus", -2);
+                int unDo = nxDepartmentOrdersService.queryDepOrdersAcount(mapUnDo);
+                // finishCount: 已完成订单数 (status=2, purchase_status>3, 有价格, 有小计)
+                Map<String, Object> mapFinish = new HashMap<>(mapColl);
+                mapFinish.put("equalStatus", 2);
+                mapFinish.put("dayuPurStatus", 3);
+                mapFinish.put("hasPrice", 1);
+                mapFinish.put("subtotal", 0);
+                int finishCount = nxDepartmentOrdersService.queryDepOrdersAcount(mapFinish);
+
+                Map<String, Object> mapItem = new HashMap<>();
+                mapItem.put("orderCount", orderCount);
+                mapItem.put("pickCount", pickCount);
+                mapItem.put("totalCount", totalCount);
+                mapItem.put("twoSubtotal", twoSubtotal);
+                mapItem.put("hasPrice", hasPrice);
+                mapItem.put("hasWeight", hasWeight);
+                mapItem.put("unDo", unDo);
+                mapItem.put("finishCount", finishCount);
+                distributerEntity.setAaa(mapItem);
+            }
+        }
 
 //        //GbData
 //        Map<String, Object> mapPB = new HashMap<>();
@@ -11562,18 +8473,30 @@ public class NxDepartmentOrdersController {
 //            mapData.put("gbDisArr", new ArrayList<>());
 //        }
 
+        Map<String, Object> mapNx = new HashMap<>();
+        mapNx.put("orderDisId", disId);
+        mapNx.put("equalStatus", 0);
+        System.out.println("mapnxxnnxnxnx" + mapNx);
+        Integer nxBillCount = nxDistributerBillService.queryDisPurchaseBatchCount(mapNx);
+        mapNx.put("orderDisId", null);
+        mapNx.put("offerDisId", disId);
+        mapNx.put("equalStatus", 2);
+        System.out.println("mapnxxnnxnxnx" + mapNx);
+        Integer nxBillCount2 = nxDistributerBillService.queryDisPurchaseBatchCount(mapNx);
 
         Map<String, Object> map111 = new HashMap<>();
         map111.put("disId", disId);
         map111.put("purStatus", 4);
+        map111.put("dayuOrderStatus", -2);
         // 出库
         map111.put("goodsType", -1);
         int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
 
         map111.put("goodsType", 1);
-        map111.put("batchId", 0);
-        int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-        map111.put("batchId", 1);
+        System.out.println("purirnirinrmap11111" + map111);
+//        map111.put("batchId", 0);
+//        int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
+//        map111.put("batchId", 1);
         int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
 
 
@@ -11584,11 +8507,11 @@ public class NxDepartmentOrdersController {
         int unPayCount = nxDepartmentBillService.queryBillsCount(mapB);
 
         //return
-        Map<String, Object> map = new HashMap<>();
-        map.put("disId", disId);
-        map.put("equalStatus", -1);
-        System.out.println("rututtntnmaappa" + map);
-        List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryReturnBill(map);
+        Map<String, Object> mapReturn = new HashMap<>();
+        mapReturn.put("disId", disId);
+        mapReturn.put("equalStatus", -1);
+        System.out.println("rututtntnmaappa" + mapReturn);
+        List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryReturnBill(mapReturn);
 //        Map<String, Object> mapGb = new HashMap<>();
 //        mapGb.put("disId", disId);
 //        mapGb.put("gbDepFatherIdNotEqual", -1);
@@ -11596,6 +8519,12 @@ public class NxDepartmentOrdersController {
 //        System.out.println("usnbdidiid" + mapGb);
 //        int i = nxDepartmentBillService.queryBillsCount(mapGb);
 
+        Map<String, Object> queryMap = new HashMap<>();
+        queryMap.put("disId", disId);
+        queryMap.put("xiaoyuStatus", 1);
+        System.out.println("queryMapqueryMapqueryMap" + queryMap);
+
+        List<NxOcrTaskEntity> nxOcrTaskEntities = nxOcrTaskService.queryTasksByDepartmentAndStatus(queryMap);
 
         Map<String, Object> map7 = new HashMap<>();
         map7.put("disId", disId);
@@ -11609,8 +8538,18 @@ public class NxDepartmentOrdersController {
         System.out.println("linsshsisiss" + mapLinshi);
         int wxCountAuto1 = nxDistributerGoodsService.queryDisGoodsTotal(mapLinshi);
 
+        //协作订单数量
+        Map<String, Object> mapcoll = new HashMap<>();
+        mapcoll.put("disId", disId);
+        mapcoll.put("purStatus", 4);
+        mapcoll.put("status", 3);
+        mapcoll.put("hasCollOrder", 1);
+
+        Integer integer = nxDepartmentOrdersService.queryOrderGoodsCount(mapcoll);
+
+
+        returnData.put("collCount", integer);
         returnData.put("stockCount", stockCount);
-        returnData.put("unPurCount", unPurCount);
         returnData.put("puringCount", puringCount);
         returnData.put("unPayCount", unPayCount);
         returnData.put("deps", mapData);
@@ -11618,784 +8557,11 @@ public class NxDepartmentOrdersController {
         returnData.put("returnList", billEntityList);
         returnData.put("unDoTotal", unDoTotal);
         returnData.put("linshiTotal", wxCountAuto1);
+        returnData.put("taskArr", nxOcrTaskEntities);
+        returnData.put("offerArr", offerNxDistributer);
+        returnData.put("nxBillCount", nxBillCount + nxBillCount2);
         return R.ok().put("data", returnData);
 
-    }
-    @RequestMapping(value = "/disGetTodayOrderCustomerSunla/{disId}")
-    @ResponseBody
-    public R disGetTodayOrderCustomerSunla(@PathVariable Integer disId) {
-        Map<String, Object> returnData = new HashMap<>();
-        //今天订货
-        Map<String, Object> map1 = new HashMap<>();
-        map1.put("disId", disId);
-        map1.put("status", 3);
-        map1.put("dayuStatus", -1);
-        System.out.println("mapapapapapddiidididi" + map1);
-
-        List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
-        List<GbDistributerEntity> distributerEntitiesAA = nxDepartmentOrdersService.queryOrderGbDistributerList(map1);
-        System.out.println("gbbgbgbgbbgbbgbgb" + distributerEntitiesAA.size());
-        Map<String, Object> mapData = new HashMap<>();
-        List<Map<String, Object>> resultNx = new ArrayList<>();
-        if (departmentEntities.size() > 0) {
-
-
-            System.out.println("depsisiisisisiiis" + departmentEntities.size());
-            // 提取所有部门ID，过滤掉null值
-            List<Integer> depFatherIds = departmentEntities.stream()
-                    .filter(dept -> dept != null)
-                    .map(dept -> dept.getNxDepartmentId())
-                    .filter(id -> id != null)
-                    .collect(Collectors.toList());
-
-            // 批量查询所有部门的统计数据
-            Map<Integer, Map<String, Object>> statsMap = nxDepartmentOrdersService.batchQueryDepartmentOrderStatsSunla(depFatherIds);
-
-            for (NxDepartmentEntity departmentEntity : departmentEntities) {
-                // 跳过null的部门实体
-                if (departmentEntity == null) {
-                    continue;
-                }
-                Integer depId = departmentEntity.getNxDepartmentId();
-                // 跳过部门ID为null的情况
-                if (depId == null) {
-                    continue;
-                }
-                Map<String, Object> stats = statsMap.get(depId);
-
-                if (stats != null) {
-                    Integer unDo = (Integer) stats.get("unDo");
-                    Integer hasPrice = (Integer) stats.get("hasPrice");
-                    Integer hasWeight = (Integer) stats.get("hasWeight");
-                    Integer totalCount = (Integer) stats.get("totalCount");
-                    Integer finishCount = (Integer) stats.get("finishCount");
-                    Object totalSubtotal = stats.get("totalSubtotal");
-
-                    Double total = 0.0;
-                    if (totalSubtotal != null) {
-                        total = ((Number) totalSubtotal).doubleValue();
-                    }
-
-                    Map<String, Object> mapDep = new HashMap<>();
-                    mapDep.put("dep", departmentEntity);
-                    mapDep.put("totalCount", totalCount);
-                    mapDep.put("finishCount", finishCount);
-                    mapDep.put("hasPrice", hasPrice);
-                    mapDep.put("hasWeight", hasWeight);
-                    mapDep.put("unDo", unDo);
-                    mapDep.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                    resultNx.add(mapDep);
-                }
-            }
-            mapData.put("nxDep", resultNx);
-        } else {
-            mapData.put("nxDep", new ArrayList<>());
-        }
-
-        List<Map<String, Object>> gbList = new ArrayList<>();
-
-        if (distributerEntitiesAA.size() > 0) {
-            // 提取所有分销商ID和部门ID
-            List<Integer> gbDisIds = new ArrayList<>();
-            List<Integer> gbDepIds = new ArrayList<>();
-            Map<Integer, List<GbDepartmentEntity>> gbDisToDepMap = new HashMap<>();
-
-            for (GbDistributerEntity gbDis : distributerEntitiesAA) {
-                gbDisIds.add(gbDis.getGbDistributerId());
-
-                Map<String, Object> mapOrderDep = new HashMap<>();
-                mapOrderDep.put("gbDisId", gbDis.getGbDistributerId());
-                mapOrderDep.put("disId", disId);
-                System.out.println("查询部门参数: " + mapOrderDep);
-                List<GbDepartmentEntity> gbpartmentEntities = nxDepartmentOrdersService.queryPureOrderGbDepartment(mapOrderDep);
-                System.out.println("商家 " + gbDis.getGbDistributerId() + " 关联的部门数量: " + gbpartmentEntities.size());
-                if (gbpartmentEntities.size() > 0) {
-                    System.out.println("部门列表: " + gbpartmentEntities.stream().map(GbDepartmentEntity::getGbDepartmentName).collect(Collectors.toList()));
-                }
-                gbDisToDepMap.put(gbDis.getGbDistributerId(), gbpartmentEntities);
-                for (GbDepartmentEntity gbDep : gbpartmentEntities) {
-                    gbDepIds.add(gbDep.getGbDepartmentId());
-                }
-            }
-
-            // 批量查询所有统计数据
-            System.out.println("=== 批量查询统计数据 ===");
-            System.out.println("商家ID列表: " + gbDisIds);
-            System.out.println("部门ID列表: " + gbDepIds);
-            Map<String, Map<String, Object>> statsMap = nxDepartmentOrdersService.batchQueryGbDistributerDepartmentStats(gbDisIds, gbDepIds);
-            System.out.println("查询到的统计数据Map大小: " + statsMap.size());
-            System.out.println("统计数据Map的key列表: " + statsMap.keySet());
-            System.out.println("统计数据Map内容: " + statsMap);
-            System.out.println("=== 批量查询完成 ===\n");
-
-            for (GbDistributerEntity gbDis : distributerEntitiesAA) {
-                List<Map<String, Object>> gbDisDepArrMap = new ArrayList<>();
-
-                Map<String, Object> mapDis = new HashMap<>();
-                mapDis.put("dis", gbDis);
-                mapDis.put("gbDisId", gbDis.getGbDistributerId());
-
-                List<GbDepartmentEntity> gbpartmentEntities = gbDisToDepMap.get(gbDis.getGbDistributerId());
-
-                System.out.println("=== 开始处理商家: " + gbDis.getGbDistributerId() + " ===");
-                System.out.println("商家名称: " + gbDis.getGbDistributerName());
-                System.out.println("关联部门数量: " + (gbpartmentEntities != null ? gbpartmentEntities.size() : "null"));
-
-                for (GbDepartmentEntity gbDepartmentEntity : gbpartmentEntities) {
-                    String key = gbDis.getGbDistributerId() + "_" + gbDepartmentEntity.getGbDepartmentId();
-                    Map<String, Object> stats = statsMap.get(key);
-
-                    System.out.println("--- 处理部门: " + gbDepartmentEntity.getGbDepartmentId() + " ---");
-                    System.out.println("部门名称: " + gbDepartmentEntity.getGbDepartmentName());
-                    System.out.println("查询key: " + key);
-                    System.out.println("统计数据: " + stats);
-
-                    if (stats != null) {
-                        Integer newOrder = (Integer) stats.get("newOrder");
-                        System.out.println("newOrder值: " + newOrder);
-
-                        if (newOrder > 0) {
-                            Integer jinhuoOrder = (Integer) stats.get("jinhuoOrder");
-                            Integer chukuOrder = (Integer) stats.get("chukuOrder");
-                            Integer hasNotWeight = (Integer) stats.get("hasNotWeight");
-                            Integer jinhuoHasWeight = (Integer) stats.get("jinhuoHasWeight");
-                            Integer chukuHasWeight = (Integer) stats.get("chukuHasWeight");
-                            Integer hasPrice = (Integer) stats.get("hasPrice");
-                            Integer hasNotPrice = (Integer) stats.get("hasNotPrice");
-                            Integer twoTotal = (Integer) stats.get("twoTotal");
-                            Object totalObj = stats.get("total");
-
-                            Double total = 0.0;
-                            if (totalObj != null) {
-                                total = ((Number) totalObj).doubleValue();
-                            }
-
-                            Integer jinhuoFinished = 0; // 这个字段在原来的代码中似乎没有计算
-
-                            Map<String, Object> mapDep = new HashMap<>();
-                            mapDep.put("gbDep", gbDepartmentEntity);
-                            mapDep.put("newOrder", newOrder);
-                            mapDep.put("hasNotWeight", hasNotWeight);
-                            mapDep.put("jinhuoOrder", jinhuoOrder);
-                            mapDep.put("jinhuoHasWeight", jinhuoHasWeight);
-                            mapDep.put("jinhuoFinished", jinhuoFinished);
-
-                            mapDep.put("chukuOrder", chukuOrder);
-                            mapDep.put("chukuHasWeight", chukuHasWeight);
-                            mapDep.put("chukuFinished", jinhuoFinished);
-
-                            mapDep.put("hasPrice", hasPrice);
-                            mapDep.put("hasNotPrice", hasNotPrice);
-
-                            mapDep.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-                            gbDisDepArrMap.add(mapDep);
-                            System.out.println("*** 添加部门数据到arr ***");
-                        } else {
-                            System.out.println("*** newOrder <= 0，跳过该部门 ***");
-                        }
-                    } else {
-                        System.out.println("*** stats为null，跳过该部门 ***");
-                    }
-                }
-
-                System.out.println("最终arr大小: " + gbDisDepArrMap.size());
-                System.out.println("arr内容: " + gbDisDepArrMap);
-                mapDis.put("arr", gbDisDepArrMap);
-                gbList.add(mapDis);
-                System.out.println("=== 商家处理完成 ===\n");
-            }
-
-            mapData.put("gbDisArrApp", gbList);
-
-        } else {
-            mapData.put("gbDisArrApp", new ArrayList<>());
-        }
-
-
-
-        Map<String, Object> map111 = new HashMap<>();
-        map111.put("disId", disId);
-        map111.put("purStatus", 4);
-        map111.put("dayuStatus", -1);
-        // 出库
-        map111.put("goodsType", -1);
-        int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-
-        map111.put("goodsType", 1);
-        map111.put("batchId", 0);
-        int unPurCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-        map111.put("batchId", 1);
-        int puringCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-
-
-        Map<String, Object> mapB = new HashMap<>();
-        mapB.put("disId", disId);
-        mapB.put("settleType", 0);
-        mapB.put("equalStatus", 0);
-        int unPayCount = nxDepartmentBillService.queryBillsCount(mapB);
-
-        //return
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("disId", disId);
-//        map.put("equalStatus", -1);
-//        System.out.println("rututtntnmaappa" + map);
-//        List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryReturnBill(map);
-//        Map<String, Object> mapGb = new HashMap<>();
-//        mapGb.put("disId", disId);
-//        mapGb.put("gbDepFatherIdNotEqual", -1);
-//        mapGb.put("status", 3);
-//        System.out.println("usnbdidiid" + mapGb);
-//        int i = nxDepartmentBillService.queryBillsCount(mapGb);
-
-
-        Map<String, Object> map7 = new HashMap<>();
-        map7.put("disId", disId);
-        map7.put("status", -1);
-        map7.put("agent", 1);
-        map7.put("dayuStatus", -1);
-        int unDoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map7);
-
-        Map<String, Object> mapLinshi = new HashMap<>();
-        mapLinshi.put("disId", disId);
-        mapLinshi.put("isLinshi", 1);
-        System.out.println("linsshsisiss" + mapLinshi);
-        int wxCountAuto1 = nxDistributerGoodsService.queryDisGoodsTotal(mapLinshi);
-
-        returnData.put("stockCount", stockCount);
-        returnData.put("unPurCount", unPurCount);
-        returnData.put("puringCount", puringCount);
-        returnData.put("unPayCount", unPayCount);
-        returnData.put("deps", mapData);
-        returnData.put("disInfo", nxDistributerService.queryDistributerInfo(disId));
-//        returnData.put("returnList", billEntityList);
-        returnData.put("unDoTotal", unDoTotal);
-        returnData.put("linshiTotal", wxCountAuto1);
-        return R.ok().put("data", returnData);
-
-    }
-
-
-
-//    @RequestMapping(value = "/disGetTodayOrderCustomer/{disId}")
-//    @ResponseBody
-//    public R disGetTodayOrderCustomer(@PathVariable Integer disId) {
-//        Map<String, Object> returnData = new HashMap<>();
-//        //今天订货
-//        Map<String, Object> map1 = new HashMap<>();
-//        map1.put("disId", disId);
-//        map1.put("status", 3);
-//        List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
-//        System.out.println("mapapapapapddiidididi" + map1);
-//        List<GbDistributerEntity> distributerEntitiesAA = nxDepartmentOrdersService.queryOrderGbDistributerList(map1);
-//        System.out.println("gbbgbgbgbbgbbgbgb" + distributerEntitiesAA.size());
-//        Map<String, Object> mapData = new HashMap<>();
-//        List<Map<String, Object>> resultNx = new ArrayList<>();
-//        if (departmentEntities.size() > 0) {
-//            Integer hasPrice = 0;
-//            Integer hasWeight = 0;
-//            Integer unDo = 0;
-//
-//            System.out.println("depsisiisisisiiis" + departmentEntities.size());
-//            for (NxDepartmentEntity departmentEntity : departmentEntities) {
-//                Map<String, Object> map7 = new HashMap<>();
-//                map7.put("depFatherId", departmentEntity.getNxDepartmentId());
-//                map7.put("status", -1);
-//                unDo = nxDepartmentOrdersService.queryDepOrdersAcount(map7);
-//
-//                map7.put("status", 3);
-//                map7.put("hasPrice", 1);
-//                System.out.println("kkkkkkkkkkkkkk" + map7);
-//                hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(map7);
-//
-//                // weigth
-//                Map<String, Object> map8 = new HashMap<>();
-//                map8.put("depFatherId", departmentEntity.getNxDepartmentId());
-//                map8.put("status", 3);
-//                map8.put("dayuPurStatus", 3);
-//                hasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(map8);
-//
-//                Map<String, Object> map2 = new HashMap<>();
-//                map2.put("depFatherId", departmentEntity.getNxDepartmentId());
-//                map2.put("status", 3);
-//                Integer totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(map2);
-//                map2.put("status", null);
-//                map2.put("dayuPurStatus", 3);
-//                map2.put("equalStatus", 2);
-//                map2.put("subtotal", 0);
-//                map2.put("hasPrice", 1);
-//                System.out.println("fiisisiisisimap" + map2);
-//                Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map2);
-//                Double total = 0.0;
-//                if (twoTotal > 0) {
-//                    total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map2);
-//                }
-//
-//
-//
-//                Map<String, Object> mapDep = new HashMap<>();
-//                mapDep.put("dep", departmentEntity);
-//                mapDep.put("totalCount", totalCount);
-//                mapDep.put("finishCount", twoTotal);
-//                mapDep.put("hasPrice", hasPrice);
-//                mapDep.put("hasWeight", hasWeight);
-//                mapDep.put("unDo", unDo);
-//
-//
-//
-//                mapDep.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-//
-//                resultNx.add(mapDep);
-//
-//            }
-//            mapData.put("nxDep", resultNx);
-//        } else {
-//            mapData.put("nxDep", new ArrayList<>());
-//        }
-//
-//        List<Map<String, Object>> gbList = new ArrayList<>();
-//
-//        if (distributerEntitiesAA.size() > 0) {
-//
-//            for (GbDistributerEntity gbDis : distributerEntitiesAA) {
-//                if (gbDis.getGbDistributerBusinessType() > 0) {
-//                    List<Map<String, Object>> gbDisDepArrMap = new ArrayList<>();
-//
-//                    Map<String, Object> mapDis = new HashMap<>();
-//                    mapDis.put("dis", gbDis);
-//                    mapDis.put("gbDisId", gbDis.getGbDistributerId());
-//                    Map<String, Object> mapOrderDep = new HashMap<>();
-//                    mapOrderDep.put("gbDisId", gbDis.getGbDistributerId());
-//                    mapOrderDep.put("disId", disId);
-//                    System.out.println("gbdidisiisisismap==" + mapOrderDep);
-//                    List<GbDepartmentEntity> gbpartmentEntities = nxDepartmentOrdersService.queryOrderGbDepartmentList(mapOrderDep);
-//
-//                    Integer newOrder = 0;
-//                    Integer hasNotWeight = 0;
-//                    Integer jinhuoOrder = 0;
-//                    Integer jinhuoHasWeight = 0;
-//                    Integer jinhuoFinished = 0;
-//                    Integer chukuOrder = 0;
-//                    Integer chukuHasWeight = 0;
-//
-//                    Integer hasPrice = 0;
-//                    Integer hasNotPrice = 0;
-//
-//                    System.out.println("gbeenesisi" + gbpartmentEntities.size());
-//                    for (GbDepartmentEntity gbDepartmentEntity : gbpartmentEntities) {
-//                        //new
-//                        Map<String, Object> mapOrder = new HashMap<>();
-//                        mapOrder.put("gbDepId", gbDepartmentEntity.getGbDepartmentId());
-//                        mapOrder.put("status", 3);
-////                    mapOrder.put("purGoodsId", 0);
-//                        System.out.println("gbnNewworororooror" + mapOrder);
-//                        newOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapOrder);
-//
-//                        if (newOrder > 0) {
-//                            //采购进货-jinhuo
-//                            mapOrder.put("purGoodsId", 1);
-//                            jinhuoOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapOrder);
-//                            //出库 -chuku
-//                            mapOrder.put("purGoodsId", -1);
-//                            chukuOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapOrder);
-//
-//                            // --weight
-//                            Map<String, Object> mapWeight = new HashMap<>();
-//                            mapWeight.put("gbDepId", gbDepartmentEntity.getGbDepartmentId());
-//                            mapWeight.put("hasWeight", -1);
-//                            mapWeight.put("status", 3);
-//
-//                            System.out.println("jinhuowhawwwrrrrrrggggg" + mapWeight);
-//                            hasNotWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapWeight);
-//
-//                            mapWeight.put("hasWeight", 1);
-//                            mapWeight.put("purGoodsId", 1);
-//                            jinhuoHasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapWeight);
-//                            mapWeight.put("purGoodsId", -1);
-//                            chukuHasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(mapWeight);
-//
-//                            // price
-//                            Map<String, Object> map7 = new HashMap<>();
-//                            map7.put("gbDepId", gbDepartmentEntity.getGbDepartmentId());
-//                            map7.put("status", 3);
-//                            map7.put("hasPrice", 1);
-//                            hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(map7);
-//                            map7.put("hasPrice", -1);
-//                            hasNotPrice = nxDepartmentOrdersService.queryDepOrdersAcount(map7);
-//
-//                            Map<String, Object> map2 = new HashMap<>();
-//                            map2.put("gbDepId", gbDepartmentEntity.getGbDepartmentId());
-//                            map2.put("equalStatus", 2);
-//                            Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map2);
-//                            Double total = 0.0;
-//                            if (twoTotal > 0) {
-//                                total = nxDepartmentOrdersService.queryDepOrdersSubtotal(map2);
-//                            }
-//
-//
-//                            Map<String, Object> mapDep = new HashMap<>();
-//                            mapDep.put("gbDep", gbDepartmentEntity);
-//                            mapDep.put("newOrder", newOrder);
-//                            mapDep.put("hasNotWeight", hasNotWeight);
-//                            mapDep.put("jinhuoOrder", jinhuoOrder);
-//                            mapDep.put("jinhuoHasWeight", jinhuoHasWeight);
-//                            mapDep.put("jinhuoFinished", jinhuoFinished);
-//
-//                            mapDep.put("chukuOrder", chukuOrder);
-//                            mapDep.put("chukuHasWeight", chukuHasWeight);
-//                            mapDep.put("chukuFinished", jinhuoFinished);
-//
-//                            mapDep.put("hasPrice", hasPrice);
-//                            mapDep.put("hasNotPrice", hasNotPrice);
-//
-//                            mapDep.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-//                            gbDisDepArrMap.add(mapDep);
-//
-//                        }
-//
-//                    }
-//
-//                    mapDis.put("arr", gbDisDepArrMap);
-//                    gbList.add(mapDis);
-//                }
-//            }
-//
-//            mapData.put("gbDisArrApp", gbList);
-//
-//        } else {
-//            mapData.put("gbDisArrApp", new ArrayList<>());
-//        }
-//
-//
-//        System.out.println("gbDisArrapp" + mapData);
-//
-//
-//        //GbData
-//        Map<String, Object> mapPB = new HashMap<>();
-//        mapPB.put("nxDisId", disId);
-//        mapPB.put("status", 3);
-//        System.out.println("enennenenenne" + mapPB);
-//        List<GbDistributerPurchaseBatchEntity> entities = gbDistributerPurchaseBatchService.queryDisPurchaseBatch(mapPB);
-//
-//        if (entities.size() > 0) {
-//
-//            for (GbDistributerPurchaseBatchEntity batchEntity : entities) {
-//
-//                Map<String, Object> mapDis = new HashMap<>();
-//                mapDis.put("nxDisId", disId);
-//                mapDis.put("disId", batchEntity.getGbDpbDistributerId());
-//                mapDis.put("status", 3);
-//                System.out.println("whwhwhwhhwhwhwhpururur000" + mapDis);
-//                Integer goodsCount = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(mapDis);
-//                mapDis.put("hasPrice", -1);
-//                System.out.println("whwhwhwhhwhwhwhpururur111" + mapDis);
-//                Integer hasNotPrice = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(mapDis);
-//                mapDis.put("hasPrice", 1);
-//                System.out.println("whwhwhwhhwhwhwhpururur222" + mapDis);
-//                Integer hasPriceCount = gbDistributerPurchaseGoodsService.queryGbPurchaseGoodsCount(mapDis);
-//
-//            }
-//
-//            mapData.put("gbDisArr", entities);
-//
-//        } else {
-//            mapData.put("gbDisArr", new ArrayList<>());
-//        }
-//
-//        Map<String, Object> map3 = new HashMap<>();
-//        map3.put("disId", disId);
-//        map3.put("status", 3);
-//        map3.put("purStatus", 4);
-//        Integer preOrders = nxDepartmentOrdersService.queryDepOrdersAcount(map3);
-//        Integer buyOrders = nxDepartmentOrdersService.queryDepOrdersAcount(map3);
-//        Map<String, Object> map3Ok = new HashMap<>();
-//        map3Ok.put("disId", disId);
-//        map3Ok.put("equalStatus", 2);
-//        Integer buyOrdersOk = nxDepartmentOrdersService.queryDepOrdersAcount(map3Ok);
-//        returnData.put("buyOrders", buyOrders);
-//        returnData.put("buyOrdersOk", buyOrdersOk);
-//
-//        Map<String, Object> map111 = new HashMap<>();
-//        map111.put("disId", disId);
-//        map111.put("status", 3);
-//        // 出库
-//        map111.put("goodsType", -1);
-//        int stockCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-//
-//        map111.put("goodsType", 1);
-//        int wxCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-//        map111.put("goodsType", 2);
-//        int wxCountAuto = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-//        int wxCountPur = wxCount + wxCountAuto;
-//
-//        map111.put("goodsType", 0);
-//        int zicaiCount = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(map111);
-//
-//        //ok
-//        Map<String, Object> mapOk = new HashMap<>();
-//        mapOk.put("disId", disId);
-//        mapOk.put("status", 3);
-//        mapOk.put("goodsType", -1);
-//        mapOk.put("dayuPurStatus", 3);
-//        //出库完成
-//        System.out.println("mapokk" + mapOk);
-//        int stockCountOK = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-//        //订货完成
-//        mapOk.put("goodsType", 1);
-//        int wxCountOk = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-//        mapOk.put("goodsType", 2);
-//        int wxCountOkAuto = nxDepartmentOrdersService.disGetPurchaseGoodsApplysCount(mapOk);
-//        int wxCountPurOk = wxCountOk + wxCountOkAuto;
-//        Map<String, Object> mapB = new HashMap<>();
-//        mapB.put("disId", disId);
-//        mapB.put("settleType", 0);
-//        mapB.put("equalStatus", 0);
-//        int unPayCount = nxDepartmentBillService.queryBillsCount(mapB);
-//
-//        //return
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("disId", disId);
-//        map.put("equalStatus", -1);
-//        System.out.println("rututtntnmaappa" + map);
-//        List<NxDepartmentBillEntity> billEntityList = nxDepartmentBillService.queryReturnBill(map);
-//
-//
-//        Map<String, Object> mapGb = new HashMap<>();
-//        mapGb.put("disId", disId);
-//        mapGb.put("gbDepFatherIdNotEqual", -1);
-//        mapGb.put("status", 3);
-//        System.out.println("usnbdidiid" + mapGb);
-//        int i = nxDepartmentBillService.queryBillsCount(mapGb);
-//
-//
-//        Map<String, Object> map7 = new HashMap<>();
-//        map7.put("disId", disId);
-//        map7.put("status", -1);
-//        int unDoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(map7);
-//
-//
-//        returnData.put("stockCount", stockCount);
-//        returnData.put("stockCountOk", stockCountOK);
-//        returnData.put("wxCount", wxCountPur);
-//        returnData.put("wxCountOk", wxCountPurOk);
-//        returnData.put("unPayCount", unPayCount);
-//        returnData.put("preOrders", preOrders);
-//
-//
-//        List<NxGoodsEntity> books = nxGoodsService.queryNumberGoods();
-//        returnData.put("deps", mapData);
-//        returnData.put("disInfo", nxDistributerService.queryObject(disId));
-//        returnData.put("books", books);
-//        returnData.put("returnList", billEntityList);
-//        returnData.put("unPayGbBills", i);
-//        returnData.put("unDoTotal", unDoTotal);
-//        return R.ok().put("data", returnData);
-//
-//    }
-
-    /**
-     * 获取今日订单客户信息
-     */
-    @RequestMapping(value = "/disGetTodayOrderCustomer2/{disId}")
-    @ResponseBody
-    public R disGetTodayOrderCustomer2(@PathVariable Integer disId) {
-        try {
-            Map<String, Object> returnData = new HashMap<>();
-            Map<String, Object> mapData = new HashMap<>();
-
-            // 1. 获取部门数据
-            Map<String, Object> params = new HashMap<>();
-            params.put("disId", disId);
-            params.put("stasts", 3);
-            List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryPureOrderNxDepartment(params);
-            List<GbDistributerEntity> distributerEntitiesAA = nxDepartmentOrdersService.queryOrderGbDistributerList(params);
-
-            // 2. 处理部门订单统计
-            List<Map<String, Object>> resultNx = new ArrayList<>();
-            if (!departmentEntities.isEmpty()) {
-                for (NxDepartmentEntity department : departmentEntities) {
-                    Map<String, Object> depStats = new HashMap<>();
-                    depStats.put("dep", department);
-
-                    // 获取价格统计
-                    Map<String, Object> priceParams = new HashMap<>();
-                    priceParams.put("depFatherId", department.getNxDepartmentId());
-                    priceParams.put("status", 3);
-                    priceParams.put("hasPrice", 1);
-                    Integer hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(priceParams);
-
-                    // 获取重量统计
-                    Map<String, Object> weightParams = new HashMap<>();
-                    weightParams.put("depFatherId", department.getNxDepartmentId());
-                    weightParams.put("status", 3);
-                    weightParams.put("dayuPurStatus", 3);
-                    Integer hasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(weightParams);
-
-                    // 获取总数统计
-                    Map<String, Object> totalParams = new HashMap<>();
-                    totalParams.put("depFatherId", department.getNxDepartmentId());
-                    totalParams.put("status", 3);
-                    Integer totalCount = nxDepartmentOrdersService.queryDepOrdersAcount(totalParams);
-
-                    // 获取完成订单统计
-                    totalParams.put("status", null);
-                    totalParams.put("dayuPurStatus", 3);
-                    totalParams.put("equalStatus", 2);
-                    totalParams.put("subtotal", 0);
-                    Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(totalParams);
-
-                    // 计算总金额
-                    Double total = 0.0;
-                    if (twoTotal > 0) {
-                        total = nxDepartmentOrdersService.queryDepOrdersSubtotal(totalParams);
-                    }
-
-                    // 组装部门统计数据
-                    depStats.put("totalCount", totalCount);
-                    depStats.put("finishCount", twoTotal);
-                    depStats.put("hasPrice", hasPrice);
-                    depStats.put("hasWeight", hasWeight);
-                    depStats.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-                    resultNx.add(depStats);
-                }
-                mapData.put("nxDep", resultNx);
-            } else {
-                mapData.put("nxDep", new ArrayList<>());
-            }
-
-            // 3. 处理国标部门订单统计
-            List<Map<String, Object>> gbList = new ArrayList<>();
-            if (!distributerEntitiesAA.isEmpty()) {
-                for (GbDistributerEntity gbDis : distributerEntitiesAA) {
-//                    if (gbDis.getGbDistributerBusinessType() > 0) {
-                    Map<String, Object> gbDisStats = new HashMap<>();
-                    gbDisStats.put("dis", gbDis);
-                    gbDisStats.put("gbDisId", gbDis.getGbDistributerId());
-
-                    // 获取国标部门列表
-                    Map<String, Object> gbDepParams = new HashMap<>();
-                    gbDepParams.put("gbDisId", gbDis.getGbDistributerId());
-                    gbDepParams.put("disId", disId);
-                    List<GbDepartmentEntity> gbDepartments = nxDepartmentOrdersService.queryOrderGbDepartmentList(gbDepParams);
-
-                    List<Map<String, Object>> gbDisDepArrMap = new ArrayList<>();
-                    for (GbDepartmentEntity gbDep : gbDepartments) {
-                        Map<String, Object> gbDepStats = processGbDepartmentStats(gbDep);
-                        if (gbDepStats != null) {
-                            gbDisDepArrMap.add(gbDepStats);
-                        }
-                    }
-
-                    gbDisStats.put("arr", gbDisDepArrMap);
-                    gbList.add(gbDisStats);
-//                    }
-                }
-                mapData.put("gbDisArrApp", gbList);
-            } else {
-                mapData.put("gbDisArrApp", new ArrayList<>());
-            }
-
-            // 4. 处理采购批次统计
-            Map<String, Object> batchParams = new HashMap<>();
-            batchParams.put("nxDisId", disId);
-            batchParams.put("status", 3);
-            List<GbDistributerPurchaseBatchEntity> batchEntities = gbDistributerPurchaseBatchService.queryDisPurchaseBatch(batchParams);
-            mapData.put("gbDisArr", batchEntities.isEmpty() ? new ArrayList<>() : batchEntities);
-
-            // 5. 获取订单统计
-            Map<String, Object> orderStats = nxDepartmentOrdersService.getOrderStats(disId);
-            returnData.putAll(orderStats);
-
-            // 6. 获取账单统计
-            Map<String, Object> billStats = nxDepartmentBillService.getBillStats(disId);
-            returnData.putAll(billStats);
-
-            // 7. 获取其他数据
-            returnData.put("deps", mapData);
-            returnData.put("disInfo", nxDistributerService.queryObject(disId));
-            returnData.put("books", nxGoodsService.queryNumberGoods());
-
-            return R.ok().put("data", returnData);
-
-        } catch (Exception e) {
-            System.out.println("获取今日订单客户信息失败" + e);
-            return R.error("获取今日订单客户信息失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 处理国标部门统计数据
-     */
-    private Map<String, Object> processGbDepartmentStats(GbDepartmentEntity gbDep) {
-        Map<String, Object> mapOrder = new HashMap<>();
-        mapOrder.put("gbDepId", gbDep.getGbDepartmentId());
-        mapOrder.put("status", 3);
-
-        Integer newOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapOrder);
-        if (newOrder <= 0) {
-            return null;
-        }
-
-        Map<String, Object> gbDepStats = new HashMap<>();
-        gbDepStats.put("gbDep", gbDep);
-        gbDepStats.put("newOrder", newOrder);
-
-        // 获取进货订单统计
-        mapOrder.put("purGoodsId", 1);
-        Integer jinhuoOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapOrder);
-        gbDepStats.put("jinhuoOrder", jinhuoOrder);
-
-        // 获取出库订单统计
-        mapOrder.put("purGoodsId", -1);
-        Integer chukuOrder = nxDepartmentOrdersService.queryDepOrdersAcount(mapOrder);
-        gbDepStats.put("chukuOrder", chukuOrder);
-
-        // 获取重量统计
-        Map<String, Object> weightParams = new HashMap<>();
-        weightParams.put("gbDepId", gbDep.getGbDepartmentId());
-        weightParams.put("status", 3);
-
-        weightParams.put("hasWeight", -1);
-        Integer hasNotWeight = nxDepartmentOrdersService.queryDepOrdersAcount(weightParams);
-        gbDepStats.put("hasNotWeight", hasNotWeight);
-
-        weightParams.put("hasWeight", 1);
-        weightParams.put("purGoodsId", 1);
-        Integer jinhuoHasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(weightParams);
-        gbDepStats.put("jinhuoHasWeight", jinhuoHasWeight);
-
-        weightParams.put("purGoodsId", -1);
-        Integer chukuHasWeight = nxDepartmentOrdersService.queryDepOrdersAcount(weightParams);
-        gbDepStats.put("chukuHasWeight", chukuHasWeight);
-
-        // 获取价格统计
-        Map<String, Object> priceParams = new HashMap<>();
-        priceParams.put("gbDepId", gbDep.getGbDepartmentId());
-        priceParams.put("status", 3);
-
-        priceParams.put("hasPrice", 1);
-        Integer hasPrice = nxDepartmentOrdersService.queryDepOrdersAcount(priceParams);
-        gbDepStats.put("hasPrice", hasPrice);
-
-        priceParams.put("hasPrice", -1);
-        Integer hasNotPrice = nxDepartmentOrdersService.queryDepOrdersAcount(priceParams);
-        gbDepStats.put("hasNotPrice", hasNotPrice);
-
-        // 获取完成订单统计
-        Map<String, Object> finishParams = new HashMap<>();
-        finishParams.put("gbDepId", gbDep.getGbDepartmentId());
-        finishParams.put("equalStatus", 2);
-        Integer twoTotal = nxDepartmentOrdersService.queryDepOrdersAcount(finishParams);
-
-        // 计算总金额
-        Double total = 0.0;
-        if (twoTotal > 0) {
-            total = nxDepartmentOrdersService.queryDepOrdersSubtotal(finishParams);
-        }
-        gbDepStats.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
-
-        return gbDepStats;
     }
 
 
@@ -12511,7 +8677,7 @@ public class NxDepartmentOrdersController {
         }
 
         ordersEntity.setNxDoPurchaseGoodsId(-1);
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoStatus(getNxOrderStatusNew());
         nxDepartmentOrdersService.update(ordersEntity);
 
@@ -12531,7 +8697,7 @@ public class NxDepartmentOrdersController {
         Integer nxDepartmentOrderId = ordersEntity.getNxDepartmentOrdersId();
         NxDepartmentOrdersEntity ordersEntity1 = nxDepartmentOrdersService.queryObject(nxDepartmentOrderId);
 
-        ordersEntity1.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity1.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity1.setNxDoStatus(getNxOrderStatusNew());
         nxDepartmentOrdersService.update(ordersEntity1);
 
@@ -12548,10 +8714,10 @@ public class NxDepartmentOrdersController {
                     nxDistributerPurchaseGoodsService.update(purchaseGoodsEntity);
 
                     //查询采购批次如果是订货批次purchaseType= 2，那么就修改订货批次为getNxDisPurchaseBatchSellerReply。
-                    if(purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1){
+                    if (purchaseGoodsEntity.getNxDpgBatchId() != null && purchaseGoodsEntity.getNxDpgBatchId() != -1) {
 
-                            NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
-                            if(nxDistributerPurchaseBatchEntity.getNxDpbStatus() == getNxDisPurchaseBatchDisUserFinish())
+                        NxDistributerPurchaseBatchEntity nxDistributerPurchaseBatchEntity = nxDistributerPurchaseBatchService.queryObject(purchaseGoodsEntity.getNxDpgBatchId());
+                        if (nxDistributerPurchaseBatchEntity.getNxDpbStatus() == getNxDisPurchaseBatchDisUserFinish())
                             nxDistributerPurchaseBatchEntity.setNxDpbStatus(getNxDisPurchaseBatchSellerReply());
                         nxDistributerPurchaseBatchService.update(nxDistributerPurchaseBatchEntity);
                     }
@@ -12594,6 +8760,24 @@ public class NxDepartmentOrdersController {
             System.out.println("库存恢复完成");
         }
 
+        //更新协作订单
+        System.out.println("colllllmap" + ordersEntity1.getNxDoCollaborativeNxDisId());
+
+        if(ordersEntity1.getNxDoCollaborativeNxDisId() != -1){
+            Integer nxDoCollaborativeNxDisId = ordersEntity1.getNxDoCollaborativeNxDisId();
+            Integer nxDepartmentOrdersId = ordersEntity1.getNxDepartmentOrdersId();
+            Map<String, Object> mapColl = new HashMap<>();
+            mapColl.put("disId", nxDoCollaborativeNxDisId);
+            mapColl.put("restrauntId", nxDepartmentOrdersId);
+            System.out.println("colllllmap" + mapColl);
+            NxDepartmentOrdersEntity collOrder =  nxDepartmentOrdersService.querycollOrder(mapColl);
+            if(collOrder != null && collOrder.getNxDoStatus() < 2){
+                collOrder.setNxDoPurchaseStatus(0);
+                collOrder.setNxDoWeight(null);
+                nxDepartmentOrdersService.update(collOrder);
+            }
+        }
+
         return R.ok();
     }
 
@@ -12603,7 +8787,7 @@ public class NxDepartmentOrdersController {
         Integer nxDepartmentOrderId = ordersEntity.getNxDepartmentOrdersId();
         NxDepartmentOrdersEntity ordersEntity1 = nxDepartmentOrdersService.queryObject(nxDepartmentOrderId);
 
-        ordersEntity1.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity1.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity1.setNxDoStatus(getNxOrderStatusNew());
         nxDepartmentOrdersService.update(ordersEntity1);
 
@@ -12652,7 +8836,7 @@ public class NxDepartmentOrdersController {
 
         System.out.println("depdisididiidididdiid" + ordersEntity.getNxDoDepDisGoodsId());
         String oldNxDoQuantity = ordersEntity.getNxDoQuantity();
-        
+
         // 检查规格是否变化：如果新规格和旧规格不一样，单价和小计设置为null
         String oldStandard = ordersEntity.getNxDoStandard();
         boolean standardChanged = false;
@@ -12695,14 +8879,14 @@ public class NxDepartmentOrdersController {
             if (nxDepartmentDisGoodsEntity != null && !standardChanged) {
                 String departmentStandard = nxDepartmentDisGoodsEntity.getNxDdgOrderStandard();
                 // 检查部门商品规格和订单规格是否一致
-                boolean standardMatch = (departmentStandard == null && standard == null) 
-                        || (departmentStandard != null && standard != null 
-                            && departmentStandard.trim().equals(standard.trim()));
+                boolean standardMatch = (departmentStandard == null && standard == null)
+                        || (departmentStandard != null && standard != null
+                        && departmentStandard.trim().equals(standard.trim()));
                 if (standardMatch) {
                     ordersEntity.setNxDoPrice(nxDepartmentDisGoodsEntity.getNxDdgOrderPrice());
                     System.out.println("✅ 部门商品规格匹配，设置价格: " + nxDepartmentDisGoodsEntity.getNxDdgOrderPrice());
                 } else {
-                    System.out.println("⚠️ 部门商品规格不匹配，跳过价格设置。部门商品规格: [" + departmentStandard 
+                    System.out.println("⚠️ 部门商品规格不匹配，跳过价格设置。部门商品规格: [" + departmentStandard
                             + "], 订单规格: [" + standard + "]");
                 }
             } else if (standardChanged) {
@@ -12716,11 +8900,11 @@ public class NxDepartmentOrdersController {
 
             // 参考 saveOneOrder 的逻辑：检查订单规格是否等于商品标准规格，或者订单规格是否匹配大包装单位（智能匹配：件=箱）
             boolean isStandardMatch = standard != null && standard.equals(nxDgGoodsStandardname);
-            boolean isCartonMatch = distributerGoodsEntity.getNxDgCartonUnit() != null 
+            boolean isCartonMatch = distributerGoodsEntity.getNxDgCartonUnit() != null
                     && !distributerGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
                     && standard != null
                     && isStandardMatch(standard.trim(), distributerGoodsEntity.getNxDgCartonUnit().trim());
-            
+
             if (isStandardMatch || isCartonMatch) {
                 System.out.println("订单规格匹配: isStandardMatch=" + isStandardMatch + ", isCartonMatch=" + isCartonMatch);
                 ordersEntity.setNxDoWeight(weight);
@@ -12734,17 +8918,17 @@ public class NxDepartmentOrdersController {
                     BigDecimal doQuantity = new BigDecimal(weight);
                     boolean useCartonPriceForCalc = false;
                     Integer itemsPerCartonForCalc = null;
-                    if (distributerGoodsEntity.getNxDgCartonUnit() != null 
+                    if (distributerGoodsEntity.getNxDgCartonUnit() != null
                             && !distributerGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
                             && standard != null
                             && isStandardMatch(standard.trim(), distributerGoodsEntity.getNxDgCartonUnit().trim())
-                            && distributerGoodsEntity.getNxDgItemsPerCarton() != null 
+                            && distributerGoodsEntity.getNxDgItemsPerCarton() != null
                             && distributerGoodsEntity.getNxDgItemsPerCarton() > 0) {
                         useCartonPriceForCalc = true;
                         itemsPerCartonForCalc = distributerGoodsEntity.getNxDgItemsPerCarton();
                         System.out.println("订单规格匹配外包装单位（智能匹配），计算时将数量转换为箱数: " + doQuantity + "个 ÷ " + itemsPerCartonForCalc + " = " + doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP) + "箱");
                     }
-                    
+
                     // 计算成本小计
                     BigDecimal costSubtotalCalc = null;
                     if (useCartonPriceForCalc && itemsPerCartonForCalc != null) {
@@ -12752,29 +8936,17 @@ public class NxDepartmentOrdersController {
                         BigDecimal cartonCount = doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP);
                         BigDecimal costPriceBD = new BigDecimal(costPrice);
                         costSubtotalCalc = cartonCount.multiply(costPriceBD).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        System.out.println("======== 成本小计计算（外包装） ========");
-                        System.out.println("原始数量: " + doQuantity + "个");
-                        System.out.println("每箱数量: " + itemsPerCartonForCalc + "个/箱");
-                        System.out.println("箱数: " + cartonCount + "箱");
-                        System.out.println("成本单价: " + costPriceBD + "元/箱");
-                        System.out.println("成本小计 = " + cartonCount + "箱 × " + costPriceBD + "元/箱 = " + costSubtotalCalc + "元");
-                        System.out.println("=====================================");
+
                     } else {
                         // 使用最小单位成本价：直接相乘
                         BigDecimal costPriceBD = new BigDecimal(costPrice);
                         costSubtotalCalc = doQuantity.multiply(costPriceBD).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        System.out.println("======== 成本小计计算（最小单位） ========");
-                        System.out.println("数量: " + doQuantity);
-                        System.out.println("成本单价: " + costPriceBD);
-                        System.out.println("成本小计 = " + doQuantity + " × " + costPriceBD + " = " + costSubtotalCalc);
-                        System.out.println("=====================================");
+
                     }
                     ordersEntity.setNxDoCostSubtotal(costSubtotalCalc.toString());
 
                     System.out.println("priririeieiieieieiiei1111" + ordersEntity.getNxDoPrice());
                     if (ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
-                        System.out.println("priririeieiieieieiiei2222" + ordersEntity.getNxDoPrice());
-                        
                         // 计算销售小计
                         BigDecimal willPrice = new BigDecimal(ordersEntity.getNxDoPrice());
                         BigDecimal subtotal;
@@ -12782,25 +8954,15 @@ public class NxDepartmentOrdersController {
                             // 使用外包装单价：需要将数量转换为箱数
                             BigDecimal cartonCount = doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP);
                             subtotal = cartonCount.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                            System.out.println("======== 销售小计计算（外包装） ========");
-                            System.out.println("原始数量: " + doQuantity + "个");
-                            System.out.println("每箱数量: " + itemsPerCartonForCalc + "个/箱");
-                            System.out.println("箱数: " + cartonCount + "箱");
-                            System.out.println("销售单价: " + willPrice + "元/箱");
-                            System.out.println("销售小计 = " + cartonCount + "箱 × " + willPrice + "元/箱 = " + subtotal + "元");
-                            System.out.println("=====================================");
+
                         } else {
                             // 使用最小单位单价：直接相乘
                             subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                            System.out.println("======== 销售小计计算（最小单位） ========");
-                            System.out.println("数量: " + doQuantity);
-                            System.out.println("销售单价: " + willPrice);
-                            System.out.println("销售小计 = " + doQuantity + " × " + willPrice + " = " + subtotal);
-                            System.out.println("=====================================");
+
                         }
-                        
+
                         ordersEntity.setNxDoSubtotal(subtotal.toString());
-                        
+
                         //profit - 参考 saveOneOrder 的逻辑，使用已计算好的 subtotal 和 costSubtotal
                         if (costSubtotalCalc != null && subtotal != null) {
                             BigDecimal profitB = subtotal.subtract(costSubtotalCalc).setScale(1, BigDecimal.ROUND_HALF_UP);
@@ -12808,10 +8970,6 @@ public class NxDepartmentOrdersController {
                             if (subtotal.compareTo(BigDecimal.ZERO) != 0) {
                                 scaleB = profitB.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
                             }
-                            System.out.println("成本小计: " + costSubtotalCalc);
-                            System.out.println("销售小计: " + subtotal);
-                            System.out.println("利润: " + profitB);
-                            System.out.println("利润率: " + scaleB + "%");
                             ordersEntity.setNxDoProfitScale(scaleB.toString());
                             ordersEntity.setNxDoProfitSubtotal(profitB.toString());
 
@@ -12824,7 +8982,6 @@ public class NxDepartmentOrdersController {
                         }
                     }
                 } catch (NumberFormatException e) {
-                    System.err.println("Invalid number format for cost price: " + costPrice + ", weight: " + weight);
                     ordersEntity.setNxDoCostSubtotal("0");
                     ordersEntity.setNxDoProfitScale("0");
                     ordersEntity.setNxDoProfitSubtotal("0");
@@ -12862,14 +9019,14 @@ public class NxDepartmentOrdersController {
                 if (nxDepartmentDisGoodsEntity != null && !standardChanged) {
                     String departmentStandard = nxDepartmentDisGoodsEntity.getNxDdgOrderStandard();
                     // 检查部门商品规格和订单规格是否一致
-                    boolean standardMatch = (departmentStandard == null && standard == null) 
-                            || (departmentStandard != null && standard != null 
-                                && departmentStandard.trim().equals(standard.trim()));
+                    boolean standardMatch = (departmentStandard == null && standard == null)
+                            || (departmentStandard != null && standard != null
+                            && departmentStandard.trim().equals(standard.trim()));
                     if (standardMatch) {
                         ordersEntity.setNxDoPrice(nxDepartmentDisGoodsEntity.getNxDdgOrderPrice());
                         System.out.println("✅ 部门商品规格匹配，设置价格: " + nxDepartmentDisGoodsEntity.getNxDdgOrderPrice());
                     } else {
-                        System.out.println("⚠️ 部门商品规格不匹配，跳过价格设置。部门商品规格: [" + departmentStandard 
+                        System.out.println("⚠️ 部门商品规格不匹配，跳过价格设置。部门商品规格: [" + departmentStandard
                                 + "], 订单规格: [" + standard + "]");
                     }
                 } else if (standardChanged) {
@@ -12877,7 +9034,7 @@ public class NxDepartmentOrdersController {
                 }
                 // 如果规格变化了，小计也设置为null
                 if (!standardChanged) {
-                ordersEntity.setNxDoSubtotal(bigDecimal.toString());
+                    ordersEntity.setNxDoSubtotal(bigDecimal.toString());
                 } else {
                     ordersEntity.setNxDoSubtotal(null);
                 }
@@ -12936,7 +9093,7 @@ public class NxDepartmentOrdersController {
                 } else {
 
                     BigDecimal purQuantity = new BigDecimal(oldPurchaseGoodsEntity.getNxDpgQuantity());
-                    BigDecimal add = purQuantity.subtract(new BigDecimal(ordersEntity.getNxDoQuantity())).setScale(1,BigDecimal.ROUND_HALF_UP);
+                    BigDecimal add = purQuantity.subtract(new BigDecimal(ordersEntity.getNxDoQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
                     System.out.println("updidddidid" + add);
                     oldPurchaseGoodsEntity.setNxDpgQuantity(add.toString());
                     oldPurchaseGoodsEntity.setNxDpgOrdersAmount(oldPurchaseGoodsEntity.getNxDpgOrdersAmount() - 1);
@@ -12982,7 +9139,7 @@ public class NxDepartmentOrdersController {
             } else {
                 System.out.println("hehehehrhereer===" + nxDgGoodsStandardname);
                 BigDecimal purQuantity = new BigDecimal(oldPurchaseGoodsEntity.getNxDpgQuantity());
-                BigDecimal add = purQuantity.subtract(new BigDecimal(oldNxDoQuantity)).add(new BigDecimal(weight)).setScale(1,BigDecimal.ROUND_HALF_UP);
+                BigDecimal add = purQuantity.subtract(new BigDecimal(oldNxDoQuantity)).add(new BigDecimal(weight)).setScale(1, BigDecimal.ROUND_HALF_UP);
                 oldPurchaseGoodsEntity.setNxDpgQuantity(add.toString());
                 oldPurchaseGoodsEntity.setNxDpgBuyQuantity(add.toString());
                 if (standard.equals(nxDgGoodsStandardname)) {
@@ -13005,7 +9162,7 @@ public class NxDepartmentOrdersController {
         ordersEntity.setNxDoQuantity(weight);
         ordersEntity.setNxDoStandard(standard);
         ordersEntity.setNxDoRemark(remark);
-        
+
         // 智能匹配打印规格：如果订单规格匹配大包装单位，则设置为大包装单位
         // 支持同义词匹配：件=箱，盒=箱等
         System.out.println("======== 修改订单-设置打印规格(printStandard)开始 ========");
@@ -13015,8 +9172,8 @@ public class NxDepartmentOrdersController {
         System.out.println("商品大包装单位(nxDgCartonUnit): " + distributerGoodsEntity.getNxDgCartonUnit());
         System.out.println("商品标准规格(nxDgGoodsStandardname): " + distributerGoodsEntity.getNxDgGoodsStandardname());
         System.out.println("设置前 printStandard: " + ordersEntity.getNxDoPrintStandard());
-        
-        if (distributerGoodsEntity.getNxDgCartonUnit() != null 
+
+        if (distributerGoodsEntity.getNxDgCartonUnit() != null
                 && !distributerGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
                 && standard != null
                 && isStandardMatch(standard.trim(), distributerGoodsEntity.getNxDgCartonUnit().trim())) {
@@ -13024,7 +9181,7 @@ public class NxDepartmentOrdersController {
             System.out.println("✅ [printStandard] 已设置为大包装单位: " + distributerGoodsEntity.getNxDgCartonUnit());
         } else if (printStandard != null && !printStandard.trim().isEmpty()) {
             // 如果前端传入了打印规格，使用前端传入的值
-        ordersEntity.setNxDoPrintStandard(printStandard);
+            ordersEntity.setNxDoPrintStandard(printStandard);
             System.out.println("✅ [printStandard] 已设置为前端传入值: " + printStandard);
         } else {
             // 否则使用商品的标准规格名称
@@ -13041,35 +9198,35 @@ public class NxDepartmentOrdersController {
         depGoodsMap.put("disGoodsId", distributerGoodsEntity.getNxDistributerGoodsId());
         depGoodsMap.put("standard", standard);  // 使用新的规格
         System.out.println("查询部门商品参数: " + depGoodsMap);
-        
+
         NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(depGoodsMap);
         if (departmentDisGoodsEntity != null) {
             System.out.println("找到部门商品，规格: " + departmentDisGoodsEntity.getNxDdgOrderStandard());
             System.out.println("部门商品价格: " + departmentDisGoodsEntity.getNxDdgOrderPrice());
-            
+
             // 如果订单价格为null（规格变化后），或者需要更新价格，则从部门商品获取
             // 必须确保部门商品的规格(ddgOrderStandard)和订单规格(standard)一致，才能给单价赋值
             if (ordersEntity.getNxDoPrice() == null || standardChanged) {
                 String departmentStandard = departmentDisGoodsEntity.getNxDdgOrderStandard();
                 // 检查部门商品规格和订单规格是否一致
-                boolean standardMatch = (departmentStandard == null && standard == null) 
-                        || (departmentStandard != null && standard != null 
-                            && departmentStandard.trim().equals(standard.trim()));
+                boolean standardMatch = (departmentStandard == null && standard == null)
+                        || (departmentStandard != null && standard != null
+                        && departmentStandard.trim().equals(standard.trim()));
                 if (standardMatch) {
                     ordersEntity.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
                     System.out.println("✅ 部门商品规格匹配，从部门商品设置价格: " + departmentDisGoodsEntity.getNxDdgOrderPrice());
                 } else {
-                    System.out.println("⚠️ 部门商品规格不匹配，跳过价格设置。部门商品规格: [" + departmentStandard 
+                    System.out.println("⚠️ 部门商品规格不匹配，跳过价格设置。部门商品规格: [" + departmentStandard
                             + "], 订单规格: [" + standard + "]");
                 }
             }
-            
+
             // 判断是否使用了大包装单价，如果是则设置打印规格为大包装单位（支持智能匹配：件=箱）
-            boolean isUsingCartonPrice = distributerGoodsEntity.getNxDgCartonUnit() != null 
+            boolean isUsingCartonPrice = distributerGoodsEntity.getNxDgCartonUnit() != null
                     && !distributerGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
                     && standard != null
                     && isStandardMatch(standard.trim(), distributerGoodsEntity.getNxDgCartonUnit().trim());
-            
+
             if (isUsingCartonPrice) {
                 ordersEntity.setNxDoPrintStandard(distributerGoodsEntity.getNxDgCartonUnit());
                 System.out.println("使用大包装单价，打印规格设置为: " + distributerGoodsEntity.getNxDgCartonUnit());
@@ -13078,9 +9235,8 @@ public class NxDepartmentOrdersController {
             } else {
                 ordersEntity.setNxDoPrintStandard(distributerGoodsEntity.getNxDgWillPriceTwoStandard());
             }
-            
-            // 如果有重量和单价，则重新计算 subtotal（参考 saveOneOrder 的逻辑）
-            if (ordersEntity.getNxDoWeight() != null && !ordersEntity.getNxDoWeight().trim().isEmpty() 
+
+            if (ordersEntity.getNxDoWeight() != null && !ordersEntity.getNxDoWeight().trim().isEmpty()
                     && ordersEntity.getNxDoPrice() != null && !ordersEntity.getNxDoPrice().trim().isEmpty()) {
                 try {
                     BigDecimal weightBD = new BigDecimal(ordersEntity.getNxDoWeight());
@@ -13089,11 +9245,11 @@ public class NxDepartmentOrdersController {
                     ordersEntity.setNxDoSubtotal(subtotal.toString());
                     System.out.println("重新计算小计: " + weightBD + " × " + priceBD + " = " + subtotal);
                 } catch (NumberFormatException e) {
-                    System.err.println("计算subtotal失败，重量或单价格式错误: weight=" + ordersEntity.getNxDoWeight() 
+                    System.err.println("计算subtotal失败，重量或单价格式错误: weight=" + ordersEntity.getNxDoWeight()
                             + ", price=" + ordersEntity.getNxDoPrice() + ", error=" + e.getMessage());
                 }
             }
-            
+
             ordersEntity.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
             System.out.println("✅ 部门商品ID已设置: " + departmentDisGoodsEntity.getNxDepartmentDisGoodsId());
         } else {
@@ -13141,29 +9297,43 @@ public class NxDepartmentOrdersController {
     @ResponseBody
     /**
      * 删除单个订单的内部逻辑
-     * 
+     *
      * @param nxDepartmentOrdersId 订单ID
      * @return 是否删除成功
      */
     private boolean deleteOrderInternal(Integer nxDepartmentOrdersId) {
+        return deleteOrderInternal(nxDepartmentOrdersId, new HashSet<>());
+    }
+
+    private boolean deleteOrderInternal(Integer nxDepartmentOrdersId, Set<Integer> processedIds) {
+        if (processedIds.contains(nxDepartmentOrdersId)) {
+            logger.warn("[deleteOrderInternal] 检测到协作订单循环引用，跳过订单ID: {}", nxDepartmentOrdersId);
+            return true;
+        }
+        processedIds.add(nxDepartmentOrdersId);
         try {
-            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObjectNew(nxDepartmentOrdersId);
+            NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(nxDepartmentOrdersId);
             if (ordersEntity == null) {
                 logger.warn("[deleteOrderInternal] 订单不存在，订单ID: {}", nxDepartmentOrdersId);
                 return false;
             }
+            System.out.println("ordosos" + ordersEntity.getNxDepartmentOrdersId());
+            if (ordersEntity.getNxDoStatus() > 2) {
+                return false;
+            }
+
 
             // 删除训练数据
             if (ordersEntity.getNxDoTrainingDataId() != null) {
                 logger.info("[deleteOrderInternal] 删除训练数据，训练数据ID: {}", ordersEntity.getNxDoTrainingDataId());
                 NxOrderOcrTrainingDataEntity nxOrderOcrTrainingDataEntity = nxOrderOcrTrainingDataService.queryObject(ordersEntity.getNxDoTrainingDataId());
-                if(nxOrderOcrTrainingDataEntity != null){
-                    if(nxOrderOcrTrainingDataEntity.getNxOtdOrderId() == null){
+                if (nxOrderOcrTrainingDataEntity != null) {
+                    if (nxOrderOcrTrainingDataEntity.getNxOtdOrderId() == null) {
                         nxOrderOcrTrainingDataService.delete(ordersEntity.getNxDoTrainingDataId());
-                    }else{
+                    } else {
                         Integer nxOtdOrderId = nxOrderOcrTrainingDataEntity.getNxOtdOrderId();
                         logger.info("[deleteOrderInternal] 删除训练数据shcnh" + nxOtdOrderId + "grid" + nxDepartmentOrdersId);
-                        if(nxOtdOrderId.equals(nxDepartmentOrdersId)){
+                        if (nxOtdOrderId.equals(nxDepartmentOrdersId)) {
                             nxOrderOcrTrainingDataService.delete(ordersEntity.getNxDoTrainingDataId());
                         }
                     }
@@ -13171,64 +9341,44 @@ public class NxDepartmentOrdersController {
             }
 
             // 处理采购商品
+
+            System.out.println("puttuduidididii" + ordersEntity.getNxDoPurchaseGoodsId());
             if (ordersEntity.getNxDoPurchaseGoodsId() != null && ordersEntity.getNxDoPurchaseGoodsId() != -1) {
                 NxDistributerPurchaseGoodsEntity nxDistributerPurchaseGoodsEntity = nxDistributerPurchaseGoodsService.queryObject(ordersEntity.getNxDoPurchaseGoodsId());
-                if (nxDistributerPurchaseGoodsEntity != null) {
-                    Integer nxDpgOrdersAmount = nxDistributerPurchaseGoodsEntity.getNxDpgOrdersAmount();
-                    if (nxDpgOrdersAmount > 1) {
-                        nxDistributerPurchaseGoodsEntity.setNxDpgOrdersAmount(nxDpgOrdersAmount - 1);
-                        if (nxDistributerPurchaseGoodsEntity.getNxDpgStandard().equals(ordersEntity.getNxDoStandard())) {
-                            if (nxDistributerPurchaseGoodsEntity.getNxDpgBuyQuantity() != null && ordersEntity.getNxDoQuantity() != null) {
-                                BigDecimal decimal = new BigDecimal(nxDistributerPurchaseGoodsEntity.getNxDpgBuyQuantity()).subtract(new BigDecimal(ordersEntity.getNxDoQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
-                                BigDecimal multiply = decimal.multiply(new BigDecimal(nxDistributerPurchaseGoodsEntity.getNxDpgBuyPrice()));
-                                nxDistributerPurchaseGoodsEntity.setNxDpgBuySubtotal(multiply.toString());
-                                nxDistributerPurchaseGoodsEntity.setNxDpgBuyQuantity(decimal.toString());
-                                nxDistributerPurchaseGoodsEntity.setNxDpgQuantity(decimal.toString());
-                            }
-                        }
-                        nxDistributerPurchaseGoodsService.update(nxDistributerPurchaseGoodsEntity);
-                    } else {
-                        Integer nxDpgBatchId = nxDistributerPurchaseGoodsEntity.getNxDpgBatchId();
-                        List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = nxDistributerPurchaseGoodsService.queryPurchaseGoodsByBatchId(nxDpgBatchId);
-                        if (purchaseGoodsEntities.size() == 1) {
-                            nxDistributerPurchaseBatchService.delete(nxDpgBatchId);
-                        }
-                        nxDistributerPurchaseGoodsService.delete(nxDistributerPurchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
-                    }
+                System.out.println("puttuduidididiigetNxDpgOrdersAmount" + nxDistributerPurchaseGoodsEntity.getNxDpgOrdersAmount());
 
-                    // 更新同部门同状态订单的todayOrder
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("depId", ordersEntity.getNxDoDepartmentId());
-                    map.put("status", 3);
-                    map.put("todayOrder", ordersEntity.getNxDoTodayOrder());
-                    List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-                    if (ordersEntities.size() > 0) {
-                        Integer currentTodayOrder = ordersEntity.getNxDoTodayOrder() != null ? ordersEntity.getNxDoTodayOrder() : 0;
-                        for (int i = 0; i < ordersEntities.size(); i++) {
-                            NxDepartmentOrdersEntity ordersEntity1 = ordersEntities.get(i);
-                            ordersEntity1.setNxDoTodayOrder(currentTodayOrder + i);
-                            nxDepartmentOrdersService.update(ordersEntity1);
+                Integer nxDpgOrdersAmount = nxDistributerPurchaseGoodsEntity.getNxDpgOrdersAmount();
+                if (nxDpgOrdersAmount > 1) {
+                    nxDistributerPurchaseGoodsEntity.setNxDpgOrdersAmount(nxDpgOrdersAmount - 1);
+                    Integer nxDoDisGoodsId = ordersEntity.getNxDoDisGoodsId();
+                    NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
+                    if (nxDistributerPurchaseGoodsEntity.getNxDpgStandard().equals(nxDistributerGoodsEntity.getNxDgGoodsStandardname())) {
+                        if (nxDistributerPurchaseGoodsEntity.getNxDpgBuyQuantity() != null && ordersEntity.getNxDoQuantity() != null) {
+                            BigDecimal decimal = new BigDecimal(nxDistributerPurchaseGoodsEntity.getNxDpgBuyQuantity()).subtract(new BigDecimal(ordersEntity.getNxDoQuantity())).setScale(1, BigDecimal.ROUND_HALF_UP);
+                            BigDecimal multiply = decimal.multiply(new BigDecimal(nxDistributerPurchaseGoodsEntity.getNxDpgBuyPrice()));
+                            nxDistributerPurchaseGoodsEntity.setNxDpgBuySubtotal(multiply.toString());
+                            nxDistributerPurchaseGoodsEntity.setNxDpgBuyQuantity(decimal.toString());
+                            nxDistributerPurchaseGoodsEntity.setNxDpgQuantity(decimal.toString());
                         }
                     }
-                }
-            } else {
-                // 没有采购商品的情况，更新todayOrder
-                Map<String, Object> map = new HashMap<>();
-                map.put("depId", ordersEntity.getNxDoDepartmentId());
-                map.put("status", 3);
-                map.put("todayOrder", ordersEntity.getNxDoTodayOrder());
-                map.put("orderBy", "time");
-                List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
-                if (ordersEntities.size() > 0) {
-                    Integer currentTodayOrder = ordersEntity.getNxDoTodayOrder() != null ? ordersEntity.getNxDoTodayOrder() : 0;
-                    for (int i = 0; i < ordersEntities.size(); i++) {
-                        NxDepartmentOrdersEntity ordersEntity1 = ordersEntities.get(i);
-                        ordersEntity1.setNxDoTodayOrder(currentTodayOrder + i);
-                        nxDepartmentOrdersService.update(ordersEntity1);
+                    nxDistributerPurchaseGoodsService.update(nxDistributerPurchaseGoodsEntity);
+                } else {
+                    Integer nxDpgBatchId = nxDistributerPurchaseGoodsEntity.getNxDpgBatchId();
+                    List<NxDistributerPurchaseGoodsEntity> purchaseGoodsEntities = nxDistributerPurchaseGoodsService.queryPurchaseGoodsByBatchId(nxDpgBatchId);
+                    if (purchaseGoodsEntities.size() == 1) {
+                        nxDistributerPurchaseBatchService.delete(nxDpgBatchId);
                     }
+                    nxDistributerPurchaseGoodsService.delete(nxDistributerPurchaseGoodsEntity.getNxDistributerPurchaseGoodsId());
                 }
             }
 
+            //处理协作商品订单（使用 processedIds 防止循环引用导致死循环）
+            if (ordersEntity.getNxDoNxRestrauntOrderId() != null && ordersEntity.getNxDoNxRestrauntOrderId() > 0) {
+                NxDepartmentOrdersEntity xiezuoOrder = nxDepartmentOrdersService.queryObjectNew(ordersEntity.getNxDoNxRestrauntOrderId());
+                if (xiezuoOrder != null) {
+                    deleteOrderInternal(xiezuoOrder.getNxDepartmentOrdersId(), processedIds);
+                }
+            }
             // 删除订单
             nxDepartmentOrdersService.delete(nxDepartmentOrdersId);
             return true;
@@ -13238,9 +9388,25 @@ public class NxDepartmentOrdersController {
         }
     }
 
+    @RequestMapping(value = "/deleteTaskData/{taskId}")
+    @ResponseBody
+    public R deleteTaskData(@PathVariable Integer taskId) {
+
+        List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = nxDepartmentOrdersService.queryListByOcrTaskId(taskId);
+
+        for (NxDepartmentOrdersEntity ordersEntity : nxDepartmentOrdersEntities) {
+            deleteOrderInternal(ordersEntity.getNxDepartmentOrdersId());
+        }
+
+        nxOcrTaskService.delete(taskId);
+
+        return R.ok();
+    }
+
+
     /**
      * 删除单个订单
-     * 
+     *
      * @param nxDepartmentOrdersId 订单ID
      * @return 删除结果
      */
@@ -13254,9 +9420,45 @@ public class NxDepartmentOrdersController {
         }
     }
 
+    @RequestMapping("/deleteTaskOrder/{nxDepartmentOrdersId}")
+    public R deleteTaskOrder(@PathVariable Integer nxDepartmentOrdersId) {
+        NxDepartmentOrdersEntity ordersEntity = nxDepartmentOrdersService.queryObject(nxDepartmentOrdersId);
+        NxOcrTaskEntity nxOcrTaskEntity = null;
+        if (ordersEntity.getNxDoOcrTaskId() != null) {
+            nxOcrTaskEntity = nxOcrTaskService.queryObject(ordersEntity.getNxDoOcrTaskId());
+            if (nxOcrTaskEntity.getNxOcrTaskTotalOrders() == 1) {
+                nxOcrTaskService.delete(ordersEntity.getNxDoOcrTaskId());
+            } else {
+                nxOcrTaskEntity.setNxOcrTaskTotalOrders(nxOcrTaskEntity.getNxOcrTaskTotalOrders() - 1);
+                if (ordersEntity.getNxDoStatus() == -2) {
+                    nxOcrTaskEntity.setNxOcrTaskPendingOrders(nxOcrTaskEntity.getNxOcrTaskPendingOrders() - 1);
+                } else {
+                    nxOcrTaskEntity.setNxOcrTaskCompletedOrders(nxOcrTaskEntity.getNxOcrTaskCompletedOrders() - 1);
+                }
+                int newPendingOrders = nxOcrTaskEntity.getNxOcrTaskPendingOrders();
+                logger.info("[choiceGoodsForApply] OCR任务更新后 - 已完成订单: {}, 待修正订单: {}",
+                        nxOcrTaskEntity.getNxOcrTaskCompletedOrders(), newPendingOrders);
+
+                // 如果待修正订单数为0，设置任务状态为已完成（状态1）
+                if (newPendingOrders == 0) {
+                    nxOcrTaskEntity.setNxOcrTaskStatus(2);
+                }
+                nxOcrTaskService.update(nxOcrTaskEntity);
+            }
+
+        }
+        boolean success = deleteOrderInternal(nxDepartmentOrdersId);
+        if (success) {
+
+            return R.ok().put("task", nxOcrTaskEntity);
+        } else {
+            return R.error("删除订单失败，订单ID: " + nxDepartmentOrdersId);
+        }
+    }
+
     /**
      * 批量删除订单
-     * 
+     *
      * @param request 请求体，包含订单ID列表，格式：{"orderIds": [1, 2, 3, ...]}
      * @return 删除结果，包含成功和失败的统计信息
      */
@@ -13266,8 +9468,54 @@ public class NxDepartmentOrdersController {
         try {
             // 获取订单ID列表
             Object orderIdsObj = request.get("orderIds");
+            Object taskId = request.get("taskId");
             if (orderIdsObj == null) {
                 return R.error("订单ID列表不能为空");
+            }
+
+            if (taskId != null) {
+                Integer taskIdInteger = null;
+                // 将 Object 转换为 Integer
+                if (taskId instanceof Number) {
+                    taskIdInteger = ((Number) taskId).intValue();
+                } else if (taskId instanceof String) {
+                    try {
+                        taskIdInteger = Integer.parseInt((String) taskId);
+                    } catch (NumberFormatException e) {
+                        logger.warn("[deleteBatch] taskId 格式错误: {}", taskId);
+                        return R.error("任务ID格式错误");
+                    }
+                } else {
+                    try {
+                        taskIdInteger = Integer.valueOf(taskId.toString());
+                    } catch (NumberFormatException e) {
+                        logger.warn("[deleteBatch] taskId 无法转换为 Integer: {}", taskId);
+                        return R.error("任务ID格式错误");
+                    }
+                }
+
+                NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(taskIdInteger);
+                String nxOcrTaskImagePath = nxOcrTaskEntity.getNxOcrTaskImagePath();
+                if (nxOcrTaskImagePath != null && !nxOcrTaskImagePath.trim().isEmpty()) {
+                    // 将相对路径转换为绝对路径
+                    String absolutePath = getAbsoluteImagePath(nxOcrTaskImagePath);
+                    if (absolutePath != null) {
+                        File file = new File(absolutePath);
+                        if (file.exists()) {
+                            boolean deleted = file.delete();
+                            if (deleted) {
+                                logger.info("[deleteBatch] 成功删除OCR任务图片文件，任务ID: {}, 文件路径: {}", taskIdInteger, absolutePath);
+                            } else {
+                                logger.warn("[deleteBatch] 删除OCR任务图片文件失败，任务ID: {}, 文件路径: {}", taskIdInteger, absolutePath);
+                            }
+                        } else {
+                            logger.warn("[deleteBatch] OCR任务图片文件不存在，任务ID: {}, 文件路径: {}", taskIdInteger, absolutePath);
+                        }
+                    } else {
+                        logger.warn("[deleteBatch] 无法获取OCR任务图片的绝对路径，任务ID: {}, 相对路径: {}", taskIdInteger, nxOcrTaskImagePath);
+                    }
+                }
+                nxOcrTaskService.delete(taskIdInteger);
             }
 
             List<Integer> orderIds = new ArrayList<>();
@@ -13322,14 +9570,7 @@ public class NxDepartmentOrdersController {
             result.put("successIds", successIds);
             result.put("failedIds", failedIds);
             result.put("failedReasons", failedReasons);
-            return R.ok().put("data", result).put("msg", "批量删除成功");
-//            if (failedIds.isEmpty()) {
-//                return R.ok().put("data", result).put("msg", "批量删除成功");
-//            } else if (successIds.isEmpty()) {
-//                return R.error("批量删除失败").put("data", result);
-//            } else {
-//                return R.ok().put("data", result).put("msg", "部分删除成功，部分删除失败");
-//            }
+            return R.ok().put("data", result);
         } catch (Exception e) {
             logger.error("[deleteBatch] 批量删除订单异常: {}", e.getMessage(), e);
             return R.error("批量删除订单异常: " + e.getMessage());
@@ -13341,7 +9582,7 @@ public class NxDepartmentOrdersController {
     @RequestMapping("/saveCash")
     public R saveCash(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
         nxDepartmentOrders.setNxDoStatus(getNxOrderStatusNew());
-        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
         nxDepartmentOrders.setNxDoApplyFullTime(formatWhatYearDayTime(0));
         nxDepartmentOrders.setNxDoApplyOnlyTime(formatWhatTime(0));
@@ -13351,6 +9592,7 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrders.setNxDoNxCommunityId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoCollaborativeNxDisId(-1);
         nxDepartmentOrders.setNxDoPriceDifferent("0.0");
 
         Map<String, Object> map = new HashMap<>();
@@ -13361,52 +9603,19 @@ public class NxDepartmentOrdersController {
 
         Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = saveOneOrder(nxDepartmentOrders, nxDistributerGoodsEntity);
+        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
 
         nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
         return R.ok().put("data", nxDepartmentOrdersEntity);
 
     }
 
-
-
-    @ResponseBody
-    @RequestMapping("/saveCashSun")
-    public R saveCashSun(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
-        nxDepartmentOrders.setNxDoStatus(getNxOrderStatusGouwu());
-        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
-        nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
-        nxDepartmentOrders.setNxDoApplyFullTime(formatWhatYearDayTime(0));
-        nxDepartmentOrders.setNxDoApplyOnlyTime(formatWhatTime(0));
-        nxDepartmentOrders.setNxDoGbDistributerId(-1);
-        nxDepartmentOrders.setNxDoGbDepartmentFatherId(-1);
-        nxDepartmentOrders.setNxDoGbDepartmentId(-1);
-        nxDepartmentOrders.setNxDoNxCommunityId(-1);
-        nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
-        nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
-        nxDepartmentOrders.setNxDoPriceDifferent("0.0");
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("depId", nxDepartmentOrders.getNxDoDepartmentId());
-        map.put("status", 3);
-        map.put("isPurType", true);
-        int order = nxDepartmentOrdersService.queryDepOrdersAcount(map);
-        nxDepartmentOrders.setNxDoTodayOrder(order + 1);
-
-        Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
-        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = saveOneOrderCash(nxDepartmentOrders, nxDistributerGoodsEntity);
-
-        nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
-        return R.ok().put("data", nxDepartmentOrdersEntity);
-
-    }
 
     @ResponseBody
     @RequestMapping("/saveCashBefore")
     public R saveCashBefore(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
         nxDepartmentOrders.setNxDoStatus(getNxOrderStatusNew());
-        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
         //临时用 purUserid 赋值 前面 order 的 id
         Integer nxDoPurchaseUserId = nxDepartmentOrders.getNxDoPurchaseUserId();
@@ -13418,13 +9627,14 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrders.setNxDoNxCommunityId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoCollaborativeNxDisId(-1);
         nxDepartmentOrders.setNxDoPriceDifferent("0.0");
         // 获取beforOrder的todayOrder值，如果为null则使用0
         Integer beforTodayOrder = beforOrder.getNxDoTodayOrder() != null ? beforOrder.getNxDoTodayOrder() : 0;
         nxDepartmentOrders.setNxDoTodayOrder(beforTodayOrder);
         Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = saveOneOrder(nxDepartmentOrders, nxDistributerGoodsEntity);
+        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
 //
 
 
@@ -13452,6 +9662,65 @@ public class NxDepartmentOrdersController {
         return R.ok().put("data", nxDepartmentOrdersEntity);
     }
 
+    @ResponseBody
+    @RequestMapping("/saveCashBeforeTask")
+    public R saveCashBeforeTask(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
+
+
+        Integer nxDoOcrTaskId = nxDepartmentOrders.getNxDoOcrTaskId();
+        NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(nxDoOcrTaskId);
+        nxOcrTaskEntity.setNxOcrTaskTotalOrders(nxOcrTaskEntity.getNxOcrTaskTotalOrders() + 1);
+        nxOcrTaskEntity.setNxOcrTaskCompletedOrders(nxOcrTaskEntity.getNxOcrTaskCompletedOrders() + 1);
+        nxOcrTaskService.update(nxOcrTaskEntity);
+
+        nxDepartmentOrders.setNxDoStatus(getNxOrderStatusNew());
+        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
+        nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
+        //临时用 purUserid 赋值 前面 order 的 id
+        Integer nxDoPurchaseUserId = nxDepartmentOrders.getNxDoPurchaseUserId();
+        NxDepartmentOrdersEntity beforOrder = nxDepartmentOrdersService.queryObject(nxDoPurchaseUserId);
+        nxDepartmentOrders.setNxDoApplyOnlyTime(formatWhatTime(0));
+        nxDepartmentOrders.setNxDoGbDistributerId(-1);
+        nxDepartmentOrders.setNxDoGbDepartmentFatherId(-1);
+        nxDepartmentOrders.setNxDoGbDepartmentId(-1);
+        nxDepartmentOrders.setNxDoNxCommunityId(-1);
+        nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
+        nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoPriceDifferent("0.0");
+        // 获取beforOrder的todayOrder值，如果为null则使用0
+        Integer beforTodayOrder = beforOrder.getNxDoTodayOrder() != null ? beforOrder.getNxDoTodayOrder() : 0;
+        nxDepartmentOrders.setNxDoTodayOrder(beforTodayOrder);
+        Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
+        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
+        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
+//
+
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("depId", nxDepartmentOrders.getNxDoDepartmentId());
+        map.put("todayOrder", beforTodayOrder);
+        map.put("status", 3);
+        map.put("orderBy", "time");
+        System.out.println("maporodoerer" + map);
+        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+        if (ordersEntities.size() > 0) {
+            System.out.println("orooro" + ordersEntities.size());
+            for (int i = 0; i < ordersEntities.size(); i++) {
+                NxDepartmentOrdersEntity ordersEntity = ordersEntities.get(i);
+                int i1 = beforTodayOrder + i + 2;
+                ordersEntity.setNxDoTodayOrder(i1);
+                nxDepartmentOrdersService.update(ordersEntity);
+            }
+        }
+
+        beforOrder.setNxDoTodayOrder(beforTodayOrder + 1);
+        nxDepartmentOrdersService.update(beforOrder);
+
+        nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
+        return R.ok().put("data", nxDepartmentOrdersEntity)
+                .put("task", nxOcrTaskEntity);
+    }
+
 
     /**
      * ORDER,DISTRIBUTER
@@ -13463,6 +9732,7 @@ public class NxDepartmentOrdersController {
     @ResponseBody
     @RequestMapping("/save")
     public R save(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
+
         nxDepartmentOrders.setNxDoStatus(getNxOrderStatusNew());
         nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
@@ -13474,6 +9744,12 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrders.setNxDoNxCommunityId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoCollaborativeNxDisId(-1);
+
+        Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
+        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
+        // 协作伙伴商品判别与保存已统一在 saveOrderWithGoods 中处理
+
         Map<String, Object> map = new HashMap<>();
         map.put("depId", nxDepartmentOrders.getNxDoDepartmentId());
         map.put("status", 3);
@@ -13482,13 +9758,29 @@ public class NxDepartmentOrdersController {
 
         nxDepartmentOrders.setNxDoTodayOrder(order + 1);
 
-        Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
-        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = saveOneOrder(nxDepartmentOrders, nxDistributerGoodsEntity);
-        nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
+        if (nxDistributerGoodsEntity.getNxDgGoodsStandardWeight() != null) {
+            nxDepartmentOrders.setStandardWeight(nxDistributerGoodsEntity.getNxDgGoodsStandardWeight());
+        } else {
+            nxDepartmentOrders.setStandardWeight("");
+        }
+        if (nxDistributerGoodsEntity.getNxDgItemsPerCarton() != null) {
+            nxDepartmentOrders.setItemsPerCarton(nxDistributerGoodsEntity.getNxDgItemsPerCarton().toString());
+        } else {
+            nxDepartmentOrders.setItemsPerCarton("");
+        }
+        if (nxDistributerGoodsEntity.getNxDgCartonUnit() != null) {
+            nxDepartmentOrders.setCartonUnit(nxDistributerGoodsEntity.getNxDgCartonUnit());
+        } else {
+            nxDepartmentOrders.setCartonUnit("");
+        }
+
+        nxDepartmentOrders.setItemUnit(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
+
+        nxDepartmentOrders = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
+        nxDepartmentOrders.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
 
 
-        return R.ok().put("data", nxDepartmentOrdersEntity);
+        return R.ok().put("data", nxDepartmentOrders);
     }
 
     @ResponseBody
@@ -13506,6 +9798,7 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrders.setNxDoNxCommunityId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoCollaborativeNxDisId(-1);
         Map<String, Object> map = new HashMap<>();
         map.put("depId", nxDepartmentOrders.getNxDoDepartmentId());
         map.put("status", 3);
@@ -13516,7 +9809,7 @@ public class NxDepartmentOrdersController {
 
         Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = saveOneOrder(nxDepartmentOrders, nxDistributerGoodsEntity);
+        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
         nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
         return R.ok().put("data", nxDepartmentOrdersEntity);
     }
@@ -13532,7 +9825,7 @@ public class NxDepartmentOrdersController {
     @RequestMapping("/saveBefore")
     public R saveBefore(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
         nxDepartmentOrders.setNxDoStatus(getNxOrderStatusNew());
-        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
         //临时用 purUserid 赋值 前面 order 的 id
         Integer nxDoPurchaseUserId = nxDepartmentOrders.getNxDoPurchaseUserId();
@@ -13544,6 +9837,7 @@ public class NxDepartmentOrdersController {
         nxDepartmentOrders.setNxDoNxCommunityId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
         nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoCollaborativeNxDisId(-1);
         // 获取beforOrder的todayOrder值，如果为null则使用0
         Integer beforTodayOrder = beforOrder.getNxDoTodayOrder() != null ? beforOrder.getNxDoTodayOrder() : 0;
         System.out.println("befororrordidd" + beforTodayOrder);
@@ -13551,7 +9845,7 @@ public class NxDepartmentOrdersController {
 
         Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDoDisGoodsId);
-        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = saveOneOrder(nxDepartmentOrders, nxDistributerGoodsEntity);
+        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
 
 
         Map<String, Object> map = new HashMap<>();
@@ -13579,193 +9873,80 @@ public class NxDepartmentOrdersController {
         return R.ok().put("data", nxDepartmentOrdersEntity);
     }
 
-    private void savePurGoodsAuto(NxDepartmentOrdersEntity ordersEntity) {
 
-        NxDistributerPurchaseGoodsEntity resultPurGoods = new NxDistributerPurchaseGoodsEntity();
+    /**
+     * ORDER,DISTRIBUTER
+     * 添加订货申请
+     *
+     * @param nxDepartmentOrders 订货申请
+     * @return ok
+     */
+    @ResponseBody
+    @RequestMapping("/saveOrderBeforeTask")
+    public R saveOrderBeforeTask(@RequestBody NxDepartmentOrdersEntity nxDepartmentOrders) {
 
-        //判断是否有已经分的
-        Integer doDisGoodsId = ordersEntity.getNxDoDisGoodsId();
-        NxDistributerGoodsEntity disGoods = nxDistributerGoodsService.queryObject(doDisGoodsId);
+        Integer nxDoOcrTaskId = nxDepartmentOrders.getNxDoOcrTaskId();
+        NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(nxDoOcrTaskId);
+        nxOcrTaskEntity.setNxOcrTaskTotalOrders(nxOcrTaskEntity.getNxOcrTaskTotalOrders() + 1);
+        nxOcrTaskEntity.setNxOcrTaskCompletedOrders(nxOcrTaskEntity.getNxOcrTaskCompletedOrders() + 1);
+        nxOcrTaskService.update(nxOcrTaskEntity);
+
+        nxDepartmentOrders.setNxDoStatus(getNxOrderStatusNew());
+        nxDepartmentOrders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
+        nxDepartmentOrders.setNxDoApplyDate(formatWhatDay(0));
+        //临时用 purUserid 赋值 前面 order 的 id
+        Integer nxDoPurchaseUserId = nxDepartmentOrders.getNxDoPurchaseUserId();
+        NxDepartmentOrdersEntity beforOrder = nxDepartmentOrdersService.queryObject(nxDoPurchaseUserId);
+        nxDepartmentOrders.setNxDoApplyOnlyTime(formatWhatTime(0));
+        nxDepartmentOrders.setNxDoGbDistributerId(-1);
+        nxDepartmentOrders.setNxDoGbDepartmentFatherId(-1);
+        nxDepartmentOrders.setNxDoGbDepartmentId(-1);
+        nxDepartmentOrders.setNxDoNxCommunityId(-1);
+        nxDepartmentOrders.setNxDoNxCommRestrauntFatherId(-1);
+        nxDepartmentOrders.setNxDoNxCommRestrauntId(-1);
+        nxDepartmentOrders.setNxDoCollaborativeNxDisId(-1);
+        // 获取beforOrder的todayOrder值，如果为null则使用0
+        Integer beforTodayOrder = beforOrder.getNxDoTodayOrder() != null ? beforOrder.getNxDoTodayOrder() : 0;
+        System.out.println("befororrordidd" + beforTodayOrder);
+        nxDepartmentOrders.setNxDoTodayOrder(beforTodayOrder);
+
+        Integer nxDoDisGoodsId = nxDepartmentOrders.getNxDoDisGoodsId();
+        NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(nxDoDisGoodsId);
+        NxDepartmentOrdersEntity nxDepartmentOrdersEntity = nxDepartmentOrdersService.saveOrderWithGoods(nxDepartmentOrders, nxDistributerGoodsEntity);
+
+
         Map<String, Object> map = new HashMap<>();
-        map.put("disGoodsId", doDisGoodsId);
-        map.put("status", 1);
-        map.put("standard", ordersEntity.getNxDoStandard());
-        System.out.println("purgogogo" + map);
-        
-        // 使用 queryPurchaseGoodsByParams 查询列表，避免 selectOne() 返回多条记录时报错
-        List<NxDistributerPurchaseGoodsEntity> purGoodsList = nxDistributerPurchaseGoodsService.queryPurchaseGoodsByParams(map);
-        NxDistributerPurchaseGoodsEntity havePurGoods = null;
-        if (purGoodsList != null && !purGoodsList.isEmpty()) {
-            // 如果有多条记录，选择第一条（通常应该只有一条，但数据库可能有重复数据）
-            havePurGoods = purGoodsList.get(0);
-            if (purGoodsList.size() > 1) {
-                logger.warn("[savePurGoodsAuto] 查询到多条采购商品记录，商品ID={}, 规格={}, 记录数={}，使用第一条记录", 
-                        doDisGoodsId, ordersEntity.getNxDoStandard(), purGoodsList.size());
+        map.put("depId", nxDepartmentOrders.getNxDoDepartmentId());
+        map.put("todayOrder", beforTodayOrder);
+        map.put("status", 3);
+        map.put("orderBy", "time");
+        System.out.println("maporodoerer" + map);
+        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+        if (ordersEntities.size() > 0) {
+            System.out.println("orooro" + ordersEntities.size());
+            for (int i = 0; i < ordersEntities.size(); i++) {
+                NxDepartmentOrdersEntity ordersEntity = ordersEntities.get(i);
+                int i1 = beforTodayOrder + i + 2;
+                System.out.println("whisisisisisisisis====" + i1);
+                ordersEntity.setNxDoTodayOrder(i1);
+                nxDepartmentOrdersService.update(ordersEntity);
             }
         }
-        
-        if (havePurGoods != null) {
-            resultPurGoods = havePurGoods;
-            havePurGoods.setNxDpgOrdersAmount(resultPurGoods.getNxDpgOrdersAmount() + 1);
 
-            // 处理数量为空或空字符串的情况，使用默认值0
-            String orderQtyStr = ordersEntity.getNxDoQuantity();
-            if (orderQtyStr == null || orderQtyStr.trim().isEmpty()) {
-                orderQtyStr = "0";
-            }
-            String purQtyStr = resultPurGoods.getNxDpgQuantity();
-            if (purQtyStr == null || purQtyStr.trim().isEmpty()) {
-                purQtyStr = "0";
-            }
-            
-            BigDecimal orderQuantity = new BigDecimal(orderQtyStr);
-            BigDecimal purQuantity = new BigDecimal(purQtyStr);
-            BigDecimal totaoWeight = orderQuantity.add(purQuantity).setScale(1,BigDecimal.ROUND_HALF_UP);
-            resultPurGoods.setNxDpgQuantity(totaoWeight.toString());
-            System.out.println("ordsss" + ordersEntity.getNxDoSubtotal());
-            if (ordersEntity.getNxDoSubtotal() != null && !ordersEntity.getNxDoSubtotal().equals("0")) {
-                resultPurGoods.setNxDpgBuyQuantity(totaoWeight.toString());
-                BigDecimal decimal2 = totaoWeight.multiply(new BigDecimal(havePurGoods.getNxDpgBuyPrice())).setScale(1, BigDecimal.ROUND_HALF_UP);
-                resultPurGoods.setNxDpgBuySubtotal(decimal2.toString());
-            }
-            nxDistributerPurchaseGoodsService.update(resultPurGoods);
-            ordersEntity.setNxDoPurchaseGoodsId(resultPurGoods.getNxDistributerPurchaseGoodsId());
+        beforOrder.setNxDoTodayOrder(beforTodayOrder + 1);
+        nxDepartmentOrdersService.update(beforOrder);
 
+        nxDepartmentOrdersEntity.setNxDistributerGoodsEntity(nxDistributerGoodsEntity);
 
-        } else {
-            resultPurGoods.setNxDpgDisGoodsFatherId(disGoods.getNxDgDfgGoodsFatherId());
-            resultPurGoods.setNxDpgDisGoodsGrandId(disGoods.getNxDgDfgGoodsGrandId());
-            resultPurGoods.setNxDpgDistributerId(disGoods.getNxDgDistributerId());
-            resultPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
-            resultPurGoods.setNxDpgApplyDate(formatWhatYearDayTime(0));
-            resultPurGoods.setNxDpgOrdersAmount(1);
-            resultPurGoods.setNxDpgFinishAmount(0);
-            resultPurGoods.setNxDpgPurchaseType(getGbPurchaseGoodsTypeForOrder());
-
-
-            if(ordersEntity.getNxDoCostPrice() != null){
-            resultPurGoods.setNxDpgExpectPrice(ordersEntity.getNxDoCostPrice());
-            resultPurGoods.setNxDpgBuyPrice(ordersEntity.getNxDoCostPrice());
-            }else{
-                resultPurGoods.setNxDpgExpectPrice("0");
-                resultPurGoods.setNxDpgBuyPrice("0");
-            }
-
-            resultPurGoods.setNxDpgDisGoodsId(doDisGoodsId);
-            resultPurGoods.setNxDpgInputType(disGoods.getNxDgPurchaseAuto());
-            resultPurGoods.setNxDpgQuantity(ordersEntity.getNxDoQuantity());
-            resultPurGoods.setNxDpgStandard(ordersEntity.getNxDoStandard());
-            System.out.println("saveoroororiid" + ordersEntity.getNxDoCostPrice());
-            if (ordersEntity.getNxDoWeight() != null && !ordersEntity.getNxDoWeight().trim().isEmpty()
-                    && ordersEntity.getNxDoCostPrice() != null && !ordersEntity.getNxDoCostPrice().trim().isEmpty()
-            ) {
-                BigDecimal totaoWeight = new BigDecimal(ordersEntity.getNxDoQuantity());
-                BigDecimal decimal2 = totaoWeight.multiply(new BigDecimal(ordersEntity.getNxDoCostPrice())).setScale(1, BigDecimal.ROUND_HALF_UP);
-                // 采购商品数据
-                resultPurGoods.setNxDpgBuyQuantity(ordersEntity.getNxDoQuantity());
-                resultPurGoods.setNxDpgBuySubtotal(decimal2.toString());
-
-            }
-
-            nxDistributerPurchaseGoodsService.save(resultPurGoods);
-            ordersEntity.setNxDoPurchaseGoodsId(resultPurGoods.getNxDistributerPurchaseGoodsId());
-
-        }
-
-        System.out.println("updaidiididii");
-        nxDepartmentOrdersService.update(ordersEntity);
-        NxDistributerPurchaseBatchEntity batchEntity = new NxDistributerPurchaseBatchEntity();
-
-        //给autoBatch更新gbDepartmentOrderid
-        System.out.println("suplieridid" + disGoods.getNxDgGoodsName() + disGoods.getNxDgSupplierId());
-        NxJrdhSupplierEntity supplierEntity = jrdhSupplierService.queryObject(disGoods.getNxDgSupplierId());
-
-        if (disGoods.getNxDgSupplierId() != null && supplierEntity.getNxJrdhsUserId() != null && supplierEntity.getNxJrdhsUserId() != -1) {
-            //
-            Map<String, Object> mapBatch = new HashMap<>();
-            Integer gbDgGbSupplierId = disGoods.getNxDgSupplierId();
-            mapBatch.put("supplierId", gbDgGbSupplierId);
-            mapBatch.put("status", 1);
-            mapBatch.put("purchaseType", 2);
-
-            List<NxDistributerPurchaseBatchEntity> entities = nxDistributerPurchaseBatchService.queryDisPurchaseBatch(mapBatch);
-            if (entities.size() == 0) {
-                //
-                batchEntity.setNxDpbDate(formatWhatDay(0));
-                batchEntity.setNxDpbTime(formatWhatTime(0));
-                batchEntity.setNxDpbMonth(formatWhatMonth(0));
-                batchEntity.setNxDpbPruchaseWeek(getWeek(0));
-                batchEntity.setNxDpbYear(formatWhatYear(0));
-                batchEntity.setNxDpbPayFullTime(formatWhatYearDayTime(0));
-                batchEntity.setNxDpbStatus(-1);
-                batchEntity.setNxDpbPurchaseType(2);
-                batchEntity.setNxDpbSupplierId(gbDgGbSupplierId);
-                batchEntity.setNxDpbSellUserId(supplierEntity.getNxJrdhsUserId());
-                batchEntity.setNxDpbDistributerId(ordersEntity.getNxDoDistributerId());
-                batchEntity.setNxDpbPurUserId(supplierEntity.getNxJrdhsNxPurUserId());
-                batchEntity.setNxDpbBuyUserId(supplierEntity.getNxJrdhsNxJrdhBuyUserId());
-                NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryObject(supplierEntity.getNxJrdhsNxJrdhBuyUserId());
-                batchEntity.setNxDpbBuyUserOpenId(nxJrdhUserEntity.getNxJrdhWxOpenId());
-                batchEntity.setNxDpbOrderIsNotice(1);
-                LocalDateTime now = LocalDateTime.now();
-                int hour = now.getHour();
-                if( hour < 12){
-                    batchEntity.setNxDpbNeedDate(formatWhatDay(0));
-                }else{
-                    batchEntity.setNxDpbNeedDate(formatWhatDay(1));
-                }
-                nxDistributerPurchaseBatchService.save(batchEntity);
-
-                resultPurGoods.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
-                resultPurGoods.setNxDpgPurchaseDate(formatWhatDay(0));
-                resultPurGoods.setNxDpgTime(formatWhatYearDayTime(0));
-                resultPurGoods.setNxDpgDistributerId(batchEntity.getNxDpbDistributerId());
-                resultPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
-                nxDistributerPurchaseGoodsService.update(resultPurGoods);
-
-
-            } else {
-                batchEntity = entities.get(0);
-                resultPurGoods.setNxDpgStatus(getNxDisPurchaseGoodsWithBatch());
-                resultPurGoods.setNxDpgBatchId(batchEntity.getNxDistributerPurchaseBatchId());
-                nxDistributerPurchaseGoodsService.update(resultPurGoods);
-            }
-
-            Map<String, TemplateData> mapNotice = new HashMap<>();
-            mapNotice.put("thing1", new TemplateData(disGoods.getNxDgGoodsName()));
-            mapNotice.put("time6", new TemplateData(formatWhatDay(0)));
-            NxDepartmentEntity departmentEntity = nxDepartmentService.queryObject(ordersEntity.getNxDoDepartmentId());
-            mapNotice.put("thing7", new TemplateData(departmentEntity.getNxDepartmentName()));
-            mapNotice.put("thing8", new TemplateData(departmentEntity.getNxDepartmentAttrName()));
-            StringBuilder pathBuilder = new StringBuilder("pages/txs/disOrderBatch/disOrderBatch");
-            pathBuilder.append("?batchId=").append(batchEntity.getNxDistributerPurchaseBatchId());
-            pathBuilder.append("&retName=").append(nxDistributerService.queryObject(batchEntity.getNxDpbDistributerId()).getNxDistributerName());
-            pathBuilder.append("&disId=").append(batchEntity.getNxDpbDistributerId());
-            pathBuilder.append("&buyUserId=").append(batchEntity.getNxDpbBuyUserId());
-            pathBuilder.append("&purUserId=").append(batchEntity.getNxDpbPurUserId());
-            pathBuilder.append("&fromBuyer=1");
-            String path = pathBuilder.toString();
-            System.out.println("paththhththt" + path);
-
-            Integer nxJrdhsUserId = supplierEntity.getNxJrdhsUserId();
-            NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryObject(nxJrdhsUserId);
-            if (nxJrdhUserEntity != null) {
-                System.out.println("suppsleir" + path);
-                WeNoticeService.nxSupplierOrderSave(nxJrdhUserEntity.getNxJrdhWxOpenId(), path, mapNotice);
-                ordersEntity.setNxDoPurchaseStatus(getNxDisPurchaseGoodsIsPurchase());
-                ordersEntity.setNxDoPurchaseGoodsId(resultPurGoods.getNxDistributerPurchaseGoodsId());
-            }
-
-        }
-
-        nxDepartmentOrdersService.update(ordersEntity);
-
+        return R.ok().put("data", nxDepartmentOrdersEntity)
+                .put("task", nxOcrTaskEntity);
     }
 
 
     @RequestMapping(value = "/disSaveLinshiToNxGoods", method = RequestMethod.POST)
     @ResponseBody
     public R disSaveLinshiToNxGoods(Integer lsGoodsId, Integer nxGoodsId) {
+
 
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryObject(nxGoodsId);
         NxDistributerGoodsEntity linshiGoods = nxDistributerGoodsService.queryObject(lsGoodsId);
@@ -13827,7 +10008,7 @@ public class NxDepartmentOrdersController {
                 nxDepartmentOrdersService.update(ordersEntity);
 
                 if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() != -1) {
-                    savePurGoodsAuto(ordersEntity);
+                    nxDepartmentOrdersService.savePurGoodsAuto(ordersEntity, getNxPurchaseGoodsInputTypeOrder(), getNxPurchaseGoodsTypeForSelf());
                 }
             }
         }
@@ -13845,10 +10026,14 @@ public class NxDepartmentOrdersController {
                 ordersEntity.setNxDoNxGoodsFatherId(nxDgNxFatherId);
                 historyService.update(ordersEntity);
 
-                if (nxDistributerGoodsEntity.getNxDgWillPriceOne().equals("0.1")) {
-                    nxDistributerGoodsEntity.setNxDgWillPriceOne(ordersEntity.getNxDoPrice());
-                    nxDistributerGoodsService.update(nxDistributerGoodsEntity);
-                }
+
+                System.out.println("nxxx" + nxDistributerGoodsEntity.getNxDgWillPriceOne());
+
+
+//                if (!nxDistributerGoodsEntity.getNxDgWillPriceOne().equals("0.1") && !nxDistributerGoodsEntity.getNxDgWillPriceOne().trim().isEmpty()) {
+//                    nxDistributerGoodsEntity.setNxDgWillPriceOne(ordersEntity.getNxDoPrice());
+//                    nxDistributerGoodsService.update(nxDistributerGoodsEntity);
+//                }
 
             }
         }
@@ -13935,7 +10120,7 @@ public class NxDepartmentOrdersController {
         List<NxDistributerGoodsShelfStockEntity> stockList = nxDisGoodsShelfStockService.queryShelfStockListByParams(stockMap);
         if (stockList != null && !stockList.isEmpty()) {
             System.out.println("[disSaveLinshiToNxGoods] 找到库存批次 " + stockList.size() + " 个，更新商品ID从 " + lsGoodsId + " 到 " + nxGoodsId);
-            
+
             // 查询新的 nxGoodsId 是否有货架商品
             Map<String, Object> nxGoodsShelfMap = new HashMap<>();
             nxGoodsShelfMap.put("disGoodsId", nxGoodsId);
@@ -13944,22 +10129,22 @@ public class NxDepartmentOrdersController {
             if (nxGoodsShelfGoodsList != null && !nxGoodsShelfGoodsList.isEmpty()) {
                 // 优先使用货架ID=1的货架商品，如果没有则使用第一个
                 nxGoodsShelfGoods = nxGoodsShelfGoodsList.stream()
-                    .filter(sg -> sg.getNxDgsgShelfId() != null && sg.getNxDgsgShelfId() == 1)
-                    .findFirst()
-                    .orElse(nxGoodsShelfGoodsList.get(0));
+                        .filter(sg -> sg.getNxDgsgShelfId() != null && sg.getNxDgsgShelfId() == 1)
+                        .findFirst()
+                        .orElse(nxGoodsShelfGoodsList.get(0));
                 System.out.println("[disSaveLinshiToNxGoods] 新商品 " + nxGoodsId + " 有货架商品，货架商品ID: " + nxGoodsShelfGoods.getNxDistributerGoodsShelfGoodsId());
             }
-            
+
             for (NxDistributerGoodsShelfStockEntity stock : stockList) {
                 stock.setNxDgssNxDisGoodsId(nxGoodsId);
                 stock.setNxDgssNxDisGoodsFatherId(nxDgDfgGoodsFatherId);
-                
+
                 // 如果新商品有货架商品，更新库存的货架商品ID
                 if (nxGoodsShelfGoods != null && nxGoodsShelfGoods.getNxDistributerGoodsShelfGoodsId() != null) {
                     stock.setNxDgssNxShelfGoodsId(nxGoodsShelfGoods.getNxDistributerGoodsShelfGoodsId());
                     System.out.println("[disSaveLinshiToNxGoods] 更新库存批次 " + stock.getNxDistributerGoodsShelfStockId() + " 的货架商品ID为 " + nxGoodsShelfGoods.getNxDistributerGoodsShelfGoodsId());
                 }
-                
+
                 nxDisGoodsShelfStockService.update(stock);
                 System.out.println("[disSaveLinshiToNxGoods] 更新库存批次 " + stock.getNxDistributerGoodsShelfStockId() + " 的商品ID为 " + nxGoodsId);
             }
@@ -14008,22 +10193,65 @@ public class NxDepartmentOrdersController {
             }
         }
 
-        NxDistributerGoodsLinshiEntity linshiEntity = new NxDistributerGoodsLinshiEntity();
-        linshiEntity.setNxDgDistributerLsId(linshiGoods.getNxDgDistributerId());
-        linshiEntity.setNxDgGoodsLsName(linshiGoods.getNxDgGoodsName());
-        linshiEntity.setNxDgGoodsLsStandardname(linshiGoods.getNxDgGoodsStandardname());
-        linshiEntity.setNxDgDfgGoodsFatherLsId(linshiGoods.getNxDgDfgGoodsFatherId());
-        linshiEntity.setNxDgGoodsLsDetail(linshiGoods.getNxDgGoodsDetail());
-        linshiEntity.setNxDgGoodsLsStatus(-1);
-        linshiEntity.setNxDgToNxDisGoodsId(nxGoodsId);
-        linshiEntity.setNxDgApplyDate(linshiGoods.getNxDgBuyingPriceUpdate());
-        linshiEntity.setNxDgGoodsLsFile(linshiGoods.getNxDgGoodsFile());
-        linshiEntity.setNxDgGoodsLsFileLarge(linshiGoods.getNxDgGoodsFileLarge());
-        linshiService.save(linshiEntity);
+        // 若临时商品表已有该商品记录，则更新；否则新建
+        NxDistributerGoodsLinshiEntity linshiEntity = linshiService.queryLinshiByFromGoodsId(lsGoodsId);
+        if (linshiEntity != null) {
+            linshiEntity.setNxDgGoodsLsStatus(-1);
+            linshiEntity.setNxDgToNxDisGoodsId(nxGoodsId);
+            linshiService.update(linshiEntity);
+        } else {
+            linshiEntity = new NxDistributerGoodsLinshiEntity();
+            linshiEntity.setNxDgDistributerLsId(linshiGoods.getNxDgDistributerId());
+            linshiEntity.setNxDgGoodsLsName(linshiGoods.getNxDgGoodsName());
+            linshiEntity.setNxDgGoodsLsStandardname(linshiGoods.getNxDgGoodsStandardname());
+            linshiEntity.setNxDgDfgGoodsFatherLsId(linshiGoods.getNxDgDfgGoodsFatherId());
+            linshiEntity.setNxDgGoodsLsDetail(linshiGoods.getNxDgGoodsDetail());
+            linshiEntity.setNxDgGoodsLsStatus(-1);
+            linshiEntity.setNxDgToNxDisGoodsId(nxGoodsId);
+            linshiEntity.setNxDgApplyDate(linshiGoods.getNxDgBuyingPriceUpdate());
+            linshiEntity.setNxDgGoodsLsFile(linshiGoods.getNxDgGoodsFile());
+            linshiEntity.setNxDgGoodsLsFileLarge(linshiGoods.getNxDgGoodsFileLarge());
+            linshiService.save(linshiEntity);
+        }
+
+
+        //更新训练数据的goodsId
+        Map<String, Object> mapT = new HashMap<>();
+        mapT.put("disGoodsId", lsGoodsId);
+
+        List<NxOrderOcrTrainingDataEntity> nxOrderOcrTrainingDataEntities = nxOrderOcrTrainingDataService.queryTrainingDataList(mapT);
+        logger.info("[disSaveLinshiToNxGoods] 查询训练数据，lsGoodsId={}, 查询结果数量={}, nxDgNxGoodsId={}",
+                lsGoodsId, nxOrderOcrTrainingDataEntities.size(), nxDgNxGoodsId);
+
+        if (nxOrderOcrTrainingDataEntities != null && !nxOrderOcrTrainingDataEntities.isEmpty()) {
+            if (nxDgNxGoodsId == null) {
+                logger.warn("[disSaveLinshiToNxGoods] nxDgNxGoodsId 为 null，无法更新训练数据的商品ID");
+            } else {
+                for (NxOrderOcrTrainingDataEntity dataEntity : nxOrderOcrTrainingDataEntities) {
+                    Integer trainingDataId = dataEntity.getNxOtdId();
+                    if (trainingDataId == null) {
+                        logger.error("[disSaveLinshiToNxGoods] 训练数据ID为null，无法更新，跳过该条记录");
+                        continue;
+                    }
+                    Integer oldGoodsId = dataEntity.getNxOtdDisGoodsId();
+                    dataEntity.setNxOtdDisGoodsId(nxGoodsId);
+                    logger.info("[disSaveLinshiToNxGoods] 更新训练数据，训练数据ID={}, 旧商品ID={}, 新商品ID={}",
+                            trainingDataId, oldGoodsId, nxDgNxGoodsId);
+                    try {
+                        nxOrderOcrTrainingDataService.update(dataEntity);
+                        logger.info("[disSaveLinshiToNxGoods] 训练数据更新成功，训练数据ID={}", trainingDataId);
+                    } catch (Exception e) {
+                        logger.error("[disSaveLinshiToNxGoods] 训练数据更新失败，训练数据ID={}, 错误: {}", trainingDataId, e.getMessage(), e);
+                    }
+                }
+            }
+        } else {
+            logger.info("[disSaveLinshiToNxGoods] 未找到需要更新的训练数据，lsGoodsId={}", lsGoodsId);
+        }
 
         nxDistributerGoodsService.delete(lsGoodsId);
 
-        return R.ok().put("data",nxDistributerGoodsEntity);
+        return R.ok().put("data", nxDistributerGoodsEntity);
     }
 
 
@@ -14078,7 +10306,7 @@ public class NxDepartmentOrdersController {
                 }
                 nxDepartmentOrdersService.update(ordersEntity);
                 if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() != -1) {
-                    savePurGoodsAuto(ordersEntity);
+                    nxDepartmentOrdersService.savePurGoodsAuto(ordersEntity, getNxPurchaseGoodsInputTypeOrder(), getNxPurchaseGoodsTypeForSelf());
                 }
             }
         }
@@ -14198,6 +10426,39 @@ public class NxDepartmentOrdersController {
             }
         }
 
+        // 若临时商品表已有该商品记录，则更新；否则新建
+        NxDistributerGoodsLinshiEntity linshiEntity = linshiService.queryLinshiByFromGoodsId(lsGoodsId);
+        if (linshiEntity != null) {
+            linshiEntity.setNxDgGoodsLsStatus(-1);
+            linshiEntity.setNxDgToNxDisGoodsId(nxGoodsId);
+            linshiService.update(linshiEntity);
+        } else {
+            linshiEntity = new NxDistributerGoodsLinshiEntity();
+            linshiEntity.setNxDgDistributerLsId(nxDistributerGoodsEntity.getNxDgDistributerId());
+            linshiEntity.setNxDgGoodsLsName(nxDistributerGoodsEntity.getNxDgGoodsName());
+            linshiEntity.setNxDgGoodsLsStandardname(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
+            linshiEntity.setNxDgDfgGoodsFatherLsId(nxDistributerGoodsEntity.getNxDgDfgGoodsFatherId());
+            linshiEntity.setNxDgGoodsLsDetail(nxDistributerGoodsEntity.getNxDgGoodsDetail());
+            linshiEntity.setNxDgGoodsLsStatus(-1);
+            linshiEntity.setNxDgToNxDisGoodsId(nxGoodsId);
+            linshiEntity.setNxDgApplyDate(nxDistributerGoodsEntity.getNxDgBuyingPriceUpdate());
+            linshiEntity.setNxDgGoodsLsFile(nxDistributerGoodsEntity.getNxDgGoodsFile());
+            linshiEntity.setNxDgGoodsLsFileLarge(nxDistributerGoodsEntity.getNxDgGoodsFileLarge());
+            linshiService.save(linshiEntity);
+        }
+
+        //训练数据
+        Map<String, Object> mapT = new HashMap<>();
+        mapT.put("disGoodsId", lsGoodsId);
+        List<NxOrderOcrTrainingDataEntity> nxOrderOcrTrainingDataEntities = nxOrderOcrTrainingDataService.queryTrainingDataList(mapT);
+        if (nxOrderOcrTrainingDataEntities.size() > 0) {
+            for (NxOrderOcrTrainingDataEntity dataEntity : nxOrderOcrTrainingDataEntities) {
+                dataEntity.setNxOtdDisGoodsId(nxDgNxGoodsId);
+                nxOrderOcrTrainingDataService.update(dataEntity);
+            }
+        }
+
+
         nxDistributerGoodsService.delete(lsGoodsId);
 
         return R.ok();
@@ -14209,77 +10470,51 @@ public class NxDepartmentOrdersController {
      * 单价转换：1斤=0.5Kg，所以1Kg=2斤，Kg单价=斤单价×2
      * 重量转换：1斤=0.5Kg，所以Kg重量=斤重量/2
      * 转换后会更新订单规格为"Kg"，避免重复转换
+     *
      * @param order 订单实体
      * @return 是否进行了转换
      */
     private boolean convertOrderPriceToKg(NxDepartmentOrdersEntity order) {
         if (order == null) {
-            System.out.println("========= convertOrderPriceToKg 开始 =========");
-            System.out.println("❌ 订单对象为 null，无法转换");
             return false;
         }
-        
+
         System.out.println("========= convertOrderPriceToKg 开始 =========");
         System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
-        
+
         // 判断商品的规格是否为"斤"，而不是订单的规格
         NxDistributerGoodsEntity distributerGoodsEntity = order.getNxDistributerGoodsEntity();
         if (distributerGoodsEntity == null) {
-            System.out.println("❌ 商品信息为空，无法判断是否需要转换");
-            System.out.println("========= convertOrderPriceToKg 结束 =========");
             return false;
         }
-        
+
         String goodsStandard = distributerGoodsEntity.getNxDgGoodsStandardname();
-        System.out.println("商品规格(nxDgGoodsStandardname): " + goodsStandard);
-        System.out.println("判断依据: 使用商品规格(nxDgGoodsStandardname)来判断是否需要转换");
-        
+
         if (goodsStandard == null || goodsStandard.trim().isEmpty()) {
-            System.out.println("❌ 商品规格为空，无需转换");
-            System.out.println("========= convertOrderPriceToKg 结束 =========");
             return false;
         }
-        
+
         String goodsStandardTrim = goodsStandard.trim();
-        System.out.println("商品规格（去除空格后）: [" + goodsStandardTrim + "]");
-        
         // 检查商品规格是否包含"斤"（支持"斤"、"市斤"等）
         boolean goodsContainsJin = goodsStandardTrim.contains("斤");
-        System.out.println("商品规格是否包含'斤': " + goodsContainsJin);
-        
         if (!goodsContainsJin) {
-            // 商品规格不是"斤"，无需转换
-            System.out.println("✅ 商品规格不是'斤'，无需转换（商品规格: " + goodsStandardTrim + "）");
-            System.out.println("========= convertOrderPriceToKg 结束 =========");
+
             return false;
         }
-        
+
         // 检查订单规格，如果已经是"Kg"，说明已经转换过，避免重复转换
         String printStandard = order.getNxDoPrintStandard();
-        System.out.println("订单打印规格(nxDoPrintStandard): " + printStandard);
-        
         if (printStandard != null && !printStandard.trim().isEmpty()) {
             String orderStandardTrim = printStandard.trim().toLowerCase();
             boolean orderContainsKg = orderStandardTrim.contains("kg");
-            System.out.println("订单规格是否包含'Kg': " + orderContainsKg);
-            
-            if (orderContainsKg) {
-                System.out.println("✅ 订单规格已经是'Kg'，说明之前已经转换过，避免重复转换");
-                System.out.println("========= convertOrderPriceToKg 结束 =========");
-                return false;
-            }
         }
-        
-        System.out.println("✅ 商品规格是'斤'，且订单规格不是'Kg'，需要转换为'Kg'");
-        
+
         // 订单规格是"斤"，需要转换
         String price = order.getNxDoPrice();
         String weight = order.getNxDoWeight();
-        System.out.println("转换前 - 单价(nxDoPrice): " + price);
-        System.out.println("转换前 - 重量(nxDoWeight): " + weight);
-        
+
         boolean hasConversion = false;
-        
+
         // 转换单价（直接修改 nxDoPrice）
         if (price != null && !price.trim().isEmpty()) {
             try {
@@ -14287,17 +10522,12 @@ public class NxDepartmentOrdersController {
                 System.out.println("单价转换计算: " + priceDecimal + " × 2 = ?");
                 // 1斤 = 0.5Kg，所以1Kg = 2斤，Kg单价 = 斤单价 × 2
                 BigDecimal priceKg = priceDecimal.multiply(new BigDecimal("2")).setScale(1, BigDecimal.ROUND_HALF_UP);
-                System.out.println("单价转换结果: " + priceDecimal + " × 2 = " + priceKg);
                 order.setNxDoPrice(priceKg.toString());
                 hasConversion = true;
-                System.out.println("✅ 单价已转换: " + price + "元/斤 -> " + priceKg + "元/公斤");
             } catch (NumberFormatException e) {
-                System.out.println("❌ 单价格式错误，无法转换: " + price + ", 错误: " + e.getMessage());
             }
-        } else {
-            System.out.println("⚠️ 单价为空，跳过单价转换");
         }
-        
+
         // 转换重量（直接修改 nxDoWeight）
         if (weight != null && !weight.trim().isEmpty()) {
             try {
@@ -14308,30 +10538,20 @@ public class NxDepartmentOrdersController {
                 System.out.println("重量转换结果: " + weightDecimal + " ÷ 2 = " + weightKg);
                 order.setNxDoWeight(weightKg.toString());
                 hasConversion = true;
-                System.out.println("✅ 重量已转换: " + weight + "斤 -> " + weightKg + "公斤");
             } catch (NumberFormatException e) {
-                System.out.println("❌ 重量格式错误，无法转换: " + weight + ", 错误: " + e.getMessage());
             }
-        } else {
-            System.out.println("⚠️ 重量为空，跳过重量转换");
         }
-        
+
         // 如果进行了转换，更新订单规格为"Kg"，避免重复转换
         if (hasConversion) {
             // 将订单规格从"斤"改为"Kg"
-            String oldStandard = printStandard;
             String newStandard = printStandard.replace("斤", "Kg").replace("市斤", "Kg");
             order.setNxDoPrintStandard(newStandard);
-            System.out.println("✅ 订单规格已更新: [" + oldStandard + "] -> [" + newStandard + "]");
-            System.out.println("说明: 更新订单规格后，下次调用时订单规格已经是'Kg'，不会再转换，避免重复转换");
-        } else {
-            System.out.println("⚠️ 没有进行任何转换（单价和重量都为空或格式错误）");
         }
-        
-        System.out.println("========= convertOrderPriceToKg 结束 =========");
+
         return hasConversion;
     }
-    
+
     /**
      * 转换订单的斤单价和重量（直接修改 nxDoPrice 和 nxDoWeight）
      * 如果商品规格是"Kg"或"kg"，则将单价和重量转换为斤
@@ -14342,138 +10562,111 @@ public class NxDepartmentOrdersController {
      * @return 是否进行了转换
      */
     /**
-     * 将订单从公斤转换为斤（只处理商品规格是"斤"的订单）
+     * 将订单从公斤转换为斤（只处理商品规格是"Kg"的订单）
      * 修改3个字段：nxDoPrice（单价）、nxDoWeight（重量）、nxDoPrintStandard（打印规格）
      * 注意：nxDoStandard（客户订货规格）不能修改
+     * 单价转换：1Kg = 2斤，所以斤单价 = Kg单价 / 2
+     * 重量转换：1Kg = 2斤，所以斤重量 = Kg重量 × 2
      */
     private boolean convertOrderPriceToJin(NxDepartmentOrdersEntity order) {
         if (order == null) {
-            System.out.println("========= convertOrderPriceToJin 开始 =========");
-            System.out.println("❌ 订单对象为 null，无法转换");
             return false;
         }
-        
+
         System.out.println("========= convertOrderPriceToJin 开始 =========");
         System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
-        
-        // 判断商品的规格是否为"斤"
+
+        // 判断商品的规格是否为"Kg"
         NxDistributerGoodsEntity distributerGoodsEntity = order.getNxDistributerGoodsEntity();
         if (distributerGoodsEntity == null) {
-            System.out.println("❌ 商品信息为空，无法判断是否需要转换");
-            System.out.println("========= convertOrderPriceToJin 结束 =========");
+            System.out.println("❌ 商品信息为空，跳过转换");
             return false;
         }
-        
+
         String goodsStandard = distributerGoodsEntity.getNxDgGoodsStandardname();
-        System.out.println("商品规格(nxDgGoodsStandardname): " + goodsStandard);
-        System.out.println("判断依据: 只处理商品规格是'斤'的订单");
-        
         if (goodsStandard == null || goodsStandard.trim().isEmpty()) {
-            System.out.println("❌ 商品规格为空，无需转换");
-            System.out.println("========= convertOrderPriceToJin 结束 =========");
+            System.out.println("❌ 商品规格为空，跳过转换");
             return false;
         }
-        
+
         String goodsStandardTrim = goodsStandard.trim();
         System.out.println("商品规格（去除空格后）: [" + goodsStandardTrim + "]");
-        
-        // 检查商品规格是否包含"斤"
-        boolean goodsContainsJin = goodsStandardTrim.contains("斤");
-        System.out.println("商品规格是否包含'斤': " + goodsContainsJin);
-        
-        if (!goodsContainsJin) {
-            // 商品规格不是"斤"，无需转换
-            System.out.println("✅ 商品规格不是'斤'，无需转换（商品规格: " + goodsStandardTrim + "）");
-            System.out.println("========= convertOrderPriceToJin 结束 =========");
+
+        // 检查商品规格是否包含"Kg"（支持"Kg"、"kg"等）
+        String goodsStandardLower = goodsStandardTrim.toLowerCase();
+        boolean goodsContainsKg = goodsStandardLower.contains("kg");
+        if (!goodsContainsKg) {
+            System.out.println("❌ 商品规格不包含Kg，跳过转换");
             return false;
         }
-        
+
         // 检查订单打印规格，如果已经是"斤"，说明已经转换过，避免重复转换
         String printStandard = order.getNxDoPrintStandard();
-        System.out.println("订单打印规格(nxDoPrintStandard): " + printStandard);
-        System.out.println("注意: nxDoStandard（客户订货规格）不修改，值为: " + order.getNxDoStandard());
-        
         if (printStandard != null && !printStandard.trim().isEmpty()) {
             String printStandardTrim = printStandard.trim();
-            boolean printContainsJin = printStandardTrim.contains("斤");
-            System.out.println("订单打印规格是否包含'斤': " + printContainsJin);
-            
-            if (printContainsJin) {
-                System.out.println("✅ 订单打印规格已经是'斤'，说明之前已经转换过，避免重复转换");
-                System.out.println("========= convertOrderPriceToJin 结束 =========");
+            if (printStandardTrim.contains("斤")) {
+                System.out.println("❌ 订单打印规格已经是斤，已转换过，跳过");
                 return false;
             }
         }
-        
-        System.out.println("✅ 商品规格是'斤'，且订单打印规格不是'斤'，需要从公斤转换为'斤'");
-        
+
         // 从公斤转换为斤：修改 nxDoPrice、nxDoWeight、nxDoPrintStandard
         String price = order.getNxDoPrice();
         String weight = order.getNxDoWeight();
-        System.out.println("转换前 - 单价(nxDoPrice): " + price);
-        System.out.println("转换前 - 重量(nxDoWeight): " + weight);
-        
+
         boolean hasConversion = false;
-        
-        // 转换单价：从公斤单价改为斤单价（除以2，因为1Kg = 2斤）
+
+        // 转换单价（直接修改 nxDoPrice）
         if (price != null && !price.trim().isEmpty()) {
             try {
                 BigDecimal priceDecimal = new BigDecimal(price.trim());
                 System.out.println("单价转换计算: " + priceDecimal + " ÷ 2 = ?");
                 // 1Kg = 2斤，所以斤单价 = Kg单价 / 2
-                BigDecimal priceJin = priceDecimal.divide(new BigDecimal("2"), 1, BigDecimal.ROUND_HALF_UP);
+                BigDecimal priceJin = priceDecimal.divide(new BigDecimal("2"), 2, BigDecimal.ROUND_HALF_UP);
                 System.out.println("单价转换结果: " + priceDecimal + " ÷ 2 = " + priceJin);
                 order.setNxDoPrice(priceJin.toString());
                 hasConversion = true;
-                System.out.println("✅ 单价已转换: " + price + "元/公斤 -> " + priceJin + "元/斤");
             } catch (NumberFormatException e) {
-                System.out.println("❌ 单价格式错误，无法转换: " + price + ", 错误: " + e.getMessage());
+                System.out.println("❌ 单价格式错误，跳过转换: " + e.getMessage());
             }
-        } else {
-            System.out.println("⚠️ 单价为空，跳过单价转换");
         }
-        
-        // 转换重量：从公斤重量改为斤重量（乘以2，因为1Kg = 2斤）
+
+        // 转换重量（直接修改 nxDoWeight）
         if (weight != null && !weight.trim().isEmpty()) {
             try {
                 BigDecimal weightDecimal = new BigDecimal(weight.trim());
                 System.out.println("重量转换计算: " + weightDecimal + " × 2 = ?");
                 // 1Kg = 2斤，所以斤重量 = Kg重量 × 2
-                BigDecimal weightJin = weightDecimal.multiply(new BigDecimal("2")).setScale(1, BigDecimal.ROUND_HALF_UP);
+                BigDecimal weightJin = weightDecimal.multiply(new BigDecimal("2")).setScale(2, BigDecimal.ROUND_HALF_UP);
                 System.out.println("重量转换结果: " + weightDecimal + " × 2 = " + weightJin);
                 order.setNxDoWeight(weightJin.toString());
                 hasConversion = true;
-                System.out.println("✅ 重量已转换: " + weight + "公斤 -> " + weightJin + "斤");
             } catch (NumberFormatException e) {
-                System.out.println("❌ 重量格式错误，无法转换: " + weight + ", 错误: " + e.getMessage());
+                System.out.println("❌ 重量格式错误，跳过转换: " + e.getMessage());
             }
-        } else {
-            System.out.println("⚠️ 重量为空，跳过重量转换");
         }
-        
+
         // 如果进行了转换，更新订单打印规格为"斤"，避免重复转换
         if (hasConversion) {
             // 将订单打印规格从"Kg"改为"斤"
             String oldPrintStandard = printStandard != null ? printStandard : "";
             String newPrintStandard = oldPrintStandard.replaceAll("(?i)kg", "斤");
             order.setNxDoPrintStandard(newPrintStandard);
-            System.out.println("✅ 订单打印规格已更新: [" + oldPrintStandard + "] -> [" + newPrintStandard + "]");
-            System.out.println("说明: 更新订单打印规格后，下次调用时订单打印规格已经是'斤'，不会再转换，避免重复转换");
-            System.out.println("注意: nxDoStandard（客户订货规格）保持不变，值为: " + order.getNxDoStandard());
+            System.out.println("✅ 转换完成，打印规格已更新: [" + oldPrintStandard + "] -> [" + newPrintStandard + "]");
         } else {
-            System.out.println("⚠️ 没有进行任何转换（单价和重量都为空或格式错误）");
+            System.out.println("❌ 没有进行任何转换");
         }
-        
-        System.out.println("========= convertOrderPriceToJin 结束 =========");
+
         return hasConversion;
     }
-    
+
     /**
      * 批量转换订单列表的Kg单价
      * @param orders 订单列表
      */
     /**
      * 批量转换订单列表的Kg单价和重量
+     *
      * @param orders 订单列表
      * @return 被转换的订单列表（只包含真正被转换的订单）
      */
@@ -14494,9 +10687,10 @@ public class NxDepartmentOrdersController {
         System.out.println("========= 批量转换结束，实际转换数量: " + convertedCount + "/" + orders.size() + " =========");
         return convertedOrders;
     }
-    
+
     /**
      * 批量转换订单列表的斤单价和重量
+     *
      * @param orders 订单列表
      * @return 被转换的订单列表（只包含真正被转换的订单）
      */
@@ -14517,9 +10711,10 @@ public class NxDepartmentOrdersController {
         System.out.println("========= 批量转换结束，实际转换数量: " + convertedCount + "/" + orders.size() + " =========");
         return convertedOrders;
     }
-    
+
     /**
      * 批量保存订单到数据库（只保存被转换的订单）
+     *
      * @param orders 订单列表（只包含被转换的订单）
      */
     private void saveOrders(List<NxDepartmentOrdersEntity> orders) {
@@ -14531,45 +10726,112 @@ public class NxDepartmentOrdersController {
         for (NxDepartmentOrdersEntity order : orders) {
             try {
                 nxDepartmentOrdersService.update(order);
-                System.out.println("✅ 订单ID: " + order.getNxDepartmentOrdersId() + 
-                                 " 已保存到数据库");
+                System.out.println("✅ 订单ID: " + order.getNxDepartmentOrdersId() +
+                        " 已保存到数据库");
             } catch (Exception e) {
-                System.out.println("❌ 保存订单ID: " + order.getNxDepartmentOrdersId() + 
-                                 " 失败: " + e.getMessage());
+                System.out.println("❌ 保存订单ID: " + order.getNxDepartmentOrdersId() +
+                        " 失败: " + e.getMessage());
             }
         }
         System.out.println("========= 订单保存完成 =========");
     }
 
     /**
+     * 将Entity列表转换为SimpleDTO列表
+     * 用于减少数据传输量
+     */
+    private List<NxDepartmentOrdersSimpleDTO> convertEntitiesToSimpleDTOs(List<NxDepartmentOrdersEntity> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<NxDepartmentOrdersSimpleDTO> dtos = new ArrayList<>();
+        for (NxDepartmentOrdersEntity entity : entities) {
+            NxDepartmentOrdersSimpleDTO dto = convertEntityToSimpleDTO(entity);
+            dtos.add(dto);
+        }
+        return dtos;
+    }
+
+    /**
+     * 将单个Entity转换为SimpleDTO
+     */
+    private NxDepartmentOrdersSimpleDTO convertEntityToSimpleDTO(NxDepartmentOrdersEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        NxDepartmentOrdersSimpleDTO dto = new NxDepartmentOrdersSimpleDTO();
+        dto.setNxDepartmentOrdersId(entity.getNxDepartmentOrdersId());
+        dto.setNxDoGoodsName(entity.getNxDoGoodsName());
+        dto.setNxDoQuantity(entity.getNxDoQuantity());
+        dto.setNxDoStandard(entity.getNxDoStandard());
+        dto.setNxDoRemark(entity.getNxDoRemark());
+        dto.setNxDoStatus(entity.getNxDoStatus());
+        dto.setNxDoWeight(entity.getNxDoWeight());
+        dto.setNxDoPrice(entity.getNxDoPrice());
+        dto.setNxDoSubtotal(entity.getNxDoSubtotal());
+        dto.setNxDoPrintStandard(entity.getNxDoPrintStandard());
+        dto.setNxDoPurchaseStatus(entity.getNxDoPurchaseStatus());
+        dto.setNxDoDisGoodsId(entity.getNxDoDisGoodsId());
+        dto.setNxDoDepartmentId(entity.getNxDoDepartmentId());
+
+        // 转换商品信息
+        if (entity.getNxDistributerGoodsEntity() != null) {
+            NxDistributerGoodsEntity goods = entity.getNxDistributerGoodsEntity();
+            NxDepartmentOrdersSimpleDTO.DistributerGoodsSimpleDTO goodsDTO = new NxDepartmentOrdersSimpleDTO.DistributerGoodsSimpleDTO();
+            goodsDTO.setNxDistributerGoodsId(goods.getNxDistributerGoodsId());
+            goodsDTO.setNxDgGoodsName(goods.getNxDgGoodsName());
+            goodsDTO.setNxDgGoodsBrand(goods.getNxDgGoodsBrand());
+            goodsDTO.setNxDgGoodsPlace(goods.getNxDgGoodsPlace());
+            goodsDTO.setNxDgGoodsDetail(goods.getNxDgGoodsDetail());
+            goodsDTO.setNxDgGoodsStandardname(goods.getNxDgGoodsStandardname());
+            goodsDTO.setNxDgGoodsStandardWeight(goods.getNxDgGoodsStandardWeight());
+            goodsDTO.setNxDgCartonUnit(goods.getNxDgCartonUnit());
+            goodsDTO.setNxDgItemsPerCarton(goods.getNxDgItemsPerCarton());
+            goodsDTO.setNxDgNxGoodsFatherColor(goods.getNxDgNxGoodsFatherColor());
+            dto.setNxDistributerGoodsEntity(goodsDTO);
+        }
+
+        // 转换部门商品信息
+        if (entity.getNxDepartmentDisGoodsEntity() != null) {
+            NxDepartmentDisGoodsEntity depGoods = entity.getNxDepartmentDisGoodsEntity();
+            NxDepartmentOrdersSimpleDTO.DepartmentDisGoodsSimpleDTO depGoodsDTO = new NxDepartmentOrdersSimpleDTO.DepartmentDisGoodsSimpleDTO();
+            depGoodsDTO.setNxDdgOrderGoodsName(depGoods.getNxDdgOrderGoodsName());
+            dto.setNxDepartmentDisGoodsEntity(depGoodsDTO);
+        }
+
+        return dto;
+    }
+
+    /**
      * 智能匹配单位规格
      * 支持同义词匹配，例如：件=箱，盒=箱等
+     *
      * @param orderStandard 订单规格（客户输入的规格，如"件"）
-     * @param cartonUnit 大包装单位（商品的外包装单位，如"箱"）
+     * @param cartonUnit    大包装单位（商品的外包装单位，如"箱"）
      * @return 是否匹配
      */
     private boolean isStandardMatch(String orderStandard, String cartonUnit) {
         System.out.println("======== 智能匹配单位规格开始 ========");
         System.out.println("订单规格: [" + orderStandard + "]");
         System.out.println("包装单位: [" + cartonUnit + "]");
-        
+
         if (orderStandard == null || cartonUnit == null) {
             System.out.println("❌ 匹配失败: 订单规格或包装单位为null");
             return false;
         }
-        
+
         // 去除空格并转为小写进行比较
         String orderStd = orderStandard.trim();
         String carton = cartonUnit.trim();
-        
+
         System.out.println("去除空格后 - 订单规格: [" + orderStd + "], 包装单位: [" + carton + "]");
-        
+
         // 1. 完全匹配
         if (orderStd.equals(carton)) {
             System.out.println("✅ 完全匹配成功: [" + orderStd + "] == [" + carton + "]");
             return true;
         }
-        
+
         // 2. 同义词映射：定义常见的单位同义词
         // 件 = 箱（订货"件"视为大包装"箱"）
         Map<String, Set<String>> synonymMap = new HashMap<>();
@@ -14577,27 +10839,107 @@ public class NxDepartmentOrdersController {
         synonymMap.put("件", new HashSet<>(Arrays.asList("箱")));
 
         System.out.println("开始检查同义词匹配...");
-        
+
         // 3. 检查同义词匹配
         // 如果订单规格的同义词组包含包装单位，或者包装单位的同义词组包含订单规格，则认为匹配
         Set<String> orderSynonyms = synonymMap.get(orderStd);
         Set<String> cartonSynonyms = synonymMap.get(carton);
-        
+
         if (orderSynonyms != null && orderSynonyms.contains(carton)) {
             System.out.println("✅ 智能匹配成功: 订单规格[" + orderStd + "] 的同义词组包含包装单位[" + carton + "]");
             System.out.println("订单规格[" + orderStd + "] 的同义词组: " + orderSynonyms);
             return true;
         }
-        
+
         if (cartonSynonyms != null && cartonSynonyms.contains(orderStd)) {
             System.out.println("✅ 智能匹配成功: 包装单位[" + carton + "] 的同义词组包含订单规格[" + orderStd + "]");
             System.out.println("包装单位[" + carton + "] 的同义词组: " + cartonSynonyms);
             return true;
         }
-        
+
         System.out.println("❌ 匹配失败: 订单规格[" + orderStd + "] 与 包装单位[" + carton + "] 不匹配");
         System.out.println("======== 智能匹配单位规格结束 ========");
         return false;
+    }
+
+    /**
+     * 获取OCR图片的基础目录（自动适配开发和生产环境）
+     * 与 OcrController 中的 getOcrImageDirectory 方法保持一致
+     *
+     * @return OCR图片基础目录路径
+     */
+    private String getOcrImageDirectory() {
+        // 1. 尝试使用配置文件中的路径（生产环境）
+        if (externalImagesPath != null && !externalImagesPath.trim().isEmpty()) {
+            // 移除 file:// 前缀（如果存在）
+            String cleanPath = externalImagesPath.replace("file://", "").trim();
+            if (!cleanPath.endsWith("/")) {
+                cleanPath += "/";
+            }
+            String productionPath = cleanPath + "ocrImages/";
+
+            File prodDir = new File(productionPath);
+            // 检查父目录是否存在（如果父目录存在，说明可能是生产环境）
+            File parentDir = prodDir.getParentFile();
+            if (parentDir != null && parentDir.exists()) {
+                logger.info("[getOcrImageDirectory] 使用生产环境路径: {}", productionPath);
+                return productionPath;
+            }
+        }
+
+        // 2. 尝试使用项目根目录（开发环境）
+        // 获取项目根目录（通过类路径推断）
+        String projectRoot = System.getProperty("user.dir");
+        if (projectRoot != null) {
+            String devPath = projectRoot + "/ocrImages/";
+            File devDir = new File(devPath);
+            // 尝试创建目录，如果成功则使用
+            if (devDir.exists() || devDir.mkdirs()) {
+                logger.info("[getOcrImageDirectory] 使用开发环境路径: {}", devPath);
+                return devPath;
+            }
+        }
+
+        // 3. 备用方案：使用用户主目录下的临时目录
+        String userHome = System.getProperty("user.home");
+        String fallbackPath = userHome + "/nongxinle_ocrImages/";
+        logger.info("[getOcrImageDirectory] 使用备用路径: {}", fallbackPath);
+        return fallbackPath;
+    }
+
+    /**
+     * 将相对路径转换为绝对路径
+     * 数据库存储的是相对路径（如：ocrImages/20250124/xxx.jpg）
+     * 需要转换为实际保存的绝对路径
+     *
+     * @param relativePath 相对路径（如：ocrImages/20250124/xxx.jpg）
+     * @return 绝对路径，如果转换失败返回 null
+     */
+    private String getAbsoluteImagePath(String relativePath) {
+        if (relativePath == null || relativePath.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            // 移除开头的 "ocrImages/" 前缀（如果存在）
+            String pathWithoutPrefix = relativePath;
+            if (pathWithoutPrefix.startsWith("ocrImages/")) {
+                pathWithoutPrefix = pathWithoutPrefix.substring("ocrImages/".length());
+            }
+
+            // 获取基础目录
+            String baseDir = getOcrImageDirectory();
+
+            // 拼接完整路径
+            String absolutePath = baseDir + pathWithoutPrefix;
+
+            logger.debug("[getAbsoluteImagePath] 相对路径: {}, 绝对路径: {}", relativePath, absolutePath);
+            return absolutePath;
+
+        } catch (Exception e) {
+            logger.error("[getAbsoluteImagePath] 转换路径失败，相对路径: {}", relativePath, e);
+            return null;
+        }
     }
 
 }

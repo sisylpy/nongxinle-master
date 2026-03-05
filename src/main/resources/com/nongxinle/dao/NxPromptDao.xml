@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxPromptDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxPromptEntity">
+		select * from nx_prompt where nx_prompt_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxPromptEntity">
+		select * from nx_prompt 
+		<where>
+			<if test="nxPromptStatus != null">
+				and nx_prompt_status = #{nxPromptStatus}
+			</if>
+			<if test="nxPromptCategory != null and nxPromptCategory != ''">
+				and nx_prompt_category = #{nxPromptCategory}
+			</if>
+			<if test="nxPromptKey != null and nxPromptKey != ''">
+				and nx_prompt_key = #{nxPromptKey}
+			</if>
+		</where>
+		order by nx_prompt_created_time desc
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_prompt 
+		<where>
+			<if test="nxPromptStatus != null">
+				and nx_prompt_status = #{nxPromptStatus}
+			</if>
+			<if test="nxPromptCategory != null and nxPromptCategory != ''">
+				and nx_prompt_category = #{nxPromptCategory}
+			</if>
+			<if test="nxPromptKey != null and nxPromptKey != ''">
+				and nx_prompt_key = #{nxPromptKey}
+			</if>
+		</where>
+	</select>
+	 
+	<insert id="save" parameterType="com.nongxinle.entity.NxPromptEntity" useGeneratedKeys="true" keyProperty="nxPromptId">
+		insert into nx_prompt
+		(
+			`nx_prompt_key`,
+			`nx_prompt_name`,
+			`nx_prompt_content`,
+			`nx_prompt_category`,
+			`nx_prompt_api_path`,
+			`nx_prompt_version`,
+			`nx_prompt_last_updated`,
+			`nx_prompt_created_time`,
+			`nx_prompt_status`,
+			`nx_prompt_description`
+		)
+		values
+		(
+			#{nxPromptKey},
+			#{nxPromptName},
+			#{nxPromptContent},
+			#{nxPromptCategory},
+			#{nxPromptApiPath},
+			#{nxPromptVersion},
+			#{nxPromptLastUpdated},
+			#{nxPromptCreatedTime},
+			#{nxPromptStatus},
+			#{nxPromptDescription}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxPromptEntity">
+		update nx_prompt 
+		<set>
+			<if test="nxPromptKey != null">`nx_prompt_key` = #{nxPromptKey},</if>
+			<if test="nxPromptName != null">`nx_prompt_name` = #{nxPromptName},</if>
+			<if test="nxPromptContent != null">`nx_prompt_content` = #{nxPromptContent},</if>
+			<if test="nxPromptCategory != null">`nx_prompt_category` = #{nxPromptCategory},</if>
+			<if test="nxPromptApiPath != null">`nx_prompt_api_path` = #{nxPromptApiPath},</if>
+			<if test="nxPromptVersion != null">`nx_prompt_version` = #{nxPromptVersion},</if>
+			<if test="nxPromptLastUpdated != null">`nx_prompt_last_updated` = #{nxPromptLastUpdated},</if>
+			<if test="nxPromptStatus != null">`nx_prompt_status` = #{nxPromptStatus},</if>
+			<if test="nxPromptDescription != null">`nx_prompt_description` = #{nxPromptDescription}</if>
+		</set>
+		where nx_prompt_id = #{nxPromptId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_prompt where nx_prompt_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_prompt where nx_prompt_id in 
+		<foreach item="nxPromptId" collection="array" open="(" separator="," close=")">
+			#{nxPromptId}
+		</foreach>
+	</delete>
+	
+	<!-- 根据 prompt_key 查询 -->
+	<select id="queryByKey" resultType="com.nongxinle.entity.NxPromptEntity">
+		select * from nx_prompt 
+		where nx_prompt_key = #{promptKey} 
+		and nx_prompt_status = 1
+		limit 1
+	</select>
+	
+	<!-- 根据 category 查询列表 -->
+	<select id="queryListByCategory" resultType="com.nongxinle.entity.NxPromptEntity">
+		select * from nx_prompt 
+		where nx_prompt_category = #{category} 
+
+		order by nx_prompt_created_time desc
+	</select>
+	
+	<!-- 根据 api_path 查询 -->
+	<select id="queryByApiPath" resultType="com.nongxinle.entity.NxPromptEntity">
+		select * from nx_prompt 
+		where nx_prompt_api_path = #{apiPath} 
+		and nx_prompt_status = 1
+		limit 1
+	</select>
+	
+	<!-- 根据 prompt_key 查询所有记录（不限制 status，用于查找历史记录） -->
+	<select id="queryListByKey" resultType="com.nongxinle.entity.NxPromptEntity">
+		select * from nx_prompt 
+		where nx_prompt_key = #{promptKey}
+		order by nx_prompt_created_time desc
+	</select>
+	
+	<!-- 将相同 prompt_key 的所有启用状态（status=1）的记录改为禁用（status=0） -->
+	<update id="disableByKey">
+		update nx_prompt 
+		set nx_prompt_status = 0,
+			nx_prompt_last_updated = now()
+		where nx_prompt_key = #{promptKey}
+		and nx_prompt_status = 1
+	</update>
+	
+	<!-- 根据 prompt_key 删除所有记录（用于处理唯一约束冲突） -->
+	<delete id="deleteByKey">
+		delete from nx_prompt where nx_prompt_key = #{promptKey}
+	</delete>
+
+</mapper>
+

@@ -30,6 +30,11 @@
     <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
   </listener>
 
+  <!-- 应用关闭监听器：优雅关闭线程池和清理资源 -->
+  <listener>
+    <listener-class>com.nongxinle.listener.ApplicationShutdownListener</listener-class>
+  </listener>
+
 
 
   <!--允许跨域访问，如果配置了网关，可以去掉该设置。-->
@@ -92,6 +97,8 @@
     </servlet-class>
     <load-on-startup>1</load-on-startup>
     <async-supported>true</async-supported>
+    <!-- 配置异步请求超时时间：600秒（10分钟），单位：毫秒 -->
+    <async-timeout>600000</async-timeout>
   </servlet>
 
   <servlet-mapping>

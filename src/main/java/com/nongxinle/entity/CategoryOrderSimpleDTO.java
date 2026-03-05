@@ -87,5 +87,26 @@ public class CategoryOrderSimpleDTO implements Serializable {
      * 拣货详情
      */
     private String pickDetail;
+
+    /**
+     * 订单所属配送商ID
+     */
+    private Integer nxDoDistributerId;
+
+    /**
+     * 配送商名称（优先 nx_distributer_show_name）
+     */
+    private String nxDoDistributerName;
+
+    /**
+     * 协作订单标识：-1=主订单，其他=协作订单（协作伙伴配送商id）
+     */
+    private Integer nxDoCollaborativeNxDisId;
+
+    /**
+     * 协作配送商名称（协作订单时，nx_DO_collaborative_nx_dis_id 对应的配送商名称）
+     */
+    private String nxDoCollaborativeDistributerName;
+
 }
 

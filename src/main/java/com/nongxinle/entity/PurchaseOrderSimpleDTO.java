@@ -24,6 +24,26 @@ public class PurchaseOrderSimpleDTO implements Serializable {
     private Integer nxDepartmentOrdersId;
 
     /**
+     * 订单所属配送商ID
+     */
+    private Integer nxDoDistributerId;
+
+    /**
+     * 协作订单标识：-1=主订单，其他=协作订单（协作伙伴配送商id）
+     */
+    private Integer nxDoCollaborativeNxDisId;
+
+    /**
+     * 配送商名称（优先 nx_distributer_show_name）
+     */
+    private String nxDoDistributerName;
+
+    /**
+     * 协作配送商名称（协作订单时，nx_DO_collaborative_nx_dis_id 对应的配送商名称）
+     */
+    private String nxDoCollaborativeDistributerName;
+
+    /**
      * 数量
      */
     private String nxDoQuantity;
@@ -32,6 +52,8 @@ public class PurchaseOrderSimpleDTO implements Serializable {
      * 规格
      */
     private String nxDoStandard;
+    private String nxDoStatus;
+    private String nxDoPurchaseStatus;
 
     /**
      * 重量
@@ -87,5 +109,9 @@ public class PurchaseOrderSimpleDTO implements Serializable {
      * 订单标准比例（用于显示规格换算）
      */
     private String nxDoDsStandardScale;
+
+
+
+    
 }
 

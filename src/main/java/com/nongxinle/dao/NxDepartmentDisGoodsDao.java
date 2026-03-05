@@ -61,4 +61,13 @@ public interface NxDepartmentDisGoodsDao extends BaseDao<NxDepartmentDisGoodsEnt
     List<NxDepartmentDisGoodsEntity> queryDepDisGoodsOrdersForAi(Map<String, Object> map);
 
     NxDepartmentDisGoodsEntity queryDepartmentGoodsOnly(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
+
+    /**
+     * 批量查询部门商品（按配送商商品ID列表+部门，用于推荐商品填充部门订货记录）
+     * @param map depId, depFatherId, disGoodsIds
+     * @return 部门商品列表（每个disGoodsId最多一条，优先department_id匹配）
+     */
+    List<NxDepartmentDisGoodsEntity> queryByDisGoodsIdsAndDep(Map<String, Object> map);
 }

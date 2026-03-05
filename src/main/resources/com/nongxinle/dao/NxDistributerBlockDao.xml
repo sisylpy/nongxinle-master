@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerBlockDao">
+
+    <!-- 查询某配送商屏蔽的配送商 id 列表 -->
+    <select id="queryBlockedDisIdsByBlocker" resultType="java.lang.Integer">
+        select blocked_nx_distributer_id
+        from nx_distributer_block
+        where blocker_nx_distributer_id = #{blockerNxDistributerId}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerBlockEntity">
+        insert into nx_distributer_block
+        (blocker_nx_distributer_id, blocked_nx_distributer_id)
+        values (#{blockerNxDistributerId}, #{blockedNxDistributerId})
+    </insert>
+
+    <delete id="deleteByBlockerAndBlocked">
+        delete from nx_distributer_block
+        where blocker_nx_distributer_id = #{blockerNxDistributerId}
+          and blocked_nx_distributer_id = #{blockedNxDistributerId}
+    </delete>
+
+    <select id="countByBlockerAndBlocked" resultType="int">
+        select count(*) from nx_distributer_block
+        where blocker_nx_distributer_id = #{blockerNxDistributerId}
+          and blocked_nx_distributer_id = #{blockedNxDistributerId}
+    </select>
+
+    <delete id="deleteByPartnerPair">
+        delete from nx_distributer_block
+        where (blocker_nx_distributer_id = #{disId1} and blocked_nx_distributer_id = #{disId2})
+           or (blocker_nx_distributer_id = #{disId2} and blocked_nx_distributer_id = #{disId1})
+    </delete>
+
+    <select id="queryBlockerDisIdsByBlocked" resultType="java.lang.Integer">
+        select blocker_nx_distributer_id from nx_distributer_block
+        where blocked_nx_distributer_id = #{blockedNxDistributerId}
+    </select>
+
+</mapper>

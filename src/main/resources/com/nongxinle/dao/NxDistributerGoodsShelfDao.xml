@@ -223,6 +223,9 @@
 
 	<resultMap id="orderDepartment" type="NxDepartmentEntity">
 		 <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -246,7 +249,10 @@
 
 	<resultMap id="orders" type="NxDepartmentOrdersEntity">
 
-		<id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		  <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
 		<result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
 		<result property="nxDoGoodsName" column="nx_DO_goods_name"/>

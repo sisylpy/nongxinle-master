@@ -91,6 +91,7 @@ public class NxDepartmentDisGoodsEntity implements Serializable, Comparable {
 	private Integer nxDdgOrderSellerUserId;
 	private Integer nxDdgOrderBuyerUserId;
 	private Integer nxDdgNxDistributerId;
+	private Integer nxDdgGoodsNxDistributerId;
 	private Integer nxDdgGbDistributerId;
 	private NxDepartmentEntity nxDepartmentEntity;
 	private GbDepartmentEntity gbDepartmentEntity;

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerInviteDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDistributerInviteEntity">
+        select * from nx_distributer_invite where nx_distributer_invite_id = #{value}
+    </select>
+
+    <select id="queryByInviteCode" resultType="com.nongxinle.entity.NxDistributerInviteEntity">
+        select * from nx_distributer_invite where invite_code = #{inviteCode} and status = 0 limit 1
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDistributerInviteEntity">
+        select * from nx_distributer_invite
+        <where>
+            <if test="inviterNxDistributerId != null">
+                and inviter_nx_distributer_id = #{inviterNxDistributerId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="rewardStatus != null">
+                and reward_status = #{rewardStatus}
+            </if>
+        </where>
+        order by created_at DESC
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*) from nx_distributer_invite
+        <where>
+            <if test="inviterNxDistributerId != null">
+                and inviter_nx_distributer_id = #{inviterNxDistributerId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="rewardStatus != null">
+                and reward_status = #{rewardStatus}
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDistributerInviteEntity"
+            useGeneratedKeys="true" keyProperty="nxDistributerInviteId">
+        insert into nx_distributer_invite
+        (inviter_nx_distributer_id, invite_code, invitee_phone, invite_type, status, reward_status)
+        values
+        (#{inviterNxDistributerId}, #{inviteCode}, #{inviteePhone}, #{inviteType}, #{status}, #{rewardStatus})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDistributerInviteEntity">
+        update nx_distributer_invite
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="inviteeNxDistributerId != null">invitee_nx_distributer_id = #{inviteeNxDistributerId},</if>
+            <if test="registeredAt != null">registered_at = #{registeredAt},</if>
+            <if test="rewardStatus != null">reward_status = #{rewardStatus},</if>
+            <if test="rewardAmount != null">reward_amount = #{rewardAmount},</if>
+            <if test="rewardType != null">reward_type = #{rewardType}</if>
+        </set>
+        where nx_distributer_invite_id = #{nxDistributerInviteId}
+    </update>
+
+    <delete id="delete">
+        delete from nx_distributer_invite where nx_distributer_invite_id = #{value}
+    </delete>
+
+</mapper>

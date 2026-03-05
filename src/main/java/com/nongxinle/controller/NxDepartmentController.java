@@ -60,7 +60,8 @@ public class NxDepartmentController {
     private NxDepartmentOrderHistoryService historyService;
     @Autowired
     private NxDistributerGbDistributerService nxDistributerGbDistributerService;
-
+    @Autowired
+    private NxOcrTaskService nxOcrTaskService;
 
     private Map<String, Boolean> tokenStatus = new HashMap<>();
 
@@ -524,12 +525,12 @@ public class NxDepartmentController {
     }
 
 
-    /**
-     * 获取批发商客户列表
-     *
-     * @param disId 批发商id
-     * @return 客户列表
-     */
+   /**
+    * 配送商获取客户列表
+    * @param disId 配送商id
+    * @return
+    * @date 2026-01-10
+    */
     @RequestMapping(value = "/disGetAllCustomer/{disId}")
     @ResponseBody
     public R disGetAllDisDepartments(@PathVariable Integer disId) {
@@ -538,53 +539,21 @@ public class NxDepartmentController {
         map.put("disId", disId);
         map.put("type", 0);
         map.put("gbDisId", -1);
-        System.out.println("selelelelllemmama" + map);
         List<NxDepartmentEntity> entities = nxDepartmentService.queryDepartmentBySettleType(map);
         map.put("type", 1);
         List<NxDepartmentEntity> entities2 = nxDepartmentService.queryDepartmentBySettleType(map);
-//        if (entities2.size() > 0) {
-//            for (NxDepartmentEntity departmentEntity : entities2) {
-//                Integer departmentId = departmentEntity.getNxDepartmentId();
-//                Map<String, Object> mapP = new HashMap<>();
-//                mapP.put("depId", departmentId);
-//                mapP.put("today", formatWhatDay(0));
-//                List<NxDistributerPayEntity> payEntities = payService.queryDisPayListByParams(mapP);
-//                if (payEntities.size() > 0) {
-//                    NxDistributerPayEntity payEntity = payEntities.get(0);
-//                    LocalDateTime nxNdpFromTime = payEntity.getNxNdpFromTime();
-//                    // 定义格式化器
-//                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//                    // 格式化 LocalDateTime
-//                    String formattedDate = nxNdpFromTime.format(formatter);
-//                    Map<String, Object> mapR = new HashMap<>();
-//                    mapR.put("depId", departmentId);
-//                    mapR.put("startDate", formattedDate);
-//                    System.out.println("wokkk" + mapR);
-//                    Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(mapR);
-//                    departmentEntity.setNxDepartmentOrderTotal(integer);
-//                    LocalDate date = LocalDate.parse(formattedDate.trim());
-//                    long daysBetween = ChronoUnit.DAYS.between(date, LocalDate.now());
-//                    String s = String.valueOf(daysBetween);
-//                    departmentEntity.setNxDepartmentDeliveryBoxNumber(Integer.valueOf(s));
-//
-//                }
-//            }
-//        }
-
-//        System.out.println("kaknakknakaknka" + disId);
-//        List<NxCommunityEntity> nxCommunityEntities = nxDisCommunityService.queryAllNxCommunity(disId);
-
-//        System.out.println("sucmcmc" + nxCommunityEntities.size());
 
         Map<String, Object> mapData = new HashMap<>();
         mapData.put("settleTypeOne", entities);
         mapData.put("settleTypeTwo", entities2);
 
-//        mapData.put("settleTypeThree", nxCommunityEntities);
+        Map<String, Object> mapTask = new HashMap<>();
+        mapTask.put("disId", disId);
+        mapTask.put("xiaoyuStatus", 2);
+        int total = nxOcrTaskService.queryTotalByDepartmentAndStatus(mapTask);
 
-
-        return R.ok().put("data", mapData);
+        return R.ok().put("data", mapData)
+                .put("taskCount", total);
     }
 
     @RequestMapping(value = "/disGetAllCustomerWeb/{disId}")
@@ -633,10 +602,10 @@ public class NxDepartmentController {
     }
 
     /**
-     * 批发商添加客户
-     *
+     * 配送商添加客户
      * @param distributerDepartmentEntity 客户
-     * @return 0
+     * @return
+     * @date 2026-01-10
      */
     @RequestMapping(value = "/saveOneCustomer", method = RequestMethod.POST)
     @ResponseBody

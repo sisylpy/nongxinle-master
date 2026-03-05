@@ -14,7 +14,10 @@
 
 
     <resultMap id="justDepOrders" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
@@ -56,6 +59,9 @@
 
     <resultMap id="nxDep" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -94,7 +100,10 @@
     </resultMap>
 
     <resultMap id="depOrdersWithDep" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -134,7 +143,11 @@
     </resultMap>
 
     <resultMap id="depDisGoods" type="NxDepartmentDisGoodsEntity">
-         <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
+        <result property="nxDdgGoodsNxDistributerId" column="nx_DDG_goods_nx_distributer_id"/>
+        <result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
+        <result property="nxDdgGoodsNxDistributerId" column="nx_DDG_goods_nx_distributer_id"/>
         <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
 		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
 		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
@@ -257,9 +270,12 @@
         <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
         <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
         <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="nxDgDistributerName" column="nx_dg_distributer_name"/>
+        <result property="goodsNxDistributerName" column="nx_dg_distributer_name"/>
         <association property="nxGoodsEntity" resultMap="nxGoods"/>
         <association property="nxJrdhSupplierEntity" resultMap="jrdhSupplier"/>
         <association property="nxDistributerFatherGoodsEntity" resultMap="disFatherGoods"/>
+        <association property="departmentDisGoodsEntity" resultMap="depDisGoods"/>
         <collection property="nxDistributerStandardEntities" resultMap="disStandards"/>
         <collection property="nxDistributerAliasEntities" resultMap="disAlias"/>
         <collection property="nxDistributerGoodsShelfGoodsEntities" resultMap="shelfGoodsList"/>
@@ -329,6 +345,7 @@
         <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
         <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
         <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+        <result property="goodsNxDistributerName" column="goods_nx_distributer_name"/>
         <association property="nxGoodsEntity" resultMap="nxGoods"/>
          <association property="nxDepartmentOrdersEntity" resultMap="depOrdersWithDep"/>
         <association property="departmentDisGoodsEntity" resultMap="depDisGoods"/>
@@ -382,6 +399,7 @@
 
         <resultMap id="disGoodsWithSupplier" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
@@ -445,8 +463,10 @@
         <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
         <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
         <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
+            <result property="goodsNxDistributerName" column="nx_dg_distributer_name"/>
             <association property="nxGoodsEntity" resultMap="nxGoods"/>
          <association property="nxJrdhSupplierEntity" resultMap="jrdhSupplier"/>
+        <association property="nxDistributerFatherGoodsEntity" resultMap="greatGrand" columnPrefix="great_grand_"/>
         <collection property="nxDistributerStandardEntities" resultMap="disStandards"/>
         <collection property="nxDistributerAliasEntities" resultMap="disAlias"/>
             <collection property="nxDistributerGoodsShelfGoodsEntities" resultMap="shelfGoodsList"/>
@@ -508,7 +528,16 @@
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id =
         ndg.nx_dg_dfg_goods_grand_id
         <where>
-            <if test="disId != null">
+            <if test="disIds != null and disIds.size() > 0">
+                and nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="notNxDisId != null">
+                AND nx_dg_distributer_id != #{notNxDisId}
+            </if>
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
                 and nx_dg_distributer_id = #{disId}
             </if>
             <if test="goodsType != null">
@@ -545,14 +574,22 @@
             <if test="grandId != null">
                 and ndg.nx_dg_dfg_goods_grand_id = #{grandId}
             </if>
-            <if test="greatGrandId != null">
-                and ndfg.nx_dfg_fathers_father_id = #{greatGrandId}
+            <if test="greatFatherId != null">
+
+                AND ndfg.nx_dfg_fathers_father_id = #{greatFatherId}
             </if>
             <if test="hasCartonUnit != null and hasCartonUnit == 1">
                 and ndg.nx_dg_carton_unit IS NOT NULL AND TRIM(ndg.nx_dg_carton_unit) != ''
             </if>
             <if test="hasCartonUnit != null and hasCartonUnit == 0">
                 and (ndg.nx_dg_carton_unit IS NULL OR TRIM(ndg.nx_dg_carton_unit) = '')
+            </if>
+
+            <if test="hasPerCarton != null and hasPerCarton == 1">
+                AND nx_dg_items_per_carton IS NOT NULL AND TRIM(nx_dg_items_per_carton) != ''
+            </if>
+            <if test="hasPerCarton != null and hasPerCarton == 0">
+                AND (nx_dg_items_per_carton IS NULL OR TRIM(nx_dg_items_per_carton) = '')
             </if>
             <if test="hasTraceReport != null and hasTraceReport == 1">
                 and ndg.nx_dg_trace_report_id IS NOT NULL
@@ -796,7 +833,6 @@
     <resultMap id="linshiGoodsWithOrders" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
-
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
@@ -1083,19 +1119,20 @@
 		<result property="nxGoodsCartonUnit" column="nx_goods_carton_unit"/>
 		<result property="nxGoodsQuantityDays" column="nx_goods_quantity_days"/>
         <result property="nxGoodsIsHidden" column="nx_goods_is_hidden"/>
+        <result property="nxGoodsSort" column="nx_goods_sort"/>
         <result property="nxGoodsSonsSort" column="nx_goods_sons_sort"/>
-        <result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
-        <result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
-        <result property="nxGoodsLevel" column="nx_goods_level"/>
-        <result property="nxGoodsName" column="nx_goods_name"/>
-        <result property="nxGoodsDetail" column="nx_goods_detail"/>
-        <result property="nxGoodsFile" column="nx_goods_file"/>
-        <result property="nxGoodsFileBig" column="nx_goods_file_big"/>
-        <result property="nxGoodsStandardname" column="nx_goods_standardname"/>
-        <result property="nxGoodsFatherId" column="nx_goods_father_id"/>
-        <result property="nxGoodsStandardAmount" column="nx_goods_standard_amount"/>
-        <result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
-        <result property="nxGoodsPy" column="nx_goods_py"/>
+		<result property="nxGoodsGrandId" column="nx_goods_grand_id"/>
+		<result property="nxGoodsIsOldestSon" column="nx_goods_is_oldest_son"/>
+		<result property="nxGoodsLevel" column="nx_goods_level"/>
+		<result property="nxGoodsName" column="nx_goods_name"/>
+		<result property="nxGoodsDetail" column="nx_goods_detail"/>
+		<result property="nxGoodsFile" column="nx_goods_file"/>
+		<result property="nxGoodsFileBig" column="nx_goods_file_big"/>
+		<result property="nxGoodsStandardname" column="nx_goods_standardname"/>
+		<result property="nxGoodsFatherId" column="nx_goods_father_id"/>
+		<result property="nxGoodsStandardAmount" column="nx_goods_standard_amount"/>
+		<result property="nxGoodsPinyin" column="nx_goods_pinyin"/>
+		<result property="nxGoodsPy" column="nx_goods_py"/>
     </resultMap>
 
 
@@ -1188,7 +1225,6 @@
     <select id="queryNxDisGrandGoodsWithGbGoodsByGreatId" resultMap="grandWithGoodsListAndGbGoods">
         select *
         from nx_distributer_father_goods as grand
-
                  left join nx_distributer_goods as ndg
                            on ndg.nx_dg_dfg_goods_grand_id = grand.nx_distributer_father_goods_id
                                and ndg.nx_dg_goods_is_hidden = 0
@@ -1218,8 +1254,10 @@
         SELECT ndg.nx_distributer_goods_id
         FROM nx_distributer_goods AS ndg
         LEFT JOIN nx_distributer_father_goods AS ndfg ON ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+        LEFT JOIN nx_distributer_father_goods AS great_grand ON great_grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         LEFT JOIN nx_goods AS ng_sub ON ng_sub.nx_goods_id = ndg.nx_dg_nx_goods_id
         LEFT JOIN nx_goods AS ng_father_sub ON ng_father_sub.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great_grand_sub ON ng_great_grand_sub.nx_goods_id = great_grand.nx_dfg_nx_goods_id
         LEFT JOIN nx_department_dis_goods AS nddg ON nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
         AND nddg.nx_DDG_department_id = #{nxDepId}
         LEFT JOIN nx_department_orders AS ndo ON ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id
@@ -1242,13 +1280,19 @@
                 AND ndg.nx_dg_purchase_auto = #{goodsType}
             </if>
         </where>
-        ORDER BY COALESCE(ng_father_sub.nx_goods_sort, ndfg.nx_dfg_father_goods_sort), COALESCE(ng_sub.nx_goods_sort, ndg.nx_dg_goods_sort), COALESCE(ng_sub.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
+        ORDER BY
+        COALESCE(ng_great_grand_sub.nx_goods_sort, great_grand.nx_dfg_father_goods_sort),
+        COALESCE(ng_father_sub.nx_goods_sort, ndfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_sub.nx_goods_sort, ndg.nx_dg_goods_sort),
+        COALESCE(ng_sub.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
         LIMIT #{offset}, #{limit}
         ) AS limited_goods
         JOIN nx_distributer_goods AS ndg ON ndg.nx_distributer_goods_id = limited_goods.nx_distributer_goods_id
         LEFT JOIN nx_distributer_father_goods AS ndfg ON ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+        LEFT JOIN nx_distributer_father_goods AS great_grand ON great_grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         LEFT JOIN nx_goods AS ng ON ng.nx_goods_id = ndg.nx_dg_nx_goods_id
         LEFT JOIN nx_goods AS ng_father ON ng_father.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great_grand ON ng_great_grand.nx_goods_id = great_grand.nx_dfg_nx_goods_id
         LEFT JOIN nx_department_dis_goods AS nddg ON nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
         AND nddg.nx_DDG_department_id = #{nxDepId}
         LEFT JOIN nx_department_orders AS ndo ON ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id
@@ -1256,9 +1300,78 @@
         LEFT JOIN nx_distributer_standard AS nds ON nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
         LEFT JOIN nx_distributer_alias AS nda ON nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
         LEFT JOIN nx_distributer_goods_shelf_goods AS ndgsg ON ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
-        LEFT JOIN nx_distributer_goods_shelf AS ndgs ON ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id;
+        LEFT JOIN nx_distributer_goods_shelf AS ndgs ON ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        <!-- 保持与子查询相同的排序逻辑：爷爷排序、父类排序、商品排序 -->
+        ORDER BY
+        COALESCE(ng_great_grand.nx_goods_sort, great_grand.nx_dfg_father_goods_sort),
+        COALESCE(ng_father.nx_goods_sort, ndfg.nx_dfg_father_goods_sort),
+        COALESCE(ng.nx_goods_sort, ndg.nx_dg_goods_sort),
+        COALESCE(ng.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort),
+        ndg.nx_distributer_goods_id;
 
     </select>
+
+
+<!--    <select id="queryNxDepDisGrandGoodsByGreatId" resultMap="disGoodsWithBusiness">-->
+<!--        SELECT ndg.*,-->
+<!--        ndfg.*,-->
+<!--        nddg.*,-->
+<!--        ndo.*,-->
+<!--        nds.*,-->
+<!--        nda.*,-->
+<!--        ndgsg.nx_distributer_goods_shelf_goods_id,-->
+<!--        ndgsg.nx_DGSG_shelf_sort,-->
+<!--        ndgsg.nx_DGSG_dis_goods_id,-->
+<!--        ndgsg.nx_DGSG_shelf_id,-->
+<!--        ndgsg.nx_DGSG_sort,-->
+<!--        ndgsg.nx_DGSG_shelf_layer,-->
+<!--        ndgsg.nx_DGSG_is_duplicate,-->
+<!--        ndgs.nx_distributer_goods_shelf_name as shelf_name-->
+<!--        FROM (-->
+<!--        SELECT ndg.nx_distributer_goods_id-->
+<!--        FROM nx_distributer_goods AS ndg-->
+<!--        LEFT JOIN nx_distributer_father_goods AS ndfg ON ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id-->
+<!--        LEFT JOIN nx_goods AS ng_sub ON ng_sub.nx_goods_id = ndg.nx_dg_nx_goods_id-->
+<!--        LEFT JOIN nx_goods AS ng_father_sub ON ng_father_sub.nx_goods_id = ndfg.nx_dfg_nx_goods_id-->
+<!--        LEFT JOIN nx_department_dis_goods AS nddg ON nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        AND nddg.nx_DDG_department_id = #{nxDepId}-->
+<!--        LEFT JOIN nx_department_orders AS ndo ON ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        AND ndo.nx_DO_purchase_status &lt; 5 AND ndo.nx_DO_department_id = #{nxDepId}-->
+<!--        <where>-->
+
+<!--            <if test="grandId != null">-->
+<!--                AND ndfg.nx_dfg_fathers_father_id = #{grandId}-->
+<!--            </if>-->
+<!--            <if test="isHidden != null">-->
+<!--                AND ndg.nx_dg_goods_is_hidden = #{isHidden}-->
+<!--            </if>-->
+<!--            <if test="notLinshi != null and notLinshi == 1">-->
+<!--                AND ndg.nx_dg_dfg_goods_father_id IS NOT NULL-->
+<!--            </if>-->
+<!--            <if test="notLinshi != null and notLinshi == -1">-->
+<!--                AND ndg.nx_dg_dfg_goods_father_id IS NULL-->
+<!--            </if>-->
+<!--            <if test="goodsType != null">-->
+<!--                AND ndg.nx_dg_purchase_auto = #{goodsType}-->
+<!--            </if>-->
+<!--        </where>-->
+<!--        ORDER BY COALESCE(ng_father_sub.nx_goods_sort, ndfg.nx_dfg_father_goods_sort), COALESCE(ng_sub.nx_goods_sort, ndg.nx_dg_goods_sort), COALESCE(ng_sub.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)-->
+<!--        LIMIT #{offset}, #{limit}-->
+<!--        ) AS limited_goods-->
+<!--        JOIN nx_distributer_goods AS ndg ON ndg.nx_distributer_goods_id = limited_goods.nx_distributer_goods_id-->
+<!--        LEFT JOIN nx_distributer_father_goods AS ndfg ON ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id-->
+<!--        LEFT JOIN nx_goods AS ng ON ng.nx_goods_id = ndg.nx_dg_nx_goods_id-->
+<!--        LEFT JOIN nx_goods AS ng_father ON ng_father.nx_goods_id = ndfg.nx_dfg_nx_goods_id-->
+<!--        LEFT JOIN nx_department_dis_goods AS nddg ON nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        AND nddg.nx_DDG_department_id = #{nxDepId}-->
+<!--        LEFT JOIN nx_department_orders AS ndo ON ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        AND ndo.nx_DO_purchase_status &lt; 5 AND ndo.nx_DO_department_id = #{nxDepId}-->
+<!--        LEFT JOIN nx_distributer_standard AS nds ON nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        LEFT JOIN nx_distributer_alias AS nda ON nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        LEFT JOIN nx_distributer_goods_shelf_goods AS ndgsg ON ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id-->
+<!--        LEFT JOIN nx_distributer_goods_shelf AS ndgs ON ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id;-->
+
+<!--    </select>-->
 
     <!-- 首衡项目：查询商品列表（包含库存批次信息） -->
     <resultMap id="disGoodsWithBusinessSunHola" type="NxDistributerGoodsEntity">
@@ -1418,10 +1531,14 @@
 
     <select id="queryDisGoodsDetail" resultMap="disGoodsWithStandards">
         select dg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                ng.*,
                ds.*,
                da.*,
                njs.*,
+               nd_dis.nx_distributer_id,
+               nd_dis.nx_distributer_show_name,
+               nd_dis.nx_distributer_name,
                sell_user.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
@@ -1432,6 +1549,7 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
+            left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
             left join nx_goods as ng on ng.nx_goods_id = dg.nx_dg_nx_goods_id
                  left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
@@ -1445,6 +1563,7 @@
 
     <select id="queryDisGoodsQuickSearchStr" resultMap="disGoodsWithStandards">
         select dg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                ds.*,
                da.*,
                ndfg.*,
@@ -1460,6 +1579,7 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
+                 left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
                  left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_father_goods as ndfg
@@ -1548,8 +1668,10 @@
     </select>
     <select id="queryDisGoodsByNamePinyin" resultMap="disGoodsWithStandards">
         select ndg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                nds.*,
                nda.*,
+               nddg.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
                ndgsg.nx_DGSG_dis_goods_id,
@@ -1557,14 +1679,24 @@
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
                ndgsg.nx_DGSG_is_duplicate,
-               ndgs.nx_distributer_goods_shelf_name as shelf_name
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+               ndg.nx_dg_distributer_id as nx_dg_distributer_id
         from nx_distributer_goods as ndg
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_standard as nds on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = #{depId}
         left join nx_distributer_alias as nda on nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
         <where>
-            <if test="disId != null">
+            <if test="disIds != null and disIds.size() > 0">
+                and nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
                 and nx_dg_distributer_id = #{disId}
             </if>
             <if test="searchPinyin != null">
@@ -1583,10 +1715,15 @@
                 and nx_dg_nx_goods_id is not null
             </if>
         </where>
+        <if test="disId != null">
+            order by CASE WHEN ndg.nx_dg_distributer_id = #{disId} THEN 0 ELSE 1 END, ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort
+        </if>
     </select>
 
     <select id="queryDisGoodsByName" resultMap="disGoodsWithStandards">
         select ndg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
+               nddg.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
                ndgsg.nx_DGSG_dis_goods_id,
@@ -1596,11 +1733,20 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = #{depId}
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
 
         <where>
-            <if test="disId != null">
+            <if test="disIds != null and disIds.size() > 0">
+                and nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
                 and nx_dg_distributer_id = #{disId}
             </if>
             <if test="searchStr != null and searchStr != ''">
@@ -1720,6 +1866,7 @@
 
     <select id="queryDisGoodsQuickSearchStrByFatherId" resultMap="disGoodsWithStandards">
         select dg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                ds.*,
                da.*,
                ndfg.*,
@@ -1732,6 +1879,7 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
+                 left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
                  left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_father_goods as ndfg
@@ -1755,6 +1903,7 @@
     <select id="queryDisPurGoodsQuickSearchStr" resultMap="disGoodsWithStandards">
         select ndpg.*,
                dg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                nda.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
@@ -1766,6 +1915,7 @@
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_purchase_goods as ndpg
                  left join nx_distributer_goods as dg on ndpg.nx_DPG_dis_goods_id = dg.nx_distributer_goods_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
         left join nx_distributer_alias as nda on nda.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = dg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
@@ -1809,9 +1959,12 @@
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
                ndgsg.nx_DGSG_is_duplicate,
-               ndgs.nx_distributer_goods_shelf_name as shelf_name
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
+
         from nx_distributer_goods as dg
-                 left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
+        LEFT JOIN nx_distributer AS nd_dis ON nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
+        left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_department_orders as dor on dor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
                  and dor.nx_DO_purchase_status &lt; 5 and dor.nx_DO_department_id = #{depId}
@@ -1824,15 +1977,28 @@
                  left join nx_goods as ng_gg on ng_gg.nx_goods_id = gg.nx_dfg_nx_goods_id
                  left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = dg.nx_distributer_goods_id
             and nddg.nx_DDG_department_id = #{depId}
+            <if test="disId != null">
+                and nddg.nx_DDG_nx_distributer_id = #{disId}
+            </if>
                  left join nx_department_user as du on du.nx_department_user_id = dor.nx_DO_order_user_id
                  left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
         where (nx_dg_goods_name like concat('%', #{searchStr}, '%')
             or nx_dg_goods_brand like concat('%', #{searchStr}, '%')
             or da.nx_da_alias_name like concat('%', #{searchStr}, '%')
+            or nx_dg_goods_pinyin = #{searchPinyin}
+            or nx_dg_goods_py = #{searchPinyin}
             )
-          and
-              nx_dg_distributer_id = #{disId} and dg.nx_dg_goods_is_hidden = 0
+          and dg.nx_dg_goods_is_hidden = 0
+            <if test="disIds != null and disIds.size() > 0">
+              and dg.nx_dg_distributer_id in
+              <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                  #{id}
+              </foreach>
+            </if>
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
+              and dg.nx_dg_distributer_id = #{disId}
+            </if>
         order by 
             CASE WHEN nx_dg_goods_name = #{searchStr} THEN 0 ELSE 1 END,
             COALESCE(ng_gg.nx_goods_sort, gg.nx_dfg_father_goods_sort), 
@@ -1842,12 +2008,80 @@
             COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
     </select>
 
+    <!-- 以部门商品表为主表查询，返回格式与 queryDisGoodsQuickSearchStrWithDepOrders 一致 -->
+    <select id="queryDepDisGoodsQuickSearchStrWithDepOrders" resultMap="disGoodsWithBusiness">
+        select dg.*,
+               ds.*,
+               da.*,
+               dor.*,
+               f.*,
+               g.*,
+               gg.*,
+               ddg.*,
+               du.*,
+               ndgsg.nx_distributer_goods_shelf_goods_id,
+               ndgsg.nx_DGSG_shelf_sort,
+               ndgsg.nx_DGSG_dis_goods_id,
+               ndgsg.nx_DGSG_shelf_id,
+               ndgsg.nx_DGSG_sort,
+               ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_is_duplicate,
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
+        from nx_department_dis_goods as ddg
+        inner join nx_distributer_goods as dg on dg.nx_distributer_goods_id = ddg.nx_DDG_dis_goods_id
+        LEFT JOIN nx_distributer AS nd_dis ON nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
+        left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
+        left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
+        left join nx_department_orders as dor on dor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+            and dor.nx_DO_purchase_status &lt; 5 and dor.nx_DO_department_id = #{depId}
+        left join nx_distributer_father_goods as f on f.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
+        left join nx_distributer_father_goods as g on g.nx_distributer_father_goods_id = f.nx_dfg_fathers_father_id
+        left join nx_distributer_father_goods as gg on gg.nx_distributer_father_goods_id = g.nx_dfg_fathers_father_id
+        left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
+        left join nx_goods as ng_f on ng_f.nx_goods_id = f.nx_dfg_nx_goods_id
+        left join nx_goods as ng_g on ng_g.nx_goods_id = g.nx_dfg_nx_goods_id
+        left join nx_goods as ng_gg on ng_gg.nx_goods_id = gg.nx_dfg_nx_goods_id
+        left join nx_department_user as du on du.nx_department_user_id = dor.nx_DO_order_user_id
+        left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = dg.nx_distributer_goods_id
+        left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        <where>
+            dg.nx_dg_goods_is_hidden = 0
+            <if test="disGoodsId != null">
+                and ddg.nx_DDG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="gbDepId != null">
+                and ddg.nx_DDG_gb_department_id = #{gbDepId}
+            </if>
+            <if test="disId != null">
+                and ddg.nx_DDG_nx_distributer_id = #{disId}
+            </if>
+            <if test="depId != null">
+                and ddg.nx_DDG_department_id = #{depId}
+            </if>
+            <if test="name != null">
+                and ddg.nx_DDG_order_goods_name = #{name}
+            </if>
+            <if test="standard != null">
+                and ddg.nx_DDG_order_standard = #{standard}
+            </if>
+        </where>
+
+        order by
+            COALESCE(ng_gg.nx_goods_sort, gg.nx_dfg_father_goods_sort),
+            COALESCE(ng_g.nx_goods_sort, g.nx_dfg_father_goods_sort),
+            COALESCE(ng_f.nx_goods_sort, f.nx_dfg_father_goods_sort),
+            COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort),
+            COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
+    </select>
+
 
     <select id="queryDisGoodsByParams" resultMap="disGoodsWithBusiness">
         <!-- ① 先分页拿到本次要显示的商品主键列表 -->
         SELECT
         ndg.*,
         ng.*,
+        nddg.*,
         ndgsg.nx_distributer_goods_shelf_goods_id,
         ndgsg.nx_DGSG_shelf_sort,
         ndgsg.nx_DGSG_dis_goods_id,
@@ -1886,6 +2120,12 @@
             <if test="goodsId != null">
                 and ndg.nx_dg_nx_goods_id = #{goodsId}
             </if>
+            <if test="goodsIds != null and goodsIds.size() > 0">
+                and ndg.nx_dg_nx_goods_id in
+                <foreach collection="goodsIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
             <if test="dgFatherId != null">
                 and ndg.nx_dg_dfg_goods_father_id = #{dgFatherId}
             </if>
@@ -1916,6 +2156,12 @@
             <if test="hasCartonUnit != null and hasCartonUnit == 0">
                 and (ndg.nx_dg_carton_unit IS NULL OR TRIM(ndg.nx_dg_carton_unit) = '')
             </if>
+            <if test="hasPerCarton != null and hasPerCarton == 1">
+                AND nx_dg_items_per_carton IS NOT NULL AND TRIM(nx_dg_items_per_carton) != ''
+            </if>
+            <if test="hasPerCarton != null and hasPerCarton == 0">
+                AND (nx_dg_items_per_carton IS NULL OR TRIM(nx_dg_items_per_carton) = '')
+            </if>
             <if test="hasTraceReport != null and hasTraceReport == 1">
                 and ndg.nx_dg_trace_report_id IS NOT NULL
             </if>
@@ -1930,6 +2176,8 @@
         ) AS page
         
         JOIN nx_distributer_goods AS ndg ON ndg.nx_distributer_goods_id = page.nx_distributer_goods_id
+        LEFT JOIN nx_department_dis_goods AS nddg ON nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        AND nddg.nx_DDG_department_id = #{nxDepId}
         LEFT JOIN nx_goods AS ng ON ng.nx_goods_id = ndg.nx_dg_nx_goods_id
         LEFT JOIN nx_distributer_goods_shelf_goods AS ndgsg ON ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         LEFT JOIN nx_distributer_goods_shelf AS ndgs ON ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
@@ -1986,29 +2234,52 @@
 
 
     <select id="querySupplierGoodsByGreatId" resultMap="disGoodsWithSupplier">
-        <!-- ① 先分页拿到本次要显示的商品主键列表 -->
+        <!-- ① 先分页拿到本次要显示的商品主键列表；用子查询取配送商名，避免 JOIN 顺序/collection 影响 -->
         SELECT
+        (SELECT COALESCE(d.nx_distributer_show_name, d.nx_distributer_name) FROM nx_distributer d WHERE d.nx_distributer_id = ndg.nx_dg_distributer_id LIMIT 1) as nx_dg_distributer_name,
         ndg.*,
         njs.*,
         nju.*,
         nds.*,
         nda.*,
         ndfg.*,
+        ndfg_great_grand.nx_distributer_father_goods_id as great_grand_nx_distributer_father_goods_id,
+        ndfg_great_grand.nx_dfg_father_goods_name as great_grand_nx_dfg_father_goods_name,
+        ndfg_great_grand.nx_dfg_father_goods_sort as great_grand_nx_dfg_father_goods_sort,
         ng.*,
+        COALESCE(ng_great_grand.nx_goods_sort, ndfg_great_grand.nx_dfg_father_goods_sort) as calculated_great_grand_sort,
+        COALESCE(ng_father.nx_goods_sort, ndfg.nx_dfg_father_goods_sort) as calculated_father_sort,
         ndgsg.*,
         ndgs.nx_distributer_goods_shelf_name as shelf_name
         FROM
         (   <!-- 这个子查询只关心筛选、排序、分页 -->
         SELECT
         ndg.nx_distributer_goods_id
-        FROM nx_distributer_goods            AS ndg
-        LEFT JOIN nx_distributer_father_goods AS ndfg
-        ON ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+        FROM nx_distributer_goods  AS ndg
+        LEFT JOIN nx_distributer_father_goods AS father
+        ON father.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_father_id
+        LEFT JOIN nx_distributer_father_goods AS grand
+        ON grand.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+
         LEFT JOIN nx_goods AS ng_sub ON ng_sub.nx_goods_id = ndg.nx_dg_nx_goods_id
-        LEFT JOIN nx_goods AS ng_father_sub ON ng_father_sub.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_father_sub ON ng_father_sub.nx_goods_id = father.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_grand_sub ON ng_grand_sub.nx_goods_id = grand.nx_dfg_nx_goods_id
         <where>
             <if test="grandId != null">
-                AND ndfg.nx_dfg_fathers_father_id = #{grandId}
+                AND grand.nx_dfg_fathers_father_id = #{grandId}
+            </if>
+            <if test="disIds != null and disIds.size() > 0">
+                AND ndg.nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
+                AND ndg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="notNxDisId != null">
+                AND nx_dg_distributer_id != #{notNxDisId}
             </if>
             <if test="isHidden != null">
                 AND ndg.nx_dg_goods_is_hidden   = #{isHidden}
@@ -2025,6 +2296,12 @@
             <if test="hasCartonUnit != null and hasCartonUnit == 0">
                 AND (ndg.nx_dg_carton_unit IS NULL OR TRIM(ndg.nx_dg_carton_unit) = '')
             </if>
+            <if test="hasPerCarton != null and hasPerCarton == 1">
+                AND nx_dg_items_per_carton IS NOT NULL AND TRIM(nx_dg_items_per_carton) != ''
+            </if>
+            <if test="hasPerCarton != null and hasPerCarton == 0">
+                AND (nx_dg_items_per_carton IS NULL OR TRIM(nx_dg_items_per_carton) = '')
+            </if>
             <if test="hasTraceReport != null and hasTraceReport == 1">
                 AND ndg.nx_dg_trace_report_id IS NOT NULL
             </if>
@@ -2033,27 +2310,33 @@
             </if>
         </where>
         ORDER BY
-        COALESCE(ng_father_sub.nx_goods_sort, ndfg.nx_dfg_father_goods_sort),
+        COALESCE(ng_grand_sub.nx_goods_sort, grand.nx_dfg_father_goods_sort),
+        COALESCE(ng_father_sub.nx_goods_sort, father.nx_dfg_father_goods_sort),
         COALESCE(ng_sub.nx_goods_sort, ndg.nx_dg_goods_sort),
         COALESCE(ng_sub.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
         LIMIT #{offset}, #{limit}
         ) AS page
 
         JOIN nx_distributer_goods           AS ndg  ON ndg.nx_distributer_goods_id = page.nx_distributer_goods_id
+        LEFT JOIN nx_distributer AS nd_dis ON nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
         LEFT JOIN nx_goods AS ng on ng.nx_goods_id = ndg.nx_dg_nx_goods_id
             LEFT JOIN nx_jrdh_supplier           AS njs  ON ndg.nx_dg_supplier_id       = njs.nx_jrdh_supplier_id
         LEFT JOIN nx_jrdh_user               AS nju  ON nju.nx_jrdh_user_id         = njs.nx_jrdhs_user_id
         LEFT JOIN nx_distributer_standard    AS nds  ON nds.nx_DS_dis_goods_id      = ndg.nx_distributer_goods_id
         LEFT JOIN nx_distributer_alias       AS nda  ON nda.nx_DA_dis_goods_id      = ndg.nx_distributer_goods_id
         LEFT JOIN nx_distributer_father_goods AS ndfg ON ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+        LEFT JOIN nx_distributer_father_goods AS ndfg_great_grand ON ndfg_great_grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         LEFT JOIN nx_goods AS ng_father ON ng_father.nx_goods_id = ndfg.nx_dfg_nx_goods_id
+        LEFT JOIN nx_goods AS ng_great_grand ON ng_great_grand.nx_goods_id = ndfg_great_grand.nx_dfg_nx_goods_id
         LEFT JOIN nx_distributer_goods_shelf_goods AS ndgsg ON ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         LEFT JOIN nx_distributer_goods_shelf AS ndgs ON ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
-
+        <!-- 保持与子查询相同的排序逻辑：爷爷排序、父类排序、商品排序 -->
         ORDER BY
+        COALESCE(ng_great_grand.nx_goods_sort, ndfg_great_grand.nx_dfg_father_goods_sort),
         COALESCE(ng_father.nx_goods_sort, ndfg.nx_dfg_father_goods_sort),
         COALESCE(ng.nx_goods_sort, ndg.nx_dg_goods_sort),
-        COALESCE(ng.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort)
+        COALESCE(ng.nx_goods_sons_sort, ndg.nx_dg_goods_sons_sort),
+        ndg.nx_distributer_goods_id
     </select>
 
 <!--    <select id="querySupplierGoodsByGreatId" resultMap="disGoodsWithSupplier">-->
@@ -2150,7 +2433,8 @@
         where nx_dg_nx_goods_id is null
     </select>
     <select id="querySupplierGoodsByFatherId" resultMap="disGoodsWithSupplier">
-        select ndg.*,
+        select (SELECT COALESCE(d.nx_distributer_show_name, d.nx_distributer_name) FROM nx_distributer d WHERE d.nx_distributer_id = ndg.nx_dg_distributer_id LIMIT 1) as dg_distributer_display_name,
+               ndg.*,
                njs.*,
                nju.*,
                nds.*,
@@ -2164,6 +2448,7 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
+                 left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
                  left join nx_jrdh_supplier as njs on ndg.nx_dg_supplier_id = njs.nx_jrdh_supplier_id
                  left join nx_jrdh_user as nju on nju.nx_jrdh_user_id= njs.nx_jrdhs_user_id
                  left join nx_distributer_standard as nds on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
@@ -2190,6 +2475,12 @@
            </if>
            <if test="hasCartonUnit != null and hasCartonUnit == 0">
                and (ndg.nx_dg_carton_unit IS NULL OR TRIM(ndg.nx_dg_carton_unit) = '')
+           </if>
+           <if test="hasPerCarton != null and hasPerCarton == 1">
+               AND nx_dg_items_per_carton IS NOT NULL AND TRIM(nx_dg_items_per_carton) != ''
+           </if>
+           <if test="hasPerCarton != null and hasPerCarton == 0">
+               AND (nx_dg_items_per_carton IS NULL OR TRIM(nx_dg_items_per_carton) = '')
            </if>
            <if test="hasTraceReport != null and hasTraceReport == 1">
                and ndg.nx_dg_trace_report_id IS NOT NULL
@@ -2264,8 +2555,10 @@
 
     <select id="queryDisGoodsByAlias" resultMap="disGoodsWithStandards">
         select ndg.*,
+               COALESCE(nd.nx_distributer_show_name, nd.nx_distributer_name) as nx_dg_distributer_name,
                nds.*,
                nda.*,
+               nddg.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
                ndgsg.nx_DGSG_dis_goods_id,
@@ -2273,15 +2566,29 @@
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
                ndgsg.nx_DGSG_is_duplicate,
-               ndgs.nx_distributer_goods_shelf_name as shelf_name
+               nd.nx_distributer_id,
+               nd.nx_distributer_name,
+               nd.nx_distributer_show_name,
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+               ndg.nx_dg_distributer_id as nx_dg_distributer_id
         from nx_distributer_goods as ndg
+        left join nx_distributer as nd on nd.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_standard as nds on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = #{depId}
         left join nx_distributer_alias as nda on nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
         <where>
-            <if test="disId != null">
-                and nx_dg_distributer_id = #{disId}
+            <if test="disIds != null and disIds.size() > 0">
+                AND ndg.nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
+                AND ndg.nx_dg_distributer_id = #{disId}
             </if>
             <if test="alias != null">
                 and nda.nx_DA_alias_name = #{alias}
@@ -2293,10 +2600,14 @@
                 and nx_dg_goods_standardname = #{standard}
             </if>
         </where>
+        <if test="disId != null">
+            order by CASE WHEN ndg.nx_dg_distributer_id = #{disId} THEN 0 ELSE 1 END, ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort
+        </if>
     </select>
 
     <select id="queryDisGoodsDetailWithLinshi" resultMap="disGoodsWithStandards">
         select dg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                ds.*,
                da.*,
                njs.*,
@@ -2310,6 +2621,7 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
+                 left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
                  left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_jrdh_supplier as njs on njs.nx_jrdh_supplier_id = dg.nx_dg_supplier_id
@@ -2846,6 +3158,7 @@
 
     <select id="queryDisLinshiGoodsQuickSearchStr" resultMap="disGoodsWithStandards">
         select dg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                ds.*,
                da.*,
                ndfg.*,
@@ -2861,6 +3174,7 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
+                 left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
                  left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = dg.nx_distributer_goods_id
                  left join nx_distributer_father_goods as ndfg
@@ -2919,7 +3233,7 @@
         <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
         <result property="nxDistributerType" column="nx_distributer_type"/>
         <result property="nxDistributerName" column="nx_distributer_name"/>
-	<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+	    <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
         <result property="nxDistributerImg" column="nx_distributer_img"/>
         <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
         <collection property="nxGoodsEntities" resultMap="disGoodsWithStandards"/>
@@ -3048,8 +3362,10 @@
 
     <select id="queryDisGoodsByLikeName" resultMap="disGoodsWithStandards">
         select ndg.*,
+               COALESCE(nd.nx_distributer_show_name, nd.nx_distributer_name) as nx_dg_distributer_name,
                nds.*,
                nda.*,
+               nddg.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
                ndgsg.nx_DGSG_dis_goods_id,
@@ -3057,20 +3373,32 @@
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
                ndgsg.nx_DGSG_is_duplicate,
-               ndgs.nx_distributer_goods_shelf_name as shelf_name
+               nd.nx_distributer_id,
+               nd.nx_distributer_name,
+               nd.nx_distributer_show_name,
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+               ndg.nx_dg_distributer_id as nx_dg_distributer_id
         from nx_distributer_goods as ndg
          left join nx_department_orders as ndo on ndo.nx_DO_department_id = #{depId}
          and ndg.nx_distributer_goods_id = ndo.nx_DO_dis_goods_id and ndo.nx_DO_status &lt; 3
          left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
          and nddg.nx_DDG_department_id = #{depId}
+        left join nx_distributer as nd on nd.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_standard as nds on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_alias as nda on nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
 
         <where>
-            <if test="disId != null">
-                and nx_dg_distributer_id = #{disId}
+            <if test="disIds != null and disIds.size() > 0">
+                AND ndg.nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
+                AND ndg.nx_dg_distributer_id = #{disId}
             </if>
             <if test="searchStr != null">
                 AND nx_dg_goods_name like   CONCAT('%', #{searchStr}, '%')
@@ -3085,6 +3413,9 @@
             </if>
 
         </where>
+        <if test="disId != null">
+            order by CASE WHEN ndg.nx_dg_distributer_id = #{disId} THEN 0 ELSE 1 END, ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort
+        </if>
     </select>
 
     <select id="querySameGoodsWithOrders" resultMap="disGoodsWithBusiness">
@@ -3130,8 +3461,10 @@
 
     <select id="queryDisGoodsByNameLikePinyin" resultMap="disGoodsWithStandards">
         select ndg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                nds.*,
                nda.*,
+               nddg.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
                ndgsg.nx_DGSG_dis_goods_id,
@@ -3141,12 +3474,22 @@
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = #{depId}
         left join nx_distributer_standard as nds on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_alias as nda on nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
         <where>
-            <if test="disId != null">
+
+            <if test="disIds != null and disIds.size() > 0">
+                and nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
                 and nx_dg_distributer_id = #{disId}
             </if>
             <if test="searchPinyin != null">
@@ -3162,8 +3505,10 @@
     </select>
     <select id="queryDisGoodsByAliasLike" resultMap="disGoodsWithStandards">
         select ndg.*,
+               COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_dg_distributer_name,
                nds.*,
                nda.*,
+               nddg.*,
                ndgsg.nx_distributer_goods_shelf_goods_id,
                ndgsg.nx_DGSG_shelf_sort,
                ndgsg.nx_DGSG_dis_goods_id,
@@ -3171,14 +3516,24 @@
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
                ndgsg.nx_DGSG_is_duplicate,
-               ndgs.nx_distributer_goods_shelf_name as shelf_name
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+               ndg.nx_dg_distributer_id as nx_dg_distributer_id
         from nx_distributer_goods as ndg
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_standard as nds on nds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = #{depId}
         left join nx_distributer_alias as nda on nda.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
         <where>
-            <if test="disId != null">
+            <if test="disIds != null and disIds.size() > 0">
+                and nx_dg_distributer_id in
+                <foreach collection="disIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="(disIds == null or disIds.size() == 0) and disId != null">
                 and nx_dg_distributer_id = #{disId}
             </if>
             <if test="searchPinyin != null">
@@ -3192,6 +3547,9 @@
                 and nx_dg_goods_standardname = #{standard}
             </if>
         </where>
+        <if test="disId != null">
+            order by CASE WHEN ndg.nx_dg_distributer_id = #{disId} THEN 0 ELSE 1 END, ndg.nx_dg_goods_sort, ndg.nx_dg_goods_sons_sort
+        </if>
     </select>
 
     <select id="queryOnlyDepGoodsIds" resultType="java.lang.Integer">

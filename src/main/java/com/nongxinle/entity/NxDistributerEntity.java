@@ -91,7 +91,7 @@ public class NxDistributerEntity implements Serializable , Comparable{
 
 	private NxDistributerUserEntity nxDistributerUserEntity;
 
-
+	private Map<String, Object> itemData;
 	private List<NxDistributerUserEntity> nxDistributerUserEntities;
 	private List<NxCommunityGoodsEntity> nxCommunityGoodsEntities;
 	private List<GbDistributerGoodsEntity> gbDistributerGoodsEntities;
@@ -127,6 +127,7 @@ public class NxDistributerEntity implements Serializable , Comparable{
 	private List<GbDistributerPurchaseBatchEntity> gbDistributerPurchaseBatchEntities;
 	private List<GbDepartmentBillEntity> gbDepartmentBillEntities;
 	private Map<String,Object> aaa;
+
 
 
 	@Override

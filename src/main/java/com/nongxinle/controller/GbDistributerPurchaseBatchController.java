@@ -4870,7 +4870,7 @@ public class GbDistributerPurchaseBatchController {
         ordersEntity.setNxDoDisGoodsGrandId(nxDistributerGoodsEntity.getNxDgDfgGoodsGrandId());
         ordersEntity.setNxDoDepDisGoodsId(-1);
         ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
         ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
@@ -5297,8 +5297,6 @@ public class GbDistributerPurchaseBatchController {
             NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryObject(nxJrdhsUserId);
             System.out.println("suppsleir" + path);
             WeNoticeService.nxSupplierOrderSave(nxJrdhUserEntity.getNxJrdhWxOpenId(), path, mapNotice);
-
-            ordersEntity.setNxDoPurchaseStatus(getNxDisPurchaseGoodsIsPurchase());
         }
 
         ordersEntity.setNxDoPurchaseGoodsId(resultPurGoods.getNxDistributerPurchaseGoodsId());

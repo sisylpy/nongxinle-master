@@ -569,8 +569,7 @@ public class NxDepartmentBillController {
 
         map.put("status", 3);
 //        map.put("equalPurStatus", 4);
-        map.put("disId", nxDepartmentBill.getNxDbDisId());
-
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
         System.out.println("nxoroossoss" + map);
 
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
@@ -640,8 +639,9 @@ public class NxDepartmentBillController {
                 disGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                 disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
                 disGoodsEntity.setNxDdgGbDistributerId(orders.getNxDoGbDistributerId());
-                if (orders.getNxDoGoodsName() != null) {
-                    disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
+                if (orders.getNxDoGoodsOriginalName() != null) {
+                    disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                 }
                 disGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                 nxDepartmentDisGoodsService.save(disGoodsEntity);
@@ -761,7 +761,7 @@ public class NxDepartmentBillController {
 
         map.put("status", 3);
 //        map.put("equalPurStatus", 4);
-        map.put("disId", nxDepartmentBill.getNxDbDisId());
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
 
         System.out.println("nxoroossoss" + map);
 
@@ -818,6 +818,7 @@ public class NxDepartmentBillController {
                 disGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                 disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
                 disGoodsEntity.setNxDdgGbDistributerId(orders.getNxDoGbDistributerId());
+                disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
                 if (orders.getNxDoGoodsName() != null) {
                     disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
                 }
@@ -833,8 +834,8 @@ public class NxDepartmentBillController {
                 departmentDisGoodsEntity.setNxDdgOrderRemark(orders.getNxDoRemark());
                 departmentDisGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                 departmentDisGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
-                if (orders.getNxDoGoodsName() != null) {
-                    departmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                if (orders.getNxDoGoodsOriginalName() != null) {
+                    departmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                 }
                 departmentDisGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                 nxDepartmentDisGoodsService.update(departmentDisGoodsEntity);
@@ -1464,6 +1465,7 @@ public class NxDepartmentBillController {
         }
     }
 
+
     private void updatePhoneBillData(NxDepartmentBillEntity nxDepartmentBill) {
 
         System.out.println("savesonnsuusbsilllnwnewenewwnwnennwnwn" + nxDepartmentBill);
@@ -1471,6 +1473,7 @@ public class NxDepartmentBillController {
         BigDecimal billProfit = new BigDecimal(0);
 
         Map<String, Object> map = new HashMap<>();
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
         map.put("depFatherId", nxDepartmentBill.getNxDbDepFatherId());
         if (!nxDepartmentBill.getNxDbDepFatherId().equals(nxDepartmentBill.getNxDbDepId())) {
             map.put("depId", nxDepartmentBill.getNxDbDepId());
@@ -1483,13 +1486,12 @@ public class NxDepartmentBillController {
             billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
 
             Map<String, Object> mapDG = new HashMap<>();
+            mapDG.put("disId", orders.getNxDoDistributerId());
             mapDG.put("disGoodsId", orders.getNxDoDisGoodsId());
             mapDG.put("depId", orders.getNxDoDepartmentId());
             System.out.println("dedigodo" + mapDG);
             NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(mapDG);
             NxDistributerGoodsEntity nxDistributerGoodsEntity = dgService.queryObject(orders.getNxDoDisGoodsId());
-
-            String nxDgGoodsName = nxDistributerGoodsEntity.getNxDgGoodsName();
 
             //1，配送商自己的客户
             if (nxDepartmentDisGoodsEntity != null) {
@@ -1499,9 +1501,10 @@ public class NxDepartmentBillController {
                 nxDepartmentDisGoodsEntity.setNxDdgOrderQuantity(orders.getNxDoQuantity());
                 nxDepartmentDisGoodsEntity.setNxDdgOrderRemark(orders.getNxDoRemark());
                 nxDepartmentDisGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
+                nxDepartmentDisGoodsEntity.setNxDdgDepGoodsName(orders.getNxDoGoodsName());
                 nxDepartmentDisGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
-                if (orders.getNxDoGoodsName() != null) {
-                    nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                if (orders.getNxDoGoodsOriginalName() != null) {
+                    nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                 }
 
                 nxDepartmentDisGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
@@ -1510,7 +1513,7 @@ public class NxDepartmentBillController {
             } else {
                 System.out.println("new Depdiiddid");
                 NxDepartmentDisGoodsEntity disGoodsEntity = new NxDepartmentDisGoodsEntity();
-                disGoodsEntity.setNxDdgDepGoodsName(nxDgGoodsName);
+                disGoodsEntity.setNxDdgDepGoodsName(orders.getNxDoGoodsName());
                 disGoodsEntity.setNxDdgDisGoodsId(orders.getNxDoDisGoodsId());
                 disGoodsEntity.setNxDdgDisGoodsFatherId(nxDistributerGoodsEntity.getNxDgDfgGoodsFatherId());
                 disGoodsEntity.setNxDdgDisGoodsGrandId(nxDistributerGoodsEntity.getNxDgDfgGoodsGrandId());
@@ -1533,9 +1536,10 @@ public class NxDepartmentBillController {
                 disGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                 disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
                 disGoodsEntity.setNxDdgGbDistributerId(orders.getNxDoGbDistributerId());
+                disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
 
-                if (orders.getNxDoGoodsName() != null) {
-                    disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                if (orders.getNxDoGoodsOriginalName() != null) {
+                    disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                 }
                 disGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                 nxDepartmentDisGoodsService.save(disGoodsEntity);
@@ -1990,6 +1994,7 @@ public class NxDepartmentBillController {
             map.put("depId", depId);
         }
         map.put("status", 3);
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
         Double aDouble = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
         nxDepartmentBill.setNxDbTotal(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
         nxDepartmentBill.setNxDbStatus(0);
@@ -2037,8 +2042,8 @@ public class NxDepartmentBillController {
                     nxDepartmentDisGoodsEntity.setNxDdgOrderRemark(orders.getNxDoRemark());
                     nxDepartmentDisGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                     nxDepartmentDisGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
-                    if (orders.getNxDoGoodsName() != null) {
-                        nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                    if (orders.getNxDoGoodsOriginalName() != null) {
+                        nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                     }
                     nxDepartmentDisGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                     nxDepartmentDisGoodsService.update(nxDepartmentDisGoodsEntity);
@@ -2070,9 +2075,10 @@ public class NxDepartmentBillController {
                     disGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                     disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
                     disGoodsEntity.setNxDdgGbDistributerId(orders.getNxDoGbDistributerId());
+                    disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
 
-                    if (orders.getNxDoGoodsName() != null) {
-                        disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                    if (orders.getNxDoGoodsOriginalName() != null) {
+                        disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                     }
                     disGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                     nxDepartmentDisGoodsService.save(disGoodsEntity);
@@ -2220,6 +2226,7 @@ public class NxDepartmentBillController {
             map.put("depId", depId);
         }
         map.put("status", 3);
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
         Double aDouble = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
         nxDepartmentBill.setNxDbTotal(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
         nxDepartmentBill.setNxDbStatus(0);
@@ -2267,8 +2274,8 @@ public class NxDepartmentBillController {
                     nxDepartmentDisGoodsEntity.setNxDdgOrderRemark(orders.getNxDoRemark());
                     nxDepartmentDisGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                     nxDepartmentDisGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
-                    if (orders.getNxDoGoodsName() != null) {
-                        nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                    if (orders.getNxDoGoodsOriginalName() != null) {
+                        nxDepartmentDisGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                     }
                     nxDepartmentDisGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                     nxDepartmentDisGoodsService.update(nxDepartmentDisGoodsEntity);
@@ -2300,9 +2307,10 @@ public class NxDepartmentBillController {
                     disGoodsEntity.setNxDdgOrderStandard(orders.getNxDoStandard());
                     disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
                     disGoodsEntity.setNxDdgGbDistributerId(orders.getNxDoGbDistributerId());
+                    disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
 
-                    if (orders.getNxDoGoodsName() != null) {
-                        disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsName());
+                    if (orders.getNxDoGoodsOriginalName() != null) {
+                        disGoodsEntity.setNxDdgOrderGoodsName(orders.getNxDoGoodsOriginalName());
                     }
                     disGoodsEntity.setNxDdgOrderPriceLevel(orders.getNxDoCostPriceLevel());
                     nxDepartmentDisGoodsService.save(disGoodsEntity);
@@ -2796,6 +2804,7 @@ public class NxDepartmentBillController {
                 System.out.println("fnirsunoreder" + orderQueryMap);
                 orderQueryMap.put("depFatherId", billEntity.getNxDbDepFatherId());
                 orderQueryMap.put("equalStatus", -1);
+                orderQueryMap.put("orderDisId", billEntity.getNxDbDisId());
                 List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(orderQueryMap);
                 if(nxDepartmentOrdersEntities.size() > 0){
                     for(NxDepartmentOrdersEntity ordersEntity: nxDepartmentOrdersEntities){
@@ -3000,6 +3009,7 @@ public class NxDepartmentBillController {
         Map<String, Object> mapO = new HashMap<>();
         mapO.put("depId", depId);
         mapO.put("status", 3);
+        mapO.put("orderDisId", billEntity.getNxDbDisId());
         System.out.println("mapoooo" + mapO);
         List<NxDepartmentOrdersEntity> ordersEntities1 = nxDepartmentOrdersService.queryDisOrdersByParams(mapO);
         if (ordersEntities1.size() > 0) {
@@ -3053,6 +3063,7 @@ public class NxDepartmentBillController {
         Map<String, Object> mapO = new HashMap<>();
         mapO.put("depId", depId);
         mapO.put("status", 3);
+        mapO.put("orderDisId", billEntity.getNxDbDisId());
         List<NxDepartmentOrdersEntity> ordersEntities1 = nxDepartmentOrdersService.queryDisOrdersByParams(mapO);
         if (ordersEntities1.size() > 0) {
             return R.error(-1, "删除账单的订单将和现有订单混在一起");
@@ -3163,7 +3174,7 @@ public class NxDepartmentBillController {
             Map<String, Object> map = new HashMap<>();
             map.put("billId", bill.getNxDepartmentBillId());
             map.put("depId", bill.getNxDbDepFatherId());
-            map.put("disId", bill.getNxDbDisId());
+            map.put("orderDisId", bill.getNxDbDisId());
             List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
             if (ordersEntities.size() > 0) {
                 for (NxDepartmentOrdersEntity ordersEntity : ordersEntities) {
@@ -3493,10 +3504,8 @@ public class NxDepartmentBillController {
         NxDepartmentBillEntity salesBill = nxDepartmentBillService.querySalesBillApplys(billId);
 
         Map<String, Object> map = new HashMap<>();
-//        map.put("gbDepFatherId", depFatherId);
         map.put("billId", billId);
         System.out.println("mappabdiidididi" + map);
-//        List<NxDepartmentOrderHistoryEntity> ordersEntities = historyService.queryDisHistoryOrdersByParams(map);
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
 
         if (salesBill.getNxDbGbDepId().equals(salesBill.getNxDbGbDepFatherId())) {
@@ -3510,7 +3519,6 @@ public class NxDepartmentBillController {
                     Map<String, Object> map1 = new HashMap<>();
                     map1.put("billId", billId);
                     map1.put("gbDepId", dep.getGbDepartmentId());
-
                     System.out.println("mapp111111" + map1);
                     List<NxDepartmentOrdersEntity> depOrders = nxDepartmentOrdersService.queryDisOrdersByParams(map1);
                     mapDep.put("depOrders", depOrders);
@@ -3988,8 +3996,9 @@ public class NxDepartmentBillController {
             disGoodsEntity.setNxDdgOrderStandard(nxDepartmentOrders.getNxDoStandard());
             disGoodsEntity.setNxDdgOrderDate(formatWhatDay(0));
             disGoodsEntity.setNxDdgGbDistributerId(nxDepartmentOrders.getNxDoGbDistributerId());
-            if (nxDepartmentOrders.getNxDoGoodsName() != null) {
-                disGoodsEntity.setNxDdgOrderGoodsName(nxDepartmentOrders.getNxDoGoodsName());
+            disGoodsEntity.setNxDdgGoodsNxDistributerId(nxDistributerGoodsEntity.getNxDgDistributerId());
+            if (nxDepartmentOrders.getNxDoGoodsOriginalName() != null) {
+                disGoodsEntity.setNxDdgOrderGoodsName(nxDepartmentOrders.getNxDoGoodsOriginalName());
             }
             disGoodsEntity.setNxDdgOrderPriceLevel(nxDepartmentOrders.getNxDoCostPriceLevel());
             nxDepartmentDisGoodsService.save(disGoodsEntity);

@@ -133,6 +133,9 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private String nxDoApplyDate;
 	private String nxDoApplyFullTime;
 	private String nxDoGoodsName;
+//	private String nxDoGoodsOriginalName;
+	private String nxDoGoodsOriginalName;
+
 
 	/**
 	 *  部门订单送达时间
@@ -177,6 +180,10 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	 *  训练数据ID（关联订单OCR训练数据表）
 	 */
 	private Integer nxDoTrainingDataId;
+	/**
+	 *  OCR任务ID（关联OCR任务表）
+	 */
+	private Integer nxDoOcrTaskId;
 	private Integer nxDoGoodsType;
 	private Integer nxDoTodayOrder;
 	private Integer nxDoGbDepDisGoodId;
@@ -186,6 +193,31 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private String nxDoCostPriceUpdate;
 	private String nxDoCostPriceLevel;
 	private Integer outShelfId;
+	private Integer nxDoCollaborativeNxDisId;
+
+	/**
+	 * 协作配送商名称（协作订单时，nx_DO_collaborative_nx_dis_id 对应的配送商名称，非数据库字段，查询时 JOIN 得出）
+	 */
+	private String nxDoCollaborativeDistributerName;
+
+	private String standardWeight;
+
+	/**
+	 * 最小包装单位（如 盒 / 瓶 / 袋）
+	 */
+	private String itemUnit;
+
+	/**
+	 * 每个大包装内的小包装数量
+	 */
+	private String itemsPerCarton;
+
+	/**
+	 * 大包装单位（如 箱 / 件）
+	 */
+	private String cartonUnit;
+
+
 	private NxDistributerUserEntity pickUserEntity;
 
 

@@ -68,13 +68,34 @@ public class HttpUtils {
             // 执行请求
             response = httpclient.execute(httpGet);
             //请求体内容
-            String content = EntityUtils.toString(response.getEntity(), "UTF-8");
-            System.out.println("doGet结果："+content);
-            jsonObj = new JSONObject(content);
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                String content = EntityUtils.toString(entity, "UTF-8");
+                System.out.println("doGet结果："+content);
+                jsonObj = new JSONObject(content);
+                // 确保实体被完全消费
+                EntityUtils.consume(entity);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
+        } finally {
+            // ✅ 修复资源泄漏：确保HTTP响应和客户端被正确关闭
+            if (response != null) {
+                try {
+                    response.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+            if (httpclient != null) {
+                try {
+                    httpclient.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
         return jsonObj;
     }
@@ -86,30 +107,48 @@ public class HttpUtils {
         CloseableHttpClient client = HttpClients.createDefault();
         //创建post方式请求对象
         HttpPost httpPost = new HttpPost(url);
-
-        //装填参数
-        StringEntity s = new StringEntity(jsonParms.toString(), "utf-8");
-        s.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE,
-                "application/json"));
-        //设置参数到请求对象中
-        httpPost.setEntity(s);
-        //设置header信息
-        httpPost.setHeader("Content-type", "application/json");
-        httpPost.setHeader("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
-        //执行请求操作，并拿到结果（同步阻塞）
-        CloseableHttpResponse response = client.execute(httpPost);
-        //获取结果实体
-        HttpEntity entity = response.getEntity();
+        CloseableHttpResponse response = null;
         JSONObject jsonObj = null;
-        if (entity != null) {
-            //按指定编码转换结果实体为String类型
-            String content = EntityUtils.toString(entity, "UTF-8");
-            System.out.println("doPost结果："+content);
-            jsonObj = new JSONObject(content);
+        
+        try {
+            //装填参数
+            StringEntity s = new StringEntity(jsonParms.toString(), "utf-8");
+            s.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE,
+                    "application/json"));
+            //设置参数到请求对象中
+            httpPost.setEntity(s);
+            //设置header信息
+            httpPost.setHeader("Content-type", "application/json");
+            httpPost.setHeader("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+            //执行请求操作，并拿到结果（同步阻塞）
+            response = client.execute(httpPost);
+            //获取结果实体
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                //按指定编码转换结果实体为String类型
+                String content = EntityUtils.toString(entity, "UTF-8");
+                System.out.println("doPost结果："+content);
+                jsonObj = new JSONObject(content);
+                // 确保实体被完全消费
+                EntityUtils.consume(entity);
+            }
+        } finally {
+            // ✅ 修复资源泄漏：确保HTTP响应和客户端被正确关闭
+            if (response != null) {
+                try {
+                    response.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+            if (client != null) {
+                try {
+                    client.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
-        EntityUtils.consume(entity);
-        //释放链接
-        response.close();
 
         return jsonObj;
     }

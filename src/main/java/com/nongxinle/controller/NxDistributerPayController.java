@@ -40,24 +40,30 @@ public class NxDistributerPayController {
     private NxMarketPricePlanService nxMarketPricePlanService;
 
 
+    /**
+     * 配送商获取支付详细
+     * @param
+     * @return 
+     * @date 2026-01-10 
+     */
     @RequestMapping(value = "/disGetBuyType", method = RequestMethod.POST)
     @ResponseBody
     public R disGetBuyType(Integer disId, Integer type) {
         List<NxDistributerPayEntity> list = new ArrayList<>();
         if (type == 0) {
             NxDistributerPayEntity payEntity = new NxDistributerPayEntity();
-            payEntity.setNxNdpBuyQuantity("3");
+            payEntity.setNxNdpBuyQuantity("30");
 //            payEntity.setNxNdpPaySubtotal("3");
             payEntity.setNxNdpPaySubtotal("3000");
             payEntity.setPerPrice("1");
             list.add(payEntity);
             NxDistributerPayEntity payEntity1 = new NxDistributerPayEntity();
-            payEntity1.setNxNdpBuyQuantity("5");
+            payEntity1.setNxNdpBuyQuantity("50");
             payEntity1.setNxNdpPaySubtotal("4500");
             payEntity1.setPerPrice("0.9");
             list.add(payEntity1);
             NxDistributerPayEntity payEntity3 = new NxDistributerPayEntity();
-            payEntity3.setNxNdpBuyQuantity("10");
+            payEntity3.setNxNdpBuyQuantity("100");
             payEntity3.setNxNdpPaySubtotal("8000");
             payEntity3.setPerPrice("0.8");
             list.add(payEntity3);

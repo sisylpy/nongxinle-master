@@ -106,6 +106,8 @@
 		<result property="nxDgGoodsLsPlace" column="nx_dg_goods_ls_place"/>
 		<result property="nxDgApplyDate" column="nx_dg_apply_date"/>
 		<result property="nxDgToNxDisGoodsId" column="nx_dg_to_nx_dis_goods_id"/>
+		<result property="nxDgFromNxDisGoodsId" column="nx_dg_from_nx_dis_goods_id"/>
+		<result property="nxDgRecommendNxGoodsIds" column="nx_dg_recommend_nx_goods_ids"/>
 		<result property="nxDgGoodsLsFile" column="nx_dg_goods_ls_file"/>
 		<result property="nxDgGoodsLsFileLarge" column="nx_dg_goods_ls_file_large"/>
 		<association property="nxDistributerGoodsEntity" resultMap="nxDisGoods"/>
@@ -130,7 +132,7 @@
 		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgl.nx_dg_to_nx_dis_goods_id
 		left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
 	    left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
-		where ndgl.nx_dg_distributer_ls_id = #{disId}
+		where ndgl.nx_dg_distributer_ls_id = #{disId} and ndgl.nx_dg_goods_ls_status = -1
 		order by ndgl.nx_dg_apply_date desc, ndgl.nx_distributer_goods_ls_id desc
 		<if test="offset != null and limit != null">
 			limit #{offset}, #{limit}
@@ -140,7 +142,40 @@
 	<select id="disGetLinshiGoodsTotal" resultType="int">
 		select count(*)
 		from nx_distributer_goods_linshi as ndgl
-		where ndgl.nx_dg_distributer_ls_id = #{disId}
+		where ndgl.nx_dg_distributer_ls_id = #{disId} and ndgl.nx_dg_goods_ls_status = -1
+	</select>
+
+	<select id="queryLinshiByFromGoodsId" resultType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
+		select * from nx_distributer_goods_linshi where nx_dg_from_nx_dis_goods_id = #{value}
+	</select>
+
+	<select id="queryLinshiListByStatus" resultMap="linshiGoods">
+		select
+		       ndgl.*,
+		       ndg.*,
+			   grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+			   grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+			   grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
+			   grand.nx_dfg_nx_goods_id 'grand_nx_dfg_nx_goods_id',
+			   grand.nx_dfg_father_goods_img 'grand_nx_dfg_father_goods_img',
+			   grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
+			   greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_dfg_distributer_father_goods_id',
+			   greatGrand.nx_dfg_distributer_id 'greatGrand_nx_dfg_distributer_id',
+			   greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+			   greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+			   greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color'
+		from nx_distributer_goods_linshi as ndgl
+		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgl.nx_dg_from_nx_dis_goods_id
+		left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+	    left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+		where ndgl.nx_dg_distributer_ls_id = #{disId} and ndgl.nx_dg_goods_ls_status = #{status}
+		order by ndgl.nx_dg_apply_date desc, ndgl.nx_distributer_goods_ls_id desc
+	</select>
+
+	<select id="queryFromGoodsIdsByDisId" resultType="java.lang.Integer">
+		select nx_dg_from_nx_dis_goods_id from nx_distributer_goods_linshi
+		where nx_dg_distributer_ls_id = #{disId} and nx_dg_from_nx_dis_goods_id is not null and nx_dg_goods_ls_status in (1, 2)
 	</select>
 
 	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
@@ -158,6 +193,8 @@
 			`nx_dg_goods_ls_brand`,
 			`nx_dg_goods_ls_place`,
 			`nx_dg_to_nx_dis_goods_id`,
+			`nx_dg_from_nx_dis_goods_id`,
+			`nx_dg_recommend_nx_goods_ids`,
 			`nx_dg_apply_date`,
 			`nx_dg_goods_ls_file`,
 			`nx_dg_goods_ls_file_large`
@@ -176,6 +213,8 @@
 			#{nxDgGoodsLsBrand},
 			#{nxDgGoodsLsPlace},
 			#{nxDgToNxDisGoodsId},
+			#{nxDgFromNxDisGoodsId},
+			#{nxDgRecommendNxGoodsIds},
 			#{nxDgApplyDate},
 			#{nxDgGoodsLsFile},
 			#{nxDgGoodsLsFileLarge}
@@ -198,7 +237,9 @@
 			<if test="nxDgApplyDate != null">`nx_dg_apply_date` = #{nxDgApplyDate}, </if>
 			<if test="nxDgGoodsLsFile != null">`nx_dg_goods_ls_file` = #{nxDgGoodsLsFile}, </if>
 			<if test="nxDgGoodsLsFileLarge != null">`nx_dg_goods_ls_file_large` = #{nxDgGoodsLsFileLarge}, </if>
-			<if test="nxDgToNxDisGoodsId != null">`nx_dg_to_nx_dis_goods_id` = #{nxDgToNxDisGoodsId}</if>
+			<if test="nxDgToNxDisGoodsId != null">`nx_dg_to_nx_dis_goods_id` = #{nxDgToNxDisGoodsId}, </if>
+			<if test="nxDgFromNxDisGoodsId != null">`nx_dg_from_nx_dis_goods_id` = #{nxDgFromNxDisGoodsId}, </if>
+			<if test="nxDgRecommendNxGoodsIds != null">`nx_dg_recommend_nx_goods_ids` = #{nxDgRecommendNxGoodsIds}</if>
 		</set>
 		where nx_distributer_goods_ls_id = #{nxDistributerGoodsLsId}
 	</update>

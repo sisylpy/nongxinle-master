@@ -71,6 +71,14 @@ public class NxDistributerGoodsLinshiEntity implements Serializable {
 	 *  商品状态
 	 */
 	private Integer nxDgToNxDisGoodsId;
+	/**
+	 *  临时商品ID(nx_distributer_goods)
+	 */
+	private Integer nxDgFromNxDisGoodsId;
+	/**
+	 *  推荐的nxGoodsId，逗号分隔如101,102,103
+	 */
+	private String nxDgRecommendNxGoodsIds;
 
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 

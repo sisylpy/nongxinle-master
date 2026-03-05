@@ -4068,15 +4068,13 @@ public class GbDepartmentOrdersController {
         ordersEntity.setNxDoDisGoodsGrandId(nxDistributerGoodsEntity.getNxDgDfgGoodsGrandId());
         ordersEntity.setNxDoDepDisGoodsId(-1);
         ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
         ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
         ordersEntity.setNxDoPurchaseUserId(-1);
         ordersEntity.setNxDoGbDepartmentOrderId(gbDepartmentOrders.getGbDepartmentOrdersId());
-        if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() == -1) {
-            ordersEntity.setNxDoPurchaseGoodsId(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
-        } else {
+        if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() != -1) {
             savePurGoodsAutoNx(ordersEntity);
         }
 
@@ -4494,11 +4492,8 @@ public class GbDepartmentOrdersController {
             NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryObject(nxJrdhsUserId);
             System.out.println("suppsleir" + path);
             WeNoticeService.nxSupplierOrderSave(nxJrdhUserEntity.getNxJrdhWxOpenId(), path, mapNotice);
-
-            ordersEntity.setNxDoPurchaseStatus(getNxDisPurchaseGoodsIsPurchase());
         }
 
-        ordersEntity.setNxDoPurchaseGoodsId(resultPurGoods.getNxDistributerPurchaseGoodsId());
         nxDepartmentOrdersService.update(ordersEntity);
 
     }
@@ -4647,7 +4642,7 @@ public class GbDepartmentOrdersController {
         ordersEntity.setNxDoDisGoodsFatherId(nxDgDfgGoodsFatherId);
         ordersEntity.setNxDoDisGoodsGrandId(nxDgDfgGoodsGrandId);
         ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
         System.out.println("nxgenennemetowowowo" + nxDistributerGoodsEntity.getNxDgWillPriceTwo());
@@ -4693,9 +4688,7 @@ public class GbDepartmentOrdersController {
 
 
         ordersEntity.setNxDoGbDepartmentOrderId(gbDepartmentOrders.getGbDepartmentOrdersId());
-        if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() == -1) {
-            ordersEntity.setNxDoPurchaseGoodsId(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
-        } else {
+        if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() != -1) {
             savePurGoodsAuto(ordersEntity);
         }
 
@@ -5324,7 +5317,7 @@ public class GbDepartmentOrdersController {
         ordersEntity.setNxDoDisGoodsGrandId(nxDgDfgGoodsGrandId);
         ordersEntity.setNxDoDepDisGoodsId(-1);
         ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
         ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
@@ -5743,7 +5736,7 @@ public class GbDepartmentOrdersController {
                 ordersEntity.setNxDoDisGoodsGrandId(nxDgDfgGoodsGrandId);
                 ordersEntity.setNxDoDepDisGoodsId(-1);
                 ordersEntity.setNxDoArriveWhatDay(getWeek(0));
-                ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusWithPurchase());
+                ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
                 ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
                 ordersEntity.setNxDoIsAgent(-1);
                 ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
@@ -5999,8 +5992,6 @@ public class GbDepartmentOrdersController {
             NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryObject(nxJrdhsUserId);
             System.out.println("suppsleir" + path);
             WeNoticeService.nxSupplierOrderSave(nxJrdhUserEntity.getNxJrdhWxOpenId(), path, mapNotice);
-
-            ordersEntity.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishBuy());
         }
 
         ordersEntity.setNxDoPurchaseGoodsId(resultPurGoods.getNxDistributerPurchaseGoodsId());

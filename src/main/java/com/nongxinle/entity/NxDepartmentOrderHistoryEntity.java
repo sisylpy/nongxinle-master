@@ -234,6 +234,10 @@ public class NxDepartmentOrderHistoryEntity implements Serializable {
 	 */
 	private Integer nxDoNxRestrauntOrderId;
 	/**
+	 *  训练数据ID（关联订单OCR训练数据表）
+	 */
+	private Integer nxDoTrainingDataId;
+	/**
 	 *  进货单价更新日期
 	 */
 	private String nxDoCostPriceUpdate;
@@ -264,11 +268,32 @@ public class NxDepartmentOrderHistoryEntity implements Serializable {
 	/**
 	 *  商品名称
 	 */
+	private Integer nxDoOcrTaskId;
 	private String nxDoGoodsName;
+	private String nxDoGoodsOriginalName;
 	/**
 	 *  
 	 */
 	private Integer nxDoGbDepDisGoodsId;
+
+	private Integer nxDoCollaborativeNxDisId;
+
+	private String standardWeight;
+
+	/**
+	 * 最小包装单位（如 盒 / 瓶 / 袋）
+	 */
+	private String itemUnit;
+
+	/**
+	 * 每个大包装内的小包装数量
+	 */
+	private String itemsPerCarton;
+
+	/**
+	 * 大包装单位（如 箱 / 件）
+	 */
+	private String cartonUnit;
 
 
 	private NxGoodsEntity nxGoodsEntity;

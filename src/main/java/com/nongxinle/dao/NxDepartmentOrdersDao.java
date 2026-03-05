@@ -8,6 +8,7 @@ package com.nongxinle.dao;
  */
 
 import com.nongxinle.entity.*;
+import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -40,6 +41,8 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     Integer queryDepOrdersAcount(Map<String, Object> map);
 
+    Integer queryMaxTodayOrder(Map<String, Object> map);
+
     Double queryDepOrdersSubtotal(Map<String, Object> map);
 
     Double queryDepOrdersCostSubtotal(Map<String, Object> map2);
@@ -53,6 +56,46 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     List<NxDepartmentOrdersEntity> queryDepWeightOrder(Map<String, Object> map);
 
     List<NxDepartmentOrdersEntity> queryNotWeightDisOrdersByParams(Map<String, Object> map1);
+
+    /**
+     * 查询订单列表（简化版，返回DTO，只包含必要字段）
+     * 用于phoneGetToFillDepOrders接口优化
+     */
+    List<NxDepartmentOrdersSimpleDTO> queryNotWeightDisOrdersSimpleByParams(Map<String, Object> map1);
+    
+    /**
+     * 根据OCR任务ID查询订单列表
+     * @param ocrTaskId OCR任务ID
+     * @return 订单列表
+     */
+    List<NxDepartmentOrdersEntity> queryListByOcrTaskId(Integer ocrTaskId);
+
+    /**
+     * 根据OCR任务ID分页查询订单列表
+     * @param map 查询参数，包含ocrTaskId、offset、limit
+     * @return 订单列表
+     */
+    List<NxDepartmentOrdersEntity> queryListByOcrTaskIdWithPage(Map<String, Object> map);
+
+    /**
+     * 根据OCR任务ID查询订单总数
+     * @param ocrTaskId OCR任务ID
+     * @return 订单总数
+     */
+    Integer queryTotalByOcrTaskId(Integer ocrTaskId);
+
+    /**
+     * 根据OCR任务ID一次性查询各状态订单数量（避免遍历内存列表）
+     * @param ocrTaskId OCR任务ID
+     * @return Map: completedCount(status=0), pendingCount(status=-2)
+     */
+    Map<String, Object> queryCountByOcrTaskIdGroupByStatus(Integer ocrTaskId);
+
+    /**
+     * 批量查询多个部门的订单列表（简化版，返回DTO）
+     * 用于优化子部门订单查询，避免N+1问题
+     */
+    List<NxDepartmentOrdersSimpleDTO> queryDisOrdersSimpleByDepIds(Map<String, Object> map1);
 
     List<GbDistributerEntity> queryOrderGbDistributerList(Map<String, Object> map1);
 
@@ -229,4 +272,21 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     List<Map<String, Object>> batchQueryDepartmentOrderStatsSunla(@Param("depFatherIds") List<Integer> depFatherIds);
 
     List<NxDistributerPurchaseBatchEntity> queryDisPurchaseBatchDto(Map<String, Object> map2);
+
+    int queryMaxTodayOrder(Integer depIdForTodayOrder);
+
+    List<NxDistributerEntity> queryOfferOrderNxDistributer(Map<String, Object> mapOffer);
+
+    List<NxDepartmentEntity> queryCollDisDeps(Map<String, Object> map);
+
+    NxDepartmentOrdersEntity querycollOrder(Map<String, Object> map);
+
+    List<NxDistributerEntity> queryOfferOrderNxDistributerWithOrder(Map<String, Object> map);
+
+    Integer queryCollReplyPartnerCount(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map);
+
+    NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId);
+
 }

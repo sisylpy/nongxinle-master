@@ -1,9 +1,7 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.dao.NxDepartmentOrdersDao;
-import com.nongxinle.entity.DailyUsage;
-import com.nongxinle.entity.NxDepartmentOrdersEntity;
-import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
+import com.nongxinle.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.nongxinle.dao.NxDepartmentOrderHistoryDao;
-import com.nongxinle.entity.NxDepartmentOrderHistoryEntity;
 import com.nongxinle.service.NxDepartmentOrderHistoryService;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -183,5 +180,11 @@ public class NxDepartmentOrderHistoryServiceImpl implements NxDepartmentOrderHis
 	public List<NxDepartmentOrderHistoryEntity> queryOrdersByBillIdWithTraceReport(Map<String, Object> map) {
 		return nxDepartmentOrderHistoryDao.queryOrdersByBillIdWithTraceReport(map);
 	}
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map) {
+
+		return nxDepartmentOrderHistoryDao.queryOfferOrdersGoods(map);
+    }
 
 }

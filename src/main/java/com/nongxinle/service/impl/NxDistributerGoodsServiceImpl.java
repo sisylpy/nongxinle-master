@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.nongxinle.dao.NxDistributerGoodsDao;
 import com.nongxinle.service.NxDistributerGoodsService;
+import com.nongxinle.service.NxDistributerService;
 
 
 
@@ -385,6 +386,12 @@ public class NxDistributerGoodsServiceImpl implements NxDistributerGoodsService 
     @Override
     public int updatePurchaseAutoByGreatGrandIds(Map<String, Object> map) {
         return nxDistributerGoodsDao.updatePurchaseAutoByGreatGrandIds(map);
+    }
+
+    @Override
+    public List<NxDistributerGoodsEntity> queryDepDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map) {
+
+	    return nxDistributerGoodsDao.queryDepDisGoodsQuickSearchStrWithDepOrders(map);
     }
 
 

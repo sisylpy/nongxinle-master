@@ -2315,7 +2315,7 @@ public class NxDistributerGoodsShelfStockController {
 			order.setNxDoNxCommunityId(-1);
 			order.setNxDoNxCommRestrauntId(-1);
 			order.setNxDoNxCommRestrauntFatherId(-1);
-			
+			order.setNxDoCollaborativeNxDisId(-1);
 			// 查询部门商品信息（用于设置部门商品ID和价格）
 			Map<String, Object> depGoodsMap = new HashMap<>();
 			depGoodsMap.put("depId", depId);

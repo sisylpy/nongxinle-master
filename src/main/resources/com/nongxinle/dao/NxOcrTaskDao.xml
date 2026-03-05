@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxOcrTaskDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxOcrTaskEntity">
+		select * from nx_ocr_task where nx_ocr_task_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxOcrTaskEntity">
+		select * from nx_ocr_task
+		<where>
+			<if test="nxOcrTaskUploadUserId != null">
+				and nx_ocr_task_upload_user_id = #{nxOcrTaskUploadUserId}
+			</if>
+			<if test="nxOcrTaskProcessorUserId != null">
+				and nx_ocr_task_processor_user_id = #{nxOcrTaskProcessorUserId}
+			</if>
+			<if test="nxOcrTaskStatus != null">
+				and nx_ocr_task_status = #{nxOcrTaskStatus}
+			</if>
+			<if test="nxOcrTaskDistributerId != null">
+				and nx_ocr_task_distributer_id = #{nxOcrTaskDistributerId}
+			</if>
+			<if test="nxOcrTaskDepartmentId != null">
+				and nx_ocr_task_department_id = #{nxOcrTaskDepartmentId}
+			</if>
+			<if test="nxOcrTaskDepartmentFatherId != null">
+				and nx_ocr_task_department_father_id = #{nxOcrTaskDepartmentFatherId}
+			</if>
+		</where>
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				order by ${sidx} ${order}
+			</when>
+			<otherwise>
+				order by nx_ocr_task_id desc
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="queryTotal" resultType="int">
+		select count(*) from nx_ocr_task
+		<where>
+			<if test="nxOcrTaskUploadUserId != null">
+				and nx_ocr_task_upload_user_id = #{nxOcrTaskUploadUserId}
+			</if>
+			<if test="nxOcrTaskProcessorUserId != null">
+				and nx_ocr_task_processor_user_id = #{nxOcrTaskProcessorUserId}
+			</if>
+			<if test="nxOcrTaskStatus != null">
+				and nx_ocr_task_status = #{nxOcrTaskStatus}
+			</if>
+			<if test="nxOcrTaskDistributerId != null">
+				and nx_ocr_task_distributer_id = #{nxOcrTaskDistributerId}
+			</if>
+			<if test="nxOcrTaskDepartmentId != null">
+				and nx_ocr_task_department_id = #{nxOcrTaskDepartmentId}
+			</if>
+			<if test="nxOcrTaskDepartmentFatherId != null">
+				and nx_ocr_task_department_father_id = #{nxOcrTaskDepartmentFatherId}
+			</if>
+		</where>
+	</select>
+
+	<select id="queryByTaskId" resultType="com.nongxinle.entity.NxOcrTaskEntity">
+		select * from nx_ocr_task where nx_ocr_task_id = #{taskId} limit 1
+	</select>
+
+	<select id="queryTaskList" resultType="com.nongxinle.entity.NxOcrTaskEntity">
+		select * from nx_ocr_task
+		<where>
+			<if test="nxOcrTaskUploadUserId != null">
+				and nx_ocr_task_upload_user_id = #{nxOcrTaskUploadUserId}
+			</if>
+			<if test="nxOcrTaskProcessorUserId != null">
+				and nx_ocr_task_processor_user_id = #{nxOcrTaskProcessorUserId}
+			</if>
+			<if test="nxOcrTaskStatus != null">
+				and nx_ocr_task_status = #{nxOcrTaskStatus}
+			</if>
+			<if test="nxOcrTaskDistributerId != null">
+				and nx_ocr_task_distributer_id = #{nxOcrTaskDistributerId}
+			</if>
+			<if test="nxOcrTaskDepartmentId != null">
+				and nx_ocr_task_department_id = #{nxOcrTaskDepartmentId}
+			</if>
+			<if test="nxOcrTaskDepartmentFatherId != null">
+				and nx_ocr_task_department_father_id = #{nxOcrTaskDepartmentFatherId}
+			</if>
+		</where>
+		order by nx_ocr_task_id desc
+	</select>
+	
+	<!-- 根据部门ID和状态查询任务列表 -->
+	<select id="queryTasksByDepartmentAndStatus" resultType="com.nongxinle.entity.NxOcrTaskEntity">
+		select task.*, dep.nx_department_name as nx_ocr_task_department_name from nx_ocr_task as task
+		left join nx_department as dep on dep.nx_department_id = task.nx_ocr_task_department_id
+		<where>
+			<if test="disId != null">
+				and nx_ocr_task_distributer_id = #{disId}
+			</if>
+			<if test="departmentFatherId != null">
+				and nx_ocr_task_department_father_id = #{departmentFatherId}
+			</if>
+			<if test="departmentId != null">
+				and nx_ocr_task_department_id = #{departmentId}
+			</if>
+			<if test="status != null">
+				and nx_ocr_task_status = #{status}
+			</if>
+			<if test="type != null">
+				and nx_ocr_task_type = #{type}
+			</if>
+			<if test="xiaoyuStatus != null">
+				and nx_ocr_task_status &lt; #{xiaoyuStatus}
+			</if>
+			<if test="xiaoyuStatus != null">
+				and nx_ocr_task_status &lt; #{xiaoyuStatus}
+			</if>
+
+		</where>
+		order by nx_ocr_task_id desc
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+	<!-- 根据部门ID和状态查询任务总数 -->
+	<select id="queryTotalByDepartmentAndStatus" resultType="int">
+		select count(*) from nx_ocr_task
+		<where>
+			<if test="disId != null">
+				and nx_ocr_task_distributer_id = #{disId}
+			</if>
+			<if test="departmentFatherId != null">
+				and nx_ocr_task_department_father_id = #{departmentFatherId}
+			</if>
+			<if test="departmentId != null">
+				and nx_ocr_task_department_id = #{departmentId}
+			</if>
+			<if test="status != null">
+				and nx_ocr_task_status = #{status}
+			</if>
+			<if test="type != null">
+				and nx_ocr_task_type = #{type}
+			</if>
+			<if test="date != null">
+				and DATE(nx_ocr_task_create_date) = #{date}
+			</if>
+			<if test="xiaoyuStatus != null">
+				and nx_ocr_task_status &lt; #{xiaoyuStatus}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 根据分销商ID查询有任务的部门父列表（去重） -->
+	<select id="queryTasksDepartmentByDisId" resultType="com.nongxinle.entity.NxDepartmentEntity">
+		select DISTINCT dep.*,
+		(select count(*) from nx_ocr_task as t where t.nx_ocr_task_department_father_id = dep.nx_department_id
+			<if test="disId != null">
+				and t.nx_ocr_task_distributer_id = #{disId}
+			</if>
+			<if test="xiaoyuStatus != null">
+				and t.nx_ocr_task_status &lt; #{xiaoyuStatus}
+			</if>
+		) as task_count
+		from nx_ocr_task as task
+		left join nx_department as dep on dep.nx_department_id = task.nx_ocr_task_department_father_id
+
+		<where>
+			<if test="disId != null">
+				and task.nx_ocr_task_distributer_id = #{disId}
+			</if>
+			<if test="xiaoyuStatus != null">
+				and task.nx_ocr_task_status &lt; #{xiaoyuStatus}
+			</if>
+			and dep.nx_department_id is not null
+		</where>
+		order by dep.nx_department_id
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxOcrTaskEntity"
+			useGeneratedKeys="true" keyProperty="nxOcrTaskId">
+		insert into nx_ocr_task
+		(
+			`nx_ocr_task_file_name`,
+			`nx_ocr_task_image_path`,
+			`nx_ocr_task_total_orders`,
+			`nx_ocr_task_completed_orders`,
+			`nx_ocr_task_pending_orders`,
+			`nx_ocr_task_upload_time`,
+			`nx_ocr_task_upload_user_id`,
+			`nx_ocr_task_upload_user_name`,
+			`nx_ocr_task_processor_user_id`,
+			`nx_ocr_task_processor_user_name`,
+			`nx_ocr_task_status`,
+			`nx_ocr_task_distributer_id`,
+			`nx_ocr_task_department_id`,
+			`nx_ocr_task_department_father_id`,
+			`nx_ocr_task_create_date`,
+			`nx_ocr_task_update_date`,
+			`nx_ocr_task_ocr_text`,
+			`nx_ocr_task_type`
+		)
+		values
+		(
+			#{nxOcrTaskFileName},
+			#{nxOcrTaskImagePath},
+			#{nxOcrTaskTotalOrders},
+			#{nxOcrTaskCompletedOrders},
+			#{nxOcrTaskPendingOrders},
+			#{nxOcrTaskUploadTime},
+			#{nxOcrTaskUploadUserId},
+			#{nxOcrTaskUploadUserName},
+			#{nxOcrTaskProcessorUserId},
+			#{nxOcrTaskProcessorUserName},
+			#{nxOcrTaskStatus},
+			#{nxOcrTaskDistributerId},
+			#{nxOcrTaskDepartmentId},
+			#{nxOcrTaskDepartmentFatherId},
+			#{nxOcrTaskCreateDate},
+			#{nxOcrTaskUpdateDate},
+			#{nxOcrTaskOcrText},
+			#{nxOcrTaskType}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxOcrTaskEntity">
+		update nx_ocr_task 
+		<set>
+			<if test="nxOcrTaskFileName != null">`nx_ocr_task_file_name` = #{nxOcrTaskFileName}, </if>
+			<if test="nxOcrTaskImagePath != null">`nx_ocr_task_image_path` = #{nxOcrTaskImagePath}, </if>
+			<if test="nxOcrTaskTotalOrders != null">`nx_ocr_task_total_orders` = #{nxOcrTaskTotalOrders}, </if>
+			<if test="nxOcrTaskCompletedOrders != null">`nx_ocr_task_completed_orders` = #{nxOcrTaskCompletedOrders}, </if>
+			<if test="nxOcrTaskPendingOrders != null">`nx_ocr_task_pending_orders` = #{nxOcrTaskPendingOrders}, </if>
+			<if test="nxOcrTaskUploadTime != null">`nx_ocr_task_upload_time` = #{nxOcrTaskUploadTime}, </if>
+			<if test="nxOcrTaskUploadUserId != null">`nx_ocr_task_upload_user_id` = #{nxOcrTaskUploadUserId}, </if>
+			<if test="nxOcrTaskUploadUserName != null">`nx_ocr_task_upload_user_name` = #{nxOcrTaskUploadUserName}, </if>
+			<if test="nxOcrTaskProcessorUserId != null">`nx_ocr_task_processor_user_id` = #{nxOcrTaskProcessorUserId}, </if>
+			<if test="nxOcrTaskProcessorUserName != null">`nx_ocr_task_processor_user_name` = #{nxOcrTaskProcessorUserName}, </if>
+			<if test="nxOcrTaskStatus != null">`nx_ocr_task_status` = #{nxOcrTaskStatus}, </if>
+			<if test="nxOcrTaskDistributerId != null">`nx_ocr_task_distributer_id` = #{nxOcrTaskDistributerId}, </if>
+			<if test="nxOcrTaskDepartmentId != null">`nx_ocr_task_department_id` = #{nxOcrTaskDepartmentId}, </if>
+			<if test="nxOcrTaskDepartmentFatherId != null">`nx_ocr_task_department_father_id` = #{nxOcrTaskDepartmentFatherId}, </if>
+			<if test="nxOcrTaskOcrText != null">`nx_ocr_task_ocr_text` = #{nxOcrTaskOcrText}, </if>
+			<if test="nxOcrTaskType != null">`nx_ocr_task_type` = #{nxOcrTaskType}, </if>
+			<if test="nxOcrTaskUpdateDate != null">`nx_ocr_task_update_date` = #{nxOcrTaskUpdateDate}</if>
+		</set>
+		where nx_ocr_task_id = #{nxOcrTaskId}
+	</update>
+	
+	<update id="updateTaskStatistics" parameterType="int">
+		update nx_ocr_task 
+		set 
+			`nx_ocr_task_completed_orders` = (
+				select count(*) from nx_department_orders 
+				where nx_do_ocr_task_id = #{taskId} and nx_do_status = 0
+			),
+			`nx_ocr_task_pending_orders` = (
+				select count(*) from nx_department_orders 
+				where nx_do_ocr_task_id = #{taskId} and nx_do_status = -2
+			),
+			`nx_ocr_task_status` = case 
+				when (
+					select count(*) from nx_department_orders 
+					where nx_do_ocr_task_id = #{taskId} and nx_do_status = -2
+				) = 0 then 1
+				when (
+					select count(*) from nx_department_orders 
+					where nx_do_ocr_task_id = #{taskId} and nx_do_status = 0
+				) > 0 then 2
+				else 0
+			end
+		where nx_ocr_task_id = #{taskId}
+	</update>
+	
+	<delete id="delete">
+		delete from nx_ocr_task where nx_ocr_task_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_ocr_task where nx_ocr_task_id in
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+</mapper>

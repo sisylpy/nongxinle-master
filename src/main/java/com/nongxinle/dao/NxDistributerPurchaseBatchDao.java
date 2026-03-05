@@ -40,4 +40,5 @@ public interface NxDistributerPurchaseBatchDao extends BaseDao<NxDistributerPurc
 
     NxDistributerPurchaseBatchEntity queryBatchItemByParams(Map<String, Object> mapB);
 
+    List<NxDistributerEntity> queryOfferNxDistributer(Map<String, Object> map);
 }

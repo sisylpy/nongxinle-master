@@ -186,6 +186,9 @@
 
     <resultMap id="orderDepartments" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -203,7 +206,10 @@
     </resultMap>
 
     <resultMap id="orders" type="NxDepartmentOrdersEntity">
-         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+           <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -342,7 +348,10 @@
     </resultMap>
 
     <resultMap id="depOrders" type="NxDepartmentOrdersEntity">
-         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+           <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -425,7 +434,10 @@
         <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
     </resultMap>
     <resultMap id="depsOrders" type="NxDepartmentOrdersEntity">
-         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+           <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -471,7 +483,9 @@
     </resultMap>
 
     <resultMap id="depDisGoods" type="NxDepartmentDisGoodsEntity">
-         <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
+        <result property="nxDdgGoodsNxDistributerId" column="nx_DDG_goods_nx_distributer_id"/>
         <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
 		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
 		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
@@ -494,6 +508,9 @@
 
     <resultMap id="orderFatherDepartment" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -2047,11 +2064,12 @@
     
     <!-- 简化的采购订单 resultMap -->
     <resultMap id="purchaseOrderUltraSimple" type="PurchaseOrderSimpleDTO">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
         <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
         <result property="depName" column="dep_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
@@ -2061,6 +2079,10 @@
         <result property="gbDepName" column="gb_dep_name"/>
         <result property="restrauntName" column="restraunt_name"/>
         <result property="nxDoDsStandardScale" column="nx_DO_ds_standard_scale"/>
+        <result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+        <result property="nxDoDistributerName" column="nx_do_distributer_name"/>
+        <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
     </resultMap>
 
     <!-- 简化的采购商品 resultMap -->
@@ -2118,6 +2140,10 @@
         ndo.nx_DO_weight,
         ndo.nx_DO_remark,
         ndo.nx_DO_print_standard,
+        ndo.nx_DO_status,
+        ndo.nx_DO_purchase_status,
+        ndo.nx_DO_distributer_id,
+        ndo.nx_DO_collaborative_nx_dis_id,
         NULL as nx_DO_ds_standard_scale,
         
         -- 扁平化的部门信息
@@ -2147,12 +2173,18 @@
         ) AS gb_dep_name,
         
         -- 餐厅名称
-        nr.nx_restraunt_attr_name AS restraunt_name
-        
+        nr.nx_restraunt_attr_name AS restraunt_name,
+
+        -- 配送商名称（优先 show_name）
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) AS nx_do_distributer_name,
+        -- 协作配送商名称
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) AS nx_do_collaborative_distributer_name
+
         from (
             -- 子查询：先获取需要返回的采购商品ID列表（应用WHERE条件和LIMIT）
             select ndpg_inner.nx_distributer_purchase_goods_id
             from nx_distributer_purchase_goods as ndpg_inner
+            left join nx_department_orders as dg_dor on dg_dor.nx_DO_purchase_goods_id = ndpg_inner.nx_distributer_purchase_goods_id
             left join nx_distributer_goods as dg_inner on dg_inner.nx_distributer_goods_id = ndpg_inner.nx_DPG_dis_goods_id
             left join nx_distributer_father_goods as ndfg_inner on ndfg_inner.nx_distributer_father_goods_id = dg_inner.nx_dg_dfg_goods_grand_id
             left join nx_distributer_father_goods as great_inner on great_inner.nx_distributer_father_goods_id = ndfg_inner.nx_dfg_fathers_father_id
@@ -2160,6 +2192,9 @@
             left join nx_goods as ng_ndfg_inner on ng_ndfg_inner.nx_goods_id = ndfg_inner.nx_dfg_nx_goods_id
             left join nx_goods as ng_dg_inner on ng_dg_inner.nx_goods_id = dg_inner.nx_dg_nx_goods_id
             <where>
+                <if test="dayuOrderStatus != null">
+                    and dg_dor.nx_DO_status &gt; #{dayuOrderStatus}
+                </if>
                 <if test="disId != null">
                     and ndpg_inner.nx_DPG_distributer_id = #{disId}
                 </if>
@@ -2193,14 +2228,22 @@
         left join nx_goods as ng_ndfg on ng_ndfg.nx_goods_id = ndfg.nx_dfg_nx_goods_id
         left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
         left join nx_department_orders as ndo on ndpg.nx_distributer_purchase_goods_id = ndo.nx_DO_purchase_goods_id
+        <if test="disId != null">
+            and ndo.nx_DO_distributer_id = #{disId}
+        </if>
         <if test="orderPurStatus != null">
             and ndo.nx_do_purchase_status &lt; #{orderPurStatus}
+        </if>
+        <if test="dayuOrderStatus != null">
+            and ndo.nx_do_status &gt; #{dayuOrderStatus}
         </if>
         left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
         left join nx_department as d on d.nx_department_id = ndo.nx_DO_department_id
         left join nx_department as dd on d.nx_department_father_id = dd.nx_department_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndo.nx_DO_distributer_id
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = ndo.nx_DO_collaborative_nx_dis_id
         -- 按照曾祖父商品的排序字段作为第一排序字段，然后按曾祖父ID（确保相同ID的商品在一起）、爷爷商品、商品、部门排序
         -- 注意：dd.nx_department_id 可能为 NULL（当采购商品没有订单时），使用 IFNULL 确保 NULL 值排在最后
         order by COALESCE(ng_great.nx_goods_sort, great.nx_dfg_father_goods_sort), great.nx_distributer_father_goods_id, COALESCE(ng_ndfg.nx_goods_sort, ndfg.nx_dfg_father_goods_sort), COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng_dg.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort),

@@ -45,6 +45,26 @@ public class PasteSearchGoodsResponseDTO implements Serializable {
     private String nxDoStandard;
 
     /**
+     * 规格重量（如 250ml / 1.9L / 500g）
+     */
+    private String standardWeight;
+
+    /**
+     * 最小包装单位（如 盒 / 瓶 / 袋）
+     */
+    private String itemUnit;
+
+    /**
+     * 每个大包装内的小包装数量
+     */
+    private String itemsPerCarton;
+
+    /**
+     * 大包装单位（如 箱 / 件）
+     */
+    private String cartonUnit;
+
+    /**
      * 备注
      */
     private String nxDoRemark;
@@ -110,7 +130,34 @@ public class PasteSearchGoodsResponseDTO implements Serializable {
     private Integer nxDoTodayOrder;
 
     /**
-     * 分销商商品候选列表（当找到多个匹配的分销商商品时）
+     * 训练数据ID（关联OCR训练数据）
+     */
+    private Integer nxDoTrainingDataId;
+
+    /**
+     * OCR任务ID（关联OCR任务表）
+     */
+    private Integer nxDoOcrTaskId;
+
+    /**
+     * 商品类型
+     */
+    private Integer nxDoGoodsType;
+
+    private Integer nxDoCollaborativeNxDisId;
+
+    /**
+     * 协作配送商名称（协作订单时，nx_DO_collaborative_nx_dis_id 对应的配送商名称，非数据库字段，查询时 JOIN 得出）
+     */
+    private String nxDoCollaborativeDistributerName;
+
+    /**
+     * 订单已匹配的单个分销商商品（状态非-2时，用于前端判断协作配送商、显示配送商名称）
+     */
+    private DistributerGoodsCandidateDTO nxDistributerGoodsEntity;
+
+    /**
+     * 分销商商品候选列表（当找到多个匹配的分销商商品时，状态-2）
      */
     private List<DistributerGoodsCandidateDTO> nxDistributerGoodsEntityList;
 

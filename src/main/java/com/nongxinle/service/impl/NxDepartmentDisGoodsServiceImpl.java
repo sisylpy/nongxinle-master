@@ -528,6 +528,17 @@ public class NxDepartmentDisGoodsServiceImpl implements NxDepartmentDisGoodsServ
 		return nxDepartmentDisGoodsDao.queryDepartmentGoodsOnly(map);
     }
 
+    @Override
+    public List<NxDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map) {
+
+		return nxDepartmentDisGoodsDao.queryDisGoodsQuickSearchStrWithDepOrders(map);
+    }
+
+	@Override
+	public List<NxDepartmentDisGoodsEntity> queryByDisGoodsIdsAndDep(Map<String, Object> map) {
+		return nxDepartmentDisGoodsDao.queryByDisGoodsIdsAndDep(map);
+	}
+
     private static final double EPSILON = 1e-6;             // 避免除零
 	private static final int MIN_USAGE_RECORDS = 4;          // 至少需要 4 条用量数据
 	private static final int RECENT_DAYS_FOR_CV = 7;         // 用近 7 天计算波动

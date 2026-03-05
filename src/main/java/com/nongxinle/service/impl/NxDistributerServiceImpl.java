@@ -37,6 +37,8 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 	private NxDistributerGoodsService dgService;
 	@Autowired
 	private NxGoodsService nxGoodsService;
+	@Autowired
+	private NxDistributerInviteService nxDistributerInviteService;
 
 
 	@Override
@@ -217,11 +219,12 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 			distributerEntity.setNxDistributerType(-1);
 			
 			// 根据市场配置设置小程序AppID和支付配置类
-			if (sysCityMarketEntity.getSysCmMiniAppId() != null) {
-				distributerEntity.setNxDistributerAppId(sysCityMarketEntity.getSysCmMiniAppId());
-			} else {
-				distributerEntity.setNxDistributerAppId("wx159c5a46d80e4500"); // 默认值
-			}
+//			if (sysCityMarketEntity.getSysCmMiniAppId() != null) {
+//				distributerEntity.setNxDistributerAppId(sysCityMarketEntity.getSysCmMiniAppId());
+//			} else {
+//				distributerEntity.setNxDistributerAppId("wx159c5a46d80e4500"); // 默认值
+//			}
+			distributerEntity.setNxDistributerAppId("-1");
 			
 			if (sysCityMarketEntity.getSysCmPayConfigClass() != null) {
 				distributerEntity.setNxDistributerPayUrl(sysCityMarketEntity.getSysCmPayConfigClass());
@@ -261,7 +264,10 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 
 		distributerEntity.setNxDistributerMarketName(sysCityMarketEntity.getSysCmMarketName());
 
+//		String inputInviteCode = distributerEntity.getInviteCode();
+//		distributerEntity.setInviteCode(null);
 		nxDistributerDao.save(distributerEntity);
+
 
 		//3，保存Dis用户
 		Integer distributerId = distributerEntity.getNxDistributerId();

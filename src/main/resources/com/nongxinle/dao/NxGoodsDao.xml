@@ -73,14 +73,17 @@
         select great.nx_goods_id    'greatgrand_nx_goods_id',
                great.nx_goods_name  'greatgrand_nx_goods_name',
                great.nx_goods_file  'greatgrand_nx_goods_file',
+               great.nx_goods_sort  'greatgrand_nx_goods_sort',
 
                grand.nx_goods_id    'grand_nx_goods_id',
                grand.nx_goods_name  'grand_nx_goods_name',
                grand.nx_goods_file  'grand_nx_goods_file',
                grand.nx_goods_father_id  'grand_nx_goods_father_id',
+               grand.nx_goods_sort  'grand_nx_goods_sort',
                father.nx_goods_id   'f_nx_goods_id',
                father.nx_goods_name 'f_nx_goods_name',
                father.nx_goods_file 'f_nx_goods_file',
+               father.nx_goods_sort 'f_nx_goods_sort',
 
                g.nx_goods_id,
                g.nx_goods_name,
@@ -120,6 +123,7 @@
             )
           and g.nx_goods_standardname is not null
           and g.nx_goods_level = 3 and g.nx_goods_is_hidden = 0
+          order by great.nx_goods_sort, grand.nx_goods_sort, father.nx_goods_sort, g.nx_goods_sort,g.nx_goods_sons_sort
     </select>
 
 
@@ -570,7 +574,6 @@
     <resultMap id="nxDisGoods" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
-
         <result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>

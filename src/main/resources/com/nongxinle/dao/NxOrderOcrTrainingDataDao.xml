@@ -73,6 +73,9 @@
 			<if test="nxOtdDataSource != null and nxOtdDataSource != ''">
 				and nx_otd_data_source = #{nxOtdDataSource}
 			</if>
+			<if test="disGoodsId != null ">
+				and nx_otd_dis_goods_id = #{disGoodsId}
+			</if>
 		</where>
 		order by nx_otd_id desc
 	</select>
@@ -80,8 +83,8 @@
 	<select id="queryByMatchFields" resultType="com.nongxinle.entity.NxOrderOcrTrainingDataEntity">
 		select * from nx_order_ocr_training_data
 		<where>
-			<if test="departmentId != null">
-				and nx_otd_department_id = #{departmentId}
+			<if test="depId != null">
+				and nx_otd_department_id = #{depId}
 			</if>
 			<if test="goodsName != null and goodsName != ''">
 				and (nx_otd_original_goods_name = #{goodsName} or nx_otd_final_goods_name = #{goodsName})
@@ -95,6 +98,14 @@
 			<if test="disGoodsId != null and disGoodsId ==  1">
 				and nx_otd_dis_goods_id is not null
 			</if>
+			<if test="otdOcrText != null">
+				and nx_otd_ocr_text = #{otdOcrText}
+			</if>
+			<!-- 按数据源类型查询：PASTE(粘贴)、OCR_IMAGE(图片)、EXCEL(Excel) -->
+			<if test="dataSource != null and dataSource != ''">
+				and nx_otd_data_source = #{dataSource}
+			</if>
+
 
 			<!-- 不再使用 standardWeight 作为查询条件，避免因为 standardWeight 的限制导致查询不到已有的训练数据 -->
 			<!-- <if test="standardWeight != null and standardWeight != ''">
@@ -137,7 +148,8 @@
 			`nx_otd_data_source`,
 			`nx_otd_create_date`,
 			`nx_otd_update_date`,
-			`nx_otd_create_user_id`
+			`nx_otd_create_user_id`,
+			`nx_otd_ocr_text`
 		)
 		values
 		(
@@ -165,7 +177,8 @@
 			#{nxOtdDataSource},
 			#{nxOtdCreateDate},
 			#{nxOtdUpdateDate},
-			#{nxOtdCreateUserId}
+			#{nxOtdCreateUserId},
+			#{nxOtdOcrText}
 		)
 	</insert>
 	 
@@ -195,7 +208,8 @@
 			<if test="nxOtdFinalRemark != null">`nx_otd_final_remark` = #{nxOtdFinalRemark}, </if>
 			<if test="nxOtdDataSource != null">`nx_otd_data_source` = #{nxOtdDataSource}, </if>
 			<if test="nxOtdUpdateDate != null">`nx_otd_update_date` = #{nxOtdUpdateDate}, </if>
-			<if test="nxOtdCreateUserId != null">`nx_otd_create_user_id` = #{nxOtdCreateUserId}</if>
+			<if test="nxOtdCreateUserId != null">`nx_otd_create_user_id` = #{nxOtdCreateUserId}, </if>
+			<if test="nxOtdOcrText != null">`nx_otd_ocr_text` = #{nxOtdOcrText}</if>
 		</set>
 		where nx_otd_id = #{nxOtdId}
 	</update>

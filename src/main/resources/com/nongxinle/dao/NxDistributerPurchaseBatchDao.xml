@@ -102,6 +102,9 @@
 
     <resultMap id="dep" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -121,7 +124,11 @@
     </resultMap>
 
     <resultMap id="depOrders" type="NxDepartmentOrdersEntity">
-         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+           <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -192,7 +199,10 @@
     </resultMap>
 
     <resultMap id="depsOrders" type="NxDepartmentOrdersEntity">
-         <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+           <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -1161,7 +1171,10 @@
     </resultMap>
 
     <resultMap id="simpleOrder" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
@@ -1171,6 +1184,8 @@
         <result property="nxDoDepartmentFatherId" column="nx_DO_department_father_id"/>
         <result property="nxDoCostPrice" column="nx_DO_cost_price"/>
         <result property="nxDoCostSubtotal" column="nx_DO_cost_subtotal"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+        <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
         <association property="nxDepartmentEntity" resultMap="simpleDep"/>
         <association property="gbDepartmentEntity" resultMap="simpleGbDep"/>
         <association property="nxRestrauntEntity" resultMap="nxRes"/>
@@ -1178,6 +1193,9 @@
 
     <resultMap id="simpleDep" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
@@ -1249,6 +1267,10 @@
         dor.nx_DO_weight,
         dor.nx_DO_cost_price,
         dor.nx_DO_cost_subtotal,
+        dor.nx_DO_distributer_id,
+        dor.nx_DO_collaborative_nx_dis_id,
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
+
         
         -- 部门信息
         ds.nx_department_id,
@@ -1279,6 +1301,7 @@
         left join nx_goods as ng_dg on ng_dg.nx_goods_id = dg.nx_dg_nx_goods_id
         left join nx_department_orders as dor on dor.nx_DO_purchase_goods_id = dpg.nx_distributer_purchase_goods_id
             and dor.nx_DO_status &lt; 3
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = dor.nx_DO_collaborative_nx_dis_id
         left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
         left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
         left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
@@ -1288,6 +1311,9 @@
 
             <if test="disId != null">
                 and dpb.nx_DPB_distributer_id = #{disId}
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
             </if>
             <if test="status != null">
                 and dpb.nx_DPB_status &lt; #{status}
@@ -1412,6 +1438,20 @@
         left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
         where dpb.nx_distributer_purchase_batch_id = #{batchId}
         order by COALESCE(ng_dg.nx_goods_sort, dg.nx_dg_goods_sort), ds.nx_department_id, ngds.gb_department_id, nr.nx_restraunt_id
+    </select>
+
+
+    <select id="queryOfferNxDistributer" resultType="com.nongxinle.entity.NxDistributerEntity">
+        select * from  nx_distributer_purchase_batch as dpb
+        left join nx_distributer as dis on dis.nx_distributer_id = dpb.nx_DPB_supplier_id
+        <where>
+            <if test="status != null">
+                and dpb.nx_DPB_status &lt; #{status}
+            </if>
+            <if test="supplierId != null">
+                and dpb.nx_DPB_supplier_id = #{supplierId}
+            </if>
+        </where>
     </select>
 
 </mapper>

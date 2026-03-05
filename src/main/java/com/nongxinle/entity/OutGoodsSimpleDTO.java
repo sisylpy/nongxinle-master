@@ -54,11 +54,13 @@ public class OutGoodsSimpleDTO implements Serializable {
      * 商品详情
      */
     private String nxDgGoodsDetail;
+    private String nxDgDistributerName;
 
     /**
      * 曾祖父商品ID（great-grand级别）
      */
     private Integer nxDgDfgGoodsGreatGrandId;
+    private Integer nxDgDistributerId;
 
     /**
      * 曾祖父商品名称（great-grand级别）

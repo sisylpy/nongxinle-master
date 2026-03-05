@@ -138,4 +138,6 @@ public interface NxDistributerGoodsService {
      * @return 更新的记录数
      */
     int updatePurchaseAutoByGreatGrandIds(Map<String, Object> map);
+
+    List<NxDistributerGoodsEntity> queryDepDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
 }

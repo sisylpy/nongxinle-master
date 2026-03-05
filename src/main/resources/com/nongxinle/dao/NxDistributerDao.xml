@@ -360,7 +360,8 @@
          `nx_distributer_pay_url`,
          `nx_distributer_sys_city_id`,
          `nx_distributer_sys_market_id`,
-         `nx_distributer_show_name`)
+         `nx_distributer_show_name`
+         )
         values (#{nxDistributerId},
                 #{nxDistributerName},
                 #{nxDistributerLan},
@@ -378,7 +379,8 @@
                 #{nxDistributerPayUrl},
                 #{nxDistributerSysCityId},
                 #{nxDistributerSysMarketId},
-                #{nxDistributerShowName})
+                #{nxDistributerShowName}
+                )
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.NxDistributerEntity">

@@ -50,6 +50,16 @@ public class CategoryGoodsSimpleDTO implements Serializable {
     private String nxDgGoodsBrand;
 
     /**
+     * 商品所属配送商ID
+     */
+    private Integer nxDgDistributerId;
+
+    /**
+     * 商品配送商名称（优先 nx_distributer_show_name）
+     */
+    private String nxDgDistributerName;
+
+    /**
      * 订单列表（简化版）
      */
     private List<CategoryOrderSimpleDTO> orders;

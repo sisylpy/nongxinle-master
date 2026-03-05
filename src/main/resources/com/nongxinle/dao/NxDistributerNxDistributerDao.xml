@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDistributerNxDistributerDao">
+
+	<select id="queryObject" resultType="com.nongxinle.entity.NxDistributerNxDistributerEntity">
+		select * from nx_distributer_nx_distributer where nx_distributer_nx_distributer_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.nongxinle.entity.NxDistributerNxDistributerEntity">
+		select * from nx_distributer_nx_distributer 
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from nx_distributer_nx_distributer 
+	</select>
+
+	<resultMap id="offerDis" type="NxDistributerEntity">
+		<id property="nxDistributerId" column="nx_distributer_id"/>
+		<result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+		<result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+		<result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+		<result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+		<result property="nxDistributerType" column="nx_distributer_type"/>
+		<result property="nxDistributerName" column="nx_distributer_name"/>
+		<result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+		<result property="nxDistributerManager" column="nx_distributer_manager"/>
+		<result property="nxDistributerAddress" column="nx_distributer_address"/>
+		<result property="nxDistributerPhone" column="nx_distributer_phone"/>
+		<result property="nxDistributerImg" column="nx_distributer_img"/>
+		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+
+	</resultMap>
+
+	<!-- 查询某配送商的所有协作伙伴，支持 disId 或 orderDisId 参数 -->
+	<select id="queryOfferNxDisByParams" resultMap="offerDis">
+		select nd.* from nx_distributer_nx_distributer as onx
+		left join nx_distributer as nd on nd.nx_distributer_id = CASE
+			WHEN onx.nx_distributer_id_1 = COALESCE(#{disId}, #{orderDisId}) THEN onx.nx_distributer_id_2
+			ELSE onx.nx_distributer_id_1
+		END
+		where (onx.nx_distributer_id_1 = COALESCE(#{disId}, #{orderDisId}) or onx.nx_distributer_id_2 = COALESCE(#{disId}, #{orderDisId}))
+		  and nd.nx_distributer_id is not null
+	</select>
+
+	<insert id="save" parameterType="com.nongxinle.entity.NxDistributerNxDistributerEntity">
+		insert into nx_distributer_nx_distributer
+		(
+			`nx_distributer_nx_distributer_id`, 
+			`nx_distributer_id_1`, 
+			`nx_distributer_id_2`,
+			`invite_type`,
+			`inviter_nx_distributer_id`
+		)
+		values
+		(
+			#{nxDistributerNxDistributerId}, 
+			#{nxDistributerId1}, 
+			#{nxDistributerId2},
+			#{inviteType},
+			#{inviterNxDistributerId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.nongxinle.entity.NxDistributerNxDistributerEntity">
+		update nx_distributer_nx_distributer 
+		<set>
+			<if test="nxDistributerId1 != null">`nx_distributer_id_1` = #{nxDistributerId1}, </if>
+			<if test="nxDistributerId2 != null">`nx_distributer_id_2` = #{nxDistributerId2}, </if>
+			<if test="inviteType != null">`invite_type` = #{inviteType}, </if>
+			<if test="inviterNxDistributerId != null">`inviter_nx_distributer_id` = #{inviterNxDistributerId}</if>
+		</set>
+		where nx_distributer_nx_distributer_id = #{nxDistributerNxDistributerId}
+	</update>
+	
+	<!-- 根据两个配送商 id 查询协作关系（id 顺序不限） -->
+	<select id="queryByPartnerIds" resultType="com.nongxinle.entity.NxDistributerNxDistributerEntity">
+		select * from nx_distributer_nx_distributer
+		where (nx_distributer_id_1 = #{disId1} and nx_distributer_id_2 = #{disId2})
+		   or (nx_distributer_id_1 = #{disId2} and nx_distributer_id_2 = #{disId1})
+		limit 1
+	</select>
+
+	<delete id="delete">
+		delete from nx_distributer_nx_distributer where nx_distributer_nx_distributer_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from nx_distributer_nx_distributer where nx_distributer_nx_distributer_id in 
+		<foreach item="nxDistributerNxDistributerId" collection="array" open="(" separator="," close=")">
+			#{nxDistributerNxDistributerId}
+		</foreach>
+	</delete>
+
+</mapper>

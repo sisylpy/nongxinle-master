@@ -104,6 +104,21 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	 *  等待积分（客户货品卖出前的积分，卖出后加到积分字段）
 	 */
 	private String nxDepartmentWaitingPoints;
+	
+	/**
+	 * OCR 修正指令 - 图片上传（用于存储用户的修正要求，针对图片识别）
+	 */
+	private String nxDepartmentOcrPromptImage;
+	
+	/**
+	 * OCR 修正指令 - Excel上传（用于存储用户的修正要求，针对Excel识别）
+	 */
+	private String nxDepartmentOcrPromptExcel;
+	
+	/**
+	 * OCR 修正指令 - 复制粘贴（用于存储用户的修正要求，针对粘贴识别）
+	 */
+	private String nxDepartmentOcrPromptPaste;
 
 	private NxDepartmentEntity fatherDepartmentEntity;
 	private NxDistributerPayEntity payEntity;
@@ -122,7 +137,7 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	private NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity;
 	private List<NxDistributerFatherGoodsEntity>  nxDisFatherGoodsEntities;
 
-
+	private int taskCount;
 
 
 	@Override

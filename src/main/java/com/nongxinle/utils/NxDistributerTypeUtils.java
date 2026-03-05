@@ -70,7 +70,38 @@ public class NxDistributerTypeUtils {
     public final static Integer NX_ORDER_AGENT_DEP = 3; //web
     public final static Integer NX_ORDER_AGENT_DIS = 4; //web
 
+    public final static Integer NX_PURCHASE_GOODS_TYPE_SHELF_DIAOCHU = -2;  //货架调货入库
+    public final static Integer NX_PURCHASE_GOODS_TYPE_FOR_SELF = 0;  //自采商品
+    public final static Integer NX_PURCHASE_GOODS_TYPE_FOR_ORDER = 1;  //订货采购商品
+    public final static Integer NX_PURCHASE_GOODS_TYPE_SHELF_TUIHUO = 9;  //货架退货
+    public final static Integer NX_PURCHASE_GOODS_TYPE_SHELF_RUKU = 10;  //货架直接入库
 
+
+    public final static Integer NX_PURCHASE_GOODS_INPUT_TYPE_ORDER = 1;  //订单采购商品
+    public final static Integer NX_PURCHASE_GOODS_INPUT_TYPE_SHELF = 2;  //货架采购商品
+
+    public static Integer getNxPurchaseGoodsTypeShelfDiaochu(){
+        return NX_PURCHASE_GOODS_TYPE_SHELF_DIAOCHU;
+    }
+    public static Integer getNxPurchaseGoodsTypeForSelf(){
+        return NX_PURCHASE_GOODS_TYPE_FOR_SELF;
+    }
+    public static Integer getNxPurchaseGoodsTypeForOrder(){
+        return NX_PURCHASE_GOODS_TYPE_FOR_ORDER;
+    }
+    public static Integer getNxPurchaseGoodsTypeShelfTuihuo(){
+        return NX_PURCHASE_GOODS_TYPE_SHELF_TUIHUO;
+    }
+    public static Integer getNxPurchaseGoodsTypeShelfRuku(){
+        return NX_PURCHASE_GOODS_TYPE_SHELF_RUKU;
+    }
+
+    public static Integer getNxPurchaseGoodsInputTypeOrder(){
+        return NX_PURCHASE_GOODS_INPUT_TYPE_ORDER;
+    }
+    public static Integer getNxPurchaseGoodsInputTypeShelf(){
+        return NX_PURCHASE_GOODS_INPUT_TYPE_SHELF;
+    }
 
     public static Integer getNxDisPayListWeb() {
         return NX_DIS_PAY_LIST_WEB;

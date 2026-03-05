@@ -12,6 +12,7 @@
         dor.nx_DO_apply_only_time,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_remark,
         dor.nx_DO_status,
         dor.nx_DO_purchase_status,
@@ -272,8 +273,25 @@
         left join gb_department as purGbDf on purGbDf.gb_department_id = purDor.nx_DO_gb_department_father_id
         left join nx_restraunt as purNr on purNr.nx_restraunt_id = purDor.nx_DO_nx_comm_restraunt_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -337,8 +355,26 @@
             <if test="settleType != null">
                 and nd.nx_department_settle_type = #{settleType}
             </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -366,6 +402,9 @@
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="returnStatus != null">
                 and dor.nx_DO_return_status &lt; #{returnStatus}
@@ -520,11 +559,24 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
@@ -580,7 +632,7 @@
     </select>
 
 
-    <select id="queryObject" resultMap="applys">
+    <select id="queryObjectNew" resultMap="applys">
         select *
         from nx_department_orders as dor
                  left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
@@ -597,8 +649,12 @@
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
         </where>
         <if test="offset != null and limit != null">
@@ -778,6 +834,9 @@
 
     <resultMap id="orderDepartment" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -796,6 +855,7 @@
         <result property="nxDepartmentFatherId" column="nx_department_father_id"/>
         <result property="nxDepartmentFilePath" column="nx_department_file_path"/>
         <result property="nxDepartmentIsGroupDep" column="nx_department_is_group_dep"/>
+        <result property="nxDepartmentOrderCode" column="nx_department_order_code"/>
         <association property="fatherDepartmentEntity" resultMap="fatherDepartment"/>
     </resultMap>
 
@@ -805,7 +865,9 @@
     </resultMap>
 
     <resultMap id="depDisGoods" type="NxDepartmentDisGoodsEntity">
-         <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
+        <result property="nxDdgGoodsNxDistributerId" column="nx_DDG_goods_nx_distributer_id"/>
         <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
 		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
         <result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
@@ -846,7 +908,7 @@
     <resultMap id="disGoods" type="NxDistributerGoodsEntity">
        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
-
+        <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
@@ -905,6 +967,7 @@
         <result property="nxDgBuyingPriceThree" column="nx_dg_buying_price_three"/>
         <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
         <result property="nxDgTraceReportId" column="nx_dg_trace_report_id"/>
+        <result property="goodsNxDistributerName" column="goods_nx_distributer_name"/>
         <collection property="unPurGoodsDisGoodsList" resultMap="onlyPurGoods"/>
         <collection property="nxDistributerStandardEntities" resultMap="disStandards"/>
     </resultMap>
@@ -1083,13 +1146,16 @@
         <result property="gbDoWeightGoodsId" column="gb_DO_weight_goods_id"/>
         <result property="gbDoPriceDifferent" column="gb_DO_price_different"/>
         <association property="gbDepartmentEntity" resultMap="needNotBuyGbDeps"/>
-        <association property="gbDistributerPurchaseGoodsEntity" resultMap="gbPurGoods"/>
         <association property="nxDepartmentDisGoodsEntity" resultMap="depDisGoods"/>
     </resultMap>
 
 
     <resultMap id="applysWithGb" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoDistributerId" column="nx_DO_distributer_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
@@ -1165,7 +1231,11 @@
         <result property="nxDiuWxAvartraUrl" column="nx_DIU_wx_avartral_url"/>
     </resultMap>
     <resultMap id="applysSimple" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDistributerId" column="nx_DO_gb_distributer_id"/>
         <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
@@ -1179,7 +1249,11 @@
         <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
     </resultMap>
     <resultMap id="applys" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -1237,6 +1311,7 @@
         <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
         <result property="nxDoNxRestrauntOrderId" column="nx_DO_nx_restraunt_order_id"/>
         <result property="nxDoTrainingDataId" column="nx_DO_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_DO_ocr_task_id"/>
         <result property="nxDoGbDepartmentOrderId" column="nx_DO_gb_department_order_id"/>
         <result property="nxDoGbDepartmentFatherId" column="nx_DO_gb_department_father_id"/>
         <result property="nxDoGbDepartmentId" column="nx_DO_gb_department_id"/>
@@ -1253,11 +1328,13 @@
         <association property="gbDepartmentOrdersEntity" resultMap="gbOrder"/>
         <association property="nxTraceReportEntity" resultMap="traceReport" columnPrefix="traceReport_"/>
         <association property="shelfStockEntity" resultMap="disStock" columnPrefix="shelfStock_"/>
-        <!--        <association property="orderPurGoods" resultMap="purGoods"/>-->
-        <!--        <association property="nxDistributerWeightEntity" resultMap="weight"/>-->
     </resultMap>
     <resultMap id="applysWithAllDeps" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -1415,7 +1492,12 @@
     </resultMap>
 
     <resultMap id="orders" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+        <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoPrintStandard" column="nx_do_print_standard"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
@@ -1435,6 +1517,10 @@
         <result property="nxDoPurchaseGoodsId" column="nx_DO_purchase_goods_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="standardWeight" column="standard_weight"/>
+        <result property="itemUnit" column="item_unit"/>
+        <result property="itemsPerCarton" column="items_per_carton"/>
+        <result property="cartonUnit" column="carton_unit"/>
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoRemark" column="nx_DO_remark"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
@@ -1727,7 +1813,6 @@
     <resultMap id="disGoodsWithOrders" type="NxDistributerGoodsEntity">
        <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
-
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
@@ -1968,7 +2053,11 @@
         <result property="gbDepartmentLevel" column="gb_department_level"/>
     </resultMap>
     <resultMap id="ordersForGoods" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -2022,8 +2111,26 @@
         left join nx_department as dep on dep.nx_department_id = dor.nx_DO_department_father_id
         left join gb_department as gdp on gdp.gb_department_id = dor.nx_DO_gb_department_father_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="disGoodsId != null">
                 and dor.nx_DO_dis_goods_id = #{disGoodsId}
@@ -2055,13 +2162,31 @@
     </select>
 
     <select id="queryTotalByParams" resultType="java.lang.Integer">
-        select count(*) from nx_department_orders
+        select count(*) from nx_department_orders as dor
         <where>
             <if test="resFatherId != null">
-                and nx_DO_nx_comm_restraunt_id = #{resFatherId}
+                and dor.nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="disGoodsId != null">
                 and dor.nx_DO_dis_goods_id = #{disGoodsId}
@@ -2073,39 +2198,42 @@
                 and dor.nx_DO_goods_type = #{goodsType}
             </if>
             <if test="depFatherId != null">
-                and nx_DO_department_father_id = #{depFatherId}
+                and dor.nx_DO_department_father_id = #{depFatherId}
             </if>
             <if test="depId != null">
-                and nx_DO_department_id = #{depId}
+                and dor.nx_DO_department_id = #{depId}
             </if>
             <if test="gbDepFatherId != null">
-                and nx_DO_gb_department_father_id = #{gbDepFatherId}
+                and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
             <if test="gbDepId != null">
-                and nx_DO_gb_department_id = #{gbdepId}
+                and dor.nx_DO_gb_department_id = #{gbdepId}
             </if>
 
             <if test="status != null">
-                and nx_DO_status &lt; #{status}
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
-                and nx_DO_status = #{equalStatus}
+                and dor.nx_DO_status = #{equalStatus}
             </if>
             <if test="onlyDate != null">
-                and nx_DO_arrive_only_date &gt; #{onlyDate}
+                and dor.nx_DO_arrive_only_date &gt; #{onlyDate}
             </if>
 
             <if test="applyDate != null">
-                and nx_DO_apply_date &gt; #{applyDate}
+                and dor.nx_DO_apply_date &gt; #{applyDate}
             </if>
             <if test="arriveDate != null">
-                and nx_DO_arrive_date = #{arriveDate}
+                and dor.nx_DO_arrive_date = #{arriveDate}
             </if>
             <if test="priceOrder != null and priceOrder == 1">
-                and nx_DO_price is not null
+                and dor.nx_DO_price is not null
             </if>
             <if test="weightOrder != null and weightOrder == 1">
-                and nx_DO_weight is not null
+                and dor.nx_DO_weight is not null
             </if>
 
         </where>
@@ -2129,6 +2257,7 @@
         dor.nx_DO_apply_only_time,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_remark,
         dor.nx_DO_status,
         dor.nx_DO_purchase_status,
@@ -2151,10 +2280,13 @@
         dg.nx_dg_goods_detail,
         dg.nx_dg_goods_place,
         dg.nx_dg_goods_standardname,
+        dg.nx_dg_carton_unit,
+        dg.nx_dg_items_per_carton,
         dg.nx_dg_goods_standard_weight,
         nds.nx_distributer_standard_id,
         nds.nx_DS_standard_name,
         nds.nx_DS_dis_goods_id
+
 
         from nx_department_orders as dor
         left join nx_department_dis_goods as ddg on ddg.nx_department_dis_goods_id = dor.nx_DO_dep_dis_goods_id
@@ -2171,8 +2303,26 @@
         left join nx_goods as ng_great on ng_great.nx_goods_id = great.nx_dfg_nx_goods_id
 
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="disGoodsId != null">
                 and dor.nx_DO_dis_goods_id = #{disGoodsId}
@@ -2226,6 +2376,7 @@
         dor.nx_DO_apply_only_time,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_remark,
         dor.nx_DO_status,
         dor.nx_DO_purchase_status,
@@ -2273,8 +2424,26 @@
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="gbDisId != null">
                 and dor.nx_DO_gb_distributer_id = #{gbDisId}
@@ -2288,8 +2457,12 @@
             <if test="resFatherId != null">
                 and dor.nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
@@ -2320,9 +2493,17 @@
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
             </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
-            </if>
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>v
             <if test="disGoodsId != null">
                 and dor.nx_DO_dis_goods_id = #{disGoodsId}
             </if>
@@ -2425,6 +2606,9 @@
 
     <resultMap id="subDeps" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="subs_nx_department_id"/>
+        <result property="nxDepartmentOcrPromptPaste" column="subs_nx_department_ocr_prompt_paste"/>
+        <result property="nxDepartmentOcrPromptImage" column="subs_nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="subs_nx_department_ocr_prompt_excel"/>
         <result property="nxDepartmentOrderCode" column="subs_nx_department_order_code"/>
         <result property="nxDepartmentPickName" column="subs_nx_department_pick_name"/>
         <result property="nxDepartmentPrintName" column="subs_nx_department_print_name"/>
@@ -2443,6 +2627,9 @@
     </resultMap>
     <resultMap id="depWithUser" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentUnloadDuration" column="nx_department_unload_duration"/>
         <result property="nxDepartmentAddress" column="nx_department_address"/>
@@ -2473,10 +2660,21 @@
         dor.nx_DO_purchase_status, dor.nx_DO_arrive_Date,
         dor.nx_DO_gb_department_id, dor.nx_DO_nx_comm_restraunt_id,
         dor.nx_DO_department_id, dor.nx_DO_department_father_id,
-        ds.nx_department_id,ds.nx_department_father_id,
-        ds.nx_department_settle_type,ds.nx_department_name,ds.nx_department_attr_name,
+        ds.nx_department_id,
+        ds.nx_department_father_id,
+        ds.nx_department_dis_id,
+        ds.nx_department_ocr_prompt_image,
+        ds.nx_department_ocr_prompt_excel,
+        ds.nx_department_ocr_prompt_paste,
+        ds.nx_department_settle_type,
+               ds.nx_department_name,
+            ds.nx_department_attr_name,
         ds.nx_department_sub_amount, ds.nx_department_pick_name,
         subsd.nx_department_id 'subs_nx_department_id',
+        subsd.nx_department_ocr_prompt_excel 'subs_nx_department_ocr_prompt_excel',
+        subsd.nx_department_ocr_prompt_image 'subs_nx_department_ocr_prompt_image',
+        subsd.nx_department_ocr_prompt_paste 'subs_nx_department_ocr_prompt_paste',
+
         subsd.nx_department_address 'subs_nx_department_address',
         subsd.nx_department_unload_duration 'subs_nx_department_unload_duration',
 
@@ -2505,14 +2703,30 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+            <if test="disId != null">
+                and ds.nx_department_dis_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="disGoodsId != null">
                 and dor.nx_DO_dis_goods_id = #{disGoodsId}
             </if>
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="dayuStatus != null">
                 and nx_DO_status &gt; #{dayuStatus}
@@ -2596,8 +2810,12 @@
             <if test="gbDepId != null">
                 and dor.nx_DO_gb_department_id = #{gbDepId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -2654,8 +2872,26 @@
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="gbDisId != null">
                 and dor.nx_DO_gb_distributer_id = #{gbDisId}
@@ -2681,6 +2917,9 @@
                 and dor.nx_DO_arrive_date &lt;= #{stopDate}
             </if>
 
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
             <if test="dayuStatus != null">
                 and dor.nx_DO_status &gt; #{dayuStatus}
             </if>
@@ -2778,8 +3017,14 @@
             <if test="batchId != null and batchId == 0">
                 and ndpg.nx_DPG_batch_id is null
             </if>
+            <if test="batchId != null and batchId == -1">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
             <if test="batchId != null and batchId == 1">
                 and ndpg.nx_DPG_batch_id is not null
+            </if>
+            <if test="purGoodsStatus != null">
+                and ndpg.nx_DPG_status &lt; #{purGoodsStatus}
             </if>
             <if test="purchaseAuto != null">
                 and dg.nx_dg_purchase_auto = #{purchaseAuto}
@@ -2823,8 +3068,27 @@
                 and dor.nx_DO_arrive_date &lt;= #{stopDate}
             </if>
 
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="fatherId != null">
                 and dor.nx_DO_dis_goods_father_id = #{fatherId}
@@ -2853,14 +3117,29 @@
             <if test="resFatherId != null">
                 and nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+            <if test="dayuPurStatus != null">
+                and nx_DO_purchase_status &gt; #{dayuPurStatus}
+            </if>
+            <if test="equalPurStatus != null">
+                and nx_DO_purchase_status = #{equalPurStatus}
+            </if>
+            <if test="purStatus != null">
+                and nx_DO_purchase_status &lt; #{purStatus}
+            </if>
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="returnStatus != null">
                 and nx_DO_return_status &lt; #{returnStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="dayuStatus != null">
                 and nx_DO_status &gt; #{dayuStatus}
@@ -2922,8 +3201,12 @@
             <if test="resFatherId != null">
                 and nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -2978,8 +3261,22 @@
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -2996,8 +3293,12 @@
             <if test="resFatherId != null">
                 and nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -3119,12 +3420,26 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="resFatherId != null">
                 and dor.nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
 
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
@@ -3203,8 +3518,22 @@
                 and nx_DO_distributer_id = #{disId}
             </if>
 
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
@@ -3238,9 +3567,11 @@
         sell_user.nx_jrdh_user_id 'sell_user_nx_jrdh_user_id',
         sell_user.nx_jrdh_wx_avartra_url 'sell_user_nx_jrdh_wx_avartra_url',
         sell_user.nx_jrdh_wx_nick_name 'sell_user_nx_jrdh_wx_nick_name',
-        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change'
+        sell_user.nx_jrdh_url_change 'sell_user_nx_jrdh_url_change',
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
         from nx_department_orders as dor
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        LEFT JOIN nx_distributer AS nd_dis ON nd_dis.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id =
         dor.nx_DO_dis_goods_grand_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id =
@@ -3283,6 +3614,9 @@
             <if test="gbDepId != null">
                 and nx_DO_gb_department_id = #{gbDepId}
             </if>
+            <if test="disId != null">
+                and nx_DO_distributer_id = #{disId}
+            </if>
             <if test="depId != null">
                 and nx_DO_department_id = #{depId}
             </if>
@@ -3295,8 +3629,12 @@
             <if test="gbDepFatherId != null">
                 and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="purchaseStatus != null">
                 and nx_DO_purchase_status &lt; #{purchaseStatus}
@@ -3469,8 +3807,12 @@
             <if test="gbDepFatherId != null">
                 and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="purchaseStatus != null">
                 and nx_DO_purchase_status &lt; #{purchaseStatus}
@@ -3572,10 +3914,28 @@
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
 
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
             </if>
-            <if test="goodsType != null">
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+              <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
             </if>
             <if test="gbDepFatherId != null">
@@ -3595,6 +3955,9 @@
             </if>
             <if test="gbDepFatherId != null">
                 and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="dayuStatus != null">
                 and dor.nx_DO_status &gt; #{dayuStatus}
@@ -3648,6 +4011,219 @@
         order by dor.nx_DO_today_order
     </select>
 
+    <!-- 简化版订单查询，只查询必要字段，返回DTO -->
+    <select id="queryNotWeightDisOrdersSimpleByParams" resultMap="orderSimpleMap">
+        select 
+        dor.nx_department_orders_id,
+        dor.nx_DO_goods_name,
+        dor.nx_DO_quantity,
+        dor.nx_DO_standard,
+        dor.nx_DO_remark,
+        dor.nx_DO_status,
+        dor.nx_DO_weight,
+        dor.nx_DO_price,
+        dor.nx_DO_subtotal,
+        dor.nx_DO_print_standard,
+        dor.nx_DO_purchase_status,
+        dor.nx_DO_dis_goods_id,
+        dor.nx_DO_department_id,
+        dor.nx_do_ocr_task_id,
+        dor.nx_DO_goods_original_name,
+        ndg.nx_distributer_goods_id,
+        ndg.nx_dg_goods_name,
+        ndg.nx_dg_goods_brand,
+        ndg.nx_dg_goods_place,
+        ndg.nx_dg_goods_detail,
+        ndg.nx_dg_goods_standardname,
+        ndg.nx_dg_goods_standard_weight,
+        ndg.nx_dg_carton_unit,
+        ndg.nx_dg_items_per_carton,
+        ndg.nx_dg_nx_goods_father_color,
+        ndg.nx_dg_distributer_id,
+        COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
+        nddg.nx_DDG_order_goods_name
+        from nx_department_orders as dor
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = ndg.nx_dg_distributer_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = dor.nx_DO_department_id
+        <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="depFatherId != null">
+                and dor.nx_DO_department_father_id = #{depFatherId}
+            </if>
+            <if test="gbDepFatherId != null">
+                and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="resFatherId != null">
+                and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
+            </if>
+        </where>
+        order by dor.nx_DO_today_order
+    </select>
+
+    <!-- 批量查询多个部门的订单（简化版） -->
+    <select id="queryDisOrdersSimpleByDepIds" resultMap="orderSimpleMap">
+        select 
+        dor.nx_department_orders_id,
+        dor.nx_DO_goods_name,
+        dor.nx_DO_quantity,
+        dor.nx_DO_standard,
+        dor.nx_DO_remark,
+        dor.nx_DO_status,
+        dor.nx_DO_weight,
+        dor.nx_DO_price,
+        dor.nx_DO_subtotal,
+        dor.nx_DO_print_standard,
+        dor.nx_DO_purchase_status,
+        dor.nx_DO_dis_goods_id,
+        dor.nx_DO_department_id,
+        dor.nx_do_ocr_task_id,
+        ndg.nx_distributer_goods_id,
+        ndg.nx_dg_goods_name,
+        ndg.nx_dg_goods_brand,
+        ndg.nx_dg_goods_place,
+        ndg.nx_dg_goods_detail,
+        ndg.nx_dg_goods_standardname,
+        ndg.nx_dg_goods_standard_weight,
+        ndg.nx_dg_carton_unit,
+        ndg.nx_dg_items_per_carton,
+        ndg.nx_dg_nx_goods_father_color,
+        COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
+        nddg.nx_DDG_order_goods_name
+        from nx_department_orders as dor
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = ndg.nx_dg_distributer_id
+        left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
+        and nddg.nx_DDG_department_id = dor.nx_DO_department_id
+        <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+
+
+            <if test="disId != null">
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="depIds != null and depIds.size() > 0">
+                and dor.nx_DO_department_id in
+                <foreach collection="depIds" item="depId" open="(" separator="," close=")">
+                    #{depId}
+                </foreach>
+            </if>
+        </where>
+        order by dor.nx_DO_department_id, dor.nx_DO_today_order
+    </select>
+
+    <!-- 根据OCR任务ID查询订单列表（含已匹配商品，供 getTaskOrdersDetail 前端判断协作配送商） -->
+    <select id="queryListByOcrTaskId" resultMap="orders">
+        select dor.*, dg.*,
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
+        from nx_department_orders as dor
+        left join nx_distributer_goods as dg on dor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
+        where dor.nx_DO_ocr_task_id = #{ocrTaskId}
+        order by dor.nx_DO_today_order
+    </select>
+
+    <!-- 根据OCR任务ID分页查询订单列表 -->
+    <select id="queryListByOcrTaskIdWithPage" resultMap="orders">
+        select dor.*, dg.*,
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
+        from nx_department_orders as dor
+        left join nx_distributer_goods as dg on dor.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dg.nx_dg_distributer_id
+        where dor.nx_DO_ocr_task_id = #{ocrTaskId}
+        order by dor.nx_DO_today_order
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 根据OCR任务ID查询订单总数 -->
+    <select id="queryTotalByOcrTaskId" resultType="int">
+        select count(*) from nx_department_orders
+        where nx_DO_ocr_task_id = #{ocrTaskId}
+    </select>
+
+    <!-- 根据OCR任务ID一次性查询各状态订单数量（status=0已完成, status=-2待修正） -->
+    <select id="queryCountByOcrTaskIdGroupByStatus" resultType="map">
+        select
+            COALESCE(SUM(CASE WHEN nx_DO_status = 0 THEN 1 ELSE 0 END), 0) as completedCount,
+            COALESCE(SUM(CASE WHEN nx_DO_status = -2 THEN 1 ELSE 0 END), 0) as pendingCount
+        from nx_department_orders
+        where nx_DO_ocr_task_id = #{ocrTaskId}
+    </select>
+
+    <!-- 简化版订单DTO的resultMap -->
+    <resultMap id="orderSimpleMap" type="com.nongxinle.dto.NxDepartmentOrdersSimpleDTO">
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
+        <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
+        <result property="nxDoQuantity" column="nx_DO_quantity"/>
+        <result property="nxDoStandard" column="nx_DO_standard"/>
+        <result property="nxDoRemark" column="nx_DO_remark"/>
+        <result property="nxDoStatus" column="nx_DO_status"/>
+        <result property="nxDoWeight" column="nx_DO_weight"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
+        <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
+        <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
+        <result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <association property="nxDistributerGoodsEntity" javaType="com.nongxinle.dto.NxDepartmentOrdersSimpleDTO$DistributerGoodsSimpleDTO">
+            <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+            <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
+            <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+            <result property="nxDgGoodsPlace" column="nx_dg_goods_place"/>
+            <result property="nxDgGoodsDetail" column="nx_dg_goods_detail"/>
+            <result property="nxDgGoodsStandardname" column="nx_dg_goods_standardname"/>
+            <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
+            <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
+            <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
+            <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
+            <result property="nxDgDistributerName" column="nx_dg_distributer_name"/>
+            <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
+        </association>
+        <association property="nxDepartmentDisGoodsEntity" javaType="com.nongxinle.dto.NxDepartmentOrdersSimpleDTO$DepartmentDisGoodsSimpleDTO">
+            <result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
+        </association>
+    </resultMap>
+
     <resultMap id="appDep" type="GbDepartmentEntity">
         <id property="gbDepartmentId" column="app_gb_department_id"/>
         <result property="gbDepartmentName" column="app_gb_department_name"/>
@@ -3658,6 +4234,9 @@
     </resultMap>
     <resultMap id="nxDep" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -3743,6 +4322,16 @@
         left join nx_department as nd on nd.nx_department_id = ndgd.nx_DGD_from_nx_dep_id
         <where>
 
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="arriveDate != null">
                 and dor.nx_DO_arrive_date = #{arriveDate}
             </if>
@@ -3771,27 +4360,45 @@
             <if test="gbDepId != null">
                 and dor.nx_DO_gb_department_id = #{gbDepId}
             </if>
-            <if test="disId != null">
-                and nx_DO_distributer_id = #{disId}
-            </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
 
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            
             <if test="status != null">
-                and nx_DO_status &lt; #{status}
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="arriveDate != null">
-                and nx_DO_arrive_Date = #{arriveDate}
+                and dor.nx_DO_arrive_Date = #{arriveDate}
             </if>
             <if test="isPurType != null">
-                and nx_DO_purchase_goods_id is  not null
+                and dor.nx_DO_purchase_goods_id is  not null
             </if>
             <if test="purType != null and purType == -1">
-                and nx_DO_purchase_goods_id is null
+                and dor.nx_DO_purchase_goods_id is null
             </if>
             <if test="purType != null and purType == 0">
-                and nx_DO_purchase_goods_id = -1
+                and dor.nx_DO_purchase_goods_id = -1
             </if>
             <if test="purType != null and purType == 1">
-                and nx_DO_purchase_goods_id != -1
+                and dor.nx_DO_purchase_goods_id != -1
             </if>
             <if test="weightId != null and weightId == 1">
                 and dor.nx_DO_weight_id is not null
@@ -3867,6 +4474,12 @@
             <if test="disId != null">
                 and purDor.nx_DO_distributer_id = #{disId}
             </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and purDor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder != -1">
+                and purDor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
             <if test="goodsType != null">
                 and purDor.nx_DO_goods_type = #{goodsType}
             </if>
@@ -3918,6 +4531,7 @@
         dor.nx_DO_apply_only_time,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_remark,
         dor.nx_DO_status,
         dor.nx_DO_purchase_status,
@@ -4119,6 +4733,15 @@
                 and purDor.nx_DO_distributer_id = #{disId}
             </if>
 
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
 
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -4297,8 +4920,26 @@
                 and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
             </if>
 
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="inputType != null">
                 and ndpg.nx_DPG_input_type = #{inputType}
@@ -4306,6 +4947,9 @@
 
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="dayuStatus != null">
                 and dor.nx_DO_status &gt; #{dayuStatus}
@@ -4533,8 +5177,26 @@
         left join nx_restraunt as purNr on purNr.nx_restraunt_id = purDor.nx_DO_nx_comm_restraunt_id
 
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -4792,7 +5454,8 @@
     <!--        dor.nx_DO_apply_date,-->
     <!--        dor.nx_DO_apply_only_time,-->
     <!--        dor.nx_DO_quantity,-->
-    <!--        dor.nx_DO_standard,-->
+    <!--        dor.nx_DO_standard,
+        dor.nx_DO_print_standard,-->
     <!--        dor.nx_DO_remark,-->
     <!--        dor.nx_DO_status,-->
     <!--        dor.nx_DO_purchase_status,-->
@@ -5010,7 +5673,7 @@
     <!--        nds.nx_department_id,-->
     <!--        ngds.gb_department_id,ndnr.nx_restraunt_id,purDs.nx_department_id,purGbDs.gb_department_id,purNr.nx_restraunt_id-->
     <!--    </select>-->
-    <select id="queryObjectNew" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
         select *
         from nx_department_orders
         where nx_department_orders_id = #{nxDepartmentOrdersId}
@@ -5072,8 +5735,26 @@
         left join nx_distributer_purchase_goods as ndpg_queryGreatGrandOrderFatherGoods on ndpg_queryGreatGrandOrderFatherGoods.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
         left join nx_distributer_purchase_batch as ndpb_queryGreatGrandOrderFatherGoods on ndpb_queryGreatGrandOrderFatherGoods.nx_distributer_purchase_batch_id = ndpg_queryGreatGrandOrderFatherGoods.nx_DPG_batch_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -5224,8 +5905,26 @@
         left join gb_department as gdf on gdf.gb_department_id = dor.nx_DO_gb_department_father_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -5312,6 +6011,9 @@
 
     <resultMap id="justFatherDep" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -5333,6 +6035,9 @@
     </resultMap>
     <resultMap id="fatherDep" type="NxDepartmentEntity">
          <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentGbDistributerId" column="nx_department_gb_distributer_id"/>
         <result property="nxDepartmentEarliestDeliveryTime" column="nx_department_earliest_delivery_time"/>
         <result property="nxDepartmentLatestDeliveryTime" column="nx_department_latest_delivery_time"/>
@@ -5462,8 +6167,26 @@
         left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
         left join nx_distributer_purchase_batch as ndpb on ndpb.nx_distributer_purchase_batch_id = ndpg.nx_DPG_batch_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
@@ -5506,8 +6229,22 @@
         left join nx_department as df on df.nx_department_id = dor.nx_DO_department_father_id
         left join nx_department as ds on ds.nx_department_father_id = df.nx_department_id
         <where>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -5595,8 +6332,23 @@
             <if test="gbDisId != null">
                 and dor.nx_DO_gb_distributer_id = #{gbDisId}
             </if>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -5672,8 +6424,22 @@
     <select id="queryDisGoodsOrderWeightTotal" resultType="java.lang.Double">
         select SUM(nx_DO_weight) from nx_department_orders as dor
         <where>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -5698,6 +6464,9 @@
 
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="dayuStatus != null">
                 and dor.nx_DO_status &gt; #{dayuStatus}
@@ -5834,6 +6603,16 @@
             <if test="disId != null">
                 and ndpg.nx_DPG_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="status != null">
                 and ndpg.nx_DPG_status &lt; #{status}
             </if>
@@ -5896,6 +6675,16 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="disGoodsId != null">
                 and dor.nx_DO_dis_goods_id = #{disGoodsId}
             </if>
@@ -5918,8 +6707,12 @@
                 and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
             </if>
 
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="returnStatus != null">
                 and nx_DO_return_status &lt; #{returnStatus}
@@ -5980,8 +6773,26 @@
         left join nx_goods as ng_greatGrand_queryGrandGoodsOrder on ng_greatGrand_queryGrandGoodsOrder.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
 
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -6123,8 +6934,26 @@
         left join nx_goods as ng_grand_queryDisGetPrintOrderGreatGrandGoods on ng_grand_queryDisGetPrintOrderGreatGrandGoods.nx_goods_id = grand.nx_dfg_nx_goods_id
         left join nx_goods as ng_greatGrand_queryDisGetPrintOrderGreatGrandGoods on ng_greatGrand_queryDisGetPrintOrderGreatGrandGoods.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -6254,6 +7083,16 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="gbDepFatherId != null">
                 and nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
@@ -6268,8 +7107,12 @@
                 and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
             </if>
 
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="weightId != null and weightId == 1">
                 and dor.nx_DO_weight_id is not null
@@ -6419,11 +7262,25 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="arriveDate != null">
                 and nx_DO_arrive_Date = #{arriveDate}
@@ -6492,11 +7349,25 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
@@ -6514,8 +7385,22 @@
     <select id="queryDepOrdersProfitScale" resultType="java.lang.Double">
         select SUM(nx_DO_profit_scale) from nx_department_orders dor
         <where>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="fatherId != null">
                 and dor.nx_DO_dis_goods_father_id = #{fatherId}
@@ -6544,8 +7429,12 @@
             <if test="resFatherId != null">
                 and nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -6580,8 +7469,22 @@
     <select id="queryCostSubtotal" resultType="java.lang.Double">
         select SUM(nx_DO_cost_subtotal) from nx_department_orders dor
         <where>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -6610,8 +7513,12 @@
             <if test="resFatherId != null">
                 and nx_DO_nx_comm_restraunt_id = #{resFatherId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -6710,6 +7617,9 @@
     <!-- 简化版部门 resultMap（用于批次订单） -->
     <resultMap id="batchDepartment" type="NxDepartmentEntity">
         <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
         <result property="nxDepartmentName" column="nx_department_name"/>
         <result property="nxDepartmentOrderCode" column="nx_department_order_code"/>
         <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
@@ -6732,7 +7642,11 @@
 
     <!-- 简化版订单 resultMap（用于采购批次查询） -->
     <resultMap id="batchOrderSimple" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoRemark" column="nx_DO_remark"/>
@@ -6873,8 +7787,26 @@
         left join gb_department as ngdf on ngdf.gb_department_id = ngds.gb_department_father_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -6906,8 +7838,12 @@
             <if test="buyStatus != null">
                 and nx_DO_purchase_status &lt; #{buyStatus}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -7030,6 +7966,7 @@
 
         select
         dor.*,
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
         -- 明确列出 nds 表的所有字段，但使用 COALESCE 处理 nx_department_attr_name
         nds.nx_department_id,
         nds.nx_department_name,
@@ -7101,6 +8038,7 @@
         left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
         left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = dor.nx_DO_collaborative_nx_dis_id
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
@@ -7115,8 +8053,26 @@
             <if test="shelfId != null and shelfId == 1">
                 and ndgsg.nx_DGSG_dis_goods_id is not null
             </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -7137,6 +8093,9 @@
                 and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
             </if>
 
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
             </if>
@@ -7293,8 +8252,8 @@
     <select id="batchQueryDepStats" resultType="java.util.Map">
         SELECT
         dor.nx_DO_department_father_id as depId,
-        COUNT(CASE WHEN dor.nx_DO_status &lt; 3  THEN 1 END) as count0,
-        COUNT(CASE WHEN dor.nx_DO_status  &lt; 3  AND dor.nx_DO_purchase_status &lt; 4   THEN 1 END) as count1,
+        COUNT(CASE WHEN  dor.nx_DO_status &lt; 3  AND dor.nx_DO_status &gt; -2  THEN 1 END) as count0,
+        COUNT(CASE WHEN dor.nx_DO_status  &lt; 3  AND dor.nx_DO_purchase_status &lt; 4  AND dor.nx_DO_status &gt; -2  THEN 1 END) as count1,
         COUNT(CASE WHEN dor.nx_DO_status  &lt; 3  AND dor.nx_DO_purchase_status = 4 THEN 1 END) as count2
         FROM nx_department_orders as dor
         <if test="params != null and params.nxSupplierId != null">
@@ -7318,9 +8277,9 @@
         SELECT
         nx_DO_department_father_id as `depFatherId`,
         COUNT(CASE WHEN nx_DO_status = -2 THEN 1 END ) as `unDo`,
-        COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_price IS NOT NULL  AND  nx_DO_price != 0.1 THEN 1 END) as `hasPrice`,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 and nx_DO_status &gt; -2 AND nx_DO_price IS NOT NULL  AND  nx_DO_price != 0.1 THEN 1 END) as `hasPrice`,
         COUNT(CASE WHEN nx_DO_status &lt; 3 AND nx_DO_purchase_status &gt; 3 THEN 1 END) as `hasWeight`,
-        COUNT(CASE WHEN nx_DO_status &lt; 3 THEN 1 END) as `totalCount`,
+        COUNT(CASE WHEN nx_DO_status &lt; 3 and nx_DO_status &gt; -2 THEN 1 END) as `totalCount`,
         COUNT(CASE WHEN nx_DO_status = 2 and nx_DO_purchase_status &gt; 3 and nx_DO_price != 0.1  and  nx_DO_subtotal &gt; 0 THEN 1 END) as `finishCount`,
         SUM(CASE WHEN nx_DO_status = 2 and nx_DO_purchase_status &gt; 3 THEN nx_DO_subtotal ELSE 0 END) as `totalSubtotal`
         FROM nx_department_orders
@@ -7328,6 +8287,7 @@
         <foreach collection="depFatherIds" item="depFatherId" open="(" separator="," close=")">
             #{depFatherId}
         </foreach>
+       and nx_DO_collaborative_nx_dis_id = -1
         GROUP BY nx_DO_department_father_id
     </select>
     
@@ -7447,8 +8407,26 @@
             <foreach collection="grandIds" item="grandId" open="(" separator="," close=")">
                 #{grandId}
             </foreach>)
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                AND dor.nx_DO_distributer_id = #{disId}
+                and grand.nx_dfg_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 AND dor.nx_DO_status &lt; #{status}
@@ -7497,8 +8475,22 @@
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
             </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="purStatus != null">
                 and dor.nx_DO_purchase_status &lt; #{purStatus}
@@ -7515,8 +8507,12 @@
             <if test="depId != null">
                 and nx_DO_department_id = #{depId}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="purStatus != null">
                 and nx_DO_purchase_status &lt; #{purStatus}
@@ -7543,8 +8539,26 @@
 
         <where>
 
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+
             <if test="disId != null">
-                AND dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="pull != null">
                 AND dg.nx_dg_pull_off = #{pull}
@@ -7589,6 +8603,12 @@
         <where>
             <if test="disId != null">
                 and needNotDor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and needNotDor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder != -1">
+                and needNotDor.nx_DO_collaborative_nx_dis_id != -1
             </if>
             <if test="goodsType != null">
                 and needNotDor.nx_DO_goods_type = #{goodsType}
@@ -7719,6 +8739,16 @@
                 <if test="disId != null">
                     and nx_DO_distributer_id = #{disId}
                 </if>
+               
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
                 <if test="purType != null and purType == -1">
                     and dor.nx_DO_purchase_goods_id is null
                 </if>
@@ -7728,9 +8758,13 @@
                 <if test="purType != null and purType == 1">
                     and dor.nx_DO_purchase_goods_id != -1
                 </if>
-                <if test="status != null">
-                    and nx_DO_status &lt; #{status}
-                </if>
+                
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
                 <if test="equalStatus != null">
                     and nx_DO_status = #{equalStatus}
                 </if>
@@ -7782,17 +8816,27 @@
 
     <select id="queryOrderGoodsCount" resultType="java.lang.Integer">
 
-        select count(1)
-        from (
-        select distinct dg.nx_distributer_goods_id
+        select count(*)
         from nx_department_orders as dor
-        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         <where>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
             </if>
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
+            </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="hasCollOrder != null and hasCollOrder != -1">
+                and dor.nx_DO_nx_restraunt_order_id is not null
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="depFatherId != null">
                 and nx_DO_department_father_id = #{depFatherId}
@@ -7806,17 +8850,26 @@
             <if test="purType != null and purType == 1">
                 and dor.nx_DO_purchase_goods_id != -1
             </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
             <if test="status != null">
-                and nx_DO_status &lt; #{status}
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and  dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
             </if>
             <if test="returnStatus != null">
-                and nx_DO_return_status &lt; #{returnStatus}
+                and dor.nx_DO_return_status &lt; #{returnStatus}
             </if>
             <if test="equalPurStatus != null">
                 and dor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
+            <if test="dayuPurStatus != null">
+                and dor.nx_DO_purchase_status &gt; #{dayuPurStatus}
             </if>
             <if test="subtotal != null">
                 and dor.nx_DO_subtotal &gt; #{subtotal}
@@ -7825,7 +8878,6 @@
                 and nx_DO_arrive_Date = #{arriveDate}
             </if>
         </where>
-        ) as count_goods
 
     </select>
 
@@ -7843,12 +8895,14 @@
         <result property="nxDgDfgGoodsGreatGrandId" column="great_nx_distributer_father_goods_id"/>
         <result property="nxDgDfgGoodsGreatGrandName" column="great_nx_dfg_father_goods_name"/>
         <result property="isSelected" column="is_selected"/>
+        <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
+        <result property="nxDgDistributerName" column="nx_dg_distributer_name"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="outOrderUltraSimple"/>
     </resultMap>
 
     <!-- 出库订单简化版 resultMap -->
     <resultMap id="outOrderUltraSimple" type="OutOrderSimpleDTO">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoRemark" column="nx_DO_remark"/>
@@ -7865,6 +8919,10 @@
         <result property="nxDoNxCommRestrauntId" column="nx_DO_nx_comm_restraunt_id"/>
         <result property="nxRestrauntAttrName" column="nx_restraunt_attr_name"/>
         <result property="purSelected" column="pur_selected"/>
+        <result property="nxDoDistributerId" column="nx_do_distributer_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+        <result property="nxDoDistributerName" column="nx_do_distributer_name"/>
+        <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
     </resultMap>
 
     <!-- 出库商品简化版查询（只返回前端需要的字段） -->
@@ -7878,6 +8936,8 @@
         dg.nx_dg_goods_place,
         dg.nx_dg_goods_detail,
         dg.nx_dg_dfg_goods_father_id,
+        dg.nx_dg_distributer_id,
+        COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
         dg.nx_dg_dfg_goods_grand_id,
         great.nx_distributer_father_goods_id as great_nx_distributer_father_goods_id,
         great.nx_dfg_father_goods_name as great_nx_dfg_father_goods_name,
@@ -7888,6 +8948,8 @@
         ndo.nx_DO_remark,
         ndo.nx_DO_department_id,
         ndo.nx_DO_department_father_id,
+        ndo.nx_DO_distributer_id,
+        ndo.nx_DO_purchase_status,
         ds.nx_department_father_id as nx_department_father_id,
         ds.nx_department_attr_name as nx_department_attr_name,
         ds.nx_department_order_code as nx_department_order_code,
@@ -7899,6 +8961,9 @@
         ngdf.gb_department_name as father_gb_department_name,
         ndo.nx_DO_nx_comm_restraunt_id,
         nr.nx_restraunt_attr_name as nx_restraunt_attr_name,
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_do_distributer_name,
+        ndo.nx_DO_collaborative_nx_dis_id,
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
         0 as pur_selected
         from (
             select DISTINCT dg.nx_distributer_goods_id,
@@ -7907,7 +8972,8 @@
             grand.nx_dfg_father_goods_sort as grand_sort,
             ndfg.nx_dfg_father_goods_sort as ndfg_sort,
             dg.nx_dg_goods_sort,
-            dg.nx_dg_goods_sons_sort
+            dg.nx_dg_goods_sons_sort,
+             dg.nx_dg_distributer_id
             from nx_department_orders as dor
             left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
             left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
@@ -7917,9 +8983,29 @@
                 <if test="goodsType != null">
                     and dor.nx_DO_goods_type = #{goodsType}
                 </if>
-                <if test="disId != null">
-                    and nx_DO_distributer_id = #{disId}
+               
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
                 </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+                <if test="disId != null">
+                    and dg.nx_dg_distributer_id = #{disId}
+                </if>
+               
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+                <if test="hasCollOrder != null and hasCollOrder != -1">
+                    and dor.nx_DO_nx_restraunt_order_id is not null
+                </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
                 <if test="purType != null and purType == -1">
                     and dor.nx_DO_purchase_goods_id is null
                 </if>
@@ -7929,8 +9015,15 @@
                 <if test="purType != null and purType == 1">
                     and dor.nx_DO_purchase_goods_id != -1
                 </if>
-                <if test="status != null">
-                    and nx_DO_status &lt; #{status}
+                
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
+                <if test="dayuOrderStatus != null">
+                    and nx_DO_status &gt; #{dayuOrderStatus}
                 </if>
                 <if test="equalStatus != null">
                     and nx_DO_status = #{equalStatus}
@@ -7964,19 +9057,48 @@
             </if>
         ) as sorted_goods
         left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = sorted_goods.nx_distributer_goods_id
+        left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = dg.nx_dg_distributer_id
         left join nx_department_orders as ndo on ndo.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
-             and ndo.nx_DO_purchase_goods_id = -1 and ndo.nx_DO_purchase_status &lt; 4
+             <if test="purType != null and purType == 0">
+             and ndo.nx_DO_purchase_goods_id = -1
+             </if>
+             <choose>
+                 <when test="purStatus != null">
+                     and ndo.nx_DO_purchase_status &lt; #{purStatus}
+                 </when>
+                 <otherwise>
+                     and ndo.nx_DO_purchase_status &lt; 4
+                 </otherwise>
+             </choose>
+             <if test="disId != null">
+                 and ndo.nx_DO_distributer_id = #{disId}
+             </if>
+        <if test="orderDisId != null">
+            and ndo.nx_DO_distributer_id = #{orderDisId}
+        </if>
+        <if test="isSelfOrder != null and isSelfOrder == -1">
+            and ndo.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+        </if>
+        <if test="isSelfOrder != null and isSelfOrder != -1">
+            and ndo.nx_DO_collaborative_nx_dis_id != -1
+        </if>
+        <if test="collNxDisId != null">
+            and ndo.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+        </if>
              <if test="depFatherId != null">
                  and ndo.nx_DO_department_father_id = #{depFatherId}
              </if>
              <if test="depId != null">
                  and ndo.nx_DO_department_id = #{depId}
              </if>
+
         left join nx_department as ds on ds.nx_department_id = ndo.nx_DO_department_id
         left join nx_department as df on df.nx_department_id = ndo.nx_DO_department_father_id
         left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndo.nx_DO_distributer_id
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = ndo.nx_DO_collaborative_nx_dis_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
         left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
@@ -7998,6 +9120,8 @@
         dg.nx_dg_goods_brand,
         dg.nx_dg_goods_place,
         dg.nx_dg_goods_detail,
+        dg.nx_dg_distributer_id,
+        COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
         great.nx_distributer_father_goods_id as great_nx_distributer_father_goods_id,
         great.nx_dfg_father_goods_name as great_nx_dfg_father_goods_name,
         0 as is_selected,
@@ -8015,6 +9139,10 @@
         ngdf.gb_department_name as father_gb_department_name,
         ndo.nx_DO_nx_comm_restraunt_id,
         nr.nx_restraunt_attr_name as nx_restraunt_attr_name,
+        ndo.nx_DO_distributer_id as nx_do_distributer_id,
+        ndo.nx_DO_collaborative_nx_dis_id,
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_do_distributer_name,
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
         0 as pur_selected
         from (
             select DISTINCT dg.nx_distributer_goods_id,
@@ -8036,6 +9164,19 @@
                 <if test="disId != null">
                     and nx_DO_distributer_id = #{disId}
                 </if>
+                <if test="disId != null">
+                    and dg.nx_dg_distributer_id = #{disId}
+                </if>
+               
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
                 <if test="purType != null and purType == -1">
                     and dor.nx_DO_purchase_goods_id is null
                 </if>
@@ -8045,9 +9186,13 @@
                 <if test="purType != null and purType == 1">
                     and dor.nx_DO_purchase_goods_id != -1
                 </if>
-                <if test="status != null">
-                    and nx_DO_status &lt; #{status}
-                </if>
+                
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
                 <if test="equalStatus != null">
                     and nx_DO_status = #{equalStatus}
                 </if>
@@ -8077,8 +9222,21 @@
                      dg.nx_dg_goods_sort, dg.nx_dg_goods_sons_sort
         ) as sorted_goods
         left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = sorted_goods.nx_distributer_goods_id
+        left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = dg.nx_dg_distributer_id
         left join nx_department_orders as ndo on ndo.nx_DO_dis_goods_id = dg.nx_distributer_goods_id
              and ndo.nx_DO_purchase_goods_id = -1 and ndo.nx_DO_purchase_status &lt; 4
+             <if test="disId != null">
+                 and ndo.nx_DO_distributer_id = #{disId}
+             </if>
+             <if test="collNxDisId != null">
+                 and ndo.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+             </if>
+             <if test="status != null">
+                 and ndo.nx_DO_status &lt; #{status}
+             </if>
+             <if test="dayuOrderStatus != null">
+                 and ndo.nx_DO_status &gt; #{dayuOrderStatus}
+             </if>
              <if test="depFatherId != null">
                  and ndo.nx_DO_department_father_id = #{depFatherId}
              </if>
@@ -8090,6 +9248,8 @@
         left join gb_department as ngds on ngds.gb_department_id = ndo.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = ndo.nx_DO_gb_department_father_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndo.nx_DO_distributer_id
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = ndo.nx_DO_collaborative_nx_dis_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
         left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
@@ -8114,6 +9274,10 @@
          `nx_DO_dep_dis_goods_price`,
          `nx_DO_quantity`,
          `nx_DO_standard`,
+         `standard_weight`,
+         `item_unit`,
+         `items_per_carton`,
+         `carton_unit`,
          `nx_DO_remark`,
          `nx_DO_weight`,
          `nx_DO_weight_kg`,
@@ -8158,6 +9322,7 @@
          `nx_DO_gb_department_order_id`,
          `nx_DO_nx_restraunt_order_id`,
          `nx_DO_training_data_id`,
+         `nx_DO_ocr_task_id`,
          `nx_DO_cost_price_update`,
          `nx_DO_cost_price_level`,
          `nx_DO_dis_goods_grand_id`,
@@ -8167,7 +9332,10 @@
          `nx_DO_price_different`,
          `nx_DO_expect_price`,
          `nx_DO_goods_name`,
-         `nx_DO_gb_dep_dis_goods_id`)
+         `nx_DO_goods_original_name`,
+         `nx_DO_gb_dep_dis_goods_id`,
+         `nx_DO_collaborative_nx_dis_id`
+         )
         values (#{nxDepartmentOrdersId},
                 #{nxDoNxGoodsId},
                 #{nxDoNxGoodsFatherId},
@@ -8177,6 +9345,10 @@
                 #{nxDoDepDisGoodsPrice},
                 #{nxDoQuantity},
                 #{nxDoStandard},
+                #{standardWeight},
+                #{itemUnit},
+                #{itemsPerCarton},
+                #{cartonUnit},
                 #{nxDoRemark},
                 #{nxDoWeight},
                 #{nxDoWeightKg},
@@ -8221,6 +9393,7 @@
                 #{nxDoGbDepartmentOrderId},
                 #{nxDoNxRestrauntOrderId},
                 #{nxDoTrainingDataId},
+                #{nxDoOcrTaskId},
                 #{nxDoCostPriceUpdate},
                 #{nxDoCostPriceLevel},
                 #{nxDoDisGoodsGrandId},
@@ -8230,7 +9403,10 @@
                 #{nxDoPriceDifferent},
                 #{nxDoExpectPrice},
                 #{nxDoGoodsName},
-                #{nxDoGbDepDisGoodId})
+                #{nxDoGoodsOriginalName},
+                #{nxDoGbDepDisGoodId},
+                #{nxDoCollaborativeNxDisId}
+                )
     </insert>
     <insert id="insertFromOrder">
         INSERT INTO nx_department_order_history
@@ -8287,6 +9463,8 @@
          `nx_DO_nx_comm_restraunt_father_id`,
          `nx_DO_gb_department_order_id`,
          `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_training_data_id`,
+         `nx_DO_ocr_task_id`,
          `nx_DO_cost_price_update`,
          `nx_DO_cost_price_level`,
          `nx_DO_dis_goods_grand_id`,
@@ -8295,7 +9473,9 @@
          `nx_DO_price_different`,
          `nx_DO_expect_price`,
          `nx_DO_goods_name`,
-         `nx_DO_gb_dep_dis_goods_id`)
+         `nx_DO_goods_original_name`,
+         `nx_DO_gb_dep_dis_goods_id`,
+         `nx_DO_collaborative_nx_dis_id`)
         SELECT
          `nx_department_orders_id`,
          `nx_DO_nx_goods_id`,
@@ -8350,6 +9530,8 @@
          `nx_DO_nx_comm_restraunt_father_id`,
          `nx_DO_gb_department_order_id`,
          `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_training_data_id`,
+         `nx_DO_ocr_task_id`,
          `nx_DO_cost_price_update`,
          `nx_DO_cost_price_level`,
          `nx_DO_dis_goods_grand_id`,
@@ -8358,7 +9540,9 @@
          `nx_DO_price_different`,
          `nx_DO_expect_price`,
          `nx_DO_goods_name`,
-         `nx_DO_gb_dep_dis_goods_id`
+         `nx_DO_goods_original_name`,
+         `nx_DO_gb_dep_dis_goods_id`,
+         `nx_DO_collaborative_nx_dis_id`
         FROM nx_department_orders
         WHERE nx_department_orders_id = #{nxDepartmentOrdersId}
     </insert>
@@ -8374,6 +9558,10 @@
          `nx_DO_dep_dis_goods_price`,
          `nx_DO_quantity`,
          `nx_DO_standard`,
+         `standard_weight`,
+         `item_unit`,
+         `items_per_carton`,
+         `carton_unit`,
          `nx_DO_remark`,
          `nx_DO_weight`,
          `nx_DO_weight_kg`,
@@ -8418,6 +9606,7 @@
          `nx_DO_gb_department_order_id`,
          `nx_DO_nx_restraunt_order_id`,
          `nx_DO_training_data_id`,
+         `nx_DO_ocr_task_id`,
          `nx_DO_cost_price_update`,
          `nx_DO_cost_price_level`,
          `nx_DO_dis_goods_grand_id`,
@@ -8427,7 +9616,9 @@
          `nx_DO_price_different`,
          `nx_DO_expect_price`,
          `nx_DO_goods_name`,
-         `nx_DO_gb_dep_dis_goods_id`)
+         `nx_DO_goods_original_name`,
+         `nx_DO_gb_dep_dis_goods_id`,
+         `nx_DO_collaborative_nx_dis_id`)
         SELECT
          `nx_department_orders_id`,
          `nx_DO_nx_goods_id`,
@@ -8438,6 +9629,10 @@
          `nx_DO_dep_dis_goods_price`,
          `nx_DO_quantity`,
          `nx_DO_standard`,
+         `standard_weight`,
+         `item_unit`,
+         `items_per_carton`,
+         `carton_unit`,
          `nx_DO_remark`,
          `nx_DO_weight`,
          `nx_DO_weight_kg`,
@@ -8481,6 +9676,8 @@
          `nx_DO_nx_comm_restraunt_father_id`,
          `nx_DO_gb_department_order_id`,
          `nx_DO_nx_restraunt_order_id`,
+         `nx_DO_training_data_id`,
+         `nx_DO_ocr_task_id`,
          `nx_DO_cost_price_update`,
          `nx_DO_cost_price_level`,
          `nx_DO_dis_goods_grand_id`,
@@ -8490,7 +9687,9 @@
          `nx_DO_price_different`,
          `nx_DO_expect_price`,
          `nx_DO_goods_name`,
-         `nx_DO_gb_dep_dis_goods_id`
+         `nx_DO_goods_original_name`,
+         `nx_DO_gb_dep_dis_goods_id`,
+         `nx_DO_collaborative_nx_dis_id`
         FROM nx_department_order_history
         WHERE nx_department_orders_id = #{nxDepartmentOrdersId}
     </insert>
@@ -8506,6 +9705,10 @@
             <if test="nxDoDepDisGoodsPrice != null">`nx_DO_dep_dis_goods_price` = #{nxDoDepDisGoodsPrice},</if>
             <if test="nxDoQuantity != null">`nx_DO_quantity` = #{nxDoQuantity},</if>
             <if test="nxDoStandard != null">`nx_DO_standard` = #{nxDoStandard},</if>
+            <if test="standardWeight != null">`standard_weight` = #{standardWeight},</if>
+            <if test="itemUnit != null">`item_unit` = #{itemUnit},</if>
+            <if test="itemsPerCarton != null">`items_per_carton` = #{itemsPerCarton},</if>
+            <if test="cartonUnit != null">`carton_unit` = #{cartonUnit},</if>
             <if test="nxDoRemark != null">`nx_DO_remark` = #{nxDoRemark},</if>
             <if test="nxDoDepartmentId != null">`nx_DO_department_id` = #{nxDoDepartmentId},</if>
             <if test="nxDoDepartmentFatherId != null">`nx_DO_department_father_id` = #{nxDoDepartmentFatherId},</if>
@@ -8550,6 +9753,7 @@
             <if test="nxDoGbDepartmentOrderId != null">`nx_DO_gb_department_order_id` = #{nxDoGbDepartmentOrderId},</if>
             <if test="nxDoNxRestrauntOrderId!= null">`nx_DO_nx_restraunt_order_id` = #{nxDoNxRestrauntOrderId},</if>
             <if test="nxDoTrainingDataId != null">`nx_DO_training_data_id` = #{nxDoTrainingDataId},</if>
+            <if test="nxDoOcrTaskId != null">`nx_DO_ocr_task_id` = #{nxDoOcrTaskId},</if>
             <if test="nxDoCostPriceUpdate!= '-99'">`nx_DO_cost_price_update` = #{nxDoCostPriceUpdate},</if>
             <if test="nxDoCostPriceLevel!= '-99'">`nx_DO_cost_price_level` = #{nxDoCostPriceLevel},</if>
             <if test="nxDoDisGoodsGrandId!= '-99'">`nx_DO_dis_goods_grand_id` = #{nxDoDisGoodsGrandId},</if>
@@ -8558,7 +9762,9 @@
             <if test="nxDoTodayOrder!= '-99'">`nx_DO_today_order` = #{nxDoTodayOrder},</if>
             <if test="nxDoPriceDifferent!= '-99'">`nx_DO_price_different` = #{nxDoPriceDifferent},</if>
             <if test="nxDoGoodsName!= '-99'">`nx_DO_goods_name` = #{nxDoGoodsName},</if>
+            <if test="nxDoGoodsOriginalName!= '-99'">`nx_DO_goods_original_name` = #{nxDoGoodsOriginalName},</if>
             <if test="nxDoGbDepDisGoodId!= '-99'">`nx_DO_gb_dep_dis_goods_id` = #{nxDoGbDepDisGoodId},</if>
+            <if test="nxDoCollaborativeNxDisId!= '-99'">`nx_DO_collaborative_nx_dis_id` = #{nxDoCollaborativeNxDisId},</if>
             <if test="nxDoNxCommRestrauntFatherId != null">`nx_DO_nx_comm_restraunt_father_id` =
                 #{nxDoNxCommRestrauntFatherId},
             </if>
@@ -8600,11 +9806,29 @@
         inner join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_shelf_id = ndgs.nx_distributer_goods_shelf_id
         inner join nx_department_orders as dor on dor.nx_DO_dis_goods_id = ndgsg.nx_DGSG_dis_goods_id
         <where>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="purStatus != null">
                 and dor.nx_DO_purchase_status &lt; #{purStatus}
@@ -8642,8 +9866,22 @@
                 and ndgsg.nx_DGSG_shelf_id = #{shelfId}
             </if>
             <!-- 分销商ID -->
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <!-- 订单状态：status < 3 表示待出库订单 -->
             <if test="status != null">
@@ -8679,8 +9917,22 @@
             <!-- 非货架商品：不在货架商品表中的商品 -->
             and ndgsg.nx_DGSG_dis_goods_id is null
             <!-- 分销商ID -->
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <!-- 订单状态：status < 3 表示待出库订单 -->
             <if test="status != null">
@@ -8711,7 +9963,11 @@
     
     <!-- 简化的订单 resultMap -->
     <resultMap id="ordersSimple" type="NxDepartmentOrdersEntity">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
@@ -8721,6 +9977,9 @@
         <!-- 简化的部门信息 -->
         <association property="nxDepartmentEntity" javaType="NxDepartmentEntity">
             <id property="nxDepartmentId" column="nx_department_id"/>
+        <result property="nxDepartmentOcrPromptImage" column="nx_department_ocr_prompt_image"/>
+        <result property="nxDepartmentOcrPromptExcel" column="nx_department_ocr_prompt_excel"/>
+        <result property="nxDepartmentOcrPromptPaste" column="nx_department_ocr_prompt_paste"/>
             <result property="nxDepartmentName" column="nx_department_name"/>
             <result property="nxDepartmentAttrName" column="nx_department_attr_name"/>
             <association property="fatherDepartmentEntity" javaType="NxDepartmentEntity">
@@ -8802,6 +10061,7 @@
         dor.nx_department_orders_id,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_weight,
         dor.nx_DO_weight_kg,
         dor.nx_DO_remark,
@@ -8844,8 +10104,22 @@
             <if test="shelfId != null and shelfId == 1">
                 and ndgsg.nx_DGSG_dis_goods_id is not null
             </if>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
@@ -8873,7 +10147,8 @@
     
     <!-- 超简化的订单 resultMap -->
     <resultMap id="shelfOrderUltraSimple" type="ShelfOrderSimpleDTO">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
@@ -8885,6 +10160,7 @@
         <result property="gbDepName" column="gb_dep_name"/>
         <result property="restrauntName" column="restraunt_name"/>
         <result property="pickDetail" column="pick_detail"/>
+        <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
     </resultMap>
 
     <!-- 超简化的商品 resultMap -->
@@ -8980,9 +10256,11 @@
         dor.nx_department_orders_id,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_weight,
         dor.nx_DO_remark,
         dor.nx_DO_print_standard,
+        dor.nx_DO_collaborative_nx_dis_id,
         
         -- 部门名称（扁平化字符串，使用 CONCAT 拼接）
         -- 当子部门的属性名称为空时，使用部门名称作为备选
@@ -9014,7 +10292,10 @@
         ndnr.nx_restraunt_attr_name as restraunt_name,
         
         -- 拣货详情
-        nddg.nx_DDG_pick_detail as pick_detail
+        nddg.nx_DDG_pick_detail as pick_detail,
+        
+        -- 协作配送商名称
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name
         
         from nx_department_orders as dor
         left join nx_department as nds on nds.nx_department_id = dor.nx_DO_department_id
@@ -9022,6 +10303,7 @@
         left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
         left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = dor.nx_DO_collaborative_nx_dis_id
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
@@ -9041,11 +10323,28 @@
             <if test="shelfId != null and shelfId == 0">
                 and ndgsg.nx_DGSG_dis_goods_id is null
             </if>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="purStatus != null">
                 and dor.nx_DO_purchase_status &lt; #{purStatus}
@@ -9095,8 +10394,22 @@
         left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
         left join nx_distributer_purchase_batch as ndpb on ndpb.nx_distributer_purchase_batch_id = ndpg.nx_DPG_batch_id
         <where>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
@@ -9143,8 +10456,22 @@
             <if test="categoryId != null">
                 and greatGrand.nx_distributer_father_goods_id = #{categoryId}
             </if>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
@@ -9171,7 +10498,7 @@
     
     <!-- 简化的订单 resultMap（类别商品用） -->
     <resultMap id="categoryOrderUltraSimple" type="CategoryOrderSimpleDTO">
-        <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+          <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
         <result property="nxDoQuantity" column="nx_DO_quantity"/>
         <result property="nxDoStandard" column="nx_DO_standard"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
@@ -9183,6 +10510,10 @@
         <result property="gbDepName" column="gb_dep_name"/>
         <result property="restrauntName" column="restraunt_name"/>
         <result property="pickDetail" column="pick_detail"/>
+        <result property="nxDoDistributerName" column="nx_do_distributer_name"/>
+        <result property="nxDoDistributerId" column="nx_do_distributer_id"/>
+        <result property="nxDoCollaborativeNxDisId" column="nx_do_collaborative_nx_dis_id"/>
+        <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
     </resultMap>
 
     <!-- 简化的商品 resultMap（类别商品用） -->
@@ -9193,6 +10524,8 @@
         <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
+        <result property="nxDgDistributerName" column="nx_dg_distributer_name"/>
         <collection property="orders" resultMap="categoryOrderUltraSimple"/>
     </resultMap>
 
@@ -9226,9 +10559,18 @@
         dor.nx_department_orders_id,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_weight,
         dor.nx_DO_remark,
         dor.nx_DO_print_standard,
+        dor.nx_DO_distributer_id as nx_do_distributer_id,
+        dor.nx_DO_collaborative_nx_dis_id as nx_do_collaborative_nx_dis_id,
+        COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_do_distributer_name,
+        COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
+
+        -- 商品配送商信息
+        ndg.nx_dg_distributer_id,
+        COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
 
         -- 扁平化的部门信息
         -- 当子部门的属性名称为空时，使用部门名称作为备选
@@ -9265,7 +10607,10 @@
         left join gb_department as ngds on ngds.gb_department_id = dor.nx_DO_gb_department_id
         left join gb_department as ngdf on ngdf.gb_department_id = dor.nx_DO_gb_department_father_id
         left join nx_restraunt as ndnr on ndnr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
+        left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = dor.nx_DO_distributer_id
+        left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = dor.nx_DO_collaborative_nx_dis_id
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_father_goods as grand on dor.nx_DO_dis_goods_grand_id = grand.nx_distributer_father_goods_id
         left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_father_id
@@ -9281,8 +10626,22 @@
             <if test="categoryId != null">
                 and greatGrand.nx_distributer_father_goods_id = #{categoryId}
             </if>
-            <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+           
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
@@ -9322,6 +10681,7 @@
         <result property="nxDfgFatherGoodsColor" column="greatGrand_nx_dfg_father_goods_color"/>
         <result property="nxDfgFatherGoodsImg" column="greatGrand_nx_dfg_father_goods_img"/>
         <result property="newOrderCount" column="order_count"/>
+        <result property="nxDfgDistributerName" column="greatGrand_nx_dfg_distributer_name"/>
     </resultMap>
 
     <!-- 查询曾祖父商品列表（超简化版，只返回基本信息，不包含嵌套对象） -->
@@ -9333,28 +10693,52 @@
         greatGrand.nx_dfg_father_goods_sort as greatGrand_nx_dfg_father_goods_sort,
         greatGrand.nx_dfg_father_goods_color as greatGrand_nx_dfg_father_goods_color,
         greatGrand.nx_dfg_father_goods_img as greatGrand_nx_dfg_father_goods_img,
-        
+
+        -- 配送商名称（nx_distributer 表，优先 show_name）
+        MAX(COALESCE(nds.nx_distributer_show_name, nds.nx_distributer_name)) as greatGrand_nx_dfg_distributer_name,
+
         -- 订单数量（直接统计）
         COUNT(DISTINCT dor.nx_department_orders_id) as order_count
         
         from nx_department_orders as dor
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer as nds on nds.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_distributer_father_goods as grand on dor.nx_DO_dis_goods_grand_id = grand.nx_distributer_father_goods_id
         left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
         left join nx_goods as ng_greatGrand_queryCategoryListSimple on ng_greatGrand_queryCategoryListSimple.nx_goods_id = greatGrand.nx_dfg_nx_goods_id
         left join nx_distributer_purchase_goods as ndpg on ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
         <where>
+            <if test="orderDisId != null">
+                and dor.nx_DO_distributer_id = #{orderDisId}
+            </if>
             <if test="disId != null">
                 and dor.nx_DO_distributer_id = #{disId}
+                and ndg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="hasCollOrder != null and hasCollOrder != -1">
+                and dor.nx_DO_nx_restraunt_order_id is not null
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
             </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
             <if test="orderGoodsType != null">
                 and dor.nx_DO_goods_type  =  #{orderGoodsType}
             </if>
+
             <if test="purStatus != null">
-                and dor.nx_DO_purchase_status &lt; #{purStatus}
+                and (dor.nx_DO_purchase_status IS NULL OR dor.nx_DO_purchase_status &lt; #{purStatus})
             </if>
             <if test="batchId != null and batchId == 0">
                 and ndpg.nx_DPG_batch_id is null
@@ -9462,6 +10846,7 @@
         dor.nx_department_orders_id,
         dor.nx_DO_quantity,
         dor.nx_DO_standard,
+        dor.nx_DO_print_standard,
         dor.nx_DO_remark,
         dor.nx_DO_purchase_status,
         dor.nx_DO_weight,
@@ -9516,8 +10901,28 @@
         left join gb_department as ngdf on ngdf.gb_department_id = ngds.gb_department_father_id
         left join nx_restraunt as nr on nr.nx_restraunt_id = dor.nx_DO_nx_comm_restraunt_id
         <where>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
             <if test="disId != null">
-                and dor.nx_DO_distributer_id = #{disId}
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="disId != null">
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+             <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
             </if>
             <if test="goodsType != null">
                 and dor.nx_DO_goods_type = #{goodsType}
@@ -9549,8 +10954,12 @@
             <if test="buyStatus != null">
                 and nx_DO_purchase_status &lt; #{buyStatus}
             </if>
+            
             <if test="status != null">
                 and nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="equalStatus != null">
                 and nx_DO_status = #{equalStatus}
@@ -9591,5 +11000,286 @@
         COALESCE(ng_dg_queryDepOrdersByBatchGb.nx_goods_sons_sort),
         df.nx_department_id, ds.nx_department_id, ngdf.gb_department_id, ngds.gb_department_id
     </select>
+    <select id="queryMaxTodayOrder" resultType="java.lang.Integer">
+        select max(nx_DO_today_order) from nongxinle.nx_department_orders where nx_DO_department_father_id = #{depIdForTodayOrder}
+    </select>
+
+    <select id="queryOfferOrderNxDistributer" resultMap="offerNxDis">
+        select dis.* from nx_distributer as dis
+        where dis.nx_distributer_id in (
+            select distinct dor.nx_DO_collaborative_nx_dis_id
+            from nx_department_orders as dor
+            <where>
+               
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+                <if test="purStatus != null">
+                    and dor.nx_DO_purchase_status &lt; #{purStatus}
+                </if>
+                <if test="status != null">
+                    and dor.nx_DO_status &lt; #{status}
+                </if>
+                <if test="isSelfOrder != null and isSelfOrder == -1">
+                    and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+                </if>
+                <if test="isSelfOrder != null and isSelfOrder != -1">
+                    and dor.nx_DO_collaborative_nx_dis_id != -1
+                </if>
+                <if test="collNxDisId != null">
+                    and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+                </if>
+            </where>
+        )
+    </select>
+
+    <!-- 查询协作配送商对应的部门：collNxDisId 为协作配送商 id，只返回有协作订单的部门 -->
+    <select id="queryCollDisDeps" resultMap="orderDepartment">
+        select distinct dep.* from nx_department_orders as dor
+        inner join nx_department as dep on dep.nx_department_id = dor.nx_DO_department_father_id
+        <where>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_distributer_id = #{collNxDisId}
+            </if>
+            <if test="disId != null and collNxDisId == null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+        </where>
+    </select>
+
+    <select id="querycollOrder" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
+        select * from nx_department_orders as dor
+        <where>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            <if test="restrauntId != null">
+                and dor.nx_DO_nx_restraunt_order_id = #{restrauntId}
+            </if>
+           
+                <if test="orderDisId != null">
+                    and dor.nx_DO_distributer_id = #{orderDisId}
+                </if>
+                <if test="disId != null">
+                    and dor.nx_DO_distributer_id = #{disId}
+                </if>
+
+        </where>
+    </select>
+
+    <!-- 协作回复出库页：按协作伙伴分组，显示已回复的合作伙伴及其商品、配送商订单 -->
+    <select id="queryOfferOrderNxDistributerWithOrder" resultMap="offerNxDisWithOrder">
+        select dor.*,
+               dis.*,
+               dg.*,
+
+        ds.nx_department_id 'nx_department_id',
+        ds.nx_department_name 'nx_department_name',
+        ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_pick_name 'nx_department_pick_name',
+        ds.nx_department_order_code 'nx_department_order_code',
+        ds.nx_department_type 'nx_department_type',
+        ds.nx_department_father_id 'nx_department_father_id',
+        ds.nx_department_is_group_dep 'nx_department_is_group_dep',
+        df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_pick_name 'dd_nx_department_pick_name',
+        df.nx_department_order_code 'dd_nx_department_order_code',
+        df.nx_department_name 'dd_nx_department_name',
+        df.nx_department_attr_name 'dd_nx_department_attr_name'
+        from nx_department_orders as dor
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        <!-- 协作回复模式(hasCollOrder=1)：按商品所属配送商(协作伙伴)分组；否则按订单配送商分组 -->
+        <choose>
+            <when test="hasCollOrder != null and hasCollOrder != -1 and disId != null">
+                left join nx_distributer as dis on dis.nx_distributer_id = dg.nx_dg_distributer_id
+            </when>
+            <otherwise>
+                left join nx_distributer as dis on dis.nx_distributer_id = dor.nx_DO_distributer_id
+            </otherwise>
+        </choose>
+        left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
+        <where>
+            <!-- 只查配送商(disId)的订单，排除协作伙伴的订单(协作伙伴订单的 nx_DO_distributer_id=伙伴id) -->
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <!-- 协作回复模式：只显示协作伙伴的商品(商品所属配送商≠当前配送商)，排除自己的商品 -->
+            <if test="hasCollOrder != null and hasCollOrder != -1 and disId != null">
+                and dg.nx_dg_distributer_id is not null and dg.nx_dg_distributer_id != #{disId}
+            </if>
+            <!-- 协作回复模式：只查配送商订单(主订单)，排除协作伙伴的副本订单(协作伙伴订单 nx_DO_collaborative_nx_dis_id=disId) -->
+            <if test="hasCollOrder != null and hasCollOrder != -1">
+                and dor.nx_DO_nx_restraunt_order_id is not null
+                and (dor.nx_DO_collaborative_nx_dis_id = -1 or dor.nx_DO_collaborative_nx_dis_id is null)
+            </if>
+            <if test="dayuPurStatus != null">
+                and dor.nx_DO_purchase_status &gt; #{dayuPurStatus}
+            </if>
+            <if test="equalPurStatus != null">
+                and dor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            <!-- 协作回复模式分页：按协作伙伴分页，子查询先取伙伴id -->
+            <if test="offset != null and limit != null and hasCollOrder != null and hasCollOrder != -1 and disId != null">
+                and dg.nx_dg_distributer_id in (
+                    select partner_id from (
+                        select distinct dg2.nx_dg_distributer_id as partner_id
+                        from nx_department_orders dor2
+                        left join nx_distributer_goods dg2 on dg2.nx_distributer_goods_id = dor2.nx_DO_dis_goods_id
+                        where dor2.nx_DO_distributer_id = #{disId}
+                          and dor2.nx_DO_nx_restraunt_order_id is not null
+                          and (dor2.nx_DO_collaborative_nx_dis_id = -1 or dor2.nx_DO_collaborative_nx_dis_id is null)
+                          and dg2.nx_dg_distributer_id is not null and dg2.nx_dg_distributer_id != #{disId}
+                          <if test="equalPurStatus != null">and dor2.nx_DO_purchase_status = #{equalPurStatus}</if>
+                          <if test="purStatus != null">and dor2.nx_DO_purchase_status &lt; #{purStatus}</if>
+                          <if test="status != null">and dor2.nx_DO_status &lt; #{status}</if>
+                        order by partner_id
+                        limit #{offset}, #{limit}
+                    ) t
+                )
+            </if>
+        </where>
+        <if test="offset != null and limit != null and (hasCollOrder == null or hasCollOrder == -1 or disId == null)">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 协作回复出库页：统计已回复的协作伙伴数量（用于分页） -->
+    <select id="queryCollReplyPartnerCount" resultType="java.lang.Integer">
+        select count(distinct dg.nx_dg_distributer_id)
+        from nx_department_orders as dor
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        <where>
+            <if test="disId != null">and dor.nx_DO_distributer_id = #{disId}</if>
+            <if test="hasCollOrder != null and hasCollOrder != -1">
+                and dor.nx_DO_nx_restraunt_order_id is not null
+                and (dor.nx_DO_collaborative_nx_dis_id = -1 or dor.nx_DO_collaborative_nx_dis_id is null)
+                and dg.nx_dg_distributer_id is not null and dg.nx_dg_distributer_id != #{disId}
+            </if>
+            <if test="dayuPurStatus != null">and dor.nx_DO_purchase_status &gt; #{dayuPurStatus}</if>
+            <if test="equalPurStatus != null">and dor.nx_DO_purchase_status = #{equalPurStatus}</if>
+            <if test="purStatus != null">and dor.nx_DO_purchase_status &lt; #{purStatus}</if>
+            <if test="status != null">and dor.nx_DO_status &lt; #{status}</if>
+        </where>
+    </select>
+
+    <select id="queryOfferOrdersGoods"  resultMap="disGoodsWithApplys">
+        select dor.*,
+        dg.*,
+        ds.nx_department_id 'nx_department_id',
+        ds.nx_department_name 'nx_department_name',
+        ds.nx_department_attr_name 'nx_department_attr_name',
+        ds.nx_department_pick_name 'nx_department_pick_name',
+        ds.nx_department_order_code 'nx_department_order_code',
+        ds.nx_department_type 'nx_department_type',
+        ds.nx_department_father_id 'nx_department_father_id',
+        ds.nx_department_is_group_dep 'nx_department_is_group_dep',
+        df.nx_department_id 'dd_nx_department_id',
+        df.nx_department_pick_name 'dd_nx_department_pick_name',
+        df.nx_department_order_code 'dd_nx_department_order_code',
+        df.nx_department_name 'dd_nx_department_name',
+        df.nx_department_attr_name 'dd_nx_department_attr_name'
+        from nx_department_orders as dor
+        left join nx_distributer_goods as dg on dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        left join nx_distributer as dis on dis.nx_distributer_id = dor.nx_DO_distributer_id
+        left join nx_department as ds on ds.nx_department_id = dor.nx_DO_department_id
+        left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
+        <where>
+            <if test="disId != null">
+                and nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="equalPurStatus != null">
+                and dor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="status != null">
+                and nx_DO_status &lt; #{status}
+            </if>
+            <if test="equalStatus != null">
+                and nx_DO_status = #{equalStatus}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+        </where>
+    </select>
+    <select id="queryByRestrauntId" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
+        select * from nongxinle.nx_department_orders where nx_DO_nx_restraunt_order_id = #{nxDoNxRestrauntOrderId}
+    </select>
+
+    <resultMap id="offerNxDis" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerType" column="nx_distributer_type"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+<!--        <collection property="nxDistributerGoodsEntities"-->
+    </resultMap>
+
+
+    <resultMap id="offerNxDisWithOrder" type="NxDistributerEntity">
+        <id property="nxDistributerId" column="nx_distributer_id"/>
+        <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
+        <result property="nxDistributerBuyQuantity" column="nx_distribuyter_buy_quantity"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <result property="nxDistributerPayUrl" column="nx_distributer_pay_url"/>
+        <result property="nxDistributerShelfQuantity" column="nx_distributer_shelf_quantity"/>
+        <result property="nxDistributerType" column="nx_distributer_type"/>
+        <result property="nxDistributerName" column="nx_distributer_name"/>
+        <result property="nxDistributerShowName" column="nx_distributer_show_name"/>
+        <result property="nxDistributerManager" column="nx_distributer_manager"/>
+        <result property="nxDistributerAddress" column="nx_distributer_address"/>
+        <result property="nxDistributerPhone" column="nx_distributer_phone"/>
+        <result property="nxDistributerImg" column="nx_distributer_img"/>
+        <result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
+        <collection property="nxDistributerGoodsEntities" resultMap="disGoodsWithApplys"/>
+    </resultMap>
+
 
 </mapper>

@@ -49,4 +49,6 @@ public interface NxDistributerPurchaseBatchService {
 	List<NxDistributerEntity> queryNxDistributerBySellerId(String sellId);
 
     NxDistributerPurchaseBatchEntity queryBatchItemByParams(Map<String, Object> mapB);
+
+    List<NxDistributerEntity> queryOfferNxDistributer(Map<String, Object> map);
 }

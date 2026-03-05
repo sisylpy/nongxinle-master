@@ -52,7 +52,10 @@
 	</select>
 
 	<resultMap id="depOrders" type="NxDepartmentOrdersEntity">
-		<id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		  <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+		<result property="nxDoGoodsOriginalName" column="nx_do_goods_original_name"/>
+        <result property="nxDoTrainingDataId" column="nx_do_training_data_id"/>
+        <result property="nxDoOcrTaskId" column="nx_do_ocr_task_id"/>
         <result property="nxDoGbDepDisGoodId" column="nx_DO_gb_dep_dis_goods_id"/>
         <result property="nxDoGoodsName" column="nx_DO_goods_name"/>
         <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
@@ -123,7 +126,10 @@
 	</resultMap>
 
 	<resultMap id="depGoodsWithHistory" type="NxDepartmentDisGoodsEntity">
-		 <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+		<id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
+        <result property="nxDdgGoodsNxDistributerId" column="nx_DDG_goods_nx_distributer_id"/>
+		<result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
         <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
 		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
 		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
@@ -408,7 +414,9 @@
 	</resultMap>
 
 	<resultMap id="depDisGoods" type="NxDepartmentDisGoodsEntity">
-		 <id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+		<id property="nxDepartmentDisGoodsId" column="nx_department_dis_goods_id"/>
+        <result property="nxDdgNxDistributerId" column="nx_DDG_nx_distributer_id"/>
+        <result property="nxDdgGoodsNxDistributerId" column="nx_DDG_goods_nx_distributer_id"/>
         <result property="nxDdgDisGoodsGreatId" column="nx_DDG_dis_goods_great_id"/>
 		<result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
 		<result property="nxDdgOrderPriceLevel" column="nx_DDG_order_price_level"/>
