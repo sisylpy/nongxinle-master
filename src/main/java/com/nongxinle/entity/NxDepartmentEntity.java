@@ -136,6 +136,7 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	private List<NxDepartmentDisGoodsEntity> nxDepartmentDisGoodsEntities;
 	private NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity;
 	private List<NxDistributerFatherGoodsEntity>  nxDisFatherGoodsEntities;
+	private List<NxDistributerLabelEntity> nxDistributerLabelEntities;
 
 	private int taskCount;
 

@@ -58,6 +58,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
 		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
 		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
 		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
 		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -169,6 +170,7 @@
 
 	<resultMap id="subOrder" type="NxCommunityOrdersSubEntity">
 		   <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
@@ -226,6 +228,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
 		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
 		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
 		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
 		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -260,6 +263,7 @@
 		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
 		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
 		<association property="nxCommunityCardEntity" resultMap="goodsCard"/>
 		<association property="ordersSubEntity" resultMap="subOrder"/>
 		<association property="memberOrdersSubEntity" resultMap="memberSubOrder"/>

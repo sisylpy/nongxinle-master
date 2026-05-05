@@ -240,9 +240,33 @@ public class NxDistributerGoodsShelfStockEntity implements Serializable {
 	 */
 	private String shelfName;
 	/**
+	 * 货架商品层级（与 shelfName 对应本批次所在货架商品行）
+	 */
+	private Integer nxDgsgShelfLayer;
+	/**
+	 * 货架商品同层序号
+	 */
+	private Integer nxDgsgShelfLayerSeq;
+	/**
 	 * 溯源报告ID
 	 */
 	private Integer nxDgssTraceReportId;
+	/**
+	 * 生产日期（如 2025-03-18）
+	 */
+	private String nxDgssProduceDate;
+	/**
+	 * 保质期（数值，如 3、7、15）
+	 */
+	private Integer nxDgssShelfLife;
+	/**
+	 * 保质期单位（天/月/年）
+	 */
+	private String nxDgssShelfLifeUnit;
+	/**
+	 * 过期日期（如 2025-03-21）
+	 */
+	private String nxDgssExpiryDate;
 
 	private List<NxDistributerGoodsShelfStockReduceEntity> reduceEntityList;
 

@@ -42,7 +42,7 @@ public interface NxDistributerGoodsShelfGoodsService {
 
 	List<NxDistributerGoodsShelfGoodsEntity> queryShelfGoodsBasic(Integer shelfId);
 
-	void updateShelfLayer(Integer id, Integer layer);
+	void updateShelfLayerFields(Integer id, Integer layer, Integer layerLast, Integer layerSeq, Integer sort);
 
 	/**
 	 * 更新商品在所有货架的重复标记

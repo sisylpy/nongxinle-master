@@ -133,6 +133,7 @@
 
     <resultMap id="subOrders" type="NxCommunityOrdersSubEntity">
            <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosServiceType" column="nx_COS_service_type"/>
@@ -158,10 +159,14 @@
         <result property="nxCosCommunityGoodsFatherId" column="nx_COS_community_goods_father_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosPurchaseUserId" column="nx_COS_purchase_usr_id"/>
+        <association property="customerUserEntity" resultMap="com.nongxinle.dao.NxCommunitySplicingOrdersDao.customerUser"/>
     </resultMap>
 
     <resultMap id="community" type="NxCommunityEntity">
-        		<id property="nxCommunityId" column="nx_community_id"/>
+        <id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_off_set"/>
 		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
         <result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
         <result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
@@ -182,6 +187,14 @@
 
     <resultMap id="cgGoods" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
         <result property="nxCgServiceType" column="nx_cg_service_type"/>
         <result property="nxCgCommunityId" column="nx_cg_community_id"/>
@@ -213,6 +226,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -240,6 +254,7 @@
         <result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
         <result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
         <result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
+       
         <result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
         <result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
         <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
@@ -267,6 +282,10 @@
 
 <!--    <resultMap id="cgGoodsWithChainResArr" type="NxCommunityGoodsEntity">-->
 <!--        <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
 		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
 		<result property="nxCgPromotionType" column="nx_cg_promotion_type"/>
@@ -486,6 +505,10 @@
 
     <resultMap id="resManCgGoods" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
         <result property="nxCgServiceType" column="nx_cg_service_type"/>
 		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
@@ -514,6 +537,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -569,6 +593,10 @@
     </resultMap>
     <resultMap id="cgGoodsWithDistributer" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
@@ -601,15 +629,15 @@
         <result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
         <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
         <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
-<!--        <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>-->
-<!--        <association property="nxDistributerEntity" resultMap="distributer"/>-->
-<!--        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>-->
-<!--        <association property="nxCommunitySupplierEntity" resultMap="commSupplier"/>-->
         <collection property="nxCommunityStandardEntities" resultMap="comStandard" />
         <collection property="nxCommunityAliasEntities" resultMap="comAlias"/>
     </resultMap>
     <resultMap id="cgGoodsWithChainResArr" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
@@ -729,6 +757,7 @@
 
     <resultMap id="subOrder" type="NxCommunityOrdersSubEntity">
            <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosServiceType" column="nx_COS_service_type"/>
@@ -754,6 +783,8 @@
         <result property="nxCosOrdersId" column="nx_COS_orders_id"/>
         <result property="nxCosSubtotal" column="nx_COS_subtotal"/>
         <result property="nxCosSubWeight" column="nx_COS_sub_weight"/>
+        <association property="customerUserEntity" resultMap="com.nongxinle.dao.NxCommunitySplicingOrdersDao.customerUser"/>
+
     </resultMap>
 
 
@@ -773,6 +804,7 @@
         <result property="nxCgSetSubNumber" column="spCg_nx_cg_set_sub_number"/>
         <result property="nxCgNxGoodsFilePath" column="spCg_nx_cg_nx_goods_file_path"/>
         <result property="nxCgNxGoodsTopFilePath" column="spCg_nx_cg_nx_goods_top_file_path"/>
+        <result property="nxCgGoodsIntroVideo" column="spCg_nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="spCg_nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="spCg_nx_cg_goods_standardname"/>
         <result property="nxCgGoodsType" column="spCg_nx_cg_goods_type"/>
@@ -851,6 +883,10 @@
 
     <resultMap id="comGoods" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
         <result property="nxCgServiceType" column="nx_cg_service_type"/>
 		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
@@ -879,6 +915,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -922,6 +959,10 @@
 
     <resultMap id="remarkComGoods" type="NxCommunityGoodsEntity">
         <id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgPrintSn" column="nx_cg_print_sn"/>
         <result property="nxCgServiceType" column="nx_cg_service_type"/>
 		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
@@ -950,6 +991,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -1034,7 +1076,10 @@
         spCg.nx_cg_goods_name 'spCg_nx_cg_goods_name',
         spCg.nx_cg_goods_standardname 'spCg_nx_cg_goods_standardname',
         spCg.nx_cg_goods_type 'spCg_nx_cg_goods_type',
-        spCg.nx_cg_card_id 'spCg_nx_cg_card_id'
+        spCg.nx_cg_card_id 'spCg_nx_cg_card_id',
+        spCg.nx_cg_nx_goods_file_path 'spCg_nx_cg_nx_goods_file_path',
+        spCg.nx_cg_nx_goods_top_file_path 'spCg_nx_cg_nx_goods_top_file_path',
+        spCg.nx_cg_goods_intro_video 'spCg_nx_cg_goods_intro_video'
 
         from nx_community_goods as ncg
         left join nx_community_card as ncc on ncc.nx_community_card_id = ncg.nx_cg_card_id
@@ -1044,10 +1089,10 @@
         left join nx_community_goods_set_item as ncgsi on ncgsi.nx_cgsi_cg_property_id =
         ncgsp.nx_community_goods_set_property_id
         left join nx_community_orders_sub as ncos on ncos.nx_COS_community_goods_id = ncg.nx_community_goods_id
-        and ncos.nx_COS_order_user_id = #{orderUserId} and ncos.nx_COS_status &lt; 2 and ncos.nx_COS_type = 0
+        and ncos.nx_COS_order_user_id = #{orderUserId} and ncos.nx_COS_status &lt; 0 and ncos.nx_COS_type = 0
         left join nx_community_orders_sub as huaxianCos on huaxianCos.nx_COS_community_goods_id =
         ncg.nx_community_goods_id
-        and huaxianCos.nx_COS_order_user_id = #{orderUserId} and huaxianCos.nx_COS_status &lt; 2 and huaxianCos.nx_COS_type = 0
+        and huaxianCos.nx_COS_order_user_id = #{orderUserId} and huaxianCos.nx_COS_status &lt; 0 and huaxianCos.nx_COS_type = 0
         left join nx_community_goods as spCg on spCg.nx_community_goods_id = ncgsi.nx_cgsi_cg_goods_id
                                                     and spCg.nx_community_goods_id !=  ncg.nx_community_goods_id
         <where>
@@ -1089,7 +1134,10 @@
         spCg.nx_cg_goods_name 'spCg_nx_cg_goods_name',
         spCg.nx_cg_goods_standardname 'spCg_nx_cg_goods_standardname',
         spCg.nx_cg_goods_type 'spCg_nx_cg_goods_type',
-        spCg.nx_cg_card_id 'spCg_nx_cg_card_id'
+        spCg.nx_cg_card_id 'spCg_nx_cg_card_id',
+        spCg.nx_cg_nx_goods_file_path 'spCg_nx_cg_nx_goods_file_path',
+        spCg.nx_cg_nx_goods_top_file_path 'spCg_nx_cg_nx_goods_top_file_path',
+        spCg.nx_cg_goods_intro_video 'spCg_nx_cg_goods_intro_video'
 
 
         from nx_community_goods as ncg
@@ -1179,6 +1227,7 @@
          `nx_cg_stop_time`,
          `nx_cg_card_id`,
          `nx_cg_nx_goods_top_file_path`,
+         `nx_cg_goods_intro_video`,
          `nx_cg_is_open_adsense`,
          `nx_cg_adsense_start_time`,
          `nx_cg_adsense_stop_time`,
@@ -1191,7 +1240,11 @@
          `nx_cg_promotion_price`,
          `nx_cg_promotion_words`,
          `nx_cg_service_type`,
-         `nx_cg_print_sn`
+         `nx_cg_print_sn`,
+         `nx_cg_goods_gross_weight`,
+         `nx_cg_goods_gross_price`,
+         `nx_cg_goods_net_weight`,
+         `nx_cg_goods_net_price`
          )
         values (#{nxCommunityGoodsId},
                 #{nxCgCommerceId},
@@ -1257,6 +1310,7 @@
                 #{nxCgStopTime},
                 #{nxCgCardId},
                 #{nxCgNxGoodsTopFilePath},
+                #{nxCgGoodsIntroVideo},
                 #{nxCgIsOpenAdsense},
                 #{nxCgAdsenseStartTime},
                 #{nxCgAdsenseStopTime},
@@ -1269,7 +1323,11 @@
                 #{nxCgPromotionPrice},
                 #{nxCgPromotionWords},
                 #{nxCgServiceType},
-                #{nxCgPrintSn}
+                #{nxCgPrintSn},
+                #{nxCgGoodsGrossWeight},
+                #{nxCgGoodsGrossPrice},
+                #{nxCgGoodsNetWeight},
+                #{nxCgGoodsNetPrice}
                 )
     </insert>
 
@@ -1294,7 +1352,7 @@
             <if test="nxCgNxGrandId != null">`nx_cg_nx_grand_id` = #{nxCgNxGrandId},</if>
             <if test="nxCgNxGreatGrandId != null">`nx_cg_nx_great_grand_id` = #{nxCgNxGreatGrandId},</if>
             <if test="nxCgGoodsTotalHits != null">`nx_cg_goods_total_hits` = #{nxCgGoodsTotalHits},</if>
-            <if test="nxCgPurchaseQuantity != null">`nx_cg_purchase_quantity` = #{nxCgPurchaseQuantity},</if>
+            <if test="nxCgPurchaseQuantity != null and nxCgPurchaseQuantity != ''">`nx_cg_purchase_quantity` = #{nxCgPurchaseQuantity},</if>
             <if test="nxCgGoodsBuyType != null">`nx_cg_goods_buy_type` = #{nxCgGoodsBuyType},</if>
             <if test="nxCgBuyPurchaseUserId != null">`nx_cg_buy_purchase_user_id` = #{nxCgBuyPurchaseUserId},</if>
             <if test="nxCgBuyAppId != null">`nx_cg_buy_app_id` = #{nxCgBuyAppId},</if>
@@ -1352,6 +1410,7 @@
             <if test="nxCgStopTimeZone != null">`nx_cg_stop_time_zone` = #{nxCgStopTimeZone},</if>
             <if test="nxCgStopTime != null">`nx_cg_stop_time` = #{nxCgStopTime},</if>
             <if test="nxCgNxGoodsTopFilePath != null">`nx_cg_nx_goods_top_file_path` = #{nxCgNxGoodsTopFilePath},</if>
+            <if test="nxCgGoodsIntroVideo != null">`nx_cg_goods_intro_video` = #{nxCgGoodsIntroVideo},</if>
             <if test="nxCgIsOpenAdsense != null">`nx_cg_is_open_adsense` = #{nxCgIsOpenAdsense},</if>
             <if test="nxCgAdsenseStartTime != null">`nx_cg_adsense_start_time` = #{nxCgAdsenseStartTime},</if>
             <if test="nxCgAdsenseStopTime != null">`nx_cg_adsense_stop_time` = #{nxCgAdsenseStopTime},</if>
@@ -1365,6 +1424,10 @@
             <if test="nxCgPromotionWords != '-99'">`nx_cg_promotion_words` = #{nxCgPromotionWords},</if>
             <if test="nxCgServiceType != '-99'">`nx_cg_service_type` = #{nxCgServiceType},</if>
             <if test="nxCgPrintSn != '-99'">`nx_cg_print_sn` = #{nxCgPrintSn},</if>
+            <if test="nxCgGoodsGrossWeight != null and nxCgGoodsGrossWeight != ''">`nx_cg_goods_gross_weight` = #{nxCgGoodsGrossWeight},</if>
+            <if test="nxCgGoodsGrossPrice != null and nxCgGoodsGrossPrice != ''">`nx_cg_goods_gross_price` = #{nxCgGoodsGrossPrice},</if>
+            <if test="nxCgGoodsNetWeight != null and nxCgGoodsNetWeight != ''">`nx_cg_goods_net_weight` = #{nxCgGoodsNetWeight},</if>
+            <if test="nxCgGoodsNetPrice != null and nxCgGoodsNetPrice != ''">`nx_cg_goods_net_price` = #{nxCgGoodsNetPrice},</if>
             <if test="nxCgGoodsType != null">`nx_cg_goods_type` = #{nxCgGoodsType}</if>
         </set>
         where nx_community_goods_id = #{nxCommunityGoodsId}

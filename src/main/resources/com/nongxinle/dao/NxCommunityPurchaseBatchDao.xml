@@ -118,8 +118,8 @@
 		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
 		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
 		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
-		<collection property="nxRestrauntOrdersEntities" resultMap="applys"/>
 	</resultMap>
+
 	<resultMap id="purchaseGoods" type="NxCommunityPurchaseGoodsEntity">
 		<id property="nxCommunityPurchaseGoodsId" column="nx_community_purchase_goods_id"/>
 		<result property="nxCpgQuantity" column="nx_cpg_quantity"/>
@@ -130,10 +130,13 @@
 		<result property="nxCpgComGoodsId" column="nx_cpg_com_goods_id"/>
 		<result property="nxCpgBatchId" column="nx_cpg_batch_id"/>
 		<association property="nxCommunityGoodsEntity" resultMap="comGoodsWithOrders"/>
+		<collection property="nxCommunityOrdersSubEntities" resultMap="com.nongxinle.dao.NxCommunityGoodsDao.subOrder"/>
 	</resultMap>
 
 	<resultMap id="comPurchaseBatchWithOrders" type="NxCommunityPurchaseBatchEntity">
 		<id property="nxCommunityPurchaseBatchId" column="nx_community_purchase_batch_id"/>
+		<result property="nxCpbPasteContent" column="nx_cpb_paste_content"/>
+		<result property="nxCpbPasteContent" column="nx_cpb_paste_content"/>
 		<result property="nxCpbPurchaseType" column="nx_cpb_purchase_type"/>
 		<result property="nxCpbDate" column="nx_cpb_date"/>
 		<result property="nxCpbHour" column="nx_cpb_hour"/>
@@ -141,7 +144,6 @@
 		<result property="nxCpbSubtotal" column="nx_cpb_subtotal"/>
 		<result property="nxCpbStatus" column="nx_cpb_status"/>
 		<result property="nxCpbTime" column="nx_cpb_time"/>
-
 		<collection property="nxCommunityPurchaseGoodsEntities" resultMap="purchaseGoods"/>
 	</resultMap>
 
@@ -149,9 +151,9 @@
 			resultMap="comPurchaseBatchWithOrders">
 		select * from nx_community_purchase_batch as cpb
 		left join nx_community_purchase_goods as cpg on cpg.nx_cpg_batch_id = cpb.nx_community_purchase_batch_id
-		left join nx_restraunt_orders as nro on cpg.nx_community_purchase_goods_id = nro.nx_RO_purchase_goods_id
+		left join nx_community_orders_sub as sub on cpg.nx_community_purchase_goods_id = sub.nx_COS_comm_pur_goods_id
 		left join nx_community_goods as cg on cg.nx_community_goods_id = cpg.nx_cpg_com_goods_id
-		left join nx_restraunt as r on r.nx_restraunt_id = nro.nx_RO_restraunt_father_id
+		 left join nx_customer_user as cu on cu.nx_CU_user_id = sub.nx_COS_order_user_id
 		<where>
 			<if test="type != null">
 				and cpb.nx_cpb_purchase_type = #{type}
@@ -181,6 +183,7 @@
 	</select>
 	<resultMap id="batchDetail" type="NxCommunityPurchaseBatchEntity">
 		<id property="nxCommunityPurchaseBatchId" column="nx_community_purchase_batch_id"/>
+		<result property="nxCpbPasteContent" column="nx_cpb_paste_content"/>
 		<result property="nxCpbPurchaseType" column="nx_cpb_purchase_type"/>
 		<result property="nxCpbDate" column="nx_cpb_date"/>
 		<result property="nxCpbHour" column="nx_cpb_hour"/>
@@ -229,7 +232,8 @@
 		 	`nx_cpb_subtotal`,
 		    `nx_cpb_buy_user_id`,
 		 	`nx_cpb_sell_user_id`,
-		 	`nx_cpb_com_supplier_id`
+		 	`nx_cpb_com_supplier_id`,
+		 	`nx_cpb_paste_content`
 		)
 		values
 		(
@@ -246,7 +250,8 @@
 		 	#{nxCpbSubtotal},
 		 	#{nxCpbBuyUserId},
 		 	#{nxCpbSellUserId},
-		 	#{nxCpbComSupplierId}
+		 	#{nxCpbComSupplierId},
+		 	#{nxCpbPasteContent}
 		)
 	</insert>
 	 
@@ -265,6 +270,7 @@
 			<if test="nxCpbBuyUserId != null">`nx_cpb_buy_user_id` = #{nxCpbBuyUserId}, </if>
 			<if test="nxCpbSellUserId != null">`nx_cpb_sell_user_id` = #{nxCpbSellUserId}, </if>
 			<if test="nxCpbComSupplierId != null">`nx_cpb_com_supplier_id` = #{nxCpbComSupplierId}, </if>
+			<if test="nxCpbPasteContent != null">`nx_cpb_paste_content` = #{nxCpbPasteContent}, </if>
 			<if test="nxCpbMinute != null">`nx_cpb_minute` = #{nxCpbMinute}</if>
 		</set>
 		where nx_community_purchase_batch_id = #{nxCommunityPurchaseBatchId}

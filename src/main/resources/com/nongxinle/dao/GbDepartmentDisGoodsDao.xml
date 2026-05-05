@@ -963,23 +963,6 @@
                 )
             </if>
 
-            <!--            <if test="searchStr != null">-->
-<!--                and (-->
-<!--                gb_DDG_dep_goods_name like concat('%', #{searchStr}, '%')-->
-<!--                or gb_DDG_dep_goods_name like concat('%', #{searchStr}, '%')-->
-<!--                or da.gb_DA_alias_name like concat('%', #{searchStr}, '%')-->
-<!--                or gb_DDG_dep_goods_pinyin like concat('%', #{searchPinyin}, '%')-->
-<!--                or gb_DDG_dep_goods_py like concat('%', #{searchPinyin}, '%')-->
-<!--                or da.gb_DA_alias_name like concat('%', #{searchPinyin}, '%')-->
-
-<!--                )-->
-<!--            </if>-->
-<!--            <if test="searchPinyin != null">-->
-<!--                and (-->
-<!--                gb_DDG_dep_goods_pinyin like concat('%', #{searchPinyin}, '%')-->
-<!--                or gb_DDG_dep_goods_py like concat('%', #{searchPinyin}, '%')-->
-<!--                or da.gb_DA_alias_name like concat('%', #{searchPinyin}, '%'))-->
-<!--            </if>-->
             <if test="isSelf != null">
                 and dg.gb_dg_is_self_control = #{isSelf}
             </if>

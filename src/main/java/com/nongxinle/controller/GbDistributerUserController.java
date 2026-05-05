@@ -277,6 +277,8 @@ public class GbDistributerUserController {
 
     }
 
+
+
     @RequestMapping(value = "/gbRegisterWithFile", produces = "text/html;charset=UTF-8")
     @ResponseBody
     public R gbRegisterWithFile(@RequestParam("file") MultipartFile file,
@@ -346,7 +348,79 @@ public class GbDistributerUserController {
 
     }
 
+    @RequestMapping(value = "/gbRegisterWithFileWithNxMarket", produces = "text/html;charset=UTF-8")
+    @ResponseBody
+    public R gbRegisterWithFileWithNxMarket(@RequestParam("file") MultipartFile file,
+                                @RequestParam("restaurantName") String restaurantName,
+                                @RequestParam("code") String code,
+                                 @RequestParam("nxDisId") Integer nxDisId,
+                                @RequestParam("phone") String phone,
+                                @RequestParam("address") String address,
+                                HttpSession session) {
+        System.out.println("restaurantName" + restaurantName);
 
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongCaigouAppId() +
+                "&secret=" + myAPPIDConfig.getTexiansongCaigouScreat() + "&js_code=" + code + "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+
+        // 转成Json对象 获取openidjrdhUserRegister
+        JSONObject jsonObject = JSONObject.parseObject(str);
+        System.out.println(jsonObject);
+
+        // 我们需要的openid，在一个小程序中，openid是唯一的
+        String openid = jsonObject.get("openid").toString();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("openId", openid);
+        map.put("admin", 2);
+        GbDepartmentUserEntity depUserEntities = gbDepartmentUserService.queryDepUsersByOpenIdAndAdmin(map);
+        NxJrdhUserEntity nxJrdhUserEntity = nxJrdhUserService.queryWhichUserByOpenId(openid);
+
+        if (depUserEntities == null && nxJrdhUserEntity == null) {
+            GbDistributerEntity gbDistributerEntity = new GbDistributerEntity();
+            gbDistributerEntity.setGbDistributerName(restaurantName);
+            gbDistributerEntity.setGbDistributerPhone(phone);
+            gbDistributerEntity.setGbDistributerAddress(address);
+            gbDistributerEntity.setGbDistributerPrintName("ApplyHalfPanel");
+            gbDistributerEntity.setGbDistributerSysCityId(6);
+            gbDistributerEntity.setGbDistributerBusinessType(-1);
+            gbDistributerEntity.setGbDistributerNxDisId(-1);
+            gbDistributerEntity.setGbDistributerRecordSeconds(30);
+            gbDistributerEntity.setGbDistributerStockCycle(0);
+            GbDepartmentUserEntity purUser = new GbDepartmentUserEntity();
+
+            String newUploadName = "uploadImage";
+            String realPath = UploadFile.upload(session, newUploadName, file);
+
+            String filename = file.getOriginalFilename();
+            String filePath = newUploadName + "/" + filename;
+//            //1 disuser save
+            purUser.setGbDuWxOpenId(openid);
+            purUser.setGbDuWxAvartraUrl(filePath);
+            purUser.setGbDuWxNickName(restaurantName+ "采购员");
+            gbDistributerEntity.setSingleDepartmentUser(purUser);
+            Integer disId = gbDistributerService.saveSingleMendianDistributerGbForNx(gbDistributerEntity);
+            System.out.println("usidididid" + disId);
+
+
+            //保存批发市场客户
+            saveNxMarketGbBusinessData(nxDisId, disId);
+
+            if (disId != null) {
+                Map<String, Object> mapRe = new HashMap<>();
+                mapRe.put("disInfo", gbDistributerService.queryDistributerInfo(disId));
+                mapRe.put("depUserInfo", gbDepartmentUserService.queryDepUserByOpenId(openid));
+                return R.ok().put("data", mapRe);
+            }
+            return R.error(-1, "注册失败");
+        } else {
+            return R.error(-1, "此微信号已注册过用户");
+        }
+
+    }
 
     @RequestMapping(value = "/gbRegisterWithFileWithNxDisId", produces = "text/html;charset=UTF-8")
     @ResponseBody
@@ -416,6 +490,40 @@ public class GbDistributerUserController {
 
     }
 
+    private  void  saveNxMarketGbBusinessData(Integer nxDisId, Integer gbDisId){
+
+
+        NxDistributerGbDistributerEntity entity = new NxDistributerGbDistributerEntity();
+        entity.setNxDgdNxDistributerId(nxDisId);
+        entity.setNxDgdGbDistributerId(gbDisId);
+        entity.setNxDgdGbPayMethod(0);
+        entity.setNxDgdGbPayPeriodWeek(4);
+        entity.setNxDgdStatus(0);
+        entity.setNxDgdFromNxDepId(-1);
+        entity.setNxDgdFromNxDisId(nxDisId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("disId", gbDisId);
+        map.put("type", getGbDepartmentTypeJicai());
+        List<GbDepartmentEntity> departmentEntities = gbDepartmentService.queryDepByDepType(map);
+        entity.setNxDgdGbDepId(departmentEntities.get(0).getGbDepartmentId());
+
+        //自动添加配送商
+        NxDistributerEntity distributerEntity = nxDistributerService.queryObject(nxDisId);
+        NxJrdhSupplierEntity supplierEntity = new NxJrdhSupplierEntity();
+        supplierEntity.setNxJrdhsGbDistributerId(gbDisId);
+        supplierEntity.setNxJrdhsNxDistributerId(nxDisId);
+        supplierEntity.setNxJrdhsSupplierName(distributerEntity.getNxDistributerName());
+        supplierEntity.setNxJrdhsSysMarketId(-1);
+        supplierEntity.setNxJrdhsSysCityId(-1);
+
+        supplierEntity.setNxJrdhsGbDepartmentId(departmentEntities.get(0).getGbDepartmentId());
+        jrdhSupplierService.save(supplierEntity);
+        entity.setNxDgdNxSupplierId(supplierEntity.getNxJrdhSupplierId());
+
+        nxDistributerGbDistributerService.save(entity);
+
+
+    }
 
    private  void  saveNxGbBusinessData(Integer disId, GbDistributerEntity gbDistributerEntity, Integer depId){
 

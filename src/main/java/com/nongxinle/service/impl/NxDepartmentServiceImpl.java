@@ -115,12 +115,16 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
 		nxDepartmentEntity.setNxDepartmentOrderTotal(0);
 		String s = hanziToPinyin(nxDepartmentEntity.getNxDepartmentName());
 		nxDepartmentEntity.setNxDepartmentPinyin(s);
-//		nxDepartmentEntity.setNxDepartmentAttrName(nxDepartmentEntity.getNxDepartmentName());
-//		nxDepartmentEntity.setNxDepartmentOrderCode(nxDepartmentEntity.getNxDepartmentName());
 		nxDepartmentEntity.setNxDepartmentRecordMinutes(30);
 		Integer nxDepartmentDisId = nxDepartmentEntity.getNxDepartmentDisId();
 		NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDepartmentDisId);
-        nxDepartmentEntity.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
+        if(nxDistributerEntity.getNxDistributerBusinessTypeId() != null){
+			nxDepartmentEntity.setNxDepartmentAppId(nxDistributerEntity.getNxDistributerAppId());
+		}
+        if(nxDistributerEntity.getNxDistributerManager() != null){
+			nxDepartmentEntity.setNxDepartmentPrintName(nxDistributerEntity.getNxDistributerManager());
+		}
+
 		nxDepartmentDao.save(nxDepartmentEntity);
 		return nxDepartmentEntity;
 	}
@@ -315,6 +319,12 @@ public class NxDepartmentServiceImpl implements NxDepartmentService {
     public NxDepartmentEntity queryDepInfoByGbDisId(Integer disId) {
 
 		return nxDepartmentDao.queryDepInfoByGbDisId(disId);
+    }
+
+    @Override
+    public NxDepartmentEntity queryRetailFatherDepByDisId(Integer id) {
+
+		return nxDepartmentDao.queryRetailFatherDepByDisId(id);
     }
 
 

@@ -1407,6 +1407,7 @@
         ndgsg.nx_DGSG_shelf_id,
         ndgsg.nx_DGSG_sort,
         ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_last,
         ndgsg.nx_DGSG_is_duplicate,
         ndgs.nx_distributer_goods_shelf_name as shelf_name,
         COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name

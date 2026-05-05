@@ -937,6 +937,7 @@
 
     <resultMap id="purchaseBatch" type="NxCommunityPurchaseBatchEntity">
         <id property="nxCommunityPurchaseBatchId" column="nx_community_purchase_batch_id"/>
+		<result property="nxCpbPasteContent" column="nx_cpb_paste_content"/>
         <result property="nxCpbPurchaseType" column="nx_cpb_purchase_type"/>
         <result property="nxCpbDate" column="nx_cpb_date"/>
         <result property="nxCpbHour" column="nx_cpb_hour"/>

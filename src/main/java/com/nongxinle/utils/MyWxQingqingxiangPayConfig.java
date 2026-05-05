@@ -8,13 +8,9 @@
 package com.nongxinle.utils;
 
 import com.github.wxpay.sdk.WXPayConfig;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.security.PrivateKey;
 
@@ -30,11 +26,11 @@ public class MyWxQingqingxiangPayConfig implements WXPayConfig {
     private static final String API_KEY = "sisy112578sisy112578sisy112578cf";
 
 
-    // V2 使用的 p12 证书路径
-    private static final String CERT_PATH = "/Users/lpy/cert/apiclient_cert.p12";
+    // 与 WxV3Util.sendPostWithCert 保持一致，避免服务器上 JSAPI 下单成功但二次签名读不到私钥
+    private static final String CERT_PATH = "/opt/nongxinle-cert/apiclient_cert.p12";
 
     // V3 使用的私钥路径（pem 格式）
-    private static final String PRIVATE_KEY_PATH = "/Users/lpy/cert/apiclient_key.pem";
+    private static final String PRIVATE_KEY_PATH = "/opt/nongxinle-cert/apiclient_key.pem";
 
     @Override
     public String getAppID() {
@@ -72,14 +68,8 @@ public class MyWxQingqingxiangPayConfig implements WXPayConfig {
 
     // =============== V3 专用 ===============
     public PrivateKey getPrivateKey() {
-        try (PEMParser pemParser = new PEMParser(new FileReader(PRIVATE_KEY_PATH))) {
-            JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-            Object object = pemParser.readObject();
-            if (object instanceof PrivateKeyInfo) {
-                return converter.getPrivateKey((PrivateKeyInfo) object);
-            } else {
-                throw new RuntimeException("私钥文件格式不正确");
-            }
+        try {
+            return WxV3Util.loadPrivateKey(PRIVATE_KEY_PATH);
         } catch (Exception e) {
             throw new RuntimeException("读取私钥失败", e);
         }

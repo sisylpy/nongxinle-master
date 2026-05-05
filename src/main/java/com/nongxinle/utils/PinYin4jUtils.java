@@ -23,6 +23,39 @@ import java.util.*;
 
 
 public class PinYin4jUtils {
+
+    /**
+     * 生成仅含安全 ASCII 的商品图片主文件名（不含扩展名），避免中文、空格、冒号等进入 URL 路径导致各项目/代理编码不一致。
+     * 形式：拼音化slug_商品id_yyyyMMddHHmmss
+     */
+    public static String toUrlSafeGoodsImageFileStem(String rawGoodsName, int goodsId) {
+        String slug = goodsNameToUrlSafeAsciiSlug(rawGoodsName);
+        return slug + "_" + goodsId + "_" + DateUtils.formatFileSafeTime();
+    }
+
+    /**
+     * 新建商品尚未有 id 时使用：slug_配送商id_yyyyMMddHHmmssSSS
+     */
+    public static String toUrlSafeGoodsImageFileStemForNew(String rawGoodsName, int disId) {
+        String slug = goodsNameToUrlSafeAsciiSlug(rawGoodsName);
+        return slug + "_d" + disId + "_" + DateUtils.formatFileSafeTimeMs();
+    }
+
+    private static String goodsNameToUrlSafeAsciiSlug(String rawGoodsName) {
+        if (rawGoodsName == null) {
+            rawGoodsName = "";
+        }
+        String stripped = rawGoodsName.replaceAll("[\\\\/:*?\"<>|]", "");
+        String ascii = hanziToPinyin(stripped);
+        ascii = ascii.replaceAll("[^a-zA-Z0-9]+", "_").replaceAll("^_+|_+$", "");
+        if (ascii.isEmpty()) {
+            ascii = "goods";
+        }
+        if (ascii.length() > 40) {
+            ascii = ascii.substring(0, 40);
+        }
+        return ascii;
+    }
     /**
      * 将字符串转换成拼音数组
      *

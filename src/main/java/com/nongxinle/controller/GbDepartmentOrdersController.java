@@ -198,6 +198,7 @@ public class GbDepartmentOrdersController {
             Map<String, Object> map = new HashMap<>();
             map.put("depId", ordersEntity.getGbDoDepartmentId());
             map.put("name", ordersEntity.getGbDoGoodsName());
+            map.put("disId", ordersEntity.getGbDoDistributerId());
             map.put("orderStandard", ordersEntity.getGbDoStandard());
             System.out.println("duoggsshangpsuodepgods11111ddd11111" + map);
             List<GbDepartmentDisGoodsEntity> departmentDisGoodsEntitiesFirst = gbDepartmentDisGoodsService.queryDepDisGoodsByParams(map);
@@ -4071,6 +4072,7 @@ public class GbDepartmentOrdersController {
         ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
+        ordersEntity.setNxDoCollaborativeNxDisId(-1);
         ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
         ordersEntity.setNxDoPurchaseUserId(-1);
         ordersEntity.setNxDoGbDepartmentOrderId(gbDepartmentOrders.getGbDepartmentOrdersId());
@@ -4645,6 +4647,7 @@ public class GbDepartmentOrdersController {
         ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
+        ordersEntity.setNxDoCollaborativeNxDisId(-1);
         System.out.println("nxgenennemetowowowo" + nxDistributerGoodsEntity.getNxDgWillPriceTwo());
         System.out.println("nxgenennemetowowowo" + gbDepartmentOrders.getGbDoStandard() + "wilweiid" + nxDistributerGoodsEntity.getNxDgWillPriceTwoStandard());
         String nxDoPrice = "";
@@ -5320,6 +5323,7 @@ public class GbDepartmentOrdersController {
         ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
         ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
         ordersEntity.setNxDoIsAgent(-1);
+        ordersEntity.setNxDoCollaborativeNxDisId(-1);
         ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
         ordersEntity.setNxDoCostPrice(nxDistributerGoodsEntity.getNxDgBuyingPrice());
         ordersEntity.setNxDoCostPriceUpdate(nxDistributerGoodsEntity.getNxDgBuyingPriceUpdate());
@@ -5739,6 +5743,7 @@ public class GbDepartmentOrdersController {
                 ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
                 ordersEntity.setNxDoGoodsType(nxDistributerGoodsEntity.getNxDgPurchaseAuto());
                 ordersEntity.setNxDoIsAgent(-1);
+                ordersEntity.setNxDoCollaborativeNxDisId(-1);
                 ordersEntity.setNxDoPrintStandard(nxDistributerGoodsEntity.getNxDgGoodsStandardname());
 
                 if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() == -1) {

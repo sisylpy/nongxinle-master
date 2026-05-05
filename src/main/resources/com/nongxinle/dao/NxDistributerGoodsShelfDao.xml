@@ -170,6 +170,10 @@
 		<result property="nxDgssRestSubtotal" column="nx_dgss_rest_subtotal"/>
 		<result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
 		<result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
+		<result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+		<result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+		<result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+		<result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
 	</resultMap>
 	<resultMap id="shelfGoods" type="NxDistributerGoodsShelfGoodsEntity">
 		<id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
@@ -179,6 +183,7 @@
 		<result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
 		<result property="nxDgsgSort" column="nx_DGSG_sort"/>
 		<result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+		<result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
 		<result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
 		<association property="nxDistributerGoodsEntity" resultMap="disGoodsWithOrders"/>
 		<collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
@@ -636,13 +641,94 @@
 			ru.nx_DIU_wx_phone 'ru_nx_DIU_wx_phone',
 			ru.nx_DIU_login_phone 'ru_nx_DIU_login_phone',
 			ru.nx_DIU_distributer_id 'ru_nx_DIU_distributer_id',
-			(select count(*) from nx_distributer_goods_shelf_goods as gsg 
-			 where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id) as goods_count
+			(select count(*) from
+			<choose>
+				<when test="shelfGoodsType != null and shelfGoodsType == 4">
+					(select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+					left join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_status = 0
+					where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					group by gsg.nx_distributer_goods_shelf_goods_id
+					having IFNULL(SUM(CAST(ndgss.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1) t
+				</when>
+				<otherwise>
+					nx_distributer_goods_shelf_goods as gsg
+					<if test="shelfGoodsType != null and shelfGoodsType == 1">
+						where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+						and (
+						gsg.nx_DGSG_dis_goods_id in (
+							select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+							where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = #{disId})
+							group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+						)
+						or gsg.nx_DGSG_dis_goods_id in (
+							select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+							where nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+							group by nx_DGSG_dis_goods_id having count(*) > 1
+						)
+						)
+					</if>
+					<if test="shelfGoodsType != null and shelfGoodsType == 2">
+						inner join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id
+							and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
+						where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					</if>
+					<if test="shelfGoodsType != null and shelfGoodsType == 3">
+						inner join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id
+							and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
+							and ndgss.nx_dgss_expiry_date is not null and ndgss.nx_dgss_expiry_date &gt;= CURDATE()
+							and ndgss.nx_dgss_expiry_date &lt;= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+						where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					</if>
+					<if test="shelfGoodsType == null or shelfGoodsType == 99">
+						where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					</if>
+				</otherwise>
+			</choose>
+			) as goods_count
 		from nx_distributer_goods_shelf gs
 		left join nx_distributer_user ru on ru.nx_distributer_user_id = gs.nx_distributer_goods_shelf_user_id
 		<where>
 			<if test="disId != null">
 				and gs.nx_distributer_goods_shelf_dis_id = #{disId}
+			</if>
+			<if test="shelfGoodsType != null and shelfGoodsType == 1">
+				and (
+				exists (select 1 from nx_distributer_goods_shelf_goods gsg
+					where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					and gsg.nx_DGSG_dis_goods_id in (
+						select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+						where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = #{disId})
+						group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+					))
+				or exists (select 1 from (
+					select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+					where nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					group by nx_DGSG_dis_goods_id having count(*) > 1
+				) dup)
+				)
+			</if>
+			<if test="shelfGoodsType != null and shelfGoodsType == 2">
+				and exists (select 1 from nx_distributer_goods_shelf_goods gsg
+					inner join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id
+						and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
+					where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id)
+			</if>
+			<if test="shelfGoodsType != null and shelfGoodsType == 3">
+				and exists (select 1 from nx_distributer_goods_shelf_goods gsg
+					inner join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id
+						and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
+						and ndgss.nx_dgss_expiry_date is not null and ndgss.nx_dgss_expiry_date &gt;= CURDATE()
+						and ndgss.nx_dgss_expiry_date &lt;= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+					where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id)
+			</if>
+			<if test="shelfGoodsType != null and shelfGoodsType == 4">
+				and exists (select 1 from (
+					select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+					left join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_status = 0
+					where gsg.nx_DGSG_shelf_id = gs.nx_distributer_goods_shelf_id
+					group by gsg.nx_distributer_goods_shelf_goods_id
+					having IFNULL(SUM(CAST(ndgss.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+				) t)
 			</if>
 		</where>
 		order by gs.nx_distributer_goods_shelf_sort

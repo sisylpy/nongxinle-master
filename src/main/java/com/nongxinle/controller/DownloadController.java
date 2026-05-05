@@ -1,12 +1,15 @@
 package com.nongxinle.controller;
 
-import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
-import com.nongxinle.entity.NxDistributerGoodsEntity;
+import com.nongxinle.entity.*;
+import com.nongxinle.service.NxDepartmentBillService;
+import com.nongxinle.service.NxDepartmentOrderHistoryService;
 import com.nongxinle.service.NxDepartmentOrdersService;
 
 
 //import org.apache.poi.ss.usermodel.*;
 //import org.apache.poi.xssf.usermodel.*;
+import com.nongxinle.service.NxDepartmentService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
@@ -23,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.imageio.ImageIO;
@@ -37,17 +41,219 @@ import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
+@Slf4j
 @RestController
 @RequestMapping("api/download")
 public class DownloadController {
 
     @Autowired
     private NxDepartmentOrdersService nxDepartmentOrdersService;
+
+    @Autowired
+    private NxDepartmentBillService nxDepartmentBillService;
+
+    @Autowired
+    private NxDepartmentOrderHistoryService nxDepartmentOrderHistoryService;
+    @Autowired
+    private NxDepartmentService nxDepartmentService;
+
+
+    /**
+     * 下载账单Excel（供小程序 downloadBillExcel 调用）
+     * 接口路径：api/download/downloadBillExcelNx?billId=xxx
+     *
+     * @param billId 账单ID (nxDepartmentBillId)
+     */
+    @RequestMapping("/downloadBillExcelNx")
+    public void downloadBillExcelNx(HttpServletResponse response, @RequestParam("billId") Integer billId) throws IOException {
+        log.info("[downloadBillExcelNx] 请求 billId={}", billId);
+        if (billId == null) {
+            log.warn("[downloadBillExcelNx] billId 为空，返回 400");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        NxDepartmentBillEntity bill = nxDepartmentBillService.queryObject(billId);
+        if (bill == null) {
+            log.warn("[downloadBillExcelNx] 账单不存在 billId={}", billId);
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        // 1. 构建文件名：部门名称_订单日期（与 Excel 标题一致，优先用 nxDepartmentAttrName）
+        String depName = "未知部门";
+        Integer depId = bill.getNxDbDepFatherId() != null ? bill.getNxDbDepFatherId() : bill.getNxDbDepId();
+        if (depId != null) {
+            NxDepartmentEntity dep = nxDepartmentService.queryObject(depId);
+            if (dep != null) {
+                depName = dep.getNxDepartmentAttrName() != null ? dep.getNxDepartmentAttrName()
+                        : (dep.getNxDepartmentName() != null ? dep.getNxDepartmentName() : "未知部门");
+            }
+        }
+        // 订单日期：nxDbDate 应为日期格式(如 2026-03-17)，若被误存为订单号则用 year-month-day 拼接
+        String orderDate = resolveOrderDate(bill);
+        String baseFileName = depName + "_" + orderDate + ".xlsx";
+        log.info("[downloadBillExcelNx] 文件名 depName={} orderDate={} baseFileName={}", depName, orderDate, baseFileName);
+        // RFC 5987: filename 用 ASCII 兜底，filename* 用 UTF-8 编码；并暴露给跨域前端
+        String encodedFileName = URLEncoder.encode(baseFileName, "UTF-8").replace("+", "%20");
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+        // 2. 查询订单：先查当前订单表，为空则查历史订单表
+        Map<String, Object> map = new HashMap<>();
+        map.put("billId", billId);
+        List<NxDepartmentOrderHistoryEntity> historyList = nxDepartmentOrderHistoryService.queryDisHistoryOrdersByParams(map);
+        int orderCount = (historyList != null) ? historyList.size() : 0;
+        log.info("[downloadBillExcelNx] 查询到订单数={} billId={} tradeNo={}", orderCount, billId, bill.getNxDbTradeNo());
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            XSSFSheet sheet = workbook.createSheet("账单明细");
+            int rowNum = 0;
+
+            // 3. 账单概要
+            XSSFRow titleRow = sheet.createRow(rowNum++);
+            Integer nxDbDepFatherId = bill.getNxDbDepFatherId();
+            NxDepartmentEntity nxDepartmentEntity = nxDepartmentService.queryObject(nxDbDepFatherId);
+//            titleRow.createCell(0).setCellValue("账单明细");
+            titleRow.createCell(0).setCellValue(nxDepartmentEntity.getNxDepartmentAttrName());
+            titleRow.getCell(0).setCellStyle(createTitleStyle(workbook));
+
+
+
+            rowNum++;
+            XSSFRow infoRow1 = sheet.createRow(rowNum++);
+            infoRow1.createCell(0).setCellValue("订单号");
+            infoRow1.createCell(1).setCellValue(bill.getNxDbTradeNo() != null ? bill.getNxDbTradeNo() : "");
+            XSSFRow infoRow2 = sheet.createRow(rowNum++);
+            infoRow2.createCell(0).setCellValue("账单日期");
+            infoRow2.createCell(1).setCellValue(bill.getNxDbDate() != null ? bill.getNxDbDate() : "");
+            XSSFRow infoRow3 = sheet.createRow(rowNum++);
+            infoRow3.createCell(0).setCellValue("账单金额");
+            infoRow3.createCell(1).setCellValue(bill.getNxDbTotal() != null ? bill.getNxDbTotal() : "0");
+
+            rowNum++;
+
+            // 4. 表头
+            XSSFRow headerRow = sheet.createRow(rowNum++);
+            headerRow.createCell(0).setCellValue("序号");
+            headerRow.createCell(1).setCellValue("商品名称");
+            headerRow.createCell(2).setCellValue("规格");
+            headerRow.createCell(3).setCellValue("数量");
+            headerRow.createCell(4).setCellValue("单位");
+            headerRow.createCell(5).setCellValue("单价");
+            headerRow.createCell(6).setCellValue("小计");
+
+            // 5. 填充订单数据（订单内容字体 12pt）
+            XSSFCellStyle dataCellStyle = createDataRowStyle(workbook);
+            if (historyList != null && !historyList.isEmpty()) {
+                int idx = 1;
+                for (NxDepartmentOrderHistoryEntity order : historyList) {
+                    XSSFRow dataRow = sheet.createRow(rowNum++);
+                    fillOrderRow(dataRow, getGoodsName(order), getStandard(order), order.getNxDoQuantity(), order.getNxDoPrintStandard(), order.getNxDoPrice(),
+                            order.getNxDoSubtotal(), idx++, dataCellStyle);
+                }
+            } else if (!historyList.isEmpty()) {
+                int idx = 1;
+                for (NxDepartmentOrderHistoryEntity order : historyList) {
+                    XSSFRow dataRow = sheet.createRow(rowNum++);
+                    fillOrderRow(dataRow,  getGoodsName(order), getStandard(order), order.getNxDoQuantity(),order.getNxDoPrintStandard(), order.getNxDoPrice(),
+                            order.getNxDoSubtotal(),  idx++, dataCellStyle);
+                }
+            }
+
+            // 6. 自动调整列宽
+            for (int i = 0; i < 8; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(response.getOutputStream());
+            log.info("[downloadBillExcelNx] 导出完成 billId={} baseFileName={} orderCount={}", billId, baseFileName, orderCount);
+        } catch (Exception e) {
+            log.error("[downloadBillExcelNx] 导出异常 billId={}", billId, e);
+            if (e instanceof IOException) {
+                throw (IOException) e;
+            }
+            throw new IOException("导出账单Excel失败", e);
+        }
+    }
+
+    /**
+     * 解析订单日期：nxDbDate 应为日期格式(如 2026-03-17)，若被误存为订单号则用 year-month 拼接
+     */
+    private String resolveOrderDate(NxDepartmentBillEntity bill) {
+        String nxDbDate = bill.getNxDbDate();
+        if (nxDbDate != null && !nxDbDate.isEmpty() && nxDbDate.matches("^20\\d{2}[-/]?\\d{1,2}[-/]?\\d{1,2}.*")) {
+            return nxDbDate;
+        }
+        String year = bill.getNxDbYear();
+        String month = bill.getNxDbMonth();
+        if (year != null && month != null) {
+            return year + "-" + (month.length() == 1 ? "0" + month : month);
+        }
+        return "";
+    }
+
+    private void fillOrderRow(XSSFRow row, String goodsName, String standard,
+                              String quantity, String printStandard, String price, String subtotal, int idx,
+                              XSSFCellStyle cellStyle) {
+        for (int i = 0; i < 7; i++) {
+            XSSFCell cell = row.createCell(i);
+            cell.setCellStyle(cellStyle);
+            switch (i) {
+                case 0: cell.setCellValue(idx); break;
+                case 1: cell.setCellValue(goodsName != null ? goodsName : ""); break;
+                case 2: cell.setCellValue(standard != null ? standard : ""); break;
+                case 3: cell.setCellValue(quantity != null ? quantity : ""); break;
+                case 4: cell.setCellValue(printStandard != null ? printStandard : ""); break;
+                case 5: cell.setCellValue(price != null ? price : ""); break;
+                case 6: cell.setCellValue(subtotal != null ? subtotal : ""); break;
+            }
+        }
+    }
+
+    private XSSFCellStyle createDataRowStyle(XSSFWorkbook workbook) {
+        XSSFCellStyle style = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+        font.setFontHeightInPoints((short) 12);
+        style.setFont(font);
+        return style;
+    }
+
+
+
+    private String getGoodsName(NxDepartmentOrderHistoryEntity order) {
+        if (order.getNxDistributerGoodsEntity() != null && order.getNxDistributerGoodsEntity().getNxDgGoodsName() != null) {
+            return order.getNxDistributerGoodsEntity().getNxDgGoodsName();
+        }
+        return order.getNxDoGoodsName() != null ? order.getNxDoGoodsName() : "";
+    }
+
+
+
+    private String getStandard(NxDepartmentOrderHistoryEntity order) {
+        if (order.getNxDistributerGoodsEntity() != null && order.getNxDistributerGoodsEntity().getNxDgItemsPerCarton() != null) {
+            if(order.getNxDistributerGoodsEntity() != null && order.getNxDistributerGoodsEntity().getNxDgGoodsStandardWeight() != null){
+                String nxDgItemsPerCarton = order.getNxDistributerGoodsEntity().getNxDgItemsPerCarton();
+                String nxDgGoodsStandardname = order.getNxDistributerGoodsEntity().getNxDgGoodsStandardname();
+                String nxDgGoodsStandardWeight = order.getNxDistributerGoodsEntity().getNxDgGoodsStandardWeight();
+                String nxDgCartonUnit = order.getNxDistributerGoodsEntity().getNxDgCartonUnit();
+                return   nxDgGoodsStandardWeight + "/" + nxDgGoodsStandardname + "*"  + nxDgItemsPerCarton +nxDgGoodsStandardname + "/" +nxDgCartonUnit ;
+            }
+        }else  {
+            if(order.getNxDistributerGoodsEntity() != null && order.getNxDistributerGoodsEntity().getNxDgGoodsStandardname() != null){
+                return order.getNxDistributerGoodsEntity().getNxDgGoodsStandardname();
+            }
+
+        }
+        return  order.getNxDoPrintStandard();
+    }
 
 
     @RequestMapping("/downloadReportExcelNx")

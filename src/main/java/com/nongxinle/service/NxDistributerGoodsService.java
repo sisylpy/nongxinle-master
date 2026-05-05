@@ -53,6 +53,10 @@ public interface NxDistributerGoodsService {
 
     List<NxDistributerGoodsEntity> queryLinshiGoods(Integer disId);
 
+    List<NxDistributerGoodsEntity> queryLinshiGoodsBySearch(Map<String, Object> map);
+
+    int queryLinshiGoodsBySearchTotal(Map<String, Object> map);
+
     List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatId(Map<String, Object> map);
 
     List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatIdSunHola(Map<String, Object> map);

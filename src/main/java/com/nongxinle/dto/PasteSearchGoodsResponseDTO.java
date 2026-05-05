@@ -83,6 +83,7 @@ public class PasteSearchGoodsResponseDTO implements Serializable {
      * 部门ID
      */
     private Integer nxDoDepartmentId;
+    private Integer nxDoPurchaseStatus;
 
     /**
      * 父部门ID

@@ -718,8 +718,8 @@
                     column="{value=nx_DPG_apply_shelf_id}"/>
         <collection property="nxDepartmentOrdersEntities" resultMap="depsOrders"/>
         <collection property="shelfGoodsEntities" 
-                    select="com.nongxinle.dao.NxDistributerGoodsShelfGoodsDao.queryShelfGoodsWithStockByDisGoodsId"
-                    column="{disGoodsId=nx_DPG_dis_goods_id}"/>
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfGoodsDao.queryShelfGoodsWithStockByPurGoodsId"
+                    column="{purGoodsId=nx_distributer_purchase_goods_id}"/>
     </resultMap>
 
 
@@ -1338,7 +1338,7 @@
         order by ndpg.nx_DPG_purchase_date DESC, ndpg.nx_DPG_time DESC
     </select>
 
-    <!-- 查询商品列表（带采购记录，按采购时间排序） -->
+    <!-- 查询商品列表（带采购记录；按进货总额 sellSubtotal 降序，同名再按商品名） -->
     <select id="queryGoodsListWithPurchase" resultMap="disGoodsWithPurchaseList">
         select 
         dg.nx_distributer_goods_id,
@@ -1455,7 +1455,7 @@
         <if test="disGoodsGreatId != null">
             and ndfg.nx_dfg_fathers_father_id = #{disGoodsGreatId}
         </if>
-        order by dg.nx_dg_goods_name
+        order by sellSubtotal DESC, dg.nx_dg_goods_name
         <if test="offset != null and limit != null">
             limit #{offset}, #{limit}
         </if>
@@ -1718,7 +1718,11 @@
          `nx_DPG_cost_level`,
          `nx_DPG_finish_amount`,
          `nx_DPG_apply_shelf_id`,
-         `nx_DPG_trace_report_id`
+         `nx_DPG_trace_report_id`,
+         `nx_DPG_produce_date`,
+         `nx_DPG_shelf_life`,
+         `nx_DPG_shelf_life_unit`,
+         `nx_DPG_expiry_date`
 
          )
         values (#{nxDistributerPurchaseGoodsId},
@@ -1750,7 +1754,11 @@
                 #{nxDpgCostLevel},
                 #{nxDpgFinishAmount},
                 #{nxDpgApplyShelfId},
-                #{nxDpgTraceReportId}
+                #{nxDpgTraceReportId},
+                #{nxDpgProduceDate},
+                #{nxDpgShelfLife},
+                #{nxDpgShelfLifeUnit},
+                #{nxDpgExpiryDate}
                 )
     </insert>
 
@@ -1785,7 +1793,11 @@
             <if test="nxDpgFinishAmount != '-99'">`nx_DPG_finish_amount` = #{nxDpgFinishAmount},</if>
             <if test="nxDpgTime != '-99'">`nx_DPG_time` = #{nxDpgTime},</if>
             <if test="nxDpgApplyShelfId != null">`nx_DPG_apply_shelf_id` = #{nxDpgApplyShelfId},</if>
-            <if test="nxDpgTraceReportId != null">`nx_DPG_trace_report_id` = #{nxDpgTraceReportId}</if>
+            <if test="nxDpgTraceReportId != null">`nx_DPG_trace_report_id` = #{nxDpgTraceReportId},</if>
+            <if test="nxDpgProduceDate != null">`nx_DPG_produce_date` = #{nxDpgProduceDate},</if>
+            <if test="nxDpgShelfLife != null">`nx_DPG_shelf_life` = #{nxDpgShelfLife},</if>
+            <if test="nxDpgShelfLifeUnit != null">`nx_DPG_shelf_life_unit` = #{nxDpgShelfLifeUnit},</if>
+            <if test="nxDpgExpiryDate != null">`nx_DPG_expiry_date` = #{nxDpgExpiryDate}</if>
         </set>
         where nx_distributer_purchase_goods_id = #{nxDistributerPurchaseGoodsId}
     </update>

@@ -406,6 +406,9 @@
             <if test="equalStatus != null ">
                 and nx_DB_status = #{equalStatus}
             </if>
+            <if test="date != null ">
+                and nx_DB_date = #{date}
+            </if>
             <if test="month != null ">
                 and nx_DB_month = #{month}
             </if>
@@ -591,6 +594,9 @@
 
             <if test="gbDepFatherIdNotEqual != null">
                and db.nx_DB_gb_dep_father_id != #{gbDepFatherIdNotEqual}
+            </if>
+            <if test="date != null">
+                and db.nx_DB_date = #{date}
             </if>
             <if test="month != null">
                 and db.nx_DB_month = #{month}

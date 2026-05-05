@@ -151,6 +151,23 @@ public class NxDistributerGoodsShelfStockController {
 				oldStockEntity.setNxDgssSellingSubtotal(toPlainString(sellingSubtotal));
 			}
 
+			if (payload.containsKey("nxDgssProduceDate")) {
+				String d = toStringValue(payload.get("nxDgssProduceDate"));
+				oldStockEntity.setNxDgssProduceDate(isBlank(d) ? null : d);
+			}
+			if (payload.containsKey("nxDgssExpiryDate")) {
+				String d = toStringValue(payload.get("nxDgssExpiryDate"));
+				oldStockEntity.setNxDgssExpiryDate(isBlank(d) ? null : d);
+			}
+			if (payload.containsKey("nxDgssShelfLife")) {
+				String sl = toStringValue(payload.get("nxDgssShelfLife"));
+				if (isBlank(sl)) {
+					oldStockEntity.setNxDgssShelfLife(null);
+				} else {
+					oldStockEntity.setNxDgssShelfLife(parseInteger(sl, "保质期"));
+				}
+			}
+
 			System.out.println("sosuusow"+ oldStockEntity.getNxDgssSellingPrice());
 			nxDistributerGoodsShelfStockService.update(oldStockEntity);
 
@@ -158,6 +175,9 @@ public class NxDistributerGoodsShelfStockController {
 			response.put("stockId", oldStockEntity.getNxDistributerGoodsShelfStockId());
 			response.put("restWeight", oldStockEntity.getNxDgssRestWeight());
 			response.put("sellingPrice", oldStockEntity.getNxDgssSellingPrice());
+			response.put("nxDgssProduceDate", oldStockEntity.getNxDgssProduceDate());
+			response.put("nxDgssExpiryDate", oldStockEntity.getNxDgssExpiryDate());
+			response.put("nxDgssShelfLife", oldStockEntity.getNxDgssShelfLife());
 			return R.ok().put("data", response);
 		} catch (IllegalArgumentException ex) {
 			return R.error(ex.getMessage());

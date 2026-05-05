@@ -109,6 +109,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
 		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
 		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
 		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
 		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>

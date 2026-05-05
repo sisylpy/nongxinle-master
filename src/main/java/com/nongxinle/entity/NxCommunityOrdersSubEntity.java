@@ -97,6 +97,7 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
 	private Integer nxCosPurchaseUserId;
 
 	private Integer nxCosOrderUserId;
+	private NxCustomerUserEntity customerUserEntity;
 	private Integer nxCosServiceType;
 
 	private Boolean hasItem;
@@ -111,6 +112,7 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
   	private Integer nxCosCucId;
 
   	private Integer nxCosGoodsSellType;
+  	private Integer nxCosCommPurGoodsId;
 
   	private String nxCosGoodsSellStandardScale;
 

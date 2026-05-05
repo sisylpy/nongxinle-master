@@ -133,7 +133,6 @@ public class NxDepartmentOrdersEntity implements Serializable, Comparable{
 	private String nxDoApplyDate;
 	private String nxDoApplyFullTime;
 	private String nxDoGoodsName;
-//	private String nxDoGoodsOriginalName;
 	private String nxDoGoodsOriginalName;
 
 

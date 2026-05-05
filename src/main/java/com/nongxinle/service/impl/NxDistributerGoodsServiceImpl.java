@@ -152,6 +152,16 @@ public class NxDistributerGoodsServiceImpl implements NxDistributerGoodsService 
     }
 
     @Override
+    public List<NxDistributerGoodsEntity> queryLinshiGoodsBySearch(Map<String, Object> map) {
+        return nxDistributerGoodsDao.queryLinshiGoodsBySearch(map);
+    }
+
+    @Override
+    public int queryLinshiGoodsBySearchTotal(Map<String, Object> map) {
+        return nxDistributerGoodsDao.queryLinshiGoodsBySearchTotal(map);
+    }
+
+    @Override
     public List<NxDistributerGoodsEntity> queryNxDepDisGrandGoodsByGreatId(Map<String, Object> map) {
 		return nxDistributerGoodsDao.queryNxDepDisGrandGoodsByGreatId(map);
     }

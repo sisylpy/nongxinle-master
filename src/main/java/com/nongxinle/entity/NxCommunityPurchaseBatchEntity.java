@@ -53,6 +53,7 @@ public class NxCommunityPurchaseBatchEntity implements Serializable,Comparable {
 	 *  时间
 	 */
 	private String nxCpbHour;
+	private String nxCpbPasteContent;
 	/**
 	 *  分钟
 	 */

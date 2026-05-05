@@ -39,6 +39,11 @@ public interface NxDistributerGoodsDao extends BaseDao<NxDistributerGoodsEntity>
 
     List<NxDistributerGoodsEntity> queryLinshiGoods(Integer disId);
 
+    /** 根据搜索词查询未处理的临时商品（nx_dg_nx_goods_id is null），支持分页，排除已有linshi记录的 */
+    List<NxDistributerGoodsEntity> queryLinshiGoodsBySearch(Map<String, Object> map);
+
+    int queryLinshiGoodsBySearchTotal(Map<String, Object> map);
+
     List<NxDistributerGoodsEntity> queryIfHasSameDisGoods(Map<String, Object> mapS);
 
     List<NxDistributerGoodsEntity>  queryDisGoodsByName(Map<String, Object> map);

@@ -1,5 +1,6 @@
 package com.nongxinle.dto;
 
+import com.nongxinle.entity.NxDistributerStandardEntity;
 import com.nongxinle.entity.NxGoodsEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -89,6 +90,12 @@ public class NxDepartmentOrdersSimpleDTO implements Serializable {
     private Integer nxDoDepartmentId;
 
     /**
+     * 是否代理订单
+     */
+    private Integer nxDoIsAgent;
+
+
+    /**
      * 商品信息（简化版）
      */
     private DistributerGoodsSimpleDTO nxDistributerGoodsEntity;
@@ -155,7 +162,23 @@ public class NxDepartmentOrdersSimpleDTO implements Serializable {
         /**
          * 每箱数量
          */
-        private Integer nxDgItemsPerCarton;
+        private String nxDgItemsPerCarton;
+
+        /**
+         * 阶梯建议零售价规格名 / 重量 / 价格（与 nx_distributer_goods 一致）
+         */
+        private String nxDgWillPriceTwoStandard;
+        private String nxDgWillPriceThreeStandard;
+        private String nxDgWillPriceTwoAboutPrice;
+        private String nxDgWillPriceThreeAboutPrice;
+        private String nxDgWillPriceTwoWeight;
+        private String nxDgWillPriceThreeWeight;
+        private String nxDgWillPriceOne;
+        private String nxDgWillPriceTwo;
+        private String nxDgWillPriceThree;
+        private String nxDgBuyingPriceOneUpdate;
+        private String nxDgBuyingPriceTwoUpdate;
+        private String nxDgBuyingPriceThreeUpdate;
 
         /**
          * 商品父级颜色
@@ -166,6 +189,11 @@ public class NxDepartmentOrdersSimpleDTO implements Serializable {
         private String nxDgDistributerId;
 
         private String goodsNxDistributerName;
+
+        /**
+         * 分销商商品订货规格列表（与 NxDistributerGoodsEntity.nxDistributerStandardEntities 一致）
+         */
+        private List<NxDistributerStandardEntity> nxDistributerStandardEntities;
     }
 
     /**

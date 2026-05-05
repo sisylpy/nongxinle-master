@@ -7,6 +7,10 @@ package com.nongxinle.utils;
 public class NxCommunityTypeUtils {
 
 
+    public final static Integer Nx_COMMUNITY_TYPE_Group = 1; //团购
+    public final static Integer Nx_COMMUNITY_TYPE_RESTAURANT = 2; //饭馆
+
+
     public final static Integer Nx_COMMUNITY_GOODS_SELL_TYPE_ALL_TIME = 1; //全时段
     public final static Integer Nx_COMMUNITY_GOODS_SELL_TYPE_PART_TIME = 2; //部分时段
     public final static Integer Nx_COMMUNITY_GOODS_SELL_TYPE_COUPON = 3; //优惠卷商品
@@ -62,7 +66,9 @@ public class NxCommunityTypeUtils {
     public static Integer getNxCommunityGoodsSellTypePratTime() {
         return Nx_COMMUNITY_GOODS_SELL_TYPE_PART_TIME;
     }
-
+    public static Integer getNxCommunityGoodsSellTypeCoupon() {
+        return Nx_COMMUNITY_GOODS_SELL_TYPE_COUPON;
+    }
     public static Integer getNxCommunityGoodsPromotionNone() {
         return NX_COMMUNITY_GOODS_PROMOTION_TYPE_NONE;
     }

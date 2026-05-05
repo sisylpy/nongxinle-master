@@ -41,6 +41,7 @@ public class ShelfGoodsSimpleDTO implements Serializable {
      * 箱单位
      */
     private String nxDgCartonUnit;
+    private String nxDgItemsPerCarton;
 
     /**
      * 品牌

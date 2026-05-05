@@ -481,6 +481,7 @@ public class OcrController {
         responseDTO.setNxDoAddRemark(note != null && !note.trim().isEmpty());
         responseDTO.setNxDoStatus(order.getNxDoStatus());
         responseDTO.setNxDoDepartmentId(order.getNxDoDepartmentId());
+        responseDTO.setNxDoPurchaseStatus(order.getNxDoPurchaseStatus());
         responseDTO.setNxDoDepartmentFatherId(order.getNxDoDepartmentFatherId());
         responseDTO.setNxDoDisGoodsId(order.getNxDoDisGoodsId());
         responseDTO.setNxDoDistributerId(order.getNxDoDistributerId());
@@ -1125,16 +1126,18 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
             if (departmentDisGoodsList.size() == 1) {
                 NxDepartmentDisGoodsEntity departmentDisGoodsEntity = departmentDisGoodsList.get(0);
                 NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
+                if (distributerGoodsEntity != null) {
+                    // 复制粘贴业务没有数量/规格改变的概念，订单状态统一设为0（已完成）
+                    ordersEntity.setNxDoStatus(0);
+                    logger.info("[pasteSearchGoods] 1级优先匹配成功，订单状态设置为 0（已完成）");
+                    // 保存订单并转换为响应DTO（传递包装结构字段）
+                    logger.info("[pasteSearchGoods] 1级匹配-调用saveStrongQueryOrderAndConvert[{}]: standardWeight={}, itemUnit={}, itemsPerCarton={}, cartonUnit={}",
+                            i, standardWeight, itemUnit, itemsPerCarton, cartonUnit);
 
-                // 复制粘贴业务没有数量/规格改变的概念，订单状态统一设为0（已完成）
-                ordersEntity.setNxDoStatus(0);
-                logger.info("[pasteSearchGoods] 1级优先匹配成功，订单状态设置为 0（已完成）");
-                // 保存订单并转换为响应DTO（传递包装结构字段）
-                logger.info("[pasteSearchGoods] 1级匹配-调用saveStrongQueryOrderAndConvert[{}]: standardWeight={}, itemUnit={}, itemsPerCarton={}, cartonUnit={}",
-                        i, standardWeight, itemUnit, itemsPerCarton, cartonUnit);
-
-                saveStrongQueryOrderAndConvert(ordersEntity, distributerGoodsEntity,  i, responseMap);
-
+                    saveStrongQueryOrderAndConvert(ordersEntity, distributerGoodsEntity,  i, responseMap);
+                } else {
+                    logger.warn("[pasteSearchGoods] 1级匹配-部门商品引用的配送商商品已不存在，商品ID: {}，跳过", departmentDisGoodsEntity.getNxDdgDisGoodsId());
+                }
             }
 
             // 2级优先匹配：查询训练表中是否有相同内容（匹配：部门ID + 商品名称）
@@ -1146,7 +1149,9 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                 matchParams.put("disGoodsId", 1);
                 NxOrderOcrTrainingDataEntity matchedTrainingData = nxOrderOcrTrainingDataService.queryByMatchFields(matchParams);
 
-                if (matchedTrainingData != null && matchedTrainingData.getNxOtdDisGoodsId() != null) {
+                if (matchedTrainingData != null && matchedTrainingData.getNxOtdDisGoodsId() != null )  {
+
+
                     // 训练数据中有商品ID，直接创建订单
                     logger.info("[pasteSearchGoods] 4级优先匹配-找到匹配的训练数据，商品ID: {}, 直接创建订单",
                             matchedTrainingData.getNxOtdDisGoodsId());
@@ -1154,31 +1159,31 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                     // 查询商品信息
                     NxDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(
                             matchedTrainingData.getNxOtdDisGoodsId());
-                    if (disGoodsEntity == null) {
-                        logger.error("[pasteSearchGoods] 商品不存在，商品ID: {}",
+                    if( disGoodsEntity != null){
+                        // 训练数据中有商品ID，直接创建订单
+                        logger.info("[pasteSearchGoods] 4级优先匹配-找到匹配的训练数据，商品ID: {}, 直接创建订单",
                                 matchedTrainingData.getNxOtdDisGoodsId());
-                        throw new RuntimeException("商品不存在，商品ID: " + matchedTrainingData.getNxOtdDisGoodsId());
+                        // 优先使用训练数据的 final_goods_name（如果存在），否则使用原始商品名称
+                        String finalGoodsName = matchedTrainingData.getNxOtdFinalGoodsName();
+                        String orderGoodsName = (finalGoodsName != null && !finalGoodsName.trim().isEmpty())
+                                ? finalGoodsName
+                                : goodsName;
+                        if (!orderGoodsName.equals(goodsName)) {
+                            logger.info("[pasteSearchGoods] 使用训练数据的 final_goods_name='{}' 替代原始商品名称='{}'",
+                                    orderGoodsName, goodsName);
+                        }
+                        ordersEntity.setNxDoGoodsName(orderGoodsName);
+                        ordersEntity.setNxDoGoodsOriginalName(orderGoodsName);
+
+                        // 复制粘贴业务没有数量/规格改变的概念，订单状态统一设为0（已完成）
+                        ordersEntity.setNxDoStatus(0);
+                        logger.info("[pasteSearchGoods] 4级优先匹配成功，订单状态设置为 0（已完成）");
+                        // 保存订单并转换为响应DTO（传递包装结构字段）
+                        logger.info("[pasteSearchGoods] 4级匹配-调用saveStrongQueryOrderAndConvert[{}]: standardWeight={}, itemUnit={}, itemsPerCarton={}, cartonUnit={}",
+                                i, standardWeight, itemUnit, itemsPerCarton, cartonUnit);
+
+                        saveStrongQueryOrderAndConvert(ordersEntity, disGoodsEntity,  i, responseMap);
                     }
-
-                    // 优先使用训练数据的 final_goods_name（如果存在），否则使用原始商品名称
-                    String finalGoodsName = matchedTrainingData.getNxOtdFinalGoodsName();
-                    String orderGoodsName = (finalGoodsName != null && !finalGoodsName.trim().isEmpty())
-                            ? finalGoodsName
-                            : goodsName;
-                    if (!orderGoodsName.equals(goodsName)) {
-                        logger.info("[pasteSearchGoods] 使用训练数据的 final_goods_name='{}' 替代原始商品名称='{}'",
-                                orderGoodsName, goodsName);
-                    }
-                    ordersEntity.setNxDoGoodsName(orderGoodsName);
-
-                    // 复制粘贴业务没有数量/规格改变的概念，订单状态统一设为0（已完成）
-                    ordersEntity.setNxDoStatus(0);
-                    logger.info("[pasteSearchGoods] 4级优先匹配成功，订单状态设置为 0（已完成）");
-                    // 保存订单并转换为响应DTO（传递包装结构字段）
-                    logger.info("[pasteSearchGoods] 4级匹配-调用saveStrongQueryOrderAndConvert[{}]: standardWeight={}, itemUnit={}, itemsPerCarton={}, cartonUnit={}",
-                            i, standardWeight, itemUnit, itemsPerCarton, cartonUnit);
-
-                    saveStrongQueryOrderAndConvert(ordersEntity, disGoodsEntity,  i, responseMap);
 
                 }
             }
@@ -3996,12 +4001,15 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                         if (departmentDisGoodsList.size() == 1) {
                             NxDepartmentDisGoodsEntity departmentDisGoodsEntity = departmentDisGoodsList.get(0);
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-
-                            // 根据数量和规格是否改变设置订单状态
-                            setOrderStatusByChangeFlag(orderBasic, specIsChange, quantityIsChange);
-                            // 保存订单并转换为响应DTO（传递包装结构字段）
-                            saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
-                            continue;
+                            if (distributerGoodsEntity == null) {
+                                logger.warn("[ocrController] 1级匹配-部门商品引用的配送商商品已不存在，商品ID: {}，跳过此匹配，继续后续流程", departmentDisGoodsEntity.getNxDdgDisGoodsId());
+                            } else {
+                                // 根据数量和规格是否改变设置订单状态
+                                setOrderStatusByChangeFlag(orderBasic, specIsChange, quantityIsChange);
+                                // 保存订单并转换为响应DTO（传递包装结构字段）
+                                saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
+                                continue;
+                            }
                         }
 
                         // 2级优先匹配：商品库，如果订货商品名称和规格完全匹配，则直接推断为该商品
@@ -4696,14 +4704,17 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                                     dataEntity.getNxOtdFinalQuantity(), dataEntity.getNxOtdFinalStandard());
                             Integer nxOtdDisGoodsId = dataEntity.getNxOtdDisGoodsId();
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(nxOtdDisGoodsId);
-
-                            // 根据数量和规格是否改变设置订单状态
-                            orderBasic.setNxDoStatus(0);
-                            orderBasic.setNxDoStandard(dataEntity.getNxOtdFinalStandard());
-                            orderBasic.setStandardWeight(dataEntity.getNxOtdFinalStandardWeight());
-                            orderBasic.setNxDoRemark(dataEntity.getNxOtdFinalRemark());
-                            saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
-                            continue;
+                            if (distributerGoodsEntity == null) {
+                                logger.warn("[recognizeOrderFast] 0级匹配-训练数据引用的商品已不存在，商品ID: {}，跳过此匹配，继续后续流程", nxOtdDisGoodsId);
+                            } else {
+                                // 根据数量和规格是否改变设置订单状态
+                                orderBasic.setNxDoStatus(0);
+                                orderBasic.setNxDoStandard(dataEntity.getNxOtdFinalStandard());
+                                orderBasic.setStandardWeight(dataEntity.getNxOtdFinalStandardWeight());
+                                orderBasic.setNxDoRemark(dataEntity.getNxOtdFinalRemark());
+                                saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
+                                continue;
+                            }
                         }
 
                         // 1级优先匹配：首先查询部门商品历史记录（用 goodsName，部门历史存的是商品名如「西红柿」）
@@ -4718,12 +4729,15 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                         if (departmentDisGoodsList.size() == 1) {
                             NxDepartmentDisGoodsEntity departmentDisGoodsEntity = departmentDisGoodsList.get(0);
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-
-                            // 根据数量和规格是否改变设置订单状态
-                            setOrderStatusByChangeFlag(orderBasic, specIsChange, quantityIsChange);
-                            // 保存订单并转换为响应DTO（传递包装结构字段）
-                            saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
-                            continue;
+                            if (distributerGoodsEntity == null) {
+                                logger.warn("[recognizeOrderFast] 1级匹配-部门商品引用的配送商商品已不存在，商品ID: {}，跳过此匹配，继续后续流程", departmentDisGoodsEntity.getNxDdgDisGoodsId());
+                            } else {
+                                // 根据数量和规格是否改变设置订单状态
+                                setOrderStatusByChangeFlag(orderBasic, specIsChange, quantityIsChange);
+                                // 保存订单并转换为响应DTO（传递包装结构字段）
+                                saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
+                                continue;
+                            }
                         }
 
                         // 2级、3级商品库匹配已移除，交由 Service（searchAndSaveOrdersFromOcr）统一处理，避免重复查询
@@ -6479,7 +6493,7 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
         Map<String, Object> queryMap = new HashMap<>();
             queryMap.put("type", type);
             queryMap.put("departmentId", depId);
-            queryMap.put("xiaoyuStatus", 2);
+            queryMap.put("xiaoyuStatus", 3);
 //            // 查询任务列表
         System.out.println("depgelis" + queryMap);
             List<NxOcrTaskEntity> taskList = nxOcrTaskService.queryTasksByDepartmentAndStatus(queryMap);
@@ -6502,7 +6516,8 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
     public R depFatherGetTaskListJustCount(@PathVariable Integer depFatherId) {
         Map<String, Object> queryMap = new HashMap<>();
         queryMap.put("departmentFatherId", depFatherId);
-        queryMap.put("status", 0);
+        queryMap.put("xiaoyuStatus", 3);
+        System.out.println("gaiwiixixiaoy3333");
         List<NxOcrTaskEntity> nxOcrTaskEntities = nxOcrTaskService.queryTasksByDepartmentAndStatus(queryMap);
 //            // 查询任务列表
 
@@ -6559,12 +6574,12 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
             
             Map<String, Object> queryMap = new HashMap<>();
             queryMap.put("disId", disId);
-            queryMap.put("xiaoyuStatus", 2);  // 查询状态小于2的任务（0=处理中，1=部分完成）
-            
+            queryMap.put("xiaoyuStatus", 3);  // 查询状态小于2的任务（0=处理中，1=部分完成）
+            System.out.println("maumapap" + queryMap);
             // 查询有任务的部门父列表（去重）
             List<NxDepartmentEntity> departmentEntityList = nxOcrTaskService.queryTasksDepartmentByDisId(queryMap);
             
-            logger.info("[disGetTaskDepFatherList] 查询完成，分销商ID: {}, 部门父数量: {}", disId, departmentEntityList.size());
+            logger.info("[disGetTaskDepFatherList] 查询完成aaa，分销商ID: {}, 部门父数量: {}", disId, departmentEntityList.size());
             
             return R.ok().put("data", departmentEntityList);
             
@@ -7410,12 +7425,15 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                         if (departmentDisGoodsList.size() == 1) {
                             NxDepartmentDisGoodsEntity departmentDisGoodsEntity = departmentDisGoodsList.get(0);
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-
-                            // Excel没有数量/规格改变的概念，订单状态统一设为0（已完成）
-                            orderBasic.setNxDoStatus(0);
-                            logger.info("[recognizeOrderFromExcel] 1级优先匹配成功，订单状态设置为 0（已完成）");
-                            // 保存订单并转换为响应DTO（传递包装结构字段）
-                            saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
+                            if (distributerGoodsEntity != null) {
+                                // Excel没有数量/规格改变的概念，订单状态统一设为0（已完成）
+                                orderBasic.setNxDoStatus(0);
+                                logger.info("[recognizeOrderFromExcel] 1级优先匹配成功，订单状态设置为 0（已完成）");
+                                // 保存订单并转换为响应DTO（传递包装结构字段）
+                                saveStrongQueryOrderAndConvert(orderBasic, distributerGoodsEntity,  i, responseMap);
+                            } else {
+                                logger.warn("[recognizeOrderFromExcel] 1级匹配-部门商品引用的配送商商品已不存在，商品ID: {}，跳过", departmentDisGoodsEntity.getNxDdgDisGoodsId());
+                            }
                         }
 
                         // 2级优先匹配：商品库，如果订货商品名称和规格完全匹配，则直接推断为该商品

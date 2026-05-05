@@ -18,6 +18,11 @@ public interface NxDistributerGoodsShelfGoodsDao extends BaseDao<NxDistributerGo
 
     List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsByParams(Map<String, Object> map);
 
+    /**
+     * 按库存批次到期排序（shelfGoodsQuerySort=3/4），列表按批次拆行
+     */
+    List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsByParamsExpirySort(Map<String, Object> map);
+
     int queryShelfForGoodsCount(Map<String, Object> map);
 
     int queryShelfGoodsCount(Map<String, Object> map);
@@ -30,7 +35,11 @@ public interface NxDistributerGoodsShelfGoodsDao extends BaseDao<NxDistributerGo
 
     List<NxDistributerGoodsShelfGoodsEntity> queryShelfGoodsBasic(Integer shelfId);
 
-    void updateShelfLayer(@Param("id") Integer id, @Param("layer") Integer layer);
+    void updateShelfLayerFields(@Param("id") Integer id,
+                               @Param("layer") Integer layer,
+                               @Param("layerLast") Integer layerLast,
+                               @Param("layerSeq") Integer layerSeq,
+                               @Param("sort") Integer sort);
 
     /**
      * 更新商品在所有货架的重复标记

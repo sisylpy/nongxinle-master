@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.List;
 
 import com.github.wxpay.sdk.WXPay;
+import com.nongxinle.entity.DaDaResponse;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.*;
@@ -130,6 +131,8 @@ public class NxDepartmentBillController {
     private NxDistributerGoodsShelfStockService nxDistributerGoodsShelfStockService;
     @Autowired
     private NxDistributerGoodsShelfStockReduceService nxDistributerGoodsShelfStockReduceService;
+    @Autowired
+    private NxOcrTaskService nxOcrTaskService;
 
     private static final Logger logger = LoggerFactory.getLogger(NxDepartmentBillController.class);
 
@@ -144,6 +147,96 @@ public class NxDepartmentBillController {
     public static final String USER = "454926763@qq.com";//*必填*：账号名
     public static final String UKEY = "bDI55xfWTv5Fu6KU";//*必填*: 飞鹅云后台注册账号后生成的UKEY 【备注：这不是填打印机的KEY】
     public static final String SN = "924610660";//*必填*：打印机编号，必须要在管理后台里添加打印机或调用API接口添加之后，才能调用API
+
+
+
+    /**
+     * NX系统采购日期统计
+     * @param disId 批发商ID
+     * @param startDate 开始日期
+     * @param stopDate 结束日期
+     * @return 统计数据
+     */
+    @RequestMapping(value = "/disGetRetailDate", method = RequestMethod.POST)
+    @ResponseBody
+    public R disGetRetailDate(Integer disId, String startDate, String stopDate) {
+
+
+
+        NxDepartmentEntity departmentEntity = nxDepartmentService.queryRetailFatherDepByDisId(disId);
+        Integer retailDepId = departmentEntity.getNxDepartmentId();
+
+        // 数据验证
+        Map<String, Object> mapCheck = new HashMap<>();
+        mapCheck.put("depFatherId", retailDepId);
+        mapCheck.put("startDate", startDate);
+        mapCheck.put("stopDate", stopDate);
+        int billsCount = nxDepartmentBillService.queryBillsCount(mapCheck);
+        double retailerSubtotal = 0.0;
+        if (billsCount == 0) {
+            System.out.println("没有数据，返回错误");
+            return R.error(-1, "没有数据");
+        }
+        retailerSubtotal = nxDepartmentBillService.queryBillSubtotalByParams(mapCheck);
+
+        // 计算日期跨度
+        List<Map<String, Object>> dayList = new ArrayList<>();
+        Integer howManyDaysInPeriod = 0;
+
+        if (!startDate.equals(stopDate)) {
+            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
+        }
+        System.out.println("日期跨度: " + (howManyDaysInPeriod + 1) + " 天");
+
+        // 按天统计
+        for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
+            String whichDay = "";
+            if (i == 0) {
+                whichDay = startDate;
+            } else {
+                whichDay = afterWhatDay(startDate, i);
+            }
+
+            System.out.println("--- 统计日期: " + whichDay + " ---");
+
+            Map<String, Object> dayMap = new HashMap<>();
+            dayMap.put("day", whichDay);
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("date", whichDay);
+            map.put("depFatherId", retailDepId);
+            int depCount = nxDepartmentBillService.queryBillsCount(map);
+
+            BigDecimal depTotal = new BigDecimal(0);
+            if (depCount > 0) {
+                Double aDouble = nxDepartmentBillService.queryBillSubtotalByParams(map);
+                logger.info("[disGetPurchaseDate] 日期: {}, 自采金额查询结果: subtotal={}", whichDay, aDouble);
+                depTotal = new BigDecimal(aDouble).setScale(2, BigDecimal.ROUND_HALF_UP);
+            }
+            dayMap.put("depCount", depCount);
+            dayMap.put("depSubtotal", depTotal);
+
+            dayList.add(dayMap);
+        }
+
+        // 计算日均值
+        BigDecimal retailerSubtotalBi = new BigDecimal(retailerSubtotal);
+        BigDecimal retailerPerDay = new BigDecimal(0);
+        if (howManyDaysInPeriod > 0) {
+            retailerPerDay = retailerSubtotalBi.divide(new BigDecimal(howManyDaysInPeriod + 1), 1, BigDecimal.ROUND_HALF_UP);
+        }
+
+        // 组装返回数据
+        Map<String, Object> result = new HashMap<>();
+        result.put("retailerSubtotal", retailerSubtotalBi.setScale(1,BigDecimal.ROUND_HALF_UP));
+        result.put("retailerPerDay", retailerPerDay);
+
+        result.put("arr", dayList);
+
+        System.out.println("======== NX采购日期统计完成 ========");
+        return R.ok().put("data", result);
+    }
+
 
 
     /**
@@ -165,7 +258,6 @@ public class NxDepartmentBillController {
         } else {
             System.out.println("执行失败，响应结果：{}" + rpcResult);
         }
-
         return null;
     }
 
@@ -725,6 +817,14 @@ public class NxDepartmentBillController {
             distributerGoodsEntity.setNxDgOutTotalWeight(add.toString());
             dgService.update(distributerGoodsEntity);
 
+            // 如果是任务订单，并且任务状态小于 3，则把任务状态更新为 3
+            if (orders.getNxDoOcrTaskId() != null) {
+                NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(orders.getNxDoOcrTaskId());
+                if (nxOcrTaskEntity != null && (nxOcrTaskEntity.getNxOcrTaskStatus() == null || nxOcrTaskEntity.getNxOcrTaskStatus() < 3)) {
+                    nxOcrTaskEntity.setNxOcrTaskStatus(3);
+                    nxOcrTaskService.update(nxOcrTaskEntity);
+                }
+            }
 
             //迁移
             System.out.println("gborororororoorqinayiqianyia");
@@ -1479,7 +1579,6 @@ public class NxDepartmentBillController {
             map.put("depId", nxDepartmentBill.getNxDbDepId());
         }
         map.put("equalStatus", 2);
-//        map.put("equalPurStatus", 4);
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
         for (NxDepartmentOrdersEntity orders : ordersEntities) {
             //0 subtotal
@@ -1551,6 +1650,16 @@ public class NxDepartmentBillController {
             orders.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishPay());
             orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
             nxDepartmentOrdersService.update(orders);
+
+            // 如果是任务订单，并且任务状态小于 3，则把任务状态更新为 3
+            if (orders.getNxDoOcrTaskId() != null) {
+                NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(orders.getNxDoOcrTaskId());
+                if (nxOcrTaskEntity != null && (nxOcrTaskEntity.getNxOcrTaskStatus() == null || nxOcrTaskEntity.getNxOcrTaskStatus() < 3)) {
+                    nxOcrTaskEntity.setNxOcrTaskStatus(3);
+                    nxOcrTaskService.update(nxOcrTaskEntity);
+                }
+            }
+
             //迁移
             nxDepartmentOrdersService.moveOrderToHistory(orders);  // ✅ 迁移
 
@@ -1598,6 +1707,146 @@ public class NxDepartmentBillController {
         nxDistributerService.update(nxDistributerEntity);
 
     }
+
+    private void updatePhoneRetailBillData(NxDepartmentBillEntity nxDepartmentBill) {
+
+        System.out.println("savesonnsuusbsilllnwnewenewwnwnennwnwn" + nxDepartmentBill);
+        BigDecimal billTotal = new BigDecimal(0);
+        BigDecimal billProfit = new BigDecimal(0);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
+        map.put("depFatherId", nxDepartmentBill.getNxDbDepFatherId());
+        map.put("depId", nxDepartmentBill.getNxDbDepId());
+
+        map.put("equalStatus", 2);
+        List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
+        for (NxDepartmentOrdersEntity orders : ordersEntities) {
+            //0 subtotal
+            billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
+
+            Map<String, Object> mapDG = new HashMap<>();
+            mapDG.put("disId", orders.getNxDoDistributerId());
+            mapDG.put("disGoodsId", orders.getNxDoDisGoodsId());
+            mapDG.put("depId", orders.getNxDoDepartmentId());
+            System.out.println("dedigodo" + mapDG);
+            NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(mapDG);
+            NxDistributerGoodsEntity nxDistributerGoodsEntity = dgService.queryObject(orders.getNxDoDisGoodsId());
+
+            orders.setNxDoStatus(3);
+            orders.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishPay());
+            orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
+            nxDepartmentOrdersService.update(orders);
+
+            // 如果是任务订单，并且任务状态小于 3，则把任务状态更新为 3
+            if (orders.getNxDoOcrTaskId() != null) {
+                NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(orders.getNxDoOcrTaskId());
+                if (nxOcrTaskEntity != null && (nxOcrTaskEntity.getNxOcrTaskStatus() == null || nxOcrTaskEntity.getNxOcrTaskStatus() < 3)) {
+                    nxOcrTaskEntity.setNxOcrTaskStatus(3);
+                    nxOcrTaskService.update(nxOcrTaskEntity);
+                }
+            }
+
+            //迁移
+            nxDepartmentOrdersService.moveOrderToHistory(orders);  // ✅ 迁移
+
+            //updata weight
+            Integer doDisGoodsId = orders.getNxDoDisGoodsId();
+            NxDistributerGoodsEntity distributerGoodsEntity = dgService.queryObject(doDisGoodsId);
+            BigDecimal weight = new BigDecimal(distributerGoodsEntity.getNxDgOutTotalWeight());
+            BigDecimal orderWeight = new BigDecimal(orders.getNxDoWeight());
+            BigDecimal add = weight.add(orderWeight).setScale(1, BigDecimal.ROUND_HALF_UP);
+            distributerGoodsEntity.setNxDgOutTotalWeight(add.toString());
+            dgService.update(distributerGoodsEntity);
+
+        }
+
+        nxDepartmentBill.setNxDbTotal(billTotal.toString());
+        nxDepartmentBill.setNxDbProfitTotal(billProfit.toString());
+        BigDecimal decimal = billProfit.divide(billTotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP);
+        nxDepartmentBill.setNxDbProfitScale(decimal.toString());
+        nxDepartmentBillService.update(nxDepartmentBill);
+
+//        Integer nxDbDepId = nxDepartmentBill.getNxDbDepId();
+//        NxDepartmentEntity departmentEntity = nxDepartmentService.queryObject(nxDbDepId);
+//        departmentEntity.setNxDepartmentWorkingStatus(-1);
+//        nxDepartmentService.update(departmentEntity);
+
+        Integer nxDbDisId = nxDepartmentBill.getNxDbDisId();
+        NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(nxDbDisId);
+        NxDistributerPayListEntity payListEntity = new NxDistributerPayListEntity();
+        payListEntity.setNxNdplNxDisId(nxDbDisId);
+        payListEntity.setNxNdplNxDepartmentId(nxDepartmentBill.getNxDbDepId());
+        payListEntity.setNxNdplNxDepartmentFatherId(nxDepartmentBill.getNxDbDepFatherId());
+        int size = ordersEntities.size();
+        payListEntity.setNxNdplPaySubtotal(Integer.valueOf(size).toString());
+        payListEntity.setNxNdplPayTime(formatFullTime());
+        payListEntity.setNxNdplPayDate(formatWhatDay(0));
+        payListEntity.setNxNdplPayMonth(formatWhatMonth(0));
+        payListEntity.setNxNdplPayYear(formatWhatYear(0));
+        payListEntity.setNxNdplStatus(0);
+        payListEntity.setNxNdplType(getNxDisPayListWeb());
+        payListEntity.setNxNdplRestPoints(nxDistributerEntity.getNxDistributerBuyQuantity());
+        payListEntity.setNxNdplNxDbId(nxDepartmentBill.getNxDepartmentBillId());
+        payListService.save(payListEntity);
+
+        BigDecimal decimal0 = new BigDecimal(nxDistributerEntity.getNxDistributerBuyQuantity());
+        BigDecimal decimal1 = new BigDecimal(ordersEntities.size());
+        BigDecimal restPoints = decimal0.subtract(decimal1).setScale(0, BigDecimal.ROUND_HALF_UP);
+        nxDistributerEntity.setNxDistributerBuyQuantity(restPoints.toString());
+
+        nxDistributerService.update(nxDistributerEntity);
+
+
+
+    }
+    /**
+     * 京京送货 部门保存订单
+     *
+     * @param depFatherId
+     * @param disId
+     * @return
+     */
+    @Transactional
+    @RequestMapping(value = "/saveAccountBillPhoneRetail", method = RequestMethod.POST)
+    @ResponseBody
+    public R saveAccountBillPhoneRetail(Integer depId, Integer depFatherId, Integer disId) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("depId", depId);
+                map.put("equalStatus", 2);
+                System.out.println("susnamap" + map);
+                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map);
+                if (integer > 0) {
+                    Double aDouble = nxDepartmentOrdersService.queryDepOrdersSubtotal(map);
+                    NxDepartmentBillEntity nxDepartmentBill = new NxDepartmentBillEntity();
+                    nxDepartmentBill.setNxDbDepId(depId);
+                    nxDepartmentBill.setNxDbDepFatherId(depFatherId);
+                    nxDepartmentBill.setNxDbDisId(disId);
+                    nxDepartmentBill.setNxDbTotal(new BigDecimal(aDouble).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    nxDepartmentBill.setNxDbStatus(3);
+                    nxDepartmentBill.setNxDbDate(formatWhatDay(0));
+                    nxDepartmentBill.setNxDbTime(formatWhatYearDayTime(0));
+                    nxDepartmentBill.setNxDbMonth(formatWhatMonth(0));
+                    nxDepartmentBill.setNxDbWeek(getWeekOfYear(0).toString());
+                    nxDepartmentBill.setNxDbDay(getWeek(0));
+                    nxDepartmentBill.setNxDbYear(formatWhatYear(0));
+                    nxDepartmentBill.setNxDbGbDisId(-1);
+                    nxDepartmentBill.setNxDbGbDepId(-1);
+                    nxDepartmentBill.setNxDbGbDepFatherId(-1);
+                    NxDistributerEntity nxDistributerEntity = nxDistributerService.queryObject(disId);
+                    String headPinyin = getHeadStringByString(nxDistributerEntity.getNxDistributerName(), true, null);
+                    System.out.println("disnamme" + nxDistributerEntity.getNxDistributerName());
+                    String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
+                    nxDepartmentBill.setNxDbTradeNo(s);
+                    nxDepartmentBillService.save(nxDepartmentBill);
+
+                    updatePhoneRetailBillData(nxDepartmentBill);
+
+                }
+
+        return R.ok();
+    }
+
 
     /**
      * 京京送货 部门保存订单
@@ -2095,6 +2344,15 @@ public class NxDepartmentBillController {
 
                 nxDepartmentOrdersService.update(orders);
 
+                // 如果是任务订单，并且任务状态小于 3，则把任务状态更新为 3
+                if (orders.getNxDoOcrTaskId() != null) {
+                    NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(orders.getNxDoOcrTaskId());
+                    if (nxOcrTaskEntity != null && (nxOcrTaskEntity.getNxOcrTaskStatus() == null || nxOcrTaskEntity.getNxOcrTaskStatus() < 3)) {
+                        nxOcrTaskEntity.setNxOcrTaskStatus(3);
+                        nxOcrTaskService.update(nxOcrTaskEntity);
+                    }
+                }
+
                 //迁移
                 System.out.println("saveAccountBillPrintersaveAccountBillPrinter" + orders.getNxDoGbDepartmentOrderId());
                 nxDepartmentOrdersService.moveOrderToHistory(orders);  // ✅ 迁移
@@ -2326,6 +2584,15 @@ public class NxDepartmentBillController {
                 orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
 
                 nxDepartmentOrdersService.update(orders);
+
+                // 如果是任务订单，并且任务状态小于 3，则把任务状态更新为 3
+                if (orders.getNxDoOcrTaskId() != null) {
+                    NxOcrTaskEntity nxOcrTaskEntity = nxOcrTaskService.queryObject(orders.getNxDoOcrTaskId());
+                    if (nxOcrTaskEntity != null && (nxOcrTaskEntity.getNxOcrTaskStatus() == null || nxOcrTaskEntity.getNxOcrTaskStatus() < 3)) {
+                        nxOcrTaskEntity.setNxOcrTaskStatus(3);
+                        nxOcrTaskService.update(nxOcrTaskEntity);
+                    }
+                }
 
                 //迁移
                 System.out.println("saveAccountBillPrintersaveAccountBillPrinterSeelfselff" + orders.getNxDoGbDepartmentOrderId());

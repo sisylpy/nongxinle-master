@@ -77,5 +77,26 @@ public class NxCommunityPurchaseGoodsServiceImpl implements NxCommunityPurchaseG
 		return nxCommunityPurchaseGoodsDao.queryPurchaseGoodsByBathcId(batchId);
     }
 
+    @Override
+    public NxCommunityPurchaseGoodsEntity queryPurchaseGoodsByStatus(Map<String, Object> mapPur) {
+
+		return  nxCommunityPurchaseGoodsDao.queryPurchaseGoodsByStatus(mapPur);
+    }
+
+    @Override
+    public List<NxCommunityFatherGoodsEntity> queryCommFatherGoodsSimple(Map<String, Object> map) {
+        return nxCommunityPurchaseGoodsDao.queryCommFatherGoodsSimple(map);
+    }
+
+    @Override
+    public int queryCommPurchaseGoodsCount(Map<String, Object> map) {
+        return nxCommunityPurchaseGoodsDao.queryCommPurchaseGoodsCount(map);
+    }
+
+    @Override
+    public List<NxCommunityPurchaseGoodsEntity> queryCommPurchaseGoodsSimple(Map<String, Object> map) {
+        return nxCommunityPurchaseGoodsDao.queryCommPurchaseGoodsSimple(map);
+    }
+
 
 }

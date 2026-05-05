@@ -42,6 +42,8 @@
 	<resultMap id="disCoupon" type="NxGbDistibuterUserCouponEntity">
 		<id property="nxGbDistributerUserCouponId" column="nx_gb_distributer_user_coupon_id"/>
 		<result property="nxGducCouponId" column="nx_gduc_coupon_id"/>
+		<result property="nxGducNxDistributerId" column="nx_gduc_nx_distributer_id"/>
+		<result property="nxGducStatus" column="nx_gduc_status"/>
 		<result property="nxGducGbDistributerId" column="nx_gduc_gb_distributer_id"/>
 		<result property="nxGducStartDate" column="nx_gduc_start_date"/>
 		<result property="nxGducStopDate" column="nx_gduc_stop_date"/>

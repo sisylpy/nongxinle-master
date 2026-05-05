@@ -21,9 +21,20 @@
         from nx_distributer_goods_shelf_goods
     </select>
 
+    <!-- shelfGoodsQuerySort：0/默认 层内顺序；1 库存金额降序；2 升序；3/4 走 queryShelfForGoodsByParamsExpirySort -->
     <select id="queryShelfForGoodsByParams" resultMap="shelfGoods">
-        select 
-        ndgsg.*,
+        <choose>
+            <when test="shelfGoodsQuerySort != null &amp;&amp; (shelfGoodsQuerySort == 1 || shelfGoodsQuerySort == 2)">
+        select
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
+        ndgsg.nx_DGSG_is_duplicate,
         ndg.*,
         #{status} as statusParam,
         #{shelfId} as shelfIdParam,
@@ -59,9 +70,140 @@
         stockPurUser.nx_DIU_wx_open_id as stockPurUser_nx_DIU_wx_open_id,
         stockPurUser.nx_DIU_wx_phone as stockPurUser_nx_DIU_wx_phone,
         stockPurUser.nx_DIU_distributer_id as stockPurUser_nx_DIU_distributer_id,
-        stockPurUser.nx_DIU_admin as stockPurUser_nx_DIU_admin
+        stockPurUser.nx_DIU_admin as stockPurUser_nx_DIU_admin,
+        CAST(ROUND(IFNULL(t1.sort_line_total, 0), 1) AS CHAR) AS shelf_goods_agg_rest_subtotal
         from (
-        select 
+        select
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        agg.line_total AS sort_line_total
+        from nx_distributer_goods_shelf_goods as ndgsg
+        inner join (
+            select nx_dgss_nx_shelf_goods_id,
+                   SUM(CAST(IFNULL(nx_dgss_rest_subtotal, 0) AS DECIMAL(16, 4))) AS line_total
+            from nx_distributer_goods_shelf_stock
+            where nx_dgss_rest_weight &gt; 0 and nx_dgss_status = 0
+            group by nx_dgss_nx_shelf_goods_id
+        ) AS agg ON agg.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+        <where>
+            <if test="shelfId !=null">
+                and nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 1">
+                and (
+                ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = (select nx_distributer_goods_shelf_dis_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{shelfId}))
+                    group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+                )
+                <if test="shelfId != null">
+                or ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id = #{shelfId}
+                    group by nx_DGSG_dis_goods_id having count(*) > 1
+                )
+                </if>
+                )
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 2">
+                and exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 3">
+                and not exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 4">
+                and ndgsg.nx_distributer_goods_shelf_goods_id in (
+                    select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+                    left join nx_distributer_goods_shelf_stock ndgss2 on ndgss2.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_status = 0
+                    where gsg.nx_DGSG_shelf_id = #{shelfId}
+                    group by gsg.nx_distributer_goods_shelf_goods_id
+                    having IFNULL(SUM(CAST(ndgss2.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+                )
+            </if>
+        </where>
+        <choose>
+            <when test="shelfGoodsQuerySort == 1">
+        order by agg.line_total DESC, ndgsg.nx_DGSG_sort asc
+            </when>
+            <otherwise>
+        order by agg.line_total ASC, ndgsg.nx_DGSG_sort asc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+        ) as t1
+        inner join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = t1.nx_distributer_goods_shelf_goods_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+            and ndgss.nx_dgss_rest_weight &gt; 0
+            and ndgss.nx_dgss_status = 0
+        left join nx_distributer_purchase_goods as stockPurGoods on stockPurGoods.nx_distributer_purchase_goods_id = ndgss.nx_dgss_nx_pur_goods_id
+        left join nx_distributer_user as stockPurUser on stockPurUser.nx_distributer_user_id = stockPurGoods.nx_DPG_pur_user_id
+        <choose>
+            <when test="shelfGoodsQuerySort == 1">
+        order by t1.sort_line_total DESC, ndgsg.nx_DGSG_sort asc
+            </when>
+            <otherwise>
+        order by t1.sort_line_total ASC, ndgsg.nx_DGSG_sort asc
+            </otherwise>
+        </choose>
+            </when>
+            <otherwise>
+        select
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
+        ndgsg.nx_DGSG_is_duplicate,
+        ndg.*,
+        #{status} as statusParam,
+        #{shelfId} as shelfIdParam,
+        ndgss.*,
+        stockPurGoods.nx_distributer_purchase_goods_id as stockPurGoods_nx_distributer_purchase_goods_id,
+        stockPurGoods.nx_DPG_finish_amount as stockPurGoods_nx_DPG_finish_amount,
+        stockPurGoods.nx_DPG_dis_goods_id as stockPurGoods_nx_DPG_dis_goods_id,
+        stockPurGoods.nx_DPG_dis_goods_father_id as stockPurGoods_nx_DPG_dis_goods_father_id,
+        stockPurGoods.nx_DPG_dis_goods_grand_id as stockPurGoods_nx_DPG_dis_goods_grand_id,
+        stockPurGoods.nx_DPG_nx_weight_id as stockPurGoods_nx_DPG_nx_weight_id,
+        stockPurGoods.nx_DPG_batch_id as stockPurGoods_nx_DPG_batch_id,
+        stockPurGoods.nx_DPG_quantity as stockPurGoods_nx_DPG_quantity,
+        stockPurGoods.nx_DPG_buy_quantity as stockPurGoods_nx_DPG_buy_quantity,
+        stockPurGoods.nx_DPG_buy_subtotal as stockPurGoods_nx_DPG_buy_subtotal,
+        stockPurGoods.nx_DPG_standard as stockPurGoods_nx_DPG_standard,
+        stockPurGoods.nx_DPG_status as stockPurGoods_nx_DPG_status,
+        stockPurGoods.nx_DPG_buy_price as stockPurGoods_nx_DPG_buy_price,
+        stockPurGoods.nx_DPG_purchase_type as stockPurGoods_nx_DPG_purchase_type,
+        stockPurGoods.nx_DPG_orders_amount as stockPurGoods_nx_DPG_orders_amount,
+        stockPurGoods.nx_DPG_type_add_user_id as stockPurGoods_nx_DPG_type_add_user_id,
+        stockPurGoods.nx_DPG_input_type as stockPurGoods_nx_DPG_input_type,
+        stockPurGoods.nx_DPG_time as stockPurGoods_nx_DPG_time,
+        stockPurGoods.nx_DPG_purchase_date as stockPurGoods_nx_DPG_purchase_date,
+        stockPurGoods.nx_DPG_distributer_id as stockPurGoods_nx_DPG_distributer_id,
+        stockPurGoods.nx_DPG_sell_user_id as stockPurGoods_nx_DPG_sell_user_id,
+        stockPurGoods.nx_DPG_buy_user_id as stockPurGoods_nx_DPG_buy_user_id,
+        stockPurGoods.nx_DPG_pur_user_id as stockPurGoods_nx_DPG_pur_user_id,
+        stockPurGoods.nx_DPG_cost_level as stockPurGoods_nx_DPG_cost_level,
+        stockPurGoods.nx_DPG_pay_type as stockPurGoods_nx_DPG_pay_type,
+        stockPurUser.nx_distributer_user_id as stockPurUser_nx_distributer_user_id,
+        stockPurUser.nx_DIU_wx_nick_name as stockPurUser_nx_DIU_wx_nick_name,
+        stockPurUser.nx_DIU_wx_avartra_url as stockPurUser_nx_DIU_wx_avartra_url,
+        stockPurUser.nx_DIU_wx_open_id as stockPurUser_nx_DIU_wx_open_id,
+        stockPurUser.nx_DIU_wx_phone as stockPurUser_nx_DIU_wx_phone,
+        stockPurUser.nx_DIU_distributer_id as stockPurUser_nx_DIU_distributer_id,
+        stockPurUser.nx_DIU_admin as stockPurUser_nx_DIU_admin,
+        CAST(NULL AS CHAR) AS shelf_goods_agg_rest_subtotal
+        from (
+        select
         ndgsg.nx_distributer_goods_shelf_goods_id
         from nx_distributer_goods_shelf_goods as ndgsg
         <where>
@@ -73,6 +215,37 @@
             </if>
             <if test="disGoodsId !=null">
                 and nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 1">
+                and (
+                ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = (select nx_distributer_goods_shelf_dis_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{shelfId}))
+                    group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+                )
+                <if test="shelfId != null">
+                or ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id = #{shelfId}
+                    group by nx_DGSG_dis_goods_id having count(*) > 1
+                )
+                </if>
+                )
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 2">
+                and exists (select 1 from nx_distributer_goods_shelf_stock ndgss where ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 3">
+                and not exists (select 1 from nx_distributer_goods_shelf_stock ndgss where ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 4">
+                and ndgsg.nx_distributer_goods_shelf_goods_id in (
+                    select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+                    left join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_status = 0
+                    where gsg.nx_DGSG_shelf_id = #{shelfId}
+                    group by gsg.nx_distributer_goods_shelf_goods_id
+                    having IFNULL(SUM(CAST(ndgss.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+                )
             </if>
         </where>
         order by nx_DGSG_sort asc
@@ -88,6 +261,155 @@
         left join nx_distributer_purchase_goods as stockPurGoods on stockPurGoods.nx_distributer_purchase_goods_id = ndgss.nx_dgss_nx_pur_goods_id
         left join nx_distributer_user as stockPurUser on stockPurUser.nx_distributer_user_id = stockPurGoods.nx_DPG_pur_user_id
         order by ndgsg.nx_DGSG_sort asc
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- shelfGoodsQuerySort 3=距到期剩余天数降序；4=升序（临期优先）。按有效库存批次拆行分页。到期日=nx_dgss_expiry_date，否则 生产日期+保质期(月*30、年*365、天按天) -->
+    <select id="queryShelfForGoodsByParamsExpirySort" resultMap="shelfGoodsExpirySortRow">
+        select
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
+        ndgsg.nx_DGSG_is_duplicate,
+        ndg.*,
+        #{status} as statusParam,
+        #{shelfId} as shelfIdParam,
+        ndgss.*,
+        stockPurGoods.nx_distributer_purchase_goods_id as stockPurGoods_nx_distributer_purchase_goods_id,
+        stockPurGoods.nx_DPG_finish_amount as stockPurGoods_nx_DPG_finish_amount,
+        stockPurGoods.nx_DPG_dis_goods_id as stockPurGoods_nx_DPG_dis_goods_id,
+        stockPurGoods.nx_DPG_dis_goods_father_id as stockPurGoods_nx_DPG_dis_goods_father_id,
+        stockPurGoods.nx_DPG_dis_goods_grand_id as stockPurGoods_nx_DPG_dis_goods_grand_id,
+        stockPurGoods.nx_DPG_nx_weight_id as stockPurGoods_nx_DPG_nx_weight_id,
+        stockPurGoods.nx_DPG_batch_id as stockPurGoods_nx_DPG_batch_id,
+        stockPurGoods.nx_DPG_quantity as stockPurGoods_nx_DPG_quantity,
+        stockPurGoods.nx_DPG_buy_quantity as stockPurGoods_nx_DPG_buy_quantity,
+        stockPurGoods.nx_DPG_buy_subtotal as stockPurGoods_nx_DPG_buy_subtotal,
+        stockPurGoods.nx_DPG_standard as stockPurGoods_nx_DPG_standard,
+        stockPurGoods.nx_DPG_status as stockPurGoods_nx_DPG_status,
+        stockPurGoods.nx_DPG_buy_price as stockPurGoods_nx_DPG_buy_price,
+        stockPurGoods.nx_DPG_purchase_type as stockPurGoods_nx_DPG_purchase_type,
+        stockPurGoods.nx_DPG_orders_amount as stockPurGoods_nx_DPG_orders_amount,
+        stockPurGoods.nx_DPG_type_add_user_id as stockPurGoods_nx_DPG_type_add_user_id,
+        stockPurGoods.nx_DPG_input_type as stockPurGoods_nx_DPG_input_type,
+        stockPurGoods.nx_DPG_time as stockPurGoods_nx_DPG_time,
+        stockPurGoods.nx_DPG_purchase_date as stockPurGoods_nx_DPG_purchase_date,
+        stockPurGoods.nx_DPG_distributer_id as stockPurGoods_nx_DPG_distributer_id,
+        stockPurGoods.nx_DPG_sell_user_id as stockPurGoods_nx_DPG_sell_user_id,
+        stockPurGoods.nx_DPG_buy_user_id as stockPurGoods_nx_DPG_buy_user_id,
+        stockPurGoods.nx_DPG_pur_user_id as stockPurGoods_nx_DPG_pur_user_id,
+        stockPurGoods.nx_DPG_cost_level as stockPurGoods_nx_DPG_cost_level,
+        stockPurGoods.nx_DPG_pay_type as stockPurGoods_nx_DPG_pay_type,
+        stockPurUser.nx_distributer_user_id as stockPurUser_nx_distributer_user_id,
+        stockPurUser.nx_DIU_wx_nick_name as stockPurUser_nx_DIU_wx_nick_name,
+        stockPurUser.nx_DIU_wx_avartra_url as stockPurUser_nx_DIU_wx_avartra_url,
+        stockPurUser.nx_DIU_wx_open_id as stockPurUser_nx_DIU_wx_open_id,
+        stockPurUser.nx_DIU_wx_phone as stockPurUser_nx_DIU_wx_phone,
+        stockPurUser.nx_DIU_distributer_id as stockPurUser_nx_DIU_distributer_id,
+        stockPurUser.nx_DIU_admin as stockPurUser_nx_DIU_admin,
+        CAST(NULL AS CHAR) AS shelf_goods_agg_rest_subtotal,
+        t_sort.sort_days_until AS shelf_goods_rest_days_until
+        from (
+        select
+        ndgss.nx_distributer_goods_shelf_stock_id,
+        DATEDIFF(
+            COALESCE(
+                IF(ndgss.nx_dgss_expiry_date IS NOT NULL, DATE(ndgss.nx_dgss_expiry_date), NULL),
+                IF(
+                    ndgss.nx_dgss_produce_date IS NOT NULL
+                    AND ndgss.nx_dgss_shelf_life IS NOT NULL
+                    AND NULLIF(TRIM(ndgss.nx_dgss_shelf_life_unit), '') IS NOT NULL,
+                    DATE_ADD(
+                        DATE(ndgss.nx_dgss_produce_date),
+                        INTERVAL (
+                            CASE
+                                WHEN LOWER(TRIM(ndgss.nx_dgss_shelf_life_unit)) IN ('月', 'month', 'm') THEN CAST(ndgss.nx_dgss_shelf_life AS SIGNED) * 30
+                                WHEN LOWER(TRIM(ndgss.nx_dgss_shelf_life_unit)) IN ('年', 'year', 'y') THEN CAST(ndgss.nx_dgss_shelf_life AS SIGNED) * 365
+                                ELSE CAST(IFNULL(ndgss.nx_dgss_shelf_life, 0) AS SIGNED)
+                            END
+                        ) DAY
+                    ),
+                    NULL
+                )
+            ),
+            CURDATE()
+        ) AS sort_days_until
+        from nx_distributer_goods_shelf_stock ndgss
+        inner join nx_distributer_goods_shelf_goods ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
+        <where>
+            ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
+            <if test="shelfId !=null">
+                and ndgsg.nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and ndgsg.nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and ndgsg.nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 1">
+                and (
+                ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = (select nx_distributer_goods_shelf_dis_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{shelfId}))
+                    group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+                )
+                <if test="shelfId != null">
+                or ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id = #{shelfId}
+                    group by nx_DGSG_dis_goods_id having count(*) > 1
+                )
+                </if>
+                )
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 2">
+                and exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 3">
+                and not exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 4">
+                and ndgsg.nx_distributer_goods_shelf_goods_id in (
+                    select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+                    left join nx_distributer_goods_shelf_stock ndgss2 on ndgss2.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_status = 0
+                    where gsg.nx_DGSG_shelf_id = #{shelfId}
+                    group by gsg.nx_distributer_goods_shelf_goods_id
+                    having IFNULL(SUM(CAST(ndgss2.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+                )
+            </if>
+        </where>
+        <choose>
+            <when test="shelfGoodsExpirySortDesc">
+        order by (sort_days_until IS NULL), sort_days_until DESC, ndgsg.nx_DGSG_sort asc, ndgss.nx_distributer_goods_shelf_stock_id asc
+            </when>
+            <otherwise>
+        order by (sort_days_until IS NULL), sort_days_until ASC, ndgsg.nx_DGSG_sort asc, ndgss.nx_distributer_goods_shelf_stock_id asc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+        ) as t_sort
+        inner join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_distributer_goods_shelf_stock_id = t_sort.nx_distributer_goods_shelf_stock_id
+        inner join nx_distributer_goods_shelf_goods ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
+        left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgsg.nx_DGSG_dis_goods_id
+        left join nx_distributer_purchase_goods as stockPurGoods on stockPurGoods.nx_distributer_purchase_goods_id = ndgss.nx_dgss_nx_pur_goods_id
+        left join nx_distributer_user as stockPurUser on stockPurUser.nx_distributer_user_id = stockPurGoods.nx_DPG_pur_user_id
+        <choose>
+            <when test="shelfGoodsExpirySortDesc">
+        order by (t_sort.sort_days_until IS NULL), t_sort.sort_days_until DESC, ndgsg.nx_DGSG_sort asc, ndgss.nx_distributer_goods_shelf_stock_id asc
+            </when>
+            <otherwise>
+        order by (t_sort.sort_days_until IS NULL), t_sort.sort_days_until ASC, ndgsg.nx_DGSG_sort asc, ndgss.nx_distributer_goods_shelf_stock_id asc
+            </otherwise>
+        </choose>
     </select>
 
     <!-- 子查询：根据商品ID查询货架采购商品 -->
@@ -249,6 +571,8 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <result property="totalRestWeight" column="totalRestWeight"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
@@ -328,6 +652,108 @@
     </select>
 
     <select id="queryShelfForGoodsCount" resultType="java.lang.Integer">
+        <choose>
+            <when test="shelfGoodsQuerySort != null &amp;&amp; (shelfGoodsQuerySort == 1 || shelfGoodsQuerySort == 2)">
+        select count(*)
+        from nx_distributer_goods_shelf_goods as ndgsg
+        inner join (
+            select nx_dgss_nx_shelf_goods_id
+            from nx_distributer_goods_shelf_stock
+            where nx_dgss_rest_weight &gt; 0 and nx_dgss_status = 0
+            group by nx_dgss_nx_shelf_goods_id
+        ) agg on agg.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+        <where>
+            <if test="shelfId !=null">
+                and nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 1">
+                and (
+                ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = (select nx_distributer_goods_shelf_dis_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{shelfId}))
+                    group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+                )
+                <if test="shelfId != null">
+                or ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id = #{shelfId}
+                    group by nx_DGSG_dis_goods_id having count(*) > 1
+                )
+                </if>
+                )
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 2">
+                and exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 3">
+                and not exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 4">
+                and ndgsg.nx_distributer_goods_shelf_goods_id in (
+                    select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+                    left join nx_distributer_goods_shelf_stock ndgss2 on ndgss2.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_status = 0
+                    where gsg.nx_DGSG_shelf_id = #{shelfId}
+                    group by gsg.nx_distributer_goods_shelf_goods_id
+                    having IFNULL(SUM(CAST(ndgss2.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+                )
+            </if>
+        </where>
+            </when>
+            <when test="shelfGoodsQuerySort != null &amp;&amp; (shelfGoodsQuerySort == 3 || shelfGoodsQuerySort == 4)">
+        select count(*)
+        from nx_distributer_goods_shelf_stock ndgss
+        inner join nx_distributer_goods_shelf_goods ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
+        <where>
+            ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
+            <if test="shelfId !=null">
+                and ndgsg.nx_DGSG_shelf_id = #{shelfId}
+            </if>
+            <if test="dayuSort !=null">
+                and ndgsg.nx_DGSG_sort &gt; #{dayuSort}
+            </if>
+            <if test="disGoodsId !=null">
+                and ndgsg.nx_DGSG_dis_goods_id = #{disGoodsId}
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 1">
+                and (
+                ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = (select nx_distributer_goods_shelf_dis_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{shelfId}))
+                    group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+                )
+                <if test="shelfId != null">
+                or ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id = #{shelfId}
+                    group by nx_DGSG_dis_goods_id having count(*) > 1
+                )
+                </if>
+                )
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 2">
+                and exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 3">
+                and not exists (select 1 from nx_distributer_goods_shelf_stock ndgss2 where ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_rest_weight &gt; 0 and ndgss2.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 4">
+                and ndgsg.nx_distributer_goods_shelf_goods_id in (
+                    select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+                    left join nx_distributer_goods_shelf_stock ndgss2 on ndgss2.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss2.nx_dgss_status = 0
+                    where gsg.nx_DGSG_shelf_id = #{shelfId}
+                    group by gsg.nx_distributer_goods_shelf_goods_id
+                    having IFNULL(SUM(CAST(ndgss2.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+                )
+            </if>
+        </where>
+            </when>
+            <otherwise>
         select count(*)
         from nx_distributer_goods_shelf_goods as ndgsg
         <where>
@@ -340,13 +766,54 @@
             <if test="disGoodsId !=null">
                 and nx_DGSG_dis_goods_id = #{disGoodsId}
             </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 1">
+                and (
+                ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id in (select nx_distributer_goods_shelf_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_dis_id = (select nx_distributer_goods_shelf_dis_id from nx_distributer_goods_shelf where nx_distributer_goods_shelf_id = #{shelfId}))
+                    group by nx_DGSG_dis_goods_id having count(distinct nx_DGSG_shelf_id) > 1
+                )
+                <if test="shelfId != null">
+                or ndgsg.nx_DGSG_dis_goods_id in (
+                    select nx_DGSG_dis_goods_id from nx_distributer_goods_shelf_goods
+                    where nx_DGSG_shelf_id = #{shelfId}
+                    group by nx_DGSG_dis_goods_id having count(*) > 1
+                )
+                </if>
+                )
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 2">
+                and exists (select 1 from nx_distributer_goods_shelf_stock ndgss where ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 3">
+                and not exists (select 1 from nx_distributer_goods_shelf_stock ndgss where ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0)
+            </if>
+            <if test="shelfGoodsType != null and shelfGoodsType == 4">
+                and ndgsg.nx_distributer_goods_shelf_goods_id in (
+                    select gsg.nx_distributer_goods_shelf_goods_id from nx_distributer_goods_shelf_goods gsg
+                    left join nx_distributer_goods_shelf_stock ndgss on ndgss.nx_dgss_nx_shelf_goods_id = gsg.nx_distributer_goods_shelf_goods_id and ndgss.nx_dgss_status = 0
+                    where gsg.nx_DGSG_shelf_id = #{shelfId}
+                    group by gsg.nx_distributer_goods_shelf_goods_id
+                    having IFNULL(SUM(CAST(ndgss.nx_dgss_rest_weight AS DECIMAL(10,2))), 0) &lt; 1
+                )
+            </if>
         </where>
+            </otherwise>
+        </choose>
     </select>
 
     <!-- 查询货架商品列表（包含溯源报告信息，返回所有商品，有溯源报告的库存批次会显示溯源信息） -->
     <select id="queryShelfForGoodsWithTraceReportByParams" resultMap="shelfGoods">
         select 
-        ndgsg.*,
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
+        ndgsg.nx_DGSG_is_duplicate,
         ndg.*,
         #{status} as statusParam,
         #{shelfId} as shelfIdParam,
@@ -511,6 +978,10 @@
         <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
         <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
         <result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
+        <result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+        <result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+        <result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+        <result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
         <association property="nxDistributerPurchaseGoodsEntity" resultMap="onlyPurGoods" columnPrefix="stockPurGoods_"/>
         <association property="nxTraceReportEntity" resultMap="traceReport" columnPrefix="traceReport_"/>
     </resultMap>
@@ -856,7 +1327,10 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <result property="totalRestSubtotal" column="shelf_goods_agg_rest_subtotal"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
         <association property="shelfPurGoods" 
                      select="queryShelfPurGoodsByDisGoodsId" 
@@ -867,6 +1341,30 @@
                     column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
     </resultMap>
 
+    <!-- 与 shelfGoods 相同，增加库存批次 id 作为第二主键，使同一货架商品下多批次在列表中拆成多行 -->
+    <resultMap id="shelfGoodsExpirySortRow" type="NxDistributerGoodsShelfGoodsEntity">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <id property="shelfGoodsListRowStockId" column="nx_distributer_goods_shelf_stock_id"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <result property="totalRestSubtotal" column="shelf_goods_agg_rest_subtotal"/>
+        <result property="shelfGoodsRestDaysUntil" column="shelf_goods_rest_days_until"/>
+        <association property="nxDistributerGoodsEntity" resultMap="disGoods"/>
+        <association property="shelfPurGoods"
+                     select="queryShelfPurGoodsByDisGoodsId"
+                     column="{disGoodsId=nx_DGSG_dis_goods_id,status=statusParam,shelfId=shelfIdParam}"/>
+        <collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
+        <collection property="sameShelfGoods"
+                    select="querySameShelfGoodsByDisGoodsId"
+                    column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
+    </resultMap>
+
     <resultMap id="shelfGoodsWithOrders" type="NxDistributerGoodsShelfGoodsEntity">
         <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
         <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
@@ -874,6 +1372,8 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithApplys"/>
         <!--		<collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>-->
@@ -937,7 +1437,9 @@
         nx_DGSG_shelf_id,
         nx_DGSG_sort,
         nx_DGSG_shelf_sort,
-        nx_DGSG_shelf_layer
+        nx_DGSG_shelf_layer,
+        nx_DGSG_shelf_layer_seq,
+        nx_DGSG_shelf_layer_last
         from nx_distributer_goods_shelf_goods
         where nx_DGSG_shelf_id = #{shelfId}
         order by nx_DGSG_sort asc
@@ -1083,6 +1585,8 @@
          `nx_DGSG_sort`,
          `nx_DGSG_shelf_sort`,
          `nx_DGSG_shelf_layer`,
+         `nx_DGSG_shelf_layer_seq`,
+         `nx_DGSG_shelf_layer_last`,
          `nx_DGSG_is_duplicate`)
         values (#{nxDistributerGoodsShelfGoodsId},
                 #{nxDgsgDisGoodsId},
@@ -1090,6 +1594,8 @@
                 #{nxDgsgSort},
                 #{nxDgsgShelfSort},
                 #{nxDgsgShelfLayer},
+                #{nxDgsgShelfLayerSeq},
+                #{nxDgsgShelfLayerLast},
                 #{nxDgsgIsDuplicate})
     </insert>
 
@@ -1101,14 +1607,19 @@
             <if test="nxDgsgShelfSort != null">`nx_DGSG_shelf_sort` = #{nxDgsgShelfSort},</if>
             <if test="nxDgsgSort != null">`nx_DGSG_sort` = #{nxDgsgSort},</if>
             <if test="nxDgsgShelfLayer != null">`nx_DGSG_shelf_layer` = #{nxDgsgShelfLayer},</if>
+            <if test="nxDgsgShelfLayerSeq != null">`nx_DGSG_shelf_layer_seq` = #{nxDgsgShelfLayerSeq},</if>
+            <if test="nxDgsgShelfLayerLast != null">`nx_DGSG_shelf_layer_last` = #{nxDgsgShelfLayerLast},</if>
             <if test="nxDgsgIsDuplicate != null">`nx_DGSG_is_duplicate` = #{nxDgsgIsDuplicate}</if>
         </set>
         where nx_distributer_goods_shelf_goods_id = #{nxDistributerGoodsShelfGoodsId}
     </update>
 
-    <update id="updateShelfLayer">
+    <update id="updateShelfLayerFields">
         update nx_distributer_goods_shelf_goods
-        set nx_DGSG_shelf_layer = #{layer,jdbcType=INTEGER}
+        set nx_DGSG_shelf_layer = #{layer,jdbcType=INTEGER},
+            nx_DGSG_shelf_layer_last = #{layerLast,jdbcType=INTEGER},
+            nx_DGSG_shelf_layer_seq = #{layerSeq,jdbcType=INTEGER},
+            nx_DGSG_sort = #{sort,jdbcType=INTEGER}
         where nx_distributer_goods_shelf_goods_id = #{id}
     </update>
 
@@ -1151,6 +1662,8 @@
         ndgsg.nx_DGSG_sort,
         ndgsg.nx_DGSG_shelf_sort,
         ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
         ndgsg.nx_DGSG_is_duplicate,
         ndgs.nx_distributer_goods_shelf_id as shelf_nx_distributer_goods_shelf_id,
         ndgs.nx_distributer_goods_shelf_name as shelf_nx_distributer_goods_shelf_name
@@ -1165,6 +1678,30 @@
         order by ndgsg.nx_DGSG_shelf_id, ndgsg.nx_DGSG_sort
     </select>
 
+    <!-- 根据采购商品ID：仅列出本条采购入库对应的货架商品（通过库存表 nx_dgss_nx_pur_goods_id 关联） -->
+    <select id="queryShelfGoodsWithStockByPurGoodsId" resultMap="simpleShelfGoodsForPurGoods">
+        select distinct
+        ndgsg.nx_distributer_goods_shelf_goods_id,
+        ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_dis_goods_id,
+        ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
+        ndgsg.nx_DGSG_is_duplicate,
+        ndgs.nx_distributer_goods_shelf_id as shelf_nx_distributer_goods_shelf_id,
+        ndgs.nx_distributer_goods_shelf_name as shelf_nx_distributer_goods_shelf_name,
+        #{purGoodsId} as nx_dgsg_for_nested_pur_goods_id
+        from nx_distributer_goods_shelf_goods as ndgsg
+        inner join nx_distributer_goods_shelf_stock as ndgss
+            on ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+            and ndgss.nx_dgss_nx_pur_goods_id = #{purGoodsId}
+        left join nx_distributer_goods_shelf as ndgs
+            on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        order by ndgsg.nx_DGSG_shelf_id, ndgsg.nx_DGSG_sort
+    </select>
+
     <!-- 简化的货架商品resultMap（用于采购商品下的货架商品列表） -->
     <resultMap id="simpleShelfGoods" type="NxDistributerGoodsShelfGoodsEntity">
         <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
@@ -1173,12 +1710,33 @@
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <result property="shelfName" column="shelf_nx_distributer_goods_shelf_name"/>
         <association property="nxDistributerGoodsShelfEntity" resultMap="simpleShelf"/>
         <collection property="nxDisGoodsShelfStockEntities" 
                     select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByShelfGoodsIdWithRest"
                     column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
+    </resultMap>
+
+    <!-- 采购商品下货架商品：库存批次仅含本条采购（shelfGoodsId + purGoodsId） -->
+    <resultMap id="simpleShelfGoodsForPurGoods" type="NxDistributerGoodsShelfGoodsEntity">
+        <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
+        <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
+        <result property="shelfName" column="shelf_nx_distributer_goods_shelf_name"/>
+        <result property="nxDgsgForNestedPurGoodsId" column="nx_dgsg_for_nested_pur_goods_id"/>
+        <association property="nxDistributerGoodsShelfEntity" resultMap="simpleShelf"/>
+        <collection property="nxDisGoodsShelfStockEntities"
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByShelfGoodsIdAndPurGoodsId"
+                    column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id,purGoodsId=nx_dgsg_for_nested_pur_goods_id}"/>
     </resultMap>
 
     <!-- 简化的货架resultMap（只包含基本字段） -->
@@ -1196,6 +1754,8 @@
         ndgsg.nx_DGSG_sort,
         ndgsg.nx_DGSG_shelf_sort,
         ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
         ndgsg.nx_DGSG_is_duplicate,
         ndgs.nx_distributer_goods_shelf_id as shelf_nx_distributer_goods_shelf_id,
         ndgs.nx_distributer_goods_shelf_name as shelf_nx_distributer_goods_shelf_name
@@ -1216,6 +1776,8 @@
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <result property="shelfName" column="shelf_nx_distributer_goods_shelf_name"/>
         <association property="nxDistributerGoodsShelfEntity" resultMap="simpleShelf"/>

@@ -19,24 +19,56 @@
 	</select>
 
 
+    <!-- 与 NxDistributerGoodsShelfGoodsDao.queryShelfForGoodsByParamsExpirySort（getShelfGoods shelfGoodsQuerySort=4）一致：
+         sort_days_until = DATEDIFF(有效到期日, CURDATE())，有效到期日优先 nx_dgss_expiry_date，否则 生产日期+保质期 -->
     <select id="queryShelfStockListByParams"
             resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockEntity">
-	select ndgss.* from nx_distributer_goods_shelf_stock as ndgss
-	<if test="shelfId != null">
-		left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
+	select ndgss.* from (
+	select ndgss_inner.*,
+		DATEDIFF(
+			COALESCE(
+				IF(ndgss_inner.nx_dgss_expiry_date IS NOT NULL, DATE(ndgss_inner.nx_dgss_expiry_date), NULL),
+				IF(
+					ndgss_inner.nx_dgss_produce_date IS NOT NULL
+					AND ndgss_inner.nx_dgss_shelf_life IS NOT NULL
+					AND NULLIF(TRIM(ndgss_inner.nx_dgss_shelf_life_unit), '') IS NOT NULL,
+					DATE_ADD(
+						DATE(ndgss_inner.nx_dgss_produce_date),
+						INTERVAL (
+							CASE
+								WHEN LOWER(TRIM(ndgss_inner.nx_dgss_shelf_life_unit)) IN ('月', 'month', 'm') THEN CAST(ndgss_inner.nx_dgss_shelf_life AS SIGNED) * 30
+								WHEN LOWER(TRIM(ndgss_inner.nx_dgss_shelf_life_unit)) IN ('年', 'year', 'y') THEN CAST(ndgss_inner.nx_dgss_shelf_life AS SIGNED) * 365
+								ELSE CAST(IFNULL(ndgss_inner.nx_dgss_shelf_life, 0) AS SIGNED)
+							END
+						) DAY
+					),
+					NULL
+				)
+			),
+			CURDATE()
+		) AS sort_days_until
+	from nx_distributer_goods_shelf_stock as ndgss_inner
+	<if test="shelfId != null and shelfGoodsId == null">
+		left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss_inner.nx_dgss_nx_shelf_goods_id
 	</if>
 	<where>
 		<if test="disGoodsId != null">
-			and ndgss.nx_dgss_nx_dis_goods_id = #{disGoodsId}
+			and ndgss_inner.nx_dgss_nx_dis_goods_id = #{disGoodsId}
 		</if>
 		<if test="restWeight != null">
-			and ndgss.nx_dgss_rest_weight &gt;  #{restWeight}
+			and ndgss_inner.nx_dgss_rest_weight &gt;  #{restWeight}
 		</if>
-		<if test="shelfId != null">
+		<if test="shelfGoodsId != null">
+			and ndgss_inner.nx_dgss_nx_shelf_goods_id = #{shelfGoodsId}
+		</if>
+		<if test="shelfId != null and shelfGoodsId == null">
 			and ndgsg.nx_DGSG_shelf_id = #{shelfId}
 		</if>
 	</where>
-	order by ndgss.nx_dgss_date asc
+	) ndgss
+	order by (ndgss.sort_days_until IS NULL), ndgss.sort_days_until ASC,
+		ndgss.nx_dgss_date asc,
+		ndgss.nx_distributer_goods_shelf_stock_id asc
 	</select>
 
 	<!-- 根据部门父ID查询库存批次 -->
@@ -261,7 +293,11 @@
 		`nx_dgss_stock_remark`,
 		`nx_dgss_return_points`,
 		`nx_dgss_return_points_time`,
-		`nx_dgss_trace_report_id`
+		`nx_dgss_trace_report_id`,
+		`nx_dgss_produce_date`,
+		`nx_dgss_shelf_life`,
+		`nx_dgss_shelf_life_unit`,
+		`nx_dgss_expiry_date`
 		)
 		values
 		(
@@ -315,7 +351,11 @@
 			#{nxDgssStockRemark},
 			#{nxDgssReturnPoints},
 			#{nxDgssReturnPointsTime},
-			#{nxDgssTraceReportId}
+			#{nxDgssTraceReportId},
+			#{nxDgssProduceDate},
+			#{nxDgssShelfLife},
+			#{nxDgssShelfLifeUnit},
+			#{nxDgssExpiryDate}
 		)
 	</insert>
 	 
@@ -372,7 +412,11 @@
 			<if test="nxDgssStockRemark != null">`nx_dgss_stock_remark` = #{nxDgssStockRemark}, </if>
 			<if test="nxDgssReturnPoints != null">`nx_dgss_return_points` = #{nxDgssReturnPoints}, </if>
 			<if test="nxDgssReturnPointsTime != null">`nx_dgss_return_points_time` = #{nxDgssReturnPointsTime}, </if>
-			<if test="nxDgssTraceReportId != null">`nx_dgss_trace_report_id` = #{nxDgssTraceReportId}</if>
+			<if test="nxDgssTraceReportId != null">`nx_dgss_trace_report_id` = #{nxDgssTraceReportId}, </if>
+			<if test="nxDgssProduceDate != null">`nx_dgss_produce_date` = #{nxDgssProduceDate}, </if>
+			<if test="nxDgssShelfLife != null">`nx_dgss_shelf_life` = #{nxDgssShelfLife}, </if>
+			<if test="nxDgssShelfLifeUnit != null">`nx_dgss_shelf_life_unit` = #{nxDgssShelfLifeUnit}, </if>
+			<if test="nxDgssExpiryDate != null">`nx_dgss_expiry_date` = #{nxDgssExpiryDate}</if>
 		</set>
 		where nx_distributer_goods_shelf_stock_id = #{nxDistributerGoodsShelfStockId}
 	</update>
@@ -558,6 +602,10 @@
 		<result property="nxDgssReturnPoints" column="nx_dgss_return_points"/>
 		<result property="nxDgssReturnPointsTime" column="nx_dgss_return_points_time"/>
 		<result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
+		<result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+		<result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+		<result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+		<result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
 		<!-- 盘库记录字段（通过别名映射） -->
 		<result property="nxDgssInventoryWeight" column="inventory_actual_weight"/>
 		<result property="nxDgssInventoryDate" column="inventory_date"/>
@@ -570,6 +618,8 @@
 		<result property="pointsReturnTime" column="points_return_time"/>
 		<!-- 货架名称字段（关联查询返回） -->
 		<result property="shelfName" column="shelf_name"/>
+		<result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+		<result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
 		<collection property="reduceEntityList" 
 					select="queryReduceRecordsByStockId"
 					column="{stockId=nx_distributer_goods_shelf_stock_id,startDate=startDate,stopDate=stopDate,equalType=equalType,typesStr=typesStr}"/>
@@ -595,7 +645,9 @@
 		d.nx_department_points AS department_points,
 		d.nx_department_waiting_points AS department_waiting_points,
 		DATE_FORMAT(ndgss.nx_dgss_full_time, '%Y-%m-%d %H:%i') AS points_return_time,
-		ndgs.nx_distributer_goods_shelf_name AS shelf_name
+		ndgs.nx_distributer_goods_shelf_name AS shelf_name,
+		ndgsg.nx_DGSG_shelf_layer AS nx_DGSG_shelf_layer,
+		ndgsg.nx_DGSG_shelf_layer_seq AS nx_DGSG_shelf_layer_seq
 		from nx_distributer_goods_shelf_stock as ndgss
 		left join nx_department as d on d.nx_department_id = ndgss.nx_dgss_nx_department_father_id
 		left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
@@ -639,7 +691,9 @@
 		<if test="typesStr == null">
 			NULL AS typesStr,
 		</if>
-		ndgs.nx_distributer_goods_shelf_name AS shelf_name
+		ndgs.nx_distributer_goods_shelf_name AS shelf_name,
+		ndgsg.nx_DGSG_shelf_layer AS nx_DGSG_shelf_layer,
+		ndgsg.nx_DGSG_shelf_layer_seq AS nx_DGSG_shelf_layer_seq
 		from nx_distributer_goods_shelf_stock as ndgss
 		left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_distributer_goods_shelf_goods_id = ndgss.nx_dgss_nx_shelf_goods_id
 		left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
@@ -986,6 +1040,10 @@
 		<result property="nxDgssReturnPoints" column="nx_dgss_return_points"/>
 		<result property="nxDgssReturnPointsTime" column="nx_dgss_return_points_time"/>
 		<result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
+		<result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+		<result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+		<result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+		<result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
 		<!-- 盘库记录字段（通过别名映射） -->
 		<result property="nxDgssInventoryWeight" column="inventory_actual_weight"/>
 		<result property="nxDgssInventoryDate" column="inventory_date"/>
@@ -1081,7 +1139,15 @@
 		where nx_dgss_nx_shelf_goods_id = #{shelfGoodsId}
 			and CAST(nx_dgss_rest_weight AS DECIMAL(10,2)) > 0
 			and nx_dgss_status = 0
-		order by nx_dgss_date asc
+		order by COALESCE(nx_dgss_produce_date, nx_dgss_date) asc, nx_dgss_date asc
+	</select>
+
+	<!-- 按货架商品 + 采购商品ID 查询本条采购产生的库存批次（避免同货架上其它采购批次混入） -->
+	<select id="queryStockByShelfGoodsIdAndPurGoodsId" resultType="com.nongxinle.entity.NxDistributerGoodsShelfStockEntity">
+		select * from nx_distributer_goods_shelf_stock
+		where nx_dgss_nx_shelf_goods_id = #{shelfGoodsId}
+			and nx_dgss_nx_pur_goods_id = #{purGoodsId}
+		order by COALESCE(nx_dgss_produce_date, nx_dgss_date) asc, nx_dgss_date asc
 	</select>
 
 </mapper>

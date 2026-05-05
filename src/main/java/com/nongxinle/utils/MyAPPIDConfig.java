@@ -291,4 +291,17 @@ public class MyAPPIDConfig  {
         return "190652f297cf9826ebb72c29aa1ff0f6"; // 请替换为实际的Secret
     }
 
+    /**
+     * 粒子订货系统公众号
+     * AppID: wx3ea930672b1b84fc
+     * @return AppId
+     */
+    public String getLiziDinghuoAppId() {
+        return "wx3ea930672b1b84fc";
+    }
+
+    public String getLiziDinghuoSecret() {
+        return "b191f8b803b3b7f9fde0677e62c66a63"; // 请替换为实际的Secret
+    }
+
 }

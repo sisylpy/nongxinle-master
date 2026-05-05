@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentLabelDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentLabelEntity">
+        select *
+        from nx_department_distributer_label
+        where nx_department_distributer_label_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDepartmentLabelEntity">
+        select *
+        from nx_department_distributer_label
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_department_distributer_label
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentLabelEntity"
+            useGeneratedKeys="true" keyProperty="nxDepartmentDistributerLabelId">
+        insert into nx_department_distributer_label
+        (
+        `nx_department_distributer_label_id`,
+        `nx_ddl_department_id`,
+        `nx_ddl_distributer_label_id`,
+        `nx_ddl_distributer_id`
+        )
+        values
+        (
+        #{nxDepartmentDistributerLabelId},
+        #{nxDdlDepartmentId},
+        #{nxDdlDistributerLabelId},
+        #{nxDdlDistributerId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDepartmentLabelEntity">
+        update nx_department_distributer_label
+        <set>
+            <if test="nxDdlDepartmentId != null">`nx_ddl_department_id` = #{nxDdlDepartmentId},</if>
+            <if test="nxDdlDistributerLabelId != null">`nx_ddl_distributer_label_id` = #{nxDdlDistributerLabelId},</if>
+            <if test="nxDdlDistributerId != null">`nx_ddl_distributer_id` = #{nxDdlDistributerId}</if>
+        </set>
+        where nx_department_distributer_label_id = #{nxDepartmentDistributerLabelId}
+    </update>
+
+    <delete id="delete">
+        delete
+        from nx_department_distributer_label
+        where nx_department_distributer_label_id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        delete from nx_department_distributer_label where nx_department_distributer_label_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByDepartmentId">
+        delete from nx_department_distributer_label
+        where nx_ddl_department_id = #{depId}
+    </delete>
+
+    <delete id="deleteByDepartmentIdAndLabelId">
+        delete from nx_department_distributer_label
+        where nx_ddl_department_id = #{depId}
+          and nx_ddl_distributer_label_id = #{labelId}
+    </delete>
+
+    <delete id="deleteByDistributerLabelId">
+        delete from nx_department_distributer_label
+        where nx_ddl_distributer_label_id = #{labelId}
+    </delete>
+
+    <select id="queryLabelIdsByDepartmentId" resultType="java.lang.Integer">
+        select nx_ddl_distributer_label_id
+        from nx_department_distributer_label
+        where nx_ddl_department_id = #{depId}
+        order by nx_department_distributer_label_id desc
+    </select>
+
+</mapper>

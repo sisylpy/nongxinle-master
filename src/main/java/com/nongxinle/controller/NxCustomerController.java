@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 import com.nongxinle.entity.NxCustomerEntity;
 import com.nongxinle.service.NxCustomerService;
 import org.springframework.web.multipart.MultipartFile;
-import sun.tools.jconsole.JConsole;
 
 import javax.servlet.http.HttpSession;
 

@@ -18,6 +18,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 
 /**
  *@author lpy
@@ -39,14 +41,46 @@ public class UploadFile {
     // 服务器路径：/opt/tomcat/latest/app-data/images/
     // 本地开发路径（根据实际项目路径修改）
     // 本地测试路径（测试时修改为）：
-    // private static final String EXTERNAL_IMAGE_DIR = "/Users/lpy/Documents/javaWeb/kuangjia/nongxinle-master/stockImagesMac/";
-    // 生产环境路径
-    private static final String EXTERNAL_IMAGE_DIR = "/opt/tomcat/latest/app-data/images/";
+    
+    // 服务器图片存储根目录
+    private static final String SERVER_IMAGE_DIR = "/opt/tomcat/latest/app-data/images/";
+    // 本地开发图片存储根目录
+    private static final String LOCAL_IMAGE_DIR = "/Users/lpy/Documents/javaWeb/kuangjia/nongxinle-master/stockImagesMac/";
+    
+    // 根据环境自动选择路径：生产环境使用 SERVER_IMAGE_DIR，开发环境使用 LOCAL_IMAGE_DIR
+    // 检测方式：生产环境路径以 /opt 开头
+    private static String getImageBaseDir() {
+        // 可以通过系统属性或配置文件来控制，这里简单判断是否为 Mac 本地路径
+        String javaHome = System.getProperty("user.home");
+        // Mac 本地开发环境判断
+        if (javaHome != null && javaHome.contains("/Users/")) {
+            return LOCAL_IMAGE_DIR;
+        }
+        return SERVER_IMAGE_DIR;
+    }
+
+    /**
+     * Nginx 常用 www-data 以 other 身份读静态文件；Tomcat umask 可能导致新建文件为 640。
+     * 上传成功后设为 644（非 POSIX 文件系统上静默跳过）。
+     */
+    private static void ensureWorldReadableFile(File f) {
+        if (f == null || !f.exists() || !f.isFile()) {
+            return;
+        }
+        try {
+            Files.setPosixFilePermissions(f.toPath(), PosixFilePermissions.fromString("rw-r--r--"));
+        } catch (UnsupportedOperationException ignored) {
+        } catch (Exception e) {
+            System.err.println("[UploadFile] ensureWorldReadableFile: " + f.getAbsolutePath() + " - " + e.getMessage());
+        }
+    }
 
 
     public static String uploadFileName(HttpSession session, String newFileName, MultipartFile file, String saveFileName){
         System.out.println("[UploadFile.uploadFileName] 开始上传文件，文件夹: " + newFileName + ", 文件名: " + saveFileName);
-        String realPath = EXTERNAL_IMAGE_DIR + newFileName;
+        // 使用动态路径
+        String baseDir = getImageBaseDir();
+        String realPath = baseDir + newFileName;
         System.out.println("[UploadFile.uploadFileName] 完整路径: " + realPath);
 
         //1，保存文件
@@ -120,6 +154,7 @@ public class UploadFile {
             
             System.out.println("[UploadFile.uploadFileName] 准备写入文件: " + destination.getAbsolutePath());
             file.transferTo(destination);
+            ensureWorldReadableFile(destination);
             System.out.println("[UploadFile.uploadFileName] 文件上传成功: " + destination.getAbsolutePath());
             // 验证文件是否真的存在
             if (destination.exists()) {
@@ -142,7 +177,9 @@ public class UploadFile {
         //1，保存文件
 //        ServletContext servletContext = session.getServletContext();
 //        String realPath = servletContext.getRealPath(newFileName);
-        String realPath = EXTERNAL_IMAGE_DIR + newFileName;
+        // 使用动态路径
+        String baseDir = getImageBaseDir();
+        String realPath = baseDir + newFileName;
 
 
         File uploadClock = new File(realPath);
@@ -153,6 +190,7 @@ public class UploadFile {
         uploadClock = new File(uploadClock + "/" + filename);
         try {
             file.transferTo(uploadClock);
+            ensureWorldReadableFile(uploadClock);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -169,12 +207,18 @@ public class UploadFile {
      * @return        文件最终保存的绝对路径
      */
     public static String upload(HttpSession session, String subDir, MultipartFile file) {
-        // 拼接最终的目录：/opt/tomcat/latest/app-data/images/goodsImage
-        String realPath = EXTERNAL_IMAGE_DIR + subDir;
+        // 自动选择开发或生产环境的图片存储路径
+        String baseDir = getImageBaseDir();
+        System.out.println("[UploadFile.upload] 使用图片存储目录: " + baseDir);
+        
+        // 拼接最终的目录
+        String realPath = baseDir + subDir;
+        System.out.println("[UploadFile.upload] 完整上传路径: " + realPath);
 
         File uploadDir = new File(realPath);
         if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
+            boolean created = uploadDir.mkdirs();
+            System.out.println("[UploadFile.upload] 创建目录: " + realPath + ", 结果: " + created);
         }
 
         // 获取原始文件名
@@ -183,11 +227,14 @@ public class UploadFile {
 
         try {
             file.transferTo(destination);
+            ensureWorldReadableFile(destination);
+            System.out.println("[UploadFile.upload] 文件上传成功: " + destination.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
+            throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
         }
 
-        // 返回完整的绝对路径，如 /opt/tomcat/latest/app-data/images/goodsImage/xxx.jpg
+        // 返回完整的绝对路径
         return destination.getAbsolutePath();
     }
 

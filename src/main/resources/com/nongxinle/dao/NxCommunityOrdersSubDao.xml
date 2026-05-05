@@ -72,6 +72,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -111,6 +112,9 @@
 
     <resultMap id="community" type="NxCommunityEntity">
         		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_off_set"/>
 		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
         <result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
         <result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
@@ -144,12 +148,12 @@
 
     <resultMap id="subOrders" type="NxCommunityOrdersSubEntity">
            <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosServiceType" column="nx_COS_service_type"/>
-
         <result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
         <result property="nxCosCommunityId" column="nx_COS_community_id"/>
         <result property="nxCosNxGoodsId" column="nx_COS_nx_goods_id"/>
@@ -335,6 +339,9 @@
             </if>
             <if test="cardId != null">
                 and  cg.nx_cg_card_id =  #{cardId}
+            </if>
+            <if test="purGoodsId != null">
+                and  s.nx_COS_comm_pur_goods_id =  #{purGoodsId}
             </if>
         </where>
     </select>
@@ -580,6 +587,21 @@
             </if>
         </where>
     </select>
+    <select id="queryTodayHuaxianCount" resultType="java.lang.Integer">
+        select  COALESCE(SUM(nx_COS_quantity), 0) from nx_community_orders_sub as s
+        <where>
+            <if test="orderUserId != null">
+                and  s.nx_COS_order_user_id = #{orderUserId}
+            </if>
+            <if test="date != null">
+                and  s.nx_COS_service_date = #{date}
+            </if>
+            <if test="goodsId != null">
+                and  s.nx_COS_community_goods_id = #{goodsId}
+            </if>
+
+        </where>
+    </select>
 
 
     <insert id="save" parameterType="com.nongxinle.entity.NxCommunityOrdersSubEntity" useGeneratedKeys="true"
@@ -621,7 +643,8 @@
          `nx_COS_splicing_orders_id`,
          `nx_COS_commerce_id`,
          `nx_COS_service_type`,
-         `nx_COS_desk_id`
+         `nx_COS_desk_id`,
+         `nx_COS_comm_pur_goods_id`
          )
         values (#{nxCommunityOrdersSubId},
                 #{nxCosNxGoodsId},
@@ -659,7 +682,8 @@
                 #{nxCosSplicingOrdersId},
                 #{nxCosCommerceId},
                 #{nxCosServiceType},
-                #{nxCosDeskId}
+                #{nxCosDeskId},
+                #{nxCosCommPurGoodsId}
 
                 )
     </insert>
@@ -702,6 +726,7 @@
             <if test="nxCosCommerceId != null">`nx_COS_commerce_id` = #{nxCosCommerceId},</if>
             <if test="nxCosServiceType != null">`nx_COS_service_type` = #{nxCosServiceType},</if>
             <if test="nxCosDeskId != null">`nx_COS_desk_id` = #{nxCosDeskId},</if>
+            <if test="nxCosCommPurGoodsId != null">`nx_COS_comm_pur_goods_id` = #{nxCosCommPurGoodsId},</if>
             <if test="nxCosAccountUserId != null">`nx_COS_account_user_id` = #{nxCosAccountUserId}</if>
         </set>
         where nx_community_orders_sub_id = #{nxCommunityOrdersSubId}

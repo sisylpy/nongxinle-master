@@ -64,8 +64,6 @@ public interface GbDepartmentDisGoodsService {
 
     List<GbDepartmentDisGoodsEntity> depQueryDepGoodsWithOrder(Map<String, Object> map);
 
-//    GbDepartmentDisGoodsEntity getTipText(GbDepartmentDisGoodsEntity departmentDisGoodsEntity);
-
     int queryDepGoodsCount(Map<String, Object> mapC);
 
     List<Integer> queryOnlyDepGoodsIds(Map<String, Object> map);

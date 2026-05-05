@@ -2474,17 +2474,9 @@ public class NxDepartmentOrdersPartController {
         goods.setNxDgCartonUnit(blankToNull(item.getString("nxDgCartonUnit")));
         Object itemsPerCartonObj = item.get("nxDgItemsPerCarton");
         if (itemsPerCartonObj != null) {
-            if (itemsPerCartonObj instanceof Integer) {
-                goods.setNxDgItemsPerCarton((Integer) itemsPerCartonObj);
-            } else if (itemsPerCartonObj instanceof String) {
-                String itemsPerCartonStr = ((String) itemsPerCartonObj).trim();
-                if (!itemsPerCartonStr.isEmpty()) {
-                    try {
-                        goods.setNxDgItemsPerCarton(Integer.parseInt(itemsPerCartonStr));
-                    } catch (NumberFormatException e) {
-                        // 忽略格式错误，不设置该字段
-                    }
-                }
+            String normalized = com.nongxinle.utils.CommonUtils.normalizeItemsPerCartonString(itemsPerCartonObj);
+            if (normalized != null) {
+                goods.setNxDgItemsPerCarton(normalized);
             }
         }
         goods.setNxDgGoodsStatus(0);
@@ -2736,15 +2728,13 @@ public class NxDepartmentOrdersPartController {
     public R depPasteSearchGoods(@RequestBody List<NxDepartmentOrdersEntity> orderList) {
         List<NxDepartmentOrdersEntity> returnList = new ArrayList<>();
         for (NxDepartmentOrdersEntity ordersEntity : orderList) {
-
-
             if (ordersEntity.getNxDoRemark().equals("-1")) {
                 ordersEntity.setNxDoRemark(null);
             }
-
             // 第一条件：部门商品搜索
             Map<String, Object> map = new HashMap<>();
             map.put("depId", ordersEntity.getNxDoDepartmentId());
+            map.put("disId", ordersEntity.getNxDoDistributerId());
             map.put("name", ordersEntity.getNxDoGoodsName());
             System.out.println("部门商品搜索" + map);
             List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepartmentDisGoodsService.queryDepDisGoodsByParams(map);
@@ -2752,6 +2742,7 @@ public class NxDepartmentOrdersPartController {
                 NxDepartmentDisGoodsEntity nxDepartmentDisGoodsEntity = departmentDisGoodsEntities.get(0);
                 Integer nxDdgDisGoodsId = nxDepartmentDisGoodsEntity.getNxDdgDisGoodsId();
                 NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(nxDdgDisGoodsId);
+                ordersEntity.setNxDoStatus(0);
                 returnList.add(nxDepartmentOrdersService.saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
             } else {
                 // 第二条件：商品名称+规格搜索
@@ -2794,6 +2785,7 @@ public class NxDepartmentOrdersPartController {
                             } else if (distributerGoodsEntitiesThree.size() == 1) {
                                 NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesThree.get(0);
                                 NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
+                                ordersEntity.setNxDoStatus(0);
                                 returnList.add(nxDepartmentOrdersService.saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
 
                             } else {
@@ -2805,6 +2797,7 @@ public class NxDepartmentOrdersPartController {
                             //1 保存订单
                             NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesTwo.get(0);
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(disGoodsEntity.getNxDistributerGoodsId());
+                            ordersEntity.setNxDoStatus(0);
                             returnList.add(nxDepartmentOrdersService.saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
                         } else {
                             System.out.println("多个distributerGoodsEntitiesTwo相同");
@@ -2814,6 +2807,7 @@ public class NxDepartmentOrdersPartController {
                     } else if (distributerGoodsEntitiesOne.size() == 1) {
                         System.out.println("zeooo=====111111111");
                         NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesOne.get(0);
+                        ordersEntity.setNxDoStatus(0);
                         returnList.add(nxDepartmentOrdersService.saveOrderWithGoods(ordersEntity, disGoodsEntity));
                     } else {
                         System.out.println("多个distributerGoodsEntitiesOne相同");
@@ -2824,6 +2818,7 @@ public class NxDepartmentOrdersPartController {
                     if (distributerGoodsEntitiesZero.size() == 1) {
                         System.out.println("zeooo=====111111111");
                         NxDistributerGoodsEntity disGoodsEntity = distributerGoodsEntitiesZero.get(0);
+                        ordersEntity.setNxDoStatus(0);
                         returnList.add(nxDepartmentOrdersService.saveOrderWithGoods(ordersEntity, disGoodsEntity));
                     } else {
                         System.out.println("多个mapZero结果商品名称+规格搜索");

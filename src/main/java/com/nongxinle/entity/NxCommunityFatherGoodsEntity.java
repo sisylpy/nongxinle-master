@@ -48,6 +48,11 @@ public class NxCommunityFatherGoodsEntity implements Serializable, Comparable  {
 	private Integer nxCfgOrderRank;
 	private Boolean nxCfgPrintSelected = true;
 
+	/**
+	 * 订单数量（查询统计字段）
+	 */
+	private Integer orderCount;
+
 
 
 	List<NxCommunityFatherGoodsEntity> fatherGoodsEntities;

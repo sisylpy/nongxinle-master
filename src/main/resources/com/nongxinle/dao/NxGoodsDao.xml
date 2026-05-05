@@ -568,6 +568,7 @@
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
     </resultMap>
 

@@ -29,14 +29,12 @@ import org.springframework.web.bind.annotation.*;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 import org.springframework.web.multipart.MultipartFile;
-import sun.tools.jconsole.JConsole;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import static com.nongxinle.utils.DateUtils.formatFullTime;
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
 import static com.nongxinle.utils.GbTypeUtils.getGbDepartmentTypeMendian;
 import static com.nongxinle.utils.PinYin4jUtils.*;
@@ -1462,7 +1460,7 @@ public class NxGoodsController {
         originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
         String englishKuohao = getEnglishKuohao(originalName);
         String headByString = hanziToPinyin(englishKuohao);
-        String lastFileName = getXiegang(englishKuohao) + formatFullTime();
+        String lastFileName = toUrlSafeGoodsImageFileStemForNew(englishKuohao, fatherId);
 
         String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
         String filename = file.getOriginalFilename();
@@ -1517,7 +1515,7 @@ public class NxGoodsController {
         originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
         String headByString = hanziToPinyin(originalName);
         String englishKuohao = getEnglishKuohao(originalName);
-        String lastFileName = getXiegang(englishKuohao) + formatFullTime();
+        String lastFileName = toUrlSafeGoodsImageFileStem(englishKuohao, id);
 
         String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
         String filename = file.getOriginalFilename();
@@ -1563,7 +1561,7 @@ public class NxGoodsController {
         String originalName = goodsName;
         originalName = originalName.replaceAll("[\\\\/:*?\"<>|]", "");
         String englishKuohao = getEnglishKuohao(originalName);
-        String lastFileName = originalName + formatFullTime();
+        String lastFileName = toUrlSafeGoodsImageFileStem(englishKuohao, id);
         String pinyin = hanziToPinyin(englishKuohao);
         String headPinyin = getHeadStringByString(englishKuohao, false, null);
         nxGoodsEntity.setNxGoodsPinyin(pinyin);
@@ -1683,7 +1681,7 @@ public class NxGoodsController {
 
         System.out.println("rorirnrnroriginalNameoriginalName" + originalName);
         String englishKuohao = getEnglishKuohao(originalName);
-        String lastFileName = originalName + formatFullTime() + "large";
+        String lastFileName = toUrlSafeGoodsImageFileStem(englishKuohao, id) + "large";
         String pinyin = hanziToPinyin(englishKuohao);
         String headPinyin = getHeadStringByString(englishKuohao, false, null);
         nxGoodsEntity.setNxGoodsPinyin(pinyin);
@@ -1691,7 +1689,6 @@ public class NxGoodsController {
         String realPath = UploadFile.uploadFileName(session, newUploadName, file, lastFileName);
         String filename = file.getOriginalFilename();
         String filePath = newUploadName + "/" + lastFileName + ".jpg";
-        System.out.println("biddiidid" + lastFileName);
         nxGoodsEntity.setNxGoodsFileBig(filePath);
         nxGoodsEntity.setNxGoodsName(englishKuohao);
 

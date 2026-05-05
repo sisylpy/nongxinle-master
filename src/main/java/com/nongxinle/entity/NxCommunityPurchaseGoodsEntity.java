@@ -98,6 +98,7 @@ public class NxCommunityPurchaseGoodsEntity implements Serializable, Comparable 
 	private NxCommunityGoodsEntity nxCommunityGoodsEntity;
 
 	private List<NxRestrauntOrdersEntity> nxRestrauntOrdersEntityList;
+	private List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities;
 
 	@Override
 	public boolean equals(Object o) {

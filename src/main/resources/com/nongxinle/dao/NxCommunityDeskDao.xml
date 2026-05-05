@@ -31,6 +31,7 @@
 
 	<resultMap id="subOrders" type="NxCommunityOrdersSubEntity">
 		 <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
 		<result property="nxCosServiceType" column="nx_COS_service_type"/>
@@ -56,6 +57,7 @@
 		<result property="nxCosCommunityGoodsFatherId" column="nx_COS_community_goods_father_id"/>
 		<result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
 		<result property="nxCosPurchaseUserId" column="nx_COS_purchase_usr_id"/>
+		<association property="customerUserEntity" resultMap="com.nongxinle.dao.NxCommunitySplicingOrdersDao.customerUser"/>
 	</resultMap>
 
 	<resultMap id="deskWithOrders" type="NxCommunityDeskEntity">

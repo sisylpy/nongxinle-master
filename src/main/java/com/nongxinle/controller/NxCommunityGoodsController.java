@@ -31,6 +31,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 
 import static com.nongxinle.utils.DateUtils.*;
+import static com.nongxinle.utils.NxCommunityTypeUtils.getNxCommunityGoodsSellTypeCoupon;
 import static com.nongxinle.utils.NxCommunityTypeUtils.getNxCommunityGoodsTypeTaocan;
 import static com.nongxinle.utils.PinYin4jUtils.*;
 
@@ -78,6 +79,8 @@ public class NxCommunityGoodsController {
     private NxRestrauntService nxRestrauntService;
     @Autowired
     private NxDistributerGoodsService nxDisGoodsService;
+    @Autowired
+    private NxCommunityGoodsMediaService nxCommunityGoodsMediaService;
 //
 
 
@@ -304,6 +307,7 @@ public class NxCommunityGoodsController {
         cfgService.update(fatherGoodsEntity);
 
     }
+
     @RequestMapping(value = "/comGetIbookGoods", method = RequestMethod.POST)
     @ResponseBody
     public R comGetIbookGoods(Integer limit, Integer page, Integer fatherId, Integer comId) {
@@ -647,7 +651,7 @@ public class NxCommunityGoodsController {
         nxCommunityGoodsEntity.setNxCgNxFatherId(-1);
         nxCommunityGoodsEntity.setNxCgNxGrandId(-1);
         nxCommunityGoodsEntity.setNxCgNxGreatGrandId(-1);
-        nxCommunityGoodsEntity.setNxCgSellType(4);
+        nxCommunityGoodsEntity.setNxCgSellType(getNxCommunityGoodsSellTypeCoupon());
         nxCommunityGoodsEntity.setNxCgIsOpenAdsense(0);
 
         if(nxCommunityGoodsEntity.getNxCgGoodsHuaxianPrice() != null){
@@ -923,6 +927,10 @@ public class NxCommunityGoodsController {
         Map<String, Object> mapR = new HashMap<>();
         mapR.put("goods",communityGoodsEntity);
         mapR.put("card", card);
+
+        //添加商品 Goodsmedia 的列表
+        List<NxCommunityGoodsMediaEntity> mediaList = nxCommunityGoodsMediaService.getMediaListByGoodsId(goodsId);
+        mapR.put("mediaList", mediaList);
         return R.ok().put("data", mapR);
     }
 
@@ -1083,6 +1091,34 @@ public class NxCommunityGoodsController {
         return R.ok();
     }
 
+    /**
+     * 上传社区商品介绍视频（与顶部图接口类似，文件保存在 goodsVideo/ 下）
+     */
+    @RequestMapping(value = "/updateComGoodsWithIntroVideo", method = RequestMethod.POST)
+    @ResponseBody
+    public R updateComGoodsWithIntroVideo(@RequestParam("file") MultipartFile file,
+                                          @RequestParam("goodsId") Integer goodsId,
+                                          HttpSession session) {
+        NxCommunityGoodsEntity communityGoodsEntity = cgService.queryObject(goodsId);
+        String oldPath = communityGoodsEntity.getNxCgGoodsIntroVideo();
+        if (oldPath != null && !oldPath.trim().isEmpty()) {
+            String oldAbsolutePath = Constant.EXTERNAL_IMAGE_DIR + oldPath;
+            File oldFile = new File(oldAbsolutePath);
+            if (oldFile.exists()) {
+                oldFile.delete();
+            }
+        }
+
+        String subDir = "goodsVideo";
+        UploadFile.upload(session, subDir, file);
+        String filename = file.getOriginalFilename();
+        String filePath = subDir + "/" + filename;
+        communityGoodsEntity.setNxCgGoodsIntroVideo(filePath);
+        cgService.update(communityGoodsEntity);
+
+        return R.ok();
+    }
+
     @RequestMapping(value = "/getCommunityGoodsByFatherId/{fatherId}")
     @ResponseBody
     public R getCommunityGoodsByFatherId(@PathVariable Integer fatherId) {
@@ -1109,6 +1145,26 @@ public class NxCommunityGoodsController {
         NxCommunityGoodsEntity communityGoodsEntity = cgService.queryObject(cgGoodsId);
 
         return R.ok().put("data", communityGoodsEntity);
+    }
+
+    /**
+     * 获取商品的图片列表
+     */
+    @RequestMapping(value = "/getGoodsMediaList/{goodsId}")
+    @ResponseBody
+    public R getGoodsMediaList(@PathVariable("goodsId") Integer goodsId) {
+        List<NxCommunityGoodsMediaEntity> mediaList = nxCommunityGoodsMediaService.getMediaListByGoodsId(goodsId);
+        return R.ok().put("data", mediaList);
+    }
+
+    /**
+     * 获取商品主图
+     */
+    @RequestMapping(value = "/getGoodsPrimaryMedia/{goodsId}")
+    @ResponseBody
+    public R getGoodsPrimaryMedia(@PathVariable("goodsId") Integer goodsId) {
+        NxCommunityGoodsMediaEntity primaryMedia = nxCommunityGoodsMediaService.getPrimaryMedia(goodsId);
+        return R.ok().put("data", primaryMedia);
     }
 
 

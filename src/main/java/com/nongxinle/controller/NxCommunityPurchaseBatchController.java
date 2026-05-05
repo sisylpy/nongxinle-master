@@ -14,17 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.nongxinle.entity.*;
-import com.nongxinle.service.NxCommunityGoodsService;
-import com.nongxinle.service.NxCommunityPurchaseGoodsService;
-import com.nongxinle.service.NxRestrauntOrdersService;
+import com.nongxinle.service.*;
 import com.nongxinle.utils.R;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.service.NxCommunityPurchaseBatchService;
-
 import static com.nongxinle.utils.DateUtils.*;
+import static com.nongxinle.utils.NxDistributerTypeUtils.*;
+import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisPurchaseGoodsUnBuy;
 
 
 @RestController
@@ -35,7 +33,7 @@ public class NxCommunityPurchaseBatchController {
 	@Autowired
 	private NxCommunityPurchaseGoodsService cpgService;
 	@Autowired
-	private NxRestrauntOrdersService nxRestrauntOrdersService;
+	private NxCommunityOrdersSubService nxCommunityOrdersSubService;
 	@Autowired
 	private NxCommunityGoodsService cgService;
 
@@ -137,6 +135,36 @@ public class NxCommunityPurchaseBatchController {
 		return R.ok().put("data", result);
 
 
+	}
+
+
+	@RequestMapping(value = "/saveCommPurGoodsBatch", method = RequestMethod.POST)
+	@ResponseBody
+	public R saveCommPurGoodsBatch (@RequestBody  NxCommunityPurchaseBatchEntity batch ) {
+
+
+		batch.setNxCpbStatus(0);
+		batch.setNxCpbDate(formatWhatDay(0));
+		cpbService.save(batch);
+//
+//		//update purGoods
+		List<NxCommunityPurchaseGoodsEntity> nxCommunityPurchaseGoodsEntities = batch.getNxCommunityPurchaseGoodsEntities();
+		if(nxCommunityPurchaseGoodsEntities.size() > 0){
+			for(NxCommunityPurchaseGoodsEntity purchaseGoodsEntity: nxCommunityPurchaseGoodsEntities){
+
+				List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = purchaseGoodsEntity.getNxCommunityOrdersSubEntities();
+				for (NxCommunityOrdersSubEntity orders : nxCommunityOrdersSubEntities) {
+					orders.setNxCosBuyStatus(2);
+					nxCommunityOrdersSubService.update(orders);
+				}
+				purchaseGoodsEntity.setNxCpgBatchId(batch.getNxCommunityPurchaseBatchId());
+				purchaseGoodsEntity.setNxCpgStatus(1);
+				cpgService.update(purchaseGoodsEntity);
+			}
+
+		}
+
+	    return R.ok();
 	}
 
 //	@RequestMapping(value = "/savePurchaseBatchDetailAll", method = RequestMethod.POST)
@@ -255,17 +283,105 @@ public class NxCommunityPurchaseBatchController {
 
 
 //
-//	@RequestMapping(value = "/comGetBuyingGoods", method = RequestMethod.POST)
-//	@ResponseBody
-//	public R comGetBuyingGoods(Integer comId, Integer type) {
-//
-//		Map<String, Object> map = new HashMap<>();
-//		map.put("comId", comId);
-//		map.put("type", type);
-//		map.put("status", 2);
-//		List<NxCommunityPurchaseBatchEntity> batchEntities = cpbService.queryComPurchaseBatchByParams(map);
-//		return R.ok().put("data", batchEntities);
-//	}
+
+
+	@RequestMapping(value = "/commFinishBatch/{id}")
+	@ResponseBody
+	public R commFinishBatch(@PathVariable Integer id) {
+
+		NxCommunityPurchaseBatchEntity nxCommunityPurchaseBatchEntity = cpbService.queryObject(id);
+		nxCommunityPurchaseBatchEntity.setNxCpbStatus(1);
+		cpbService.update(nxCommunityPurchaseBatchEntity);
+
+
+		List<NxCommunityPurchaseGoodsEntity> purchaseGoodsEntities = cpgService.queryPurchaseGoodsByBathcId(id);
+
+		if(purchaseGoodsEntities.size() > 0){
+			for(NxCommunityPurchaseGoodsEntity purchaseGoodsEntity: purchaseGoodsEntities){
+				purchaseGoodsEntity.setNxCpgPurchaseType(1);
+				cpgService.update(purchaseGoodsEntity);
+			}
+		}
+
+		return R.ok();
+
+	}
+
+
+	@RequestMapping(value = "/updateCommPasteBatch", method = RequestMethod.POST)
+	@ResponseBody
+	public R updateCommPasteBatch (@RequestBody  NxCommunityPurchaseBatchEntity communityPurchaseBatchEntity) {
+	    cpbService.update(communityPurchaseBatchEntity);
+	    return R.ok();
+	}
+
+
+	@RequestMapping(value = "/deleteCommPurBatchItem/{id}")
+	@ResponseBody
+	public R deleteCommPurBatchItem(@PathVariable Integer id) {
+		NxCommunityPurchaseGoodsEntity nxCommunityPurchaseGoodsEntity = cpgService.queryObject(id);
+
+		System.out.println("statssss" + nxCommunityPurchaseGoodsEntity.getNxCpgStatus());
+		if(nxCommunityPurchaseGoodsEntity.getNxCpgStatus().equals(getNxDisPurchaseGoodsWithBatch())){
+			Integer nxDpgBatchId = nxCommunityPurchaseGoodsEntity.getNxCpgBatchId();
+			List<NxCommunityPurchaseGoodsEntity> nxCommunityPurchaseGoodsEntities = cpgService.queryPurchaseGoodsByBathcId(nxDpgBatchId);
+			if(nxCommunityPurchaseGoodsEntities.size() == 1){
+				cpbService.delete(nxDpgBatchId);
+			}
+			nxCommunityPurchaseGoodsEntity.setNxCpgBuyPrice(null);
+			nxCommunityPurchaseGoodsEntity.setNxCpgBuySubtotal(null);
+			nxCommunityPurchaseGoodsEntity.setNxCpgBuyQuantity(null);
+			nxCommunityPurchaseGoodsEntity.setNxCpgBatchId(null);
+			nxCommunityPurchaseGoodsEntity.setNxCpgStatus(getNxDisPurchaseGoodsUnBuy());
+			nxCommunityPurchaseGoodsEntity.setNxCpgPurchaseDate(null);
+			nxCommunityPurchaseGoodsEntity.setNxCpgTime(null);
+			nxCommunityPurchaseGoodsEntity.setNxCpgBuyUserId(null);
+			cpgService.update(nxCommunityPurchaseGoodsEntity);
+
+			Integer nxDistributerPurchaseGoodsId = nxCommunityPurchaseGoodsEntity.getNxCommunityPurchaseGoodsId();
+			Map<String, Object> map = new HashMap<>();
+			map.put("purGoodsId", nxDistributerPurchaseGoodsId);
+			System.out.println("orderdmappaappa" + map);
+			List<NxCommunityOrdersSubEntity> subEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
+			for (NxCommunityOrdersSubEntity orders : subEntities) {
+
+				if(orders.getNxCosStatus() < 4 && orders.getNxCosBuyStatus() < 3){
+					orders.setNxCosStatus(getNxOrderStatusNew());
+					orders.setNxCosBuyStatus(getNxDisPurchaseGoodsUnBuy());
+					System.out.println("oreener" + orders);
+					nxCommunityOrdersSubService.update(orders);
+				}
+			}
+			return R.ok();
+
+		}else{
+			return R.error(-1,"请刷新数据");
+		}
+	}
+
+	@RequestMapping(value = "/comGetBuyingPurBatch", method = RequestMethod.POST)
+	@ResponseBody
+	public R comGetBuyingPurBatch(Integer comId, Integer type) {
+
+		Map<String, Object> map = new HashMap<>();
+		map.put("comId", comId);
+		map.put("type", type);
+		map.put("status", 1);
+		List<NxCommunityPurchaseBatchEntity> batchEntities = cpbService.queryComPurchaseBatchByParams(map);
+		return R.ok().put("data", batchEntities);
+	}
+
+	@RequestMapping(value = "/comGetBuyingGoods", method = RequestMethod.POST)
+	@ResponseBody
+	public R comGetBuyingGoods(Integer comId, Integer type) {
+
+		Map<String, Object> map = new HashMap<>();
+		map.put("comId", comId);
+		map.put("type", type);
+		map.put("status", 2);
+		List<NxCommunityPurchaseBatchEntity> batchEntities = cpbService.queryComPurchaseBatchByParams(map);
+		return R.ok().put("data", batchEntities);
+	}
 
 
 

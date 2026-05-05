@@ -46,8 +46,6 @@ public class NxDistributerGbDistributerController {
 
 
 
-
-
     @RequestMapping(value = "/queryDisInfoBusiness",method = RequestMethod.POST)
     @ResponseBody
     public R queryDisInfoBusiness(Integer gbDisId, Integer nxDisId) {

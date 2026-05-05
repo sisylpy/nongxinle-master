@@ -72,6 +72,12 @@
 
 	<resultMap id="community" type="NxCommunityEntity">
 		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_off_set"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_off_set"/>
 		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
 		<result property="nxCommunityName" column="nx_community_name"/>
 		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>

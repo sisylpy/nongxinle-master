@@ -6,6 +6,8 @@ package com.nongxinle.controller;
  */
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,27 +16,21 @@ import java.util.TreeSet;
 
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
-import org.apache.poi.util.Internal;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.nongxinle.utils.CommonUtils;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 import com.nongxinle.utils.UploadFile;
-import com.nongxinle.utils.DateUtils;
-import com.nongxinle.utils.PinYin4jUtils;
-
 import javax.servlet.http.HttpSession;
-import javax.swing.*;
 
 import static com.nongxinle.utils.DateUtils.*;
 import static com.nongxinle.utils.GbTypeUtils.*;
 import static com.nongxinle.utils.NxDistributerTypeUtils.*;
-import static com.nongxinle.utils.PinYin4jUtils.hanziToPinyin;
 
 
 @RestController
@@ -77,7 +73,65 @@ public class NxDistributerPurchaseGoodsController {
     @Autowired
     private NxTraceReportService nxTraceReportService;
 
+    /**
+     * 从采购商品复制生产日期、保质期、过期日期到库存批次
+     */
+    private void copyProduceDateFromPurchaseGoods(NxDistributerGoodsShelfStockEntity stockEntity,
+                                                  NxDistributerPurchaseGoodsEntity purchaseGoodsEntity) {
+        if (purchaseGoodsEntity != null) {
+            stockEntity.setNxDgssProduceDate(purchaseGoodsEntity.getNxDpgProduceDate());
+            stockEntity.setNxDgssShelfLife(purchaseGoodsEntity.getNxDpgShelfLife());
+            stockEntity.setNxDgssShelfLifeUnit(purchaseGoodsEntity.getNxDpgShelfLifeUnit());
+            stockEntity.setNxDgssExpiryDate(purchaseGoodsEntity.getNxDpgExpiryDate());
+        }
+    }
 
+    /**
+     * 根据生产日期+保质期计算过期日期
+     * @param produceDate 生产日期 yyyy-MM-dd
+     * @param shelfLife 保质期数值
+     * @param unit 保质期单位：天/月/年
+     * @return 过期日期 yyyy-MM-dd，解析失败返回null
+     */
+    private String calcExpiryDate(String produceDate, Integer shelfLife, String unit) {
+        if (produceDate == null || produceDate.trim().isEmpty() || shelfLife == null || unit == null || unit.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            LocalDate date = LocalDate.parse(produceDate.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate expiry;
+            switch (unit.trim()) {
+                case "天":
+                    expiry = date.plusDays(shelfLife);
+                    break;
+                case "月":
+                    expiry = date.plusMonths(shelfLife);
+                    break;
+                case "年":
+                    expiry = date.plusYears(shelfLife);
+                    break;
+                default:
+                    return null;
+            }
+            return expiry.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (Exception e) {
+            logger.warn("[calcExpiryDate] 计算过期日期失败: produceDate={}, shelfLife={}, unit={}", produceDate, shelfLife, unit, e);
+            return null;
+        }
+    }
+
+    /**
+     * 从源库存批次复制生产日期、保质期、过期日期到目标库存批次（用于调拨）
+     */
+    private void copyProduceDateFromSourceStock(NxDistributerGoodsShelfStockEntity targetStock,
+                                               NxDistributerGoodsShelfStockEntity sourceStock) {
+        if (sourceStock != null) {
+            targetStock.setNxDgssProduceDate(sourceStock.getNxDgssProduceDate());
+            targetStock.setNxDgssShelfLife(sourceStock.getNxDgssShelfLife());
+            targetStock.setNxDgssShelfLifeUnit(sourceStock.getNxDgssShelfLifeUnit());
+            targetStock.setNxDgssExpiryDate(sourceStock.getNxDgssExpiryDate());
+        }
+    }
 
     @RequestMapping(value = "/supplierGivePurchaseGoodsData", method = RequestMethod.POST)
     @ResponseBody
@@ -130,6 +184,7 @@ public class NxDistributerPurchaseGoodsController {
         if(purchaseGoodsEntity.getNxDpgExpectPrice() != null){
             stockEntity.setNxDgssSellingPrice(purchaseGoodsEntity.getNxDpgExpectPrice());
         }
+        copyProduceDateFromPurchaseGoods(stockEntity, purchaseGoodsEntity);
         shelfStockService.save(stockEntity);
 
 
@@ -201,7 +256,7 @@ public class NxDistributerPurchaseGoodsController {
                     reduceEntity.setNxDgssrWeek(getWeek(0));
                     reduceEntity.setNxDgssrMonth(formatWhatMonth(0));
                     reduceEntity.setNxDgssrFullTime(formatWhatYearDayTime(0));
-                    reduceEntity.setNxDgssrType(1); // 1 = 正常出库
+                    reduceEntity.setNxDgssrType(0); // 1 = 正常出库
                     Integer reduceUserId = purchaseGoodsEntity.getNxDpgTypeAddUserId() != null
                             ? purchaseGoodsEntity.getNxDpgTypeAddUserId()
                             : purchaseGoodsEntity.getNxDpgPurUserId();
@@ -289,6 +344,28 @@ public class NxDistributerPurchaseGoodsController {
         if (requestMap.get("nxDpgStandard") != null) {
             purchaseGoodsEntity.setNxDpgStandard(requestMap.get("nxDpgStandard").toString());
         }
+        // 提取生产日期、保质期、保质期单位、过期日期
+        if (requestMap.get("nxDpgProduceDate") != null) {
+            purchaseGoodsEntity.setNxDpgProduceDate(requestMap.get("nxDpgProduceDate").toString().trim());
+        }
+        if (requestMap.get("nxDpgShelfLife") != null) {
+            try {
+                purchaseGoodsEntity.setNxDpgShelfLife(Integer.parseInt(requestMap.get("nxDpgShelfLife").toString()));
+            } catch (NumberFormatException e) {
+                logger.warn("[disSavePurGoodsSaveStock] 保质期格式错误: {}", requestMap.get("nxDpgShelfLife"));
+            }
+        }
+        if (requestMap.get("nxDpgShelfLifeUnit") != null) {
+            purchaseGoodsEntity.setNxDpgShelfLifeUnit(requestMap.get("nxDpgShelfLifeUnit").toString().trim());
+        }
+        if (requestMap.get("nxDpgExpiryDate") != null) {
+            purchaseGoodsEntity.setNxDpgExpiryDate(requestMap.get("nxDpgExpiryDate").toString().trim());
+        } else if (purchaseGoodsEntity.getNxDpgProduceDate() != null && purchaseGoodsEntity.getNxDpgShelfLife() != null && purchaseGoodsEntity.getNxDpgShelfLifeUnit() != null) {
+            String expiryDate = calcExpiryDate(purchaseGoodsEntity.getNxDpgProduceDate(), purchaseGoodsEntity.getNxDpgShelfLife(), purchaseGoodsEntity.getNxDpgShelfLifeUnit());
+            if (expiryDate != null) {
+                purchaseGoodsEntity.setNxDpgExpiryDate(expiryDate);
+            }
+        }
         
         // 提取前端传入的双单价字段
         String nxDgssPriceCarton = requestMap.get("nxDgssPriceCarton") != null ? requestMap.get("nxDgssPriceCarton").toString() : null;
@@ -337,8 +414,7 @@ public class NxDistributerPurchaseGoodsController {
         boolean hasCarton = disGoodsEntity != null 
             && disGoodsEntity.getNxDgCartonUnit() != null 
             && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-            && disGoodsEntity.getNxDgItemsPerCarton() != null 
-            && disGoodsEntity.getNxDgItemsPerCarton() > 0;
+            && CommonUtils.isPositiveItemsPerCarton(disGoodsEntity.getNxDgItemsPerCarton());
         
         // 判断采购规格是否与外包装单位匹配
         String purchaseStandard = purchaseGoodsEntity.getNxDpgStandard();
@@ -348,8 +424,8 @@ public class NxDistributerPurchaseGoodsController {
         
         if (hasCarton) {
             // 有外包装：需要计算双单价和双零售价
-            Integer itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
-            BigDecimal itemsPerCartonBD = new BigDecimal(itemsPerCarton);
+            String itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
+            BigDecimal itemsPerCartonBD = CommonUtils.parseItemsPerCartonBigDecimal(itemsPerCarton);
             
             // 1. 数量转换：按最小单位存储
             BigDecimal weightInMinUnit;
@@ -487,6 +563,7 @@ public class NxDistributerPurchaseGoodsController {
             }
         }
 
+        copyProduceDateFromPurchaseGoods(stockEntity, purchaseGoodsEntity);
         shelfStockService.save(stockEntity);
         System.out.println("[disSavePurGoodsSaveStock] 库存批次已保存，库存ID: " + stockEntity.getNxDistributerGoodsShelfStockId());
         return R.ok().put("data",stockEntity);
@@ -616,8 +693,7 @@ public class NxDistributerPurchaseGoodsController {
         boolean hasCarton = disGoodsEntity != null 
             && disGoodsEntity.getNxDgCartonUnit() != null 
             && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-            && disGoodsEntity.getNxDgItemsPerCarton() != null 
-            && disGoodsEntity.getNxDgItemsPerCarton() > 0;
+            && CommonUtils.isPositiveItemsPerCarton(disGoodsEntity.getNxDgItemsPerCarton());
         
         // 判断采购规格是否与外包装单位匹配
         String purchaseStandard = purchaseGoodsEntity.getNxDpgStandard();
@@ -627,8 +703,8 @@ public class NxDistributerPurchaseGoodsController {
         
         if (hasCarton) {
             // 有外包装：需要计算双单价和双零售价
-            Integer itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
-            BigDecimal itemsPerCartonBD = new BigDecimal(itemsPerCarton);
+            String itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
+            BigDecimal itemsPerCartonBD = CommonUtils.parseItemsPerCartonBigDecimal(itemsPerCarton);
             
             // 1. 数量转换：按最小单位存储
             BigDecimal weightInMinUnit;
@@ -776,6 +852,7 @@ public class NxDistributerPurchaseGoodsController {
             System.out.println("[disSavePurGoodsSaveStockSunHola] 设置库存说明: " + nxDgssStockRemark);
         }
 
+        copyProduceDateFromPurchaseGoods(stockEntity, purchaseGoodsEntity);
         shelfStockService.save(stockEntity);
         System.out.println("[disSavePurGoodsSaveStockSunHola] 首衡项目库存批次已保存，库存ID: " + stockEntity.getNxDistributerGoodsShelfStockId());
         
@@ -1307,8 +1384,7 @@ public class NxDistributerPurchaseGoodsController {
     /**
      * disUser
      *
-     * @param searchStr
-     * @param disId
+     * @para
      * @return
      */
 //    @RequestMapping(value = "/queryDisPurGoodsByQuickSearch", method = RequestMethod.POST)
@@ -2376,8 +2452,7 @@ public class NxDistributerPurchaseGoodsController {
             boolean hasCarton = disGoodsEntity != null 
                 && disGoodsEntity.getNxDgCartonUnit() != null 
                 && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                && disGoodsEntity.getNxDgItemsPerCarton() != null 
-                && disGoodsEntity.getNxDgItemsPerCarton() > 0;
+                && CommonUtils.isPositiveItemsPerCarton(disGoodsEntity.getNxDgItemsPerCarton());
             
             if (hasCarton) {
                 System.out.println("✅ 商品有外包装信息:");
@@ -2399,8 +2474,8 @@ public class NxDistributerPurchaseGoodsController {
             
             if (hasCarton) {
                 // 有外包装：需要计算双单价和双零售价
-                Integer itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
-                BigDecimal itemsPerCartonBD = new BigDecimal(itemsPerCarton);
+                String itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
+                BigDecimal itemsPerCartonBD = CommonUtils.parseItemsPerCartonBigDecimal(itemsPerCarton);
                 
                 // 1. 数量转换：按最小单位存储
                 BigDecimal weightInMinUnit;
@@ -2676,8 +2751,7 @@ public class NxDistributerPurchaseGoodsController {
             boolean hasCarton = disGoodsEntity != null 
                 && disGoodsEntity.getNxDgCartonUnit() != null 
                 && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                && disGoodsEntity.getNxDgItemsPerCarton() != null 
-                && disGoodsEntity.getNxDgItemsPerCarton() > 0;
+                && CommonUtils.isPositiveItemsPerCarton(disGoodsEntity.getNxDgItemsPerCarton());
             
             if (hasCarton) {
                 System.out.println("✅ 商品有外包装信息:");
@@ -2699,8 +2773,8 @@ public class NxDistributerPurchaseGoodsController {
             
             if (hasCarton) {
                 // 有外包装：需要计算双单价和双零售价
-                Integer itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
-                BigDecimal itemsPerCartonBD = new BigDecimal(itemsPerCarton);
+                String itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
+                BigDecimal itemsPerCartonBD = CommonUtils.parseItemsPerCartonBigDecimal(itemsPerCarton);
                 
                 // 1. 数量转换：按最小单位存储
                 BigDecimal weightInMinUnit;
@@ -2877,6 +2951,7 @@ public class NxDistributerPurchaseGoodsController {
                 System.out.println("商品不在货架上");
             }
 
+            copyProduceDateFromPurchaseGoods(stockEntity, purchaseGoodsEntity);
             shelfStockService.save(stockEntity);
 
             olePurGoods.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
@@ -2932,13 +3007,12 @@ public class NxDistributerPurchaseGoodsController {
                 boolean hasCarton = disGoodsEntity != null 
                     && disGoodsEntity.getNxDgCartonUnit() != null 
                     && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && disGoodsEntity.getNxDgItemsPerCarton() != null 
-                    && disGoodsEntity.getNxDgItemsPerCarton() > 0;
+                    && CommonUtils.isPositiveItemsPerCarton(disGoodsEntity.getNxDgItemsPerCarton());
                 
                 if (hasCarton) {
                     // 有外包装：需要计算双单价和双零售价
-                    Integer itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
-                    BigDecimal itemsPerCartonBD = new BigDecimal(itemsPerCarton);
+                    String itemsPerCarton = disGoodsEntity.getNxDgItemsPerCarton();
+                    BigDecimal itemsPerCartonBD = CommonUtils.parseItemsPerCartonBigDecimal(itemsPerCarton);
                     
                     // 1. 数量转换：按最小单位存储
                     BigDecimal weightInMinUnit = buyQuantity.multiply(itemsPerCartonBD);
@@ -3006,6 +3080,7 @@ public class NxDistributerPurchaseGoodsController {
                     System.out.println("商品不在货架上");
                 }
 
+                copyProduceDateFromPurchaseGoods(stockEntity, purchaseGoodsEntity);
                 shelfStockService.save(stockEntity);
                 System.out.println("库存批次已保存");
 
@@ -3070,6 +3145,7 @@ public class NxDistributerPurchaseGoodsController {
             stockEntity.setNxDgssNxShelfGoodsId(shelfGoodsEntity.getNxDistributerGoodsShelfGoodsId());
         }
 
+        copyProduceDateFromPurchaseGoods(stockEntity, purchaseGoodsEntity);
         shelfStockService.save(stockEntity);
 
         purchaseGoodsEntity.setNxDpgStatus(getNxDisPurchaseGoodsFinishBuy());
@@ -3209,6 +3285,9 @@ public class NxDistributerPurchaseGoodsController {
             nxRestrauntOrdersService.update(resOrdersEntity);
         }
     }
+
+
+
 
     /**
      * NX系统采购日期统计
@@ -3953,10 +4032,11 @@ public class NxDistributerPurchaseGoodsController {
         Map<String, Object> mapR = new HashMap<>();
         List<Map<String, Object>> result = new ArrayList<>();
 
-        if (type == 0) {
+        if (type == 10) {
+
             // 自采：没有批次ID（按采购员分组）
             map.put("purchaseType", type); // 排除入库类型
-
+            System.out.println("typeeee==100000" + map);
             // 计算总额
             Double totalAmount = 0.0;
             Integer totalCount = nxDisPurcGoodsService.queryGoodsListCount(map);
@@ -5148,6 +5228,7 @@ public class NxDistributerPurchaseGoodsController {
             targetStock.setNxDgssReturnWeight("0");
             targetStock.setNxDgssReturnSubtotal("0");
             targetStock.setNxDgssReceiveUserId(userId);
+            copyProduceDateFromSourceStock(targetStock, sourceStock);
             shelfStockService.save(targetStock);
             System.out.println("目标货架库存批次已创建，ID: " + targetStock.getNxDistributerGoodsShelfStockId());
             
@@ -5295,6 +5376,7 @@ public class NxDistributerPurchaseGoodsController {
             targetStock.setNxDgssReturnWeight("0");
             targetStock.setNxDgssReturnSubtotal("0");
             targetStock.setNxDgssReceiveUserId(userId);
+            copyProduceDateFromSourceStock(targetStock, sourceStock);
             shelfStockService.save(targetStock);
             System.out.println("目标货架库存批次已创建，ID: " + targetStock.getNxDistributerGoodsShelfStockId());
             

@@ -20,6 +20,9 @@
 
 	<resultMap id="community" type="NxCommunityEntity">
 		<id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_off_set"/>
 		<result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
 		<result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
 		<result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
@@ -39,7 +42,10 @@
 		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
 		<result property="nxCommunityLat" column="nx_community_lat"/>
 		<result property="nxCommunityLng" column="nx_community_lng"/>
-		<result property="nxCommunityCommerceId" column="nx_community_commerce_id"/>
+		<result property="nxCommunityBusinessPhone" column="nx_community_business_phone"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_offset"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
 <!--		<result property="nxCommunityLocation" column="nx_community_location" jdbcType="OTHER"-->
 <!--				javaType="com.nongxinle.entity.NxLocation"-->
 <!--				typeHandler="org.apache.ibatis.type.ObjectTypeHandler"/>-->
@@ -79,7 +85,10 @@
 		FROM
 		nx_community
 		WHERE
-		ST_Distance_Sphere(nx_community_location, ST_GeomFromText(CONCAT('POINT(', #{nxCuaLng}, ' ', #{nxCuaLat}, ')'))) &lt; 100000;
+		ST_Distance_Sphere(nx_community_location, ST_GeomFromText(CONCAT('POINT(', #{nxCuaLng}, ' ', #{nxCuaLat}, ')'))) &lt; 100000
+		<if test="commerceId != null">
+			AND nx_community_commerce_id = #{commerceId}
+		</if>
 	</select>
 
 
@@ -110,7 +119,10 @@
 			`nx_community_sys_business_area_id`,
 			`nx_community_sys_district_id`,
 			`nx_community_sys_province_id`,
-			`nx_community_location`
+			`nx_community_location`,
+			`nx_community_delivery_day_offset`,
+			`nx_community_delivery_start_time`,
+			`nx_community_delivery_stop_time`
 		)
 		values
 		(
@@ -137,12 +149,15 @@
 			#{nxCommunitySysBusinessAreaId},
 			#{nxCommunitySysDistrictId},
 			#{nxCommunitySysProvinceId},
-			ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')'))
+			ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')')),
+			#{nxCommunityDeliveryDayOffset},
+			#{nxCommunityDeliveryStartTime},
+			#{nxCommunityDeliveryStopTime}
 		)
 	</insert>
 
 	<insert id="saveOne" parameterType="com.nongxinle.entity.NxCommunityEntity" useGeneratedKeys="true"
-			keyProperty="nxCommunityId">
+		keyProperty="nxCommunityId">
 		insert into nx_community
 		(
 			`nx_community_id`,
@@ -170,7 +185,10 @@
 			`nx_community_sys_province_id`,
 			`nx_community_location`,
 			`nx_community_bill_print_sn`,
-			`nx_community_business_phone`
+			`nx_community_business_phone`,
+			`nx_community_delivery_day_offset`,
+			`nx_community_delivery_start_time`,
+			`nx_community_delivery_stop_time`
 		)
 		values
 		(
@@ -199,7 +217,10 @@
 			#{nxCommunitySysProvinceId},
 			ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')')),
 			#{nxCommunityBillPrintSn},
-			#{nxCommunityBusinessPhone}
+			#{nxCommunityBusinessPhone},
+			#{nxCommunityDeliveryDayOffset},
+			#{nxCommunityDeliveryStartTime},
+			#{nxCommunityDeliveryStopTime}
 		)
 	</insert>
 
@@ -234,6 +255,9 @@
 				`nx_community_location` =
 				ST_GeomFromText(CONCAT('POINT(', #{nxCommunityLng}, ' ', #{nxCommunityLat}, ')'))
 			</if>
+			<if test="nxCommunityDeliveryDayOffset != null">`nx_community_delivery_day_offset` = #{nxCommunityDeliveryDayOffset}, </if>
+			<if test="nxCommunityDeliveryStartTime != null">`nx_community_delivery_start_time` = #{nxCommunityDeliveryStartTime}, </if>
+			<if test="nxCommunityDeliveryStopTime != null">`nx_community_delivery_stop_time` = #{nxCommunityDeliveryStopTime}, </if>
 		</set>
 		where nx_community_id = #{nxCommunityId}
 	</update>

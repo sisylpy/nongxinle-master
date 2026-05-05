@@ -91,7 +91,7 @@
 		<result property="gbDepartmentType" column="appSupplierDep_gb_department_type"/>
 		<result property="gbDepartmentName" column="appSupplierDep_gb_department_name"/>
 		<result property="gbDepartmentPrintName" column="appSupplierDep_gb_department_print_name"/>
-		<collection property="appSupplierList" resultMap="nxDisGbDis"/>
+<!--		<collection property="appSupplierList" resultMap="nxDisGbDis"/>-->
 	</resultMap>
 	<resultMap id="stockDep" type="GbDepartmentEntity">
 		<id property="gbDepartmentId" column="stockDep_gb_department_id"/>
@@ -188,11 +188,14 @@
 		<association property="appSupplierDepartment" resultMap="appSupplierDep"/>
  		<association property="gbDistributerModuleEntity" resultMap="disModule"/>
 		<association property="sysBusinessTypeEntity" resultMap="sysBusiness"/>
+		<association property="nxDistributerGbDistributerEntity" resultMap="nxDisGbDis"/>
 		<collection property="franchiseeDepartmentList" resultMap="franchiseeDeps"/>
+
  		<collection property="purDepartmentList" resultMap="purDeps"/>
 		<collection property="stockDepartmentList" resultMap="stockDep"/>
 		<collection property="mendianDepartmentList" resultMap="mdDep"/>
 		<collection property="kitchenDepartmentList" resultMap="kitchenDep"/>
+
 	</resultMap>
 
 	<select id="queryDisInfo" resultMap="disInfo">
@@ -236,7 +239,6 @@
 			   kitchenDep.gb_department_dis_id 'kitchenDep_gb_department_dis_id',
 			   kitchenDep.gb_department_print_name 'kitchenDep_gb_department_print_name',
 			   kitchenDep.gb_department_name 'kitchenDep_gb_department_name'
-#
 		from gb_distributer  as dis
 				 left join gb_distributer_module as gdm on gdm.gb_dm_distributer_id = dis.gb_distributer_id
 				 left join gb_department as directDep on directDep.gb_department_dis_id = dis.gb_distributer_id
@@ -256,7 +258,7 @@
 			and kitchenDep.gb_department_type = 4
 				 left join gb_department as appSupplierDep on appSupplierDep.gb_department_dis_id = dis.gb_distributer_id
 			and appSupplierDep.gb_department_type = 5
-				 left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_dep_id = appSupplierDep.gb_department_id
+				 left join nx_distributer_gb_distributer as ndgd on ndgd.nx_DGD_gb_distributer_id = dis.gb_distributer_id
 				 left join nx_distributer as nd on nd.nx_distributer_id = ndgd.nx_DGD_nx_distributer_id
 		where gb_distributer_id = #{diuDistributerId}
 		order by  directDep.gb_department_id, franchDep.gb_department_id, purDep.gb_department_id, kitchenDep.gb_department_id, stockDep.gb_department_id

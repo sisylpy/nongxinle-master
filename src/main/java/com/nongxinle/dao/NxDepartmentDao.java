@@ -39,4 +39,6 @@ public interface NxDepartmentDao extends BaseDao<NxDepartmentEntity> {
     NxDepartmentEntity queryDepInfoAll(Integer nxDepartmentId);
 
     NxDepartmentEntity queryDepInfoByGbDisId(Integer disId);
+
+    NxDepartmentEntity queryRetailFatherDepByDisId(Integer id);
 }

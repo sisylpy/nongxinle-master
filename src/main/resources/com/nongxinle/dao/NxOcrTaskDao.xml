@@ -118,9 +118,7 @@
 			<if test="xiaoyuStatus != null">
 				and nx_ocr_task_status &lt; #{xiaoyuStatus}
 			</if>
-			<if test="xiaoyuStatus != null">
-				and nx_ocr_task_status &lt; #{xiaoyuStatus}
-			</if>
+
 
 		</where>
 		order by nx_ocr_task_id desc

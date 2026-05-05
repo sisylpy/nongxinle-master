@@ -32,6 +32,16 @@ public class DateUtils {
      */
     public final static String FULL_TIME_PATTERN = "yyyy-MM-dd HH:mm";
 
+    /**
+     * 用于磁盘/URL 路径中的文件名时间部分：无空格、无冒号，避免各端编码不一致。
+     */
+    public final static String FILE_SAFE_TIME_PATTERN = "yyyyMMddHHmmss";
+
+    /**
+     * 含毫秒，用于尚无商品 id 时的上传文件名，降低同一秒内冲突概率。
+     */
+    public final static String FILE_SAFE_TIME_MS_PATTERN = "yyyyMMddHHmmssSSS";
+
     public final static String YEAR_DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm";
     public final static String DATE_TIME_PATTERN = "MM-dd HH:mm";
     public final static String ONLY_DATE_PATTERN = "MM-dd";
@@ -84,6 +94,14 @@ public class DateUtils {
 
     public static String formatFullTime() {
         return format(new Date(), FULL_TIME_PATTERN);
+    }
+
+    public static String formatFileSafeTime() {
+        return format(new Date(), FILE_SAFE_TIME_PATTERN);
+    }
+
+    public static String formatFileSafeTimeMs() {
+        return format(new Date(), FILE_SAFE_TIME_MS_PATTERN);
     }
 
     public static String formatWhatFullTime(int what) {

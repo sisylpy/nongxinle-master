@@ -329,7 +329,13 @@ public class NxCommunityOrdersSubController {
                     } else {
                         NxCommunityGoodsEntity goodsEntity = nxCommunityGoodsService.queryObject(nxCosCommunityGoodsId);
                         subEntity.setNxCosPrice(goodsEntity.getNxCgGoodsHuaxianPrice());
-                        BigDecimal orderQuantity = new BigDecimal(subEntity.getNxCosQuantity());
+//                        BigDecimal orderQuantity = new BigDecimal(subEntity.getNxCosQuantity());
+                        Map<String, Object> mapOrderQuantity = new HashMap<>();
+                        mapOrderQuantity.put("date", formatWhatDay(0));
+                        mapOrderQuantity.put("orderUserId", orderUserId);
+                        mapOrderQuantity.put("goodsId", subEntity.getNxCosCommunityGoodsId());
+                        int  orderQuantityInt =  nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                        BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                         BigDecimal decimal = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianPrice()).multiply(orderQuantity).setScale(1, BigDecimal.ROUND_HALF_UP);
                         subEntity.setNxCosSubtotal(decimal.toString());
                         subEntity.setNxCosHuaxianDifferentPrice("0");
@@ -369,7 +375,12 @@ public class NxCommunityOrdersSubController {
                     //只有划线商品的订单才改动
                     if (goodsEntity.getNxCgGoodsHuaxianPrice() != null) {
                         BigDecimal huaxianQuantity = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianQuantity());
-                        BigDecimal orderQuantity = new BigDecimal(subEntity.getNxCosQuantity());
+                        Map<String, Object> mapOrderQuantity = new HashMap<>();
+                        mapOrderQuantity.put("date", formatWhatDay(0));
+                        mapOrderQuantity.put("orderUserId", orderUserId);
+                        mapOrderQuantity.put("goodsId", nxCosCommunityGoodsId);
+                        int orderQuantityInt = nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                        BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                         BigDecimal moreQuantity = huaxianQuantity.subtract(orderQuantity);
                         //划线优惠数量没有用完，直接修改订单
                         System.out.println("huaxianqqqqqq" + huaxianQuantity);
@@ -432,7 +443,7 @@ public class NxCommunityOrdersSubController {
                                     limitOrder.setNxCosType(orderType);
                                     limitOrder.setNxCosServiceType(serviceType);
                                     limitOrder.setNxCosSplicingOrdersId(subEntity.getNxCosSplicingOrdersId());
-                                    System.out.println("sanenennenenennenlimlmeoror" + limitOrder.getNxCosQuantity());
+                                    limitOrder.setNxCosServiceDate(formatWhatDay(0));
                                     nxCommunityOrdersSubService.save(limitOrder);
 
 
@@ -898,6 +909,7 @@ public class NxCommunityOrdersSubController {
             subEntity.setNxCosServiceType(serviceType);
             subEntity.setNxCosSplicingOrdersId(spId);
             subEntity.setNxCosOrdersId(pindanId);
+            subEntity.setNxCosServiceDate(formatWhatDay(0));
             System.out.println("dkfadfjalfahuaxx" + goodsEntity.getNxCgGoodsHuaxianPriceDifferent());
             nxCommunityOrdersSubService.save(subEntity);
 
@@ -943,9 +955,14 @@ public class NxCommunityOrdersSubController {
             map.put("splicingOrderId", spId);
             map.put("serviceType", serviceType);
             NxCommunityOrdersSubEntity communityOrdersSubEntity = nxCommunityOrdersSubService.queryChangeSubOrderByParams(map);
-            if (communityOrdersSubEntity != null) {
+            if (communityOrdersSubEntity != null ) {
                 BigDecimal huaxianQuantity = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianQuantity());
-                BigDecimal orderQuantity = new BigDecimal(communityOrdersSubEntity.getNxCosQuantity());
+                Map<String, Object> mapOrderQuantity = new HashMap<>();
+                mapOrderQuantity.put("date", formatWhatDay(0));
+                mapOrderQuantity.put("orderUserId", orderUserId);
+                mapOrderQuantity.put("goodsId", goodsId);
+                int orderQuantityInt = nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                 Map<String, Object> mapT = new HashMap<>();
                 mapT.put("orderUserId", orderUserId);
                 mapT.put("deskId", deskId);
@@ -1017,6 +1034,7 @@ public class NxCommunityOrdersSubController {
                         subEntity.setNxCosServiceType(serviceType);
                         subEntity.setNxCosSplicingOrdersId(spId);
                         subEntity.setNxCosOrdersId(pindanId);
+                        subEntity.setNxCosServiceDate(formatWhatDay(0));
                         System.out.println("newsavveeee" + subEntity);
                         nxCommunityOrdersSubService.save(subEntity);
                     }
@@ -1068,6 +1086,7 @@ public class NxCommunityOrdersSubController {
                     subEntity.setNxCosType(orderType);
                     subEntity.setNxCosSplicingOrdersId(spId);
                     subEntity.setNxCosOrdersId(pindanId);
+                    subEntity.setNxCosServiceDate(formatWhatDay(0));
                     System.out.println("fakdfalfjaslfjsafahfahef");
                     nxCommunityOrdersSubService.save(subEntity);
                 } else {
@@ -1100,6 +1119,7 @@ public class NxCommunityOrdersSubController {
                     subEntity.setNxCosServiceType(serviceType);
                     subEntity.setNxCosSplicingOrdersId(spId);
                     subEntity.setNxCosOrdersId(pindanId);
+                    subEntity.setNxCosServiceDate(formatWhatDay(0));
                     System.out.println("abccccc" + subEntity);
                     nxCommunityOrdersSubService.save(subEntity);
 
@@ -1150,9 +1170,14 @@ public class NxCommunityOrdersSubController {
             map.put("serviceType", serviceType);
             System.out.println("ccccccccccaaaamemberSaveMemberOrderR" + map);
             NxCommunityOrdersSubEntity communityOrdersSubEntity = nxCommunityOrdersSubService.queryChangeSubOrderByParams(map);
-            if (communityOrdersSubEntity != null) {
+            if (communityOrdersSubEntity != null && goodsEntity.getNxCgGoodsHuaxianPrice() != null) {
                 BigDecimal huaxianQuantity = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianQuantity());
-                BigDecimal orderQuantity = new BigDecimal(communityOrdersSubEntity.getNxCosQuantity());
+                Map<String, Object> mapOrderQuantity = new HashMap<>();
+                mapOrderQuantity.put("date", formatWhatDay(0));
+                mapOrderQuantity.put("orderUserId", orderUserId);
+                mapOrderQuantity.put("goodsId", goodsId);
+                int orderQuantityInt = nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                 Map<String, Object> mapT = new HashMap<>();
                 mapT.put("orderUserId", orderUserId);
                 mapT.put("deskId", deskId);
@@ -1225,6 +1250,7 @@ public class NxCommunityOrdersSubController {
                         subEntity.setNxCosServiceType(serviceType);
                         subEntity.setNxCosSplicingOrdersId(spId);
                         subEntity.setNxCosOrdersId(pindanId);
+                        subEntity.setNxCosServiceDate(formatWhatDay(0));
                         nxCommunityOrdersSubService.save(subEntity);
                     }
                 }
@@ -1272,6 +1298,7 @@ public class NxCommunityOrdersSubController {
                     subEntity.setNxCosServiceType(serviceType);
                     subEntity.setNxCosSplicingOrdersId(spId);
                     subEntity.setNxCosOrdersId(pindanId);
+                    subEntity.setNxCosServiceDate(formatWhatDay(0));
                     System.out.println("fakdfalfjaslfjsafahfahef");
                     nxCommunityOrdersSubService.save(subEntity);
                 } else {
@@ -1299,6 +1326,7 @@ public class NxCommunityOrdersSubController {
                     subEntity.setNxCosServiceType(serviceType);
                     subEntity.setNxCosSplicingOrdersId(spId);
                     subEntity.setNxCosOrdersId(pindanId);
+                    subEntity.setNxCosServiceDate(formatWhatDay(0));
                     nxCommunityOrdersSubService.save(subEntity);
                 }
             }
@@ -1357,9 +1385,14 @@ public class NxCommunityOrdersSubController {
                 //1.1.1 先查询优惠订单是否超过数量
                 System.out.println("ccccccccccaaaaRemarkkekeek" + mapC);
                 NxCommunityOrdersSubEntity communityOrdersSubEntity = nxCommunityOrdersSubService.queryChangeSubOrderByParams(mapC);
-                if (communityOrdersSubEntity != null) {
+                if (communityOrdersSubEntity != null && goodsEntity.getNxCgGoodsHuaxianPrice() != null) {
                     BigDecimal huaxianQuantity = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianQuantity());
-                    BigDecimal orderQuantity = new BigDecimal(communityOrdersSubEntity.getNxCosQuantity());
+                    Map<String, Object> mapOrderQuantity = new HashMap<>();
+                    mapOrderQuantity.put("date", formatWhatDay(0));
+                    mapOrderQuantity.put("orderUserId", orderUserId);
+                    mapOrderQuantity.put("goodsId", goodsId);
+                    int orderQuantityInt = nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                    BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                     Map<String, Object> mapT = new HashMap<>();
                     mapT.put("orderUserId", orderUserId);
                     mapT.put("deskId", deskId);
@@ -1434,6 +1467,7 @@ public class NxCommunityOrdersSubController {
                                 subEntity.setNxCosServiceType(serviceType);
                                 subEntity.setNxCosSplicingOrdersId(spId);
                                 subEntity.setNxCosOrdersId(pindanId);
+                                subEntity.setNxCosServiceDate(formatWhatDay(0));
                                 nxCommunityOrdersSubService.save(subEntity);
                             }
                         }
@@ -1506,6 +1540,7 @@ public class NxCommunityOrdersSubController {
                                 subEntity.setNxCosSplicingOrdersId(spId);
                                 subEntity.setNxCosRemark(remark);
                                 subEntity.setNxCosOrdersId(pindanId);
+                                subEntity.setNxCosServiceDate(formatWhatDay(0));
                                 nxCommunityOrdersSubService.save(subEntity);
                             } else {
                                 NxCommunityOrdersSubEntity subEntity = new NxCommunityOrdersSubEntity();
@@ -1531,6 +1566,7 @@ public class NxCommunityOrdersSubController {
                                 subEntity.setNxCosServiceType(serviceType);
                                 subEntity.setNxCosSplicingOrdersId(spId);
                                 subEntity.setNxCosOrdersId(pindanId);
+                                subEntity.setNxCosServiceDate(formatWhatDay(0));
                                 nxCommunityOrdersSubService.save(subEntity);
                             }
 
@@ -1560,6 +1596,7 @@ public class NxCommunityOrdersSubController {
                             subEntity.setNxCosSplicingOrdersId(spId);
                             subEntity.setNxCosRemark(remark);
                             subEntity.setNxCosOrdersId(pindanId);
+                            subEntity.setNxCosServiceDate(formatWhatDay(0));
                             nxCommunityOrdersSubService.save(subEntity);
                         }
                     }
@@ -1610,6 +1647,7 @@ public class NxCommunityOrdersSubController {
                     subEntity.setNxCosServiceType(serviceType);
                     subEntity.setNxCosSplicingOrdersId(spId);
                     subEntity.setNxCosOrdersId(pindanId);
+                    subEntity.setNxCosServiceDate(formatWhatDay(0));
                     nxCommunityOrdersSubService.save(subEntity);
                 }
             }
@@ -1642,6 +1680,7 @@ public class NxCommunityOrdersSubController {
             subEntity.setNxCosServiceType(serviceType);
             subEntity.setNxCosSplicingOrdersId(spId);
             subEntity.setNxCosOrdersId(pindanId);
+            subEntity.setNxCosServiceDate(formatWhatDay(0));
             nxCommunityOrdersSubService.save(subEntity);
             System.out.println("isshhdhdhhddhd" + goodsEntity.getNxCgCardId());
             if (goodsEntity.getNxCgCardId() != null) {
@@ -1714,10 +1753,15 @@ public class NxCommunityOrdersSubController {
                 NxCommunityOrdersSubEntity communityOrdersSubEntity = nxCommunityOrdersSubService.queryChangeSubOrderByParams(mapC);
                 System.out.println("wwwhwiiwiwiwiwwiiwiiwiiw" + communityOrdersSubEntity);
 
-                if (communityOrdersSubEntity != null) {
+                if (communityOrdersSubEntity != null && goodsEntity.getNxCgGoodsHuaxianPrice() != null) {
 
                     BigDecimal huaxianQuantity = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianQuantity());
-                    BigDecimal orderQuantity = new BigDecimal(communityOrdersSubEntity.getNxCosQuantity());
+                    Map<String, Object> mapOrderQuantity = new HashMap<>();
+                    mapOrderQuantity.put("date", formatWhatDay(0));
+                    mapOrderQuantity.put("orderUserId", orderUserId);
+                    mapOrderQuantity.put("goodsId", goodsId);
+                    int orderQuantityInt = nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                    BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                     Map<String, Object> mapT = new HashMap<>();
                     mapT.put("orderUserId", orderUserId);
                     mapT.put("deskId", deskId);
@@ -1788,6 +1832,7 @@ public class NxCommunityOrdersSubController {
                             subEntity.setNxCosServiceType(serviceType);
                             subEntity.setNxCosSplicingOrdersId(spId);
                             subEntity.setNxCosOrdersId(pindanId);
+                            subEntity.setNxCosServiceDate(formatWhatDay(0));
                             nxCommunityOrdersSubService.save(subEntity);
                         }
                     }
@@ -1834,6 +1879,7 @@ public class NxCommunityOrdersSubController {
                             subEntity.setNxCosServiceType(serviceType);
                             subEntity.setNxCosSplicingOrdersId(spId);
                             subEntity.setNxCosOrdersId(pindanId);
+                            subEntity.setNxCosServiceDate(formatWhatDay(0));
                             nxCommunityOrdersSubService.save(subEntity);
                         } else {
 
@@ -1882,6 +1928,7 @@ public class NxCommunityOrdersSubController {
                                 subEntity.setNxCosServiceType(serviceType);
                                 subEntity.setNxCosSplicingOrdersId(spId);
                                 subEntity.setNxCosOrdersId(pindanId);
+                                subEntity.setNxCosServiceDate(formatWhatDay(0));
                                 nxCommunityOrdersSubService.save(subEntity);
                             }
                         }
@@ -1913,6 +1960,7 @@ public class NxCommunityOrdersSubController {
                         subEntity.setNxCosServiceType(serviceType);
                         subEntity.setNxCosSplicingOrdersId(spId);
                         subEntity.setNxCosOrdersId(pindanId);
+                        subEntity.setNxCosServiceDate(formatWhatDay(0));
                         nxCommunityOrdersSubService.save(subEntity);
                     }
                 }
@@ -1965,6 +2013,7 @@ public class NxCommunityOrdersSubController {
                     subEntity.setNxCosServiceType(serviceType);
                     subEntity.setNxCosSplicingOrdersId(spId);
                     subEntity.setNxCosOrdersId(pindanId);
+                    subEntity.setNxCosServiceDate(formatWhatDay(0));
                     nxCommunityOrdersSubService.save(subEntity);
                 }
             }
@@ -1998,6 +2047,7 @@ public class NxCommunityOrdersSubController {
             subEntity.setNxCosServiceType(serviceType);
             subEntity.setNxCosSplicingOrdersId(spId);
             subEntity.setNxCosOrdersId(pindanId);
+            subEntity.setNxCosServiceDate(formatWhatDay(0));
             nxCommunityOrdersSubService.save(subEntity);
 
             NxCommunityCardEntity cardEntity = nxCommunityCardService.queryObject(goodsEntity.getNxCgCardId());
@@ -2171,6 +2221,7 @@ public class NxCommunityOrdersSubController {
                 BigDecimal subtotal = new BigDecimal(subOrderEntity.getNxCosPrice()).multiply(add).setScale(1, BigDecimal.ROUND_HALF_UP);
                 subOrderEntity.setNxCosQuantity(add.toString());
                 subOrderEntity.setNxCosSubtotal(subtotal.toString());
+                subOrderEntity.setNxCosServiceDate(formatWhatDay(0));
                 nxCommunityOrdersSubService.update(subOrderEntity);
             }
 
@@ -2195,6 +2246,7 @@ public class NxCommunityOrdersSubController {
                 BigDecimal subtotal = new BigDecimal(putongSubOrder.getNxCosPrice()).multiply(add).setScale(1, BigDecimal.ROUND_HALF_UP);
                 putongSubOrder.setNxCosQuantity(add.toString());
                 putongSubOrder.setNxCosSubtotal(subtotal.toString());
+                putongSubOrder.setNxCosServiceDate(formatWhatDay(0));
                 nxCommunityOrdersSubService.update(putongSubOrder);
 
             } else {
@@ -2211,9 +2263,15 @@ public class NxCommunityOrdersSubController {
                 //先查询优惠订单是否超过数量
                 System.out.println("youhuidiadddddd" + mapC);
                 NxCommunityOrdersSubEntity communityOrdersSubEntity = nxCommunityOrdersSubService.queryChangeSubOrderByParams(mapC);
-                if (communityOrdersSubEntity != null) {
+                if (communityOrdersSubEntity != null && goodsEntity.getNxCgGoodsHuaxianPrice() != null) {
 
-                    BigDecimal orderQuantity = new BigDecimal(communityOrdersSubEntity.getNxCosQuantity());
+                    Map<String, Object> mapOrderQuantity = new HashMap<>();
+                    mapOrderQuantity.put("date", formatWhatDay(0));
+                    mapOrderQuantity.put("orderUserId", orderUserId);
+                    mapOrderQuantity.put("goodsId", goodsId);
+                    System.out.println("chaxiniorderh" + mapOrderQuantity);
+                    int orderQuantityInt = nxCommunityOrdersSubService.queryTodayHuaxianCount(mapOrderQuantity);
+                    BigDecimal orderQuantity = new BigDecimal(orderQuantityInt);
                     //huxianQuantity
                     if (goodsEntity.getNxCgGoodsHuaxianQuantity() != null) {
                         BigDecimal huaxianQuantity = new BigDecimal(goodsEntity.getNxCgGoodsHuaxianQuantity());
@@ -2252,6 +2310,7 @@ public class NxCommunityOrdersSubController {
                             subEntity.setNxCosServiceType(serviceType);
                             subEntity.setNxCosSplicingOrdersId(spId);
                             subEntity.setNxCosOrdersId(pindanId);
+                            subEntity.setNxCosServiceDate(formatWhatDay(0));
                             nxCommunityOrdersSubService.save(subEntity);
                         }
                     } else {
@@ -2312,6 +2371,7 @@ public class NxCommunityOrdersSubController {
         subEntity.setNxCosServiceType(0);
         subEntity.setNxCosSplicingOrdersId(-1);
         subEntity.setNxCosOrdersId(orderId);
+        subEntity.setNxCosServiceDate(formatWhatDay(0));
         nxCommunityOrdersSubService.save(subEntity);
 
         NxCommunityOrdersEntity ordersEntity = nxCommunityOrdersService.queryObject(orderId);
@@ -2785,6 +2845,7 @@ public class NxCommunityOrdersSubController {
                             youhuiSubOrder.setNxCosCucId(null);
                             youhuiSubOrder.setNxCosPrice(goodsEntity.getNxCgPromotionPrice());
                             youhuiSubOrder.setNxCosSubtotal(goodsEntity.getNxCgPromotionPrice());
+                            youhuiSubOrder.setNxCosServiceDate(formatWhatDay(0));
                             nxCommunityOrdersSubService.save(youhuiSubOrder);
 
                             //修改subOrder Quanity, subtotal减1
@@ -2806,6 +2867,7 @@ public class NxCommunityOrdersSubController {
         subEntity.setNxCosType(orderType);
         subEntity.setNxCosSplicingOrdersId(spId);
         subEntity.setNxCosOrdersId(pindanId);
+        subEntity.setNxCosServiceDate(formatWhatDay(0));
         nxCommunityOrdersSubService.save(subEntity);
 
         System.out.println("savememe" + deskId);
@@ -2964,6 +3026,8 @@ public class NxCommunityOrdersSubController {
     @ResponseBody
     @RequestMapping("/saveSubOrderCoupon")
     public R saveSubOrderCoupon(@RequestBody NxCommunityOrdersSubEntity nxOrdersSub) {
+
+        nxOrdersSub.setNxCosServiceDate(formatWhatDay(0));
         nxCommunityOrdersSubService.save(nxOrdersSub);
         Integer nxCosCucId = nxOrdersSub.getNxCosCucId();
         NxCustomerUserCouponEntity userCouponEntity = nxCustomerUserCouponService.equalObject(nxCosCucId);

@@ -395,6 +395,7 @@ public class GbDistributerServiceImpl implements GbDistributerService {
 
     }
 
+
     @Override
     public Integer saveSingleMendianDistributerGb(GbDistributerEntity gbDistributerEntity) {
 
@@ -432,6 +433,46 @@ public class GbDistributerServiceImpl implements GbDistributerService {
 
         //baocunlinshi
         saveLinshiFatherGoods(gbDistributerEntity);
+
+
+        return  gbDistributerEntity.getGbDistributerId();
+    }
+
+
+    @Override
+    public Integer saveSingleMendianDistributerGbForNx(GbDistributerEntity gbDistributerEntity) {
+
+
+        //1.保存distributer
+        gbDistributerEntity.setGbDistributerSettleDate(formatWhatDay(0));
+        gbDistributerEntity.setGbDistributerSettleFullTime(formatFullTime());
+        gbDistributerEntity.setGbDistributerSettleMonth(formatWhatMonth(0));
+        gbDistributerEntity.setGbDistributerSettleWeek(getWeekOfYear(0).toString());
+        gbDistributerEntity.setGbDistributerSettleYear(formatWhatYear(0));
+        gbDistributerEntity.setGbDistributerManager("09:00");
+        gbDistributerEntity.setGbDistributerSettleTimes("0");
+        gbDistributerEntity.setGbDistributerBuyQuantity("0");
+        gbDistributerDao.save(gbDistributerEntity);
+
+
+        //模块
+        GbDistributerModuleEntity gbDistributerModuleEntity = new GbDistributerModuleEntity();
+        gbDistributerModuleEntity.setGbDmPurchaseNumber(0);
+        gbDistributerModuleEntity.setGbDmDirectSalesNumber(0);
+        gbDistributerModuleEntity.setGbDmAppSupplierNumber(0);
+        gbDistributerModuleEntity.setGbDmCentralKitchenNumber(-1);
+        gbDistributerModuleEntity.setGbDmStockNumber(-1);
+        gbDistributerModuleEntity.setGbDmFixedSupplierNumber(-1);
+        gbDistributerModuleEntity.setGbDmFranchiseeNumber(-1);
+        gbDistributerModuleEntity.setGbDmDistributerId(gbDistributerEntity.getGbDistributerId());
+        gbDistributerModuleService.save(gbDistributerModuleEntity);
+
+        //保存集采模块
+        saveDepartmentSingleMendian(gbDistributerEntity,  getGbDepartmentTypeJicai());
+
+        saveSelfFatherGoods(gbDistributerEntity);
+
+
         return  gbDistributerEntity.getGbDistributerId();
     }
 
@@ -474,5 +515,43 @@ public class GbDistributerServiceImpl implements GbDistributerService {
 
     }
 
+
+
+    private void saveSelfFatherGoods(GbDistributerEntity gbDistributerEntity){
+        //添加临时商品父类
+        Integer nxDistributerId = gbDistributerEntity.getGbDistributerId();
+
+        GbDistributerFatherGoodsEntity greatGrand = new GbDistributerFatherGoodsEntity();
+        greatGrand.setGbDfgDistributerId(nxDistributerId);
+        greatGrand.setGbDfgFatherGoodsLevel(0);
+        greatGrand.setGbDfgFatherGoodsImg("goodsImage/logo.jpg");
+        greatGrand.setGbDfgFatherGoodsName("自采商品");
+        greatGrand.setGbDfgFatherGoodsColor("#757575");
+        greatGrand.setGbDfgFathersFatherId(0);
+        dgfService.save(greatGrand);
+
+
+        GbDistributerFatherGoodsEntity grand = new GbDistributerFatherGoodsEntity();
+        grand.setGbDfgDistributerId(nxDistributerId);
+        grand.setGbDfgFatherGoodsLevel(1);
+        grand.setGbDfgFatherGoodsImg("goodsImage/logo.jpg");
+        grand.setGbDfgFatherGoodsName("自采商品");
+        grand.setGbDfgGoodsAmount(0);
+        grand.setGbDfgFatherGoodsColor("#757575");
+        grand.setGbDfgFathersFatherId(greatGrand.getGbDistributerFatherGoodsId());
+
+        dgfService.save(grand);
+
+        GbDistributerFatherGoodsEntity father = new GbDistributerFatherGoodsEntity();
+        father.setGbDfgDistributerId(nxDistributerId);
+        father.setGbDfgFatherGoodsLevel(2);
+        father.setGbDfgFatherGoodsImg("goodsImage/logo.jpg");
+        father.setGbDfgFatherGoodsName("自采商品");
+        father.setGbDfgGoodsAmount(0);
+        father.setGbDfgFatherGoodsColor("#757575");
+        father.setGbDfgFathersFatherId(grand.getGbDistributerFatherGoodsId());
+        dgfService.save(father);
+
+    }
 
 }

@@ -1082,6 +1082,11 @@ public class NxDistributerPurchaseBatchController {
 				stockEntity.setNxDgssRestSubtotal(purGoods.getNxDpgBuySubtotal());
 				stockEntity.setNxDgssStatus(0);
 				stockEntity.setNxDgssInventoryDate(formatWhatDay(0));
+				// 复制生产日期、保质期、过期日期
+				stockEntity.setNxDgssProduceDate(purGoods.getNxDpgProduceDate());
+				stockEntity.setNxDgssShelfLife(purGoods.getNxDpgShelfLife());
+				stockEntity.setNxDgssShelfLifeUnit(purGoods.getNxDpgShelfLifeUnit());
+				stockEntity.setNxDgssExpiryDate(purGoods.getNxDpgExpiryDate());
 				shelfStockService.save(stockEntity);
 
 

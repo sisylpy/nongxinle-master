@@ -34,7 +34,19 @@ public interface NxDistributerGoodsLinshiService {
 
 	NxDistributerGoodsLinshiEntity queryLinshiByFromGoodsId(Integer fromGoodsId);
 
+	NxDistributerGoodsLinshiEntity queryLinshiByToGoodsId(Integer toGoodsId);
+
+	int updateRevertToLinshi(Integer linshiId);
+
 	List<NxDistributerGoodsLinshiEntity> queryLinshiListByStatus(Map<String, Object> map);
 
 	List<Integer> queryFromGoodsIdsByDisId(Integer disId);
+
+	/**
+	 * 根据搜索词和配送商ID查询临时商品（支持分页）
+	 * @param map disId, searchGoodsName, searchPinyin(可选), status(可选), offset, limit
+	 */
+	List<NxDistributerGoodsLinshiEntity> searchLinshiGoodsList(Map<String, Object> map);
+
+	int searchLinshiGoodsTotal(Map<String, Object> map);
 }

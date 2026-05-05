@@ -185,6 +185,7 @@
 
     <resultMap id="subOrder" type="NxCommunityOrdersSubEntity">
            <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
+		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
         <result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosServiceType" column="nx_COS_service_type"/>
@@ -338,6 +339,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -370,6 +372,10 @@
         <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
         <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
         <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <association property="nxCommunityCardEntity" resultMap="goodsCard"/>
     </resultMap>
 
@@ -403,6 +409,7 @@
         <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <result property="nxCgGoodsName" column="nx_cg_goods_name"/>
         <result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
         <result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
@@ -435,8 +442,13 @@
         <result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
         <result property="nxCgGoodsType" column="nx_cg_goods_type"/>
         <result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
+        <result property="nxCgGoodsGrossWeight" column="nx_cg_goods_gross_weight"/>
+        <result property="nxCgGoodsGrossPrice" column="nx_cg_goods_gross_price"/>
+        <result property="nxCgGoodsNetWeight" column="nx_cg_goods_net_weight"/>
+        <result property="nxCgGoodsNetPrice" column="nx_cg_goods_net_price"/>
         <result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
 		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
+		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
         <association property="nxCommunityCardEntity" resultMap="goodsCard"/>
          <association property="ordersSubEntity" resultMap="subOrder"/>
         <association property="memberOrdersSubEntity" resultMap="memberSubOrder"/>
@@ -557,7 +569,11 @@
         grand.nx_community_father_goods_id
 
         left join nx_community_goods as ncg on ncg.nx_cg_cfg_goods_father_id = ncfg.nx_community_father_goods_id
-        and ncg.nx_cg_start_time_zone &lt; #{nowMinute} and ncg.nx_cg_stop_time_zone &gt; #{nowMinute}
+        and (
+            (ncg.nx_cg_start_time_zone &lt; ncg.nx_cg_stop_time_zone and ncg.nx_cg_start_time_zone &lt; #{nowMinute} and #{nowMinute} &lt; ncg.nx_cg_stop_time_zone)
+            or
+            (ncg.nx_cg_start_time_zone &gt; ncg.nx_cg_stop_time_zone and (ncg.nx_cg_start_time_zone &lt; #{nowMinute} or #{nowMinute} &lt; ncg.nx_cg_stop_time_zone))
+        )
                                                    and ncg.nx_cg_service_type = #{serviceType}
         left join nx_community_card as ncc on ncc.nx_community_card_id = ncg.nx_cg_card_id
         left join nx_community_goods_set_item as ncgsiGoods on ncgsiGoods.nx_cgsi_item_cg_goods_id =
@@ -690,7 +706,11 @@
         grand.nx_community_father_goods_id
 
         left join nx_community_goods as ncg on ncg.nx_cg_cfg_goods_father_id = ncfg.nx_community_father_goods_id
-        and ncg.nx_cg_start_time_zone &lt; #{nowMinute} and ncg.nx_cg_stop_time_zone &gt; #{nowMinute}
+        and (
+            (ncg.nx_cg_start_time_zone &lt; ncg.nx_cg_stop_time_zone and ncg.nx_cg_start_time_zone &lt; #{nowMinute} and #{nowMinute} &lt; ncg.nx_cg_stop_time_zone)
+            or
+            (ncg.nx_cg_start_time_zone &gt; ncg.nx_cg_stop_time_zone and (ncg.nx_cg_start_time_zone &lt; #{nowMinute} or #{nowMinute} &lt; ncg.nx_cg_stop_time_zone))
+        )
         and ncg.nx_cg_service_type = #{serviceType}
         left join nx_community_card as ncc on ncc.nx_community_card_id = ncg.nx_cg_card_id
         left join nx_community_goods_set_item as ncgsiGoods on ncgsiGoods.nx_cgsi_item_cg_goods_id =

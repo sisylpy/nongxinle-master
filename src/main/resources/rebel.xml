@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  This is the JRebel configuration file. It maps the running application to your IDE workspace, enabling JRebel reloading for this project.
-  Refer to https://manuals.jrebel.com/jrebel/standalone/config.html for more information.
+  JRebel 配置。下方 classpath 指向 Maven 编译输出 target/classes。
+  若该目录不存在，JRebel 会告警，且 IDEA 部署 exploded WAR 时 WEB-INF/classes 可能不完整，
+  会导致 ContextLoaderListener 等监听器启动失败。
+  请在启动 Tomcat 前先执行：mvn compile（或 mvn package），或 IntelliJ 菜单 Build -> Build Project。
+  参考：https://manuals.jrebel.com/jrebel/standalone/config.html
 -->
 <application generated-by="intellij" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 			 xmlns="http://www.zeroturnaround.com"

@@ -143,6 +143,7 @@ public class NxDistributerGoodsPartController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("fathersFatherId", fatherId);
+        System.out.println("mapapap" + map);
         List<NxDistributerFatherGoodsEntity> fatherGoodsEntities = dgfService.queryDisFathersGoodsByParams(map);
         return R.ok().put("data", fatherGoodsEntities);
     }

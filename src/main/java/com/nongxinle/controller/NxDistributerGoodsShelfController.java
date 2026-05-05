@@ -41,15 +41,33 @@ public class NxDistributerGoodsShelfController {
 
 
 
+	@RequestMapping(value = "/disGetShelfListByType", method = RequestMethod.POST)
+	@ResponseBody
+	public R disGetShelfListByType(Integer disId, Integer shelfGoodsType) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("disId", disId);
+		map.put("shelfGoodsType", shelfGoodsType);
+		// shelfGoodsType: 99=全部 1=多货架商品 2=有库存 3=临期商品 4=库存不足
+
+		List<NxDistributerGoodsShelfEntity> nxDistributerGoodsShelfEntities = nxDisGoodsShelfService.queryShelfList(map);
+		// 有库存/多货架/临期/库存不足 时不查询非货架商品，直接返回0
+		int total = (shelfGoodsType != null && shelfGoodsType != 99) ? 0 : dgService.queryDisUnshelfGoodsTotal(map);
+		Map<String, Object> mapRe = new HashMap<>();
+		mapRe.put("shelfArr", nxDistributerGoodsShelfEntities);
+		mapRe.put("unShelfTotalCount", total);
+
+		return R.ok().put("data", mapRe);
+	}
 
 	@RequestMapping(value = "/disGetShelfList/{disId}")
 	@ResponseBody
-	public R disGetShelfList(@PathVariable Integer disId) {
+	public R disGetShelfList(@PathVariable  Integer disId) {
 		Map<String, Object> map = new HashMap<>();
 		map.put("disId", disId);
+
 		List<NxDistributerGoodsShelfEntity> nxDistributerGoodsShelfEntities = nxDisGoodsShelfService.queryShelfList(map);
-//  // 查询总数
-		        int total = dgService.queryDisUnshelfGoodsTotal(map);
+		// 有库存/多货架/临期/库存不足 时不查询非货架商品，直接返回0
+		int total = dgService.queryDisUnshelfGoodsTotal(map);
 		Map<String, Object> mapRe = new HashMap<>();
 		mapRe.put("shelfArr", nxDistributerGoodsShelfEntities);
 		mapRe.put("unShelfTotalCount", total);
@@ -93,9 +111,14 @@ public class NxDistributerGoodsShelfController {
 	}
 
 
-	@RequestMapping(value = "/getShelfGoods/{shelfId}")
+	@RequestMapping(value = "/getShelfGoods", method = RequestMethod.POST)
 	@ResponseBody
-	public R getShelfGoods(@PathVariable Integer shelfId, Integer page, Integer limit) {
+	public R getShelfGoods(
+			@RequestParam(required = false) Integer shelfId,
+			@RequestParam(required = false) Integer page,
+			@RequestParam(required = false) Integer limit,
+			@RequestParam(required = false) Integer shelfGoodsType,
+			@RequestParam(value = "shelfGoodsQuerySort", required = false) Integer shelfGoodsQuerySort) {
 		// 设置默认分页参数
 		if (page == null || page < 1) {
 			page = 1;
@@ -103,6 +126,9 @@ public class NxDistributerGoodsShelfController {
 		if (limit == null || limit < 1) {
 			limit = 15;
 		}
+
+		// shelfGoodsQuerySort: 0 默认 1 库存金额降序 2 升序 3 到期剩余天数降序 4 升序（临期优先）；非法或未传按 0
+		int sort = (shelfGoodsQuerySort == null || shelfGoodsQuerySort < 0 || shelfGoodsQuerySort > 4) ? 0 : shelfGoodsQuerySort;
 
 		// 计算偏移量
 		int offset = (page - 1) * limit;
@@ -113,13 +139,36 @@ public class NxDistributerGoodsShelfController {
 		map.put("status", 3);
 		map.put("offset", offset);
 		map.put("limit", limit);
-
-		logger.info("[getShelfGoods] 查询参数: shelfId={}, page={}, limit={}", shelfId, page, limit);
+		map.put("shelfGoodsType", shelfGoodsType);
+		map.put("shelfGoodsQuerySort", sort);
+		// shelfGoodsType: 99=全部 1=多货架商品 2=有库存 3=无库存 4=库存不足
+		
+		logger.info("[getShelfGoods] 查询参数: shelfId={}, page={}, limit={}, shelfGoodsType={}, shelfGoodsQuerySort={}", shelfId, page, limit, shelfGoodsType, sort);
 
 		// 查询总数
 		int total = nxDisGoodsShelfGoodsService.queryShelfForGoodsCount(map);
 		// 查询分页数据
 		List<NxDistributerGoodsShelfGoodsEntity> nxDistributerGoodsShelfGoodsEntities = nxDisGoodsShelfGoodsService.queryShelfForGoodsByParams(map);
+
+		if (sort == 3 || sort == 4) {
+			logger.info("[getShelfGoods] 临期排序 SQL 方向: sort={}, desc模式(晚到期在前)={}, totalCount={}, 本页条数={}",
+					sort, sort == 3, total, nxDistributerGoodsShelfGoodsEntities.size());
+			for (int i = 0; i < nxDistributerGoodsShelfGoodsEntities.size(); i++) {
+				NxDistributerGoodsShelfGoodsEntity e = nxDistributerGoodsShelfGoodsEntities.get(i);
+				Integer rowStockId = e.getShelfGoodsListRowStockId();
+				String expiry = "";
+				if (e.getNxDisGoodsShelfStockEntities() != null) {
+					for (NxDistributerGoodsShelfStockEntity st : e.getNxDisGoodsShelfStockEntities()) {
+						if (rowStockId != null && rowStockId.equals(st.getNxDistributerGoodsShelfStockId())) {
+							expiry = st.getNxDgssExpiryDate() == null ? "" : st.getNxDgssExpiryDate();
+							break;
+						}
+					}
+				}
+				logger.info("[getShelfGoods] 临期序#{} shelfGoodsId={} rowStockId={} restDaysUntil={} nxDgssExpiryDate={}",
+						i + 1, e.getNxDistributerGoodsShelfGoodsId(), rowStockId, e.getShelfGoodsRestDaysUntil(), expiry);
+			}
+		}
 
 		// 使用 PageUtils 返回分页结果
 		PageUtils pageUtil = new PageUtils(nxDistributerGoodsShelfGoodsEntities, total, limit, page);

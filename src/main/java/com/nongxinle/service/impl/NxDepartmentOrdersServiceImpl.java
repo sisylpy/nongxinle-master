@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.utils.CommonUtils;
 import com.nongxinle.utils.R;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import static com.nongxinle.utils.PinYin4jUtils.getHeadStringByString;
 import static com.nongxinle.utils.PinYin4jUtils.hanziToPinyin;
 
 
+/** 由 component-scan 注册，bean 名与历史 XML 一致，便于按名引用。 */
 @Service("nxDepartmentOrdersService")
 public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService {
     @Autowired
@@ -623,7 +625,7 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
 
         // 1. 获取货架商品数据
         params.put("shelfId", 1);
-        System.out.println("shelfrrrrrrr" + params);
+        System.out.println("shelfrrrrrrraa" + params);
         List<NxDistributerGoodsShelfEntity> shelfEntities = queryShelfGoodsOrder(params);
         long t2 = System.currentTimeMillis();
         params.put("shelfId", 0);
@@ -787,8 +789,41 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                 }
             }
         }
-        
+
+        // 历史数据或未跑过 setShelfLayer 时 DB 中 layer_seq 可能为 NULL：按层内 sort 顺序补算，保证接口始终有可读序号
+        if (shelfDetail.getGoodsList() != null) {
+            fillMissingShelfLayerSeqRecursive(shelfDetail.getGoodsList());
+        }
+
         return shelfDetail;
+    }
+
+    /**
+     * 对 goodsList / sameShelfGoods 中 nxDgsgShelfLayerSeq 为 null 的项，按 nxDgsgSort 顺序在每一 nxDgsgShelfLayer 内从 1 递增赋值。
+     */
+    private static void fillMissingShelfLayerSeqRecursive(List<ShelfGoodsShelfGoodsSimpleDTO> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        fillMissingShelfLayerSeqInPlace(list);
+        for (ShelfGoodsShelfGoodsSimpleDTO item : list) {
+            fillMissingShelfLayerSeqRecursive(item.getSameShelfGoods());
+        }
+    }
+
+    private static void fillMissingShelfLayerSeqInPlace(List<ShelfGoodsShelfGoodsSimpleDTO> list) {
+        List<ShelfGoodsShelfGoodsSimpleDTO> sorted = new ArrayList<>(list);
+        sorted.sort(Comparator.comparing(ShelfGoodsShelfGoodsSimpleDTO::getNxDgsgSort, Comparator.nullsLast(Integer::compareTo)));
+        Map<Integer, Integer> nextSeqByLayer = new HashMap<>();
+        for (ShelfGoodsShelfGoodsSimpleDTO g : sorted) {
+            if (g.getNxDgsgShelfLayerSeq() != null) {
+                continue;
+            }
+            int layer = g.getNxDgsgShelfLayer() != null ? g.getNxDgsgShelfLayer() : 1;
+            int next = nextSeqByLayer.getOrDefault(layer, 0) + 1;
+            nextSeqByLayer.put(layer, next);
+            g.setNxDgsgShelfLayerSeq(next);
+        }
     }
 
     @Override
@@ -910,7 +945,8 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
 
     @Override
     public NxDepartmentOrdersEntity saveCollaborativeOrderWhenNeeded(NxDepartmentOrdersEntity mainOrder, NxDistributerGoodsEntity disGoodsEntity) {
-        if (mainOrder.getNxDoDistributerId() == null || disGoodsEntity.getNxDgDistributerId() == null
+        if (mainOrder == null || disGoodsEntity == null
+                || mainOrder.getNxDoDistributerId() == null || disGoodsEntity.getNxDgDistributerId() == null
                 || disGoodsEntity.getNxDgDistributerId().equals(mainOrder.getNxDoDistributerId())) {
             return null;
         }
@@ -950,17 +986,17 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         map.put("standard", order.getNxDoStandard());
         NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
         if (departmentDisGoodsEntity != null) {
-            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-            if (isUsingCartonPrice) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-            } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-            }
+//            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
+//                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                    && order.getNxDoStandard() != null
+//                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
+//            if (isUsingCartonPrice) {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
+//            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
+//            } else {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
+//            }
             order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
             if (order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()
                     && order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty()) {
@@ -981,24 +1017,27 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
             if (departmentDisGoodsEntityO != null) {
                 order.setNxDoDepDisGoodsId(departmentDisGoodsEntityO.getNxDepartmentDisGoodsId());
             }else{
-                boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
-                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                        && order.getNxDoStandard() != null
-                        && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-                if (isUsingCartonPrice) {
-                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
-                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-                } else {
-                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-                }
+//                boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
+//                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                        && order.getNxDoStandard() != null
+//                        && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
+//                if (isUsingCartonPrice) {
+//                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
+//                } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
+//                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
+//                } else {
+//                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
+//                }
             }
         }
     }
 
     @Override
     public NxDepartmentOrdersEntity saveOrderWithGoods(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
-
+        if (disGoodsEntity == null) {
+            logger.warn("[saveOrderWithGoods] disGoodsEntity 为空，无法保存订单，order.goodsName={}", order != null ? order.getNxDoGoodsName() : null);
+            throw new IllegalArgumentException("disGoodsEntity 不能为空");
+        }
         saveCollaborativeOrderWhenNeeded(order, disGoodsEntity);
 
         System.out.println("saveONeOrderereerereeqonenenneorere");
@@ -1397,7 +1436,7 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
     @Override
     public NxDepartmentOrdersEntity updateOneOrderForChoice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
 
-        System.out.println("saveONeOrderereerereeqonenenneorere" + order.getNxDepartmentOrdersId());
+        System.out.println("saveONeOrderereerereeqonenenneorere111111---" + order.getNxDepartmentOrdersId());
         order.setNxDoDisGoodsFatherId(disGoodsEntity.getNxDgDfgGoodsFatherId());
         order.setNxDoDisGoodsGrandId(disGoodsEntity.getNxDgDfgGoodsGrandId());
         order.setNxDoDisGoodsId(disGoodsEntity.getNxDistributerGoodsId());
@@ -1421,7 +1460,6 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         order.setNxDoPurchaseGoodsId(-1);
         order.setNxDoCollaborativeNxDisId(-1);
         order.setNxDoArriveWhatDay(getWeek(0));
-        order.setNxDoCostPriceLevel("1");
 
         //auto
         Integer nxDepartmentOrdersId = order.getNxDepartmentOrdersId();
@@ -1470,22 +1508,6 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         System.out.println("depmapapmmdmmdd" + map);
         NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
         if (departmentDisGoodsEntity != null) {
-            System.out.println("prinstnan" + departmentDisGoodsEntity.getNxDdgOrderStandard());
-            // 判断是否使用了大包装单价，如果是则设置打印规格为大包装单位（支持智能匹配：件=箱）
-            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-
-            if (isUsingCartonPrice) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
-            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-            } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-            }
-
             order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
             //如果有重量和单价，则计算 subtotal
             if(order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()
@@ -1610,6 +1632,12 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         return  nxDepartmentOrdersDao.queryByRestrauntId(nxDoNxRestrauntOrderId);
     }
 
+    @Override
+    public List<NxDepartmentEntity> queryRetailOrderNxDepartment(Map<String, Object> map) {
+
+        return  nxDepartmentOrdersDao.queryRetailOrderNxDepartment(map);
+    }
+
 
     public int queryMaxTodayOrder(Integer depIdForTodayOrder) {
 
@@ -1625,10 +1653,39 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
      * @param disGoodsEntity 分销商商品实体
      */
     public void processOrderPrice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
+        // 当订货规格与商品标准规格一致或同义（件↔箱、袋↔包↔代 等，见 isStandardMatchCore）时，nxDoWeight = nxDoQuantity
+        if (order.getNxDoStandard() != null && order.getNxDoQuantity() != null && !order.getNxDoQuantity().trim().isEmpty()
+                && disGoodsEntity.getNxDgGoodsStandardname() != null && !disGoodsEntity.getNxDgGoodsStandardname().trim().isEmpty()) {
+            String os = order.getNxDoStandard().trim();
+            String goodsStd = disGoodsEntity.getNxDgGoodsStandardname().trim();
+            if (os.equals(goodsStd) || isStandardMatchCore(os, goodsStd)) {
+                order.setNxDoWeight(order.getNxDoQuantity());
+            }
+        }
+        // 订货规格匹配大包装单位（如件=箱）时也设置
+        if (order.getNxDoWeight() == null && order.getNxDoStandard() != null && order.getNxDoQuantity() != null && !order.getNxDoQuantity().trim().isEmpty()
+                && disGoodsEntity.getNxDgCartonUnit() != null && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+                && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())) {
+            order.setNxDoWeight(order.getNxDoQuantity());
+        }
+
         Integer nxDoDistributerId = order.getNxDoDistributerId();
         NxDistributerEntity distributerEntity = nxDistributerService.queryObject(nxDoDistributerId);
+        if (distributerEntity != null && isDistributerBusinessTypeHistoryPriceOnly(distributerEntity.getNxDistributerBusinessTypeId())) {
+            // 业务类型 0–2：不按货架批次改价、不写分销商商品；单价与打印规格沿用部门商品表（与 applyDepartmentGoodsPriceIfFound 同一套查询）
+            Integer bizType = distributerEntity.getNxDistributerBusinessTypeId();
+            logger.info("[processOrderPrice] 历史价分支(业务类型0-2) disId={} bizType={} orderId={} depId={} disGoodsId={} standard={}",
+                    nxDoDistributerId, bizType, order.getNxDepartmentOrdersId(),
+                    order.getNxDoDepartmentId(), disGoodsEntity.getNxDistributerGoodsId(), order.getNxDoStandard());
+            applyDepartmentGoodsPriceIfFound(order, disGoodsEntity);
+            logger.info("[processOrderPrice] 历史价分支(0-2) 已套用部门商品价 orderId={} nxDoPrice={} printStandard={} depDisGoodsId={} subtotal={}",
+                    order.getNxDepartmentOrdersId(), order.getNxDoPrice(), order.getNxDoPrintStandard(),
+                    order.getNxDoDepDisGoodsId(), order.getNxDoSubtotal());
+            nxDepartmentOrdersDao.update(order);
+            return;
+        }
         //平台型
-        if (distributerEntity.getNxDistributerBusinessTypeId() > 6) {
+        if (distributerEntity != null && distributerEntity.getNxDistributerBusinessTypeId() > 6) {
             if (disGoodsEntity.getNxDgWillPriceTwo() != null
                     && !disGoodsEntity.getNxDgWillPriceTwo().trim().isEmpty()
                     && order.getNxDoStandard().equals(disGoodsEntity.getNxDgWillPriceTwoStandard())) {
@@ -1641,17 +1698,7 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                 BigDecimal profit = subtotal.subtract(costSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
                 BigDecimal scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
 
-                // 判断是否使用大包装单价，如果是则设置打印规格为大包装单位
-                if (disGoodsEntity.getNxDgCartonUnit() != null
-                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-
-                        && order.getNxDoStandard() != null
-                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgCartonUnit().trim())) {
-                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                    System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
-                } else {
-                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-                }
+                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
                 order.setNxDoPrice(disGoodsEntity.getNxDgWillPriceTwo());
                 order.setNxDoExpectPrice(disGoodsEntity.getNxDgWillPriceTwo());
                 order.setNxDoCostPrice(disGoodsEntity.getNxDgBuyingPriceTwo());
@@ -1679,36 +1726,17 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                 }
             }
         } else {
-            // 初始设置打印规格：如果订单规格等于大包装单位，则设置为大包装单位
-            // 支持智能匹配：件=箱，盒=箱等同义词
+            // 打印规格：与三档销售规格 nxDgWillPrice*Standard 对齐，不再用大包装单位 nxDgCartonUnit 判断
             System.out.println("======== 设置打印规格(printStandard)开始 ========");
             System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
             System.out.println("订单规格(nxDoStandard): " + order.getNxDoStandard());
-            System.out.println("商品大包装单位(nxDgCartonUnit): " + disGoodsEntity.getNxDgCartonUnit());
+            System.out.println("一档规格(nxDgWillPriceOneStandard): " + disGoodsEntity.getNxDgWillPriceOneStandard());
+            System.out.println("二档规格(nxDgWillPriceTwoStandard): " + disGoodsEntity.getNxDgWillPriceTwoStandard());
+            System.out.println("三档规格(nxDgWillPriceThreeStandard): " + disGoodsEntity.getNxDgWillPriceThreeStandard());
             System.out.println("商品标准规格(nxDgGoodsStandardname): " + disGoodsEntity.getNxDgGoodsStandardname());
             System.out.println("设置前 printStandard: " + order.getNxDoPrintStandard());
 
-            if (disGoodsEntity.getNxDgCartonUnit() != null
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())) {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                System.out.println("✅ [printStandard] 已设置为大包装单位: " + disGoodsEntity.getNxDgCartonUnit());
-            } else {
-                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-                System.out.println("✅ [printStandard] 已设置为商品标准规格: " + disGoodsEntity.getNxDgGoodsStandardname());
-            }
-            System.out.println("设置后 printStandard: " + order.getNxDoPrintStandard());
-            System.out.println("======== 设置打印规格(printStandard)结束 ========");
-            System.out.println("======== 从货架获取价格开始 ========");
-            System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
-            System.out.println("商品ID: " + disGoodsEntity.getNxDistributerGoodsId());
-            System.out.println("商品名称: " + disGoodsEntity.getNxDgGoodsName());
-            System.out.println("商品名称12: " + disGoodsEntity.getNxDgCartonUnit());
-            System.out.println("商品名称3333: " + disGoodsEntity.getNxDgCartonUnit());
-            System.out.println("订单规格: " + order.getNxDoStandard());
-            System.out.println("订单规格ppppp: " + order.getNxDoPrintStandard());
-            System.out.println("商品规格: " + disGoodsEntity.getNxDgGoodsStandardname());
+            resolvePrintStandardFromDisGoodsTierSpecs(order, disGoodsEntity);
 
             Integer nxDistributerGoodsId = disGoodsEntity.getNxDistributerGoodsId();
             Map<String, Object> map = new HashMap<>();
@@ -1719,6 +1747,7 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
             List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
             System.out.println("查询到库存批次数量: " + stockEntities.size());
 
+            boolean shelfSellingPriceApplied = false;
             if (stockEntities.size() > 0) {
                 NxDistributerGoodsShelfStockEntity nxDistributerGoodsShelfStockEntity = stockEntities.get(stockEntities.size() - 1);
                 System.out.println("--- 最后一个库存批次信息 ---");
@@ -1729,18 +1758,15 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                 System.out.println("外包装销售价(nxDgssSellingPriceCarton): " + nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton());
                 System.out.println("剩余重量: " + nxDistributerGoodsShelfStockEntity.getNxDgssRestWeight());
                 System.out.println("订单规格: " + order.getNxDoStandard());
-                System.out.println("商品外包装单位: " + disGoodsEntity.getNxDgCartonUnit());
+                System.out.println("二档规格(nxDgWillPriceTwoStandard): " + disGoodsEntity.getNxDgWillPriceTwoStandard());
 
-                // 判断订单规格是否与外包装单位匹配
-                boolean useCartonPrice = false;
-                if (disGoodsEntity.getNxDgCartonUnit() != null
-                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                        && disGoodsEntity.getNxDgItemsPerCarton() != null
-                        && disGoodsEntity.getNxDgItemsPerCarton() > 0
+                // 订单规格命中二档销售规格时，批次仓储价取「外包装」字段（与历史 carton_unit 语义解耦）
+                boolean useCartonPrice = disGoodsEntity.getNxDgWillPriceTwoStandard() != null
+                        && !disGoodsEntity.getNxDgWillPriceTwoStandard().trim().isEmpty()
                         && order.getNxDoStandard() != null
-                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgCartonUnit().trim())) {
-                    useCartonPrice = true;
-                    System.out.println("✅ 订单规格与外包装单位匹配，将使用外包装单价");
+                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgWillPriceTwoStandard().trim());
+                if (useCartonPrice) {
+                    System.out.println("✅ 订单规格与二档销售规格一致，批次取外包装销售价/成本价");
                 }
 
                 // 根据匹配情况选择对应的单价
@@ -1777,15 +1803,14 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                 if (sellingPrice != null) {
                     System.out.println("✅ 找到销售价，开始设置订单价格");
                     order.setNxDoPrice(sellingPrice);
+                    shelfSellingPriceApplied = true;
                     if (costPrice != null) {
                         order.setNxDoCostPrice(costPrice);
                     }
-                    // 如果使用了大包装单价，设置打印规格为大包装单位
-                    if (useCartonPrice && disGoodsEntity.getNxDgCartonUnit() != null
-                            && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                           ) {
-                        order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-                        System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
+                    if (useCartonPrice && disGoodsEntity.getNxDgWillPriceTwoStandard() != null
+                            && !disGoodsEntity.getNxDgWillPriceTwoStandard().trim().isEmpty()) {
+                        order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard().trim());
+                        System.out.println("使用批次外包装价，打印规格设置为: " + disGoodsEntity.getNxDgWillPriceTwoStandard().trim());
                     }
                     System.out.println("订单销售价已设置为: " + order.getNxDoPrice());
                     System.out.println("订单成本价已设置为: " + order.getNxDoCostPrice());
@@ -1795,17 +1820,26 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                 }
             }
 
-            System.out.println("rodstntn" + order.getNxDoStandard() + "disganttt" + disGoodsEntity.getNxDgGoodsStandardname());
-            // 检查订单规格是否等于商品标准规格，或者订单规格是否匹配大包装单位（智能匹配：件=箱）
-            boolean isStandardMatch = order.getNxDoStandard() != null
-                    && order.getNxDoStandard().equals(disGoodsEntity.getNxDgGoodsStandardname());
-            boolean isCartonMatch = disGoodsEntity.getNxDgCartonUnit() != null
-                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                    && order.getNxDoStandard() != null
-                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
+            // 业务类型 3–5：仅当货架批次未写入销售价时做档位兜底（避免前端/历史残留的 nxDoPrice 如 0.1 阻止兜底）
+            boolean shelfTierBiz = distributerEntity != null
+                    && isDistributerBusinessTypeShelfTier(distributerEntity.getNxDistributerBusinessTypeId());
+            boolean willCallTierFallback = shelfTierBiz && !shelfSellingPriceApplied;
+            System.out.println("【processOrderPrice】3-5档位兜底判定 distributerNull=" + (distributerEntity == null)
+                    + " bizType=" + (distributerEntity != null ? distributerEntity.getNxDistributerBusinessTypeId() : null)
+                    + " shelfSellingPriceApplied=" + shelfSellingPriceApplied + " willCallTierFallback=" + willCallTierFallback
+                    + " nxDoPrice(before)=" + order.getNxDoPrice());
+            if (willCallTierFallback) {
+                applyDisGoodsTierPricingFallbackForOrder(order, disGoodsEntity);
+                logger.info("[processOrderPrice] 业务类型3-5 档位兜底 orderId={} nxDoPrice={} costLevel={} printStandard={}",
+                        order.getNxDepartmentOrdersId(), order.getNxDoPrice(), order.getNxDoCostPriceLevel(), order.getNxDoPrintStandard());
+            }
 
-            if (isStandardMatch || isCartonMatch) {
-                System.out.println("订单规格匹配: isStandardMatch=" + isStandardMatch + ", isCartonMatch=" + isCartonMatch);
+            System.out.println("rodstntn" + order.getNxDoStandard() + "disganttt" + disGoodsEntity.getNxDgGoodsStandardname());
+            // 小计：订单规格命中三档销售规格之一时，按「数量 × 单价」计算（单价已对应所选档位，不再按装箱数折算）
+            boolean tierSpecMatch = orderStandardMatchesDisGoodsPriceTierSpec(order, disGoodsEntity);
+
+            if (tierSpecMatch) {
+                System.out.println("订单规格匹配销售档位规格(一/二/三档 willPrice*Standard 或一档默认商品标准)");
                 order.setNxDoWeight(order.getNxDoQuantity());
 
                 // 检查价格是否已设置
@@ -1814,44 +1848,15 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                     BigDecimal doQuantity = new BigDecimal(order.getNxDoQuantity());
                     BigDecimal willPrice = new BigDecimal(order.getNxDoPrice());
 
-                    // 判断是否使用外包装单价计算（支持智能匹配：件=箱）
-                    boolean useCartonPriceForCalc = false;
-                    Integer itemsPerCartonForCalc = null;
-                    if (disGoodsEntity.getNxDgCartonUnit() != null
-                            && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-                            && disGoodsEntity.getNxDgItemsPerCarton() != null
-                            && disGoodsEntity.getNxDgItemsPerCarton() > 0
-                            && order.getNxDoStandard() != null
-                            && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())
-                            && disGoodsEntity.getNxDgItemsPerCarton() != null
-                            && disGoodsEntity.getNxDgItemsPerCarton() > 0) {
-                        useCartonPriceForCalc = true;
-                        itemsPerCartonForCalc = disGoodsEntity.getNxDgItemsPerCarton();
-                        System.out.println("订单规格匹配外包装单位（智能匹配），计算时将数量转换为箱数: " + doQuantity + "个 ÷ " + itemsPerCartonForCalc + " = " + doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP) + "箱");
-                    }
-
                     BigDecimal subtotal;
                     BigDecimal costSubtotal = null;
-                    if (useCartonPriceForCalc && itemsPerCartonForCalc != null) {
-                        // 使用外包装单价：需要将数量转换为箱数
-                        BigDecimal cartonCount = doQuantity.divide(new BigDecimal(itemsPerCartonForCalc), 4, BigDecimal.ROUND_HALF_UP);
-                        subtotal = cartonCount.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        System.out.println("使用外包装单价计算: " + cartonCount + "箱 × " + willPrice + "元/箱 = " + subtotal + "元");
+                    subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+                    System.out.println("按所选档位单价计算小计: " + doQuantity + " × " + willPrice + " = " + subtotal);
 
-                        if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
-                            BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
-                            costSubtotal = cartonCount.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                            System.out.println("使用外包装成本价计算: " + cartonCount + "箱 × " + cosPrice + "元/箱 = " + costSubtotal + "元");
-                        }
-                    } else {
-                        // 使用最小单位单价：直接相乘
-                        subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        System.out.println("使用最小单位单价计算: " + doQuantity + " × " + willPrice + " = " + subtotal);
-
-                        if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
-                            BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
-                            costSubtotal = doQuantity.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        }
+                    if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
+                        BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
+                        costSubtotal = doQuantity.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+                        System.out.println("成本小计: " + doQuantity + " × " + cosPrice + " = " + costSubtotal);
                     }
 
                     order.setNxDoSubtotal(subtotal.toString());
@@ -1877,13 +1882,323 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         nxDepartmentOrdersDao.update(order);
     }
 
+    private static final String DEFAULT_NX_DG_WILL_PRICE_FALLBACK = "0.1";
 
     /**
-     * 智能匹配单位规格
-     * 支持同义词匹配，例如：件=箱，盒=箱等
-     * @param orderStandard 订单规格（客户输入的规格，如"件"）
-     * @param cartonUnit 大包装单位（商品的外包装单位，如"箱"）
-     * @return 是否匹配
+     * 业务类型 3、4、5：先走货架逻辑，无单价时再走此兜底（不写分销商商品表）。
+     */
+    private static boolean isDistributerBusinessTypeShelfTier(Integer nxDistributerBusinessTypeId) {
+        return nxDistributerBusinessTypeId != null
+                && nxDistributerBusinessTypeId >= 3
+                && nxDistributerBusinessTypeId <= 5;
+    }
+
+    /**
+     * 订单规格是否命中「一档」：明确写了 nxDgWillPriceOneStandard 则只比该字段；否则与商品标准规格 nxDgGoodsStandardname 一致也算一档（如都是「桶」）。
+     */
+    private static boolean orderStandardMatchesFirstTier(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity g) {
+        if (order.getNxDoStandard() == null) {
+            return false;
+        }
+        String os = order.getNxDoStandard().trim();
+        String oneSt = g.getNxDgWillPriceOneStandard();
+        if (oneSt != null && !oneSt.trim().isEmpty()) {
+            return os.equals(oneSt.trim());
+        }
+        String goodsSt = g.getNxDgGoodsStandardname();
+        return goodsSt != null && os.equals(goodsSt.trim());
+    }
+
+    /**
+     * 订单规格是否命中三档销售规格之一（一档规则同 {@link #orderStandardMatchesFirstTier}；二/三档以 willPrice*Standard 为准）。
+     */
+    private static boolean orderStandardMatchesDisGoodsPriceTierSpec(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity g) {
+        if (order.getNxDoStandard() == null || order.getNxDoStandard().trim().isEmpty()) {
+            return false;
+        }
+        if (orderStandardMatchesFirstTier(order, g)) {
+            return true;
+        }
+        String os = order.getNxDoStandard().trim();
+        String two = g.getNxDgWillPriceTwoStandard();
+        if (two != null && !two.trim().isEmpty() && os.equals(two.trim())) {
+            return true;
+        }
+        String three = g.getNxDgWillPriceThreeStandard();
+        return three != null && !three.trim().isEmpty() && os.equals(three.trim());
+    }
+
+    /**
+     * 订货规格与大包装单位智能匹配：同组内任意两字互认同义（如 件↔箱；袋↔包↔代，含「代」常见 OCR 别字）。
+     */
+    private static final List<Set<String>> STANDARD_UNIT_SYNONYM_GROUPS = Arrays.asList(
+            new HashSet<>(Arrays.asList("件", "箱")),
+            new HashSet<>(Arrays.asList("袋", "包", "代"))
+    );
+
+    /**
+     * 订单规格是否与大包装单位一致或同义；无日志，供静态方法与 {@link #isStandardMatch} 复用。
+     */
+    private static boolean isStandardMatchCore(String orderStandard, String cartonUnit) {
+        if (orderStandard == null || cartonUnit == null) {
+            return false;
+        }
+        String orderStd = orderStandard.trim();
+        String carton = cartonUnit.trim();
+        if (orderStd.isEmpty() || carton.isEmpty()) {
+            return false;
+        }
+        if (orderStd.equals(carton)) {
+            return true;
+        }
+        for (Set<String> group : STANDARD_UNIT_SYNONYM_GROUPS) {
+            if (group.contains(orderStd) && group.contains(carton)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 兜底设置打印规格：原逻辑落「商品标准规格」时，若订货单位与大包装同义则用大包装单位（如箱）。
+     */
+    private void setNxDoPrintStandardGoodsOrCartonSynonym(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity g) {
+        String os = order.getNxDoStandard();
+        String carton = g.getNxDgCartonUnit();
+        if (os != null && carton != null && !carton.trim().isEmpty()
+                && isStandardMatchCore(os, carton)) {
+            order.setNxDoPrintStandard(carton.trim());
+        } else {
+            order.setNxDoPrintStandard(g.getNxDgGoodsStandardname());
+        }
+    }
+
+    /**
+     * 按订单规格与三档 willPrice*Standard 的对应关系设置打印规格；无匹配时用商品标准规格。
+     */
+    private static void resolvePrintStandardFromDisGoodsTierSpecs(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity g) {
+        if (order.getNxDoStandard() == null || order.getNxDoStandard().trim().isEmpty()) {
+            order.setNxDoPrintStandard(g.getNxDgGoodsStandardname());
+            return;
+        }
+        String os = order.getNxDoStandard().trim();
+        if (g.getNxDgWillPriceTwoStandard() != null && !g.getNxDgWillPriceTwoStandard().trim().isEmpty()
+                && os.equals(g.getNxDgWillPriceTwoStandard().trim())) {
+            order.setNxDoPrintStandard(g.getNxDgWillPriceTwoStandard().trim());
+            return;
+        }
+        if (g.getNxDgWillPriceThreeStandard() != null && !g.getNxDgWillPriceThreeStandard().trim().isEmpty()
+                && os.equals(g.getNxDgWillPriceThreeStandard().trim())) {
+            order.setNxDoPrintStandard(g.getNxDgWillPriceThreeStandard().trim());
+            return;
+        }
+        if (orderStandardMatchesFirstTier(order, g)) {
+            String ps = g.getNxDgWillPriceOneStandard();
+            order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+            return;
+        }
+        // 订货「件」等大包装同义词时，打印规格用大包装单位（如箱），避免误落 nxDgGoodsStandardname（如桶）
+        if (g.getNxDgCartonUnit() != null && !g.getNxDgCartonUnit().trim().isEmpty()
+                && isStandardMatchCore(os, g.getNxDgCartonUnit())) {
+            order.setNxDoPrintStandard(g.getNxDgCartonUnit().trim());
+            return;
+        }
+        order.setNxDoPrintStandard(g.getNxDgGoodsStandardname());
+    }
+
+    /**
+     * 与 {@link com.nongxinle.controller.NxDepartmentOrdersController#disUpdateBuyingPrice} 体重档位一致；
+     * 订单规格命中二档标准且二档单价非占位 0.1 时优先二档；
+     * 命中一档标准（或标准规格）时用 nxDgWillPriceOne，避免仅因未配 nxDgWillPriceOneWeight 就落到 nxDgWillPrice/0.1；
+     * 其余档位未配置时用 nxDgWillPrice；仍空则用 0.1。
+     */
+    private void applyDisGoodsTierPricingFallbackForOrder(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity g) {
+        String tierDump = String.format(
+                "[档位兜底]商品多档字段 disGoodsId=%s name=%s goodsStd=%s carton=%s | oneStd=%s twoStd=%s threeStd=%s | willOne=%s willTwo=%s willThree=%s | oneW=%s twoW=%s threeW=%s | nxDgWillPrice=%s | buyOne=%s buyTwo=%s buyThree=%s | orderStd=%s qty=%s weight=%s nxDoPrice(入参)=%s",
+                g.getNxDistributerGoodsId(), g.getNxDgGoodsName(), g.getNxDgGoodsStandardname(), g.getNxDgCartonUnit(),
+                g.getNxDgWillPriceOneStandard(), g.getNxDgWillPriceTwoStandard(), g.getNxDgWillPriceThreeStandard(),
+                g.getNxDgWillPriceOne(), g.getNxDgWillPriceTwo(), g.getNxDgWillPriceThree(),
+                g.getNxDgWillPriceOneWeight(), g.getNxDgWillPriceTwoWeight(), g.getNxDgWillPriceThreeWeight(),
+                g.getNxDgWillPrice(),
+                g.getNxDgBuyingPriceOne(), g.getNxDgBuyingPriceTwo(), g.getNxDgBuyingPriceThree(),
+                order.getNxDoStandard(), order.getNxDoQuantity(), order.getNxDoWeight(), order.getNxDoPrice());
+        System.out.println("【processOrderPrice】" + tierDump);
+        logger.info("[processOrderPrice][档位兜底] 商品多档销售价(实体) {}", tierDump);
+
+        BigDecimal willPrice = BigDecimal.ZERO;
+        String buyingPriceLevel = "0";
+        BigDecimal buyingPrice = BigDecimal.ZERO;
+        String buyingUpdate = g.getNxDgBuyingPriceUpdate();
+
+        String wpTwo = g.getNxDgWillPriceTwo();
+        String wpThree = g.getNxDgWillPriceThree();
+        if (wpTwo != null && !wpTwo.trim().isEmpty() && !"0.1".equals(wpTwo.trim())
+                && order.getNxDoStandard() != null && g.getNxDgWillPriceTwoStandard() != null
+                && order.getNxDoStandard().trim().equals(g.getNxDgWillPriceTwoStandard().trim())) {
+            willPrice = CommonUtils.parseBigDecimalOrDefault(wpTwo, BigDecimal.ZERO);
+            buyingPriceLevel = "2";
+            buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceTwo(), BigDecimal.ZERO);
+            buyingUpdate = g.getNxDgBuyingPriceTwoUpdate();
+            order.setNxDoPrintStandard(g.getNxDgWillPriceTwoStandard().trim());
+            logger.info("[processOrderPrice][档位兜底] path=二档规格 standard={} twoStd={} nxDgWillPriceTwo={} orderId={} disGoodsId={}",
+                    order.getNxDoStandard(), g.getNxDgWillPriceTwoStandard(), wpTwo,
+                    order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+        } else if (wpThree != null && !wpThree.trim().isEmpty() && !"0.1".equals(wpThree.trim())
+                && g.getNxDgWillPriceThreeStandard() != null && !g.getNxDgWillPriceThreeStandard().trim().isEmpty()
+                && order.getNxDoStandard() != null
+                && order.getNxDoStandard().trim().equals(g.getNxDgWillPriceThreeStandard().trim())) {
+            willPrice = CommonUtils.parseBigDecimalOrDefault(wpThree, BigDecimal.ZERO);
+            buyingPriceLevel = "3";
+            buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceThree(), BigDecimal.ZERO);
+            buyingUpdate = g.getNxDgBuyingPriceThreeUpdate();
+            order.setNxDoPrintStandard(g.getNxDgWillPriceThreeStandard().trim());
+            logger.info("[processOrderPrice][档位兜底] path=三档规格 standard={} threeStd={} nxDgWillPriceThree={} orderId={} disGoodsId={}",
+                    order.getNxDoStandard(), g.getNxDgWillPriceThreeStandard(), wpThree,
+                    order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+        } else {
+            if (orderStandardMatchesFirstTier(order, g)) {
+                String wpOne = g.getNxDgWillPriceOne();
+                if (wpOne != null && !wpOne.trim().isEmpty()) {
+                    willPrice = CommonUtils.parseBigDecimalOrDefault(wpOne, BigDecimal.ZERO);
+                    buyingPriceLevel = "1";
+                    buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceOne(), BigDecimal.ZERO);
+                    buyingUpdate = g.getNxDgBuyingPriceOneUpdate();
+                    String ps = g.getNxDgWillPriceOneStandard();
+                    order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+                    logger.info("[processOrderPrice][档位兜底] path=一档规格(与一档标准/商品标准一致) standard={} oneStd={} goodsStd={} nxDgWillPriceOne={} orderId={} disGoodsId={}",
+                            order.getNxDoStandard(), g.getNxDgWillPriceOneStandard(), g.getNxDgGoodsStandardname(), wpOne,
+                            order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+                } else {
+                    logger.info("[processOrderPrice][档位兜底] path=一档规格命中但nxDgWillPriceOne为空,继续体重档/扁平价 standard={} orderId={} disGoodsId={}",
+                            order.getNxDoStandard(), order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+                }
+            }
+            if (willPrice.compareTo(BigDecimal.ZERO) == 0) {
+                String wStr = order.getNxDoWeight();
+                if (wStr == null || wStr.trim().isEmpty()) {
+                    wStr = order.getNxDoQuantity();
+                }
+                if (wStr != null && !wStr.trim().isEmpty()) {
+                BigDecimal orderWeight = CommonUtils.parseBigDecimalOrDefault(wStr, BigDecimal.ZERO);
+                logger.info("[processOrderPrice][档位兜底] path=尝试体重分档 wStr={} orderWeight={} oneW={} twoW={} orderId={} disGoodsId={}",
+                        wStr, orderWeight, g.getNxDgWillPriceOneWeight(), g.getNxDgWillPriceTwoWeight(),
+                        order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+                if (CommonUtils.isStrictlyPositiveDecimalString(g.getNxDgWillPriceOneWeight())) {
+                    BigDecimal nxOneWeight = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceOneWeight(), BigDecimal.ZERO);
+                    if (orderWeight.compareTo(nxOneWeight) < 1) {
+                        willPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceOne(), BigDecimal.ZERO);
+                        buyingPriceLevel = "1";
+                        buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceOne(), BigDecimal.ZERO);
+                        buyingUpdate = g.getNxDgBuyingPriceOneUpdate();
+                        String ps = g.getNxDgWillPriceOneStandard();
+                        order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+                        logger.info("[processOrderPrice][档位兜底] path=体重档->一档(<=oneW) level=1 willOne={}", g.getNxDgWillPriceOne());
+                    } else if (CommonUtils.isStrictlyPositiveDecimalString(g.getNxDgWillPriceTwoWeight())) {
+                        BigDecimal nxTwoWeight = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceTwoWeight(), BigDecimal.ZERO);
+                        if (orderWeight.compareTo(nxTwoWeight) < 1) {
+                            willPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceTwo(), BigDecimal.ZERO);
+                            buyingPriceLevel = "2";
+                            buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceTwo(), BigDecimal.ZERO);
+                            buyingUpdate = g.getNxDgBuyingPriceTwoUpdate();
+                            String ps = g.getNxDgWillPriceTwoStandard();
+                            order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+                            logger.info("[processOrderPrice][档位兜底] path=体重档->二档(<=twoW) level=2 willTwo={}", g.getNxDgWillPriceTwo());
+                        } else if (CommonUtils.isStrictlyPositiveDecimalString(g.getNxDgWillPriceThreeWeight())) {
+                            willPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceThree(), BigDecimal.ZERO);
+                            buyingPriceLevel = "3";
+                            buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceThree(), BigDecimal.ZERO);
+                            buyingUpdate = g.getNxDgBuyingPriceThreeUpdate();
+                            String ps = g.getNxDgWillPriceThreeStandard();
+                            order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+                            logger.info("[processOrderPrice][档位兜底] path=体重档->三档 level=3 willThree={}", g.getNxDgWillPriceThree());
+                        } else {
+                            willPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceTwo(), BigDecimal.ZERO);
+                            buyingPriceLevel = "2";
+                            buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceTwo(), BigDecimal.ZERO);
+                            buyingUpdate = g.getNxDgBuyingPriceTwoUpdate();
+                            String ps = g.getNxDgWillPriceTwoStandard();
+                            order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+                            logger.info("[processOrderPrice][档位兜底] path=体重档->二档(>twoW无三档权重) level=2 willTwo={}", g.getNxDgWillPriceTwo());
+                        }
+                    } else {
+                        willPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgWillPriceOne(), BigDecimal.ZERO);
+                        buyingPriceLevel = "1";
+                        buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPriceOne(), BigDecimal.ZERO);
+                        buyingUpdate = g.getNxDgBuyingPriceOneUpdate();
+                        String ps = g.getNxDgWillPriceOneStandard();
+                        order.setNxDoPrintStandard(ps != null && !ps.trim().isEmpty() ? ps.trim() : g.getNxDgGoodsStandardname());
+                        logger.info("[processOrderPrice][档位兜底] path=体重档->一档(>oneW无twoW权重) level=1 willOne={}", g.getNxDgWillPriceOne());
+                    }
+                } else {
+                    String wp = g.getNxDgWillPrice();
+                    if (wp == null || wp.trim().isEmpty()) {
+                        wp = DEFAULT_NX_DG_WILL_PRICE_FALLBACK;
+                    }
+                    willPrice = CommonUtils.parseBigDecimalOrDefault(wp, new BigDecimal(DEFAULT_NX_DG_WILL_PRICE_FALLBACK));
+                    buyingPriceLevel = "0";
+                    buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPrice(), BigDecimal.ZERO);
+                    buyingUpdate = g.getNxDgBuyingPriceUpdate();
+                    setNxDoPrintStandardGoodsOrCartonSynonym(order, g);
+                    logger.info("[processOrderPrice][档位兜底] path=体重档未配_oneWeight空 用nxDgWillPrice或默认0.1 wStr={} nxDgWillPrice取{} orderId={} disGoodsId={}",
+                            wStr, wp, order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+                }
+                } else {
+                    String wp = g.getNxDgWillPrice();
+                    if (wp == null || wp.trim().isEmpty()) {
+                        wp = DEFAULT_NX_DG_WILL_PRICE_FALLBACK;
+                    }
+                    willPrice = CommonUtils.parseBigDecimalOrDefault(wp, new BigDecimal(DEFAULT_NX_DG_WILL_PRICE_FALLBACK));
+                    buyingPriceLevel = "0";
+                    buyingPrice = CommonUtils.parseBigDecimalOrDefault(g.getNxDgBuyingPrice(), BigDecimal.ZERO);
+                    buyingUpdate = g.getNxDgBuyingPriceUpdate();
+                    setNxDoPrintStandardGoodsOrCartonSynonym(order, g);
+                    logger.info("[processOrderPrice][档位兜底] path=无有效重量数量 用nxDgWillPrice或默认0.1 nxDgWillPrice取{} orderId={} disGoodsId={}",
+                            wp, order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+                }
+            }
+        }
+
+        if (willPrice.compareTo(BigDecimal.ZERO) == 0) {
+            String wp = g.getNxDgWillPrice();
+            if (wp == null || wp.trim().isEmpty()) {
+                wp = DEFAULT_NX_DG_WILL_PRICE_FALLBACK;
+            }
+            willPrice = CommonUtils.parseBigDecimalOrDefault(wp, new BigDecimal(DEFAULT_NX_DG_WILL_PRICE_FALLBACK));
+            logger.info("[processOrderPrice][档位兜底] path=单价仍为零 最后用nxDgWillPrice或默认0.1 nxDgWillPrice取{} orderId={} disGoodsId={}",
+                    wp, order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId());
+        }
+
+        order.setNxDoPrice(willPrice.setScale(1, BigDecimal.ROUND_HALF_UP).toPlainString());
+        order.setNxDoExpectPrice(order.getNxDoPrice());
+        order.setNxDoCostPriceLevel(buyingPriceLevel);
+        order.setNxDoCostPrice(buyingPrice.toPlainString());
+        if (buyingUpdate != null) {
+            order.setNxDoCostPriceUpdate(buyingUpdate);
+        }
+        if (willPrice.compareTo(BigDecimal.ZERO) != 0) {
+            BigDecimal profitB = willPrice.subtract(buyingPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal scaleB = profitB.divide(willPrice, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            order.setNxDoProfitScale(scaleB.toPlainString());
+        } else {
+            order.setNxDoProfitScale("0");
+        }
+        logger.info("[processOrderPrice][档位兜底] 汇总 orderId={} disGoodsId={} nxDoPrice={} costLevel={} costPrice={} printStd={}",
+                order.getNxDepartmentOrdersId(), g.getNxDistributerGoodsId(), order.getNxDoPrice(),
+                order.getNxDoCostPriceLevel(), order.getNxDoCostPrice(), order.getNxDoPrintStandard());
+    }
+
+    /**
+     * 业务类型 0、1、2：价格只跟部门商品历史定价走，不查货架库存批次（3–5、平台等另分支处理）。
+     */
+    private static boolean isDistributerBusinessTypeHistoryPriceOnly(Integer nxDistributerBusinessTypeId) {
+        return nxDistributerBusinessTypeId != null
+                && nxDistributerBusinessTypeId >= 0
+                && nxDistributerBusinessTypeId <= 2;
+    }
+
+    /**
+     * 智能匹配单位规格（与同 {@link #isStandardMatchCore}）。
+     * 同义词组：件↔箱；袋↔包↔代（「代」常为客户或 OCR 误写「袋」）。
      */
     private boolean isStandardMatch(String orderStandard, String cartonUnit) {
         System.out.println("======== 智能匹配单位规格开始 ========");
@@ -1895,46 +2210,21 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
             return false;
         }
 
-        // 去除空格并转为小写进行比较
         String orderStd = orderStandard.trim();
         String carton = cartonUnit.trim();
 
         System.out.println("去除空格后 - 订单规格: [" + orderStd + "], 包装单位: [" + carton + "]");
 
-        // 1. 完全匹配
+        boolean match = isStandardMatchCore(orderStd, carton);
         if (orderStd.equals(carton)) {
             System.out.println("✅ 完全匹配成功: [" + orderStd + "] == [" + carton + "]");
-            return true;
+        } else if (match) {
+            System.out.println("✅ 智能匹配成功: 订单规格[" + orderStd + "] 与 包装单位[" + carton + "] 同义");
+        } else {
+            System.out.println("❌ 匹配失败: 订单规格[" + orderStd + "] 与 包装单位[" + carton + "] 不匹配");
         }
-
-        // 2. 同义词映射：定义常见的单位同义词
-        // 件 = 箱（订货"件"视为大包装"箱"）
-        Map<String, Set<String>> synonymMap = new HashMap<>();
-        synonymMap.put("箱", new HashSet<>(Arrays.asList("件")));
-        synonymMap.put("件", new HashSet<>(Arrays.asList("箱")));
-
-        System.out.println("开始检查同义词匹配...");
-
-        // 3. 检查同义词匹配
-        // 如果订单规格的同义词组包含包装单位，或者包装单位的同义词组包含订单规格，则认为匹配
-        Set<String> orderSynonyms = synonymMap.get(orderStd);
-        Set<String> cartonSynonyms = synonymMap.get(carton);
-
-        if (orderSynonyms != null && orderSynonyms.contains(carton)) {
-            System.out.println("✅ 智能匹配成功: 订单规格[" + orderStd + "] 的同义词组包含包装单位[" + carton + "]");
-            System.out.println("订单规格[" + orderStd + "] 的同义词组: " + orderSynonyms);
-            return true;
-        }
-
-        if (cartonSynonyms != null && cartonSynonyms.contains(orderStd)) {
-            System.out.println("✅ 智能匹配成功: 包装单位[" + carton + "] 的同义词组包含订单规格[" + orderStd + "]");
-            System.out.println("包装单位[" + carton + "] 的同义词组: " + cartonSynonyms);
-            return true;
-        }
-
-        System.out.println("❌ 匹配失败: 订单规格[" + orderStd + "] 与 包装单位[" + carton + "] 不匹配");
         System.out.println("======== 智能匹配单位规格结束 ========");
-        return false;
+        return match;
     }
 
     public R pasteSearchGoods(@RequestBody List<NxDepartmentOrdersEntity> orderList) {
@@ -2100,7 +2390,11 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                                 } else if (nxDepartmentDisGoodsEntityList.size() == 1) {
                                     NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsEntityList.get(0);
                                     NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-                                    returnList.add(saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
+                                    if(distributerGoodsEntity != null){
+                                        returnList.add(saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
+                                    }else{
+                                        returnList.add(aaaTemp(ordersEntity));
+                                    }
                                 } else {
                                     List<NxDistributerGoodsEntity> list = new ArrayList<>();
                                     for (NxDepartmentDisGoodsEntity departmentDisGoodsEntity : nxDepartmentDisGoodsEntityList) {
@@ -2164,11 +2458,20 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                         logger.info("[pasteSearchGoodsService] 二级匹配-查询部门商品历史记录，查询参数: {}", map);
                         List<NxDepartmentDisGoodsEntity> nxDepartmentDisGoodsEntityList = nxDepartmentDisGoodsService.queryDepartmentGoods(map);
                         if (nxDepartmentDisGoodsEntityList.size() == 1) {
+
+
                             // 如果有部门历史记录，则保存订单
                             NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsEntityList.get(0);
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-                            ordersEntity.setNxDoStatus(0);
-                            returnList.add(saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
+                            if(distributerGoodsEntity != null){
+                                ordersEntity.setNxDoStatus(0);
+                                returnList.add(saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
+                            }else{
+                                // 没有部门历史记录，列为候选商品
+                                ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesOne);
+                                returnList.add(aaaTemp(ordersEntity));
+                            }
+
                         } else {
                             // 没有部门历史记录，列为候选商品
                             ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesOne);
@@ -2191,15 +2494,23 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
                         } else if (nxDepartmentDisGoodsEntityList.size() == 1) {
                             NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsEntityList.get(0);
                             NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryDisGoodsDetail(departmentDisGoodsEntity.getNxDdgDisGoodsId());
-                            ordersEntity.setNxDoStatus(0);
-                            returnList.add(saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
+                            if(distributerGoodsEntity != null){
+                                ordersEntity.setNxDoStatus(0);
+                                returnList.add(saveOrderWithGoods(ordersEntity, distributerGoodsEntity));
+                            }else{
+                                ordersEntity.setNxDistributerGoodsEntityList(distributerGoodsEntitiesOne);
+                                returnList.add(aaaTemp(ordersEntity));
+                            }
+
                         } else {
                             List<NxDistributerGoodsEntity> list = new ArrayList<>();
                             for (NxDepartmentDisGoodsEntity departmentDisGoodsEntity : nxDepartmentDisGoodsEntityList) {
                                 Integer nxDdgDisGoodsId = departmentDisGoodsEntity.getNxDdgDisGoodsId();
 
                                 NxDistributerGoodsEntity distributerGoodsEntity = nxDistributerGoodsService.queryObject(nxDdgDisGoodsId);
-                                list.add(distributerGoodsEntity);
+                                if(distributerGoodsEntity != null){
+                                    list.add(distributerGoodsEntity);
+                                }
                             }
                             ordersEntity.setNxDistributerGoodsEntityList(list);
                             returnList.add(aaaTemp(ordersEntity));
@@ -2575,6 +2886,256 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         return order;
     }
 
+
+//    public void processOrderPrice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
+//        // 当订货规格和商品规格一样时，自动设置 nxDoWeight = nxDoQuantity（平台型和非平台型均适用）
+//        if (order.getNxDoStandard() != null && order.getNxDoQuantity() != null && !order.getNxDoQuantity().trim().isEmpty()
+//                && order.getNxDoStandard().equals(disGoodsEntity.getNxDgGoodsStandardname())) {
+//            order.setNxDoWeight(order.getNxDoQuantity());
+//        }
+//        // 支持智能匹配：订单规格匹配大包装单位（如件=箱）时也设置
+//        if (order.getNxDoWeight() == null && order.getNxDoStandard() != null && order.getNxDoQuantity() != null && !order.getNxDoQuantity().trim().isEmpty()
+//                && disGoodsEntity.getNxDgCartonUnit() != null && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())) {
+//            order.setNxDoWeight(order.getNxDoQuantity());
+//        }
+//
+//        Integer nxDoDistributerId = order.getNxDoDistributerId();
+//        NxDistributerEntity distributerEntity = nxDistributerService.queryObject(nxDoDistributerId);
+//        //平台型
+//        if (distributerEntity.getNxDistributerBusinessTypeId() > 6) {
+//            if (disGoodsEntity.getNxDgWillPriceTwo() != null
+//                    && !disGoodsEntity.getNxDgWillPriceTwo().trim().isEmpty()
+//                    && order.getNxDoStandard().equals(disGoodsEntity.getNxDgWillPriceTwoStandard())) {
+//                System.out.println("levlellelelelel111222222222222222");
+//                BigDecimal doQuantity = new BigDecimal(order.getNxDoQuantity());
+//                BigDecimal cosPrice = new BigDecimal(disGoodsEntity.getNxDgBuyingPriceTwo());
+//                BigDecimal willPrice = new BigDecimal(disGoodsEntity.getNxDgWillPriceTwo());
+//                BigDecimal costSubtotal = doQuantity.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                BigDecimal subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                BigDecimal profit = subtotal.subtract(costSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                BigDecimal scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+//
+//                // 判断是否使用大包装单价，如果是则设置打印规格为大包装单位
+//                if (disGoodsEntity.getNxDgCartonUnit() != null
+//                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//
+//                        && order.getNxDoStandard() != null
+//                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgCartonUnit().trim())) {
+//                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
+//                    System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
+//                } else {
+//                    order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
+//                }
+//                order.setNxDoPrice(disGoodsEntity.getNxDgWillPriceTwo());
+//                order.setNxDoExpectPrice(disGoodsEntity.getNxDgWillPriceTwo());
+//                order.setNxDoCostPrice(disGoodsEntity.getNxDgBuyingPriceTwo());
+//                order.setNxDoSubtotal(subtotal.toString());
+//                order.setNxDoCostSubtotal(costSubtotal.toString());
+//                order.setNxDoCostPriceLevel("2");
+//                order.setNxDoCostPriceUpdate(disGoodsEntity.getNxDgBuyingPriceTwoUpdate());
+//                order.setNxDoProfitSubtotal(profit.toString());
+//                order.setNxDoProfitScale(scaleB.toString());
+//
+//            } else {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
+//                order.setNxDoCostPriceLevel("1");
+//                order.setNxDoSubtotal("0");
+//                order.setNxDoCostSubtotal("0");
+//                System.out.println("jimimhuaaa" + disGoodsEntity.getNxDgWillPriceOne());
+//                if (disGoodsEntity.getNxDgWillPriceOne() != null && !disGoodsEntity.getNxDgWillPriceOne().trim().isEmpty()) {
+//                    System.out.println("jieghuasu?????????" + order.getNxDoPrice());
+//                    order.setNxDoPrice(disGoodsEntity.getNxDgWillPriceOne());
+//                    order.setNxDoExpectPrice(disGoodsEntity.getNxDgWillPriceOne());
+//                }
+//                if (disGoodsEntity.getNxDgBuyingPriceOne() != null && !disGoodsEntity.getNxDgBuyingPriceOne().trim().isEmpty()) {
+//                    order.setNxDoCostPriceUpdate(disGoodsEntity.getNxDgBuyingPriceOneUpdate());
+//                    order.setNxDoCostPrice(disGoodsEntity.getNxDgBuyingPriceOne());
+//                }
+//            }
+//        } else {
+//            // 初始设置打印规格：如果订单规格等于大包装单位，则设置为大包装单位
+//            // 支持智能匹配：件=箱，盒=箱等同义词
+//            System.out.println("======== 设置打印规格(printStandard)开始 ========");
+//            System.out.println("订单ID: " + order.getNxDepartmentOrdersId());
+//            System.out.println("订单规格(nxDoStandard): " + order.getNxDoStandard());
+//            System.out.println("商品大包装单位(nxDgCartonUnit): " + disGoodsEntity.getNxDgCartonUnit());
+//            System.out.println("商品标准规格(nxDgGoodsStandardname): " + disGoodsEntity.getNxDgGoodsStandardname());
+//            System.out.println("设置前 printStandard: " + order.getNxDoPrintStandard());
+//
+//            if (disGoodsEntity.getNxDgCartonUnit() != null
+//                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                    && order.getNxDoStandard() != null
+//                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())) {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
+//            } else {
+//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
+//            }
+//
+//            Integer nxDistributerGoodsId = disGoodsEntity.getNxDistributerGoodsId();
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("disGoodsId", nxDistributerGoodsId);
+//            map.put("restWeight", 0);
+//
+//            System.out.println("查询货架库存参数: " + map);
+//            List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDisGoodsShelfStockService.queryShelfStockListByParams(map);
+//            System.out.println("查询到库存批次数量: " + stockEntities.size());
+//
+//            if (stockEntities.size() > 0) {
+//                NxDistributerGoodsShelfStockEntity nxDistributerGoodsShelfStockEntity = stockEntities.get(stockEntities.size() - 1);
+//                System.out.println("--- 最后一个库存批次信息 ---");
+//                System.out.println("库存批次ID: " + nxDistributerGoodsShelfStockEntity.getNxDistributerGoodsShelfStockId());
+//                System.out.println("成本价(nxDgssPrice): " + nxDistributerGoodsShelfStockEntity.getNxDgssPrice());
+//                System.out.println("外包装成本价(nxDgssPriceCarton): " + nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton());
+//                System.out.println("销售价(nxDgssSellingPrice): " + nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice());
+//                System.out.println("外包装销售价(nxDgssSellingPriceCarton): " + nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton());
+//                System.out.println("剩余重量: " + nxDistributerGoodsShelfStockEntity.getNxDgssRestWeight());
+//                System.out.println("订单规格: " + order.getNxDoStandard());
+//                System.out.println("商品外包装单位: " + disGoodsEntity.getNxDgCartonUnit());
+//
+//                // 判断订单规格是否与外包装单位匹配
+//                boolean useCartonPrice = false;
+//                if (disGoodsEntity.getNxDgCartonUnit() != null
+//                        && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                        && CommonUtils.isPositiveItemsPerCarton(disGoodsEntity.getNxDgItemsPerCarton())
+//                        && order.getNxDoStandard() != null
+//                        && order.getNxDoStandard().trim().equals(disGoodsEntity.getNxDgCartonUnit().trim())) {
+//                    useCartonPrice = true;
+//                    System.out.println("✅ 订单规格与外包装单位匹配，将使用外包装单价");
+//                }
+//
+//                // 根据匹配情况选择对应的单价
+//                String sellingPrice = null;
+//                String costPrice = null;
+//
+//                if (useCartonPrice) {
+//                    // 使用外包装单价
+//                    if (nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton() != null
+//                            && !nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton().trim().isEmpty()) {
+//                        sellingPrice = nxDistributerGoodsShelfStockEntity.getNxDgssSellingPriceCarton();
+//                        System.out.println("使用外包装建议零售价: " + sellingPrice);
+//                    }
+//                    if (nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton() != null
+//                            && !nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton().trim().isEmpty()) {
+//                        costPrice = nxDistributerGoodsShelfStockEntity.getNxDgssPriceCarton();
+//                        System.out.println("使用外包装采购单价: " + costPrice);
+//                    }
+//                } else {
+//                    // 使用最小单位单价
+//                    if (nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice() != null
+//                            && !nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice().trim().isEmpty()) {
+//                        sellingPrice = nxDistributerGoodsShelfStockEntity.getNxDgssSellingPrice();
+//                        System.out.println("使用最小单位建议零售价: " + sellingPrice);
+//                    }
+//                    if (nxDistributerGoodsShelfStockEntity.getNxDgssPrice() != null
+//                            && !nxDistributerGoodsShelfStockEntity.getNxDgssPrice().trim().isEmpty()) {
+//                        costPrice = nxDistributerGoodsShelfStockEntity.getNxDgssPrice();
+//                        System.out.println("使用最小单位采购单价: " + costPrice);
+//                    }
+//                }
+//
+//                // 设置订单价格
+//                if (sellingPrice != null) {
+//                    System.out.println("✅ 找到销售价，开始设置订单价格");
+//                    order.setNxDoPrice(sellingPrice);
+//                    if (costPrice != null) {
+//                        order.setNxDoCostPrice(costPrice);
+//                    }
+//                    // 如果使用了大包装单价，设置打印规格为大包装单位
+//                    if (useCartonPrice && disGoodsEntity.getNxDgCartonUnit() != null
+//                            && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                    ) {
+//                        order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
+//                        System.out.println("使用大包装单价，打印规格设置为: " + disGoodsEntity.getNxDgCartonUnit());
+//                    }
+//                    System.out.println("订单销售价已设置为: " + order.getNxDoPrice());
+//                    System.out.println("订单成本价已设置为: " + order.getNxDoCostPrice());
+//                } else {
+//
+//                    System.out.println("⚠️ 销售价为null，不设置价格");
+//                }
+//            }
+//
+//            System.out.println("rodstntn" + order.getNxDoStandard() + "disganttt" + disGoodsEntity.getNxDgGoodsStandardname());
+//            // 检查订单规格是否等于商品标准规格，或者订单规格是否匹配大包装单位（智能匹配：件=箱）
+//            boolean isStandardMatch = order.getNxDoStandard() != null
+//                    && order.getNxDoStandard().equals(disGoodsEntity.getNxDgGoodsStandardname());
+//            boolean isCartonMatch = disGoodsEntity.getNxDgCartonUnit() != null
+//                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                    && order.getNxDoStandard() != null
+//                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
+//
+//            if (isStandardMatch || isCartonMatch) {
+//                System.out.println("订单规格匹配: isStandardMatch=" + isStandardMatch + ", isCartonMatch=" + isCartonMatch);
+//                order.setNxDoWeight(order.getNxDoQuantity());
+//
+//                // 检查价格是否已设置
+//                if (order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty() && !order.getNxDoQuantity().trim().isEmpty() ) {
+//
+//                    BigDecimal doQuantity = new BigDecimal(order.getNxDoQuantity());
+//                    BigDecimal willPrice = new BigDecimal(order.getNxDoPrice());
+//
+//                    // 判断是否使用外包装单价计算（支持智能匹配：件=箱）
+//                    boolean useCartonPriceForCalc = false;
+//                    BigDecimal itemsPerCartonBdForCalc = null;
+//                    if (disGoodsEntity.getNxDgCartonUnit() != null
+//                            && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
+//                            && order.getNxDoStandard() != null
+//                            && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim())) {
+//                        itemsPerCartonBdForCalc = CommonUtils.parseItemsPerCartonBigDecimal(disGoodsEntity.getNxDgItemsPerCarton());
+//                        if (itemsPerCartonBdForCalc != null && itemsPerCartonBdForCalc.compareTo(BigDecimal.ZERO) > 0) {
+//                            useCartonPriceForCalc = true;
+//                            System.out.println("订单规格匹配外包装单位（智能匹配），计算时将数量转换为箱数: " + doQuantity + "个 ÷ " + itemsPerCartonBdForCalc + " = " + doQuantity.divide(itemsPerCartonBdForCalc, 4, BigDecimal.ROUND_HALF_UP) + "箱");
+//                        }
+//                    }
+//
+//                    BigDecimal subtotal;
+//                    BigDecimal costSubtotal = null;
+//                    if (useCartonPriceForCalc && itemsPerCartonBdForCalc != null) {
+//                        // 使用外包装单价：需要将数量转换为箱数
+//                        BigDecimal cartonCount = doQuantity.divide(itemsPerCartonBdForCalc, 4, BigDecimal.ROUND_HALF_UP);
+//                        subtotal = cartonCount.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                        System.out.println("使用外包装单价计算: " + cartonCount + "箱 × " + willPrice + "元/箱 = " + subtotal + "元");
+//
+//                        if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
+//                            BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
+//                            costSubtotal = cartonCount.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                            System.out.println("使用外包装成本价计算: " + cartonCount + "箱 × " + cosPrice + "元/箱 = " + costSubtotal + "元");
+//                        }
+//                    } else {
+//                        // 使用最小单位单价：直接相乘
+//                        subtotal = doQuantity.multiply(willPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                        System.out.println("使用最小单位单价计算: " + doQuantity + " × " + willPrice + " = " + subtotal);
+//
+//                        if (order.getNxDoCostPrice() != null && !order.getNxDoCostPrice().trim().isEmpty()) {
+//                            BigDecimal cosPrice = new BigDecimal(order.getNxDoCostPrice());
+//                            costSubtotal = doQuantity.multiply(cosPrice).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                        }
+//                    }
+//
+//                    order.setNxDoSubtotal(subtotal.toString());
+//
+//                    if (costSubtotal != null) {
+//                        BigDecimal profit = subtotal.subtract(costSubtotal).setScale(1, BigDecimal.ROUND_HALF_UP);
+//                        BigDecimal scaleB = BigDecimal.ZERO;
+//                        if (subtotal.compareTo(BigDecimal.ZERO) != 0) {
+//                            scaleB = profit.divide(subtotal, 2, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+//                        }
+//                        System.out.println("成本小计: " + costSubtotal);
+//                        System.out.println("销售小计: " + subtotal);
+//                        System.out.println("利润: " + profit);
+//                        System.out.println("利润率: " + scaleB + "%");
+//                        order.setNxDoCostSubtotal(costSubtotal.toString());
+//                        order.setNxDoProfitSubtotal(profit.toString());
+//                        order.setNxDoProfitScale(scaleB.toString());
+//                    }
+//                    System.out.println("✅ 订单金额计算完成");
+//                }
+//            }
+//        }
+//        nxDepartmentOrdersDao.update(order);
+//    }
+
     /**
      * 将订单添加到返回列表，同时保存对应的原始订单索引
      *
@@ -2655,6 +3216,16 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         
         // 获取订单信息
         String goodsName = order.getNxDoGoodsName();
+        if (goodsName == null) {
+            goodsName = "";
+        }
+        
+        // 商品名称为空，直接返回，不查询推荐商品
+        if (goodsName.trim().isEmpty()) {
+            logger.info("[addCommentsGoodsForOrder] 商品名称为空，直接返回");
+            return order;
+        }
+        
         String spec = order.getNxDoStandard();
         Integer disId = order.getNxDoDistributerId();
         Integer depId = order.getNxDoDepartmentId();
@@ -2856,6 +3427,7 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         }
 
         // 排序：1.有 departmentDisGoodsEntity（部门商品）的排最前；2.商品名称完全等于查询名称的排在仅包含名称的前面；3.同一系统商品时，自己的配送商品排在协作配送商前面
+        final String goodsNameForSort = goodsName;
         recommendedGoodsList.sort((g1, g2) -> {
             // 有 departmentDisGoodsEntity 的优先排最前
             boolean g1Dep = g1.getDepartmentDisGoodsEntity() != null;
@@ -2863,8 +3435,8 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
             if (g1Dep && !g2Dep) return -1;
             if (!g1Dep && g2Dep) return 1;
             // 在部门商品下面：nxDgGoodsName 完全等于查询名称的排在仅包含名称的前面
-            boolean g1Exact = goodsName != null && goodsName.equals(g1.getNxDgGoodsName());
-            boolean g2Exact = goodsName != null && goodsName.equals(g2.getNxDgGoodsName());
+            boolean g1Exact = goodsNameForSort != null && goodsNameForSort.equals(g1.getNxDgGoodsName());
+            boolean g2Exact = goodsNameForSort != null && goodsNameForSort.equals(g2.getNxDgGoodsName());
             if (g1Exact && !g2Exact) return -1;
             if (!g1Exact && g2Exact) return 1;
             // 同一系统商品(nxDgNxGoodsId)时，自己的配送商品排在协作配送商前面
@@ -2934,6 +3506,13 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         
         // 设置推荐商品列表
         if (!recommendedGoodsList.isEmpty()) {
+            // 限制最多返回20个推荐商品，避免JSON序列化过慢
+            int maxResults = 20;
+            if (recommendedGoodsList.size() > maxResults) {
+                logger.warn("[addCommentsGoodsForOrder] 推荐商品数量过多（{}），截断到 {} 个", 
+                        recommendedGoodsList.size(), maxResults);
+                recommendedGoodsList = new ArrayList<>(recommendedGoodsList.subList(0, maxResults));
+            }
             order.setNxDistributerGoodsEntityList(recommendedGoodsList);
             logger.info("[addCommentsGoodsForOrder] 找到 {} 个推荐商品", recommendedGoodsList.size());
         } else {

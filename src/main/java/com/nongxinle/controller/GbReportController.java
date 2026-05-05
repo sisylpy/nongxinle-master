@@ -40,15 +40,7 @@ public class GbReportController {
     @Autowired
     private GbDistributerService gbDistributerService;
     @Autowired
-    private GbDistributerFatherGoodsService fatherGoodsService;
-    @Autowired
     private GbDepartmentGoodsDailyService gbDepGoodsDailyService;
-    @Autowired
-    private GbDistributerGoodsService gbDistributerGoodsService;
-    @Autowired
-    private GbDistributerUserService gbDistributerUserService;
-    @Autowired
-    private GbDistributerGoodsPriceService gbDistributerGoodsPriceService;
     @Autowired
     private NxDistributerService nxDistributerService;
     @Autowired
@@ -57,8 +49,6 @@ public class GbReportController {
     private GbDistributerPurchaseBatchService gbDistributerPurchaseBatchService;
     @Autowired
     private GbDepartmentGoodsStockReduceService gbDepartmentStockReduceService;
-    @Autowired
-    private GbDepartmentBillService gbDepartmentBillService;
     @Autowired
     private NxJrdhSupplierService jrdhSupplierService;
     @Autowired
@@ -862,7 +852,9 @@ public class GbReportController {
             mapResult.put("totalRestSubtotal", new BigDecimal(doutbleRestV).setScale(1, RoundingMode.HALF_UP).toString());
 
             List<GbDistributerFatherGoodsEntity> greatGrandFatherGoods = new ArrayList<>();
-            System.out.println("44444depdididiid" + map);
+            map.put("equalType", null);
+            System.out.println("44444depdididiid5555" + map);
+
             Integer integer = gbDepartmentStockReduceService.queryReduceTypeCount(map);
 
             if (integer > 0) {
@@ -956,11 +948,13 @@ public class GbReportController {
                 mapResult.put("arr", greatGrandFatherGoods);
                 mapResult.put("depArr", gbDepartmentEntities);
                 mapResult.put("code", 0);
-            } else {
-                mapResult.put("code", -1);
             }
+//            else {
+//                mapResult.put("code", -1);
+//            }
 
-        } else {
+        }
+        else {
             mapResult.put("code", -1);
         }
 

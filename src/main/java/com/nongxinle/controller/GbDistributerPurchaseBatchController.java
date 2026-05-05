@@ -2368,9 +2368,10 @@ public class GbDistributerPurchaseBatchController {
 
                         System.out.println("updatpuurururrurr");
                         gbDPGService.update(purchaseGoodsEntity);
-                    } else {
-                        return R.error(-1, "aaa");
                     }
+//                    else {
+//                        return R.error(-1, "aaa");
+//                    }
                 }
 
                 if(batchEntity.getGbDpbPayType() == 0){

@@ -491,6 +491,12 @@ public class NxDistributerFatherGoodsController {
                 map.put("isHidden", 1);
                 map.put("disId", disId);
             }
+
+            //想增加货架商品有重复的查询，怎么让type赋值？
+
+            //想增加有库存的商品有重复的查询，怎么让type赋值？
+
+
             else{
                 map.put("goodsType", goodsType);
                 map.put("disId", disId);
@@ -500,6 +506,7 @@ public class NxDistributerFatherGoodsController {
             map.put("disId", disId);
             map.put("isHidden", 0);
         }
+
         NxDistributerEntity distributerEntity = nxDistributerService.queryObject(disId);
         if(distributerEntity.getNxDistributerBusinessTypeId() > 5){
             // 查询协作商户和自己的商品，构建多个配送商 id 列表
@@ -537,9 +544,7 @@ public class NxDistributerFatherGoodsController {
         map.put("limit", limit);
 
 
-
         List<NxDistributerGoodsEntity> distributerGoodsEntities = distributerGoodsService.querySupplierGoodsByGreatId(map);
-        
 
         Map<String, Object> mapCount = new HashMap<>();
         mapCount.put("disId", disId);
@@ -576,9 +581,7 @@ public class NxDistributerFatherGoodsController {
         int total = distributerGoodsService.queryDisGoodsTotal(mapCount);
         PageUtils pageUtil = new PageUtils(distributerGoodsEntities, total, limit, page);
 
-
         Map<String, Object> returnData = new HashMap<>();
-
         Map<String, Object> map111 = new HashMap<>();
         map111.put("disId", disId);
         map111.put("purStatus", 4);
@@ -841,10 +844,12 @@ public class NxDistributerFatherGoodsController {
                 mapG.put("hasSupplier", 1);
                 mapG.put("isHidden", 0);
                 mapG.put("disId", disId);
-            } else if(goodsType == -2){
+            }
+            else if(goodsType == -2){
                 mapG.put("isHidden", 1);
                 mapG.put("disId", disId);
             }
+
             else{
                 mapG.put("goodsType", goodsType);
                 mapG.put("disId", disId);
@@ -890,7 +895,6 @@ public class NxDistributerFatherGoodsController {
         if(hasTraceReport != null){
             mapG.put("hasTraceReport", hasTraceReport);
         }
-
 
 
         // 总数查询也需要传递外包装条件、溯源条件和多个配送商 id

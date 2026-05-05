@@ -53,16 +53,34 @@ public class NxAliasController {
 		Map<String, Object> map = new HashMap<>();
 		map.put("nxGoodsId", nxAlsGoodsId);
 		List<NxDistributerGoodsEntity> distributerGoodsEntities = nxDistributerGoodsService.queryDisGoodsByParams(map);
+		String systemAliasName = alias.getNxAliasName();
 		if(distributerGoodsEntities.size() > 0){
 			for(NxDistributerGoodsEntity distributerGoodsEntity: distributerGoodsEntities){
 				Integer distributerGoodsId = distributerGoodsEntity.getNxDistributerGoodsId();
-				NxDistributerAliasEntity aliasEntity = new NxDistributerAliasEntity();
-				aliasEntity.setNxDaAliasName(alias.getNxAliasName());
-				aliasEntity.setNxDaDisGoodsId(distributerGoodsId);
-				aliasEntity.setNxDaNxAliasId(alias.getNxAliasId());
-				aliasEntity.setNxDaAliasPinyin(pinyin);
-				aliasEntity.setNxDaAliasPy(headPinyin);
-				nxDistributerAliasService.save(aliasEntity);
+				Map<String, Object> aliasMap = new HashMap<>();
+				aliasMap.put("disGoodsId", distributerGoodsId);
+				List<NxDistributerAliasEntity> existingAliases = nxDistributerAliasService.queryAliasByParmas(aliasMap);
+				NxDistributerAliasEntity sameNameAlias = null;
+				for(NxDistributerAliasEntity ea : existingAliases){
+					if(systemAliasName != null && systemAliasName.equals(ea.getNxDaAliasName())){
+						sameNameAlias = ea;
+						break;
+					}
+				}
+				if(sameNameAlias != null){
+					sameNameAlias.setNxDaNxAliasId(alias.getNxAliasId());
+					sameNameAlias.setNxDaAliasPinyin(pinyin);
+					sameNameAlias.setNxDaAliasPy(headPinyin);
+					nxDistributerAliasService.update(sameNameAlias);
+				} else {
+					NxDistributerAliasEntity aliasEntity = new NxDistributerAliasEntity();
+					aliasEntity.setNxDaAliasName(systemAliasName);
+					aliasEntity.setNxDaDisGoodsId(distributerGoodsId);
+					aliasEntity.setNxDaNxAliasId(alias.getNxAliasId());
+					aliasEntity.setNxDaAliasPinyin(pinyin);
+					aliasEntity.setNxDaAliasPy(headPinyin);
+					nxDistributerAliasService.save(aliasEntity);
+				}
 			}
 		}
 

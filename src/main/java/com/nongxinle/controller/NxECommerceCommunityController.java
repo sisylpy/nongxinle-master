@@ -38,6 +38,7 @@ public class NxECommerceCommunityController {
 		Map<String, Object> map = new HashMap<>();
 		map.put("arr", entities);
 		map.put("commerce", nxECommerceEntity);
+		System.out.println("aqrrr" + entities.get(0).getNxCommunityDeliveryStartTime());
 		return R.ok().put("data", map);
 	}
 

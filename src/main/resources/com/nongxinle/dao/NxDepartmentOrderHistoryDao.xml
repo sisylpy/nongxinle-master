@@ -1057,6 +1057,9 @@
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
             </if>
+            <if test="orderDisId != null">
+                and dor.nx_DO_distributer_id = #{orderDisId}
+            </if>
             <if test="disId != null">
                 and dor.nx_DO_distributer_id = #{disId}
             </if>
@@ -2008,6 +2011,10 @@
         <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
         <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
         <result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
+        <result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+        <result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+        <result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+        <result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
     </resultMap>
 
     <!-- 根据departmentBillId查询历史订单列表（包含溯源报告信息） -->

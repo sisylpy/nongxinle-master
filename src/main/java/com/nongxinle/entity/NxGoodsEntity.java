@@ -130,9 +130,9 @@ public class NxGoodsEntity implements Serializable, Comparable {
      */
     private String nxGoodsCartonUnit;
     /**
-     * 外箱装数量
+     * 外箱装数量（与库 varchar 一致，如 9.5）
      */
-    private Integer nxGoodsItemsPerCarton;
+    private String nxGoodsItemsPerCarton;
 
     private NxDistributerGoodsEntity nxDistributerGoodsEntity;
 

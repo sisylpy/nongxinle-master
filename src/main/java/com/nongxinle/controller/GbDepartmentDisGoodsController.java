@@ -65,48 +65,6 @@ public class GbDepartmentDisGoodsController {
         return R.ok().put("page", list);
     }
 
-//
-//    @RequestMapping(value = "/getDepGoodsOrderHistory", method = RequestMethod.POST)
-//    @ResponseBody
-//    public R getDepGoodsOrderHistory (Integer depGoodsId, String startDate, String stopDate) {
-//
-//        GbDepartmentDisGoodsEntity departmentDisGoodsEntity = gbDepartmentDisGoodsService.queryObject(depGoodsId);
-//
-//        List<Map<String, Object>> dayList = new ArrayList<>();
-//        Integer gbDdgDisGoodsId = departmentDisGoodsEntity.getGbDdgDisGoodsId();
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("disGoodsId", gbDdgDisGoodsId);
-//
-//        Integer howManyDaysInPeriod = 0;
-//        if (!startDate.equals(stopDate)) {
-//            howManyDaysInPeriod = getHowManyDaysInPeriod(stopDate, startDate);
-//        }
-//        if (howManyDaysInPeriod > 0) {
-//
-//            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
-//                // dateList
-//                String whichDay = "";
-//                if (i == 0) {
-//                    whichDay = startDate;
-//                } else {
-//                    whichDay = afterWhatDay(startDate, i);
-//                }
-//                map.put("arriveDate", whichDay);
-//                map.put("dayuStatus", 1);
-//                map.put("depId", departmentDisGoodsEntity.getGbDdgDepartmentId());
-//                map.put("orderTypeNotEqual", 9);
-//                System.out.println("whdaydmamm" + map);
-//                List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities = gbDepartmentOrdersService.queryDisOrdersByParams(map);
-//                Map<String, Object> mapDay = new HashMap<>();
-//                String substring = whichDay.substring(8, 10);
-//                mapDay.put("day",  substring);
-//                mapDay.put("arr", gbDepartmentOrdersEntities);
-//                dayList.add(mapDay);
-//            }
-//        }
-//
-//        return R.ok().put("data", dayList);
-//    }
 
 
     @RequestMapping(value = "/departmentSaveLinshiDisGoods", method = RequestMethod.POST)

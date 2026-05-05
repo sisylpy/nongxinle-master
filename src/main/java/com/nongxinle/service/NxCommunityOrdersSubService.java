@@ -45,4 +45,6 @@ public interface NxCommunityOrdersSubService {
     int querySubOrderCount(Map<String, Object> mapT);
 
     double queryHuaxianTotal(Map<String, Object> map);
+
+    int queryTodayHuaxianCount(Map<String, Object> mapOrderQuantity);
 }

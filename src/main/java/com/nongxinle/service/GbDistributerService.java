@@ -47,4 +47,5 @@ public interface GbDistributerService {
 
     Integer saveSingleMendianDistributerGb(GbDistributerEntity gbDistributerEntity);
 
+	Integer saveSingleMendianDistributerGbForNx(GbDistributerEntity gbDistributerEntity);
 }

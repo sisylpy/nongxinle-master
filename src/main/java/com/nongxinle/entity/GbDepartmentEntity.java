@@ -142,6 +142,7 @@ public class GbDepartmentEntity implements Serializable, Comparable {
 	private String depWastePercent;
 	private String depLossGoodsPercent;
 	private String depWasteGoodsPercent;
+
 	private String depProduceGoodsTotalString;
 	private Double depCostGoodsTotal  = 0.0;
 	private String depCostGoodsTotalString;

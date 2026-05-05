@@ -99,5 +99,12 @@ public class NxCommunityCommunityOrdersSubServiceImpl implements NxCommunityOrde
 		return nxCommunityOrdersSubDao.queryHuaxianTotal(map);
     }
 
+    @Override
+    public int queryTodayHuaxianCount(Map<String, Object> mapOrderQuantity) {
+
+		return nxCommunityOrdersSubDao.queryTodayHuaxianCount(mapOrderQuantity);
+
+    }
+
 
 }

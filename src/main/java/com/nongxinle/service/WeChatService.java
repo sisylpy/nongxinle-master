@@ -14,7 +14,6 @@ import com.nongxinle.entity.NxCustomerUserEntity;
 import com.nongxinle.entity.TemplateDataVo;
 import com.nongxinle.entity.WxMssVo;
 import lombok.extern.slf4j.Slf4j;
-import netscape.javascript.JSObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpEntity;

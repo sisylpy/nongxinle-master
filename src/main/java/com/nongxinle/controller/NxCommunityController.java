@@ -124,7 +124,11 @@ public class NxCommunityController {
 				if (nxCommunity.getNxCommunityLng() == null || nxCommunity.getNxCommunityLng().trim().isEmpty()) {
 					return R.error(-1, "经度不能为空");
 				}
-				
+
+				nxCommunity.setNxCommunitySysBusinessAreaId("1");
+				nxCommunity.setNxCommunitySysCityId("1");
+				nxCommunity.setNxCommunitySysDistrictId("1");
+				nxCommunity.setNxCommunitySysProvinceId("1");
 				nxCommunityService.saveWithEcommerce(nxCommunity);
 
 				// 3.2，保存批发商用户

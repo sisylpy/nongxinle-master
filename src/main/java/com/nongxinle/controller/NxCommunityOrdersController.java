@@ -75,13 +75,14 @@ public class NxCommunityOrdersController {
     private NxCommunityDeskService nxCommunityDeskService;
     @Autowired
     private NxCommunityService nxCommunityService;
+    @Autowired
+    private NxCommunityPurchaseGoodsService nxComPurchaseGoodsService;
 
     public static final String URL = "http://api.feieyun.cn/Api/Open/";//不需要修改
 
     public static final String USER = "454926763@qq.com";//*必填*：账号名
     public static final String UKEY = "bDI55xfWTv5Fu6KU";//*必填*: 飞鹅云后台注册账号后生成的UKEY 【备注：这不是填打印机的KEY】
     public static final String SN = "924610660";//*必填*：打印机编号，必须要在管理后台里添加打印机或调用API接口添加之后，才能调用API
-
 
 
     @RequestMapping(value = "/printDeskOrder/{id}")
@@ -97,20 +98,20 @@ public class NxCommunityOrdersController {
 
         Integer nxCosDeskId = ordersEntity.getNxCoDeskId();
         NxCommunityDeskEntity deskEntity = new NxCommunityDeskEntity();
-        if(nxCosDeskId != -1 && nxCosDeskId != 99){
+        if (nxCosDeskId != -1 && nxCosDeskId != 99) {
             deskEntity = nxCommunityDeskService.queryObject(nxCosDeskId);
-        }else{
+        } else {
             deskEntity.setNxCommunityDeskName("堂食");
         }
 
         String content;
         content = "<CB>" + communityEntity.getNxCommunityName() + "</CB><BR>";
         Map<String, Object> mapSub = new HashMap<>();
-        mapSub.put("orderId",id);
-        System.out.println("osroooeeoesssnssn" + mapSub) ;
+        mapSub.put("orderId", id);
+        System.out.println("osroooeeoesssnssn" + mapSub);
         List<NxCommunityOrdersSubEntity> subEntities = nxCommunityOrdersSubService.querySubOrdersByParams(mapSub);
-        if(subEntities.size() > 0){
-            for(NxCommunityOrdersSubEntity subEntity: subEntities){
+        if (subEntities.size() > 0) {
+            for (NxCommunityOrdersSubEntity subEntity : subEntities) {
                 Integer nxCosCommunityGoodsId = subEntity.getNxCosCommunityGoodsId();
                 NxCommunityGoodsEntity goodsEntity = nxCommunityGoodsService.queryObject(nxCosCommunityGoodsId);
                 content += goodsEntity.getNxCgGoodsName() + subEntity.getNxCosQuantity() + "<BR>";
@@ -118,11 +119,11 @@ public class NxCommunityOrdersController {
             }
         }
         content += "--------------------------------<BR>";
-        content += "桌号："+ deskEntity.getNxCommunityDeskName() + "<BR>";
-        content += "合计："+ ordersEntity.getNxCoTotal() +"元<BR>";
-        content += "店铺地址："+ communityEntity.getNxCommunityDeliveryAddress() + "<BR>";
-        content += "联系电话："+ communityEntity.getNxCommunityBusinessPhone() + "<BR>";
-        content += "营业时间："+ communityEntity.getNxCommunityOpenTime() + "-"+ communityEntity.getNxCommunityCloseTime() +"<BR>";
+        content += "桌号：" + deskEntity.getNxCommunityDeskName() + "<BR>";
+        content += "合计：" + ordersEntity.getNxCoTotal() + "元<BR>";
+        content += "店铺地址：" + communityEntity.getNxCommunityDeliveryAddress() + "<BR>";
+        content += "联系电话：" + communityEntity.getNxCommunityBusinessPhone() + "<BR>";
+        content += "营业时间：" + communityEntity.getNxCommunityOpenTime() + "-" + communityEntity.getNxCommunityCloseTime() + "<BR>";
 
         //通过POST请求，发送打印信息到服务器
         RequestConfig requestConfig = RequestConfig.custom()
@@ -136,37 +137,33 @@ public class NxCommunityOrdersController {
 
         HttpPost post = new HttpPost(URL);
         List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-        nvps.add(new BasicNameValuePair("user",USER));
-        String STIME = String.valueOf(System.currentTimeMillis()/1000);
-        nvps.add(new BasicNameValuePair("stime",STIME));
-        nvps.add(new BasicNameValuePair("sig",signature(USER,UKEY,STIME)));
-        nvps.add(new BasicNameValuePair("apiname","Open_printMsg"));//固定值,不需要修改
-        nvps.add(new BasicNameValuePair("sn",sn));
-        nvps.add(new BasicNameValuePair("content",content));
-        nvps.add(new BasicNameValuePair("times","1"));//打印联数
+        nvps.add(new BasicNameValuePair("user", USER));
+        String STIME = String.valueOf(System.currentTimeMillis() / 1000);
+        nvps.add(new BasicNameValuePair("stime", STIME));
+        nvps.add(new BasicNameValuePair("sig", signature(USER, UKEY, STIME)));
+        nvps.add(new BasicNameValuePair("apiname", "Open_printMsg"));//固定值,不需要修改
+        nvps.add(new BasicNameValuePair("sn", sn));
+        nvps.add(new BasicNameValuePair("content", content));
+        nvps.add(new BasicNameValuePair("times", "1"));//打印联数
 
         CloseableHttpResponse response = null;
         String result = null;
-        try
-        {
-            post.setEntity(new UrlEncodedFormEntity(nvps,"utf-8"));
+        try {
+            post.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
             response = httpClient.execute(post);
             int statecode = response.getStatusLine().getStatusCode();
-            if(statecode == 200){
+            if (statecode == 200) {
                 HttpEntity httpentity = response.getEntity();
-                if (httpentity != null){
+                if (httpentity != null) {
                     //服务器返回的JSON字符串，建议要当做日志记录起来
                     result = EntityUtils.toString(httpentity);
                 }
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally{
+        } finally {
             try {
-                if(response!=null){
+                if (response != null) {
                     response.close();
                 }
             } catch (IOException e) {
@@ -188,10 +185,10 @@ public class NxCommunityOrdersController {
         return R.ok();
     }
 
-    
+
     @RequestMapping(value = "/deskGetUnPayOrders", method = RequestMethod.POST)
     @ResponseBody
-    public R  deskGetUnPayOrders(Integer deskId, String startDate, String stopDate) {
+    public R deskGetUnPayOrders(Integer deskId, String startDate, String stopDate) {
 
         System.out.println("s");
         Map<String, Object> map = new HashMap<>();
@@ -205,13 +202,13 @@ public class NxCommunityOrdersController {
         mapR.put("arr", ordersEntities);
         mapR.put("subtotal", subtotal);
 
-        return R.ok().put("data",mapR);
+        return R.ok().put("data", mapR);
     }
 
 
     @RequestMapping(value = "/deskGetOrders", method = RequestMethod.POST)
     @ResponseBody
-    public R  deskGetOrders(Integer deskId, String startDate, String stopDate) {
+    public R deskGetOrders(Integer deskId, String startDate, String stopDate) {
 
         System.out.println("s");
         Map<String, Object> map = new HashMap<>();
@@ -220,8 +217,10 @@ public class NxCommunityOrdersController {
         map.put("stopDate", stopDate);
         List<NxCommunityOrdersEntity> ordersEntities = nxCommunityOrdersService.queryCustomerOrder(map);
 
-        return R.ok().put("data",ordersEntities);
+        return R.ok().put("data", ordersEntities);
     }
+
+
     @RequestMapping(value = "/orderDesk/4pqhDTY6LK.txt")
     @ResponseBody
     public String orderDesk() {
@@ -231,20 +230,20 @@ public class NxCommunityOrdersController {
 
     @RequestMapping(value = "/updateAllSplicing", method = RequestMethod.POST)
     @ResponseBody
-    public R updateAllSplicing (@RequestBody  NxCommunityOrdersEntity ordersEntity) {
+    public R updateAllSplicing(@RequestBody NxCommunityOrdersEntity ordersEntity) {
 
         List<NxCommunitySplicingOrdersEntity> allSplicingOrders = ordersEntity.getAllSplicingOrders();
 
-        for(NxCommunitySplicingOrdersEntity splicingOrdersEntity: allSplicingOrders){
+        for (NxCommunitySplicingOrdersEntity splicingOrdersEntity : allSplicingOrders) {
             BigDecimal total = new BigDecimal(0);
             BigDecimal huaxianTotal = new BigDecimal(0);
             List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = splicingOrdersEntity.getNxCommunityOrdersSubEntities();
 
-            if(nxCommunityOrdersSubEntities.size() > 0){
+            if (nxCommunityOrdersSubEntities.size() > 0) {
 
-                for(NxCommunityOrdersSubEntity subEntity: nxCommunityOrdersSubEntities){
+                for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
                     total = total.add(new BigDecimal(subEntity.getNxCosSubtotal()));
-                    if(subEntity.getNxCosHuaxianSubtotal() != null){
+                    if (subEntity.getNxCosHuaxianSubtotal() != null) {
                         huaxianTotal = huaxianTotal.add(new BigDecimal(subEntity.getNxCosHuaxianSubtotal()));
                     }
                 }
@@ -352,7 +351,6 @@ public class NxCommunityOrdersController {
     }
 
 
-
     @RequestMapping(value = "/getSalesCommerceEveryDay", method = RequestMethod.POST)
     @ResponseBody
     private Map<String, Object> getSalesCommerceEveryDay(String startDate, String stopDate, Integer commerceId) {
@@ -425,7 +423,7 @@ public class NxCommunityOrdersController {
         }
         if (howManyDaysInPeriod > 0) {
 
-            for (int i = 0; i < howManyDaysInPeriod + 1; i++) {
+            for (int i = 0; i < howManyDaysInPeriod + 2; i++) {
                 // dateList
                 String whichDay = "";
                 if (i == 0) {
@@ -513,7 +511,7 @@ public class NxCommunityOrdersController {
     public R rePrintOrder(@RequestBody NxCommunityOrdersEntity orders) {
         Integer nxCommunityOrdersId = orders.getNxCommunityOrdersId();
 
-        if(orders.getNxCoType() == 0){
+        if (orders.getNxCoType() == 0) {
             Map<String, Object> map = new HashMap<>();
             map.put("orderId", nxCommunityOrdersId);
             List<NxCommunityOrdersSubEntity> subEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
@@ -526,12 +524,12 @@ public class NxCommunityOrdersController {
             }
             orders.setNxCoStatus(2);
             nxCommunityOrdersService.update(orders);
-        }else{
+        } else {
             Map<String, Object> map = new HashMap<>();
             map.put("id", nxCommunityOrdersId);
             List<NxCommunitySplicingOrdersEntity> nxCommunitySplicingOrdersEntities = nxCommunitySplicingOrdersService.querySplicingListByParams(map);
-            if(nxCommunitySplicingOrdersEntities.size() > 0){
-                for(NxCommunitySplicingOrdersEntity splicingOrdersEntity: nxCommunitySplicingOrdersEntities){
+            if (nxCommunitySplicingOrdersEntities.size() > 0) {
+                for (NxCommunitySplicingOrdersEntity splicingOrdersEntity : nxCommunitySplicingOrdersEntities) {
                     Integer nxCommunitySplicingOrdersId = splicingOrdersEntity.getNxCommunitySplicingOrdersId();
                     Map<String, Object> mapSp = new HashMap<>();
                     mapSp.put("splicingOrderId", nxCommunitySplicingOrdersId);
@@ -550,7 +548,12 @@ public class NxCommunityOrdersController {
         return R.ok();
     }
 
-    //
+    /**
+     * 顾客已取货
+     *
+     * @param orders
+     * @return
+     */
     @RequestMapping(value = "/customerFetchOrder", method = RequestMethod.POST)
     @ResponseBody
     public R customerFetchOrder(@RequestBody NxCommunityOrdersEntity orders) {
@@ -600,8 +603,8 @@ public class NxCommunityOrdersController {
                     mapCD.put("status", -1);
                     mapCD.put("cardId", userCardEntity.getNxCucaCardId());
                     List<NxCustomerUserCardEntity> cardEntitiesD = nxCustomerUserCardService.queryUserCardByParams(mapCD);
-                    if(cardEntitiesD.size() > 0){
-                        for(NxCustomerUserCardEntity card : cardEntitiesD){
+                    if (cardEntitiesD.size() > 0) {
+                        for (NxCustomerUserCardEntity card : cardEntitiesD) {
                             nxCustomerUserCardService.delete(card.getNxCustomerUserCardId());
                         }
                     }
@@ -638,8 +641,8 @@ public class NxCommunityOrdersController {
                             mapCD.put("status", -1);
                             mapCD.put("cardId", userCardEntity.getNxCucaCardId());
                             List<NxCustomerUserCardEntity> cardEntitiesD = nxCustomerUserCardService.queryUserCardByParams(mapCD);
-                            if(cardEntitiesD.size() > 0){
-                                for(NxCustomerUserCardEntity card : cardEntitiesD){
+                            if (cardEntitiesD.size() > 0) {
+                                for (NxCustomerUserCardEntity card : cardEntitiesD) {
                                     nxCustomerUserCardService.delete(card.getNxCustomerUserCardId());
                                 }
                             }
@@ -670,7 +673,7 @@ public class NxCommunityOrdersController {
 
         String orderDetail = "";
 
-        if(orders.getNxCoType() == 0){
+        if (orders.getNxCoType() == 0) {
             Map<String, Object> map = new HashMap<>();
             map.put("orderId", nxCommunityOrdersId);
             List<NxCommunityOrdersSubEntity> subEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
@@ -679,11 +682,11 @@ public class NxCommunityOrdersController {
                     subEntity.setNxCosStatus(3);
                     nxCommunityOrdersSubService.update(subEntity);
                     NxCommunityGoodsEntity goodsEntity = nxCommunityGoodsService.queryObject(subEntity.getNxCosCommunityGoodsId());
-                    orderDetail =  orderDetail +  goodsEntity.getNxCgGoodsName() + ",";
+                    orderDetail = orderDetail + goodsEntity.getNxCgGoodsName() + ",";
                 }
             }
 
-        }else{
+        } else {
             Map<String, Object> map = new HashMap<>();
             map.put("id", nxCommunityOrdersId);
             System.out.println("iddiididid" + map);
@@ -698,7 +701,7 @@ public class NxCommunityOrdersController {
                             subEntity.setNxCosStatus(3);
                             nxCommunityOrdersSubService.update(subEntity);
                             NxCommunityGoodsEntity goodsEntity = nxCommunityGoodsService.queryObject(subEntity.getNxCosCommunityGoodsId());
-                            orderDetail = orderDetail +  goodsEntity.getNxCgGoodsName() + ",";
+                            orderDetail = orderDetail + goodsEntity.getNxCgGoodsName() + ",";
                         }
                     }
                 }
@@ -709,24 +712,20 @@ public class NxCommunityOrdersController {
         nxCommunityOrdersService.update(orders);
 
 
-
         Integer nxCoUserId = orders.getNxCoUserId();
         NxCustomerUserEntity userEntity = nxCustomerUserService.queryObject(nxCoUserId);
         String nxCuWxOpenId = userEntity.getNxCuWxOpenId();
 
-        Map<String, TemplateData> mapNotice = new HashMap<>();
-//        mapNotice.put("character_string1", new TemplateData(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date())));
-//        mapNotice.put("amount2", new TemplateData("12"));
-//        mapNotice.put("phrase3", new TemplateData("已到货"));
-//        mapNotice.put("thing6", new TemplateData("BJYSL-SN-500"));
-//        mapNotice.put("number7", new TemplateData("100"));
+        Integer nxCoCommunityId = orders.getNxCoCommunityId();
+        NxCommunityEntity nxCommunityEntity = nxCommunityService.queryObject(nxCoCommunityId);
 
-        mapNotice.put("thing2", new TemplateData("青轻香"));
+        Map<String, TemplateData> mapNotice = new HashMap<>();
+        mapNotice.put("thing2", new TemplateData(nxCommunityEntity.getNxCommunityName()));
         mapNotice.put("character_string4", new TemplateData(orders.getNxCoWeighNumber()));
         mapNotice.put("thing5", new TemplateData(orderDetail));
         mapNotice.put("time6", new TemplateData(orders.getNxCoServiceDate() + " " + orders.getNxCoServiceHour() + ":" +
                 orders.getNxCoServiceMinute()));
-        mapNotice.put("phone_number12", new TemplateData("13910825707"));
+        mapNotice.put("phone_number12", new TemplateData(nxCommunityEntity.getNxCommunityBusinessPhone()));
         System.out.println("nociiciiiicic" + mapNotice);
         WeNoticeService.qucantixingMessageMix(nxCuWxOpenId, "pages/index/index", mapNotice);
 
@@ -810,7 +809,7 @@ public class NxCommunityOrdersController {
         //check1
         Map<String, Object> mapD = new HashMap<>();
         mapD.put("userId", orderUserId);
-        mapD.put("type", 0 );
+        mapD.put("type", 0);
         mapD.put("commId", commId);
         mapD.put("xiaoyuStatus", 1);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -819,8 +818,8 @@ public class NxCommunityOrdersController {
         System.out.println("delleleleNowtiem" + mapD);
         List<NxCustomerUserCouponEntity> delCouponEntities = nxCustomerUserCouponService.queryUserCouponListByParams(mapD);
         System.out.println("sssssssssss" + delCouponEntities.size());
-        if(delCouponEntities.size() > 0){
-            for(NxCustomerUserCouponEntity userCouponEntity: delCouponEntities){
+        if (delCouponEntities.size() > 0) {
+            for (NxCustomerUserCouponEntity userCouponEntity : delCouponEntities) {
                 userCouponEntity.setNxCucStatus(-2);
                 nxCustomerUserCouponService.update(userCouponEntity);
             }
@@ -835,8 +834,8 @@ public class NxCommunityOrdersController {
         System.out.println("getupodddi");
 
         List<NxCustomerUserCardEntity> cardEntities = nxCustomerUserCardService.queryUserCardByParams(mapCARD);
-        if(cardEntities.size() > 0){
-            for(NxCustomerUserCardEntity cardEntity: cardEntities){
+        if (cardEntities.size() > 0) {
+            for (NxCustomerUserCardEntity cardEntity : cardEntities) {
                 System.out.println("deleleleleleleleellelelleelle" + cardEntity.getNxCucaStopDate());
                 nxCustomerUserCardService.delete(cardEntity.getNxCustomerUserCardId());
             }
@@ -849,7 +848,7 @@ public class NxCommunityOrdersController {
         List<NxCommunityCouponEntity> nxCommunityCouponEntityList = nxCommunityCouponService.queryCustomerShowCoupon(mapC);
         List<NxCommunityCouponEntity> downCoupons = new ArrayList<>();
         if (nxCommunityCouponEntityList.size() > 0) {
-            for(NxCommunityCouponEntity communityCouponEntity: nxCommunityCouponEntityList){
+            for (NxCommunityCouponEntity communityCouponEntity : nxCommunityCouponEntityList) {
                 Map<String, Object> mapIF = new HashMap<>();
                 mapIF.put("coupId", communityCouponEntity.getNxCommunityCouponId());
                 mapIF.put("userId", orderUserId);
@@ -861,10 +860,10 @@ public class NxCommunityOrdersController {
                     downCoupons.add(communityCouponEntity);
                 }
             }
-            if(downCoupons.size() > 0){
+            if (downCoupons.size() > 0) {
                 map.put("coupon", downCoupons.get(0));
                 map.put("couponList", JSON.toJSONString(downCoupons));
-            }else{
+            } else {
                 map.put("coupon", null);
                 map.put("couponList", null);
             }
@@ -886,7 +885,7 @@ public class NxCommunityOrdersController {
         //1,
         Map<String, Object> mapUC = new HashMap<>();
         mapUC.put("userId", orderUserId);
-        mapUC.put("type", 0 );
+        mapUC.put("type", 0);
         mapUC.put("commId", commId);
         mapUC.put("xiaoyuStatus", 1);
         mapUC.put("dayuStatus", -2);
@@ -898,8 +897,8 @@ public class NxCommunityOrdersController {
         //3,
         Map<String, Object> mapUG = new HashMap<>();
         mapUG.put("userId", orderUserId);
-        mapUG.put("commId",commId );
-        mapUG.put("type",1 );
+        mapUG.put("commId", commId);
+        mapUG.put("type", 1);
         System.out.println("maudud" + mapUG);
         int userGoodsCount = nxCustomerUserGoodsDao.queryUserGoodsCount(mapUG);
 
@@ -998,7 +997,7 @@ public class NxCommunityOrdersController {
         reqJson.put("notify_url", "https://grainservice.club:8443/nongxinle/api/nxorders/refund"); // 请替换为你自己的退款通知地址
 
         // 构造金额对象（单位：分）
-        String refundAmountString  = nxCommunityOrdersEntity.getNxCoTotal();
+        String refundAmountString = nxCommunityOrdersEntity.getNxCoTotal();
         if (refundAmountString == null || refundAmountString.trim().isEmpty()) {
             return R.error("订单总金额为空，无法处理退款");
         }
@@ -1071,8 +1070,8 @@ public class NxCommunityOrdersController {
                 System.out.println("【微信V3退款回调】resource 字段为空，无法解密退款信息");
                 return WxV3Util.errorReturn("Resource is null");
             }
-            String ciphertext     = resource.getString("ciphertext");
-            String nonce         = resource.getString("nonce");
+            String ciphertext = resource.getString("ciphertext");
+            String nonce = resource.getString("nonce");
             String associatedData = resource.getString("associated_data");
 
             // 4. 使用 APIv3Key 解密 ciphertext 得到退款明文信息
@@ -1086,8 +1085,8 @@ public class NxCommunityOrdersController {
             JSONObject refundInfo = JSON.parseObject(plainText);
 
             // 微信退款通知里会包含 out_refund_no、refund_id、refund_status 等
-            String outRefundNo  = refundInfo.getString("out_refund_no");
-            String refundId     = refundInfo.getString("refund_id");
+            String outRefundNo = refundInfo.getString("out_refund_no");
+            String refundId = refundInfo.getString("refund_id");
             String refundStatus = refundInfo.getString("refund_status"); // SUCCESS、CLOSED等
 
             System.out.println("【微信V3退款回调】out_refund_no = " + outRefundNo
@@ -1121,174 +1120,6 @@ public class NxCommunityOrdersController {
             // 如果解析或处理失败，返回错误信息
             return WxV3Util.errorReturn("Exception: " + e.getMessage());
         }
-    }
-    @RequestMapping("/refund1")
-    public String refund1(HttpServletRequest request, HttpServletResponse response) {
-        // System.out.println("微信支付成功,微信发送的callback信息,请注意修改订单信息");
-        InputStream is = null;
-        try {
-
-            is = request.getInputStream();// 获取请求的流信息(这里是微信发的xml格式所有只能使用流来读)
-            String xml = WxPayUtils.InputStream2String(is);
-            Map<String, String> notifyMap = WxPayUtils.xmlToMap(xml);// 将微信发的xml转map
-            System.out.println("微信返回给回调函数的信息为V3：" + xml);
-            if (notifyMap.get("result_code").equals("SUCCESS")) {
-                /*
-                 * 以下是自己的业务处理------仅做参考 更新order对应字段/已支付金额/状态码
-                 * 更新bill支付状态
-                 */
-                System.out.println("===notify===回调方法已经被调！！！");
-
-                String ordersSn = notifyMap.get("out_trade_no");// 商户订单号
-                NxCommunityOrdersEntity billEntity = nxCommunityOrdersService.queryOrderByTradeNo(ordersSn);
-                billEntity.setNxCoStatus(2);
-                billEntity.setNxCoPaymentStatus(1);
-                nxCommunityOrdersService.update(billEntity);
-
-
-                // 更新桌子状态
-                Integer nxCoDeskId = billEntity.getNxCoDeskId();
-                if(nxCoDeskId != -1 && nxCoDeskId != 99){
-                    NxCommunityDeskEntity deskEntity = nxCommunityDeskService.queryObject(nxCoDeskId);
-                    deskEntity.setNxCdStatus(0);
-                    nxCommunityDeskService.update(deskEntity);
-                }
-
-
-                if (billEntity.getNxCoType() == 0) {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("orderId", billEntity.getNxCommunityOrdersId());
-                    List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
-                    if (nxCommunityOrdersSubEntities.size() > 0) {
-                        for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
-                            //检查 Adsense
-                            checkAdsenseGoods(subEntity.getNxCosCommunityGoodsId(), subEntity);
-
-                            subEntity.setNxCosStatus(1);
-                            subEntity.setNxCosServiceTime(billEntity.getNxCoServiceTime());
-                            subEntity.setNxCosPickUpCode(billEntity.getNxCoWeighNumber());
-                            subEntity.setNxCosService(billEntity.getNxCoService());
-                            subEntity.setNxCosServiceDate(billEntity.getNxCoServiceDate());
-                            subEntity.setNxCosServiceTime(billEntity.getNxCoServiceTime());
-                            nxCommunityOrdersSubService.update(subEntity);
-
-                            saveUserGoods(subEntity);
-
-                            printSubOrderGoods(subEntity);
-
-                            if (subEntity.getNxCosCucId() != null) {
-                                NxCustomerUserCouponEntity customerUserCouponEntity = nxCustomerUserCouponService.equalObject(subEntity.getNxCosCucId());
-                                customerUserCouponEntity.setNxCucStatus(2);
-                                nxCustomerUserCouponService.update(customerUserCouponEntity);
-                            }
-                        }
-                    }
-                    Map<String, Object> mapC = new HashMap<>();
-                    mapC.put("userId", billEntity.getNxCoUserId());
-                    mapC.put("status", -1);
-                    List<NxCustomerUserCardEntity> cardEntities = nxCustomerUserCardService.queryUserCardByParams(mapC);
-                    if (cardEntities.size() > 0) {
-                        for (NxCustomerUserCardEntity userCardEntity : cardEntities) {
-                            if (userCardEntity.getNxCucaIsSelected() == 1) {
-                                userCardEntity.setNxCucaStatus(0);
-                                userCardEntity.setNxCucaComOrderId(billEntity.getNxCommunityOrdersId());
-                                nxCustomerUserCardService.update(userCardEntity);
-                                //给订单添加购买卡的费用
-                                Integer nxCucaCardId = userCardEntity.getNxCucaCardId();
-                                NxCommunityCardEntity cardEntity = nxCommunityCardService.queryObject(nxCucaCardId);
-                                String nxCcPrice = cardEntity.getNxCcPrice();
-                                billEntity.setNxCoBuyMemberCardSubtotal(nxCcPrice);
-                                nxCommunityOrdersService.update(billEntity);
-                            } else {
-                                nxCustomerUserCardService.delete(userCardEntity.getNxCustomerUserCardId());
-                            }
-                        }
-                    }
-
-                } else {
-                    Map<String, Object> mapS = new HashMap<>();
-                    mapS.put("id", billEntity.getNxCommunityOrdersId());
-                    System.out.println("bilosororororororoorro" +mapS);
-                    List<NxCommunitySplicingOrdersEntity> nxCommunitySplicingOrdersEntities = nxCommunitySplicingOrdersService.querySplicingListByParams(mapS);
-                    if (nxCommunitySplicingOrdersEntities.size() > 0) {
-                        for (NxCommunitySplicingOrdersEntity splicingOrdersEntity : nxCommunitySplicingOrdersEntities) {
-
-                            Map<String, Object> map = new HashMap<>();
-                            map.put("splicingOrderId", splicingOrdersEntity.getNxCommunitySplicingOrdersId());
-                            System.out.println("pspsosoosossos" + splicingOrdersEntity.getNxCommunitySplicingOrdersId());
-                            List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
-                            if (nxCommunityOrdersSubEntities.size() > 0) {
-                                for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
-
-                                    //检查 Adsense
-                                    checkAdsenseGoods(subEntity.getNxCosCommunityGoodsId(), subEntity);
-
-                                    subEntity.setNxCosStatus(1);
-                                    subEntity.setNxCosServiceTime(billEntity.getNxCoServiceTime());
-                                    subEntity.setNxCosPickUpCode(billEntity.getNxCoWeighNumber());
-                                    subEntity.setNxCosService(billEntity.getNxCoService());
-                                    subEntity.setNxCosServiceDate(billEntity.getNxCoServiceDate());
-                                    subEntity.setNxCosServiceTime(billEntity.getNxCoServiceTime());
-                                    nxCommunityOrdersSubService.update(subEntity);
-                                    saveUserGoods(subEntity);
-
-                                    if (subEntity.getNxCosCucId() != null) {
-                                        NxCustomerUserCouponEntity customerUserCouponEntity = nxCustomerUserCouponService.equalObject(subEntity.getNxCosCucId());
-                                        customerUserCouponEntity.setNxCucStatus(2);
-                                        nxCustomerUserCouponService.update(customerUserCouponEntity);
-                                    }
-
-                                }
-                            }
-
-                            Map<String, Object> mapC = new HashMap<>();
-                            mapC.put("userId", splicingOrdersEntity.getNxCsoUserId());
-                            mapC.put("status", -1);
-                            List<NxCustomerUserCardEntity> cardEntities = nxCustomerUserCardService.queryUserCardByParams(mapC);
-                            if (cardEntities.size() > 0) {
-                                for (NxCustomerUserCardEntity userCardEntity : cardEntities) {
-                                    if (userCardEntity.getNxCucaIsSelected() == 1) {
-                                        userCardEntity.setNxCucaStatus(0);
-                                        userCardEntity.setNxCucaComOrderId(billEntity.getNxCommunityOrdersId());
-                                        nxCustomerUserCardService.update(userCardEntity);
-
-                                        //给订单添加购买卡的费用
-                                        Integer nxCucaCardId = userCardEntity.getNxCucaCardId();
-                                        NxCommunityCardEntity cardEntity = nxCommunityCardService.queryObject(nxCucaCardId);
-                                        String nxCcPrice = cardEntity.getNxCcPrice();
-                                        billEntity.setNxCoBuyMemberCardSubtotal(nxCcPrice);
-                                        nxCommunityOrdersService.update(billEntity);
-
-
-                                    } else {
-                                        nxCustomerUserCardService.delete(userCardEntity.getNxCustomerUserCardId());
-                                    }
-                                }
-
-                            }
-
-                        }
-
-                    }
-                }
-
-            }
-
-            // 告诉微信服务器收到信息了，不要在调用回调action了========这里很重要回复微信服务器信息用流发送一个xml即可
-            response.getWriter().write("<xml><return_code><![CDATA[SUCCESS]]></return_code></xml>");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return null;
     }
 
 
@@ -1397,7 +1228,7 @@ public class NxCommunityOrdersController {
     @ResponseBody
     public R deliverySavePindan(Integer commId, Integer deliveryUserId, Integer serviceType) {
 
-        NxECommerceCommunityEntity eCommerceCommunityEntity =  nxECommerceCommunityService.queryByCommunityId(commId);
+        NxECommerceCommunityEntity eCommerceCommunityEntity = nxECommerceCommunityService.queryByCommunityId(commId);
         Integer nxEccEId = eCommerceCommunityEntity.getNxEccEId();
         NxCustomerUserEntity userEntity = nxCustomerUserService.queryObject(deliveryUserId);
         NxCommunityOrdersEntity ordersEntity = new NxCommunityOrdersEntity();
@@ -1491,14 +1322,14 @@ public class NxCommunityOrdersController {
     public R pindanSaveOrder(@RequestBody NxCommunityOrdersEntity nxOrders) {
 
         System.out.println(nxOrders);
-        nxOrders.setNxCoDate(formatWhatDate(0));
+        nxOrders.setNxCoDate(formatWhatYearDayTime(0));
         nxOrders.setNxCoStatus(0);
         String pickUpCode = generatePickNumber(3);
         nxOrders.setNxCoWeighNumber(pickUpCode);
         BigDecimal multiply = new BigDecimal(nxOrders.getNxCoServiceHour()).multiply(new BigDecimal(60));
         BigDecimal add = multiply.add(new BigDecimal(nxOrders.getNxCoServiceMinute()));
         nxOrders.setNxCoServiceTime(add.toString());
-        nxOrders.setNxCoDate(formatWhatDate(0));
+        nxOrders.setNxCoDate(formatWhatYearDayTime(0));
         nxCommunityOrdersService.update(nxOrders);
 
 
@@ -1534,7 +1365,7 @@ public class NxCommunityOrdersController {
     }
 
 
-    private  void saveUserGoods(NxCommunityOrdersSubEntity subEntity){
+    private void saveUserGoods(NxCommunityOrdersSubEntity subEntity) {
 
         Integer nxOsCommunityGoodsId = subEntity.getNxCosCommunityGoodsId();
         Map<String, Object> mapUG = new HashMap<>();
@@ -1572,14 +1403,12 @@ public class NxCommunityOrdersController {
     }
 
 
-
-
     @ResponseBody
     @RequestMapping(value = "/customerSaveOrder", method = RequestMethod.POST)
     public R customerSaveOrder(@RequestBody NxCommunityOrdersEntity nxOrders) {
 
         System.out.println(nxOrders);
-        nxOrders.setNxCoDate(formatWhatDate(0));
+        nxOrders.setNxCoDate(formatWhatYearDayTime(0));
         nxOrders.setNxCoStatus(0);
         nxOrders.setNxCoType(0);
         String pickUpCode = generatePickNumber(3);
@@ -1587,7 +1416,7 @@ public class NxCommunityOrdersController {
         BigDecimal multiply = new BigDecimal(nxOrders.getNxCoServiceHour()).multiply(new BigDecimal(60));
         BigDecimal add = multiply.add(new BigDecimal(nxOrders.getNxCoServiceMinute()));
         nxOrders.setNxCoServiceTime(add.toString());
-        nxOrders.setNxCoDate(formatWhatDate(0));
+        nxOrders.setNxCoDate(formatWhatYearDayTime(0));
 //        nxCommunityOrdersService.justSaveWithUserGoods(nxOrders);
         nxCommunityOrdersService.justSave(nxOrders);
 
@@ -1613,7 +1442,7 @@ public class NxCommunityOrdersController {
     public R staffSaveOrder(@RequestBody NxCommunityOrdersEntity nxOrders) {
 
         System.out.println(nxOrders);
-        nxOrders.setNxCoDate(formatWhatDate(0));
+        nxOrders.setNxCoDate(formatWhatYearDayTime(0));
         nxOrders.setNxCoStatus(0);
         nxOrders.setNxCoType(0);
         String pickUpCode = generatePickNumber(3);
@@ -1621,7 +1450,7 @@ public class NxCommunityOrdersController {
         BigDecimal multiply = new BigDecimal(nxOrders.getNxCoServiceHour()).multiply(new BigDecimal(60));
         BigDecimal add = multiply.add(new BigDecimal(nxOrders.getNxCoServiceMinute()));
         nxOrders.setNxCoServiceTime(add.toString());
-        nxOrders.setNxCoDate(formatWhatDate(0));
+        nxOrders.setNxCoDate(formatWhatYearDayTime(0));
 //        nxCommunityOrdersService.justSaveWithUserGoods(nxOrders);
 
         System.out.println("jjsususuave" + nxOrders);
@@ -1629,12 +1458,11 @@ public class NxCommunityOrdersController {
 
         Integer nxCoDeskId = nxOrders.getNxCoDeskId();
 
-        if(nxCoDeskId != -1 && nxCoDeskId != 99){
+        if (nxCoDeskId != -1 && nxCoDeskId != 99) {
             NxCommunityDeskEntity deskEntity = nxCommunityDeskService.queryObject(nxCoDeskId);
             deskEntity.setNxCdStatus(1);
             nxCommunityDeskService.update(deskEntity);
         }
-
 
 
         List<NxCommunityOrdersSubEntity> nxOrdersSubEntities = nxOrders.getNxOrdersSubEntities();
@@ -1655,136 +1483,12 @@ public class NxCommunityOrdersController {
         return R.ok().put("data", nxOrders.getNxCommunityOrdersId());
 
     }
-//
-
-//    @ResponseBody
-//    @RequestMapping(value = "/customerCashPayMixDesk", method = RequestMethod.POST)
-//    public R customerCashPayMixDesk(Integer orderId, String code) {
-//        System.out.println("customerUserLogincodee" + code);
-//        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-//        String liancaiKufangAppId = myAPPIDConfig.getQingqingxiangAppId();
-//        String liancaiKufangScreat = myAPPIDConfig.getQingqingxiangScreat();
-//
-//        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + liancaiKufangAppId + "&secret=" +
-//                liancaiKufangScreat + "&js_code=" + code +
-//                "&grant_type=authorization_code";
-//        // 发送请求，返回Json字符串
-//        String str = WeChatUtil.httpRequest(url, "GET", null);
-//        // 转成Json对象 获取openid
-//        JSONObject jsonObject = JSONObject.parseObject(str);
-//        // 我们需要的openid，在一个小程序中，openid是唯一的
-//        String openId = jsonObject.get("openid").toString();
-//
-//
-//        NxCommunityOrdersEntity nxOrders = nxCommunityOrdersService.queryObject(orderId);
-//        MyWxQingqingxiangPayConfig config = new MyWxQingqingxiangPayConfig();
-//        String nxRbTotal = nxOrders.getNxCoTotal();
-////        Double aDouble = Double.parseDouble(nxRbTotal) * 100;
-//        Double aDouble = Double.parseDouble("0.01") * 100;
-//        int i = aDouble.intValue();
-//        System.out.println("dfdafkdaksfas" + nxOrders.getNxCoTotal());
-//        String s1 = String.valueOf(i);
-//        String tradeNo = CommonUtils.generateOutTradeNo();
-//        SortedMap<String, String> params = new TreeMap<>();
-//        params.put("appid", config.getAppID());
-//        params.put("mch_id", config.getMchID());
-//        params.put("nonce_str", CommonUtils.generateUUID());
-//        params.put("body", "订单支付");
-//        params.put("out_trade_no", tradeNo);
-//        params.put("fee_type", "CNY");
-//        params.put("total_fee", s1);
-//        params.put("spbill_create_ip", "101.42.222.149");
-//        params.put("notify_url", "https://grainservice.club:8443/nongxinle/api/nxorders/notify");
-//        params.put("trade_type", "JSAPI");
-//        params.put("openid", openId);
-//
-//        //map转xml
-//        try {
-//            WXPay wxpay = new WXPay(config);
-//            long time = System.currentTimeMillis();
-//            String tString = String.valueOf(time / 1000);
-//            Map<String, String> resp = wxpay.unifiedOrder(params);
-//            System.out.println(resp);
-//            SortedMap<String, String> reMap = new TreeMap<>();
-//            reMap.put("appId", config.getAppID());
-//            reMap.put("nonceStr", resp.get("nonce_str"));
-//            reMap.put("package", "prepay_id=" + resp.get("prepay_id"));
-//            reMap.put("signType", "MD5");
-//            reMap.put("timeStamp", tString);
-//            String s = WxPayUtils.creatSign(reMap, config.getKey());
-//            reMap.put("paySign", s);
-//
-//            nxOrders.setNxCoStatus(1);
-//            nxOrders.setNxCoPaymentStatus(0);
-//            nxOrders.setNxCoWxOutTradeNo(tradeNo);
-//            nxCommunityOrdersService.update(nxOrders);
-//            reMap.put("orderId", nxOrders.getNxCommunityOrdersId().toString());
-//            return R.ok().put("map", reMap);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return R.ok();
-//
-//    }
-
-
-//    @ResponseBody
-//    @RequestMapping(value = "/refundOrder", method = RequestMethod.POST)
-//    public R refundOrder(Integer orderId, Integer refundAmount) {
-//        try {
-//            // 获取订单信息
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("id", orderId);
-//            System.out.println("oroeoemap" + map);
-//            NxCommunityOrdersEntity nxOrders = nxCommunityOrdersService.queryRefundOrder(orderId);
-//            String tradeNo = nxOrders.getNxCoWxOutTradeNo();
-////            String openId = nxOrders.getNxCoUserOpenId(); // 如果没有保存，建议支付时就保存 openId
-//            String openId = "oPnqL66gH3MlyCJF-p3BVTGNA56Y"; // 如果没有保存，建议支付时就保存 openId
-//            String totalAmountStr = nxOrders.getNxCoTotal();
-//
-//            MyWxQingqingxiangPayConfig config = new MyWxQingqingxiangPayConfig();
-//
-//            // 获取 access_token（你需要先调用获取 access_token 的接口或缓存已有的 token）
-//            String accessToken = getAccessToken(); // 自定义方法实现获取 access_token
-//
-//            String requestUrl = "https://api.weixin.qq.com/shop/pay/refundorder?access_token=" + accessToken;
-//
-//            // 构建退款请求参数
-//            JSONObject param = new JSONObject();
-//            param.put("openid", openId);
-//            param.put("mchid", config.getMchID());
-//            param.put("trade_no", tradeNo); // 如果你有 transaction_id，也可以用 transaction_id
-//            param.put("refund_no", CommonUtils.generateOutTradeNo()); // 自定义退款单号
-//            param.put("total_amount", Double.valueOf(totalAmountStr) * 100); // 单位是分
-//            param.put("refund_amount", refundAmount); // 单位是分
-//
-//            // 发送 POST 请求
-//            String response = WeChatUtil.httpRequest(requestUrl, "POST", param.toJSONString());
-//            JSONObject responseJson = JSONObject.parseObject(response);
-//
-//            // 打印并返回结果
-//            System.out.println("退款接口返回结果：" + responseJson);
-//
-//            if ("0".equals(responseJson.getString("errcode"))) {
-//                nxOrders.setNxCoStatus(5); // 自定义：5 表示已退款
-//                nxCommunityOrdersService.update(nxOrders);
-//                return R.ok("退款成功").put("data", responseJson);
-//            } else {
-//                return R.error("退款失败").put("data", responseJson);
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return R.error("退款异常");
-//        }
-//
-//    }
 
     public static String getAccessToken() {
         long currentTime = System.currentTimeMillis();
 // 缓存 access_token 和过期时间（简单缓存示例）
-       String accessToken = null;
-       long expireTime = 0;
+        String accessToken = null;
+        long expireTime = 0;
         // 如果 token 还没过期就直接返回
         if (accessToken != null && currentTime < expireTime) {
             return accessToken;
@@ -1818,6 +1522,13 @@ public class NxCommunityOrdersController {
     }
 
 
+    /**
+     * 餐桌发起结账
+     *
+     * @param orderId
+     * @param code
+     * @return
+     */
     @RequestMapping(value = "/customerCashPayMixDesk", method = RequestMethod.POST)
     public R customerCashPayMixDesk(Integer orderId, String code) {
 
@@ -1826,28 +1537,27 @@ public class NxCommunityOrdersController {
         String liancaiKufangAppId = myAPPIDConfig.getQingqingxiangAppId();
         String liancaiKufangScreat = myAPPIDConfig.getQingqingxiangScreat();
 
-//        String urlCode = "https://api.weixin.qq.com/sns/jscode2session?appid=" + liancaiKufangAppId + "&secret=" +
-//                liancaiKufangScreat + "&js_code=" + code +
-//                "&grant_type=authorization_code";
-//        // 发送请求，返回Json字符串
-//        String str = WeChatUtil.httpRequest(urlCode, "GET", null);
-//        System.out.println("strrr" + str);
-//        // 转成Json对象 获取openid
-//        JSONObject jsonObject = JSONObject.parseObject(str);
-//        System.out.println("jsonObjectjsonObject" + jsonObject);
+        String urlCode = "https://api.weixin.qq.com/sns/jscode2session?appid=" + liancaiKufangAppId + "&secret=" +
+                liancaiKufangScreat + "&js_code=" + code +
+                "&grant_type=authorization_code";
+        // 发送请求，返回Json字符串
+        String str = WeChatUtil.httpRequest(urlCode, "GET", null);
+        System.out.println("strrr" + str);
+        // 转成Json对象 获取openid
+        JSONObject jsonObject = JSONObject.parseObject(str);
+        System.out.println("jsonObjectjsonObject" + jsonObject);
         // 我们需要的openid，在一个小程序中，openid是唯一的
-//        String openId = jsonObject.get("openid").toString();
-        String openId = "oPnqL66gH3MlyCJF-p3BVTGNA56Y";
+        String openId = jsonObject.get("openid").toString();
 
-        System.out.println("orderreer"+ orderId);
+        System.out.println("orderreer" + orderId);
         NxCommunityOrdersEntity nxOrders = nxCommunityOrdersService.queryObject(orderId);
 
         MyWxQingqingxiangPayConfig config = new MyWxQingqingxiangPayConfig();
         String tradeNo = CommonUtils.generateOutTradeNo();
-//
+
 //        // 实际支付金额（单位：分）
         Double amountYuan = Double.parseDouble(nxOrders.getNxCoTotal());
-        int totalFee = (int)(amountYuan * 100);
+        int totalFee = (int) (amountYuan * 100);
         System.out.println("tororor" + totalFee);
 
         try {
@@ -1857,7 +1567,7 @@ public class NxCommunityOrdersController {
             reqJson.put("mchid", config.getMchID());
             reqJson.put("description", "订单支付");
             reqJson.put("out_trade_no", tradeNo);
-            reqJson.put("notify_url", "https://grainservice.club:8443/nongxinle/api/nxorders/notify");
+            reqJson.put("notify_url", "https://grainservice.club:8443/nongxinle/api/nxorders/notifyDesk");
             JSONObject amount = new JSONObject();
             amount.put("total", totalFee);
             amount.put("currency", "CNY");
@@ -1984,6 +1694,14 @@ public class NxCommunityOrdersController {
         }
     }
 
+
+    /**
+     * 团购顾客发起支付
+     *
+     * @param orderId
+     * @param openId
+     * @return
+     */
     @ResponseBody
     @RequestMapping(value = "/customerCashPayMix", method = RequestMethod.POST)
     public R customerCashPayMix(Integer orderId, String openId) {
@@ -1992,7 +1710,6 @@ public class NxCommunityOrdersController {
         MyWxQingqingxiangPayConfig config = new MyWxQingqingxiangPayConfig();
         String nxRbTotal = nxOrders.getNxCoTotal();
         Double aDouble = Double.parseDouble(nxRbTotal) * 100;
-//        Double aDouble = Double.parseDouble("0.01") * 100;
         int i = aDouble.intValue();
         System.out.println("dfdafkdaksfas" + nxOrders.getNxCoTotal());
         String s1 = String.valueOf(i);
@@ -2031,23 +1748,161 @@ public class NxCommunityOrdersController {
             nxOrders.setNxCoWxOutTradeNo(tradeNo);
             nxCommunityOrdersService.update(nxOrders);
 
+            if (nxOrders.getNxCoType() == 0) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("orderId", nxOrders.getNxCommunityOrdersId());
+                List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
+                if (nxCommunityOrdersSubEntities.size() > 0) {
+                    for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
+                        //检查 Adsense
+                        checkAdsenseGoods(subEntity.getNxCosCommunityGoodsId(), subEntity);
 
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("orderId", nxOrders.getNxCommunityOrdersId());
-//            List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
-//            if (nxCommunityOrdersSubEntities.size() > 0) {
-//                for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
-//
-//
-//
-//                }
-//            }
+                        subEntity.setNxCosStatus(1);
+                        subEntity.setNxCosServiceTime(nxOrders.getNxCoServiceTime());
+                        subEntity.setNxCosPickUpCode(nxOrders.getNxCoWeighNumber());
+                        subEntity.setNxCosService(nxOrders.getNxCoService());
+                        subEntity.setNxCosServiceDate(nxOrders.getNxCoServiceDate());
+                        subEntity.setNxCosServiceTime(nxOrders.getNxCoServiceTime());
+
+                        //保存为 comPurGoods
+                        Integer comGoodsId = subEntity.getNxCosCommunityGoodsId();
+
+                        //查询是否有采购的同一个商品
+                        Map<String, Object> mapPur = new HashMap<>();
+                        mapPur.put("comGoodsId", comGoodsId);
+                        mapPur.put("equalStatus", 0);
+                        NxCommunityPurchaseGoodsEntity purchaseGoodsEntity = nxComPurchaseGoodsService.queryPurchaseGoodsByStatus(mapPur);
+                        if (purchaseGoodsEntity == null) {
+                            //是个新采购商品
+                            NxCommunityPurchaseGoodsEntity comPurchaseGoodsEntity = new NxCommunityPurchaseGoodsEntity();
+                            comPurchaseGoodsEntity.setNxCpgComGoodsFatherId(subEntity.getNxCosCommunityGoodsFatherId());
+                            comPurchaseGoodsEntity.setNxCpgComGoodsId(subEntity.getNxCosCommunityGoodsId());
+                            comPurchaseGoodsEntity.setNxCpgCommunityId(subEntity.getNxCosCommunityId());
+                            comPurchaseGoodsEntity.setNxCpgApplyDate(formatWhatDay(0));
+                            comPurchaseGoodsEntity.setNxCpgStatus(0);
+                            comPurchaseGoodsEntity.setNxCpgOrdersAmount(1);
+                            comPurchaseGoodsEntity.setNxCpgStandard(subEntity.getNxCosStandard());
+                            comPurchaseGoodsEntity.setNxCpgQuantity(subEntity.getNxCosQuantity());
+                            comPurchaseGoodsEntity.setNxCpgPurchaseType(1);
+                            nxComPurchaseGoodsService.save(comPurchaseGoodsEntity);
+                            Integer gbDistributerPurchaseGoodsId = comPurchaseGoodsEntity.getNxCommunityPurchaseGoodsId();
+                            subEntity.setNxCosCommPurGoodsId(gbDistributerPurchaseGoodsId);
+                            subEntity.setNxCosBuyStatus(0);
+
+                        } else {
+                            //给老采购商品添加新订单
+                            Integer gbDistributerPurchaseGoodsId = purchaseGoodsEntity.getNxCommunityPurchaseGoodsId();
+                            subEntity.setNxCosCommPurGoodsId(gbDistributerPurchaseGoodsId);
+                            subEntity.setNxCosBuyStatus(0);
+                            //采购商品订单数量更新
+                            Integer gbDpgOrdersAmount = purchaseGoodsEntity.getNxCpgOrdersAmount();
+                            purchaseGoodsEntity.setNxCpgOrdersAmount(gbDpgOrdersAmount + 1);
+                            BigDecimal purQuantity = new BigDecimal(purchaseGoodsEntity.getNxCpgQuantity());
+                            BigDecimal orderQuantity = new BigDecimal(subEntity.getNxCosQuantity());
+                            BigDecimal add = purQuantity.add(orderQuantity).setScale(2, BigDecimal.ROUND_HALF_UP);
+                            purchaseGoodsEntity.setNxCpgQuantity(add.toString());
+                            nxComPurchaseGoodsService.update(purchaseGoodsEntity);
+                        }
+
+                        nxCommunityOrdersSubService.update(subEntity);
+
+                        saveUserGoods(subEntity);
+
+                        if (subEntity.getNxCosCucId() != null) {
+                            NxCustomerUserCouponEntity customerUserCouponEntity = nxCustomerUserCouponService.equalObject(subEntity.getNxCosCucId());
+                            customerUserCouponEntity.setNxCucStatus(2);
+                            nxCustomerUserCouponService.update(customerUserCouponEntity);
+                        }
+                    }
+                }
+                Map<String, Object> mapC = new HashMap<>();
+                mapC.put("userId", nxOrders.getNxCoUserId());
+                mapC.put("status", -1);
+                List<NxCustomerUserCardEntity> cardEntities = nxCustomerUserCardService.queryUserCardByParams(mapC);
+                if (cardEntities.size() > 0) {
+                    for (NxCustomerUserCardEntity userCardEntity : cardEntities) {
+                        if (userCardEntity.getNxCucaIsSelected() == 1) {
+                            userCardEntity.setNxCucaStatus(0);
+                            userCardEntity.setNxCucaComOrderId(nxOrders.getNxCommunityOrdersId());
+                            nxCustomerUserCardService.update(userCardEntity);
+                            //给订单添加购买卡的费用
+                            Integer nxCucaCardId = userCardEntity.getNxCucaCardId();
+                            NxCommunityCardEntity cardEntity = nxCommunityCardService.queryObject(nxCucaCardId);
+                            String nxCcPrice = cardEntity.getNxCcPrice();
+                            nxOrders.setNxCoBuyMemberCardSubtotal(nxCcPrice);
+                            nxCommunityOrdersService.update(nxOrders);
+                        } else {
+                            nxCustomerUserCardService.delete(userCardEntity.getNxCustomerUserCardId());
+                        }
+                    }
+                }
+
+            } else {
+                Map<String, Object> mapS = new HashMap<>();
+                mapS.put("id", nxOrders.getNxCommunityOrdersId());
+                System.out.println("bilosororororororoorro" + mapS);
+                List<NxCommunitySplicingOrdersEntity> nxCommunitySplicingOrdersEntities = nxCommunitySplicingOrdersService.querySplicingListByParams(mapS);
+                if (nxCommunitySplicingOrdersEntities.size() > 0) {
+                    for (NxCommunitySplicingOrdersEntity splicingOrdersEntity : nxCommunitySplicingOrdersEntities) {
+
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("splicingOrderId", splicingOrdersEntity.getNxCommunitySplicingOrdersId());
+                        System.out.println("pspsosoosossos" + splicingOrdersEntity.getNxCommunitySplicingOrdersId());
+                        List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
+                        if (nxCommunityOrdersSubEntities.size() > 0) {
+                            for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
+
+                                //检查 Adsense
+                                checkAdsenseGoods(subEntity.getNxCosCommunityGoodsId(), subEntity);
+
+                                subEntity.setNxCosStatus(1);
+                                subEntity.setNxCosServiceTime(nxOrders.getNxCoServiceTime());
+                                subEntity.setNxCosPickUpCode(nxOrders.getNxCoWeighNumber());
+                                subEntity.setNxCosService(nxOrders.getNxCoService());
+                                subEntity.setNxCosServiceDate(nxOrders.getNxCoServiceDate());
+                                subEntity.setNxCosServiceTime(nxOrders.getNxCoServiceTime());
+                                nxCommunityOrdersSubService.update(subEntity);
+                                saveUserGoods(subEntity);
+
+                                if (subEntity.getNxCosCucId() != null) {
+                                    NxCustomerUserCouponEntity customerUserCouponEntity = nxCustomerUserCouponService.equalObject(subEntity.getNxCosCucId());
+                                    customerUserCouponEntity.setNxCucStatus(2);
+                                    nxCustomerUserCouponService.update(customerUserCouponEntity);
+                                }
 
 
+                            }
+                        }
+
+                        Map<String, Object> mapC = new HashMap<>();
+                        mapC.put("userId", splicingOrdersEntity.getNxCsoUserId());
+                        mapC.put("status", -1);
+                        List<NxCustomerUserCardEntity> cardEntities = nxCustomerUserCardService.queryUserCardByParams(mapC);
+                        if (cardEntities.size() > 0) {
+                            for (NxCustomerUserCardEntity userCardEntity : cardEntities) {
+                                if (userCardEntity.getNxCucaIsSelected() == 1) {
+                                    userCardEntity.setNxCucaStatus(0);
+                                    userCardEntity.setNxCucaComOrderId(nxOrders.getNxCommunityOrdersId());
+                                    nxCustomerUserCardService.update(userCardEntity);
+
+                                    //给订单添加购买卡的费用
+                                    Integer nxCucaCardId = userCardEntity.getNxCucaCardId();
+                                    NxCommunityCardEntity cardEntity = nxCommunityCardService.queryObject(nxCucaCardId);
+                                    String nxCcPrice = cardEntity.getNxCcPrice();
+                                    nxOrders.setNxCoBuyMemberCardSubtotal(nxCcPrice);
+                                    nxCommunityOrdersService.update(nxOrders);
+                                } else {
+                                    nxCustomerUserCardService.delete(userCardEntity.getNxCustomerUserCardId());
+                                }
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
             reMap.put("orderId", nxOrders.getNxCommunityOrdersId().toString());
-
-
-
 
             return R.ok().put("map", reMap);
 
@@ -2062,10 +1917,13 @@ public class NxCommunityOrdersController {
     }
 
 
-
-
-
-
+    /**
+     * 京采下单app 结账 已作废也许
+     *
+     * @param orderId
+     * @param openId
+     * @return
+     */
     @ResponseBody
     @RequestMapping(value = "/customerCashPay", method = RequestMethod.POST)
     public R customerCashPay(Integer orderId, String openId) {
@@ -2115,9 +1973,6 @@ public class NxCommunityOrdersController {
             nxCommunityOrdersService.update(nxOrders);
 
 
-
-
-
             reMap.put("orderId", nxOrders.getNxCommunityOrdersId().toString());
 
             return R.ok().put("map", reMap);
@@ -2126,7 +1981,6 @@ public class NxCommunityOrdersController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
         return R.ok();
 
@@ -2163,10 +2017,94 @@ public class NxCommunityOrdersController {
                 nxCommunityOrdersService.update(billEntity);
 
 
+                if (billEntity.getNxCoType() == 0) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("orderId", billEntity.getNxCommunityOrdersId());
+                    List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
+                    if (nxCommunityOrdersSubEntities.size() > 0) {
+                        for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
+                            subEntity.setNxCosStatus(2);
+                            nxCommunityOrdersSubService.update(subEntity);
+                        }
+                    }
+
+                } else {
+                    Map<String, Object> mapS = new HashMap<>();
+                    mapS.put("id", billEntity.getNxCommunityOrdersId());
+                    System.out.println("bilosororororororoorro" + mapS);
+                    List<NxCommunitySplicingOrdersEntity> nxCommunitySplicingOrdersEntities = nxCommunitySplicingOrdersService.querySplicingListByParams(mapS);
+                    if (nxCommunitySplicingOrdersEntities.size() > 0) {
+                        for (NxCommunitySplicingOrdersEntity splicingOrdersEntity : nxCommunitySplicingOrdersEntities) {
+
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("splicingOrderId", splicingOrdersEntity.getNxCommunitySplicingOrdersId());
+                            System.out.println("pspsosoosossos" + splicingOrdersEntity.getNxCommunitySplicingOrdersId());
+                            List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
+                            if (nxCommunityOrdersSubEntities.size() > 0) {
+                                for (NxCommunityOrdersSubEntity subEntity : nxCommunityOrdersSubEntities) {
+                                    subEntity.setNxCosStatus(2);
+                                    nxCommunityOrdersSubService.update(subEntity);
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+            }
+
+            // 告诉微信服务器收到信息了，不要在调用回调action了========这里很重要回复微信服务器信息用流发送一个xml即可
+            response.getWriter().write("<xml><return_code><![CDATA[SUCCESS]]></return_code></xml>");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * @Title: callBack
+     * @Description: 支付完成的回调函数
+     * @param:
+     * @return:
+     */
+    @RequestMapping("/notifyDesk")
+    public String callBackDesk(HttpServletRequest request, HttpServletResponse response) {
+        // System.out.println("微信支付成功,微信发送的callback信息,请注意修改订单信息");
+        InputStream is = null;
+        try {
+
+            is = request.getInputStream();// 获取请求的流信息(这里是微信发的xml格式所有只能使用流来读)
+            String xml = WxPayUtils.InputStream2String(is);
+            Map<String, String> notifyMap = WxPayUtils.xmlToMap(xml);// 将微信发的xml转map
+            System.out.println("微信返回给回调函数的信息为NxcommmOrders：" + xml);
+            if (notifyMap.get("result_code").equals("SUCCESS")) {
+                /*
+                 * 以下是自己的业务处理------仅做参考 更新order对应字段/已支付金额/状态码
+                 * 更新bill支付状态
+                 */
+                System.out.println("===NxcommmOrdersnotify===回调方法已经被调！！！" + notifyMap);
+
+                String ordersSn = notifyMap.get("out_trade_no");// 商户订单号
+                NxCommunityOrdersEntity billEntity = nxCommunityOrdersService.queryOrderByTradeNo(ordersSn);
+                billEntity.setNxCoStatus(2);
+                billEntity.setNxCoPaymentStatus(1);
+                nxCommunityOrdersService.update(billEntity);
+
+
                 // 更新桌子状态
                 Integer nxCoDeskId = billEntity.getNxCoDeskId();
                 System.out.println("dsisiissis" + billEntity.getNxCoDeskId());
-                if(nxCoDeskId != -1 && nxCoDeskId != 99){
+                if (nxCoDeskId != -1 && nxCoDeskId != 99) {
                     NxCommunityDeskEntity deskEntity = nxCommunityDeskService.queryObject(nxCoDeskId);
                     deskEntity.setNxCdStatus(0);
                     nxCommunityDeskService.update(deskEntity);
@@ -2226,7 +2164,7 @@ public class NxCommunityOrdersController {
                 } else {
                     Map<String, Object> mapS = new HashMap<>();
                     mapS.put("id", billEntity.getNxCommunityOrdersId());
-                    System.out.println("bilosororororororoorro" +mapS);
+                    System.out.println("bilosororororororoorro" + mapS);
                     List<NxCommunitySplicingOrdersEntity> nxCommunitySplicingOrdersEntities = nxCommunitySplicingOrdersService.querySplicingListByParams(mapS);
                     if (nxCommunitySplicingOrdersEntities.size() > 0) {
                         for (NxCommunitySplicingOrdersEntity splicingOrdersEntity : nxCommunitySplicingOrdersEntities) {
@@ -2311,12 +2249,12 @@ public class NxCommunityOrdersController {
     }
 
 
-
     /**
      * 飞鹅打印内容
+     *
      * @param subEntity
      */
-    private void printSubOrderGoodsDesk(NxCommunityOrdersSubEntity subEntity){
+    private void printSubOrderGoodsDesk(NxCommunityOrdersSubEntity subEntity) {
 
         System.out.println("pringoods" + subEntity);
         Integer nxCosNxGoodsId = subEntity.getNxCosCommunityGoodsId();
@@ -2325,9 +2263,9 @@ public class NxCommunityOrdersController {
 
         Integer nxCosDeskId = subEntity.getNxCosDeskId();
         NxCommunityDeskEntity deskEntity = new NxCommunityDeskEntity();
-        if(nxCosDeskId != -1 && nxCosDeskId != 99){
-             deskEntity = nxCommunityDeskService.queryObject(nxCosDeskId);
-        }else{
+        if (nxCosDeskId != -1 && nxCosDeskId != 99) {
+            deskEntity = nxCommunityDeskService.queryObject(nxCosDeskId);
+        } else {
             deskEntity.setNxCommunityDeskName("堂食");
         }
 
@@ -2349,25 +2287,24 @@ public class NxCommunityOrdersController {
 
         HttpPost post = new HttpPost(URL);
         List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-        nvps.add(new BasicNameValuePair("user",USER));
-        String STIME = String.valueOf(System.currentTimeMillis()/1000);
-        nvps.add(new BasicNameValuePair("stime",STIME));
-        nvps.add(new BasicNameValuePair("sig",signature(USER,UKEY,STIME)));
-        nvps.add(new BasicNameValuePair("apiname","Open_printMsg"));//固定值,不需要修改
-        nvps.add(new BasicNameValuePair("sn",sn));
-        nvps.add(new BasicNameValuePair("content",content));
-        nvps.add(new BasicNameValuePair("times","1"));//打印联数
+        nvps.add(new BasicNameValuePair("user", USER));
+        String STIME = String.valueOf(System.currentTimeMillis() / 1000);
+        nvps.add(new BasicNameValuePair("stime", STIME));
+        nvps.add(new BasicNameValuePair("sig", signature(USER, UKEY, STIME)));
+        nvps.add(new BasicNameValuePair("apiname", "Open_printMsg"));//固定值,不需要修改
+        nvps.add(new BasicNameValuePair("sn", sn));
+        nvps.add(new BasicNameValuePair("content", content));
+        nvps.add(new BasicNameValuePair("times", "1"));//打印联数
 
         CloseableHttpResponse response = null;
         String result = null;
-        try
-        {
-            post.setEntity(new UrlEncodedFormEntity(nvps,"utf-8"));
+        try {
+            post.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
             response = httpClient.execute(post);
             int statecode = response.getStatusLine().getStatusCode();
-            if(statecode == 200){
+            if (statecode == 200) {
                 HttpEntity httpentity = response.getEntity();
-                if (httpentity != null){
+                if (httpentity != null) {
                     //服务器返回的JSON字符串，建议要当做日志记录起来
                     result = EntityUtils.toString(httpentity);
                     subEntity.setNxCosStatus(2);
@@ -2375,14 +2312,11 @@ public class NxCommunityOrdersController {
 
                 }
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally{
+        } finally {
             try {
-                if(response!=null){
+                if (response != null) {
                     response.close();
                 }
             } catch (IOException e) {
@@ -2402,7 +2336,8 @@ public class NxCommunityOrdersController {
         System.out.println("resulslsl" + result);
 
     }
-    private void printSubOrderGoods(NxCommunityOrdersSubEntity subEntity){
+
+    private void printSubOrderGoods(NxCommunityOrdersSubEntity subEntity) {
 
         System.out.println("pringoods" + subEntity);
         Integer nxCosNxGoodsId = subEntity.getNxCosCommunityGoodsId();
@@ -2411,9 +2346,9 @@ public class NxCommunityOrdersController {
 
         Integer nxCosDeskId = subEntity.getNxCosDeskId();
         NxCommunityDeskEntity deskEntity = new NxCommunityDeskEntity();
-        if(nxCosDeskId != -1 && nxCosDeskId != 99){
+        if (nxCosDeskId != -1 && nxCosDeskId != 99) {
             deskEntity = nxCommunityDeskService.queryObject(nxCosDeskId);
-        }else{
+        } else {
             deskEntity.setNxCommunityDeskName("堂食");
         }
 
@@ -2435,25 +2370,24 @@ public class NxCommunityOrdersController {
 
         HttpPost post = new HttpPost(URL);
         List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-        nvps.add(new BasicNameValuePair("user",USER));
-        String STIME = String.valueOf(System.currentTimeMillis()/1000);
-        nvps.add(new BasicNameValuePair("stime",STIME));
-        nvps.add(new BasicNameValuePair("sig",signature(USER,UKEY,STIME)));
-        nvps.add(new BasicNameValuePair("apiname","Open_printMsg"));//固定值,不需要修改
-        nvps.add(new BasicNameValuePair("sn",sn));
-        nvps.add(new BasicNameValuePair("content",content));
-        nvps.add(new BasicNameValuePair("times","1"));//打印联数
+        nvps.add(new BasicNameValuePair("user", USER));
+        String STIME = String.valueOf(System.currentTimeMillis() / 1000);
+        nvps.add(new BasicNameValuePair("stime", STIME));
+        nvps.add(new BasicNameValuePair("sig", signature(USER, UKEY, STIME)));
+        nvps.add(new BasicNameValuePair("apiname", "Open_printMsg"));//固定值,不需要修改
+        nvps.add(new BasicNameValuePair("sn", sn));
+        nvps.add(new BasicNameValuePair("content", content));
+        nvps.add(new BasicNameValuePair("times", "1"));//打印联数
 
         CloseableHttpResponse response = null;
         String result = null;
-        try
-        {
-            post.setEntity(new UrlEncodedFormEntity(nvps,"utf-8"));
+        try {
+            post.setEntity(new UrlEncodedFormEntity(nvps, "utf-8"));
             response = httpClient.execute(post);
             int statecode = response.getStatusLine().getStatusCode();
-            if(statecode == 200){
+            if (statecode == 200) {
                 HttpEntity httpentity = response.getEntity();
-                if (httpentity != null){
+                if (httpentity != null) {
                     //服务器返回的JSON字符串，建议要当做日志记录起来
                     result = EntityUtils.toString(httpentity);
                     subEntity.setNxCosStatus(2);
@@ -2474,14 +2408,11 @@ public class NxCommunityOrdersController {
 
                 }
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally{
+        } finally {
             try {
-                if(response!=null){
+                if (response != null) {
                     response.close();
                 }
             } catch (IOException e) {
@@ -2503,22 +2434,22 @@ public class NxCommunityOrdersController {
     }
 
     //生成签名字符串
-    private static String signature(String USER,String UKEY,String STIME){
-        String s = DigestUtils.sha1Hex(USER+UKEY+STIME);
+    private static String signature(String USER, String UKEY, String STIME) {
+        String s = DigestUtils.sha1Hex(USER + UKEY + STIME);
         return s;
     }
 
 
-    private void checkAdsenseGoods(Integer goodsId, NxCommunityOrdersSubEntity subEntity){
+    private void checkAdsenseGoods(Integer goodsId, NxCommunityOrdersSubEntity subEntity) {
         System.out.println("checkckkckckckckckc");
         NxCommunityGoodsEntity goodsEntity = nxCommunityGoodsService.queryObject(goodsId);
-        if(goodsEntity.getNxCgIsOpenAdsense() == 1){
+        if (goodsEntity.getNxCgIsOpenAdsense() == 1) {
 
             System.out.println("minieiieieiieiieieei");
             int nowMinute = getNowMinute();
-            int nxCgAdsenseStartTimeZone = Integer.parseInt(goodsEntity.getNxCgAdsenseStartTimeZone()) ;
+            int nxCgAdsenseStartTimeZone = Integer.parseInt(goodsEntity.getNxCgAdsenseStartTimeZone());
             int nxCgAdsenseStopTimeZone = Integer.parseInt(goodsEntity.getNxCgAdsenseStopTimeZone());
-            if(nowMinute > nxCgAdsenseStartTimeZone && nowMinute < nxCgAdsenseStopTimeZone){
+            if (nowMinute > nxCgAdsenseStartTimeZone && nowMinute < nxCgAdsenseStopTimeZone) {
                 System.out.println("minieiieieiieiieieei" + nowMinute);
                 BigDecimal adQuantity = new BigDecimal(goodsEntity.getNxCgAdsenseRestQuantity());
                 BigDecimal subtract = adQuantity.subtract(new BigDecimal(subEntity.getNxCosQuantity()));
@@ -2529,7 +2460,6 @@ public class NxCommunityOrdersController {
         }
 
     }
-
 
 
 }

@@ -34,5 +34,5 @@ public interface NxCommunityService {
 
 	NxECommerceEntity queryCommunityByECommerceId(Integer id);
 
-    List<NxCommunityEntity> queryCommunityListByUserPoint(String nxCuaLat, String nxCuaLng);
+    List<NxCommunityEntity> queryCommunityListByUserPoint(String nxCuaLat, String nxCuaLng, Integer commerceId);
 }

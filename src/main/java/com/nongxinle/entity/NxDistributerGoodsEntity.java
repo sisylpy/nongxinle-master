@@ -142,9 +142,9 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	 */
 	private String nxDgCartonUnit;
 	/**
-	 * 外箱装数量
+	 * 外箱装数量（与库 varchar 一致，如 9.5）
 	 */
-	private Integer nxDgItemsPerCarton;
+	private String nxDgItemsPerCarton;
 	
 	private Integer gbDisGoodsId;
 	private Integer gbDisGoodsFatherId;
@@ -184,7 +184,7 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private List<NxDistributerPurchaseGoodsEntity>  unPurOrdersDisGoodsList;
 	private NxDistributerGoodsEntity sonGoods;
 	private List<NxDistributerGoodsEntity> allSons;
-//	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
+	private GbDistributerGoodsEntity gbDistributerGoodsEntity;
 	private NxDistributerPurchaseGoodsEntity shelfPurGoods;
 	private NxDistributerGoodsShelfGoodsEntity shelfGoodsEntity;
 

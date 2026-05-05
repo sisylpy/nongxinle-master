@@ -16,6 +16,26 @@ import com.nongxinle.service.NxDistributerGoodsShelfGoodsService;
 public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoodsShelfGoodsService {
 	@Autowired
 	private NxDistributerGoodsShelfGoodsDao nxDistributerGoodsShelfGoodsDao;
+
+	private static void normalizeShelfGoodsQuerySort(Map<String, Object> map) {
+		Object s = map.get("shelfGoodsQuerySort");
+		int v = 0;
+		if (s instanceof Number) {
+			v = ((Number) s).intValue();
+		} else if (s != null) {
+			try {
+				v = Integer.parseInt(s.toString().trim());
+			} catch (NumberFormatException e) {
+				v = 0;
+			}
+		}
+		if (v < 0 || v > 4) {
+			v = 0;
+		}
+		map.put("shelfGoodsQuerySort", v);
+		// 临期 SQL 分支：避免 OGNL 对 Integer == 3 比较异常导致 3 与 4 都走 ASC
+		map.put("shelfGoodsExpirySortDesc", v == 3);
+	}
 	
 	@Override
 	public NxDistributerGoodsShelfGoodsEntity queryObject(Integer nxDistributerGoodsShelfGoodsId){
@@ -54,14 +74,18 @@ public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoo
 
     @Override
     public List<NxDistributerGoodsShelfGoodsEntity> queryShelfForGoodsByParams(Map<String, Object> map) {
-
-		return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsByParams(map);
+        normalizeShelfGoodsQuerySort(map);
+        int sort = (Integer) map.get("shelfGoodsQuerySort");
+        if (sort == 3 || sort == 4) {
+            return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsByParamsExpirySort(map);
+        }
+        return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsByParams(map);
     }
 
     @Override
     public int queryShelfForGoodsCount(Map<String, Object> map) {
-
-		return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsCount(map);
+        normalizeShelfGoodsQuerySort(map);
+        return nxDistributerGoodsShelfGoodsDao.queryShelfForGoodsCount(map);
     }
 
     @Override
@@ -94,9 +118,9 @@ public class NxDistributerGoodsShelfGoodsServiceImpl implements NxDistributerGoo
     }
 
     @Override
-    public void updateShelfLayer(Integer id, Integer layer) {
+    public void updateShelfLayerFields(Integer id, Integer layer, Integer layerLast, Integer layerSeq, Integer sort) {
 
-        nxDistributerGoodsShelfGoodsDao.updateShelfLayer(id, layer);
+        nxDistributerGoodsShelfGoodsDao.updateShelfLayerFields(id, layer, layerLast, layerSeq, sort);
     }
 
     @Override

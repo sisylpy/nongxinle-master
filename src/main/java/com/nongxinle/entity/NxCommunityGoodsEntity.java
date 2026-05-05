@@ -79,6 +79,8 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	 */
 	private String nxCgNxFatherImg;
 	private String nxCgNxGoodsTopFilePath;
+	/** 介绍视频相对路径（如 goodsVideo/xxx.mp4） */
+	private String nxCgGoodsIntroVideo;
 	private Integer nxCgNxGrandId;
 	private String nxCgNxGrandName;
 	private Integer nxCgNxGreatGrandId;
@@ -119,7 +121,7 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	private String nxCgGoodsPinyin;
 
 	private String nxCgGoodsPy;
-	private Integer nxCgSellType; // 暂时无用
+	private Integer nxCgSellType;
 	private Integer nxCgCustomerPrice;
 	private String nxCgGoodsPriceExchange;
 	private String nxCgGoodsTwoPriceExchange;
@@ -156,6 +158,10 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
    private String nxCgRealityGrossProfit;
    private String nxCgGoodsHuaxianPrice;
    private String nxCgGoodsHuaxianPriceDifferent;
+   private String nxCgGoodsGrossWeight;
+   private String nxCgGoodsGrossPrice;
+   private String nxCgGoodsNetWeight;
+   private String nxCgGoodsNetPrice;
 
 
 	private NxCommunityEntity nxCommunityEntity;

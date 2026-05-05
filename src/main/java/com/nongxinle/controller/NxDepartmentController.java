@@ -7,8 +7,6 @@ package com.nongxinle.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.time.temporal.ChronoUnit;
 
@@ -27,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
-import sun.tools.jconsole.JConsole;
 
 import javax.servlet.http.HttpSession;
 
@@ -64,6 +61,115 @@ public class NxDepartmentController {
     private NxOcrTaskService nxOcrTaskService;
 
     private Map<String, Boolean> tokenStatus = new HashMap<>();
+
+
+
+    /**
+     * 零售子部门 slot 是否仍可复用。
+     * 业务上订单保存/结账后常会迁入 nx_department_order_history，当前表 nx_department_orders 可能已为空，
+     * 因此除 live 订单数外，必须再查历史订单；另查账单，避免仅有账单、无历史行时仍被当成空槽。
+     */
+    private boolean isRetailDepSlotUnused(Integer depId) {
+        if (depId == null) {
+            return false;
+        }
+        Map<String, Object> m = new HashMap<>();
+        m.put("depId", depId);
+        Integer liveCnt = nxDepartmentOrdersService.queryDepOrdersAcount(m);
+        if (liveCnt != null && liveCnt > 0) {
+            return false;
+        }
+        Integer histCnt = historyService.queryDepOrdersAcount(m);
+        if (histCnt != null && histCnt > 0) {
+            return false;
+        }
+        return nxDepartmentBillService.queryBillsCount(m) <= 0;
+    }
+
+    /**
+     * 打开零售页时获取零售子部门：默认复用「进行中、且从未真实开单」的空部门，避免反复进出页面堆积 R1/R2 空壳。
+     * 已打印账单/仅有历史订单的 R 槽位不再复用，否则会一直回到同一个 R2。
+     * forceNew=true 时始终新建（例如明确要开新一单）。
+     */
+    @RequestMapping(value = "/saveRetailDepartment/{id}")
+    @ResponseBody
+    public R saveRetailDepartment(@PathVariable Integer id,
+                                @RequestParam(value = "forceNew", required = false, defaultValue = "false") boolean forceNew) {
+        NxDepartmentEntity departmentEntity = nxDepartmentService.queryRetailFatherDepByDisId(id);
+        if (departmentEntity == null) {
+            departmentEntity = new NxDepartmentEntity();
+            departmentEntity.setNxDepartmentFatherId(0);
+            departmentEntity.setNxDepartmentName("零售");
+            departmentEntity.setNxDepartmentAttrName("零售");
+            departmentEntity.setNxDepartmentOrderCode("零售");
+            departmentEntity.setNxDepartmentIsGroupDep(1);
+            departmentEntity.setNxDepartmentDisId(id);
+            departmentEntity.setNxDepartmentSettleType(2);
+            departmentEntity.setNxDepartmentPrintName("BlueToothPrint");
+            nxDepartmentService.saveJustDepartment(departmentEntity);
+
+        }
+        Integer fatherDepId = departmentEntity.getNxDepartmentId();
+        List<NxDepartmentEntity> existingSubs = nxDepartmentService.querySubDepartments(fatherDepId);
+
+        if (!forceNew && existingSubs != null) {
+            NxDepartmentEntity newestEmpty = null;
+            for (NxDepartmentEntity d : existingSubs) {
+                if (d.getNxDepartmentSettleType() == null || d.getNxDepartmentSettleType() != 2) {
+                    continue;
+                }
+                Integer ws = d.getNxDepartmentWorkingStatus();
+                if (ws != null && ws != 0) {
+                    continue;
+                }
+                if (!isRetailDepSlotUnused(d.getNxDepartmentId())) {
+                    continue;
+                }
+                if (newestEmpty == null
+                        || (d.getNxDepartmentId() != null && newestEmpty.getNxDepartmentId() != null
+                        && d.getNxDepartmentId() > newestEmpty.getNxDepartmentId())) {
+                    newestEmpty = d;
+                }
+            }
+            if (newestEmpty != null) {
+                return R.ok().put("data", newestEmpty).put("reused", true);
+            }
+        }
+
+        int retailSeq = 0;
+        if (existingSubs != null) {
+            for (NxDepartmentEntity d : existingSubs) {
+                if (d.getNxDepartmentSettleType() != null && d.getNxDepartmentSettleType() == 2) {
+                    retailSeq++;
+                }
+            }
+        }
+        String shortCode = "R" + (retailSeq + 1);
+        String fullRetailName = "零售 " + shortCode;
+
+        NxDepartmentEntity subDepartent = new NxDepartmentEntity();
+        subDepartent.setNxDepartmentFatherId(fatherDepId);
+        subDepartent.setNxDepartmentSettleType(2);
+        subDepartent.setNxDepartmentDisId(id);
+        subDepartent.setNxDepartmentName(fullRetailName);
+        subDepartent.setNxDepartmentAttrName(shortCode);
+        subDepartent.setNxDepartmentOrderCode(shortCode);
+        subDepartent.setNxDepartmentType("零售");
+        subDepartent.setNxDepartmentWorkingStatus(0);
+        subDepartent.setNxDepartmentSubAmount(0);
+        subDepartent.setNxDepartmentIsGroupDep(0);
+
+        NxDepartmentEntity saved = nxDepartmentService.saveJustDepartment(subDepartent);
+
+        NxDepartmentEntity father = nxDepartmentService.queryObject(fatherDepId);
+        if (father != null) {
+            int sub = father.getNxDepartmentSubAmount() == null ? 0 : father.getNxDepartmentSubAmount();
+            father.setNxDepartmentSubAmount(sub + 1);
+            nxDepartmentService.update(father);
+        }
+
+        return R.ok().put("data", saved).put("reused", false);
+    }
 
 
     @RequestMapping(value = "/changeDeps", method = RequestMethod.POST)
@@ -418,9 +524,10 @@ public class NxDepartmentController {
         } else {
             return R.error(-1, "此微信号已注册过采购员");
         }
-
-
     }
+
+
+
 
     /**
      * 保存
@@ -533,12 +640,14 @@ public class NxDepartmentController {
     */
     @RequestMapping(value = "/disGetAllCustomer/{disId}")
     @ResponseBody
-    public R disGetAllDisDepartments(@PathVariable Integer disId) {
+    public R disGetAllDisDepartments(@PathVariable Integer disId,
+                                     @RequestParam(required = false) Integer labelId) {
 
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("type", 0);
         map.put("gbDisId", -1);
+        map.put("labelId", labelId);
         List<NxDepartmentEntity> entities = nxDepartmentService.queryDepartmentBySettleType(map);
         map.put("type", 1);
         List<NxDepartmentEntity> entities2 = nxDepartmentService.queryDepartmentBySettleType(map);
@@ -549,7 +658,7 @@ public class NxDepartmentController {
 
         Map<String, Object> mapTask = new HashMap<>();
         mapTask.put("disId", disId);
-        mapTask.put("xiaoyuStatus", 2);
+        mapTask.put("xiaoyuStatus", 3);
         int total = nxOcrTaskService.queryTotalByDepartmentAndStatus(mapTask);
 
         return R.ok().put("data", mapData)
@@ -558,11 +667,13 @@ public class NxDepartmentController {
 
     @RequestMapping(value = "/disGetAllCustomerWeb/{disId}")
     @ResponseBody
-    public R disGetAllDisDepartmentsWeb(@PathVariable Integer disId) {
+    public R disGetAllDisDepartmentsWeb(@PathVariable Integer disId,
+                                        @RequestParam(required = false) Integer labelId) {
 
         Map<String, Object> map = new HashMap<>();
         map.put("disId", disId);
         map.put("type", 1);
+        map.put("labelId", labelId);
         List<NxDepartmentEntity> entities = nxDepartmentService.queryDepartmentBySettleType(map);
 
         return R.ok().put("data", entities);

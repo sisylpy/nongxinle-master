@@ -119,6 +119,13 @@
         <result property="nxDiuQyCorpUserId" column="nx_DIU_qy_corp_user_id"/>
 
     </resultMap>
+    <resultMap id="distributerLabel" type="NxDistributerLabelEntity">
+        <id property="nxDistributerLabelId" column="nx_distributer_label_id"/>
+        <result property="nxDlDistributerId" column="nx_dl_distributer_id"/>
+        <result property="nxDlName" column="nx_dl_name"/>
+        <result property="nxDlSort" column="nx_dl_sort"/>
+        <result property="nxDlStatus" column="nx_dl_status"/>
+    </resultMap>
     <resultMap id="distributer" type="NxDistributerEntity">
          <id property="nxDistributerId" column="nx_distributer_id"/>
         <result property="nxDistributerSysMarketId"  column="nx_distributer_sys_market_id"/>
@@ -204,7 +211,21 @@
         <association property="payEntity" resultMap="disPayItem"/>
         <collection property="nxDepartmentUserEntities" resultMap="depUsers"/>
         <collection property="nxDepartmentEntities" resultMap="subDeps"/>
+        <collection property="nxDistributerLabelEntities"
+                    select="queryDistributerLabelsByDepartmentId"
+                    column="{depId=nx_department_id,disId=nx_department_dis_id}"/>
     </resultMap>
+
+    <select id="queryDistributerLabelsByDepartmentId" resultMap="distributerLabel">
+        select l.*
+        from nx_department_distributer_label as dl
+                 left join nx_distributer_label as l
+                           on l.nx_distributer_label_id = dl.nx_ddl_distributer_label_id
+        where dl.nx_ddl_department_id = #{depId}
+          and dl.nx_ddl_distributer_id = #{disId}
+          and (l.nx_dl_status is null or l.nx_dl_status = 1)
+        order by l.nx_dl_sort asc, l.nx_distributer_label_id desc
+    </select>
 
     <select id="queryDisDepartments" resultMap="departmentsWithUsers">
         select * from nx_department as d
@@ -366,6 +387,9 @@
 <!--        <association property="fatherDepartmentEntity" resultMap="fatherDep"/>-->
         <association property="nxDistributerEntity" resultMap="distributer"/>
         <collection property="nxDepartmentEntities" resultMap="subDeps"/>
+        <collection property="nxDistributerLabelEntities"
+                    select="queryDistributerLabelsByDepartmentId"
+                    column="{depId=d_nx_department_id,disId=d_nx_department_dis_id}"/>
     </resultMap>
     <resultMap id="depWithFather" type="NxDepartmentEntity">
           <id property="nxDepartmentId" column="d_nx_department_id"/>
@@ -587,7 +611,7 @@
 
         from nx_department as d
                  left join nx_department as subsd on subsd.nx_department_father_id = d.nx_department_id
-#                   left join nx_department as f on f.nx_department_id = d.nx_department_father_id  and d.nx_department_father_id != 0
+                # left join nx_department as f on f.nx_department_id = d.nx_department_father_id  and d.nx_department_father_id != 0
                  left join nx_distributer as dis on dis.nx_distributer_id = d.nx_department_dis_id
         where d.nx_department_id = #{nxDuDepartmentId}
     </select>
@@ -636,7 +660,8 @@
 		(select count(*) from nx_ocr_task as ta where ta.nx_ocr_task_department_father_id = d.nx_department_id and ta.nx_ocr_task_status &lt; 2) 'task_count'
                from nx_department as d
                left join nx_department as subsd on subsd.nx_department_father_id = d.nx_department_id
-              left join nx_distributer_pay as ndp on ndp.nx_ndp_nx_new_dis_id = d.nx_department_id
+               left join nx_distributer_pay as ndp on ndp.nx_ndp_nx_new_dis_id = d.nx_department_id
+               left join nx_department_distributer_label as dl on dl.nx_ddl_department_id = d.nx_department_id
 
         <where>
             <if test="disId != null">
@@ -653,6 +678,9 @@
             </if>
             <if test="subAmount != null">
                 and d.nx_department_sub_amount = #{subAmount}
+            </if>
+            <if test="labelId != null">
+                and dl.nx_ddl_distributer_label_id = #{labelId}
             </if>
 
             and d.nx_department_is_group_dep = 1
@@ -868,6 +896,11 @@
 
     <select id="queryDepInfoByGbDisId" resultType="com.nongxinle.entity.NxDepartmentEntity">
         select * from nx_department where nx_department_gb_distributer_id = #{disId}
+    </select>
+    <select id="queryRetailFatherDepByDisId" resultType="com.nongxinle.entity.NxDepartmentEntity">
+
+    select * from nx_department where  nx_department_settle_type = 2 and nx_department_dis_id = #{id}
+        and nx_department_is_group_dep = 1
     </select>
 
 

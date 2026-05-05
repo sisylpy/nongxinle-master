@@ -46,6 +46,8 @@
     <freemarker-version>2.3.23</freemarker-version>
     <!-- lombok -->
     <lombok-version>1.18.30</lombok-version>
+    <!-- 统一 Kotlin 版本，解决腾讯云 SDK 依赖的 Kotlin 与 IDE 不兼容 -->
+    <kotlin.version>1.6.20</kotlin.version>
     <!-- baidu -->
     <com.baidu.aip>4.10.0</com.baidu.aip>
     <org.apache.poi>4.0.1</org.apache.poi>
@@ -56,8 +58,6 @@
 
 
   </properties>
-
-
 
   <dependencies>
 

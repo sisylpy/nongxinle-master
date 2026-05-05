@@ -5855,18 +5855,18 @@ public class GbDistributerPurchaseGoodsController {
         map4.put("type", 2);
         System.out.println("map444444444456666=====" + map4);
 //        List<GbDistributerFatherGoodsEntity> purchaseToday = gbDpgService.queryDisPurchaseGoods(map4);
-        List<GbDistributerFatherGoodsEntity> purchaseToday = gbDpgService.queryGbFatherDisPurchaseGoods(map4);
-        List<GbDistributerPurchaseGoodsEntity> result = new ArrayList<>();
-        if (purchaseToday.size() > 0) {
-            for (GbDistributerFatherGoodsEntity fatherGoodsEntity : purchaseToday) {
-                if (fatherGoodsEntity.getFatherGoodsEntities().size() > 0) {
-                    for (GbDistributerFatherGoodsEntity fatherGoodsEntity1 : fatherGoodsEntity.getFatherGoodsEntities()) {
-//                        List<GbDistributerPurchaseGoodsEntity> gbDistributerGoodsEntities = fatherGoodsEntity1.getGbDistributerPurchaseGoodsEntities();
-//                        result.addAll(gbDistributerGoodsEntities);
-                    }
-                }
-            }
-        }
+//        List<GbDistributerFatherGoodsEntity> purchaseToday = gbDpgService.queryGbFatherDisPurchaseGoods(map4);
+//        List<GbDistributerPurchaseGoodsEntity> result = new ArrayList<>();
+//        if (purchaseToday.size() > 0) {
+//            for (GbDistributerFatherGoodsEntity fatherGoodsEntity : purchaseToday) {
+//                if (fatherGoodsEntity.getFatherGoodsEntities().size() > 0) {
+//                    for (GbDistributerFatherGoodsEntity fatherGoodsEntity1 : fatherGoodsEntity.getFatherGoodsEntities()) {
+////                        List<GbDistributerPurchaseGoodsEntity> gbDistributerGoodsEntities = fatherGoodsEntity1.getGbDistributerPurchaseGoodsEntities();
+////                        result.addAll(gbDistributerGoodsEntities);
+//                    }
+//                }
+//            }
+//        }
 
 
         Map<String, Object> map1 = new HashMap<>();
@@ -5942,7 +5942,7 @@ public class GbDistributerPurchaseGoodsController {
         }
 
         Map<String, Object> map3 = new HashMap<>();
-        map3.put("arr", result);
+//        map3.put("arr", result);
         map3.put("orderAmount", purCount);
         map3.put("wxAmount", purCountOne);
         map3.put("appAmount", count2);
@@ -6035,6 +6035,7 @@ public class GbDistributerPurchaseGoodsController {
         map4.put("orderStatus", 3);
         map4.put("orderEqualBuyStatus", 0);
         map4.put("supplierBuy", -1);
+        map4.put("purType", 0);
         System.out.println("map4444444whyyyy111" + map4);
         List<GbDistributerPurchaseGoodsEntity> purchaseToday = gbDpgService.querySimplePurGoods(map4);
         Map<String, Object> map1 = new HashMap<>();
@@ -6056,6 +6057,53 @@ public class GbDistributerPurchaseGoodsController {
         Map<String, Object> map3 = new HashMap<>();
         map3.put("arr", purchaseToday);
         map3.put("orderAmount", purCount);
+        map3.put("wxAmount", purCountOne);
+        map3.put("disInfo", gbDistributerService.queryDistributerInfo(disId));
+
+        return R.ok().put("data", map3);
+    }
+
+    /**
+     * DISTRIBUTE
+     * 批发商获取进货商品列表
+     *
+     * @param
+     * @return 进货商品列表
+     */
+    @RequestMapping(value = "/getPurchaseGoodsGbWithTabCountWithNxDis", method = RequestMethod.POST)
+    @ResponseBody
+    public R getPurchaseGoodsGbWithTabCountWithNxDis(Integer disId, Integer nxDisId) {
+
+        Map<String, Object> map4 = new HashMap<>();
+        map4.put("disId", disId);
+        map4.put("orderStatus", 3);
+        map4.put("nxDisId", nxDisId);
+        System.out.println("map4444444whyyyy111" + map4);
+        List<GbDistributerPurchaseGoodsEntity> purchaseToday = gbDpgService.querySimplePurGoods(map4);
+        Map<String, Object> map1 = new HashMap<>();
+        map1.put("disId", disId);
+        map1.put("status", 3);
+        map1.put("orderType", 5);
+        map1.put("nxDisId", nxDisId);
+        System.out.println("mapp111aaaaaaa" + map1);
+
+        int purCount = gbDepartmentOrdersService.queryGbDepartmentOrderAmount(map1);
+
+
+        map1.put("nxDisId", null);
+        map1.put("notEqualOrderType", 5);
+        int selfPurCount = gbDepartmentOrdersService.queryGbDepartmentOrderAmount(map1);
+
+        map1.put("equalBuyStatus", null);
+        map1.put("dayuBuyStatus", 0);
+        map1.put("dayuStatus", -2);
+        System.out.println("mapp111oneoeneoene11111" + map1);
+        int purCountOne = gbDepartmentOrdersService.queryGbDepartmentOrderAmount(map1);
+
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("arr", purchaseToday);
+        map3.put("nxOrderAmount", purCount);
+        map3.put("selfOrderAmount", selfPurCount);
         map3.put("wxAmount", purCountOne);
         map3.put("disInfo", gbDistributerService.queryDistributerInfo(disId));
 

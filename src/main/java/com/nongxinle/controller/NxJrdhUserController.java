@@ -1108,8 +1108,6 @@ public class NxJrdhUserController {
         supplierEntity.setNxJrdhsSysMarketId(-1);
         nxJrdhSupplierService.save(supplierEntity);
 
-
-
         return supplierEntity;
     }
 

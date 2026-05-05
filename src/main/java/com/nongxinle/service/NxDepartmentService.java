@@ -64,4 +64,6 @@ public interface NxDepartmentService {
 	Map<String, Object> queryDepAndUserInfoAll(Integer nxDepartmentUserId);
 
     NxDepartmentEntity queryDepInfoByGbDisId(Integer disId);
+
+    NxDepartmentEntity queryRetailFatherDepByDisId(Integer id);
 }

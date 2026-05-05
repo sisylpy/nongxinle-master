@@ -9,6 +9,7 @@ package com.nongxinle.controller;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.nongxinle.entity.NxCommunityEntity;
 import com.nongxinle.entity.NxCustomerUserEntity;
@@ -33,13 +34,14 @@ public class NxCustomerUserAddressController {
 	private NxCommunityService nxCommunityService;
 
 
-	@RequestMapping(value = "/getCommityByAddressId/{id}")
+	@RequestMapping(value = "/getCommityByAddressId", method = RequestMethod.POST)
 	@ResponseBody
-	public R getCommityByAddressId(@PathVariable Integer id) {
+	public R getCommityByAddressId(Integer id, Integer commerceId) {
 		NxCustomerUserAddressEntity addressEntity = nxCustomerUserAddressService.queryObject(id);
 		String nxCuaLat = addressEntity.getNxCuaLat();
 		String nxCuaLng = addressEntity.getNxCuaLng();
-		List<NxCommunityEntity> communityEntities =  nxCommunityService.queryCommunityListByUserPoint(nxCuaLat, nxCuaLng);
+
+		List<NxCommunityEntity> communityEntities =  nxCommunityService.queryCommunityListByUserPoint(nxCuaLat, nxCuaLng, commerceId);
 
 		return R.ok().put("data", communityEntities);
 	}

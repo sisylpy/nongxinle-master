@@ -1493,6 +1493,7 @@
 
     <resultMap id="orders" type="NxDepartmentOrdersEntity">
           <id property="nxDepartmentOrdersId" column="nx_department_orders_id"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
         <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
         <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
 		<result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
@@ -2156,6 +2157,9 @@
             <if test="dayuStatus != null">
                 and dor.nx_DO_status &gt; #{dayuStatus}
             </if>
+            <if test="equalPurStatus != null">
+                and dor.nx_DO_purchase_status = #{equalPurStatus}
+            </if>
         </where>
 
         order by dep.nx_department_id, dor.nx_DO_arrive_date
@@ -2702,6 +2706,9 @@
             </if>
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="depFatherId != null">
+                and nx_DO_department_father_id = #{depFatherId}
             </if>
             <if test="disId != null">
                 and ds.nx_department_dis_id = #{disId}
@@ -3344,6 +3351,9 @@
 
     <resultMap id="nxComm" type="NxCommunityEntity">
         <id property="nxCommunityId" column="nx_community_id"/>
+		<result property="nxCommunityDeliveryStartTime" column="nx_community_delivery_start_time"/>
+		<result property="nxCommunityDeliveryStopTime" column="nx_community_delivery_stop_time"/>
+		<result property="nxCommunityDeliveryDayOffset" column="nx_community_delivery_day_off_set"/>
         <result property="nxCommunityBillPrintSn" column="nx_community_bill_print_sn"/>
         <result property="nxCommunityDeliveryMixSubtotal" column="nx_community_delivery_mix_subtotal"/>
         <result property="nxCommunityDeliveryFeeFreeDistance" column="nx_community_delivery_fee_free_distance"/>
@@ -3616,6 +3626,9 @@
             </if>
             <if test="disId != null">
                 and nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="orderDisId != null">
+                and nx_DO_distributer_id = #{orderDisId}
             </if>
             <if test="depId != null">
                 and nx_DO_department_id = #{depId}
@@ -4029,6 +4042,7 @@
         dor.nx_DO_department_id,
         dor.nx_do_ocr_task_id,
         dor.nx_DO_goods_original_name,
+        dor.nx_DO_is_agent,
         ndg.nx_distributer_goods_id,
         ndg.nx_dg_goods_name,
         ndg.nx_dg_goods_brand,
@@ -4038,6 +4052,18 @@
         ndg.nx_dg_goods_standard_weight,
         ndg.nx_dg_carton_unit,
         ndg.nx_dg_items_per_carton,
+        ndg.nx_dg_will_price_two_standard,
+        ndg.nx_dg_will_price_three_standard,
+        ndg.nx_dg_will_price_two_about_price,
+        ndg.nx_dg_will_price_three_about_price,
+        ndg.nx_dg_will_price_two_weight,
+        ndg.nx_dg_will_price_three_weight,
+        ndg.nx_dg_will_price_one,
+        ndg.nx_dg_will_price_two,
+        ndg.nx_dg_will_price_three,
+        ndg.nx_dg_buying_price_one_update,
+        ndg.nx_dg_buying_price_two_update,
+        ndg.nx_dg_buying_price_three_update,
         ndg.nx_dg_nx_goods_father_color,
         ndg.nx_dg_distributer_id,
         COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
@@ -4068,6 +4094,7 @@
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
             </if>
+
             <if test="depFatherId != null">
                 and dor.nx_DO_department_father_id = #{depFatherId}
             </if>
@@ -4098,6 +4125,7 @@
         dor.nx_DO_dis_goods_id,
         dor.nx_DO_department_id,
         dor.nx_do_ocr_task_id,
+        dor.nx_DO_is_agent,
         ndg.nx_distributer_goods_id,
         ndg.nx_dg_goods_name,
         ndg.nx_dg_goods_brand,
@@ -4107,7 +4135,20 @@
         ndg.nx_dg_goods_standard_weight,
         ndg.nx_dg_carton_unit,
         ndg.nx_dg_items_per_carton,
+        ndg.nx_dg_will_price_two_standard,
+        ndg.nx_dg_will_price_three_standard,
+        ndg.nx_dg_will_price_two_about_price,
+        ndg.nx_dg_will_price_three_about_price,
+        ndg.nx_dg_will_price_two_weight,
+        ndg.nx_dg_will_price_three_weight,
+        ndg.nx_dg_will_price_one,
+        ndg.nx_dg_will_price_two,
+        ndg.nx_dg_will_price_three,
+        ndg.nx_dg_buying_price_one_update,
+        ndg.nx_dg_buying_price_two_update,
+        ndg.nx_dg_buying_price_three_update,
         ndg.nx_dg_nx_goods_father_color,
+        ndg.nx_dg_distributer_id,
         COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
         nddg.nx_DDG_order_goods_name
         from nx_department_orders as dor
@@ -4205,6 +4246,7 @@
         <result property="nxDoDisGoodsId" column="nx_DO_dis_goods_id"/>
         <result property="nxDoDepartmentId" column="nx_DO_department_id"/>
         <result property="nxDoGoodsOriginalName" column="nx_DO_goods_original_name"/>
+        <result property="nxDoIsAgent" column="nx_DO_is_agent"/>
         <association property="nxDistributerGoodsEntity" javaType="com.nongxinle.dto.NxDepartmentOrdersSimpleDTO$DistributerGoodsSimpleDTO">
             <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
             <result property="nxDgGoodsName" column="nx_dg_goods_name"/>
@@ -4215,9 +4257,24 @@
             <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
             <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
             <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
+            <result property="nxDgWillPriceTwoStandard" column="nx_dg_will_price_two_standard"/>
+            <result property="nxDgWillPriceThreeStandard" column="nx_dg_will_price_three_standard"/>
+            <result property="nxDgWillPriceTwoAboutPrice" column="nx_dg_will_price_two_about_price"/>
+            <result property="nxDgWillPriceThreeAboutPrice" column="nx_dg_will_price_three_about_price"/>
+            <result property="nxDgWillPriceTwoWeight" column="nx_dg_will_price_two_weight"/>
+            <result property="nxDgWillPriceThreeWeight" column="nx_dg_will_price_three_weight"/>
+            <result property="nxDgWillPriceOne" column="nx_dg_will_price_one"/>
+            <result property="nxDgWillPriceTwo" column="nx_dg_will_price_two"/>
+            <result property="nxDgWillPriceThree" column="nx_dg_will_price_three"/>
+            <result property="nxDgBuyingPriceOneUpdate" column="nx_dg_buying_price_one_update"/>
+            <result property="nxDgBuyingPriceTwoUpdate" column="nx_dg_buying_price_two_update"/>
+            <result property="nxDgBuyingPriceThreeUpdate" column="nx_dg_buying_price_three_update"/>
             <result property="nxDgNxGoodsFatherColor" column="nx_dg_nx_goods_father_color"/>
             <result property="nxDgDistributerName" column="nx_dg_distributer_name"/>
             <result property="nxDgDistributerId" column="nx_dg_distributer_id"/>
+            <collection property="nxDistributerStandardEntities"
+                        select="com.nongxinle.dao.NxDistributerStandardDao.queryDisStandardByDisGoodsId"
+                        column="{nxDdgDisGoodsId=nx_distributer_goods_id}"/>
         </association>
         <association property="nxDepartmentDisGoodsEntity" javaType="com.nongxinle.dto.NxDepartmentOrdersSimpleDTO$DepartmentDisGoodsSimpleDTO">
             <result property="nxDdgOrderGoodsName" column="nx_DDG_order_goods_name"/>
@@ -5783,6 +5840,9 @@
 
             <if test="status != null">
                 and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
             </if>
             <if test="grandId != null">
                 and dor.nx_DO_dis_goods_grand_id = #{grandId}
@@ -7938,6 +7998,10 @@
         <result property="nxDgssStockImage" column="nx_dgss_stock_image"/>
         <result property="nxDgssStockRemark" column="nx_dgss_stock_remark"/>
         <result property="nxDgssTraceReportId" column="nx_dgss_trace_report_id"/>
+        <result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+        <result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+        <result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+        <result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
     </resultMap>
 
 
@@ -7948,7 +8012,13 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithApplys"/>
+        <!-- 增加sql查询同一商品在其他货架的信息（只包含货架名称） -->
+        <collection property="sameShelfGoods"
+                    select="querySameShelfGoodsForSimple"
+                    column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
         <collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
     </resultMap>
 
@@ -8042,8 +8112,8 @@
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
         left join nx_distributer_goods_shelf as ndgs on ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
-        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_dis_goods_id =
-        ndg.nx_distributer_goods_id
+        left join nx_distributer_goods_shelf_stock as ndgss on ndgss.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+            and ndgss.nx_dgss_rest_weight &gt; 0 and ndgss.nx_dgss_status = 0
         left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
         and nddg.nx_DDG_department_id = dor.nx_DO_department_id
         <where>
@@ -8162,7 +8232,7 @@
             </if>
 
         </where>
-        order by ndgs.nx_distributer_goods_shelf_sort, ndgsg.nx_DGSG_sort
+        order by ndgs.nx_distributer_goods_shelf_sort, ndgsg.nx_DGSG_sort, COALESCE(ndgss.nx_dgss_produce_date, ndgss.nx_dgss_date) asc, ndgss.nx_dgss_date asc
 
     </select>
 
@@ -10020,6 +10090,8 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoodsSimple"/>
     </resultMap>
 
@@ -10048,6 +10120,8 @@
         ndgsg.nx_DGSG_sort,
         ndgsg.nx_DGSG_shelf_sort,
         ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
         
         -- 商品基本信息（只返回必要字段）
         ndg.nx_distributer_goods_id,
@@ -10171,10 +10245,11 @@
         <result property="nxDgGoodsStandardWeight" column="nx_dg_goods_standard_weight"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgGoodsBrand" column="nx_dg_goods_brand"/>
+        <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
         <collection property="orders" resultMap="shelfOrderUltraSimple"/>
     </resultMap>
 
-    <!-- 超简化的货架商品 resultMap -->
+    <!-- 超简化的货架商品 resultMap（含当前货架库存及其他货架信息） -->
     <resultMap id="shelfGoodsShelfGoodsUltraSimple" type="ShelfGoodsShelfGoodsSimpleDTO">
         <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
@@ -10182,25 +10257,47 @@
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <association property="goods" resultMap="shelfGoodsUltraSimple"/>
-        <!-- 查询同一商品在其他货架的信息（只包含货架名称） -->
+        <!-- 当前货架商品的库存批次（含生产日期、保质期、过期日期，FIFO排序） -->
+        <collection property="nxDisGoodsShelfStockEntities"
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByShelfGoodsIdWithRest"
+                    column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
+        <!-- 同一商品在其他货架的信息（含货架名称及该货架的库存批次） -->
         <collection property="sameShelfGoods" 
                     select="querySameShelfGoodsForSimple" 
                     column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
     </resultMap>
 
-    <!-- 查询同一商品在其他货架的信息（简化版，只返回货架名称） -->
+    <!-- 查询同一商品在其他货架的信息（简化版，含货架名称及该货架的库存批次） -->
     <resultMap id="sameShelfGoodsSimple" type="ShelfGoodsShelfGoodsSimpleDTO">
         <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
+        <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
+        <result property="nxDgsgSort" column="nx_DGSG_sort"/>
+        <result property="nxDgsgShelfSort" column="nx_DGSG_shelf_sort"/>
+        <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
+        <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <result property="shelfName" column="shelf_name"/>
+        <collection property="nxDisGoodsShelfStockEntities"
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfStockDao.queryStockByShelfGoodsIdWithRest"
+                    column="{shelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
     </resultMap>
 
     <select id="querySameShelfGoodsForSimple" resultMap="sameShelfGoodsSimple">
         select distinct
         ndgsg.nx_distributer_goods_shelf_goods_id,
         ndgsg.nx_DGSG_shelf_id,
+        ndgsg.nx_DGSG_dis_goods_id,
         ndgsg.nx_DGSG_sort,
+        ndgsg.nx_DGSG_shelf_sort,
+        ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
+        ndgsg.nx_DGSG_is_duplicate,
         ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods_shelf_goods as ndgsg
         left join nx_distributer_goods_shelf as ndgs 
@@ -10243,6 +10340,8 @@
         ndgsg.nx_DGSG_sort,
         ndgsg.nx_DGSG_shelf_sort,
         ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_seq,
+        ndgsg.nx_DGSG_shelf_layer_last,
         
         -- 商品基本信息（只返回必要字段）
         ndg.nx_distributer_goods_id,
@@ -10251,7 +10350,8 @@
         ndg.nx_dg_goods_standard_weight,
         ndg.nx_dg_carton_unit,
         ndg.nx_dg_goods_brand,
-        
+        ndg.nx_dg_items_per_carton,
+
         -- 订单基本信息（只返回必要字段）
         dor.nx_department_orders_id,
         dor.nx_DO_quantity,
@@ -11240,6 +11340,43 @@
     </select>
     <select id="queryByRestrauntId" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
         select * from nongxinle.nx_department_orders where nx_DO_nx_restraunt_order_id = #{nxDoNxRestrauntOrderId}
+    </select>
+
+
+    <!-- 只查 depFatherId 下的子部门（ds 为下单部门）；勿仅用 dor.nx_DO_department_father_id，否则父部门自身下单会被当成 ds -->
+    <select id="queryRetailOrderNxDepartment" resultMap="subDepartmentWithOrders">
+        select dor.*,
+        ds.nx_department_id 'ds_nx_department_id',
+        ds.nx_department_name 'ds_nx_department_name',
+        ds.nx_department_type 'ds_nx_department_type',
+        ds.nx_department_father_id 'ds_nx_department_father_id',
+        ds.nx_department_is_group_dep 'ds_nx_department_is_group_dep',
+        ds.nx_department_settle_type 'ds_nx_department_settle_type',
+        ds.nx_department_attr_name 'ds_nx_department_attr_name',
+        ds.nx_department_order_code 'ds_nx_department_order_code',
+        ds.nx_department_pick_name 'ds_nx_department_pick_name'
+        from nx_department as ds
+        inner join nx_department_orders as dor on ds.nx_department_id = dor.nx_DO_department_id
+        <where>
+            <if test="depFatherId != null">
+                and ds.nx_department_father_id = #{depFatherId}
+            </if>
+            <if test="orderDisId != null">
+                and dor.nx_DO_distributer_id = #{orderDisId}
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="gbDepFatherId != null">
+                and dor.nx_DO_gb_department_father_id = #{gbDepFatherId}
+            </if>
+            <if test="resFatherId != null">
+                and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+        </where>
     </select>
 
     <resultMap id="offerNxDis" type="NxDistributerEntity">

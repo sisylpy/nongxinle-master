@@ -103,6 +103,22 @@ public class NxDistributerPurchaseGoodsEntity implements Serializable {
 	 * 溯源报告ID
 	 */
 	private Integer nxDpgTraceReportId;
+	/**
+	 * 生产日期（如 2025-03-18）
+	 */
+	private String nxDpgProduceDate;
+	/**
+	 * 保质期（数值，如 3、7、15）
+	 */
+	private Integer nxDpgShelfLife;
+	/**
+	 * 保质期单位（天/月/年）
+	 */
+	private String nxDpgShelfLifeUnit;
+	/**
+	 * 过期日期（如 2025-03-21）
+	 */
+	private String nxDpgExpiryDate;
 
     private List<NxDistributerGoodsShelfGoodsEntity> shelfGoodsEntities;
     private NxDistributerGoodsShelfEntity applyShelfEntity;

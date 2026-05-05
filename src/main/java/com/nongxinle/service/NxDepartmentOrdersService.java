@@ -330,4 +330,5 @@ public interface NxDepartmentOrdersService {
 
     NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId);
 
+    List<NxDepartmentEntity> queryRetailOrderNxDepartment(Map<String, Object> map);
 }

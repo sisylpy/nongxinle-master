@@ -54,6 +54,7 @@ public class GbDepartmentUserController {
 
 
 
+
     @RequestMapping(value = "/whichJrdhUserLoginGbJj", method = RequestMethod.POST)
     @ResponseBody
     public R whichJrdhUserLoginGbJj(String code, Integer gbDisId, Integer batchId,

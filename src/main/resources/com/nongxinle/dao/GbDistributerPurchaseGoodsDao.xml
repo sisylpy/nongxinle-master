@@ -2010,6 +2010,7 @@
         <result property="gbDpgBuySubtotal" column="gb_DPG_buy_subtotal"/>
         <result property="gbDpgPurchaseMonth" column="gb_DPG_purchase_month"/>
         <result property="gbDpgPurchaseDate" column="gb_DPG_purchase_date"/>
+        <result property="gbDpgPurchaseDate" column="gb_DPG_purchase_date"/>
         <result property="gbDpgPurchaseYear" column="gb_DPG_purchase_year"/>
         <result property="gbDpgDisGoodsPriceId" column="gb_DPG_dis_goods_price_id"/>
         <result property="gbDpgPurUserId" column="gb_DPG_pur_user_id"/>
@@ -2024,7 +2025,8 @@
         <result property="gbDpgWarnFullTime" column="gb_DPG_warn_full_time"/>
         <result property="gbDpgWasteFullTime" column="gb_DPG_waste_full_time"/>
         <association property="gbDistributerGoodsEntity" resultMap="disGoods"/>
-    </resultMap>
+        <collection property="gbDepartmentOrdersEntities" resultMap="depOrders"/>
+     </resultMap>
 
     <select id="querySimplePurGoods" resultMap="purchaseGoodsSimple">
         select
@@ -2071,6 +2073,9 @@
             </if>
             <if test="supplierBuy != null and supplierBuy == 1">
                 AND gdpg.gb_DPG_purchase_nx_supplier_id != -1
+            </if>
+            <if test="nxDisId != null">
+                AND gdpg.gb_DPG_purchase_nx_distributer_id = #{nxDisId}
             </if>
             <if test="status != null">
                 and gb_DPG_status &lt; #{status}

@@ -92,6 +92,11 @@
 		<association property="nxDistributerFatherGoodsEntity" resultMap="greatGrand"/>
 	</resultMap>
 
+	<resultMap id="nxDisGoodsWithStandards" type="NxDistributerGoodsEntity" extends="nxDisGoods">
+		<collection property="nxDistributerStandardEntities" resultMap="com.nongxinle.dao.NxDistributerGoodsDao.disStandards"/>
+		<collection property="nxDistributerAliasEntities" resultMap="com.nongxinle.dao.NxDistributerGoodsDao.disAlias"/>
+	</resultMap>
+
 	<resultMap id="linshiGoods" type="NxDistributerGoodsLinshiEntity">
 		<id property="nxDistributerGoodsLsId" column="nx_distributer_goods_ls_id"/>
 		<result property="nxDgDfgGoodsFatherLsId" column="nx_dg_dfg_goods_father_ls_id"/>
@@ -112,10 +117,40 @@
 		<result property="nxDgGoodsLsFileLarge" column="nx_dg_goods_ls_file_large"/>
 		<association property="nxDistributerGoodsEntity" resultMap="nxDisGoods"/>
 	</resultMap>
-	<select id="disGetLinshiGoodsList" resultMap="linshiGoods">
+
+	<!-- 临时商品含订单，与 NxDistributerGoodsDao.queryLinshiGoods 数据结构一致 -->
+	<resultMap id="linshiGoodsWithOrders" type="NxDistributerGoodsLinshiEntity" extends="linshiGoods">
+		<collection property="nxDepartmentOrdersEntities" resultMap="com.nongxinle.dao.NxDistributerGoodsDao.depOrdersWithDep"/>
+	</resultMap>
+
+	<!-- 已替换列表：商品含规格、别名 -->
+	<resultMap id="linshiGoodsWithStandards" type="NxDistributerGoodsLinshiEntity">
+		<id property="nxDistributerGoodsLsId" column="nx_distributer_goods_ls_id"/>
+		<result property="nxDgDfgGoodsFatherLsId" column="nx_dg_dfg_goods_father_ls_id"/>
+		<result property="nxDgDistributerLsId" column="nx_dg_distributer_ls_id"/>
+		<result property="nxDgGoodsLsStatus" column="nx_dg_goods_ls_status"/>
+		<result property="nxDgGoodsLsName" column="nx_dg_goods_ls_name"/>
+		<result property="nxDgGoodsLsDetail" column="nx_dg_goods_ls_detail"/>
+		<result property="nxDgGoodsLsStandardname" column="nx_dg_goods_ls_standardname"/>
+		<result property="nxDgGoodsLsPinyin" column="nx_dg_goods_ls_pinyin"/>
+		<result property="nxDgGoodsLsPy" column="nx_dg_goods_ls_py"/>
+		<result property="nxDgGoodsLsBrand" column="nx_dg_goods_ls_brand"/>
+		<result property="nxDgGoodsLsPlace" column="nx_dg_goods_ls_place"/>
+		<result property="nxDgApplyDate" column="nx_dg_apply_date"/>
+		<result property="nxDgToNxDisGoodsId" column="nx_dg_to_nx_dis_goods_id"/>
+		<result property="nxDgFromNxDisGoodsId" column="nx_dg_from_nx_dis_goods_id"/>
+		<result property="nxDgRecommendNxGoodsIds" column="nx_dg_recommend_nx_goods_ids"/>
+		<result property="nxDgGoodsLsFile" column="nx_dg_goods_ls_file"/>
+		<result property="nxDgGoodsLsFileLarge" column="nx_dg_goods_ls_file_large"/>
+		<association property="nxDistributerGoodsEntity" resultMap="nxDisGoodsWithStandards"/>
+	</resultMap>
+
+	<select id="disGetLinshiGoodsList" resultMap="linshiGoodsWithStandards">
 		select
 		       ndgl.*,
 		       ndg.*,
+			   ds.*,
+			   da.*,
 			   grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
 			   grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
 			   grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
@@ -130,6 +165,8 @@
 			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color'
 		from nx_distributer_goods_linshi as ndgl
 		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgl.nx_dg_to_nx_dis_goods_id
+		left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+		left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
 		left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
 	    left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
 		where ndgl.nx_dg_distributer_ls_id = #{disId} and ndgl.nx_dg_goods_ls_status = -1
@@ -145,11 +182,95 @@
 		where ndgl.nx_dg_distributer_ls_id = #{disId} and ndgl.nx_dg_goods_ls_status = -1
 	</select>
 
+	<!-- 根据搜索词查询临时商品：支持 status=-1(已替换)/1(推荐)/2(申请添加)，不传 status 则查全部
+	     status=-1 关联 to 商品，status=1/2 关联 from 商品 -->
+	<select id="searchLinshiGoodsList" resultMap="linshiGoodsWithStandards">
+		select
+		       ndgl.*,
+		       ndg.*,
+			   ds.*,
+			   da.*,
+			   grand.nx_distributer_father_goods_id 'grand_nx_distributer_father_goods_id',
+			   grand.nx_dfg_fathers_father_id 'grand_nx_dfg_fathers_father_id',
+			   grand.nx_dfg_father_goods_name 'grand_nx_dfg_father_goods_name',
+			   grand.nx_dfg_nx_goods_id 'grand_nx_dfg_nx_goods_id',
+			   grand.nx_dfg_father_goods_img 'grand_nx_dfg_father_goods_img',
+			   grand.nx_dfg_father_goods_sort 'grand_nx_dfg_father_goods_sort',
+			   greatGrand.nx_distributer_father_goods_id 'greatGrand_nx_dfg_distributer_father_goods_id',
+			   greatGrand.nx_dfg_distributer_id 'greatGrand.nx_dfg_distributer_id',
+			   greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
+			   greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
+			   greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
+			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color'
+		from nx_distributer_goods_linshi as ndgl
+		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = COALESCE(ndgl.nx_dg_to_nx_dis_goods_id, ndgl.nx_dg_from_nx_dis_goods_id)
+		left join nx_distributer_standard as ds on ds.nx_DS_dis_goods_id = ndg.nx_distributer_goods_id
+		left join nx_distributer_alias as da on da.nx_DA_dis_goods_id = ndg.nx_distributer_goods_id
+		left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
+	    left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+		where ndgl.nx_dg_distributer_ls_id = #{disId}
+		<if test="status != null">
+			and ndgl.nx_dg_goods_ls_status = #{status}
+		</if>
+		<if test="searchGoodsName != null and searchGoodsName != ''">
+			and (
+				ndgl.nx_dg_goods_ls_name like concat('%', #{searchGoodsName}, '%')
+				or ndgl.nx_dg_goods_ls_standardname like concat('%', #{searchGoodsName}, '%')
+				or ndg.nx_dg_goods_name like concat('%', #{searchGoodsName}, '%')
+				or ndg.nx_dg_goods_standardname like concat('%', #{searchGoodsName}, '%')
+				<if test="searchPinyin != null and searchPinyin != ''">
+					or ndgl.nx_dg_goods_ls_pinyin like concat('%', #{searchPinyin}, '%')
+					or ndgl.nx_dg_goods_ls_py like concat('%', #{searchPinyin}, '%')
+					or ndg.nx_dg_goods_pinyin like concat('%', #{searchPinyin}, '%')
+					or ndg.nx_dg_goods_py like concat('%', #{searchPinyin}, '%')
+				</if>
+			)
+		</if>
+		order by ndgl.nx_dg_apply_date desc, ndgl.nx_distributer_goods_ls_id desc
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="searchLinshiGoodsTotal" resultType="int">
+		select count(*)
+		from nx_distributer_goods_linshi as ndgl
+		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = COALESCE(ndgl.nx_dg_to_nx_dis_goods_id, ndgl.nx_dg_from_nx_dis_goods_id)
+		where ndgl.nx_dg_distributer_ls_id = #{disId}
+		<if test="status != null">
+			and ndgl.nx_dg_goods_ls_status = #{status}
+		</if>
+		<if test="searchGoodsName != null and searchGoodsName != ''">
+			and (
+				ndgl.nx_dg_goods_ls_name like concat('%', #{searchGoodsName}, '%')
+				or ndgl.nx_dg_goods_ls_standardname like concat('%', #{searchGoodsName}, '%')
+				or ndg.nx_dg_goods_name like concat('%', #{searchGoodsName}, '%')
+				or ndg.nx_dg_goods_standardname like concat('%', #{searchGoodsName}, '%')
+				<if test="searchPinyin != null and searchPinyin != ''">
+					or ndgl.nx_dg_goods_ls_pinyin like concat('%', #{searchPinyin}, '%')
+					or ndgl.nx_dg_goods_ls_py like concat('%', #{searchPinyin}, '%')
+					or ndg.nx_dg_goods_pinyin like concat('%', #{searchPinyin}, '%')
+					or ndg.nx_dg_goods_py like concat('%', #{searchPinyin}, '%')
+				</if>
+			)
+		</if>
+	</select>
+
 	<select id="queryLinshiByFromGoodsId" resultType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
 		select * from nx_distributer_goods_linshi where nx_dg_from_nx_dis_goods_id = #{value}
 	</select>
 
-	<select id="queryLinshiListByStatus" resultMap="linshiGoods">
+	<select id="queryLinshiByToGoodsId" resultType="com.nongxinle.entity.NxDistributerGoodsLinshiEntity">
+		select * from nx_distributer_goods_linshi where nx_dg_to_nx_dis_goods_id = #{value} limit 1
+	</select>
+
+	<update id="updateRevertToLinshi">
+		update nx_distributer_goods_linshi
+		set nx_dg_goods_ls_status = 2, nx_dg_to_nx_dis_goods_id = null
+		where nx_distributer_goods_ls_id = #{value}
+	</update>
+
+	<select id="queryLinshiListByStatus" resultMap="linshiGoodsWithOrders">
 		select
 		       ndgl.*,
 		       ndg.*,
@@ -164,11 +285,35 @@
 			   greatGrand.nx_dfg_fathers_father_id 'greatGrand_nx_dfg_fathers_father_id',
 			   greatGrand.nx_dfg_father_goods_name 'greatGrand_nx_dfg_father_goods_name',
 			   greatGrand.nx_dfg_nx_goods_id 'greatGrand_nx_dfg_nx_goods_id',
-			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color'
+			   greatGrand.nx_dfg_father_goods_color 'greatGrand_nx_dfg_father_goods_color',
+			   ndo.*,
+			   ds.nx_department_id            'nx_department_id',
+			   ds.nx_department_name          'nx_department_name',
+			   ds.nx_department_attr_name     'nx_department_attr_name',
+			   ds.nx_department_type          'nx_department_type',
+			   ds.nx_department_father_id     'nx_department_father_id',
+			   ds.nx_department_is_group_dep  'nx_department_is_group_dep',
+			   df.nx_department_id            'dd_nx_department_id',
+			   df.nx_department_name          'dd_nx_department_name',
+			   df.nx_department_attr_name     'dd_nx_department_attr_name',
+			   gds.gb_department_name         'gb_department_name',
+			   gds.gb_department_attr_name    'gb_department_attr_name',
+			   gds.gb_department_type         'gb_department_type',
+			   gds.gb_department_father_id     'gb_department_father_id',
+			   gds.gb_department_is_group_dep 'gb_department_is_group_dep',
+			   gdf.gb_department_id           'dd_gb_department_id',
+			   gdf.gb_department_name         'dd_gb_department_name',
+			   gdf.gb_department_attr_name    'dd_gb_department_attr_name'
 		from nx_distributer_goods_linshi as ndgl
 		left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = ndgl.nx_dg_from_nx_dis_goods_id
 		left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndg.nx_dg_dfg_goods_grand_id
 	    left join nx_distributer_father_goods as greatGrand on greatGrand.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
+		left join nx_department_order_history as ndo on ndo.nx_DO_dis_goods_id = COALESCE(ndgl.nx_dg_to_nx_dis_goods_id, ndgl.nx_dg_from_nx_dis_goods_id)
+			and ndo.nx_DO_distributer_id = #{disId}
+		left join nx_department as ds on ds.nx_department_id = ndo.nx_DO_department_id
+		left join nx_department as df on df.nx_department_id = ds.nx_department_father_id
+		left join gb_department as gds on gds.gb_department_id = ndo.nx_DO_gb_department_id
+		left join gb_department as gdf on gdf.gb_department_id = gds.gb_department_father_id
 		where ndgl.nx_dg_distributer_ls_id = #{disId} and ndgl.nx_dg_goods_ls_status = #{status}
 		order by ndgl.nx_dg_apply_date desc, ndgl.nx_distributer_goods_ls_id desc
 	</select>

@@ -597,6 +597,7 @@ public class NxDistributerUserController {
     @ResponseBody
     public R disLogin(@RequestBody NxDistributerUserEntity distributerUserEntity) {
 
+        System.out.println("thisisiisitestrebel");
         MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getTexiansongAppID() + "&secret=" +
                 myAPPIDConfig.getTexiansongScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
@@ -1291,7 +1292,7 @@ public class NxDistributerUserController {
         System.out.println("apddd" + phone);
         nxWeightUserService.update(nxDistributerUserEntity);
 
-        NxDistributerUserEntity nxDistributerUserEntity1 = nxDistributerUserService.queryUserInfo(userId);
+        NxWeightUserEntity nxDistributerUserEntity1 = nxWeightUserService.queryObject(userId);
         return R.ok().put("data", nxDistributerUserEntity1);
     }
 

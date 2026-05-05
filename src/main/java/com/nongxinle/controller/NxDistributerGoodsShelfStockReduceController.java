@@ -73,27 +73,38 @@ public class NxDistributerGoodsShelfStockReduceController {
         return BigDecimal.ZERO;
     }
 
+    /**
+     * FIFO 库存查询参数：不传 shelfGoodsId 时按商品跨所有货架；
+     * 传 shelfGoodsId（nx_distributer_goods_shelf_goods_id）时只扣挂在该货架商品上的批次（与列表里 nx_dgss_nx_shelf_goods_id 一致，同架多行商品也能区分）。
+     */
+    private Map<String, Object> buildStockFifoQueryMap(Integer disGoodsId, Integer shelfGoodsId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("disGoodsId", disGoodsId);
+        map.put("restWeight", 0);
+        if (shelfGoodsId != null) {
+            map.put("shelfGoodsId", shelfGoodsId);
+        }
+        return map;
+    }
 
 	/**
-	 * 损耗
+	 * 损耗（使用）
 	 * @param disId 批发商ID
 	 * @param disGoodsId 商品ID
 	 * @param weight 损耗重量
 	 * @param userId 操作用户ID
+	 * @param shelfGoodsId 可选，货架商品ID（nx_distributer_goods_shelf_goods_id）；从货架商品行操作时传入
 	 * @return
 	 */
 	@RequestMapping(value = "/addUse", method = RequestMethod.POST)
 	@ResponseBody
-	public R addUse(Integer disId, Integer disGoodsId, String weight, Integer userId) {
+	public R addUse(Integer disId, Integer disGoodsId, String weight, Integer userId, Integer shelfGoodsId) {
 		System.out.println("======== 添加损耗记录开始 ========");
-		System.out.println("批发商ID: " + disId + ", 商品ID: " + disGoodsId + ", 损耗重量: " + weight + ", 用户ID: " + userId);
+		System.out.println("批发商ID: " + disId + ", 商品ID: " + disGoodsId + ", 损耗重量: " + weight + ", 用户ID: " + userId + ", 货架商品ID: " + shelfGoodsId);
 
 		try {
-			// 查询库存批次（FIFO排序）
-			Map<String, Object> map = new HashMap<>();
-			map.put("disGoodsId", disGoodsId);
-			map.put("restWeight", 0);
-			List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDistributerGoodsShelfStockService.queryShelfStockListByParams(map);
+			List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDistributerGoodsShelfStockService.queryShelfStockListByParams(
+					buildStockFifoQueryMap(disGoodsId, shelfGoodsId));
 
 			if (stockEntities.size() == 0) {
 				System.out.println("⚠️ 没有找到库存批次");
@@ -149,12 +160,12 @@ public class NxDistributerGoodsShelfStockReduceController {
 				reduceEntity.setNxDgssrWeek(getWeek(0));
 				reduceEntity.setNxDgssrMonth(formatWhatMonth(0));
 				reduceEntity.setNxDgssrFullTime(formatWhatYearDayTime(0));
-				reduceEntity.setNxDgssrType(1); // 1=使用
+				reduceEntity.setNxDgssrType(0); // 1=使用
 				reduceEntity.setNxDgssrDoUserId(userId);
 				reduceEntity.setNxDgssrCostWeight(deductWeight.toString());
 				reduceEntity.setNxDgssrCostSubtotal(batchCost.toString());
-				reduceEntity.setNxDgssrLossWeight(deductWeight.toString());
-				reduceEntity.setNxDgssrLossSubtotal(batchCost.toString());
+				reduceEntity.setNxDgssrProduceWeight(deductWeight.toString());
+				reduceEntity.setNxDgssrProduceSubtotal(batchCost.toString());
 				reduceEntity.setNxDgssrNxPurGoodsId(stockEntity.getNxDgssNxPurGoodsId());
 				reduceEntity.setNxDgssrStatus(0);
 				nxDistributerGoodsShelfStockReduceService.save(reduceEntity);
@@ -189,20 +200,18 @@ public class NxDistributerGoodsShelfStockReduceController {
 	 * @param disGoodsId 商品ID
 	 * @param weight 损耗重量
 	 * @param userId 操作用户ID
+	 * @param shelfGoodsId 可选，货架商品ID
 	 * @return
 	 */
 	@RequestMapping(value = "/addLoss", method = RequestMethod.POST)
 	@ResponseBody
-	public R addLoss(Integer disId, Integer disGoodsId, String weight, Integer userId) {
+	public R addLoss(Integer disId, Integer disGoodsId, String weight, Integer userId, Integer shelfGoodsId) {
 		System.out.println("======== 添加损耗记录开始 ========");
-		System.out.println("批发商ID: " + disId + ", 商品ID: " + disGoodsId + ", 损耗重量: " + weight + ", 用户ID: " + userId);
+		System.out.println("批发商ID: " + disId + ", 商品ID: " + disGoodsId + ", 损耗重量: " + weight + ", 用户ID: " + userId + ", 货架商品ID: " + shelfGoodsId);
 
 		try {
-			// 查询库存批次（FIFO排序）
-			Map<String, Object> map = new HashMap<>();
-			map.put("disGoodsId", disGoodsId);
-			map.put("restWeight", 0);
-			List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDistributerGoodsShelfStockService.queryShelfStockListByParams(map);
+			List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDistributerGoodsShelfStockService.queryShelfStockListByParams(
+					buildStockFifoQueryMap(disGoodsId, shelfGoodsId));
 			
 			if (stockEntities.size() == 0) {
 				System.out.println("⚠️ 没有找到库存批次");
@@ -298,20 +307,18 @@ public class NxDistributerGoodsShelfStockReduceController {
 	 * @param disGoodsId 商品ID
 	 * @param weight 退货重量
 	 * @param userId 操作用户ID
+	 * @param shelfGoodsId 可选，货架商品ID
 	 * @return
 	 */
 	@RequestMapping(value = "/addReturn", method = RequestMethod.POST)
 	@ResponseBody
-	public R addReturn(Integer disId, Integer disGoodsId, String weight, Integer userId) {
+	public R addReturn(Integer disId, Integer disGoodsId, String weight, Integer userId, Integer shelfGoodsId) {
 		System.out.println("======== 添加退货记录开始 ========");
-		System.out.println("批发商ID: " + disId + ", 商品ID: " + disGoodsId + ", 退货重量: " + weight + ", 用户ID: " + userId);
+		System.out.println("批发商ID: " + disId + ", 商品ID: " + disGoodsId + ", 退货重量: " + weight + ", 用户ID: " + userId + ", 货架商品ID: " + shelfGoodsId);
 
 		try {
-			// 查询库存批次（FIFO排序）
-			Map<String, Object> map = new HashMap<>();
-			map.put("disGoodsId", disGoodsId);
-			map.put("restWeight", 0);
-			List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDistributerGoodsShelfStockService.queryShelfStockListByParams(map);
+			List<NxDistributerGoodsShelfStockEntity> stockEntities = nxDistributerGoodsShelfStockService.queryShelfStockListByParams(
+					buildStockFifoQueryMap(disGoodsId, shelfGoodsId));
 			
 			if (stockEntities.size() == 0) {
 				System.out.println("⚠️ 没有找到库存批次");

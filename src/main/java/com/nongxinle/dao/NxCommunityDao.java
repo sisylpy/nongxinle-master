@@ -21,5 +21,5 @@ public interface NxCommunityDao extends BaseDao<NxCommunityEntity> {
 
     NxECommerceEntity queryCommunityByECommerceId(Integer id);
 
-    List<NxCommunityEntity> queryCommunityListByUserPoint(@Param("nxCuaLat") String nxCuaLat, @Param("nxCuaLng") String nxCuaLng);
+    List<NxCommunityEntity> queryCommunityListByUserPoint(@Param("nxCuaLat") String nxCuaLat, @Param("nxCuaLng") String nxCuaLng, @Param("commerceId") Integer commerceId);
 }

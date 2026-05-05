@@ -158,6 +158,7 @@ public class NxDepartmentDisGoodsController {
                 Map<String, Object> map1 = new HashMap<>();
                 map1.put("depFatherId", gbDepartmentId);
                 map1.put("disGoodsId", disGoodsId);
+                map1.put("disId", department.getNxDepartmentDisId());
                 System.out.println("depdidgoods" + map1);
                 List<NxDepartmentDisGoodsEntity> departmentDisGoodsEntities = nxDepartmentDisGoodsService.queryDepDisGoodsByParams(map1);
                 if(departmentDisGoodsEntities.size() > 0){

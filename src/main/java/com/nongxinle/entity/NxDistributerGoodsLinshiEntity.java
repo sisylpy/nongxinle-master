@@ -8,6 +8,7 @@ package com.nongxinle.entity;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -81,5 +82,8 @@ public class NxDistributerGoodsLinshiEntity implements Serializable {
 	private String nxDgRecommendNxGoodsIds;
 
 	private NxDistributerGoodsEntity nxDistributerGoodsEntity;
+
+	/** 关联的订单列表（与 queryLinshiGoods 数据结构一致） */
+	private List<NxDepartmentOrdersEntity> nxDepartmentOrdersEntities;
 
 }

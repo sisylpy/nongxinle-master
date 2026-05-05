@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityGoodsMediaDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.nongxinle.entity.NxCommunityGoodsMediaEntity" id="nxCommunityGoodsMediaMap">
+        <result property="nxCommGoodsMediaId" column="nx_comm_goods_media_id"/>
+        <result property="nxCommGoodsId" column="nx_comm_goods_id"/>
+        <result property="nxCommGoodsMediaType" column="nx_comm_goods_media_type"/>
+        <result property="nxCommGoodsMediaUrl" column="nx_comm_goods_media_url"/>
+        <result property="nxCommGoodsMediaThumbnailUrl" column="nx_comm_goods_media_thumbnail_url"/>
+        <result property="nxCommGoodsMediaSort" column="nx_comm_goods_media_sort"/>
+        <result property="nxCommGoodsMediaIsPrimary" column="nx_comm_goods_media_is_primary"/>
+        <result property="nxCommGoodsMediaStatus" column="nx_comm_goods_media_status"/>
+        <result property="nxCommGoodsMediaFileSize" column="nx_comm_goods_media_file_size"/>
+        <result property="nxCommGoodsMediaFileName" column="nx_comm_goods_media_file_name"/>
+        <result property="nxCommGoodsMediaCreateTime" column="nx_comm_goods_media_create_time"/>
+        <result property="nxCommGoodsMediaUpdateTime" column="nx_comm_goods_media_update_time"/>
+    </resultMap>
+
+    <!-- 保存单张媒体 -->
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityGoodsMediaEntity">
+        insert into nx_community_goods_media
+        (
+            nx_comm_goods_id,
+            nx_comm_goods_media_type,
+            nx_comm_goods_media_url,
+            nx_comm_goods_media_thumbnail_url,
+            nx_comm_goods_media_sort,
+            nx_comm_goods_media_is_primary,
+            nx_comm_goods_media_status,
+            nx_comm_goods_media_file_size,
+            nx_comm_goods_media_file_name
+        ) values
+        (
+            #{nxCommGoodsId},
+            #{nxCommGoodsMediaType},
+            #{nxCommGoodsMediaUrl},
+            #{nxCommGoodsMediaThumbnailUrl},
+            #{nxCommGoodsMediaSort},
+            #{nxCommGoodsMediaIsPrimary},
+            #{nxCommGoodsMediaStatus},
+            #{nxCommGoodsMediaFileSize},
+            #{nxCommGoodsMediaFileName}
+        )
+    </insert>
+
+    <!-- 根据商品ID查询媒体列表（按排序） -->
+    <select id="queryListByGoodsId" resultMap="nxCommunityGoodsMediaMap">
+        SELECT * FROM nx_community_goods_media
+        WHERE nx_comm_goods_id = #{goodsId}
+          AND nx_comm_goods_media_status = 1
+        ORDER BY nx_comm_goods_media_sort ASC, nx_comm_goods_media_id ASC
+    </select>
+
+    <!-- 查询商品主图 -->
+    <select id="queryPrimaryMediaByGoodsId" resultMap="nxCommunityGoodsMediaMap">
+        SELECT * FROM nx_community_goods_media
+        WHERE nx_comm_goods_id = #{goodsId}
+          AND nx_comm_goods_media_is_primary = 1
+          AND nx_comm_goods_media_status = 1
+        LIMIT 1
+    </select>
+
+    <!-- 根据商品ID删除所有媒体 -->
+    <delete id="deleteByGoodsId">
+        DELETE FROM nx_community_goods_media WHERE nx_comm_goods_id = #{goodsId}
+    </delete>
+
+    <!-- 批量插入媒体 -->
+    <insert id="saveBatch">
+        INSERT INTO nx_community_goods_media (
+            nx_comm_goods_id,
+            nx_comm_goods_media_type,
+            nx_comm_goods_media_url,
+            nx_comm_goods_media_thumbnail_url,
+            nx_comm_goods_media_sort,
+            nx_comm_goods_media_is_primary,
+            nx_comm_goods_media_status,
+            nx_comm_goods_media_file_size,
+            nx_comm_goods_media_file_name
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.nxCommGoodsId},
+                #{item.nxCommGoodsMediaType},
+                #{item.nxCommGoodsMediaUrl},
+                #{item.nxCommGoodsMediaThumbnailUrl},
+                #{item.nxCommGoodsMediaSort},
+                #{item.nxCommGoodsMediaIsPrimary},
+                #{item.nxCommGoodsMediaStatus},
+                #{item.nxCommGoodsMediaFileSize},
+                #{item.nxCommGoodsMediaFileName}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据媒体ID删除单张图片 -->
+    <delete id="deleteByMediaId">
+        DELETE FROM nx_community_goods_media WHERE nx_comm_goods_media_id = #{mediaId}
+    </delete>
+
+    <!-- 取消商品的所有主图状态 -->
+    <update id="clearPrimaryByGoodsId">
+        UPDATE nx_community_goods_media
+        SET nx_comm_goods_media_is_primary = 0
+        WHERE nx_comm_goods_id = #{goodsId}
+    </update>
+
+    <!-- 更新单个图片的排序 -->
+    <update id="updateMediaSort">
+        UPDATE nx_community_goods_media
+        SET nx_comm_goods_media_sort = #{newSort}
+        WHERE nx_comm_goods_media_id = #{mediaId}
+    </update>
+
+</mapper>

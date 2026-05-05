@@ -201,6 +201,7 @@
 
     <resultMap id="disGoodsWithStandards" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
+        <result property="nxDgWillPrice" column="nx_dg_will_price"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
@@ -388,6 +389,8 @@
         <result property="nxDgsgDisGoodsId" column="nx_DGSG_dis_goods_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <result property="totalRestWeight" column="totalRestWeight"/>
         <result property="shelfName" column="shelf_name"/>
@@ -1139,7 +1142,6 @@
     <resultMap id="disGoodsWithGbDepBusiness" type="NxDistributerGoodsEntity">
         <id property="nxDistributerGoodsId" column="nx_distributer_goods_id"/>
         <result property="nxDgNxGoodsId" column="nx_dg_nx_goods_id"/>
-
 		<result property="nxDgQuantityDays" column="nx_dg_quantity_days"/>
         <result property="nxDgCartonUnit" column="nx_dg_carton_unit"/>
         <result property="nxDgItemsPerCarton" column="nx_dg_items_per_carton"/>
@@ -1212,6 +1214,7 @@
         <result property="gbDisGoodsType" column="gb_dg_goods_type"/>
         <result property="gbDisGoodsToDepId" column="gb_dg_gb_department_id"/>
         <association property="nxGoodsEntity" resultMap="nxGoods"/>
+
         <association property="nxDistributerFatherGoodsEntity" resultMap="greatGrand"/>
         <association property="gbDepartmentDisGoodsEntity" resultMap="gbDepDisGoods"/>
         <association property="nxDepartmentOrdersEntity" resultMap="depOrdersWithDep"/>
@@ -1248,6 +1251,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         FROM (
@@ -1461,6 +1465,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name,
                ndgss.nx_distributer_goods_shelf_stock_id,
@@ -1546,6 +1551,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
@@ -1576,6 +1582,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
@@ -1678,6 +1685,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name,
                ndg.nx_dg_distributer_id as nx_dg_distributer_id
@@ -1730,6 +1738,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
@@ -1831,6 +1840,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name,
                COALESCE((
@@ -1858,6 +1868,101 @@
           and nx_dg_distributer_id = #{disId}
     </select>
 
+    <!-- 根据搜索词查询未处理的临时商品（nx_dg_nx_goods_id is null），排除已有linshi记录的 -->
+    <select id="queryLinshiGoodsBySearch" resultMap="linshiGoodsWithOrders">
+        select *,
+               ds.nx_department_id            'nx_department_id',
+               ds.nx_department_name          'nx_department_name',
+               ds.nx_department_attr_name     'nx_department_attr_name',
+               ds.nx_department_type          'nx_department_type',
+               ds.nx_department_father_id     'nx_department_father_id',
+               ds.nx_department_is_group_dep  'nx_department_is_group_dep',
+               df.nx_department_id            'dd_nx_department_id',
+               df.nx_department_name          'dd_nx_department_name',
+               df.nx_department_attr_name     'dd_nx_department_attr_name',
+               gds.gb_department_name         'gb_department_name',
+               gds.gb_department_attr_name    'gb_department_attr_name',
+               gds.gb_department_type         'gb_department_type',
+               gds.gb_department_father_id    'gb_department_father_id',
+               gds.gb_department_is_group_dep 'gb_department_is_group_dep',
+               gdf.gb_department_id           'dd_gb_department_id',
+               gdf.gb_department_name         'dd_gb_department_name',
+               gdf.gb_department_attr_name    'dd_gb_department_attr_name',
+               ndgsg.nx_distributer_goods_shelf_goods_id,
+               ndgsg.nx_DGSG_shelf_sort,
+               ndgsg.nx_DGSG_dis_goods_id,
+               ndgsg.nx_DGSG_shelf_id,
+               ndgsg.nx_DGSG_sort,
+               ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
+               ndgsg.nx_DGSG_is_duplicate,
+               ndgs.nx_distributer_goods_shelf_name as shelf_name,
+               COALESCE((
+                   SELECT SUM(CAST(ndgss2.nx_dgss_rest_weight AS DECIMAL(10,1)))
+                   FROM nx_distributer_goods_shelf_stock AS ndgss2
+                   LEFT JOIN nx_distributer_goods_shelf_stock_reduce AS ir2
+                       ON ir2.nx_dgssr_nx_stock_id = ndgss2.nx_distributer_goods_shelf_stock_id
+                       AND ir2.nx_dgssr_type = 2
+                   WHERE ndgss2.nx_dgss_nx_shelf_goods_id = ndgsg.nx_distributer_goods_shelf_goods_id
+                       AND ndgss2.nx_dgss_rest_weight > 0
+                       AND ndgss2.nx_dgss_status = 0
+                       AND ir2.nx_distributer_goods_shelf_stock_reduce_id IS NULL
+               ), 0) AS totalRestWeight
+        from nx_distributer_goods as ndg
+                 left join nx_department_order_history as ndo on ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id
+                 and ndo.nx_DO_dis_goods_id = ndg.nx_distributer_goods_id and ndo.nx_DO_distributer_id = #{disId}
+                 left join nx_department as ds on ds.nx_department_id = ndo.nx_DO_department_id
+                 left join nx_department df on ds.nx_department_father_id = df.nx_department_id
+                 left join gb_department as gds on gds.gb_department_id = ndo.nx_DO_gb_department_id
+                 left join gb_department as gdf on gdf.gb_department_id = gds.gb_department_father_id
+                 left join nx_distributer_goods_shelf_goods AS ndgsg ON ndgsg.nx_DGSG_dis_goods_id = ndg.nx_distributer_goods_id
+                 left join nx_distributer_goods_shelf AS ndgs ON ndgs.nx_distributer_goods_shelf_id = ndgsg.nx_DGSG_shelf_id
+        where nx_dg_nx_goods_id is null
+          and nx_dg_distributer_id = #{disId}
+        <if test="excludeFromGoodsIds != null and excludeFromGoodsIds.size() > 0">
+            and ndg.nx_distributer_goods_id not in
+            <foreach collection="excludeFromGoodsIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="searchGoodsName != null and searchGoodsName != ''">
+            and (
+                ndg.nx_dg_goods_name like concat('%', #{searchGoodsName}, '%')
+                or ndg.nx_dg_goods_standardname like concat('%', #{searchGoodsName}, '%')
+                <if test="searchPinyin != null and searchPinyin != ''">
+                    or ndg.nx_dg_goods_pinyin like concat('%', #{searchPinyin}, '%')
+                    or ndg.nx_dg_goods_py like concat('%', #{searchPinyin}, '%')
+                </if>
+            )
+        </if>
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryLinshiGoodsBySearchTotal" resultType="int">
+        select count(*)
+        from nx_distributer_goods as ndg
+        where nx_dg_nx_goods_id is null
+          and nx_dg_distributer_id = #{disId}
+        <if test="excludeFromGoodsIds != null and excludeFromGoodsIds.size() > 0">
+            and ndg.nx_distributer_goods_id not in
+            <foreach collection="excludeFromGoodsIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="searchGoodsName != null and searchGoodsName != ''">
+            and (
+                ndg.nx_dg_goods_name like concat('%', #{searchGoodsName}, '%')
+                or ndg.nx_dg_goods_standardname like concat('%', #{searchGoodsName}, '%')
+                <if test="searchPinyin != null and searchPinyin != ''">
+                    or ndg.nx_dg_goods_pinyin like concat('%', #{searchPinyin}, '%')
+                    or ndg.nx_dg_goods_py like concat('%', #{searchPinyin}, '%')
+                </if>
+            )
+        </if>
+    </select>
+
     <select id="queryListGoodsAll" resultType="com.nongxinle.entity.NxDistributerGoodsEntity">
         select *
         from nx_distributer_goods
@@ -1876,6 +1981,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
@@ -1911,6 +2017,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_purchase_goods as ndpg
@@ -1958,6 +2065,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name,
         COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
@@ -1986,8 +2094,8 @@
         where (nx_dg_goods_name like concat('%', #{searchStr}, '%')
             or nx_dg_goods_brand like concat('%', #{searchStr}, '%')
             or da.nx_da_alias_name like concat('%', #{searchStr}, '%')
-            or nx_dg_goods_pinyin = #{searchPinyin}
-            or nx_dg_goods_py = #{searchPinyin}
+            or nx_dg_goods_pinyin like concat('%',  #{searchPinyin}, '%')
+            or nx_dg_goods_py like concat('%',  #{searchPy}, '%')
             )
           and dg.nx_dg_goods_is_hidden = 0
             <if test="disIds != null and disIds.size() > 0">
@@ -2025,6 +2133,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name,
                COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as goods_nx_distributer_name
@@ -2065,6 +2174,7 @@
             <if test="standard != null">
                 and ddg.nx_DDG_order_standard = #{standard}
             </if>
+
         </where>
 
         order by
@@ -2088,6 +2198,7 @@
         ndgsg.nx_DGSG_shelf_id,
         ndgsg.nx_DGSG_sort,
         ndgsg.nx_DGSG_shelf_layer,
+        ndgsg.nx_DGSG_shelf_layer_last,
         ndgsg.nx_DGSG_is_duplicate,
         ndgs.nx_distributer_goods_shelf_name as shelf_name
         FROM
@@ -2445,6 +2556,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
@@ -2506,6 +2618,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
@@ -2565,6 +2678,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                nd.nx_distributer_id,
                nd.nx_distributer_name,
@@ -2618,6 +2732,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
@@ -2890,10 +3005,15 @@
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
         <association property="nxDistributerGoodsEntity" resultMap="disGoodsWithStandards"/>
         <association property="shelfPurGoods" resultMap="onlyPurGoods"/>
         <collection property="nxDisGoodsShelfStockEntities" resultMap="disStock"/>
+        <collection property="sameShelfGoods"
+                    select="com.nongxinle.dao.NxDistributerGoodsShelfGoodsDao.querySameShelfGoodsByDisGoodsId"
+                    column="{disGoodsId=nx_DGSG_dis_goods_id,currentShelfGoodsId=nx_distributer_goods_shelf_goods_id}"/>
     </resultMap>
     <resultMap id="shelfGoods" type="NxDistributerGoodsShelfGoodsEntity">
         <id property="nxDistributerGoodsShelfGoodsId" column="nx_distributer_goods_shelf_goods_id"/>
@@ -2902,6 +3022,8 @@
         <result property="nxDgsgShelfId" column="nx_DGSG_shelf_id"/>
         <result property="nxDgsgSort" column="nx_DGSG_sort"/>
         <result property="nxDgsgShelfLayer" column="nx_DGSG_shelf_layer"/>
+        <result property="nxDgsgShelfLayerSeq" column="nx_DGSG_shelf_layer_seq"/>
+        <result property="nxDgsgShelfLayerLast" column="nx_DGSG_shelf_layer_last"/>
         <result property="nxDgsgIsDuplicate" column="nx_DGSG_is_duplicate"/>
     </resultMap>
 
@@ -2939,6 +3061,10 @@
 
     <resultMap id="disStock" type="NxDistributerGoodsShelfStockEntity">
         <id property="nxDistributerGoodsShelfStockId" column="nx_distributer_goods_shelf_stock_id"/>
+        <result property="nxDgssProduceDate" column="nx_dgss_produce_date"/>
+        <result property="nxDgssShelfLife" column="nx_dgss_shelf_life"/>
+        <result property="nxDgssShelfLifeUnit" column="nx_dgss_shelf_life_unit"/>
+        <result property="nxDgssExpiryDate" column="nx_dgss_expiry_date"/>
         <result property="nxDgssSellingPriceCarton" column="nx_dgss_selling_price_carton"/>
         <result property="nxDgssPriceCarton" column="nx_dgss_price_carton"/>
         <result property="nxDgssNxDisGoodsId" column="nx_dgss_nx_dis_goods_id"/>
@@ -3059,7 +3185,8 @@
             or da.nx_DA_alias_py like concat('%', #{searchPinyin}, '%')
             )
           and nx_dg_distributer_id = #{disId} and dg.nx_dg_goods_is_hidden = 0
-        order by ndgsg.nx_DGSG_shelf_id, COALESCE(ng.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
+        order by COALESCE(ndgs.nx_distributer_goods_shelf_sort, 999999), COALESCE(ndgsg.nx_DGSG_sort, 999999),
+                 COALESCE(ng.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
     </select>
 
 
@@ -3086,7 +3213,8 @@
             )
           and nx_dg_distributer_id = #{disId} and dg.nx_dg_goods_is_hidden = 0
           and ndgsg.nx_DGSG_dis_goods_id is not null
-        order by COALESCE(ng.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
+        order by COALESCE(ndgs.nx_distributer_goods_shelf_sort, 999999), COALESCE(ndgsg.nx_DGSG_sort, 999999),
+                 COALESCE(ng.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
     </select>
 
     <!-- 查询有nxGoodsId的货架商品 -->
@@ -3114,7 +3242,8 @@
           and dg.nx_dg_goods_is_hidden = 0
           and dg.nx_dg_nx_goods_id is not null
           and dg.nx_dg_nx_goods_id != 0
-        order by COALESCE(ng.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
+        order by COALESCE(ndgs.nx_distributer_goods_shelf_sort, 999999), COALESCE(ndgsg.nx_DGSG_sort, 999999),
+                 COALESCE(ng.nx_goods_sort, dg.nx_dg_goods_sort), COALESCE(ng.nx_goods_sons_sort, dg.nx_dg_goods_sons_sort)
     </select>
 
     <!-- 查询未上架商品列表（带分页） -->
@@ -3146,13 +3275,20 @@
     </select>
 
     <!-- 查询未上架商品总数 -->
+    <!-- shelfGoodsType: 99=全部 1=多货架 2=有库存 3=临期 4=库存不足；类型1/2/3/4时未上架=0 -->
     <select id="queryDisUnshelfGoodsTotal" resultType="java.lang.Integer">
-        select count(*)
-        from nx_distributer_goods as dg
+        select
+        <choose>
+            <when test="shelfGoodsType != null and shelfGoodsType != 99">
+                0
+            </when>
+            <otherwise>
+                (select count(*) from nx_distributer_goods as dg
                  left join nx_distributer_goods_shelf_goods as ndgsg on ndgsg.nx_DGSG_dis_goods_id = dg.nx_distributer_goods_id
-        where nx_dg_distributer_id = #{disId}
-          and ndgsg.nx_DGSG_dis_goods_id is null
-
+                 where nx_dg_distributer_id = #{disId}
+                   and ndgsg.nx_DGSG_dis_goods_id is null)
+            </otherwise>
+        </choose>
     </select>
 
 
@@ -3171,6 +3307,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
@@ -3372,6 +3509,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                nd.nx_distributer_id,
                nd.nx_distributer_name,
@@ -3431,6 +3569,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as dg
@@ -3471,6 +3610,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name
         from nx_distributer_goods as ndg
@@ -3515,6 +3655,7 @@
                ndgsg.nx_DGSG_shelf_id,
                ndgsg.nx_DGSG_sort,
                ndgsg.nx_DGSG_shelf_layer,
+               ndgsg.nx_DGSG_shelf_layer_last,
                ndgsg.nx_DGSG_is_duplicate,
                ndgs.nx_distributer_goods_shelf_name as shelf_name,
                ndg.nx_dg_distributer_id as nx_dg_distributer_id

@@ -195,6 +195,7 @@ public class NxDistributerServiceImpl implements NxDistributerService {
 
 		distributerEntity.setNxDistributerShelfQuantity(0);
 		distributerEntity.setNxDistributerBusinessTypeId(0);
+		distributerEntity.setNxDistributerManager("ApplyHalfPanel");
 		Integer marketId = distributerEntity.getNxDistributerSysMarketId();
 		
 		// 如果marketId为空，使用默认值1

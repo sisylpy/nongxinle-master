@@ -72,6 +72,19 @@ public class NxCommunityEntity implements Serializable {
 	private String nxCommunityBillPrintSn;
 	private String nxCommunityBusinessPhone;
 
+	/**
+	 * 取货日期偏移（从下单当天算起第几天取货，如1=次日，2=隔日）
+	 */
+	private Integer nxCommunityDeliveryDayOffset;
+	/**
+	 * 取货开始时间（分钟，如540=9:00，1080=18:00）
+	 */
+	private Integer nxCommunityDeliveryStartTime;
+	/**
+	 * 取货结束时间（分钟）
+	 */
+	private Integer nxCommunityDeliveryStopTime;
+
 	public String getNxCommunityLocation() {
 		return nxCommunityLocation != null ? "POINT(" + nxCommunityLocation.getLng() + " " + nxCommunityLocation.getLat() + ")" : null;
 	}

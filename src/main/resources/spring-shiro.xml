@@ -49,6 +49,7 @@
 				/uploadImage/**=anon
 				/foodImage/**=anon
 				/goodsImage/**=anon
+				/goodsVideo/**=anon
 				/userImage/**=anon
 				/traceReports/**=anon
 				/numberRecord/**=anon

@@ -69,6 +69,16 @@ public class NxDistributerGoodsLinshiServiceImpl implements NxDistributerGoodsLi
 	}
 
 	@Override
+	public NxDistributerGoodsLinshiEntity queryLinshiByToGoodsId(Integer toGoodsId) {
+		return nxDistributerGoodsLinshiDao.queryLinshiByToGoodsId(toGoodsId);
+	}
+
+	@Override
+	public int updateRevertToLinshi(Integer linshiId) {
+		return nxDistributerGoodsLinshiDao.updateRevertToLinshi(linshiId);
+	}
+
+	@Override
 	public List<NxDistributerGoodsLinshiEntity> queryLinshiListByStatus(Map<String, Object> map) {
 		return nxDistributerGoodsLinshiDao.queryLinshiListByStatus(map);
 	}
@@ -76,6 +86,16 @@ public class NxDistributerGoodsLinshiServiceImpl implements NxDistributerGoodsLi
 	@Override
 	public List<Integer> queryFromGoodsIdsByDisId(Integer disId) {
 		return nxDistributerGoodsLinshiDao.queryFromGoodsIdsByDisId(disId);
+	}
+
+	@Override
+	public List<NxDistributerGoodsLinshiEntity> searchLinshiGoodsList(Map<String, Object> map) {
+		return nxDistributerGoodsLinshiDao.searchLinshiGoodsList(map);
+	}
+
+	@Override
+	public int searchLinshiGoodsTotal(Map<String, Object> map) {
+		return nxDistributerGoodsLinshiDao.searchLinshiGoodsTotal(map);
 	}
 
 }

@@ -7,6 +7,7 @@
 
 package com.nongxinle.utils;
 
+import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -72,6 +73,73 @@ public class CommonUtils {
         } catch (java.security.NoSuchAlgorithmException e) {
         }
         return null;
+    }
+
+    /**
+     * 每箱数量（库 varchar / 接口字符串），解析为 BigDecimal；空或非法返回 null。
+     */
+    public static BigDecimal parseItemsPerCartonBigDecimal(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String t = raw.trim();
+        if (t.isEmpty()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(t);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static boolean isPositiveItemsPerCarton(String raw) {
+        BigDecimal bd = parseItemsPerCartonBigDecimal(raw);
+        return bd != null && bd.compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    /**
+     * JSON / Object 转为可入库的每箱数量字符串；无法识别返回 null。
+     */
+    public static String normalizeItemsPerCartonString(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof String) {
+            String s = ((String) raw).trim();
+            return s.isEmpty() ? null : s;
+        }
+        if (raw instanceof Number) {
+            try {
+                return new BigDecimal(raw.toString()).stripTrailingZeros().toPlainString();
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 通用数字字符串解析；null、空串、非法格式返回 defaultValue。
+     */
+    public static BigDecimal parseBigDecimalOrDefault(String raw, BigDecimal defaultValue) {
+        if (raw == null) {
+            return defaultValue;
+        }
+        String t = raw.trim();
+        if (t.isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return new BigDecimal(t);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    public static boolean isStrictlyPositiveDecimalString(String raw) {
+        BigDecimal bd = parseBigDecimalOrDefault(raw, BigDecimal.ZERO);
+        return bd.compareTo(BigDecimal.ZERO) > 0;
     }
 
 }

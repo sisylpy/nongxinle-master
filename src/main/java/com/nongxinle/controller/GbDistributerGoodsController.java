@@ -59,8 +59,6 @@ public class GbDistributerGoodsController {
     @Autowired
     private GbDistributerGoodsShelfGoodsService gbDistributerGoodsShelfGoodsService;
     @Autowired
-    private GbDistributerSupplierService gbDistributerSupplierService;
-    @Autowired
     private GbDepartmentService gbDepartmentService;
     @Autowired
     private GbDistributerService gbDistributerService;
@@ -516,12 +514,17 @@ public class GbDistributerGoodsController {
         return R.ok().put("data", gbDepartmentOrders);
     }
 
+
+
+
     @ResponseBody
     @RequestMapping("/saveOrdersGbJjAndSaveGoodsSx")
     public R saveOrdersGbJjAndSaveGoodsSx(@RequestBody GbDepartmentOrdersEntity gbDepartmentOrders) {
 
         Integer toDepartmentId = gbDepartmentOrders.getGbDoToDepartmentId();
         Integer gbDoDistributerId = gbDepartmentOrders.getGbDoDistributerId();
+        Integer gbDoNxDistributerId = gbDepartmentOrders.getGbDoNxDistributerId();
+
         Integer nxGoodsId = gbDepartmentOrders.getGbDoNxGoodsId();
         //添加 gbDisGoods
         GbDistributerGoodsEntity gbNewGoods = postDgnGbGoods(gbDoDistributerId, toDepartmentId, nxGoodsId);
@@ -551,29 +554,29 @@ public class GbDistributerGoodsController {
         NxDistributerGoodsEntity nxDistributerGoodsEntity = nxDistributerGoodsService.queryOneGoodsAboutNxGoods(map);
 
         //添加caigou部门商品
-        GbDepartmentDisGoodsEntity disGoodsEntity = new GbDepartmentDisGoodsEntity();
-        disGoodsEntity.setGbDdgDepGoodsName(gbNewGoods.getGbDgGoodsName());
-        disGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
-        disGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
-        disGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
-        disGoodsEntity.setGbDdgDisGoodsGreatId(gbNewGoods.getGbDgDfgGoodsGreatId());
-        disGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
-        disGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
-        disGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
-        disGoodsEntity.setGbDdgDepartmentId(toDepartmentId);
-        disGoodsEntity.setGbDdgDepartmentFatherId(toDepartmentId);
-        disGoodsEntity.setGbDdgGbDisId(gbNewGoods.getGbDgDistributerId());
-        disGoodsEntity.setGbDdgGoodsType(gbNewGoods.getGbDgGoodsType());
-        disGoodsEntity.setGbDdgStockTotalWeight("0.0");
-        disGoodsEntity.setGbDdgStockTotalSubtotal("0.0");
-        disGoodsEntity.setGbDdgShowStandardId(-1);
-        disGoodsEntity.setGbDdgShowStandardName(gbNewGoods.getGbDgGoodsStandardname());
-        disGoodsEntity.setGbDdgShowStandardScale("-1");
-        disGoodsEntity.setGbDdgShowStandardWeight(null);
-        disGoodsEntity.setGbDdgNxDistributerGoodsId(gbNewGoods.getGbDgNxDistributerGoodsId());
-        disGoodsEntity.setGbDdgNxDistributerId(-1);
-        disGoodsEntity.setGbDdgPrintStandard(gbDepartmentOrders.getGbDoPrintStandard());
-        gbDepDisGoodsService.save(disGoodsEntity);
+//        GbDepartmentDisGoodsEntity disGoodsEntity = new GbDepartmentDisGoodsEntity();
+//        disGoodsEntity.setGbDdgDepGoodsName(gbNewGoods.getGbDgGoodsName());
+//        disGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
+//        disGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
+//        disGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
+//        disGoodsEntity.setGbDdgDisGoodsGreatId(gbNewGoods.getGbDgDfgGoodsGreatId());
+//        disGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
+//        disGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
+//        disGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
+//        disGoodsEntity.setGbDdgDepartmentId(toDepartmentId);
+//        disGoodsEntity.setGbDdgDepartmentFatherId(toDepartmentId);
+//        disGoodsEntity.setGbDdgGbDisId(gbNewGoods.getGbDgDistributerId());
+//        disGoodsEntity.setGbDdgGoodsType(gbNewGoods.getGbDgGoodsType());
+//        disGoodsEntity.setGbDdgStockTotalWeight("0.0");
+//        disGoodsEntity.setGbDdgStockTotalSubtotal("0.0");
+//        disGoodsEntity.setGbDdgShowStandardId(-1);
+//        disGoodsEntity.setGbDdgShowStandardName(gbNewGoods.getGbDgGoodsStandardname());
+//        disGoodsEntity.setGbDdgShowStandardScale("-1");
+//        disGoodsEntity.setGbDdgShowStandardWeight(null);
+//        disGoodsEntity.setGbDdgNxDistributerGoodsId(gbNewGoods.getGbDgNxDistributerGoodsId());
+//        disGoodsEntity.setGbDdgNxDistributerId(-1);
+//        disGoodsEntity.setGbDdgPrintStandard(gbDepartmentOrders.getGbDoPrintStandard());
+//        gbDepDisGoodsService.save(disGoodsEntity);
 
         //添加部门商品
         GbDepartmentDisGoodsEntity mendianDisGoodsEntity = new GbDepartmentDisGoodsEntity();
@@ -581,7 +584,7 @@ public class GbDistributerGoodsController {
         mendianDisGoodsEntity.setGbDdgDisGoodsId(gbNewGoods.getGbDistributerGoodsId());
         mendianDisGoodsEntity.setGbDdgDisGoodsFatherId(gbNewGoods.getGbDgDfgGoodsFatherId());
         mendianDisGoodsEntity.setGbDdgDisGoodsGrandId(gbNewGoods.getGbDgDfgGoodsGrandId());
-        disGoodsEntity.setGbDdgDisGoodsGreatId(gbNewGoods.getGbDgDfgGoodsGreatId());
+        mendianDisGoodsEntity.setGbDdgDisGoodsGreatId(gbNewGoods.getGbDgDfgGoodsGreatId());
         mendianDisGoodsEntity.setGbDdgDepGoodsPinyin(gbNewGoods.getGbDgGoodsPinyin());
         mendianDisGoodsEntity.setGbDdgDepGoodsPy(gbNewGoods.getGbDgGoodsPy());
         mendianDisGoodsEntity.setGbDdgDepGoodsStandardname(gbNewGoods.getGbDgGoodsStandardname());
@@ -600,8 +603,8 @@ public class GbDistributerGoodsController {
         mendianDisGoodsEntity.setGbDdgShowStandardWeight(null);
         mendianDisGoodsEntity.setGbDdgNxDistributerGoodsId(gbNewGoods.getGbDgNxDistributerGoodsId());
         mendianDisGoodsEntity.setGbDdgNxDistributerId(-1);
-        disGoodsEntity.setGbDdgPrintStandard(gbDepartmentOrders.getGbDoPrintStandard());
-        disGoodsEntity.setGbDdgOrderPriceLevel(gbDepartmentOrders.getGbDoCostPriceLevel().toString());
+        mendianDisGoodsEntity.setGbDdgPrintStandard(gbDepartmentOrders.getGbDoPrintStandard());
+        mendianDisGoodsEntity.setGbDdgOrderPriceLevel(gbDepartmentOrders.getGbDoCostPriceLevel().toString());
         gbDepDisGoodsService.save(mendianDisGoodsEntity);
 
         // add purchaseGoods
@@ -697,6 +700,7 @@ public class GbDistributerGoodsController {
         ordersEntity.setNxDoCostPriceUpdate(nxDistributerGoodsEntity.getNxDgBuyingPriceUpdate());
         ordersEntity.setNxDoCostPriceLevel(gbDepartmentOrders.getGbDoCostPriceLevel().toString());
         ordersEntity.setNxDoPurchaseUserId(-1);
+        ordersEntity.setNxDoCollaborativeNxDisId(-1);
         ordersEntity.setNxDoGbDepartmentOrderId(gbDepartmentOrders.getGbDepartmentOrdersId());
         System.out.println("oreiidid==" + ordersEntity.getNxDoGbDepartmentOrderId());
         if (nxDistributerGoodsEntity.getNxDgPurchaseAuto() == -1) {
@@ -1043,6 +1047,7 @@ public class GbDistributerGoodsController {
 //
 //
 //    }
+
 
 
     public GbDistributerGoodsEntity postDgnGbGoods(Integer gbDisId, Integer depId, Integer nxGoodsId) {
@@ -3402,6 +3407,7 @@ public class GbDistributerGoodsController {
 
         return R.ok().put("data", newList);
     }
+
 
     @RequestMapping(value = "/canclePostDgnGoodsGb", method = RequestMethod.POST)
     @ResponseBody

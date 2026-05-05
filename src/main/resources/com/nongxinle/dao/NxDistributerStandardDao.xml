@@ -6,6 +6,7 @@
 
 	<select id="queryDisStandardByDisGoodsId" resultType="com.nongxinle.entity.NxDistributerStandardEntity">
 		select * from nx_distributer_standard where nx_DS_dis_goods_id = #{nxDdgDisGoodsId}
+		order by IFNULL(nx_DS_standard_sort, 0), nx_distributer_standard_id
 	</select>
 
 
