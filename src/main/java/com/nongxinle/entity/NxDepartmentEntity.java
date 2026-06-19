@@ -140,6 +140,15 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 
 	private int taskCount;
 
+	/** 平台客户：1 / 0（展示用） */
+	private Integer isPlatformCustomer;
+	/** PLATFORM / OWN（展示用） */
+	private String orderSource;
+	/** 平台客户标签（展示用） */
+	private String platformLabel;
+	/** 排序：平台客户 0，普通客户 1 */
+	private Integer platformSort;
+
 
 	@Override
 	public boolean equals(Object o) {

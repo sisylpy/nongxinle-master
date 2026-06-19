@@ -19,4 +19,11 @@ public final class PlatformConstants {
     public static final String SWITCH_SCOPE_ORDER_ONLY = "ORDER_ONLY";
     public static final String SWITCH_SCOPE_ORDER_AND_DEFAULT = "ORDER_AND_DEFAULT";
     public static final String SWITCH_SCOPE_ORDER_AND_SNAPSHOT = "ORDER_AND_SNAPSHOT";
+
+    public static final String FULFILLMENT_STATUS_ASSIGNED = "ASSIGNED";
+    public static final String FULFILLMENT_STATUS_READY_FOR_PICKUP = "READY_FOR_PICKUP";
+    public static final String FULFILLMENT_STATUS_PICKED_UP = "PICKED_UP";
+    public static final String FULFILLMENT_STATUS_DELIVERING = "DELIVERING";
+    public static final String FULFILLMENT_STATUS_DELIVERED = "DELIVERED";
+    public static final String FULFILLMENT_STATUS_SUPPLIER_EXCEPTION = "SUPPLIER_EXCEPTION";
 }

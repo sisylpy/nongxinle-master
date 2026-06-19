@@ -19,7 +19,12 @@ public class PlatformAssignResponse implements Serializable {
     private Integer nxDoDisGoodsId;
     private Integer nxDoCollaborativeNxDisId;
     private String nxDoPrice;
+    private String nxDoExpectPrice;
+    private String nxDoPriceDifferent;
     private String nxDoSubtotal;
     private Integer defaultId;
     private Integer switchLogId;
+    /** 可选：assign 成功后履约状态 */
+    private String fulfillmentStatus;
+    private Integer costMissing;
 }

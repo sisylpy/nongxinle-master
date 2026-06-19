@@ -162,6 +162,8 @@ public interface NxDepartmentOrdersService {
 
     List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map);
 
+    List<Integer> queryPlatformCustomerDepFatherIds(Map<String, Object> map);
+
     Map<Integer, Map<String, Integer>> batchQueryDepStats(@Param("list") List<Integer> depIds, @Param("params") Map<String, Object> params);
 
 

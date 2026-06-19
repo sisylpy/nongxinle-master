@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       default-lazy-init="true"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+    <import resource="classpath:spring-jdbc.xml"/>
+
+    <context:component-scan base-package="com.nongxinle.service.impl">
+        <context:exclude-filter type="regex" expression=".*NxCustomer.*"/>
+        <context:exclude-filter type="regex" expression="com\.nongxinle\.service\.impl\.NxCommunity.*"/>
+        <context:exclude-filter type="regex" expression=".*QyWx.*"/>
+        <context:exclude-filter type="regex" expression="com\.nongxinle\.service\.impl\.Gb.*"/>
+    </context:component-scan>
+    <context:component-scan base-package="com.nongxinle.service.platform"/>
+</beans>

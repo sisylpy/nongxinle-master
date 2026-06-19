@@ -5,6 +5,7 @@ import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.CommonUtils;
+import com.nongxinle.utils.PlatformOrderDisplaySupport;
 import com.nongxinle.utils.R;
 import com.nongxinle.utils.SalesPriceUtils;
 import org.slf4j.Logger;
@@ -126,7 +127,22 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
 
     @Override
     public List<NxDepartmentEntity> queryOrderDepartmentList(Map<String, Object> map1) {
-        return nxDepartmentOrdersDao.queryOrderDepartmentList(map1);
+        List<NxDepartmentEntity> list = nxDepartmentOrdersDao.queryOrderDepartmentList(map1);
+        applyPlatformCustomerSort(list, map1);
+        return list;
+    }
+
+    private void applyPlatformCustomerSort(List<NxDepartmentEntity> list, Map<String, Object> map) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        Set<Integer> platformDepIds = PlatformOrderDisplaySupport.toPlatformDepIdSet(
+                nxDepartmentOrdersDao.queryPlatformCustomerDepFatherIds(map));
+        for (NxDepartmentEntity dep : list) {
+            boolean platform = dep.getNxDepartmentId() != null && platformDepIds.contains(dep.getNxDepartmentId());
+            PlatformOrderDisplaySupport.applyPlatformCustomerFields(dep, platform);
+        }
+        list.sort(PlatformOrderDisplaySupport.departmentEntityComparator());
     }
 
     @Override
@@ -244,7 +260,9 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
 
     @Override
     public List<OutGoodsSimpleDTO> queryOutGoodsWithOrdersUltraSimple(Map<String, Object> map) {
-        return nxDepartmentOrdersDao.queryOutGoodsWithOrdersUltraSimple(map);
+        List<OutGoodsSimpleDTO> list = nxDepartmentOrdersDao.queryOutGoodsWithOrdersUltraSimple(map);
+        PlatformOrderDisplaySupport.enrichOutGoodsList(list);
+        return list;
     }
 
 
@@ -261,9 +279,16 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
     }
 
 
+    @Override
     public List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map) {
+        List<NxDepartmentEntity> list = nxDepartmentOrdersDao.queryPureOrderNxDepartmentSimple(map);
+        applyPlatformCustomerSort(list, map);
+        return list;
+    }
 
-        return nxDepartmentOrdersDao.queryPureOrderNxDepartmentSimple(map);
+    @Override
+    public List<Integer> queryPlatformCustomerDepFatherIds(Map<String, Object> map) {
+        return nxDepartmentOrdersDao.queryPlatformCustomerDepFatherIds(map);
     }
 
     @Override
@@ -465,7 +490,9 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
 
     @Override
     public List<OutGoodsSimpleDTO> disGetNxGoodsApplyUltraSimple(Map<String, Object> map) {
-        return nxDepartmentOrdersDao.disGetNxGoodsApplyUltraSimple(map);
+        List<OutGoodsSimpleDTO> list = nxDepartmentOrdersDao.disGetNxGoodsApplyUltraSimple(map);
+        PlatformOrderDisplaySupport.enrichOutGoodsList(list);
+        return list;
     }
 
     @Override

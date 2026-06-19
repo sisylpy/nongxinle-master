@@ -184,6 +184,8 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
 
     List<NxDepartmentEntity> queryPureOrderNxDepartmentSimple(Map<String, Object> map);
 
+    List<Integer> queryPlatformCustomerDepFatherIds(Map<String, Object> map);
+
     List<Map<String, Object>> batchQueryDepStats(@Param("list") List<Integer> depIds, @Param("params") Map<String, Object> params);
 
     List<Map<String, Object>> batchQueryGbDepStats(@Param("list") List<Integer> gbDepIds, @Param("params") Map<String, Object> params);

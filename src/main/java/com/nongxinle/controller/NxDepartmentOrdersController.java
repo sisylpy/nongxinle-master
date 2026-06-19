@@ -15,7 +15,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.service.platform.PlatformOutboundFinishSupport;
 import com.nongxinle.utils.CommonUtils;
+import com.nongxinle.utils.PlatformOrderDisplaySupport;
+import com.nongxinle.utils.PlatformOrderPriceSupport;
 import com.nongxinle.utils.PageUtils;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -104,6 +107,8 @@ public class NxDepartmentOrdersController {
     private NxDistributerBillService nxDistributerBillService;
     @Autowired
     private NxDistributerGoodsMergeService nxDistributerGoodsMergeService;
+    @Autowired
+    private PlatformOrderFulfillmentService platformOrderFulfillmentService;
 
     @Value("${external.images.path:file:///opt/tomcat/latest/app-data/images/}")
     private String externalImagesPath;
@@ -2042,11 +2047,7 @@ public class NxDepartmentOrdersController {
 
             }
 
-            BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
-            BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
-            oldOrderEntity.setNxDoCostSubtotal(decimal.toString());
-            oldOrderEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-            nxDepartmentOrdersService.update(oldOrderEntity);
+            finishOutboundOrder(oldOrderEntity);
         }
 
         return R.ok();
@@ -2069,12 +2070,7 @@ public class NxDepartmentOrdersController {
                     ordersEntity.setNxDoSubtotal(decimal1.toString());
                     ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
                 }
-                //cost
-                BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
-                BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
-                ordersEntity.setNxDoCostSubtotal(decimal.toString());
-                ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-                nxDepartmentOrdersService.update(ordersEntity);
+                finishOutboundOrder(ordersEntity);
 
             }
         }
@@ -4238,6 +4234,10 @@ public class NxDepartmentOrdersController {
             depMap.put("depAttrName", department.getNxDepartmentAttrName());
             depMap.put("depOrderCode", department.getNxDepartmentOrderCode());
             depMap.put("depPinyin", department.getNxDepartmentPinyin());
+            depMap.put("isPlatformCustomer", department.getIsPlatformCustomer() != null ? department.getIsPlatformCustomer() : 0);
+            depMap.put("platformSort", department.getPlatformSort() != null ? department.getPlatformSort() : 1);
+            depMap.put("orderSource", department.getOrderSource() != null ? department.getOrderSource() : PlatformOrderDisplaySupport.ORDER_SOURCE_OWN);
+            depMap.put("platformLabel", department.getPlatformLabel());
 
             // 统计该部门的订单数量
             Map<String, Object> countMap = new HashMap<>();
@@ -4258,21 +4258,36 @@ public class NxDepartmentOrdersController {
             departmentList.add(depMap);
         }
 
-        // 3. 按部门名称拼音排序
+        // 3. 平台客户优先，再按拼音排序
         departmentList.sort((a, b) -> {
+            int sortA = a.get("platformSort") instanceof Number ? ((Number) a.get("platformSort")).intValue() : 1;
+            int sortB = b.get("platformSort") instanceof Number ? ((Number) b.get("platformSort")).intValue() : 1;
+            if (sortA != sortB) {
+                return Integer.compare(sortA, sortB);
+            }
             String pinyinA = (String) a.get("depPinyin");
             String pinyinB = (String) b.get("depPinyin");
             if (pinyinA == null && pinyinB == null) {
                 return 0;
             }
             if (pinyinA == null) {
-                return 1; // null值排在后面
+                return 1;
             }
             if (pinyinB == null) {
-                return -1; // null值排在后面
+                return -1;
             }
-            return pinyinA.compareTo(pinyinB); // 升序排序
+            return pinyinA.compareTo(pinyinB);
         });
+
+        List<Map<String, Object>> platformDepList = new ArrayList<>();
+        List<Map<String, Object>> ownDepList = new ArrayList<>();
+        for (Map<String, Object> depMapItem : departmentList) {
+            if (Integer.valueOf(1).equals(depMapItem.get("isPlatformCustomer"))) {
+                platformDepList.add(depMapItem);
+            } else {
+                ownDepList.add(depMapItem);
+            }
+        }
 
         // 4. 全局统计
         Map<String, Object> map111 = new HashMap<>();
@@ -4308,6 +4323,8 @@ public class NxDepartmentOrdersController {
         mapR.put("havePurCount", havePurCount);
         mapR.put("puringCount", puringCount);
         mapR.put("arr", departmentList);
+        mapR.put("platformDep", platformDepList);
+        mapR.put("ownDep", ownDepList);
         mapR.put("offArr", offerNxDistributer);
         return R.ok().put("data", mapR);
     }
@@ -4439,11 +4456,7 @@ public class NxDepartmentOrdersController {
         }
         //profit
         if (depOrders.getNxDoExpectPrice() != null && !depOrders.getNxDoExpectPrice().trim().isEmpty()) {
-
-            BigDecimal expectPrice = new BigDecimal(depOrders.getNxDoExpectPrice());
-            BigDecimal doPrice = new BigDecimal(depOrders.getNxDoPrice());
-            BigDecimal subtract = doPrice.subtract(expectPrice);
-            depOrders.setNxDoPriceDifferent(subtract.toString());
+            PlatformOrderPriceSupport.recalculatePriceDifferent(depOrders);
         }
 
         System.out.println("sorderss" + depOrders);
@@ -4496,13 +4509,7 @@ public class NxDepartmentOrdersController {
             ordersEntity.setNxDoSubtotal(decimal.toString());
             ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
         }
-        //cost
-        BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
-        BigDecimal weightB = new BigDecimal(weight);
-        BigDecimal decimal = nxDoCostPriceB.multiply(weightB).setScale(1, BigDecimal.ROUND_HALF_UP);
-        ordersEntity.setNxDoCostSubtotal(decimal.toString());
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-        nxDepartmentOrdersService.update(ordersEntity);
+        finishOutboundOrder(ordersEntity);
         //weight
         if (ordersEntity.getNxDoWeightId() != null) {
             NxDistributerWeightEntity weightEntity = nxDistributerWeightService.queryObject(ordersEntity.getNxDoWeightId());
@@ -4660,15 +4667,6 @@ public class NxDepartmentOrdersController {
             ordersEntity.setNxDoSubtotal(subtotalB.toString());
             ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
 
-            //profit
-            if (ordersEntity.getNxDoExpectPrice() != null && !ordersEntity.getNxDoExpectPrice().trim().isEmpty() && !ordersEntity.getNxDoExpectPrice().isEmpty()) {
-                BigDecimal expectPrice = new BigDecimal(ordersEntity.getNxDoExpectPrice());
-                BigDecimal doPrice = new BigDecimal(ordersEntity.getNxDoPrice());
-                BigDecimal subtract = doPrice.subtract(expectPrice);
-                System.out.println("exxxxxxxx" + subtract);
-                ordersEntity.setNxDoPriceDifferent(subtract.toString());
-
-            }
             System.out.println("cosrprice" + ordersEntity.getNxDoCostPrice());
             if (ordersEntity.getNxDoCostPrice() != null && !ordersEntity.getNxDoCostPrice().isEmpty()) {
                 BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
@@ -4681,7 +4679,10 @@ public class NxDepartmentOrdersController {
                 ordersEntity.setNxDoProfitScale(scaleB.toString());
                 ordersEntity.setNxDoProfitSubtotal(profitB.toString());
             }
+        } else {
+            PlatformOrderPriceSupport.recalculateSubtotalFromActualPrice(ordersEntity);
         }
+        PlatformOrderPriceSupport.recalculatePriceDifferent(ordersEntity);
 
         nxDepartmentOrdersService.update(ordersEntity);
 
@@ -4703,15 +4704,6 @@ public class NxDepartmentOrdersController {
             ordersEntity.setNxDoSubtotal(subtotalB.toString());
             ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
 
-            //profit
-            if (ordersEntity.getNxDoExpectPrice() != null && !ordersEntity.getNxDoExpectPrice().trim().isEmpty() && !ordersEntity.getNxDoExpectPrice().isEmpty()) {
-                BigDecimal expectPrice = new BigDecimal(ordersEntity.getNxDoExpectPrice());
-                BigDecimal doPrice = new BigDecimal(ordersEntity.getNxDoPrice());
-                BigDecimal subtract = doPrice.subtract(expectPrice);
-                System.out.println("exxxxxxxx" + subtract);
-                ordersEntity.setNxDoPriceDifferent(subtract.toString());
-
-            }
             System.out.println("cosrprice" + ordersEntity.getNxDoCostPrice());
             if (ordersEntity.getNxDoCostPrice() != null && !ordersEntity.getNxDoCostPrice().isEmpty()) {
                 BigDecimal nxDoCostPriceB = new BigDecimal(ordersEntity.getNxDoCostPrice());
@@ -4724,7 +4716,10 @@ public class NxDepartmentOrdersController {
                 ordersEntity.setNxDoProfitScale(scaleB.toString());
                 ordersEntity.setNxDoProfitSubtotal(profitB.toString());
             }
+        } else {
+            PlatformOrderPriceSupport.recalculateSubtotalFromActualPrice(ordersEntity);
         }
+        PlatformOrderPriceSupport.recalculatePriceDifferent(ordersEntity);
 
         nxDepartmentOrdersService.update(ordersEntity);
 
@@ -4773,7 +4768,10 @@ public class NxDepartmentOrdersController {
                 ordersEntity.setNxDoProfitScale(scaleB.toString());
                 ordersEntity.setNxDoProfitSubtotal(profitB.toString());
             }
+        } else {
+            PlatformOrderPriceSupport.recalculateSubtotalFromActualPrice(ordersEntity);
         }
+        PlatformOrderPriceSupport.recalculatePriceDifferent(ordersEntity);
         nxDepartmentOrdersService.update(ordersEntity);
         return R.ok();
     }
@@ -4796,8 +4794,7 @@ public class NxDepartmentOrdersController {
                 ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
             }
 
-            ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-            nxDepartmentOrdersService.update(ordersEntity);
+            finishOutboundOrder(ordersEntity);
 
             Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
             if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
@@ -4916,8 +4913,7 @@ public class NxDepartmentOrdersController {
             ordersEntity.setNxDoSubtotal(subtotal.toString());
             ordersEntity.setNxDoStatus(getNxOrderStatusHasFinished());
         }
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-        nxDepartmentOrdersService.update(ordersEntity);
+        finishOutboundOrder(ordersEntity);
 
         Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
         if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
@@ -5171,8 +5167,7 @@ public class NxDepartmentOrdersController {
             }
         }
 
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-        nxDepartmentOrdersService.update(ordersEntity);
+        finishOutboundOrder(ordersEntity);
 
 
         Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
@@ -5525,8 +5520,7 @@ public class NxDepartmentOrdersController {
                 }
             }
 
-            ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-            nxDepartmentOrdersService.update(ordersEntity);
+            finishOutboundOrder(ordersEntity);
 
             Integer nxDoPurchaseGoodsId = ordersEntity.getNxDoPurchaseGoodsId();
             if (nxDoPurchaseGoodsId != null && nxDoPurchaseGoodsId != -1) {
@@ -5706,8 +5700,7 @@ public class NxDepartmentOrdersController {
 
         System.out.println("orderreeeequant" + ordersEntity.getNxDoWeight() + "sutl" + ordersEntity.getNxDoSubtotal());
 
-        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
-        nxDepartmentOrdersService.update(ordersEntity);
+        finishOutboundOrder(ordersEntity);
 
         return R.ok();
     }
@@ -8357,10 +8350,24 @@ public class NxDepartmentOrdersController {
                     mapDep.put("hasWeight", hasWeight);
                     mapDep.put("unDo", unDo);
                     mapDep.put("twoSubtotal", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP).toString());
+                    PlatformOrderDisplaySupport.enrichCustomerDepMap(mapDep,
+                            departmentEntity.getIsPlatformCustomer() != null && departmentEntity.getIsPlatformCustomer() == 1);
 
                     resultNx.add(mapDep);
                 }
             }
+            resultNx.sort(PlatformOrderDisplaySupport.customerDepMapComparator());
+            List<Map<String, Object>> platformDep = new ArrayList<>();
+            List<Map<String, Object>> ownDep = new ArrayList<>();
+            for (Map<String, Object> item : resultNx) {
+                if (Integer.valueOf(1).equals(item.get("isPlatformCustomer"))) {
+                    platformDep.add(item);
+                } else {
+                    ownDep.add(item);
+                }
+            }
+            mapData.put("platformDep", platformDep);
+            mapData.put("ownDep", ownDep);
             mapData.put("nxDep", resultNx);
         } else {
             mapData.put("nxDep", new ArrayList<>());
@@ -10870,6 +10877,22 @@ public class NxDepartmentOrdersController {
             BigDecimal newRestSubtotal = newRestWeight.multiply(stockPriceForRest).setScale(1, BigDecimal.ROUND_HALF_UP);
             stockEntity.setNxDgssRestSubtotal(newRestSubtotal.toPlainString());
         }
+    }
+
+    private void applyPlatformCostBeforeOutboundFinish(NxDepartmentOrdersEntity ordersEntity) {
+        platformOrderFulfillmentService.tryResolveOutboundCost(ordersEntity);
+        platformOrderFulfillmentService.applyOutboundCostSubtotalIfValid(ordersEntity);
+    }
+
+    private void finishOutboundOrder(NxDepartmentOrdersEntity ordersEntity) {
+        applyPlatformCostBeforeOutboundFinish(ordersEntity);
+        ordersEntity.setNxDoPurchaseStatus(getNxDepOrderBuyStatusFinishOut());
+        nxDepartmentOrdersService.update(ordersEntity);
+        syncPlatformReadyAfterOutboundFinish(ordersEntity);
+    }
+
+    private void syncPlatformReadyAfterOutboundFinish(NxDepartmentOrdersEntity ordersEntity) {
+        platformOrderFulfillmentService.syncReadyForPickupAfterOutboundFinish(ordersEntity, null);
     }
 
 }

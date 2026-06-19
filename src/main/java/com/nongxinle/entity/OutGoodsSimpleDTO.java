@@ -76,5 +76,15 @@ public class OutGoodsSimpleDTO implements Serializable {
      * 订单列表（简化版）
      */
     private List<OutOrderSimpleDTO> nxDepartmentOrdersEntities;
+
+    /**
+     * 展示用：平台订单数量合计（不改变商品卡片总量算法）
+     */
+    private String platformQuantity;
+
+    /**
+     * 展示用：自有订单数量合计
+     */
+    private String ownQuantity;
 }
 

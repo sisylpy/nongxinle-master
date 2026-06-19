@@ -13,6 +13,33 @@
         )
     </sql>
 
+    <!-- Phase 2b Round 2-B：平台订单展示 JOIN / SELECT（LEFT JOIN，不过滤自有单） -->
+    <sql id="platformOrderJoinFromDor">
+        LEFT JOIN nx_platform_order_assign poa
+            ON poa.nx_poa_order_id = dor.nx_department_orders_id
+           AND poa.nx_poa_assign_mode = 'PLATFORM'
+        LEFT JOIN nx_platform_order_fulfillment pof
+            ON pof.nx_pof_order_id = dor.nx_department_orders_id
+    </sql>
+
+    <sql id="platformOrderJoinFromNdo">
+        LEFT JOIN nx_platform_order_assign poa
+            ON poa.nx_poa_order_id = ndo.nx_department_orders_id
+           AND poa.nx_poa_assign_mode = 'PLATFORM'
+        LEFT JOIN nx_platform_order_fulfillment pof
+            ON pof.nx_pof_order_id = ndo.nx_department_orders_id
+    </sql>
+
+    <sql id="platformOrderFlagsSelect">
+        CASE WHEN poa.nx_poa_assign_status = 'ASSIGNED' THEN 1 ELSE 0 END AS is_platform_order,
+        CASE WHEN poa.nx_poa_assign_status = 'ASSIGNED' THEN 'PLATFORM' ELSE 'OWN' END AS order_source,
+        poa.nx_poa_id AS platform_assign_id,
+        pof.nx_pof_fulfillment_status AS platform_fulfillment_status,
+        CASE WHEN poa.nx_poa_assign_status = 'ASSIGNED' THEN '平台' ELSE NULL END AS platform_label,
+        CASE WHEN poa.nx_poa_assign_status = 'ASSIGNED' THEN 1 ELSE 0 END AS price_editable,
+        CASE WHEN poa.nx_poa_assign_status = 'ASSIGNED' THEN 0 ELSE 1 END AS platform_sort
+    </sql>
+
     <select id="disGetUnPlanPurchaseApplys" resultMap="unPlanPurchaseOrdersDisFatherGoods">
         select
         dor.nx_department_orders_id,
@@ -6298,6 +6325,61 @@
         </where>
         order by df.nx_department_pinyin
     </select>
+
+    <!-- Phase 2b Round 2-B：有 ASSIGNED 平台订单的客户（父部门）ID -->
+    <select id="queryPlatformCustomerDepFatherIds" resultType="java.lang.Integer">
+        SELECT DISTINCT dor.nx_DO_department_father_id
+        FROM nx_department_orders dor
+        INNER JOIN nx_platform_order_assign poa
+            ON poa.nx_poa_order_id = dor.nx_department_orders_id
+           AND poa.nx_poa_assign_mode = 'PLATFORM'
+           AND poa.nx_poa_assign_status = 'ASSIGNED'
+        LEFT JOIN nx_distributer_goods dg ON dg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
+        LEFT JOIN nx_distributer_purchase_goods ndpg ON ndpg.nx_distributer_purchase_goods_id = dor.nx_DO_purchase_goods_id
+        LEFT JOIN nx_distributer_purchase_batch ndpb ON ndpb.nx_distributer_purchase_batch_id = ndpg.nx_DPG_batch_id
+        <where>
+            <if test="orderDisId != null">
+                and dor.nx_DO_distributer_id = #{orderDisId}
+            </if>
+            <if test="disId != null">
+                and dor.nx_DO_distributer_id = #{disId}
+            </if>
+            <if test="disId != null">
+                and dg.nx_dg_distributer_id = #{disId}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder == -1">
+                and dor.nx_DO_collaborative_nx_dis_id = #{isSelfOrder}
+            </if>
+            <if test="isSelfOrder != null and isSelfOrder != -1">
+                and dor.nx_DO_collaborative_nx_dis_id != -1
+            </if>
+            <if test="collNxDisId != null">
+                and dor.nx_DO_collaborative_nx_dis_id = #{collNxDisId}
+            </if>
+            <if test="status != null">
+                and dor.nx_DO_status &lt; #{status}
+            </if>
+            <if test="dayuOrderStatus != null">
+                and dor.nx_DO_status &gt; #{dayuOrderStatus}
+            </if>
+            <if test="orderGoodsType != null">
+                and dor.nx_DO_goods_type = #{orderGoodsType}
+            </if>
+            <if test="goodsType != null">
+                and dor.nx_DO_goods_type = #{goodsType}
+            </if>
+            <if test="purStatus != null">
+                and dor.nx_DO_purchase_status &lt; #{purStatus}
+            </if>
+            <if test="batchId != null and batchId == 0">
+                and ndpg.nx_DPG_batch_id is null
+            </if>
+            and dor.nx_DO_gb_department_id = -1
+            and dor.nx_DO_nx_comm_restraunt_id = -1
+            and dor.nx_DO_department_father_id IS NOT NULL
+        </where>
+    </select>
+
     <select id="queryPureOrderNxDepartment" resultMap="fatherDep">
         select * ,
         ds.nx_department_id 'ds_nx_department_id',
@@ -9015,6 +9097,17 @@
         <result property="nxDoCollaborativeNxDisId" column="nx_DO_collaborative_nx_dis_id"/>
         <result property="nxDoDistributerName" column="nx_do_distributer_name"/>
         <result property="nxDoCollaborativeDistributerName" column="nx_do_collaborative_distributer_name"/>
+        <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
+        <result property="isPlatformOrder" column="is_platform_order"/>
+        <result property="orderSource" column="order_source"/>
+        <result property="platformAssignId" column="platform_assign_id"/>
+        <result property="platformFulfillmentStatus" column="platform_fulfillment_status"/>
+        <result property="platformLabel" column="platform_label"/>
+        <result property="priceEditable" column="price_editable"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="platformSort" column="platform_sort"/>
     </resultMap>
 
     <!-- 出库商品简化版查询（只返回前端需要的字段） -->
@@ -9042,6 +9135,9 @@
         ndo.nx_DO_department_father_id,
         ndo.nx_DO_distributer_id,
         ndo.nx_DO_purchase_status,
+        ndo.nx_DO_price,
+        ndo.nx_DO_expect_price,
+        ndo.nx_DO_price_different,
         ds.nx_department_father_id as nx_department_father_id,
         ds.nx_department_attr_name as nx_department_attr_name,
         ds.nx_department_order_code as nx_department_order_code,
@@ -9056,6 +9152,7 @@
         COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_do_distributer_name,
         ndo.nx_DO_collaborative_nx_dis_id,
         COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
+        <include refid="platformOrderFlagsSelect"/>,
         0 as pur_selected
         from (
             select DISTINCT dg.nx_distributer_goods_id,
@@ -9191,6 +9288,7 @@
         left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
         left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndo.nx_DO_distributer_id
         left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = ndo.nx_DO_collaborative_nx_dis_id
+        <include refid="platformOrderJoinFromNdo"/>
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
         left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id
@@ -9223,6 +9321,10 @@
         ndo.nx_DO_remark,
         ndo.nx_DO_department_id,
         ndo.nx_DO_department_father_id,
+        ndo.nx_DO_purchase_status,
+        ndo.nx_DO_price,
+        ndo.nx_DO_expect_price,
+        ndo.nx_DO_price_different,
         ds.nx_department_attr_name as nx_department_attr_name,
         df.nx_department_attr_name as father_department_attr_name,
         ndo.nx_DO_gb_department_id,
@@ -9235,6 +9337,7 @@
         ndo.nx_DO_collaborative_nx_dis_id,
         COALESCE(nd_dis.nx_distributer_show_name, nd_dis.nx_distributer_name) as nx_do_distributer_name,
         COALESCE(nd_coll.nx_distributer_show_name, nd_coll.nx_distributer_name) as nx_do_collaborative_distributer_name,
+        <include refid="platformOrderFlagsSelect"/>,
         0 as pur_selected
         from (
             select DISTINCT dg.nx_distributer_goods_id,
@@ -9342,6 +9445,7 @@
         left join nx_restraunt as nr on nr.nx_restraunt_id = ndo.nx_DO_nx_comm_restraunt_id
         left join nx_distributer as nd_dis on nd_dis.nx_distributer_id = ndo.nx_DO_distributer_id
         left join nx_distributer as nd_coll on nd_coll.nx_distributer_id = ndo.nx_DO_collaborative_nx_dis_id
+        <include refid="platformOrderJoinFromNdo"/>
         left join nx_distributer_father_goods as ndfg on ndfg.nx_distributer_father_goods_id = dg.nx_dg_dfg_goods_father_id
         left join nx_distributer_father_goods as grand on grand.nx_distributer_father_goods_id = ndfg.nx_dfg_fathers_father_id
         left join nx_distributer_father_goods as great on great.nx_distributer_father_goods_id = grand.nx_dfg_fathers_father_id

@@ -1,0 +1,45 @@
+-- =============================================================================
+-- 补丁索引：部分执行 init 后的结构补齐（按需执行子文件）
+--
+-- 现象：CREATE TABLE IF NOT EXISTS 不会升级已存在旧表，Java 查询报 Unknown column。
+--
+-- | 报错列 / 表                         | 执行文件 |
+-- |-------------------------------------|----------|
+-- | nx_customer_promotion_campaign.*    | upgrade_nx_customer_promotion_campaign.sql |
+-- | nx_customer_user_referral.campaign_id / inviter_user_id 等 | upgrade_nx_customer_user_referral.sql |
+-- | nx_customer_user_coupon.nx_cuc_start_date 等 | upgrade_nx_customer_user_coupon.sql |
+-- | nx_customer_referral_reward_rule.rule_status 等 | upgrade_nx_customer_referral_reward_rule.sql |
+-- | nx_community_pos_payment / coupon_verify_log / 订单渠道字段 | upgrade_nx_community_pos.sql |
+-- | nx_community_coupon.nx_cp_validity_type 等元数据列         | upgrade_nx_community_coupon_metadata.sql（本地）/ upgrade_nx_community_coupon_metadata_server.sql（服务器整段执行） |
+-- | nx_community_coupon.coupon_type / discount_amount 等规则列 | upgrade_coupon_rule_v1.sql |
+-- | 批发市场平台化 Phase 2a（4 表 + 订单分配）                  | upgrade_nx_platform_phase2a.sql |
+-- | Phase 2b 平台订单履约（出库完成→READY_FOR_PICKUP）        | upgrade_nx_platform_phase2b_fulfillment.sql |
+-- | Phase 2a 阶段 0：nx_DO_distributer_id 是否 NULL            | check_nx_department_orders_distributer_id.sql |
+-- | Phase 2a Round 1 测试种子                                   | seed_nx_platform_phase2a_test.sql |
+-- | Phase 2b Round 2-B.1：历史 ASSIGNED 平台单 expectPrice 回填（可选） | backfill_nx_platform_expect_price.sql |
+--
+-- =============================================================================
+-- Phase 2a Round 1 执行顺序（submitLine 验收，必须严格按序）
+-- =============================================================================
+--
+--   1. check_nx_department_orders_distributer_id.sql   ← 阶段 0，确认 nx_DO_distributer_id 是否 NULL
+--   2. upgrade_nx_platform_phase2a.sql                 ← 建 4 张平台表（含 nx_platform_order_assign）
+--   3. seed_nx_platform_phase2a_test.sql               ← 改真实 marketId/departmentId 后执行
+--
+-- ⚠️  先跑完 1→2→3，再启动含 Phase 2a Java 代码的应用。
+--     新代码在部分旧配送商查询中 NOT EXISTS nx_platform_order_assign；
+--     若表未建，旧配送商接口会直接报错（表不存在）。
+--
+-- 详细验收步骤见：docs/nxPlatform/Phase2a-Round1-验收指南.md
+--
+-- Phase 2b 履约表执行顺序：
+--   1. upgrade_nx_platform_phase2a.sql（若未执行）
+--   2. upgrade_nx_platform_phase2b_fulfillment.sql
+--   3. 可选 backfill（同文件 §3）
+--   4. 再部署 Phase 2b Java
+-- 详见：docs/nxPlatform/Phase2b-SQL-Patch-Draft.md
+--
+-- 执行前建议：
+--   SHOW COLUMNS FROM <表名>;
+-- 某条 ALTER 报 Duplicate column name 时跳过该句即可。
+-- =============================================================================

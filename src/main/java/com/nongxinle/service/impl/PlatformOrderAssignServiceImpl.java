@@ -27,6 +27,7 @@ import com.nongxinle.entity.NxDistributerGoodsEntity;
 import com.nongxinle.entity.NxGoodsEntity;
 import com.nongxinle.entity.NxMarketDepartmentEntity;
 import com.nongxinle.entity.NxPlatformOrderAssignEntity;
+import com.nongxinle.entity.NxPlatformOrderFulfillmentEntity;
 import com.nongxinle.entity.NxSupplierSwitchLogEntity;
 import com.nongxinle.service.NxDepartmentDisGoodsService;
 import com.nongxinle.service.NxDepartmentOrdersService;
@@ -36,10 +37,13 @@ import com.nongxinle.service.NxDistributerService;
 import com.nongxinle.service.NxGoodsService;
 import com.nongxinle.service.PlatformMarketDepartmentService;
 import com.nongxinle.service.PlatformOrderAssignService;
+import com.nongxinle.service.PlatformOrderFulfillmentService;
+import com.nongxinle.service.platform.PlatformDisGoodsCostResolver;
 import com.nongxinle.service.platform.PlatformDisGoodsValidator;
 import com.nongxinle.service.platform.PlatformDistributerIdResolver;
 import com.nongxinle.utils.SalesPriceUtils;
 import com.nongxinle.utils.PlatformConstants;
+import com.nongxinle.utils.PlatformOrderPriceSupport;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +98,8 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
     private NxDistributerService nxDistributerService;
     @Autowired
     private PlatformDistributerIdResolver platformDistributerIdResolver;
+    @Autowired
+    private PlatformOrderFulfillmentService platformOrderFulfillmentService;
 
     @Override
     @Transactional
@@ -271,6 +277,10 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         AssignPricingTrace pricingTrace = applyPlatformAssignPricing(order, disGoods);
         assertValidAssignOrderPrice(order, pricingTrace);
 
+        PlatformDisGoodsCostResolver.CostResolveResult costResult =
+                PlatformDisGoodsCostResolver.resolve(disGoods, order);
+        applyPlatformAssignCost(order, costResult);
+
         nxDepartmentOrdersDao.update(order);
 
         Integer defaultId;
@@ -289,6 +299,9 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         poa.setNxPoaSwitchLogId(switchLogId);
         nxPlatformOrderAssignDao.update(poa);
 
+        NxPlatformOrderFulfillmentEntity fulfillment = platformOrderFulfillmentService.ensureAssignedFulfillment(
+                poa, order, costResult, request.getOperatorId());
+
         PlatformAssignResponse response = new PlatformAssignResponse();
         response.setOrderId(order.getNxDepartmentOrdersId());
         response.setPlatformAssignId(poa.getNxPoaId());
@@ -297,9 +310,13 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         response.setNxDoDisGoodsId(order.getNxDoDisGoodsId());
         response.setNxDoCollaborativeNxDisId(order.getNxDoCollaborativeNxDisId());
         response.setNxDoPrice(order.getNxDoPrice());
+        response.setNxDoExpectPrice(order.getNxDoExpectPrice());
+        response.setNxDoPriceDifferent(order.getNxDoPriceDifferent());
         response.setNxDoSubtotal(order.getNxDoSubtotal());
         response.setDefaultId(defaultId);
         response.setSwitchLogId(switchLogId);
+        response.setFulfillmentStatus(fulfillment.getNxPofFulfillmentStatus());
+        response.setCostMissing(fulfillment.getNxPofCostMissing());
         return response;
     }
 
@@ -478,6 +495,7 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
 
         recalculateAssignSubtotal(order);
         trace.finalNxDoPrice = order.getNxDoPrice();
+        PlatformOrderPriceSupport.applyAssignReferencePrice(order);
 
         logger.info("[platformAssignPricing] disGoodsId={} nxGoodsId={} standard={} currentQuotePrice={} "
                         + "customerHistoryPrice={} afterProcessOrderPrice={} afterApplyDepPrice={} finalNxDoPrice={}",
@@ -503,6 +521,41 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
             return null;
         }
         return depGoods.getNxDdgOrderPrice().trim();
+    }
+
+    private void applyPlatformAssignCost(
+            NxDepartmentOrdersEntity order, PlatformDisGoodsCostResolver.CostResolveResult costResult) {
+        if (costResult == null || costResult.isCostMissing()) {
+            return;
+        }
+        order.setNxDoCostPrice(costResult.getCostPrice());
+        if (costResult.getCostPriceUpdate() != null) {
+            order.setNxDoCostPriceUpdate(costResult.getCostPriceUpdate());
+        }
+        if (costResult.getCostPriceLevel() != null) {
+            order.setNxDoCostPriceLevel(costResult.getCostPriceLevel());
+        }
+        recalculateCostSubtotal(order);
+    }
+
+    private void recalculateCostSubtotal(NxDepartmentOrdersEntity order) {
+        if (!SalesPriceUtils.isValidSalesPrice(order.getNxDoCostPrice())) {
+            return;
+        }
+        String multiplier = order.getNxDoWeight();
+        if (StringUtils.isBlank(multiplier)) {
+            multiplier = order.getNxDoQuantity();
+        }
+        if (StringUtils.isBlank(multiplier)) {
+            return;
+        }
+        try {
+            BigDecimal qty = new BigDecimal(multiplier.trim());
+            BigDecimal price = new BigDecimal(order.getNxDoCostPrice().trim());
+            order.setNxDoCostSubtotal(qty.multiply(price).setScale(1, BigDecimal.ROUND_HALF_UP).toPlainString());
+        } catch (NumberFormatException e) {
+            logger.warn("[recalculateCostSubtotal] 计算失败 qty={} costPrice={}", multiplier, order.getNxDoCostPrice());
+        }
     }
 
     private void recalculateAssignSubtotal(NxDepartmentOrdersEntity order) {

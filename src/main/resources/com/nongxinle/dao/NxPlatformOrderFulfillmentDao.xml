@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxPlatformOrderFulfillmentDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxPlatformOrderFulfillmentEntity">
+        select * from nx_platform_order_fulfillment where nx_pof_id = #{value}
+    </select>
+
+    <select id="queryByOrderId" resultType="com.nongxinle.entity.NxPlatformOrderFulfillmentEntity">
+        select * from nx_platform_order_fulfillment where nx_pof_order_id = #{value}
+    </select>
+
+    <select id="countAll" resultType="int">
+        select count(*) from nx_platform_order_fulfillment
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxPlatformOrderFulfillmentEntity"
+            useGeneratedKeys="true" keyProperty="nxPofId">
+        insert into nx_platform_order_fulfillment
+        (`nx_pof_market_id`, `nx_pof_order_id`, `nx_pof_platform_assign_id`, `nx_pof_department_id`,
+         `nx_pof_nx_goods_id`, `nx_pof_distributer_id`, `nx_pof_dis_goods_id`,
+         `nx_pof_fulfillment_status`, `nx_pof_cost_missing`, `nx_pof_cost_missing_reason`,
+         `nx_pof_created_at`, `nx_pof_updated_at`, `nx_pof_updated_by`)
+        values
+        (#{nxPofMarketId}, #{nxPofOrderId}, #{nxPofPlatformAssignId}, #{nxPofDepartmentId},
+         #{nxPofNxGoodsId}, #{nxPofDistributerId}, #{nxPofDisGoodsId},
+         #{nxPofFulfillmentStatus}, #{nxPofCostMissing}, #{nxPofCostMissingReason},
+         #{nxPofCreatedAt}, #{nxPofUpdatedAt}, #{nxPofUpdatedBy})
+    </insert>
+
+    <update id="updateFulfillment" parameterType="com.nongxinle.entity.NxPlatformOrderFulfillmentEntity">
+        update nx_platform_order_fulfillment
+        <set>
+            <if test="nxPofFulfillmentStatus != null">`nx_pof_fulfillment_status` = #{nxPofFulfillmentStatus},</if>
+            <if test="nxPofCostMissing != null">
+                `nx_pof_cost_missing` = #{nxPofCostMissing},
+                `nx_pof_cost_missing_reason` = #{nxPofCostMissingReason},
+            </if>
+            <if test="nxPofReadyForPickupAt != null">`nx_pof_ready_for_pickup_at` = #{nxPofReadyForPickupAt},</if>
+            <if test="nxPofUpdatedAt != null">`nx_pof_updated_at` = #{nxPofUpdatedAt},</if>
+            <if test="nxPofUpdatedBy != null">`nx_pof_updated_by` = #{nxPofUpdatedBy},</if>
+        </set>
+        where nx_pof_id = #{nxPofId}
+    </update>
+</mapper>
