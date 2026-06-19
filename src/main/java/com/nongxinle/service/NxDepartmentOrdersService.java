@@ -268,6 +268,11 @@ public interface NxDepartmentOrdersService {
 
     void  processOrderPrice(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity);
 
+    /**
+     * 查询部门商品历史价并套用到订单（平台 assign 复用，不触发协作链）
+     */
+    void applyDepartmentGoodsPriceIfFound(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity);
+
     void savePurGoodsAuto(NxDepartmentOrdersEntity ordersEntity, Integer inputType, Integer purchaseType);
 
     int queryMaxTodayOrder(Integer depIdForTodayOrder);

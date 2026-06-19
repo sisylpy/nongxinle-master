@@ -143,4 +143,6 @@ public interface NxDistributerGoodsDao extends BaseDao<NxDistributerGoodsEntity>
     int updatePurchaseAutoByGreatGrandIds(Map<String, Object> map);
 
     List<NxDistributerGoodsEntity> queryDepDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
+
+    List<com.nongxinle.dto.platform.PlatformSupplierRow> queryPlatformSuppliersByNxGoods(Map<String, Object> map);
 }

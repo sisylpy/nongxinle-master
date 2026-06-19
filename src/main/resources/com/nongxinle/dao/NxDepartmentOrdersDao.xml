@@ -3,6 +3,16 @@
 
 <mapper namespace="com.nongxinle.dao.NxDepartmentOrdersDao">
 
+    <!-- Phase 2a：PENDING 平台单不进旧配送商分拣/打印/结算视图 -->
+    <sql id="excludePlatformPendingOrders">
+        AND NOT EXISTS (
+            SELECT 1 FROM nx_platform_order_assign poa
+            WHERE poa.nx_poa_order_id = dor.nx_department_orders_id
+              AND poa.nx_poa_assign_mode = 'PLATFORM'
+              AND poa.nx_poa_assign_status = 'PENDING'
+        )
+    </sql>
+
     <select id="disGetUnPlanPurchaseApplys" resultMap="unPlanPurchaseOrdersDisFatherGoods">
         select
         dor.nx_department_orders_id,
@@ -281,6 +291,10 @@
                     and dor.nx_DO_distributer_id = #{disId}
                 </if>
 
+            <if test="disId != null or orderDisId != null">
+                <include refid="excludePlatformPendingOrders"/>
+            </if>
+
             <if test="disId != null">
                 and dg.nx_dg_distributer_id = #{disId}
             </if>
@@ -362,6 +376,10 @@
                 <if test="disId != null">
                     and dor.nx_DO_distributer_id = #{disId}
                 </if>
+
+            <if test="disId != null or orderDisId != null">
+                <include refid="excludePlatformPendingOrders"/>
+            </if>
 
             <if test="disId != null">
                 and dg.nx_dg_distributer_id = #{disId}
@@ -2886,6 +2904,10 @@
                 <if test="disId != null">
                     and dor.nx_DO_distributer_id = #{disId}
                 </if>
+
+            <if test="disId != null or orderDisId != null">
+                <include refid="excludePlatformPendingOrders"/>
+            </if>
 
             <if test="disId != null">
                 and dg.nx_dg_distributer_id = #{disId}

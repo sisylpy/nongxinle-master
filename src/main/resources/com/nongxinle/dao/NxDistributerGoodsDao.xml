@@ -3790,6 +3790,56 @@
 
     </select>
 
+    <!-- Phase 2a：市场内某标准商品的可选配送商（销售报价，非进价） -->
+    <select id="queryPlatformSuppliersByNxGoods" resultType="com.nongxinle.dto.platform.PlatformSupplierRow">
+        select
+            dg.nx_distributer_goods_id as disGoodsId,
+            dg.nx_dg_distributer_id as distributerId,
+            COALESCE(nd.nx_distributer_show_name, nd.nx_distributer_name) as distributerName,
+            dg.nx_dg_nx_goods_id as nxGoodsId,
+            dg.nx_dg_goods_name as goodsName,
+            dg.nx_dg_goods_standardname as standard,
+            dg.nx_dg_goods_brand as brand,
+            dg.nx_dg_goods_place as place,
+            dg.nx_dg_will_price_one as willPriceOne,
+            dg.nx_dg_will_price as willPrice,
+            ddg.nx_DDG_order_price as customerHistoryPrice,
+            dngd.nx_dngd_default_distributer_id as defaultDistributerId,
+            dngd.nx_dngd_default_dis_goods_id as defaultDisGoodsId
+        from nx_distributer_goods dg
+        inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+        left join nx_department_dis_goods ddg
+            on ddg.nx_DDG_dis_goods_id = dg.nx_distributer_goods_id
+           and ddg.nx_DDG_department_id = #{departmentId}
+        left join nx_department_nx_goods_default dngd
+            on dngd.nx_dngd_market_id = #{marketId}
+           and dngd.nx_dngd_department_id = #{departmentId}
+           and dngd.nx_dngd_nx_goods_id = dg.nx_dg_nx_goods_id
+           and dngd.nx_dngd_status = 'ACTIVE'
+        where nd.nx_distributer_sys_market_id = #{marketId}
+          and dg.nx_dg_nx_goods_id = #{nxGoodsId}
+          and dg.nx_dg_nx_goods_id is not null
+          and dg.nx_dg_nx_goods_id != 0
+          and dg.nx_dg_dfg_goods_father_id is not null
+          and (dg.nx_dg_pull_off is null or dg.nx_dg_pull_off = 0)
+          and (dg.nx_dg_goods_is_hidden is null or dg.nx_dg_goods_is_hidden = 0)
+          and (
+              (dg.nx_dg_will_price_one is not null and trim(dg.nx_dg_will_price_one) != ''
+               and dg.nx_dg_will_price_one != '0' and dg.nx_dg_will_price_one != '0.1'
+               and cast(dg.nx_dg_will_price_one as decimal(10, 2)) &gt; 0.1)
+              or (dg.nx_dg_will_price is not null and trim(dg.nx_dg_will_price) != ''
+               and dg.nx_dg_will_price != '0' and dg.nx_dg_will_price != '0.1'
+               and cast(dg.nx_dg_will_price as decimal(10, 2)) &gt; 0.1)
+          )
+        <if test="standard != null and standard != ''">
+            and dg.nx_dg_goods_standardname = #{standard}
+        </if>
+        order by
+            case when dngd.nx_dngd_default_distributer_id = dg.nx_dg_distributer_id then 0 else 1 end,
+            nd.nx_distributer_name,
+            dg.nx_dg_goods_sort,
+            dg.nx_distributer_goods_id
+    </select>
 
 </mapper>
 

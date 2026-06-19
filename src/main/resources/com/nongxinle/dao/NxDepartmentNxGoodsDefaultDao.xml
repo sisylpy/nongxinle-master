@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDepartmentNxGoodsDefaultDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDepartmentNxGoodsDefaultEntity">
+        select * from nx_department_nx_goods_default where nx_dngd_id = #{value}
+    </select>
+
+    <select id="queryActiveByMarketDepGoods" resultType="com.nongxinle.entity.NxDepartmentNxGoodsDefaultEntity">
+        select * from nx_department_nx_goods_default
+        where nx_dngd_market_id = #{marketId}
+          and nx_dngd_department_id = #{departmentId}
+          and nx_dngd_nx_goods_id = #{nxGoodsId}
+          and nx_dngd_status = 'ACTIVE'
+        limit 1
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDepartmentNxGoodsDefaultEntity"
+            useGeneratedKeys="true" keyProperty="nxDngdId">
+        insert into nx_department_nx_goods_default
+        (`nx_dngd_market_id`, `nx_dngd_department_id`, `nx_dngd_nx_goods_id`,
+         `nx_dngd_default_distributer_id`, `nx_dngd_default_dis_goods_id`,
+         `nx_dngd_source`, `nx_dngd_status`, `nx_dngd_last_order_id`, `nx_dngd_last_switch_log_id`,
+         `nx_dngd_created_by`, `nx_dngd_updated_by`)
+        values
+        (#{nxDngdMarketId}, #{nxDngdDepartmentId}, #{nxDngdNxGoodsId},
+         #{nxDngdDefaultDistributerId}, #{nxDngdDefaultDisGoodsId},
+         #{nxDngdSource}, #{nxDngdStatus}, #{nxDngdLastOrderId}, #{nxDngdLastSwitchLogId},
+         #{nxDngdCreatedBy}, #{nxDngdUpdatedBy})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDepartmentNxGoodsDefaultEntity">
+        update nx_department_nx_goods_default
+        <set>
+            <if test="nxDngdDefaultDistributerId != null">`nx_dngd_default_distributer_id` = #{nxDngdDefaultDistributerId},</if>
+            <if test="nxDngdDefaultDisGoodsId != null">`nx_dngd_default_dis_goods_id` = #{nxDngdDefaultDisGoodsId},</if>
+            <if test="nxDngdSource != null">`nx_dngd_source` = #{nxDngdSource},</if>
+            <if test="nxDngdStatus != null">`nx_dngd_status` = #{nxDngdStatus},</if>
+            <if test="nxDngdLastOrderId != null">`nx_dngd_last_order_id` = #{nxDngdLastOrderId},</if>
+            <if test="nxDngdLastSwitchLogId != null">`nx_dngd_last_switch_log_id` = #{nxDngdLastSwitchLogId},</if>
+            <if test="nxDngdUpdatedBy != null">`nx_dngd_updated_by` = #{nxDngdUpdatedBy},</if>
+        </set>
+        where nx_dngd_id = #{nxDngdId}
+    </update>
+</mapper>

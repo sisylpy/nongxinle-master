@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxSupplierSwitchLogDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxSupplierSwitchLogEntity">
+        select * from nx_supplier_switch_log where nx_ssl_id = #{value}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxSupplierSwitchLogEntity"
+            useGeneratedKeys="true" keyProperty="nxSslId">
+        insert into nx_supplier_switch_log
+        (`nx_ssl_market_id`, `nx_ssl_department_id`, `nx_ssl_nx_goods_id`, `nx_ssl_order_id`,
+         `nx_ssl_from_distributer_id`, `nx_ssl_from_dis_goods_id`,
+         `nx_ssl_to_distributer_id`, `nx_ssl_to_dis_goods_id`,
+         `nx_ssl_switch_scope`, `nx_ssl_reason_code`, `nx_ssl_reason_note`,
+         `nx_ssl_snapshot_id`, `nx_ssl_snapshot_action`, `nx_ssl_operator_id`)
+        values
+        (#{nxSslMarketId}, #{nxSslDepartmentId}, #{nxSslNxGoodsId}, #{nxSslOrderId},
+         #{nxSslFromDistributerId}, #{nxSslFromDisGoodsId},
+         #{nxSslToDistributerId}, #{nxSslToDisGoodsId},
+         #{nxSslSwitchScope}, #{nxSslReasonCode}, #{nxSslReasonNote},
+         #{nxSslSnapshotId}, #{nxSslSnapshotAction}, #{nxSslOperatorId})
+    </insert>
+</mapper>

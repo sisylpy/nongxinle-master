@@ -6,6 +6,7 @@ import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.CommonUtils;
 import com.nongxinle.utils.R;
+import com.nongxinle.utils.SalesPriceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -976,9 +977,10 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
 
     /**
      * 查询部门商品表，若存在则用部门商品单价、打印规格、depDisGoodsId 赋值到订单
-     * 主订单和协作订单均可复用
+     * 主订单和协作订单均可复用；平台 assign 亦复用
      */
-    private void applyDepartmentGoodsPriceIfFound(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
+    @Override
+    public void applyDepartmentGoodsPriceIfFound(NxDepartmentOrdersEntity order, NxDistributerGoodsEntity disGoodsEntity) {
         Map<String, Object> map = new HashMap<>();
         map.put("disId", order.getNxDoDistributerId());
         map.put("depId", order.getNxDoDepartmentId());
@@ -986,28 +988,19 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
         map.put("standard", order.getNxDoStandard());
         NxDepartmentDisGoodsEntity departmentDisGoodsEntity = nxDepartmentDisGoodsService.queryDepartmentGoodsOnly(map);
         if (departmentDisGoodsEntity != null) {
-//            boolean isUsingCartonPrice = disGoodsEntity.getNxDgCartonUnit() != null
-//                    && !disGoodsEntity.getNxDgCartonUnit().trim().isEmpty()
-//                    && order.getNxDoStandard() != null
-//                    && isStandardMatch(order.getNxDoStandard().trim(), disGoodsEntity.getNxDgCartonUnit().trim());
-//            if (isUsingCartonPrice) {
-//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgCartonUnit());
-//            } else if (order.getNxDoCostPriceLevel() == null || order.getNxDoCostPriceLevel().equals("1")) {
-//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgGoodsStandardname());
-//            } else {
-//                order.setNxDoPrintStandard(disGoodsEntity.getNxDgWillPriceTwoStandard());
-//            }
-            order.setNxDoPrice(departmentDisGoodsEntity.getNxDdgOrderPrice());
-            if (order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()
-                    && order.getNxDoPrice() != null && !order.getNxDoPrice().trim().isEmpty()) {
-                try {
-                    BigDecimal weight = new BigDecimal(order.getNxDoWeight());
-                    BigDecimal price = new BigDecimal(order.getNxDoPrice());
-                    BigDecimal subtotal = weight.multiply(price).setScale(1, BigDecimal.ROUND_HALF_UP);
-                    order.setNxDoSubtotal(subtotal.toString());
-                } catch (NumberFormatException e) {
-                    logger.warn("[applyDepartmentGoodsPriceIfFound] 计算subtotal失败: weight={}, price={}, error={}",
-                            order.getNxDoWeight(), order.getNxDoPrice(), e.getMessage());
+            String historyPrice = departmentDisGoodsEntity.getNxDdgOrderPrice();
+            if (SalesPriceUtils.isValidSalesPrice(historyPrice)) {
+                order.setNxDoPrice(historyPrice.trim());
+                if (order.getNxDoWeight() != null && !order.getNxDoWeight().trim().isEmpty()) {
+                    try {
+                        BigDecimal weight = new BigDecimal(order.getNxDoWeight());
+                        BigDecimal price = new BigDecimal(order.getNxDoPrice());
+                        BigDecimal subtotal = weight.multiply(price).setScale(1, BigDecimal.ROUND_HALF_UP);
+                        order.setNxDoSubtotal(subtotal.toString());
+                    } catch (NumberFormatException e) {
+                        logger.warn("[applyDepartmentGoodsPriceIfFound] 计算subtotal失败: weight={}, price={}, error={}",
+                                order.getNxDoWeight(), order.getNxDoPrice(), e.getMessage());
+                    }
                 }
             }
             order.setNxDoDepDisGoodsId(departmentDisGoodsEntity.getNxDepartmentDisGoodsId());

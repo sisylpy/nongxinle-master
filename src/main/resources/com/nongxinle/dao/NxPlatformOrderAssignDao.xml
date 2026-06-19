@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxPlatformOrderAssignDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxPlatformOrderAssignEntity">
+        select * from nx_platform_order_assign where nx_poa_id = #{value}
+    </select>
+
+    <select id="queryByOrderId" resultType="com.nongxinle.entity.NxPlatformOrderAssignEntity">
+        select * from nx_platform_order_assign where nx_poa_order_id = #{value}
+    </select>
+
+    <select id="queryPendingGroupedByDepartment" resultType="com.nongxinle.dto.platform.PlatformPendingGroupRow">
+        select
+            poa.nx_poa_department_id as departmentId,
+            nd.nx_department_name as departmentName,
+            nd.nx_department_order_code as departmentOrderCode,
+            count(*) as pendingLineCount,
+            group_concat(poa.nx_poa_order_id order by poa.nx_poa_order_id separator ',') as orderIdsCsv,
+            date_format(min(poa.nx_poa_created_at), '%Y-%m-%d %H:%i:%s') as firstPendingAt,
+            date_format(max(poa.nx_poa_created_at), '%Y-%m-%d %H:%i:%s') as lastPendingAt
+        from nx_platform_order_assign poa
+        inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+        inner join nx_department nd on nd.nx_department_id = poa.nx_poa_department_id
+        where poa.nx_poa_market_id = #{marketId}
+          and poa.nx_poa_assign_status = 'PENDING'
+          and poa.nx_poa_assign_mode = 'PLATFORM'
+        <if test="applyDate != null and applyDate != ''">
+            and dor.nx_DO_apply_date = #{applyDate}
+        </if>
+        group by poa.nx_poa_department_id, nd.nx_department_name, nd.nx_department_order_code
+        order by lastPendingAt desc, departmentId asc
+    </select>
+
+    <select id="countPendingByMarket" resultType="int">
+        select count(*)
+        from nx_platform_order_assign poa
+        inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+        where poa.nx_poa_market_id = #{marketId}
+          and poa.nx_poa_assign_status = 'PENDING'
+          and poa.nx_poa_assign_mode = 'PLATFORM'
+        <if test="applyDate != null and applyDate != ''">
+            and dor.nx_DO_apply_date = #{applyDate}
+        </if>
+    </select>
+
+    <select id="queryPlatformOrderDetailLines" resultType="com.nongxinle.dto.platform.PlatformOrderDetailRow">
+        select
+            dor.nx_department_orders_id as orderId,
+            poa.nx_poa_id as platformAssignId,
+            dor.nx_DO_nx_goods_id as nxGoodsId,
+            dor.nx_DO_goods_name as goodsName,
+            dor.nx_DO_quantity as quantity,
+            dor.nx_DO_standard as standard,
+            dor.nx_DO_remark as remark,
+            poa.nx_poa_assign_status as assignStatus,
+            poa.nx_poa_assign_mode as assignMode,
+            poa.nx_poa_assigned_distributer_id as assignedDistributerId,
+            poa.nx_poa_assigned_dis_goods_id as assignedDisGoodsId,
+            dor.nx_DO_price as orderPrice,
+            dor.nx_DO_subtotal as orderSubtotal,
+            dngd.nx_dngd_id as defaultId,
+            dngd.nx_dngd_default_distributer_id as defaultDistributerId,
+            dngd.nx_dngd_default_dis_goods_id as defaultDisGoodsId,
+            dngd.nx_dngd_source as defaultSource
+        from nx_platform_order_assign poa
+        inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+        left join nx_department_nx_goods_default dngd
+            on dngd.nx_dngd_market_id = poa.nx_poa_market_id
+           and dngd.nx_dngd_department_id = poa.nx_poa_department_id
+           and dngd.nx_dngd_nx_goods_id = dor.nx_DO_nx_goods_id
+           and dngd.nx_dngd_status = 'ACTIVE'
+        where poa.nx_poa_market_id = #{marketId}
+          and poa.nx_poa_assign_mode = 'PLATFORM'
+          and poa.nx_poa_department_id = #{departmentId}
+        <if test="applyDate != null and applyDate != ''">
+            and dor.nx_DO_apply_date = #{applyDate}
+        </if>
+        <if test="orderIds != null and orderIds.size() > 0">
+            and poa.nx_poa_order_id in
+            <foreach collection="orderIds" item="oid" open="(" separator="," close=")">
+                #{oid}
+            </foreach>
+        </if>
+        order by dor.nx_DO_today_order asc, dor.nx_department_orders_id asc
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxPlatformOrderAssignEntity"
+            useGeneratedKeys="true" keyProperty="nxPoaId">
+        insert into nx_platform_order_assign
+        (`nx_poa_market_id`, `nx_poa_order_id`, `nx_poa_department_id`, `nx_poa_nx_goods_id`,
+         `nx_poa_assign_status`, `nx_poa_assign_mode`)
+        values
+        (#{nxPoaMarketId}, #{nxPoaOrderId}, #{nxPoaDepartmentId}, #{nxPoaNxGoodsId},
+         #{nxPoaAssignStatus}, #{nxPoaAssignMode})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxPlatformOrderAssignEntity">
+        update nx_platform_order_assign
+        <set>
+            <if test="nxPoaAssignStatus != null">`nx_poa_assign_status` = #{nxPoaAssignStatus},</if>
+            <if test="nxPoaAssignedDistributerId != null">`nx_poa_assigned_distributer_id` = #{nxPoaAssignedDistributerId},</if>
+            <if test="nxPoaAssignedDisGoodsId != null">`nx_poa_assigned_dis_goods_id` = #{nxPoaAssignedDisGoodsId},</if>
+            <if test="nxPoaAssignedPrice != null">`nx_poa_assigned_price` = #{nxPoaAssignedPrice},</if>
+            <if test="nxPoaAssignedAt != null">`nx_poa_assigned_at` = #{nxPoaAssignedAt},</if>
+            <if test="nxPoaAssignedBy != null">`nx_poa_assigned_by` = #{nxPoaAssignedBy},</if>
+            <if test="nxPoaDefaultId != null">`nx_poa_default_id` = #{nxPoaDefaultId},</if>
+            <if test="nxPoaSwitchLogId != null">`nx_poa_switch_log_id` = #{nxPoaSwitchLogId},</if>
+        </set>
+        where nx_poa_id = #{nxPoaId}
+    </update>
+</mapper>
