@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.GbDepartmentBillPaymentDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.GbDepartmentBillPaymentEntity">
+        select * from gb_department_bill_payment where gb_bp_id = #{value}
+    </select>
+
+    <select id="queryByOutTradeNo" resultType="com.nongxinle.entity.GbDepartmentBillPaymentEntity">
+        select * from gb_department_bill_payment where gb_bp_out_trade_no = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.GbDepartmentBillPaymentEntity">
+        select * from gb_department_bill_payment
+        <where>
+            <if test="billId != null">and gb_bp_bill_id = #{billId}</if>
+            <if test="status != null">and gb_bp_status = #{status}</if>
+            <if test="payPhase != null">and gb_bp_pay_phase = #{payPhase}</if>
+        </where>
+        order by gb_bp_id desc
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.GbDepartmentBillPaymentEntity"
+            useGeneratedKeys="true" keyProperty="gbBpId">
+        insert into gb_department_bill_payment
+        (`gb_bp_bill_id`, `gb_bp_pay_phase`, `gb_bp_amount`, `gb_bp_out_trade_no`,
+         `gb_bp_transaction_id`, `gb_bp_status`, `gb_bp_paid_at`, `gb_bp_notify_raw`)
+        values
+        (#{gbBpBillId}, #{gbBpPayPhase}, #{gbBpAmount}, #{gbBpOutTradeNo},
+         #{gbBpTransactionId}, #{gbBpStatus}, #{gbBpPaidAt}, #{gbBpNotifyRaw})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.GbDepartmentBillPaymentEntity">
+        update gb_department_bill_payment
+        <set>
+            <if test="gbBpTransactionId != null">`gb_bp_transaction_id` = #{gbBpTransactionId},</if>
+            <if test="gbBpStatus != null">`gb_bp_status` = #{gbBpStatus},</if>
+            <if test="gbBpPaidAt != null">`gb_bp_paid_at` = #{gbBpPaidAt},</if>
+            <if test="gbBpNotifyRaw != null">`gb_bp_notify_raw` = #{gbBpNotifyRaw},</if>
+        </set>
+        where gb_bp_id = #{gbBpId}
+    </update>
+
+    <delete id="delete">
+        delete from gb_department_bill_payment where gb_bp_id = #{value}
+    </delete>
+</mapper>

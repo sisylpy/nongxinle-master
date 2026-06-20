@@ -292,4 +292,10 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId);
 
     List<NxDepartmentEntity> queryRetailOrderNxDepartment(Map<String, Object> map);
+
+    int resetPlatformOrderAfterUnassign(@Param("orderId") Integer orderId,
+                                        @Param("pendingDistributerId") Integer pendingDistributerId,
+                                        @Param("nxGoodsId") Integer nxGoodsId,
+                                        @Param("nxGoodsFatherId") Integer nxGoodsFatherId,
+                                        @Param("purchaseStatus") Integer purchaseStatus);
 }

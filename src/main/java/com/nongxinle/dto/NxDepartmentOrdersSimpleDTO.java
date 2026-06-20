@@ -64,6 +64,29 @@ public class NxDepartmentOrdersSimpleDTO implements Serializable {
     private String nxDoPrice;
 
     /**
+     * 平台分配参考价 / 期望单价
+     */
+    private String nxDoExpectPrice;
+
+    /**
+     * 实际价 - 期望价
+     */
+    private String nxDoPriceDifferent;
+
+    /** 平台订单：1 平台 / 0 自有 */
+    private Integer isPlatformOrder;
+    private String orderSource;
+    private Integer platformAssignId;
+    private String platformFulfillmentStatus;
+    private String platformLabel;
+    private Integer priceEditable;
+    private Integer platformSort;
+    /** 展示别名 */
+    private String expectPrice;
+    private String actualPrice;
+    private String priceDifferent;
+
+    /**
      * 订单小计
      */
     private String nxDoSubtotal;

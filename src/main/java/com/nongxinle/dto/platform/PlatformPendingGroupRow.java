@@ -11,6 +11,8 @@ public class PlatformPendingGroupRow {
     private String departmentName;
     private String departmentOrderCode;
     private Integer pendingLineCount;
+    private Integer assignedLineCount;
+    private Integer totalLineCount;
     private String orderIdsCsv;
     private String firstPendingAt;
     private String lastPendingAt;

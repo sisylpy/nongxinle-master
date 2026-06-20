@@ -17,23 +17,28 @@
 
     <select id="queryPendingGroupedByDepartment" resultType="com.nongxinle.dto.platform.PlatformPendingGroupRow">
         select
-            poa.nx_poa_department_id as departmentId,
-            nd.nx_department_name as departmentName,
-            nd.nx_department_order_code as departmentOrderCode,
-            count(*) as pendingLineCount,
+            coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id) as departmentId,
+            max(coalesce(gd.gb_department_name, nd.nx_department_name)) as departmentName,
+            max(coalesce(gd.gb_department_name, nd.nx_department_order_code)) as departmentOrderCode,
+            sum(case when poa.nx_poa_assign_status = 'PENDING' then 1 else 0 end) as pendingLineCount,
+            sum(case when poa.nx_poa_assign_status = 'ASSIGNED' then 1 else 0 end) as assignedLineCount,
+            count(*) as totalLineCount,
             group_concat(poa.nx_poa_order_id order by poa.nx_poa_order_id separator ',') as orderIdsCsv,
             date_format(min(poa.nx_poa_created_at), '%Y-%m-%d %H:%i:%s') as firstPendingAt,
             date_format(max(poa.nx_poa_created_at), '%Y-%m-%d %H:%i:%s') as lastPendingAt
         from nx_platform_order_assign poa
         inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
-        inner join nx_department nd on nd.nx_department_id = poa.nx_poa_department_id
+        left join gb_department gd
+            on gd.gb_department_id = coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id)
+        left join nx_department nd on nd.nx_department_id = poa.nx_poa_department_id
         where poa.nx_poa_market_id = #{marketId}
-          and poa.nx_poa_assign_status = 'PENDING'
           and poa.nx_poa_assign_mode = 'PLATFORM'
+          and poa.nx_poa_assign_status in ('PENDING', 'ASSIGNED')
+          and dor.nx_DO_status &gt;= 0
         <if test="applyDate != null and applyDate != ''">
             and dor.nx_DO_apply_date = #{applyDate}
         </if>
-        group by poa.nx_poa_department_id, nd.nx_department_name, nd.nx_department_order_code
+        group by coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id)
         order by lastPendingAt desc, departmentId asc
     </select>
 
@@ -44,6 +49,7 @@
         where poa.nx_poa_market_id = #{marketId}
           and poa.nx_poa_assign_status = 'PENDING'
           and poa.nx_poa_assign_mode = 'PLATFORM'
+          and dor.nx_DO_status &gt;= 0
         <if test="applyDate != null and applyDate != ''">
             and dor.nx_DO_apply_date = #{applyDate}
         </if>
@@ -60,8 +66,10 @@
             dor.nx_DO_remark as remark,
             poa.nx_poa_assign_status as assignStatus,
             poa.nx_poa_assign_mode as assignMode,
+            poa.nx_poa_assign_source as assignSource,
             poa.nx_poa_assigned_distributer_id as assignedDistributerId,
             poa.nx_poa_assigned_dis_goods_id as assignedDisGoodsId,
+            ndis.nx_distributer_name as assignedDistributerName,
             dor.nx_DO_price as orderPrice,
             dor.nx_DO_subtotal as orderSubtotal,
             dngd.nx_dngd_id as defaultId,
@@ -70,14 +78,24 @@
             dngd.nx_dngd_source as defaultSource
         from nx_platform_order_assign poa
         inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+        left join nx_distributer ndis on ndis.nx_distributer_id = poa.nx_poa_assigned_distributer_id
         left join nx_department_nx_goods_default dngd
             on dngd.nx_dngd_market_id = poa.nx_poa_market_id
-           and dngd.nx_dngd_department_id = poa.nx_poa_department_id
+           and dngd.nx_dngd_department_id = coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id)
            and dngd.nx_dngd_nx_goods_id = dor.nx_DO_nx_goods_id
            and dngd.nx_dngd_status = 'ACTIVE'
         where poa.nx_poa_market_id = #{marketId}
           and poa.nx_poa_assign_mode = 'PLATFORM'
-          and poa.nx_poa_department_id = #{departmentId}
+          and poa.nx_poa_assign_status in ('PENDING', 'ASSIGNED')
+          and dor.nx_DO_status &gt;= 0
+          and (
+                coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id) = #{departmentId}
+             or poa.nx_poa_gb_department_id = #{departmentId}
+             or poa.nx_poa_gb_department_father_id = #{departmentId}
+             or poa.nx_poa_department_id = #{departmentId}
+             or dor.nx_DO_gb_department_id = #{departmentId}
+             or dor.nx_DO_gb_department_father_id = #{departmentId}
+          )
         <if test="applyDate != null and applyDate != ''">
             and dor.nx_DO_apply_date = #{applyDate}
         </if>
@@ -88,6 +106,209 @@
             </foreach>
         </if>
         order by dor.nx_DO_today_order asc, dor.nx_department_orders_id asc
+    </select>
+
+    <select id="queryCustomerPlatformOrderLines"
+            resultType="com.nongxinle.dto.platform.customer.PlatformCustomerOrderLineItem">
+        select
+            dor.nx_department_orders_id as orderId,
+            poa.nx_poa_id as platformAssignId,
+            dor.nx_DO_nx_goods_id as nxGoodsId,
+            coalesce(nullif(trim(dor.nx_DO_goods_name), ''), ng.nx_goods_name) as goodsName,
+            ng.nx_goods_brand as goodsBrand,
+            dor.nx_DO_quantity as quantity,
+            dor.nx_DO_standard as standard,
+            dor.nx_DO_weight as weight,
+            dor.nx_DO_price as orderPrice,
+            dor.nx_DO_subtotal as orderSubtotal,
+            dor.nx_DO_remark as remark,
+            poa.nx_poa_assign_status as assignStatus,
+            poa.nx_poa_assign_source as assignSource,
+            poa.nx_poa_assigned_distributer_id as assignedDistributerId,
+            ndis.nx_distributer_name as assignedDistributerName,
+            poa.nx_poa_assigned_price as assignedPrice,
+            dor.nx_DO_gb_department_order_id as gbDepartmentOrderId,
+            dngd.nx_dngd_default_distributer_id as defaultDistributerId,
+            nddef.nx_distributer_name as defaultDistributerName
+        from nx_platform_order_assign poa
+        inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+        left join nx_goods ng on ng.nx_goods_id = dor.nx_DO_nx_goods_id
+        left join nx_distributer ndis on ndis.nx_distributer_id = poa.nx_poa_assigned_distributer_id
+        left join nx_department_nx_goods_default dngd
+            on dngd.nx_dngd_market_id = poa.nx_poa_market_id
+           and dngd.nx_dngd_department_id = coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id)
+           and dngd.nx_dngd_nx_goods_id = dor.nx_DO_nx_goods_id
+           and dngd.nx_dngd_status = 'ACTIVE'
+        left join nx_distributer nddef on nddef.nx_distributer_id = dngd.nx_dngd_default_distributer_id
+        where poa.nx_poa_market_id = #{marketId}
+          and poa.nx_poa_assign_mode = 'PLATFORM'
+          and (
+                poa.nx_poa_department_id = #{departmentId}
+             or poa.nx_poa_gb_department_id = #{departmentId}
+          )
+          and poa.nx_poa_assign_status in ('PENDING', 'ASSIGNED')
+          and dor.nx_DO_status &gt;= 0
+        <if test="applyDate != null and applyDate != ''">
+            and dor.nx_DO_apply_date = #{applyDate}
+        </if>
+        <if test="orderIds != null and orderIds.size() > 0">
+            and poa.nx_poa_order_id in
+            <foreach collection="orderIds" item="oid" open="(" separator="," close=")">
+                #{oid}
+            </foreach>
+        </if>
+        order by dor.nx_DO_today_order asc, dor.nx_department_orders_id asc
+    </select>
+
+    <delete id="deleteByOrderId">
+        delete from nx_platform_order_assign where nx_poa_order_id = #{value}
+    </delete>
+
+    <!-- 配送商今日平台客户：nx 父部门 → 京采市场饭店展示名 -->
+    <select id="queryPlatformCustomerDisplayByDistributer" resultType="java.util.Map">
+        select
+            case
+                when poa.nx_poa_source_type = 'GB'
+                     or (dor.nx_DO_gb_department_id is not null and dor.nx_DO_gb_department_id > 0)
+                then coalesce(
+                    nullif(dor.nx_DO_gb_department_father_id, -1),
+                    nullif(poa.nx_poa_gb_department_father_id, 0),
+                    dor.nx_DO_gb_department_id,
+                    poa.nx_poa_gb_department_id
+                )
+                else dor.nx_DO_department_father_id
+            end as depFatherId,
+            max(coalesce(nullif(poa.nx_poa_gb_department_id, 0), dor.nx_DO_gb_department_id, poa.nx_poa_department_id)) as gbDepartmentId,
+            max(gd.gb_department_name) as gbDepartmentName,
+            max(poa.nx_poa_market_id) as marketId
+        from nx_department_orders dor
+        inner join nx_platform_order_assign poa
+            on poa.nx_poa_order_id = dor.nx_department_orders_id
+           and poa.nx_poa_assign_mode = 'PLATFORM'
+           and poa.nx_poa_assign_status = 'ASSIGNED'
+        left join gb_department gd
+            on gd.gb_department_id = coalesce(
+                nullif(dor.nx_DO_gb_department_id, -1),
+                nullif(poa.nx_poa_gb_department_id, 0),
+                poa.nx_poa_department_id
+            )
+        where (
+            dor.nx_DO_distributer_id = #{disId}
+            or poa.nx_poa_assigned_distributer_id = #{disId}
+        )
+          and (dor.nx_DO_collaborative_nx_dis_id = -1 or dor.nx_DO_collaborative_nx_dis_id is null)
+          and dor.nx_DO_status &gt;= 0
+          and dor.nx_DO_status &lt; 3
+        group by depFatherId
+        having depFatherId is not null and depFatherId > 0
+    </select>
+
+    <!-- 配送商今日平台客户列表（GB 京采 + NX 两类，不受 nx_DO_gb_department_id=-1 限制） -->
+    <select id="queryPlatformDistributerCustomers"
+            resultType="com.nongxinle.dto.platform.distributer.PlatformDistributerCustomerRow">
+        select
+            case
+                when poa.nx_poa_source_type = 'GB'
+                     or (dor.nx_DO_gb_department_id is not null and dor.nx_DO_gb_department_id > 0)
+                then 'GB'
+                else 'NX'
+            end as customerSource,
+            case
+                when poa.nx_poa_source_type = 'GB'
+                     or (dor.nx_DO_gb_department_id is not null and dor.nx_DO_gb_department_id > 0)
+                then coalesce(
+                    nullif(dor.nx_DO_gb_department_father_id, -1),
+                    nullif(poa.nx_poa_gb_department_father_id, 0),
+                    dor.nx_DO_gb_department_id,
+                    poa.nx_poa_gb_department_id
+                )
+                else dor.nx_DO_department_father_id
+            end as groupKey,
+            max(coalesce(nullif(poa.nx_poa_gb_department_id, 0), dor.nx_DO_gb_department_id, poa.nx_poa_department_id)) as gbDepartmentId,
+            max(gd.gb_department_name) as gbDepartmentName,
+            max(gd.gb_department_attr_name) as gbDepartmentAttrName,
+            max(poa.nx_poa_market_id) as marketId,
+            max(case when dor.nx_DO_gb_department_id = -1 then dor.nx_DO_department_father_id else null end) as nxDepFatherId,
+            max(nd.nx_department_attr_name) as nxDepAttrName,
+            count(case when dor.nx_DO_status = -2 then 1 end) as undo_count,
+            count(case when dor.nx_DO_status &lt; 3 and dor.nx_DO_status &gt; -2
+                        and dor.nx_DO_price is not null and dor.nx_DO_price != 0.1 then 1 end) as hasPrice,
+            count(case when dor.nx_DO_status &lt; 3 and dor.nx_DO_purchase_status &gt; 3 then 1 end) as hasWeight,
+            count(case when dor.nx_DO_status &lt; 3 and dor.nx_DO_status &gt; -2 then 1 end) as totalCount,
+            count(case when dor.nx_DO_status = 2 and dor.nx_DO_purchase_status &gt; 3
+                        and dor.nx_DO_price != 0.1 and dor.nx_DO_subtotal &gt; 0 then 1 end) as finishCount,
+            sum(case when dor.nx_DO_status = 2 and dor.nx_DO_purchase_status &gt; 3 then dor.nx_DO_subtotal else 0 end) as totalSubtotal
+        from nx_department_orders dor
+        inner join nx_platform_order_assign poa
+            on poa.nx_poa_order_id = dor.nx_department_orders_id
+           and poa.nx_poa_assign_mode = 'PLATFORM'
+           and poa.nx_poa_assign_status = 'ASSIGNED'
+        left join gb_department gd
+            on gd.gb_department_id = coalesce(
+                nullif(dor.nx_DO_gb_department_id, -1),
+                nullif(poa.nx_poa_gb_department_id, 0),
+                poa.nx_poa_department_id
+            )
+        left join nx_department nd
+            on nd.nx_department_id = dor.nx_DO_department_father_id
+           and (dor.nx_DO_gb_department_id is null or dor.nx_DO_gb_department_id = -1)
+        where (
+            dor.nx_DO_distributer_id = #{disId}
+            or poa.nx_poa_assigned_distributer_id = #{disId}
+        )
+          and (dor.nx_DO_collaborative_nx_dis_id = -1 or dor.nx_DO_collaborative_nx_dis_id is null)
+          and dor.nx_DO_status &gt;= 0
+          and dor.nx_DO_status &lt; 3
+        group by customerSource, groupKey
+        having groupKey is not null and groupKey > 0
+        order by customerSource, groupKey
+    </select>
+
+    <!-- 平台客户列表为空时的诊断计数（Tomcat 日志用） -->
+    <select id="queryPlatformDistributerCustomerDiagnostics" resultType="java.util.Map">
+        select
+            (select count(*)
+             from nx_platform_order_assign poa
+             inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+             where poa.nx_poa_assign_mode = 'PLATFORM'
+               and poa.nx_poa_assign_status = 'ASSIGNED'
+               and dor.nx_DO_distributer_id = #{disId}
+               and dor.nx_DO_status &gt;= 0) as assignedByOrderDisId,
+            (select count(*)
+             from nx_platform_order_assign poa
+             inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+             where poa.nx_poa_assign_mode = 'PLATFORM'
+               and poa.nx_poa_assign_status = 'ASSIGNED'
+               and poa.nx_poa_assigned_distributer_id = #{disId}
+               and dor.nx_DO_status &gt;= 0) as assignedByPoaDisId,
+            (select count(*)
+             from nx_platform_order_assign poa
+             inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+             where poa.nx_poa_assign_mode = 'PLATFORM'
+               and poa.nx_poa_assign_status = 'ASSIGNED'
+               and (dor.nx_DO_distributer_id = #{disId} or poa.nx_poa_assigned_distributer_id = #{disId})
+               and (dor.nx_DO_collaborative_nx_dis_id = -1 or dor.nx_DO_collaborative_nx_dis_id is null)
+               and dor.nx_DO_status &gt;= 0
+               and dor.nx_DO_status &lt; 3) as assignedOpenOrders,
+            (select count(*)
+             from nx_platform_order_assign poa
+             inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+             where poa.nx_poa_assign_mode = 'PLATFORM'
+               and poa.nx_poa_assign_status = 'PENDING'
+               and (dor.nx_DO_distributer_id = #{disId} or poa.nx_poa_assigned_distributer_id = #{disId})
+               and dor.nx_DO_status &gt;= 0) as pendingOrders,
+            (select group_concat(t.order_id)
+             from (
+                 select dor.nx_department_orders_id as order_id
+                 from nx_platform_order_assign poa
+                 inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
+                 where poa.nx_poa_assign_mode = 'PLATFORM'
+                   and poa.nx_poa_assign_status = 'ASSIGNED'
+                   and (dor.nx_DO_distributer_id = #{disId} or poa.nx_poa_assigned_distributer_id = #{disId})
+                   and dor.nx_DO_status &gt;= 0
+                 order by dor.nx_department_orders_id
+                 limit 5
+             ) t) as sampleOrderIds
     </select>
 
     <insert id="save" parameterType="com.nongxinle.entity.NxPlatformOrderAssignEntity"
@@ -121,5 +342,16 @@
             <if test="nxPoaSwitchLogId != null">`nx_poa_switch_log_id` = #{nxPoaSwitchLogId},</if>
         </set>
         where nx_poa_id = #{nxPoaId}
+    </update>
+
+    <update id="resetAssignToPending">
+        update nx_platform_order_assign
+        set `nx_poa_assign_status` = 'PENDING',
+            `nx_poa_assigned_distributer_id` = null,
+            `nx_poa_assigned_dis_goods_id` = null,
+            `nx_poa_assigned_price` = null,
+            `nx_poa_assigned_at` = null,
+            `nx_poa_assigned_by` = null
+        where nx_poa_id = #{value}
     </update>
 </mapper>

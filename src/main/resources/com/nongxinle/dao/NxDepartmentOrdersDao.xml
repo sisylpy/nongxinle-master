@@ -4084,6 +4084,9 @@
         dor.nx_DO_status,
         dor.nx_DO_weight,
         dor.nx_DO_price,
+        dor.nx_DO_expect_price,
+        dor.nx_DO_price_different,
+        <include refid="platformOrderFlagsSelect"/>,
         dor.nx_DO_subtotal,
         dor.nx_DO_print_standard,
         dor.nx_DO_purchase_status,
@@ -4118,6 +4121,7 @@
         COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
         nddg.nx_DDG_order_goods_name
         from nx_department_orders as dor
+        <include refid="platformOrderJoinFromDor"/>
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
@@ -4153,8 +4157,9 @@
             <if test="resFatherId != null">
                 and dor.nx_DO_nx_comm_restraunt_father_id = #{resFatherId}
             </if>
+            <include refid="excludePlatformPendingOrders"/>
         </where>
-        order by dor.nx_DO_today_order
+        order by platform_sort, dor.nx_DO_today_order
     </select>
 
     <!-- 批量查询多个部门的订单（简化版） -->
@@ -4168,6 +4173,9 @@
         dor.nx_DO_status,
         dor.nx_DO_weight,
         dor.nx_DO_price,
+        dor.nx_DO_expect_price,
+        dor.nx_DO_price_different,
+        <include refid="platformOrderFlagsSelect"/>,
         dor.nx_DO_subtotal,
         dor.nx_DO_print_standard,
         dor.nx_DO_purchase_status,
@@ -4201,6 +4209,7 @@
         COALESCE(nd_dg.nx_distributer_show_name, nd_dg.nx_distributer_name) as nx_dg_distributer_name,
         nddg.nx_DDG_order_goods_name
         from nx_department_orders as dor
+        <include refid="platformOrderJoinFromDor"/>
         left join nx_distributer_goods as ndg on ndg.nx_distributer_goods_id = dor.nx_DO_dis_goods_id
         left join nx_distributer as nd_dg on nd_dg.nx_distributer_id = ndg.nx_dg_distributer_id
         left join nx_department_dis_goods as nddg on nddg.nx_DDG_dis_goods_id = ndg.nx_distributer_goods_id
@@ -4234,8 +4243,9 @@
                     #{depId}
                 </foreach>
             </if>
+            <include refid="excludePlatformPendingOrders"/>
         </where>
-        order by dor.nx_DO_department_id, dor.nx_DO_today_order
+        order by platform_sort, dor.nx_DO_department_id, dor.nx_DO_today_order
     </select>
 
     <!-- 根据OCR任务ID查询订单列表（含已匹配商品，供 getTaskOrdersDetail 前端判断协作配送商） -->
@@ -4289,6 +4299,15 @@
         <result property="nxDoStatus" column="nx_DO_status"/>
         <result property="nxDoWeight" column="nx_DO_weight"/>
         <result property="nxDoPrice" column="nx_DO_price"/>
+        <result property="nxDoExpectPrice" column="nx_DO_expect_price"/>
+        <result property="nxDoPriceDifferent" column="nx_DO_price_different"/>
+        <result property="isPlatformOrder" column="is_platform_order"/>
+        <result property="orderSource" column="order_source"/>
+        <result property="platformAssignId" column="platform_assign_id"/>
+        <result property="platformFulfillmentStatus" column="platform_fulfillment_status"/>
+        <result property="platformLabel" column="platform_label"/>
+        <result property="priceEditable" column="price_editable"/>
+        <result property="platformSort" column="platform_sort"/>
         <result property="nxDoSubtotal" column="nx_DO_subtotal"/>
         <result property="nxDoPrintStandard" column="nx_DO_print_standard"/>
         <result property="nxDoPurchaseStatus" column="nx_DO_purchase_status"/>
@@ -9967,6 +9986,27 @@
             <if test="nxDoArriveDate != null">`nx_DO_arrive_date` = #{nxDoArriveDate}</if>
         </set>
         where nx_department_orders_id = #{nxDepartmentOrdersId}
+    </update>
+
+    <update id="resetPlatformOrderAfterUnassign">
+        update nx_department_orders
+        set `nx_DO_dis_goods_id` = null,
+            `nx_DO_dep_dis_goods_id` = null,
+            `nx_DO_dis_goods_father_id` = null,
+            `nx_DO_dis_goods_grand_id` = null,
+            `nx_DO_collaborative_nx_dis_id` = -1,
+            `nx_DO_distributer_id` = #{pendingDistributerId},
+            `nx_DO_price` = null,
+            `nx_DO_subtotal` = null,
+            `nx_DO_expect_price` = null,
+            `nx_DO_price_different` = null,
+            `nx_DO_cost_price` = null,
+            `nx_DO_cost_subtotal` = null,
+            `nx_DO_cost_price_update` = null,
+            `nx_DO_nx_goods_id` = #{nxGoodsId},
+            `nx_DO_nx_goods_father_id` = #{nxGoodsFatherId},
+            `nx_DO_purchase_status` = #{purchaseStatus}
+        where nx_department_orders_id = #{orderId}
     </update>
 
     <delete id="delete">

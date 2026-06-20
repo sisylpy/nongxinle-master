@@ -43,5 +43,9 @@ public interface GbDepartmentBillDao extends BaseDao<GbDepartmentBillEntity> {
 
     GbDepartmentBillEntity queryDepartBillByTsxTradeNo(String nxDbTradeNo);
 
+    GbDepartmentBillEntity queryByPlatformSubmitToken(String submitToken);
+
+    GbDepartmentBillEntity queryBlockingPlatformCashBillByDep(Integer depId);
+
     List<NxDistributerEntity> queryNxDistributer(Map<String, Object> map4);
 }

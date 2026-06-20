@@ -125,7 +125,7 @@ public class GbPlatformOrderBridgeServiceImpl implements GbPlatformOrderBridgeSe
         NxPlatformOrderAssignEntity poa = new NxPlatformOrderAssignEntity();
         poa.setNxPoaMarketId(resolveMarketId(distributerId));
         poa.setNxPoaOrderId(nxOrder.getNxDepartmentOrdersId());
-        poa.setNxPoaDepartmentId(resolvePlatformDepartmentId(gbOrder));
+        poa.setNxPoaDepartmentId(gbOrder.getGbDoDepartmentId());
         poa.setNxPoaNxGoodsId(nxGoodsId);
         poa.setNxPoaAssignStatus(PlatformConstants.ASSIGN_STATUS_ASSIGNED);
         poa.setNxPoaAssignMode(PlatformConstants.ASSIGN_MODE_PLATFORM);

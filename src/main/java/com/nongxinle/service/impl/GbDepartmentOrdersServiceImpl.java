@@ -30,8 +30,12 @@ public class GbDepartmentOrdersServiceImpl implements GbDepartmentOrdersService 
 	
 	@Override
 	public void save(GbDepartmentOrdersEntity gbDepartmentOrders){
-		gbDepartmentOrders.setGbDoStatus(getGbOrderStatusNew());
-		gbDepartmentOrders.setGbDoBuyStatus(getGbOrderBuyStatusNew());
+		if (gbDepartmentOrders.getGbDoStatus() == null) {
+			gbDepartmentOrders.setGbDoStatus(getGbOrderStatusNew());
+		}
+		if (gbDepartmentOrders.getGbDoBuyStatus() == null) {
+			gbDepartmentOrders.setGbDoBuyStatus(getGbOrderBuyStatusNew());
+		}
 		gbDepartmentOrdersDao.save(gbDepartmentOrders);
 	}
 

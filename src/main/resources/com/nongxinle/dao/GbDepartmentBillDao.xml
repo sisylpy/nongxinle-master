@@ -966,6 +966,22 @@
         select * from gb_department_bill as gdb where  gdb.gb_DB_wx_out_trade_no = #{ordersSn}
     </select>
 
+    <select id="queryByPlatformSubmitToken" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
+        select * from gb_department_bill
+        where gb_db_platform_submit_token = #{value}
+          and gb_db_bill_source = 'PLATFORM_CASH'
+        limit 1
+    </select>
+
+    <select id="queryBlockingPlatformCashBillByDep" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
+        select * from gb_department_bill
+        where gb_db_bill_source = 'PLATFORM_CASH'
+          and gb_db_pay_status in ('AWAIT_FIRST_PAY', 'AWAIT_SUPPLEMENT')
+          and (gb_DB_dep_id = #{value} or gb_DB_dep_father_id = #{value})
+        order by case gb_db_pay_status when 'AWAIT_FIRST_PAY' then 1 when 'AWAIT_SUPPLEMENT' then 2 else 3 end,
+                 gb_department_bill_id desc
+        limit 1
+    </select>
 
 
     <select id="queryBillFromWhichDepartment" resultMap="billDetail">
@@ -1080,7 +1096,14 @@
          `gb_DB_user_coupon_id`,
          `gb_DB_user_coupon_total`,
          `gb_DB_return_order_total`,
-         `gb_DB_return_order_id`
+         `gb_DB_return_order_id`,
+         `gb_db_known_total`,
+         `gb_db_paid_total`,
+         `gb_db_supplement_due`,
+         `gb_db_pending_item_count`,
+         `gb_db_pay_status`,
+         `gb_db_bill_source`,
+         `gb_db_platform_submit_token`
          )
         values (#{gbDepartmentBillId},
                 #{gbDbDisId},
@@ -1117,7 +1140,14 @@
                 #{gbDbUserCouponId},
                 #{gbDbUserCouponTotal},
                 #{gbDbReturnTotal},
-                #{gbDbReturnOrderId}
+                #{gbDbReturnOrderId},
+                #{gbDbKnownTotal},
+                #{gbDbPaidTotal},
+                #{gbDbSupplementDue},
+                #{gbDbPendingItemCount},
+                #{gbDbPayStatus},
+                #{gbDbBillSource},
+                #{gbDbPlatformSubmitToken}
                 )
     </insert>
 
@@ -1158,6 +1188,13 @@
             <if test="gbDbUserCouponTotal != null">`gb_DB_user_coupon_total` = #{gbDbUserCouponTotal},</if>
             <if test="gbDbReturnTotal != null">`gb_DB_return_order_total` = #{gbDbReturnTotal},</if>
             <if test="gbDbReturnOrderId != null">`gb_DB_return_order_id` = #{gbDbReturnOrderId},</if>
+            <if test="gbDbKnownTotal != null">`gb_db_known_total` = #{gbDbKnownTotal},</if>
+            <if test="gbDbPaidTotal != null">`gb_db_paid_total` = #{gbDbPaidTotal},</if>
+            <if test="gbDbSupplementDue != null">`gb_db_supplement_due` = #{gbDbSupplementDue},</if>
+            <if test="gbDbPendingItemCount != null">`gb_db_pending_item_count` = #{gbDbPendingItemCount},</if>
+            <if test="gbDbPayStatus != null">`gb_db_pay_status` = #{gbDbPayStatus},</if>
+            <if test="gbDbBillSource != null">`gb_db_bill_source` = #{gbDbBillSource},</if>
+            <if test="gbDbPlatformSubmitToken != null">`gb_db_platform_submit_token` = #{gbDbPlatformSubmitToken},</if>
             <if test="gbDbDay != null">`gb_DB_day` = #{gbDbDay}</if>
         </set>
         where gb_department_bill_id = #{gbDepartmentBillId}

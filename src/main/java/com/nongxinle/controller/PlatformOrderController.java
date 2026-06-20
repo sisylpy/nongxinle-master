@@ -4,6 +4,7 @@ import com.nongxinle.dto.platform.PlatformAssignRequest;
 import com.nongxinle.dto.platform.PlatformOrderDetailRequest;
 import com.nongxinle.dto.platform.PlatformPendingRequest;
 import com.nongxinle.dto.platform.PlatformSubmitLineRequest;
+import com.nongxinle.dto.platform.PlatformUnassignRequest;
 import com.nongxinle.dto.platform.PlatformSuppliersRequest;
 import com.nongxinle.dto.platform.PlatformDistributerIdSchemaProbeResponse;
 import com.nongxinle.service.PlatformGoodsSupplierService;
@@ -65,6 +66,16 @@ public class PlatformOrderController {
     public R assign(@RequestBody PlatformAssignRequest request) {
         try {
             return R.ok().put("data", platformOrderAssignService.assign(request));
+        } catch (Exception e) {
+            return R.error(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/unassign", method = RequestMethod.POST)
+    @ResponseBody
+    public R unassign(@RequestBody PlatformUnassignRequest request) {
+        try {
+            return R.ok().put("data", platformOrderAssignService.unassign(request));
         } catch (Exception e) {
             return R.error(e.getMessage());
         }

@@ -9,6 +9,8 @@ package com.nongxinle.controller;
 import com.github.wxpay.sdk.WXPay;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.service.platform.GbBillCreationGuardService;
+import com.nongxinle.utils.GbBillPlatformConstants;
 import com.nongxinle.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -56,9 +58,8 @@ public class GbDepartmentBillController {
     private GbDepartmentGoodsStockReduceService gbDepGoodsStockReduceService;
     @Autowired
     private GbDepartmentGoodsDailyService gbDepGoodsDailyService;
-
-
-    @RequestMapping(value = "/stockReceiveBill", method = RequestMethod.POST)
+    @Autowired
+    private GbBillCreationGuardService gbBillCreationGuardService;
     @ResponseBody
     public R stockReceiveBill(@RequestBody GbDepartmentBillEntity billEntity) {
 
@@ -1482,7 +1483,9 @@ public class GbDepartmentBillController {
     public R saveAccountBillGb(@RequestBody GbDepartmentBillEntity gbDepartmentBill) {
 
         List<GbDepartmentOrdersEntity> nxDepartmentOrdersEntities = gbDepartmentBill.getGbDepartmentOrdersEntities();
+        gbBillCreationGuardService.assertGbOrdersCanAttachToNewLegacyBill(nxDepartmentOrdersEntities);
         gbDepartmentBill.setGbDbStatus(-1);
+        gbDepartmentBill.setGbDbBillSource(GbBillPlatformConstants.BILL_SOURCE_LEGACY);
         gbDepartmentBill.setGbDbDate(formatWhatDay(0));
         gbDepartmentBill.setGbDbTime(formatWhatYearDayTime(0));
         gbDepartmentBill.setGbDbMonth(formatWhatMonth(0));

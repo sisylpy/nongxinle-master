@@ -3841,6 +3841,186 @@
             dg.nx_distributer_goods_id
     </select>
 
+    <!-- 平台饭店端首页：可售 SKU 公共过滤（与 Phase 2a queryPlatformSuppliersByNxGoods 一致） -->
+    <sql id="platformCustomerEligibleGoodsWhere">
+        dg.nx_dg_nx_goods_id is not null
+        and dg.nx_dg_nx_goods_id != 0
+        and dg.nx_dg_dfg_goods_father_id is not null
+        and (dg.nx_dg_pull_off is null or dg.nx_dg_pull_off = 0)
+        and (dg.nx_dg_goods_is_hidden is null or dg.nx_dg_goods_is_hidden = 0)
+        and (
+            (dg.nx_dg_will_price_one is not null and trim(dg.nx_dg_will_price_one) != ''
+             and dg.nx_dg_will_price_one != '0' and dg.nx_dg_will_price_one != '0.1'
+             and cast(dg.nx_dg_will_price_one as decimal(10, 2)) &gt; 0.1)
+            or (dg.nx_dg_will_price is not null and trim(dg.nx_dg_will_price) != ''
+             and dg.nx_dg_will_price != '0' and dg.nx_dg_will_price != '0.1'
+             and cast(dg.nx_dg_will_price as decimal(10, 2)) &gt; 0.1)
+        )
+    </sql>
+
+    <!-- 平台饭店端首页：市场批发商列表 -->
+    <select id="queryPlatformMarketSupplierHomeList" resultType="com.nongxinle.dto.platform.PlatformMarketSupplierHomeRow">
+        select
+            nd.nx_distributer_id as distributerId,
+            COALESCE(NULLIF(trim(nd.nx_distributer_show_name), ''), nd.nx_distributer_name) as distributerName,
+            nd.nx_distributer_img as logo,
+            nd.nx_distributer_address as address,
+            (
+                select GROUP_CONCAT(distinct sub.nx_dfg_father_goods_name order by sub.nx_dfg_father_goods_sort separator '、')
+                from nx_distributer_father_goods sub
+                where sub.nx_dfg_distributer_id = nd.nx_distributer_id
+                  and sub.nx_dfg_father_goods_level = 0
+                  and sub.nx_dfg_nx_goods_id is not null
+            ) as mainCategories,
+            count(distinct dg.nx_dg_nx_goods_id) as goodsCount
+        from nx_distributer nd
+        left join nx_distributer_goods dg
+            on dg.nx_dg_distributer_id = nd.nx_distributer_id
+           and <include refid="platformCustomerEligibleGoodsWhere"/>
+        where nd.nx_distributer_sys_market_id = #{marketId}
+        group by nd.nx_distributer_id, nd.nx_distributer_show_name, nd.nx_distributer_name,
+                 nd.nx_distributer_img, nd.nx_distributer_address
+        order by
+            case when count(distinct dg.nx_dg_nx_goods_id) > 0 then 0 else 1 end,
+            count(distinct dg.nx_dg_nx_goods_id) desc,
+            COALESCE(NULLIF(trim(nd.nx_distributer_show_name), ''), nd.nx_distributer_name),
+            nd.nx_distributer_id
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 平台饭店端首页：标准商品一级分类统计 -->
+    <select id="queryPlatformCategoryHomeList" resultType="com.nongxinle.dto.platform.PlatformCategoryHomeRow">
+        select
+            cat.nx_goods_id as categoryId,
+            cat.nx_goods_name as categoryName,
+            cat.nx_goods_file as icon,
+            count(distinct dg.nx_dg_nx_goods_id) as goodsCount,
+            count(distinct dg.nx_dg_distributer_id) as supplierCount
+        from nx_goods cat
+        inner join nx_goods leaf on leaf.nx_goods_great_grand_id = cat.nx_goods_id
+        inner join nx_distributer_goods dg
+            on dg.nx_dg_nx_goods_id = leaf.nx_goods_id
+           and <include refid="platformCustomerEligibleGoodsWhere"/>
+        inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+        where cat.nx_goods_father_id = 0
+          and (cat.nx_goods_is_hidden is null or cat.nx_goods_is_hidden = 0)
+          and nd.nx_distributer_sys_market_id = #{marketId}
+        group by cat.nx_goods_id, cat.nx_goods_name, cat.nx_goods_file, cat.nx_goods_sort
+        having goodsCount &gt; 0
+        order by cat.nx_goods_sort, cat.nx_goods_id
+    </select>
+
+    <select id="countPlatformMarketSuppliers" resultType="int">
+        select count(distinct nd.nx_distributer_id)
+        from nx_distributer nd
+        inner join nx_distributer_goods dg on dg.nx_dg_distributer_id = nd.nx_distributer_id
+        where nd.nx_distributer_sys_market_id = #{marketId}
+          and <include refid="platformCustomerEligibleGoodsWhere"/>
+    </select>
+
+    <select id="countPlatformMarketCategories" resultType="int">
+        select count(*) from (
+            select cat.nx_goods_id
+            from nx_goods cat
+            inner join nx_goods leaf on leaf.nx_goods_great_grand_id = cat.nx_goods_id
+            inner join nx_distributer_goods dg
+                on dg.nx_dg_nx_goods_id = leaf.nx_goods_id
+               and <include refid="platformCustomerEligibleGoodsWhere"/>
+            inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+            where cat.nx_goods_father_id = 0
+              and (cat.nx_goods_is_hidden is null or cat.nx_goods_is_hidden = 0)
+              and nd.nx_distributer_sys_market_id = #{marketId}
+            group by cat.nx_goods_id
+            having count(distinct dg.nx_dg_nx_goods_id) &gt; 0
+        ) t
+    </select>
+
+    <select id="countPlatformMarketDistinctGoods" resultType="int">
+        select count(distinct dg.nx_dg_nx_goods_id)
+        from nx_distributer_goods dg
+        inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+        where nd.nx_distributer_sys_market_id = #{marketId}
+          and <include refid="platformCustomerEligibleGoodsWhere"/>
+    </select>
+
+    <!-- 平台全部类别：市场内可售 nx 商品 ID 排序（部门常购顺序近似） -->
+    <select id="queryPlatformCatalogGoodsIdsSort" resultType="int">
+        select ng.nx_goods_id
+        from nx_goods ng
+        inner join nx_distributer_goods dg on dg.nx_dg_nx_goods_id = ng.nx_goods_id
+        inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+        where nd.nx_distributer_sys_market_id = #{marketId}
+          and (ng.nx_goods_is_hidden is null or ng.nx_goods_is_hidden = 0)
+          and <include refid="platformCustomerEligibleGoodsWhere"/>
+        group by ng.nx_goods_id, ng.nx_goods_sort, ng.nx_goods_sons_sort
+        order by ng.nx_goods_sort, ng.nx_goods_sons_sort, ng.nx_goods_id
+    </select>
+
+    <select id="queryPlatformCatalogGoodsByGreatGrandId"
+            resultType="com.nongxinle.dto.platform.PlatformCatalogGoodsRow">
+        select
+            ng.nx_goods_id as nxGoodsId,
+            ng.nx_goods_name as nxGoodsName,
+            ng.nx_goods_standardname as nxGoodsStandardname,
+            ng.nx_goods_standard_weight as nxGoodsStandardWeight,
+            ng.nx_goods_grand_id as nxGoodsGrandId,
+            ng.nx_goods_great_grand_id as nxGoodsGreatGrandId,
+            ng.nx_goods_file as nxGoodsFile,
+            ng.nx_goods_brand as nxGoodsBrand,
+            ng.nx_goods_items_per_carton as nxGoodsItemsPerCarton,
+            ng.nx_goods_carton_unit as nxGoodsCartonUnit,
+            nxo.nx_department_orders_id as platformOrderId,
+            nxo.nx_DO_quantity as platformOrderQuantity,
+            nxo.nx_DO_standard as platformOrderStandard
+        from nx_goods ng
+        inner join nx_goods f on f.nx_goods_id = ng.nx_goods_father_id
+        inner join nx_goods g on g.nx_goods_id = f.nx_goods_father_id
+        <if test="departmentId != null">
+        left join (
+            select nxo2.nx_DO_nx_goods_id as nx_goods_id,
+                   max(nxo2.nx_department_orders_id) as order_id
+            from nx_department_orders nxo2
+            inner join nx_platform_order_assign poa
+                on poa.nx_poa_order_id = nxo2.nx_department_orders_id
+               and poa.nx_poa_assign_status = 'PENDING'
+               and poa.nx_poa_assign_mode = 'PLATFORM'
+            where nxo2.nx_DO_department_id = #{departmentId}
+              and nxo2.nx_DO_apply_date = #{applyDate}
+            group by nxo2.nx_DO_nx_goods_id
+        ) pord on pord.nx_goods_id = ng.nx_goods_id
+        left join nx_department_orders nxo on nxo.nx_department_orders_id = pord.order_id
+        </if>
+        where ng.nx_goods_great_grand_id = #{greatGrandId}
+          and (ng.nx_goods_is_hidden is null or ng.nx_goods_is_hidden = 0)
+          and exists (
+            select 1
+            from nx_distributer_goods dg
+            inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+            where dg.nx_dg_nx_goods_id = ng.nx_goods_id
+              and nd.nx_distributer_sys_market_id = #{marketId}
+              and <include refid="platformCustomerEligibleGoodsWhere"/>
+          )
+        order by g.nx_goods_sort, f.nx_goods_sort, ng.nx_goods_sort, ng.nx_goods_sons_sort, ng.nx_goods_id
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countPlatformCatalogGoodsByGreatGrandId" resultType="int">
+        select count(distinct ng.nx_goods_id)
+        from nx_goods ng
+        where ng.nx_goods_great_grand_id = #{greatGrandId}
+          and (ng.nx_goods_is_hidden is null or ng.nx_goods_is_hidden = 0)
+          and exists (
+            select 1
+            from nx_distributer_goods dg
+            inner join nx_distributer nd on nd.nx_distributer_id = dg.nx_dg_distributer_id
+            where dg.nx_dg_nx_goods_id = ng.nx_goods_id
+              and nd.nx_distributer_sys_market_id = #{marketId}
+              and <include refid="platformCustomerEligibleGoodsWhere"/>
+          )
+    </select>
+
 </mapper>
 
 

@@ -17,6 +17,8 @@ public class PlatformPendingCustomerItem implements Serializable {
     private String departmentName;
     private String departmentOrderCode;
     private Integer pendingLineCount;
+    private Integer assignedLineCount;
+    private Integer totalLineCount;
     private List<Integer> orderIds;
     private String firstPendingAt;
     private String lastPendingAt;

@@ -1111,6 +1111,7 @@
         <result property="gbDoScaleWeight" column="gb_DO_scale_weight"/>
         <result property="gbDoScalePrice" column="gb_DO_scale_price"/>
         <result property="gbDoPrice" column="gb_DO_price"/>
+        <result property="gbDoPriceConfirmStatus" column="gb_do_price_confirm_status"/>
         <result property="gbDoSubtotal" column="gb_DO_subtotal"/>
         <result property="gbDoBuyStatus" column="gb_DO_buy_status"/>
         <result property="gbDoNxGoodsFatherId" column="gb_DO_nx_goods_father_id"/>
@@ -3961,6 +3962,7 @@
          `gb_DO_remark`,
          `gb_DO_weight`,
          `gb_DO_price`,
+         `gb_do_price_confirm_status`,
          `gb_DO_subtotal`,
          `gb_DO_department_id`,
          `gb_DO_department_father_id`,
@@ -4023,6 +4025,7 @@
                 #{gbDoRemark},
                 #{gbDoWeight},
                 #{gbDoPrice},
+                #{gbDoPriceConfirmStatus},
                 #{gbDoSubtotal},
                 #{gbDoDepartmentId},
                 #{gbDoDepartmentFatherId},
@@ -4089,6 +4092,7 @@
             <if test="gbDoRemark != null">`gb_DO_remark` = #{gbDoRemark},</if>
             <if test="gbDoWeight != null">`gb_DO_weight` = #{gbDoWeight},</if>
             <if test="gbDoPrice != null">`gb_DO_price` = #{gbDoPrice},</if>
+            <if test="gbDoPriceConfirmStatus != null">`gb_do_price_confirm_status` = #{gbDoPriceConfirmStatus},</if>
             <if test="gbDoSubtotal != null">`gb_DO_subtotal` = #{gbDoSubtotal},</if>
             <if test="gbDoDepartmentId != null">`gb_DO_department_id` = #{gbDoDepartmentId},</if>
             <if test="gbDoDepartmentFatherId != null">`gb_DO_department_father_id` = #{gbDoDepartmentFatherId},</if>

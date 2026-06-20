@@ -567,6 +567,35 @@
           </dependency>
         </dependencies>
       </plugin>
+
+      <!-- 固定 Java 8 编译，避免 JDK8 环境误用新版 compiler 的 release 参数 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <encoding>UTF-8</encoding>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.30</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <!-- 平台验收 Runner 在 src/test/java，exec:java 默认使用 test classpath -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <classpathScope>test</classpathScope>
+        </configuration>
+      </plugin>
     </plugins>
 
 
