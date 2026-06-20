@@ -21,6 +21,11 @@ public class NxPlatformOrderAssignEntity implements Serializable {
     private Integer nxPoaNxGoodsId;
     private String nxPoaAssignStatus;
     private String nxPoaAssignMode;
+    private String nxPoaAssignSource;
+    private String nxPoaSourceType;
+    private Integer nxPoaGbDepartmentId;
+    private Integer nxPoaGbDepartmentFatherId;
+    private Integer nxPoaGbDepartmentOrderId;
     private Integer nxPoaAssignedDistributerId;
     private Integer nxPoaAssignedDisGoodsId;
     private BigDecimal nxPoaAssignedPrice;

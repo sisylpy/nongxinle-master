@@ -14,6 +14,14 @@ public final class PlatformConstants {
     public static final String ASSIGN_MODE_PLATFORM = "PLATFORM";
     public static final String ASSIGN_MODE_LEGACY_DIS = "LEGACY_DIS";
 
+    /** 饭店从批发商店铺主动选商下单（GB 链路） */
+    public static final String ASSIGN_SOURCE_CUSTOMER_SELECTED_SUPPLIER = "CUSTOMER_SELECTED_SUPPLIER";
+    /** 平台 Phase 2a 手动分配等 NX 侧来源 */
+    public static final String ASSIGN_SOURCE_PLATFORM_MANUAL = "PLATFORM_MANUAL";
+
+    public static final String SOURCE_TYPE_GB = "GB";
+    public static final String SOURCE_TYPE_NX = "NX";
+
     public static final String MARKET_DEP_STATUS_ACTIVE = "ACTIVE";
 
     public static final String SWITCH_SCOPE_ORDER_ONLY = "ORDER_ONLY";

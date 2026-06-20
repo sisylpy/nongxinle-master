@@ -15,6 +15,7 @@ import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
@@ -89,6 +90,8 @@ public class GbDistributerGoodsController {
     private GbDistributerPayListService payListService;
     @Autowired
     private GbDepartmentDisGoodsService gbDepartmentDisGoodsService;
+    @Autowired
+    private GbPlatformOrderBridgeService gbPlatformOrderBridgeService;
 
 
     @RequestMapping(value = "/addAutoOrderGoods", method = RequestMethod.POST)
@@ -519,6 +522,7 @@ public class GbDistributerGoodsController {
 
     @ResponseBody
     @RequestMapping("/saveOrdersGbJjAndSaveGoodsSx")
+    @Transactional(rollbackFor = Exception.class)
     public R saveOrdersGbJjAndSaveGoodsSx(@RequestBody GbDepartmentOrdersEntity gbDepartmentOrders) {
 
         Integer toDepartmentId = gbDepartmentOrders.getGbDoToDepartmentId();
@@ -760,7 +764,10 @@ public class GbDistributerGoodsController {
 
         depOrdersService.update(gbDepartmentOrders);
 
-        return R.ok().put("data", ordersEntity);
+        NxDepartmentOrdersEntity savedNxOrder = nxDepartmentOrdersService.queryObject(nxDepartmentOrdersId);
+        gbPlatformOrderBridgeService.onNxOrderCreatedFromGb(gbDepartmentOrders, savedNxOrder);
+
+        return R.ok().put("data", savedNxOrder);
     }
 
 

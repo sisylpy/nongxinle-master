@@ -13,6 +13,8 @@ public interface NxPlatformOrderAssignDao {
 
     NxPlatformOrderAssignEntity queryByOrderId(Integer orderId);
 
+    NxPlatformOrderAssignEntity queryByGbDepartmentOrderId(Integer gbDepartmentOrderId);
+
     List<PlatformPendingGroupRow> queryPendingGroupedByDepartment(Map<String, Object> params);
 
     List<PlatformOrderDetailRow> queryPlatformOrderDetailLines(Map<String, Object> params);

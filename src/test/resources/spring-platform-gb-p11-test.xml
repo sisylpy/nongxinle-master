@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       default-lazy-init="true"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+    <import resource="classpath:spring-jdbc.xml"/>
+
+    <!-- 真实 Controller 联调：加载完整业务层 + GB/NX Controller（排除 WebSocket，CLI 无 Servlet 容器） -->
+    <context:component-scan base-package="com.nongxinle">
+        <context:exclude-filter type="assignable"
+                                expression="com.nongxinle.utils.WebSocketConfig"/>
+    </context:component-scan>
+</beans>

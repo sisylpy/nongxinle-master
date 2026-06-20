@@ -15,6 +15,7 @@ import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
 import com.nongxinle.utils.PageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.nongxinle.utils.R;
 
@@ -103,6 +104,8 @@ public class GbDepartmentOrdersController {
     private NxDistributerAliasService disAliasService;
     @Autowired
     private NxStandardService nxStandardService;
+    @Autowired
+    private GbPlatformOrderBridgeService gbPlatformOrderBridgeService;
 
 
     @RequestMapping(value = "/choiceGoodsForApply", method = RequestMethod.POST)
@@ -5172,6 +5175,7 @@ public class GbDepartmentOrdersController {
 
     @ResponseBody
     @RequestMapping("/saveOrdersGbJjAndSaveDepGoodsSx")
+    @Transactional(rollbackFor = Exception.class)
     public R saveOrdersGbJjAndSaveDepGoodsSx(@RequestBody GbDepartmentOrdersEntity gbDepartmentOrders) {
 
         // add purchaseGoods
@@ -5419,6 +5423,8 @@ public class GbDepartmentOrdersController {
 //        gbDepartmentOrdersEntity.setGbDistributerGoodsEntity(goodsEntity);
         Integer gbDoNxDepartmentOrderId = gbDepartmentOrders.getGbDoNxDepartmentOrderId();
         NxDepartmentOrdersEntity ordersEntity1 = nxDepartmentOrdersService.queryObject(nxDepartmentOrdersId);
+
+        gbPlatformOrderBridgeService.onNxOrderCreatedFromGb(gbDepartmentOrders, ordersEntity1);
 
         return R.ok().put("data", ordersEntity1);
 

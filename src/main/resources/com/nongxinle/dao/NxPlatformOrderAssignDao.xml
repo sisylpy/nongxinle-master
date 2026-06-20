@@ -11,6 +11,10 @@
         select * from nx_platform_order_assign where nx_poa_order_id = #{value}
     </select>
 
+    <select id="queryByGbDepartmentOrderId" resultType="com.nongxinle.entity.NxPlatformOrderAssignEntity">
+        select * from nx_platform_order_assign where nx_poa_gb_department_order_id = #{value}
+    </select>
+
     <select id="queryPendingGroupedByDepartment" resultType="com.nongxinle.dto.platform.PlatformPendingGroupRow">
         select
             poa.nx_poa_department_id as departmentId,
@@ -90,10 +94,18 @@
             useGeneratedKeys="true" keyProperty="nxPoaId">
         insert into nx_platform_order_assign
         (`nx_poa_market_id`, `nx_poa_order_id`, `nx_poa_department_id`, `nx_poa_nx_goods_id`,
-         `nx_poa_assign_status`, `nx_poa_assign_mode`)
+         `nx_poa_assign_status`, `nx_poa_assign_mode`,
+         `nx_poa_assign_source`, `nx_poa_source_type`,
+         `nx_poa_gb_department_id`, `nx_poa_gb_department_father_id`, `nx_poa_gb_department_order_id`,
+         `nx_poa_assigned_distributer_id`, `nx_poa_assigned_dis_goods_id`, `nx_poa_assigned_price`,
+         `nx_poa_assigned_at`, `nx_poa_assigned_by`)
         values
         (#{nxPoaMarketId}, #{nxPoaOrderId}, #{nxPoaDepartmentId}, #{nxPoaNxGoodsId},
-         #{nxPoaAssignStatus}, #{nxPoaAssignMode})
+         #{nxPoaAssignStatus}, #{nxPoaAssignMode},
+         #{nxPoaAssignSource}, #{nxPoaSourceType},
+         #{nxPoaGbDepartmentId}, #{nxPoaGbDepartmentFatherId}, #{nxPoaGbDepartmentOrderId},
+         #{nxPoaAssignedDistributerId}, #{nxPoaAssignedDisGoodsId}, #{nxPoaAssignedPrice},
+         #{nxPoaAssignedAt}, #{nxPoaAssignedBy})
     </insert>
 
     <update id="update" parameterType="com.nongxinle.entity.NxPlatformOrderAssignEntity">
