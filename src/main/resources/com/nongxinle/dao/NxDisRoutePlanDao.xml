@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisRoutePlanDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        select * from nx_dis_route_plan where nx_drp_id = #{value}
+    </select>
+
+    <select id="queryByDisRouteDateStatus" resultType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        select * from nx_dis_route_plan
+        where nx_drp_distributer_id = #{disId}
+          and nx_drp_status = #{status}
+          and (
+              nx_drp_route_date = #{routeDate}
+              or (nx_drp_route_date is null and nx_drp_plan_date = #{routeDate})
+          )
+        order by nx_drp_id desc
+        limit 1
+    </select>
+
+    <select id="queryByDisRouteDateBatchStatus" resultType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        select * from nx_dis_route_plan
+        where nx_drp_distributer_id = #{disId}
+          and nx_drp_status = #{status}
+          and nx_drp_dispatch_batch = #{dispatchBatch}
+          and (
+              nx_drp_route_date = #{routeDate}
+              or (nx_drp_route_date is null and nx_drp_plan_date = #{routeDate})
+          )
+        order by nx_drp_id desc
+        limit 1
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        select * from nx_dis_route_plan
+        <where>
+            <if test="disId != null">and nx_drp_distributer_id = #{disId}</if>
+            <if test="routeDate != null">
+                and (nx_drp_route_date = #{routeDate}
+                or (nx_drp_route_date is null and nx_drp_plan_date = #{routeDate}))
+            </if>
+            <if test="planDate != null">
+                and nx_drp_plan_date = #{planDate}
+            </if>
+            <if test="status != null">and nx_drp_status = #{status}</if>
+        </where>
+        order by nx_drp_id desc
+    </select>
+
+    <!-- Phase 1.5a：eligible live order（沙盘候选，do_status < 3）；simulate 后续实现使用 -->
+    <select id="queryEligibleLiveOrderSnapshots" resultType="com.nongxinle.dto.route.DisRouteOrderSnapshotDto">
+        select dor.nx_department_orders_id     as orderId,
+               ds.nx_department_id             as departmentId,
+               ds.nx_department_name           as departmentName,
+               ds.nx_department_lat            as lat,
+               ds.nx_department_lng            as lng,
+               ds.nx_department_address        as address,
+               dor.nx_DO_goods_name            as goodsName,
+               dor.nx_DO_quantity              as quantity,
+               dor.nx_DO_standard              as standard,
+               dor.nx_DO_remark                as remark
+        from nx_department_orders dor
+                 join nx_department ds on ds.nx_department_id = dor.nx_DO_department_father_id
+        where dor.nx_DO_distributer_id = #{disId}
+          and dor.nx_DO_status &lt; 3
+          and dor.nx_DO_gb_department_id = -1
+          and dor.nx_DO_nx_comm_restraunt_id = -1
+          and dor.nx_DO_apply_date = #{routeDate}
+        order by ds.nx_department_pinyin, dor.nx_department_orders_id
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisRoutePlanEntity"
+            useGeneratedKeys="true" keyProperty="nxDrpId">
+        insert into nx_dis_route_plan
+        (`nx_drp_distributer_id`, `nx_drp_plan_date`, `nx_drp_route_date`, `nx_drp_dispatch_date`,
+         `nx_drp_status`, `nx_drp_depot_lat`, `nx_drp_depot_lng`,
+         `nx_drp_optimizer_type`, `nx_drp_cost_provider_type`,
+         `nx_drp_driver_count`, `nx_drp_total_distance_m`, `nx_drp_total_duration_s`,
+         `nx_drp_created_by`, `nx_drp_created_at`)
+        values
+        (#{nxDrpDistributerId}, #{nxDrpPlanDate}, #{nxDrpRouteDate}, #{nxDrpDispatchDate},
+         #{nxDrpStatus}, #{nxDrpDepotLat}, #{nxDrpDepotLng},
+         #{nxDrpOptimizerType}, #{nxDrpCostProviderType},
+         #{nxDrpDriverCount}, #{nxDrpTotalDistanceM}, #{nxDrpTotalDurationS},
+         #{nxDrpCreatedBy}, #{nxDrpCreatedAt})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        update nx_dis_route_plan
+        <set>
+            <if test="nxDrpStatus != null">`nx_drp_status` = #{nxDrpStatus},</if>
+            <if test="nxDrpDispatchDate != null">`nx_drp_dispatch_date` = #{nxDrpDispatchDate},</if>
+            <if test="nxDrpDriverCount != null">`nx_drp_driver_count` = #{nxDrpDriverCount},</if>
+            <if test="nxDrpTotalDistanceM != null">`nx_drp_total_distance_m` = #{nxDrpTotalDistanceM},</if>
+            <if test="nxDrpTotalDurationS != null">`nx_drp_total_duration_s` = #{nxDrpTotalDurationS},</if>
+            <if test="nxDrpConfirmedBy != null">`nx_drp_confirmed_by` = #{nxDrpConfirmedBy},</if>
+            <if test="nxDrpConfirmedAt != null">`nx_drp_confirmed_at` = #{nxDrpConfirmedAt},</if>
+            <if test="nxDrpReadyBy != null">`nx_drp_ready_by` = #{nxDrpReadyBy},</if>
+            <if test="nxDrpReadyAt != null">`nx_drp_ready_at` = #{nxDrpReadyAt},</if>
+        </set>
+        where nx_drp_id = #{nxDrpId}
+    </update>
+
+    <update id="updateSchedule" parameterType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        update nx_dis_route_plan
+        set nx_drp_planned_start_at    = #{nxDrpPlannedStartAt},
+            nx_drp_planned_end_at      = #{nxDrpPlannedEndAt},
+            nx_drp_total_wait_minutes  = #{nxDrpTotalWaitMinutes},
+            nx_drp_total_late_minutes  = #{nxDrpTotalLateMinutes},
+            nx_drp_schedule_status     = #{nxDrpScheduleStatus}
+        where nx_drp_id = #{nxDrpId}
+    </update>
+
+    <update id="updateFeasibility" parameterType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        update nx_dis_route_plan
+        set nx_drp_feasibility_status = #{nxDrpFeasibilityStatus}
+        where nx_drp_id = #{nxDrpId}
+    </update>
+
+    <update id="updateBatch" parameterType="com.nongxinle.entity.NxDisRoutePlanEntity">
+        update nx_dis_route_plan
+        set nx_drp_dispatch_batch    = #{nxDrpDispatchBatch},
+            nx_drp_batch_start_at    = #{nxDrpBatchStartAt},
+            nx_drp_batch_end_at      = #{nxDrpBatchEndAt},
+            nx_drp_default_depart_at = #{nxDrpDefaultDepartAt}
+        where nx_drp_id = #{nxDrpId}
+    </update>
+
+    <update id="cancelDraftByDisRouteDate">
+        update nx_dis_route_plan
+        set nx_drp_status = 'CANCELLED'
+        where nx_drp_distributer_id = #{disId}
+          and nx_drp_status in ('DRAFT', 'SIMULATED')
+          and (
+              nx_drp_route_date = #{routeDate}
+              or (nx_drp_route_date is null and nx_drp_plan_date = #{routeDate})
+          )
+    </update>
+
+    <update id="cancelConfirmedByDisRouteDate">
+        update nx_dis_route_plan
+        set nx_drp_status = 'CANCELLED'
+        where nx_drp_distributer_id = #{disId}
+          and nx_drp_status in ('CONFIRMED', 'ASSIGNED', 'READY')
+          and (
+              nx_drp_route_date = #{routeDate}
+              or (nx_drp_route_date is null and nx_drp_plan_date = #{routeDate})
+          )
+    </update>
+</mapper>

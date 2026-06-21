@@ -29,6 +29,11 @@ import com.github.wxpay.sdk.WXPay;
 import com.nongxinle.entity.DaDaResponse;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.dto.platform.BillCreationPartition;
+import com.nongxinle.dto.route.BillPrintedOrderRef;
+import com.nongxinle.dao.NxDisShipmentTaskItemDao;
+import com.nongxinle.service.platform.GbBillCreationGuardService;
+import com.nongxinle.service.platform.GbBillPaymentRecalcService;
 import com.nongxinle.utils.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
@@ -133,6 +138,14 @@ public class NxDepartmentBillController {
     private NxDistributerGoodsShelfStockReduceService nxDistributerGoodsShelfStockReduceService;
     @Autowired
     private NxOcrTaskService nxOcrTaskService;
+    @Autowired
+    private GbBillCreationGuardService gbBillCreationGuardService;
+    @Autowired
+    private GbBillPaymentRecalcService gbBillPaymentRecalcService;
+    @Autowired
+    private DisShipmentTaskService disShipmentTaskService;
+    @Autowired
+    private NxDisShipmentTaskItemDao nxDisShipmentTaskItemDao;
 
     private static final Logger logger = LoggerFactory.getLogger(NxDepartmentBillController.class);
 
@@ -460,6 +473,8 @@ public class NxDepartmentBillController {
 
         }
 
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
+
         Integer nxDbGbDisId = nxDepartmentBill.getNxDbGbDisId();
         Map<String, Object> map = new HashMap<>();
         map.put("type", getGbDepartmentTypeAppSupplier());
@@ -667,13 +682,23 @@ public class NxDepartmentBillController {
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
         System.out.println("nxoroossoss" + ordersEntities.size());
 
+        BillCreationPartition billPartition = gbBillCreationGuardService.partitionNxOrdersForLegacyBill(ordersEntities);
+        if (billPartition.hasErrors()) {
+            throw new IllegalStateException(String.join("; ", billPartition.getErrors()));
+        }
+        Set<Integer> platformNxOrderIds = toPlatformNxOrderIds(billPartition);
+        logBillPartitionWarnings("nxDisWaitingGbReceive", billPartition);
+
         int totalAuto1 = 0;
         for (NxDepartmentOrdersEntity orders : ordersEntities) {
+            boolean platformAttached = platformNxOrderIds.contains(orders.getNxDepartmentOrdersId());
             //0 subtotal
-            billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
+            if (!platformAttached) {
+                billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
+                orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
+            }
             orders.setNxDoStatus(3);
             orders.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishPay());
-            orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
             nxDepartmentOrdersService.update(orders);
 
             Integer nxDoPurchaseGoodsId = orders.getNxDoPurchaseGoodsId();
@@ -783,7 +808,9 @@ public class NxDepartmentBillController {
             gbDepartmentOrdersEntity.setGbDoSubtotal(orders.getNxDoSubtotal());
             gbDepartmentOrdersEntity.setGbDoBuyStatus(getGbOrderBuyStatusHasFinishPurGoods());
             gbDepartmentOrdersEntity.setGbDoStatus(getGbOrderStatusHasFinished());
-            gbDepartmentOrdersEntity.setGbDoBillId(gbDepartmentBillEntity.getGbDepartmentBillId());
+            if (!platformAttached) {
+                gbDepartmentOrdersEntity.setGbDoBillId(gbDepartmentBillEntity.getGbDepartmentBillId());
+            }
             gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
 
             Integer gbDoPurchaseGoodsId = gbDepartmentOrdersEntity.getGbDoPurchaseGoodsId();
@@ -837,14 +864,9 @@ public class NxDepartmentBillController {
         nxDepartmentBill.setNxDbTotal(billTotal.toString());
         nxDepartmentBillService.update(nxDepartmentBill);
 
-//        System.out.println("autotototo0011111111" + totalAuto);
-//        if (totalAuto == ordersEntities.size()) {
-//            gbDepartmentBillEntity.setGbDbSetAutoGoods(1);
-//        } else {
-//            gbDepartmentBillEntity.setGbDbSetAutoGoods(0);
-//        }
-//        gbDepartmentBillService.update(gbDepartmentBillEntity);
+        recalcPlatformCashBills(billPartition);
 
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
 
     }
 
@@ -868,13 +890,23 @@ public class NxDepartmentBillController {
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(map);
         System.out.println("nxoroossoss" + ordersEntities.size());
 
+        BillCreationPartition billPartition = gbBillCreationGuardService.partitionNxOrdersForLegacyBill(ordersEntities);
+        if (billPartition.hasErrors()) {
+            throw new IllegalStateException(String.join("; ", billPartition.getErrors()));
+        }
+        Set<Integer> platformNxOrderIds = toPlatformNxOrderIds(billPartition);
+        logBillPartitionWarnings("nxDisWaitingGbReceiveAndPrint", billPartition);
+
         int totalAuto = 0;
         for (NxDepartmentOrdersEntity orders : ordersEntities) {
+            boolean platformAttached = platformNxOrderIds.contains(orders.getNxDepartmentOrdersId());
             //0 subtotal
-            billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
+            if (!platformAttached) {
+                billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
+                orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
+            }
             orders.setNxDoStatus(3);
             orders.setNxDoPurchaseStatus(getNxDisPurchaseGoodsFinishPay());
-            orders.setNxDoBillId(nxDepartmentBill.getNxDepartmentBillId());
             nxDepartmentOrdersService.update(orders);
 
             nxDepartmentOrdersService.moveOrderToHistory(orders);
@@ -969,7 +1001,9 @@ public class NxDepartmentBillController {
             gbDepartmentOrdersEntity.setGbDoSubtotal(orders.getNxDoSubtotal());
             gbDepartmentOrdersEntity.setGbDoBuyStatus(3);
             gbDepartmentOrdersEntity.setGbDoStatus(3);
-            gbDepartmentOrdersEntity.setGbDoBillId(gbDepartmentBillEntity.getGbDepartmentBillId());
+            if (!platformAttached) {
+                gbDepartmentOrdersEntity.setGbDoBillId(gbDepartmentBillEntity.getGbDepartmentBillId());
+            }
             gbDepartmentOrdersService.update(gbDepartmentOrdersEntity);
 
             Integer gbDoDisGoodsId = gbDepartmentOrdersEntity.getGbDoDisGoodsId();
@@ -1016,6 +1050,10 @@ public class NxDepartmentBillController {
             gbDepartmentBillEntity.setGbDbSetAutoGoods(0);
         }
         gbDepartmentBillService.update(gbDepartmentBillEntity);
+
+        recalcPlatformCashBills(billPartition);
+
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
 
         printFeiEBillDataGb(nxDepartmentBill);
 
@@ -1706,6 +1744,8 @@ public class NxDepartmentBillController {
 
         nxDistributerService.update(nxDistributerEntity);
 
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
+
     }
 
     private void updatePhoneRetailBillData(NxDepartmentBillEntity nxDepartmentBill) {
@@ -1797,7 +1837,7 @@ public class NxDepartmentBillController {
 
         nxDistributerService.update(nxDistributerEntity);
 
-
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
 
     }
     /**
@@ -2129,6 +2169,7 @@ public class NxDepartmentBillController {
         Map<String, Object> nxMap = new HashMap<>();
         nxMap.put("gbDepFatherId", gbDepFatherId);
         nxMap.put("status", 3);
+        nxMap.put("orderDisId", nxDisId);
         if (!gbDepFatherId.equals(gbDepId)) {
             nxMap.put("gbDepId", gbDepId);
         }
@@ -2168,9 +2209,19 @@ public class NxDepartmentBillController {
         BigDecimal billProfit = new BigDecimal(0);
 
         List<NxDepartmentOrdersEntity> ordersEntities = nxDepartmentOrdersService.queryDisOrdersByParams(nxMap);
+        BillCreationPartition billPartition = gbBillCreationGuardService.partitionNxOrdersForLegacyBill(ordersEntities);
+        if (billPartition.hasErrors()) {
+            return R.error(-1, String.join("; ", billPartition.getErrors()));
+        }
+        Set<Integer> platformNxOrderIds = toPlatformNxOrderIds(billPartition);
+        logBillPartitionWarnings("saveAccountBillPrinterGb", billPartition);
 
         if (ordersEntities.size() > 0) {
             for (NxDepartmentOrdersEntity orders : ordersEntities) {
+                boolean platformAttached = platformNxOrderIds.contains(orders.getNxDepartmentOrdersId());
+                if (platformAttached) {
+                    continue;
+                }
                 //0 subtotal
                 billTotal = billTotal.add(new BigDecimal(orders.getNxDoSubtotal()));
 
@@ -2223,6 +2274,7 @@ public class NxDepartmentBillController {
         gbDepartmentBillEntity.setGbDbPayTotal(nxDepartmentBill.getNxDbTotal());
         gbDepartmentBillEntity.setGbDbTotal(billTotal.toString());
         gbDepartmentBillService.update(gbDepartmentBillEntity);
+        recalcPlatformCashBills(billPartition);
         return R.ok();
     }
 
@@ -2459,6 +2511,7 @@ public class NxDepartmentBillController {
 
         nxDistributerService.update(nxDistributerEntity);
 
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
 
         return R.ok();
     }
@@ -2635,6 +2688,8 @@ public class NxDepartmentBillController {
         nxDepartmentBillService.update(nxDepartmentBill);
 
 
+
+        hookShipmentTaskOnBillPrinted(nxDepartmentBill.getNxDepartmentBillId(), ordersEntities);
 
         // ========== 自助打印机逻辑（新增） ==========
         // 1. 获取打印机设备信息并计算打印费用
@@ -3208,6 +3263,8 @@ public class NxDepartmentBillController {
     @ResponseBody
     public R deleteBillAgain(@PathVariable Integer billId) {
 
+        hookShipmentTaskOnBillReverted(billId);
+
         //order
         Map<String, Object> map = new HashMap<>();
         map.put("billId", billId);
@@ -3230,6 +3287,8 @@ public class NxDepartmentBillController {
     @RequestMapping(value = "/deleteBillAgainGb/{billId}")
     @ResponseBody
     public R deleteBillAgainGb(@PathVariable Integer billId) {
+
+        hookShipmentTaskOnBillReverted(billId);
 
         //order
         Map<String, Object> map = new HashMap<>();
@@ -3282,6 +3341,8 @@ public class NxDepartmentBillController {
         if (ordersEntities1.size() > 0) {
             return R.error(-1, "删除账单的订单将和现有订单混在一起");
         } else {
+            hookShipmentTaskOnBillReverted(billId);
+
             //order
             Map<String, Object> map = new HashMap<>();
             map.put("billId", billId);
@@ -3335,6 +3396,8 @@ public class NxDepartmentBillController {
         if (ordersEntities1.size() > 0) {
             return R.error(-1, "删除账单的订单将和现有订单混在一起");
         } else {
+            hookShipmentTaskOnBillReverted(billId);
+
             //order
             Map<String, Object> map = new HashMap<>();
             map.put("billId", billId);
@@ -4178,6 +4241,19 @@ public class NxDepartmentBillController {
 
     public GbDepartmentBillEntity savePhoneGbBillByNxBIll(@RequestBody NxDepartmentBillEntity nxDepartmentBill, Integer integer) {
 
+        Map<String, Object> nxMap = buildNxGbPendingOrderMap(nxDepartmentBill);
+        List<NxDepartmentOrdersEntity> pendingOrders = nxDepartmentOrdersService.queryDisOrdersByParams(nxMap);
+        BillCreationPartition billPartition = gbBillCreationGuardService.partitionNxOrdersForLegacyBill(pendingOrders);
+        if (billPartition.hasErrors()) {
+            throw new IllegalStateException(String.join("; ", billPartition.getErrors()));
+        }
+        if (billPartition.getLegacyCreatableLines().isEmpty() && billPartition.getSinglePlatformCashBillId() != null) {
+            GbDepartmentBillEntity existingBill = gbDepartmentBillService.queryObject(billPartition.getSinglePlatformCashBillId());
+            nxDepartmentBill.setNxDbGbDepartmentBillId(existingBill.getGbDepartmentBillId());
+            nxDepartmentBillService.update(nxDepartmentBill);
+            logBillPartitionWarnings("savePhoneGbBillByNxBIll", billPartition);
+            return existingBill;
+        }
 
         GbDepartmentBillEntity gbDepartmentBill = new GbDepartmentBillEntity();
         gbDepartmentBill.setGbDbIssueNxDisId(nxDepartmentBill.getNxDbDisId());
@@ -4197,6 +4273,7 @@ public class NxDepartmentBillController {
         gbDepartmentBill.setGbDbWeek(getWeekOfYear(0).toString());
         gbDepartmentBill.setGbDbDay(getWeek(0));
         gbDepartmentBill.setGbDbTradeNo(nxDepartmentBill.getNxDbTradeNo());
+        gbDepartmentBill.setGbDbBillSource(GbBillPlatformConstants.BILL_SOURCE_LEGACY);
         Map<String, Object> mapg = new HashMap<>();
         mapg.put("nxDisId", nxDepartmentBill.getNxDbDisId());
         mapg.put("gbDisId", nxDepartmentBill.getNxDbGbDisId());
@@ -4326,6 +4403,87 @@ public class NxDepartmentBillController {
         return R.ok();
     }
 
+    private Map<String, Object> buildNxGbPendingOrderMap(NxDepartmentBillEntity nxDepartmentBill) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("gbDepFatherId", nxDepartmentBill.getNxDbGbDepFatherId());
+        if (nxDepartmentBill.getNxDbGbDepFatherId() != null
+                && nxDepartmentBill.getNxDbGbDepId() != null
+                && !nxDepartmentBill.getNxDbGbDepFatherId().equals(nxDepartmentBill.getNxDbGbDepId())) {
+            map.put("gbDepId", nxDepartmentBill.getNxDbGbDepId());
+        }
+        map.put("status", 3);
+        map.put("orderDisId", nxDepartmentBill.getNxDbDisId());
+        return map;
+    }
+
+    private Set<Integer> toPlatformNxOrderIds(BillCreationPartition partition) {
+        Set<Integer> ids = new HashSet<>();
+        for (NxDepartmentOrdersEntity line : partition.getPlatformCashLines()) {
+            ids.add(line.getNxDepartmentOrdersId());
+        }
+        return ids;
+    }
+
+    private void logBillPartitionWarnings(String source, BillCreationPartition partition) {
+        if (partition.getWarnings().isEmpty()) {
+            return;
+        }
+        logger.warn("[GbBillGuard] {} {}", source, String.join("; ", partition.getWarnings()));
+    }
+
+    private void recalcPlatformCashBills(BillCreationPartition partition) {
+        if (partition == null || partition.getPlatformCashBillIds().isEmpty()) {
+            return;
+        }
+        for (Integer billId : partition.getPlatformCashBillIds()) {
+            gbBillPaymentRecalcService.recalcBillPaymentState(billId);
+        }
+    }
+
+    /**
+     * bill 打印且 order 已 migrate 后，回填 shipment_task_item.billId / historyOrderId。
+     * 无 shipment_task_item 的订单跳过并记日志。
+     */
+    private void hookShipmentTaskOnBillPrinted(Integer billId, List<NxDepartmentOrdersEntity> movedOrders) {
+        if (billId == null || movedOrders == null || movedOrders.isEmpty()) {
+            return;
+        }
+        List<BillPrintedOrderRef> refs = new ArrayList<>();
+        int skippedNoItem = 0;
+        for (NxDepartmentOrdersEntity orders : movedOrders) {
+            if (orders == null || orders.getNxDepartmentOrdersId() == null) {
+                continue;
+            }
+            Integer liveOrderId = orders.getNxDepartmentOrdersId();
+            if (nxDisShipmentTaskItemDao.queryByLiveOrderId(liveOrderId) == null) {
+                skippedNoItem++;
+                continue;
+            }
+            BillPrintedOrderRef ref = new BillPrintedOrderRef();
+            ref.setLiveOrderId(liveOrderId);
+            ref.setHistoryOrderId(liveOrderId);
+            ref.setDepFatherId(orders.getNxDoDepartmentFatherId());
+            ref.setDisId(orders.getNxDoDistributerId());
+            refs.add(ref);
+        }
+        if (skippedNoItem > 0) {
+            logger.info("[shipment_task] onBillPrinted billId={}: {} orders skipped (no shipment_task_item)",
+                    billId, skippedNoItem);
+        }
+        if (!refs.isEmpty()) {
+            disShipmentTaskService.onBillPrinted(billId, refs);
+            logger.info("[shipment_task] onBillPrinted billId={}: {} items hooked", billId, refs.size());
+        }
+    }
+
+    /** bill 删除/回退前调用：清 item bill 引用，task 从 READY_TO_GO 回 ASSIGNED。 */
+    private void hookShipmentTaskOnBillReverted(Integer billId) {
+        if (billId == null) {
+            return;
+        }
+        disShipmentTaskService.onBillReverted(billId);
+        logger.info("[shipment_task] onBillReverted billId={}", billId);
+    }
 
 }
 

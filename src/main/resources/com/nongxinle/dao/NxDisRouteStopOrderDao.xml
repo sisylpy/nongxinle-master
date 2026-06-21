@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisRouteStopOrderDao">
+
+    <select id="queryByStopId" resultType="com.nongxinle.entity.NxDisRouteStopOrderEntity">
+        select * from nx_dis_route_stop_order
+        where nx_drso_stop_id = #{value}
+        order by nx_drso_id
+    </select>
+
+    <select id="queryByStopIds" resultType="com.nongxinle.entity.NxDisRouteStopOrderEntity">
+        select * from nx_dis_route_stop_order
+        where nx_drso_stop_id in
+        <foreach collection="stopIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        order by nx_drso_stop_id, nx_drso_id
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisRouteStopOrderEntity"
+            useGeneratedKeys="true" keyProperty="nxDrsoId">
+        insert into nx_dis_route_stop_order
+        (`nx_drso_stop_id`, `nx_drso_order_id`, `nx_drso_department_id`,
+         `nx_drso_goods_name`, `nx_drso_quantity`, `nx_drso_standard`, `nx_drso_remark`)
+        values
+        (#{nxDrsoStopId}, #{nxDrsoOrderId}, #{nxDrsoDepartmentId},
+         #{nxDrsoGoodsName}, #{nxDrsoQuantity}, #{nxDrsoStandard}, #{nxDrsoRemark})
+    </insert>
+
+    <delete id="deleteByStopIds">
+        delete from nx_dis_route_stop_order
+        where nx_drso_stop_id in
+        <foreach collection="stopIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

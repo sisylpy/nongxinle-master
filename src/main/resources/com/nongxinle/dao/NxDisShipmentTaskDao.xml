@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisShipmentTaskDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        select * from nx_dis_shipment_task where nx_dst_id = #{value}
+    </select>
+
+    <select id="queryByOpenKey" resultType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        select * from nx_dis_shipment_task where nx_dst_open_key = #{openKey} limit 1
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        select * from nx_dis_shipment_task
+        <where>
+            <if test="disId != null">and nx_dst_distributer_id = #{disId}</if>
+            <if test="routeDate != null">and nx_dst_route_date = #{routeDate}</if>
+            <if test="planId != null">and nx_dst_plan_id = #{planId}</if>
+            <if test="status != null">and nx_dst_status = #{status}</if>
+            <if test="assignedDriverUserId != null">
+                and nx_dst_assigned_driver_user_id = #{assignedDriverUserId}
+            </if>
+            <if test="openOnly != null and openOnly == true">
+                and nx_dst_open_key is not null
+            </if>
+        </where>
+        order by nx_dst_priority_level desc, nx_dst_id
+    </select>
+
+    <select id="queryByPlanId" resultType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        select * from nx_dis_shipment_task
+        where nx_dst_plan_id = #{planId}
+        order by nx_dst_priority_level desc, nx_dst_id
+    </select>
+
+    <select id="queryByDisRouteDateStatus" resultType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        select * from nx_dis_shipment_task
+        where nx_dst_distributer_id = #{disId}
+          and nx_dst_route_date = #{routeDate}
+        <if test="status != null">and nx_dst_status = #{status}</if>
+        <if test="assignedDriverUserId != null">
+            and nx_dst_assigned_driver_user_id = #{assignedDriverUserId}
+        </if>
+        order by nx_dst_priority_level desc, nx_dst_id
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisShipmentTaskEntity"
+            useGeneratedKeys="true" keyProperty="nxDstId">
+        insert into nx_dis_shipment_task
+        (`nx_dst_distributer_id`, `nx_dst_route_date`, `nx_dst_dep_father_id`, `nx_dst_dep_name`,
+         `nx_dst_lat`, `nx_dst_lng`, `nx_dst_address`, `nx_dst_status`,
+         `nx_dst_suggested_driver_user_id`, `nx_dst_assigned_driver_user_id`,
+         `nx_dst_manual_locked`, `nx_dst_manual_stop_seq`, `nx_dst_priority_level`,
+         `nx_dst_assign_confirmed_at`, `nx_dst_operator_user_id`,
+         `nx_dst_assign_reason`, `nx_dst_adjust_reason`, `nx_dst_plan_id`, `nx_dst_open_key`)
+        values
+        (#{nxDstDistributerId}, #{nxDstRouteDate}, #{nxDstDepFatherId}, #{nxDstDepName},
+         #{nxDstLat}, #{nxDstLng}, #{nxDstAddress}, #{nxDstStatus},
+         #{nxDstSuggestedDriverUserId}, #{nxDstAssignedDriverUserId},
+         #{nxDstManualLocked}, #{nxDstManualStopSeq}, #{nxDstPriorityLevel},
+         #{nxDstAssignConfirmedAt}, #{nxDstOperatorUserId},
+         #{nxDstAssignReason}, #{nxDstAdjustReason}, #{nxDstPlanId}, #{nxDstOpenKey})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        update nx_dis_shipment_task
+        <set>
+            <if test="nxDstDepName != null">`nx_dst_dep_name` = #{nxDstDepName},</if>
+            <if test="nxDstLat != null">`nx_dst_lat` = #{nxDstLat},</if>
+            <if test="nxDstLng != null">`nx_dst_lng` = #{nxDstLng},</if>
+            <if test="nxDstAddress != null">`nx_dst_address` = #{nxDstAddress},</if>
+            <if test="nxDstStatus != null">`nx_dst_status` = #{nxDstStatus},</if>
+            <if test="nxDstSuggestedDriverUserId != null">`nx_dst_suggested_driver_user_id` = #{nxDstSuggestedDriverUserId},</if>
+            <if test="nxDstAssignedDriverUserId != null">`nx_dst_assigned_driver_user_id` = #{nxDstAssignedDriverUserId},</if>
+            <if test="nxDstManualLocked != null">`nx_dst_manual_locked` = #{nxDstManualLocked},</if>
+            <if test="nxDstManualStopSeq != null">`nx_dst_manual_stop_seq` = #{nxDstManualStopSeq},</if>
+            <if test="nxDstPriorityLevel != null">`nx_dst_priority_level` = #{nxDstPriorityLevel},</if>
+            <if test="nxDstCustomerTier != null">`nx_dst_customer_tier` = #{nxDstCustomerTier},</if>
+            <if test="nxDstPriorityWeight != null">`nx_dst_priority_weight` = #{nxDstPriorityWeight},</if>
+            <if test="nxDstOrderCount != null">`nx_dst_order_count` = #{nxDstOrderCount},</if>
+            <if test="nxDstItemCount != null">`nx_dst_item_count` = #{nxDstItemCount},</if>
+            <if test="nxDstTotalQuantity != null">`nx_dst_total_quantity` = #{nxDstTotalQuantity},</if>
+            <if test="nxDstEarliestDeliveryTimeS != null">`nx_dst_earliest_delivery_time_s` = #{nxDstEarliestDeliveryTimeS},</if>
+            <if test="nxDstLatestDeliveryTimeS != null">`nx_dst_latest_delivery_time_s` = #{nxDstLatestDeliveryTimeS},</if>
+            <if test="nxDstServiceMinutes != null">`nx_dst_service_minutes` = #{nxDstServiceMinutes},</if>
+            <if test="nxDstTimeWindowOverrideFlag != null">`nx_dst_time_window_override_flag` = #{nxDstTimeWindowOverrideFlag},</if>
+            <if test="nxDstTimeWindowAdjustReason != null">`nx_dst_time_window_adjust_reason` = #{nxDstTimeWindowAdjustReason},</if>
+            <if test="nxDstAssignConfirmedAt != null">`nx_dst_assign_confirmed_at` = #{nxDstAssignConfirmedAt},</if>
+            <if test="nxDstOperatorUserId != null">`nx_dst_operator_user_id` = #{nxDstOperatorUserId},</if>
+            <if test="nxDstAssignReason != null">`nx_dst_assign_reason` = #{nxDstAssignReason},</if>
+            <if test="nxDstAdjustReason != null">`nx_dst_adjust_reason` = #{nxDstAdjustReason},</if>
+            <if test="nxDstPlanId != null">`nx_dst_plan_id` = #{nxDstPlanId},</if>
+            <if test="clearOpenKey != null and clearOpenKey == true">`nx_dst_open_key` = NULL,</if>
+            <if test="nxDstOpenKey != null">`nx_dst_open_key` = #{nxDstOpenKey},</if>
+        </set>
+        where nx_dst_id = #{nxDstId}
+    </update>
+
+    <update id="clearOpenKey">
+        update nx_dis_shipment_task set nx_dst_open_key = null where nx_dst_id = #{taskId}
+    </update>
+</mapper>

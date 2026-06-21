@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisShipmentTaskItemDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDisShipmentTaskItemEntity">
+        select * from nx_dis_shipment_task_item where nx_dsti_id = #{value}
+    </select>
+
+    <select id="queryByLiveOrderId" resultType="com.nongxinle.entity.NxDisShipmentTaskItemEntity">
+        select * from nx_dis_shipment_task_item where nx_dsti_live_order_id = #{liveOrderId} limit 1
+    </select>
+
+    <select id="queryByTaskId" resultType="com.nongxinle.entity.NxDisShipmentTaskItemEntity">
+        select * from nx_dis_shipment_task_item
+        where nx_dsti_task_id = #{taskId}
+        order by nx_dsti_id
+    </select>
+
+    <select id="queryByTaskIds" resultType="com.nongxinle.entity.NxDisShipmentTaskItemEntity">
+        select * from nx_dis_shipment_task_item
+        where nx_dsti_task_id in
+        <foreach collection="taskIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        order by nx_dsti_task_id, nx_dsti_id
+    </select>
+
+    <select id="queryByBillId" resultType="com.nongxinle.entity.NxDisShipmentTaskItemEntity">
+        select * from nx_dis_shipment_task_item where nx_dsti_bill_id = #{billId}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisShipmentTaskItemEntity"
+            useGeneratedKeys="true" keyProperty="nxDstiId">
+        insert into nx_dis_shipment_task_item
+        (`nx_dsti_task_id`, `nx_dsti_live_order_id`, `nx_dsti_history_order_id`, `nx_dsti_bill_id`,
+         `nx_dsti_goods_name`, `nx_dsti_quantity`, `nx_dsti_standard`, `nx_dsti_remark`, `nx_dsti_item_status`)
+        values
+        (#{nxDstiTaskId}, #{nxDstiLiveOrderId}, #{nxDstiHistoryOrderId}, #{nxDstiBillId},
+         #{nxDstiGoodsName}, #{nxDstiQuantity}, #{nxDstiStandard}, #{nxDstiRemark}, #{nxDstiItemStatus})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDisShipmentTaskItemEntity">
+        update nx_dis_shipment_task_item
+        <set>
+            <if test="nxDstiTaskId != null">`nx_dsti_task_id` = #{nxDstiTaskId},</if>
+            <if test="nxDstiHistoryOrderId != null">`nx_dsti_history_order_id` = #{nxDstiHistoryOrderId},</if>
+            <if test="clearBillId != null and clearBillId == true">`nx_dsti_bill_id` = NULL,</if>
+            <if test="nxDstiBillId != null and (clearBillId == null or clearBillId == false)">`nx_dsti_bill_id` = #{nxDstiBillId},</if>
+            <if test="clearHistoryOrderId != null and clearHistoryOrderId == true">`nx_dsti_history_order_id` = NULL,</if>
+            <if test="nxDstiHistoryOrderId != null and (clearHistoryOrderId == null or clearHistoryOrderId == false)">`nx_dsti_history_order_id` = #{nxDstiHistoryOrderId},</if>
+            <if test="nxDstiGoodsName != null">`nx_dsti_goods_name` = #{nxDstiGoodsName},</if>
+            <if test="nxDstiQuantity != null">`nx_dsti_quantity` = #{nxDstiQuantity},</if>
+            <if test="nxDstiStandard != null">`nx_dsti_standard` = #{nxDstiStandard},</if>
+            <if test="nxDstiRemark != null">`nx_dsti_remark` = #{nxDstiRemark},</if>
+            <if test="nxDstiItemStatus != null">`nx_dsti_item_status` = #{nxDstiItemStatus},</if>
+        </set>
+        where nx_dsti_id = #{nxDstiId}
+    </update>
+</mapper>

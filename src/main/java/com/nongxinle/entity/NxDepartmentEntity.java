@@ -95,6 +95,12 @@ public class NxDepartmentEntity implements Serializable, Comparable {
 	private Integer nxDepartmentEarliestDeliveryTime;
 	private Integer nxDepartmentLatestDeliveryTime;
 	private Integer nxDepartmentUnloadDuration;
+	/** Phase 2b-5：调度分类 VIP|NORMAL|SMALL|NEW */
+	private String nxDepartmentDispatchCustomerTier;
+	/** Phase 2b-5：调度优先级权重 */
+	private Integer nxDepartmentDispatchPriorityWeight;
+	/** Phase 2b-5：调度备注 */
+	private String nxDepartmentDispatchRemark;
 	private Integer nxDepartmentGbDistributerId;
 	/**
 	 *  部门积分

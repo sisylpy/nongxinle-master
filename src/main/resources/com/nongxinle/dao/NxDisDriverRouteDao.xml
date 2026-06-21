@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisDriverRouteDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        select * from nx_dis_driver_route where nx_ddr_id = #{value}
+    </select>
+
+    <select id="queryByPlanId" resultType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        select dr.*,
+               du.nx_DIU_wx_nick_name as driverName,
+               du.nx_DIU_wx_phone     as driverPhone
+        from nx_dis_driver_route dr
+                 left join nx_distributer_user du on du.nx_distributer_user_id = dr.nx_ddr_driver_user_id
+        where dr.nx_ddr_plan_id = #{value}
+        order by dr.nx_ddr_route_seq
+    </select>
+
+    <select id="queryByPlanAndDriver" resultType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        select dr.*,
+               du.nx_DIU_wx_nick_name as driverName,
+               du.nx_DIU_wx_phone     as driverPhone
+        from nx_dis_driver_route dr
+                 left join nx_distributer_user du on du.nx_distributer_user_id = dr.nx_ddr_driver_user_id
+        where dr.nx_ddr_plan_id = #{planId}
+          and dr.nx_ddr_driver_user_id = #{driverUserId}
+        limit 1
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisDriverRouteEntity"
+            useGeneratedKeys="true" keyProperty="nxDdrId">
+        insert into nx_dis_driver_route
+        (`nx_ddr_plan_id`, `nx_ddr_driver_user_id`, `nx_ddr_route_seq`,
+         `nx_ddr_total_distance_m`, `nx_ddr_total_duration_s`, `nx_ddr_stop_count`)
+        values
+        (#{nxDdrPlanId}, #{nxDdrDriverUserId}, #{nxDdrRouteSeq},
+         #{nxDdrTotalDistanceM}, #{nxDdrTotalDurationS}, #{nxDdrStopCount})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        update nx_dis_driver_route
+        <set>
+            <if test="nxDdrStopCount != null">`nx_ddr_stop_count` = #{nxDdrStopCount},</if>
+            <if test="nxDdrTotalDistanceM != null">`nx_ddr_total_distance_m` = #{nxDdrTotalDistanceM},</if>
+            <if test="nxDdrTotalDurationS != null">`nx_ddr_total_duration_s` = #{nxDdrTotalDurationS},</if>
+        </set>
+        where nx_ddr_id = #{nxDdrId}
+    </update>
+
+    <update id="updateSchedule" parameterType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        update nx_dis_driver_route
+        set nx_ddr_planned_depart_at       = #{nxDdrPlannedDepartAt},
+            nx_ddr_planned_finish_at       = #{nxDdrPlannedFinishAt},
+            nx_ddr_total_service_minutes   = #{nxDdrTotalServiceMinutes},
+            nx_ddr_total_wait_minutes      = #{nxDdrTotalWaitMinutes},
+            nx_ddr_total_late_minutes      = #{nxDdrTotalLateMinutes},
+            nx_ddr_schedule_status         = #{nxDdrScheduleStatus}
+        where nx_ddr_id = #{nxDdrId}
+    </update>
+
+    <update id="updateFeasibility" parameterType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        update nx_dis_driver_route
+        set nx_ddr_dispatch_eligible   = #{nxDdrDispatchEligible},
+            nx_ddr_ineligible_reason   = #{nxDdrIneligibleReason},
+            nx_ddr_feasibility_status  = #{nxDdrFeasibilityStatus}
+        where nx_ddr_id = #{nxDdrId}
+    </update>
+
+    <delete id="deleteByPlanId">
+        delete from nx_dis_driver_route where nx_ddr_plan_id = #{value}
+    </delete>
+</mapper>

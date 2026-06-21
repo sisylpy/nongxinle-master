@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisRouteStopDao">
+
+    <select id="queryByDriverRouteId" resultType="com.nongxinle.entity.NxDisRouteStopEntity">
+        select * from nx_dis_route_stop
+        where nx_drs_driver_route_id = #{value}
+        order by nx_drs_stop_seq
+    </select>
+
+    <select id="queryByDriverRouteIds" resultType="com.nongxinle.entity.NxDisRouteStopEntity">
+        select * from nx_dis_route_stop
+        where nx_drs_driver_route_id in
+        <foreach collection="driverRouteIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        order by nx_drs_driver_route_id, nx_drs_stop_seq
+    </select>
+
+    <select id="queryByShipmentTaskId" resultType="com.nongxinle.entity.NxDisRouteStopEntity">
+        select * from nx_dis_route_stop
+        where nx_drs_shipment_task_id = #{shipmentTaskId}
+        limit 1
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisRouteStopEntity"
+            useGeneratedKeys="true" keyProperty="nxDrsId">
+        insert into nx_dis_route_stop
+        (`nx_drs_driver_route_id`, `nx_drs_shipment_task_id`, `nx_drs_stop_seq`, `nx_drs_department_id`,
+         `nx_drs_department_name`, `nx_drs_lat`, `nx_drs_lng`, `nx_drs_address`,
+         `nx_drs_order_count`, `nx_drs_leg_distance_m`, `nx_drs_leg_duration_s`, `nx_drs_stop_status`)
+        values
+        (#{nxDrsDriverRouteId}, #{nxDrsShipmentTaskId}, #{nxDrsStopSeq}, #{nxDrsDepartmentId},
+         #{nxDrsDepartmentName}, #{nxDrsLat}, #{nxDrsLng}, #{nxDrsAddress},
+         #{nxDrsOrderCount}, #{nxDrsLegDistanceM}, #{nxDrsLegDurationS}, #{nxDrsStopStatus})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxDisRouteStopEntity">
+        update nx_dis_route_stop
+        <set>
+            <if test="nxDrsDriverRouteId != null">`nx_drs_driver_route_id` = #{nxDrsDriverRouteId},</if>
+            <if test="nxDrsStopSeq != null">`nx_drs_stop_seq` = #{nxDrsStopSeq},</if>
+            <if test="nxDrsStopStatus != null">`nx_drs_stop_status` = #{nxDrsStopStatus},</if>
+        </set>
+        where nx_drs_id = #{nxDrsId}
+    </update>
+
+    <update id="updateSchedule" parameterType="com.nongxinle.entity.NxDisRouteStopEntity">
+        update nx_dis_route_stop
+        set nx_drs_earliest_delivery_time_s = #{nxDrsEarliestDeliveryTimeS},
+            nx_drs_latest_delivery_time_s   = #{nxDrsLatestDeliveryTimeS},
+            nx_drs_service_minutes            = #{nxDrsServiceMinutes},
+            nx_drs_planned_arrival_at         = #{nxDrsPlannedArrivalAt},
+            nx_drs_planned_service_start_at   = #{nxDrsPlannedServiceStartAt},
+            nx_drs_planned_departure_at       = #{nxDrsPlannedDepartureAt},
+            nx_drs_wait_minutes               = #{nxDrsWaitMinutes},
+            nx_drs_late_minutes               = #{nxDrsLateMinutes},
+            nx_drs_time_window_status         = #{nxDrsTimeWindowStatus}
+        where nx_drs_id = #{nxDrsId}
+    </update>
+
+    <update id="updateDispatchSnapshot" parameterType="com.nongxinle.entity.NxDisRouteStopEntity">
+        update nx_dis_route_stop
+        <set>
+            <if test="nxDrsCustomerTier != null">`nx_drs_customer_tier` = #{nxDrsCustomerTier},</if>
+            <if test="nxDrsPriorityWeight != null">`nx_drs_priority_weight` = #{nxDrsPriorityWeight},</if>
+            <if test="nxDrsOrderCount != null">`nx_drs_order_count` = #{nxDrsOrderCount},</if>
+            <if test="nxDrsItemCount != null">`nx_drs_item_count` = #{nxDrsItemCount},</if>
+            <if test="nxDrsTotalQuantity != null">`nx_drs_total_quantity` = #{nxDrsTotalQuantity},</if>
+            <if test="nxDrsEarliestDeliveryTimeS != null">`nx_drs_earliest_delivery_time_s` = #{nxDrsEarliestDeliveryTimeS},</if>
+            <if test="nxDrsLatestDeliveryTimeS != null">`nx_drs_latest_delivery_time_s` = #{nxDrsLatestDeliveryTimeS},</if>
+            <if test="nxDrsServiceMinutes != null">`nx_drs_service_minutes` = #{nxDrsServiceMinutes},</if>
+            <if test="nxDrsTimeWindowOverrideFlag != null">`nx_drs_time_window_override_flag` = #{nxDrsTimeWindowOverrideFlag},</if>
+            <if test="nxDrsTimeWindowAdjustReason != null">`nx_drs_time_window_adjust_reason` = #{nxDrsTimeWindowAdjustReason},</if>
+        </set>
+        where nx_drs_id = #{nxDrsId}
+    </update>
+
+    <delete id="deleteByShipmentTaskId">
+        delete from nx_dis_route_stop where nx_drs_shipment_task_id = #{shipmentTaskId}
+    </delete>
+
+    <delete id="deleteByDriverRouteIds">
+        delete from nx_dis_route_stop
+        where nx_drs_driver_route_id in
+        <foreach collection="driverRouteIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

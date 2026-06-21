@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisRouteUnassignedStopOrderDao">
+
+    <select id="queryByUnassignedStopId" resultType="com.nongxinle.entity.NxDisRouteUnassignedStopOrderEntity">
+        select * from nx_dis_route_unassigned_stop_order
+        where nx_druo_unassigned_stop_id = #{value}
+        order by nx_druo_id
+    </select>
+
+    <select id="queryByUnassignedStopIds" resultType="com.nongxinle.entity.NxDisRouteUnassignedStopOrderEntity">
+        select * from nx_dis_route_unassigned_stop_order
+        where nx_druo_unassigned_stop_id in
+        <foreach collection="unassignedStopIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        order by nx_druo_unassigned_stop_id, nx_druo_id
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxDisRouteUnassignedStopOrderEntity"
+            useGeneratedKeys="true" keyProperty="nxDruoId">
+        insert into nx_dis_route_unassigned_stop_order
+        (`nx_druo_unassigned_stop_id`, `nx_druo_order_id`, `nx_druo_department_id`,
+         `nx_druo_goods_name`, `nx_druo_quantity`, `nx_druo_standard`, `nx_druo_remark`)
+        values
+        (#{nxDruoUnassignedStopId}, #{nxDruoOrderId}, #{nxDruoDepartmentId},
+         #{nxDruoGoodsName}, #{nxDruoQuantity}, #{nxDruoStandard}, #{nxDruoRemark})
+    </insert>
+
+    <delete id="deleteByUnassignedStopIds">
+        delete from nx_dis_route_unassigned_stop_order
+        where nx_druo_unassigned_stop_id in
+        <foreach collection="unassignedStopIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByPlanId">
+        delete uo from nx_dis_route_unassigned_stop_order uo
+            inner join nx_dis_route_unassigned_stop us on us.nx_drus_id = uo.nx_druo_unassigned_stop_id
+        where us.nx_drus_plan_id = #{planId}
+    </delete>
+</mapper>
