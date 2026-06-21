@@ -9,7 +9,8 @@
 > - 配送商端：`jcJieDan/docs/平台客户订单接口说明.md`  
 > - 平台分配 Phase 2：`docs/nxPlatform/Phase2a-Backend-Confirmation.md` 等  
 
-**当前阶段明确不做**：真实微信支付、微信回调、司机路线、配送商/司机结算、跨批发商复杂结算、Electric 对购物车 `-1` 行的主调度。
+**当前阶段明确不做**：司机路线、配送商/司机结算、跨批发商复杂结算、Electric 对购物车 `-1` 行的主调度。  
+**Checkout 真实微信支付（2026-06-21）**：生产主链 `checkoutPay` → 微信 JSAPI → 回调后正式化；`checkoutConfirm` 保留本地 mock。
 
 ---
 
@@ -366,7 +367,7 @@ Checkout 生成 bill 后（`gb_department_bill` 平台现金字段）：
 | `payAmount` | **本次应付 = knownTotal** |
 | `notice` | 「部分商品需称重确认，后续可能产生补款」 |
 
-### 7.4 Checkout 确认 — `checkoutConfirm`
+### 7.4 Checkout 确认 — `checkoutConfirm`（**本地 mock**）
 
 **入参**：`gbDepartmentId`、`marketId`、`orderIds[]`、`checkoutToken`（幂等）
 
@@ -382,7 +383,50 @@ Checkout 生成 bill 后（`gb_department_bill` 平台现金字段）：
 8. `GbBillPaymentRecalcService.recalcBillPaymentState`；
 9. 返回 bill 摘要 + 行列表（含 `priceConfirmStatus`、`assignStatus`）+ `payStatus`。
 
-**路径建议**：`POST api/platform/customer/cart/checkout/preview`、`POST api/platform/customer/cart/checkout/confirm`
+**路径**：`POST api/platform/customer/cart/checkout/preview`、`POST api/platform/customer/cart/checkout/confirm`
+
+> **生产环境禁止依赖 mock confirm**；真实支付见 §7.4b。
+
+### 7.4b Checkout 支付 — `checkoutPay`（**生产主链**）
+
+**入参**：与 `checkoutConfirm` 相同 + **`openId`**（小程序 JSAPI）
+
+**职责（支付成功前）**：
+
+1. 校验本批 `status=-1` 行；`checkoutPreview` 同口径重算 **`knownTotal > 0`**；
+2. 4001 阻断（与 confirm 一致）；
+3. 写入 `platform_checkout_payment`（`PENDING`）+ `outTradeNo`；
+4. 调微信 JSAPI unifiedOrder；返回 `wxPayParams`；
+5. **不**创建 bill、**不**转正 order、**不** assign。
+
+**微信支付成功回调** `POST .../cart/checkout/payment/notify/wechat`：
+
+1. 验签；标记 payment `SUCCESS`；
+2. 执行与 `checkoutConfirm` 相同的正式化（`finalizeCheckoutAfterWechatPayment`）；
+3. 落库 `gb_department_bill_payment`（`FIRST` / `SUCCESS`）；
+4. `paidTotal = knownTotal`。
+
+**支付失败 / 用户取消 / 超时**：payment 标记 `FAILED` / `CANCELLED` / `EXPIRED`；**不**生成 bill；order 保持 `status=-1`；购物车行恢复可改删；配送商/Electric 不可见。
+
+**PENDING 锁释放**（仅 `PENDING` 且未超时锁定）：
+
+| 方式 | 说明 |
+|------|------|
+| `POST .../payment/cancel` | 用户取消微信支付；`status=CANCELLED` |
+| `POST .../payment/status` | 查询时发现 `expireAt` 已过 → 自动 `EXPIRED` |
+| 再次 `checkoutPay` | 旧 PENDING 已超时则先关闭再建新 payment |
+| 定时任务（后续） | 批量 sweep 超时 PENDING |
+
+**路径**：`POST api/platform/customer/cart/checkout/pay`、`POST .../payment/cancel`
+
+**安全闭环（2026-06-21）**：
+
+1. `platform_checkout_payment` 保存 `orderIds`、`knownTotal`、`pendingPriceItemCount`、`gbDepartmentId`、`checkoutToken`、`outTradeNo`、`expireAt` 快照；
+2. **仅** `PENDING && !expired` 期间本批行禁止修改/删除/再次 checkout；列表仍展示，`editable=false`、`paymentProcessing=true`；
+3. 微信回调 **API v2 MD5 验签** + 校验 `appid` / `mch_id` / `out_trade_no` / `total_fee`（**分**，与 `knownTotal` 元转分比较）/ 订单仍 `status=-1`；同一 `outTradeNo` 仅 finalize 一次；
+4. 成功后写 `billId`、`transactionId`、`paidAt`、`notifyRaw`；
+5. `POST .../payment/status` 返回 `status`、`locked`、`expired`、`billId`、`orderIds`、`knownTotal`、`pendingPriceItemCount`、`message`；
+6. `knownTotal=0` 禁止 `checkoutPay`；`checkoutConfirm` 仍为本地 mock。
 
 ---
 

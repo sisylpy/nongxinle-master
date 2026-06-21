@@ -1,10 +1,11 @@
 package com.nongxinle.service.platform;
 
+import com.nongxinle.dao.GbDepartmentBillPaymentDao;
 import com.nongxinle.dao.NxDepartmentOrdersDao;
 import com.nongxinle.dao.NxPlatformOrderAssignDao;
+import com.nongxinle.dao.PlatformCheckoutPaymentDao;
 import com.nongxinle.dto.platform.GbBillPaymentRecalcResult;
 import com.nongxinle.dto.platform.LineAmountConfirmResult;
-import com.nongxinle.dto.platform.customer.PlatformCartLineItem;
 import com.nongxinle.dto.platform.customer.PlatformCartLineDeleteRequest;
 import com.nongxinle.dto.platform.customer.PlatformCartLineItem;
 import com.nongxinle.dto.platform.customer.PlatformCartLineUpdateRequest;
@@ -16,10 +17,13 @@ import com.nongxinle.dto.platform.customer.PlatformCheckoutLineItem;
 import com.nongxinle.dto.platform.customer.PlatformCheckoutPreviewRequest;
 import com.nongxinle.dto.platform.customer.PlatformCheckoutPreviewResponse;
 import com.nongxinle.entity.GbDepartmentBillEntity;
+import com.nongxinle.entity.GbDepartmentBillPaymentEntity;
 import com.nongxinle.entity.GbDepartmentOrdersEntity;
 import com.nongxinle.entity.NxDepartmentOrdersEntity;
 import com.nongxinle.entity.NxDistributerGoodsEntity;
+import com.nongxinle.entity.NxDistributerEntity;
 import com.nongxinle.entity.NxPlatformOrderAssignEntity;
+import com.nongxinle.entity.PlatformCheckoutPaymentEntity;
 import com.nongxinle.service.GbDepartmentBillService;
 import com.nongxinle.service.GbDepartmentOrdersService;
 import com.nongxinle.service.GbPlatformOrderBridgeService;
@@ -93,6 +97,14 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
     private NxPlatformOrderAssignDao nxPlatformOrderAssignDao;
     @Autowired
     private PlatformGbNxOrderLineService platformGbNxOrderLineService;
+    @Autowired
+    private PlatformCartLineDisplaySupport platformCartLineDisplaySupport;
+    @Autowired
+    private GbDepartmentBillPaymentDao gbDepartmentBillPaymentDao;
+    @Autowired
+    private PlatformCheckoutPaymentLockService platformCheckoutPaymentLockService;
+    @Autowired
+    private PlatformCheckoutPaymentDao platformCheckoutPaymentDao;
 
     @Override
     public PlatformCartListResponse listCartLines(PlatformCartListRequest request) {
@@ -105,12 +117,20 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
         List<NxDepartmentOrdersEntity> nxOrders = nxDepartmentOrdersDao.queryDisOrdersByParams(params);
 
         List<PlatformCartLineItem> lines = new ArrayList<>();
+        Map<Integer, NxDistributerEntity> supplierCache = new HashMap<>();
+        Map<Integer, com.nongxinle.entity.PlatformCheckoutPaymentEntity> paymentLockByOrderId =
+                platformCheckoutPaymentLockService.mapActivePaymentByOrderId(request.getGbDepartmentId());
         if (nxOrders != null) {
             for (NxDepartmentOrdersEntity nxOrder : nxOrders) {
                 if (nxOrder == null || nxOrder.getNxDepartmentOrdersId() == null) {
                     continue;
                 }
-                lines.add(toCartLineItem(nxOrder, resolveGbOrder(nxOrder), resolvePriceConfirm(nxOrder, resolveGbOrder(nxOrder))));
+                GbDepartmentOrdersEntity gbOrder = resolveGbOrder(nxOrder);
+                String priceConfirmStatus = resolvePriceConfirm(nxOrder, gbOrder);
+                PlatformCartLineItem item = toCartLineItem(nxOrder, gbOrder, priceConfirmStatus);
+                platformCartLineDisplaySupport.enrichCartLine(item, nxOrder, gbOrder, priceConfirmStatus, supplierCache);
+                applyPaymentLockDisplay(item, paymentLockByOrderId.get(nxOrder.getNxDepartmentOrdersId()));
+                lines.add(item);
             }
         }
 
@@ -183,7 +203,9 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
         }
         log.info("[platform/cart/lines/update] nxOrderId={} priceConfirmStatus={}",
                 nxOrder.getNxDepartmentOrdersId(), priceConfirmStatus);
-        return toCartLineItem(nxOrder, gbOrder, priceConfirmStatus);
+        PlatformCartLineItem item = toCartLineItem(nxOrder, gbOrder, priceConfirmStatus);
+        platformCartLineDisplaySupport.enrichCartLine(item, nxOrder, gbOrder, priceConfirmStatus, new HashMap<>());
+        return item;
     }
 
     @Override
@@ -207,14 +229,15 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
     @Override
     public PlatformCheckoutPreviewResponse checkoutPreview(PlatformCheckoutPreviewRequest request) {
         List<ResolvedCartLine> resolved = loadAndValidateCartLines(request.getMarketId(), request.getGbDepartmentId(),
-                request.getOrderIds(), false);
+                request.getOrderIds(), false, null);
 
         List<PlatformCheckoutLineItem> confirmedLines = new ArrayList<>();
         List<PlatformCheckoutLineItem> pendingPriceLines = new ArrayList<>();
         BigDecimal knownTotal = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        Map<Integer, NxDistributerEntity> supplierCache = new HashMap<>();
 
         for (ResolvedCartLine line : resolved) {
-            PlatformCheckoutLineItem item = toCheckoutLineItem(line, null);
+            PlatformCheckoutLineItem item = toCheckoutLineItem(line, null, supplierCache);
             if (GbBillPlatformConstants.PRICE_CONFIRM_CONFIRMED.equals(line.priceConfirmStatus)) {
                 confirmedLines.add(item);
                 knownTotal = knownTotal.add(parseMoney(line.lineSubtotal));
@@ -239,23 +262,55 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
     public PlatformCheckoutConfirmResponse checkoutConfirm(PlatformCheckoutConfirmRequest request) {
         validateConfirmRequest(request);
         platformMarketDepartmentService.ensureActiveForGbCustomer(request.getMarketId(), request.getGbDepartmentId());
+        return executeCheckoutConfirm(request, null, null, null);
+    }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public PlatformCheckoutConfirmResponse finalizeCheckoutAfterWechatPayment(PlatformCheckoutConfirmRequest request,
+                                                                              String outTradeNo,
+                                                                              String transactionId,
+                                                                              String notifyRaw) {
+        validateConfirmRequest(request);
+        platformMarketDepartmentService.ensureActiveForGbCustomer(request.getMarketId(), request.getGbDepartmentId());
+        if (StringUtils.isBlank(outTradeNo)) {
+            throw new IllegalArgumentException("outTradeNo 不能为空");
+        }
+        return executeCheckoutConfirm(request, outTradeNo.trim(), transactionId, notifyRaw);
+    }
+
+    private PlatformCheckoutConfirmResponse executeCheckoutConfirm(PlatformCheckoutConfirmRequest request,
+                                                                   String wxOutTradeNo,
+                                                                   String wxTransactionId,
+                                                                   String wxNotifyRaw) {
         String token = request.getCheckoutToken().trim();
         GbDepartmentBillEntity existing = gbDepartmentBillService.queryByPlatformSubmitToken(token);
         if (existing != null) {
+            if (StringUtils.isNotBlank(wxOutTradeNo)) {
+                recordWechatBillPaymentIfAbsent(existing, wxOutTradeNo, wxTransactionId, wxNotifyRaw);
+            }
             return buildConfirmResponse(existing, true);
         }
 
         platformOutstandingBillService.assertNotBlockedForNewSubmit(request.getGbDepartmentId());
 
+        Integer excludePaymentIdFromLock = null;
+        if (StringUtils.isNotBlank(wxOutTradeNo)) {
+            PlatformCheckoutPaymentEntity paying = platformCheckoutPaymentDao.queryByOutTradeNo(wxOutTradeNo.trim());
+            if (paying != null) {
+                excludePaymentIdFromLock = paying.getPcpId();
+            }
+        }
+
         try {
             List<ResolvedCartLine> resolved = loadAndValidateCartLines(request.getMarketId(),
-                    request.getGbDepartmentId(), request.getOrderIds(), true);
+                    request.getGbDepartmentId(), request.getOrderIds(), true, excludePaymentIdFromLock);
 
             GbDepartmentBillEntity bill = createPlatformCashBill(request, resolved.size());
             BigDecimal knownTotal = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
             int pendingPriceCount = 0;
             List<PlatformCheckoutLineItem> confirmLines = new ArrayList<>();
+            Map<Integer, NxDistributerEntity> supplierCache = new HashMap<>();
 
             for (ResolvedCartLine line : resolved) {
                 finalizeCartLineForCheckout(line, bill.getGbDepartmentBillId(), request);
@@ -267,23 +322,32 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
                 String assignStatus = PlatformCartLineSupport.hasCustomerSelectedSupplier(line.nxOrder)
                         ? PlatformConstants.ASSIGN_STATUS_ASSIGNED
                         : PlatformConstants.ASSIGN_STATUS_PENDING;
-                confirmLines.add(toCheckoutLineItem(line, assignStatus));
+                confirmLines.add(toCheckoutLineItem(line, assignStatus, supplierCache));
             }
 
             bill.setGbDbKnownTotal(knownTotal);
             bill.setGbDbPendingItemCount(pendingPriceCount);
             bill.setGbDbPaidTotal(knownTotal);
             bill.setGbDbOrderAmount(resolved.size());
+            if (StringUtils.isNotBlank(wxOutTradeNo)) {
+                bill.setGbDbTradeNo(wxOutTradeNo);
+            }
             gbDepartmentBillService.update(bill);
 
             assertAllLinesAttachedToBill(bill.getGbDepartmentBillId(), resolved.size());
+
+            if (StringUtils.isNotBlank(wxOutTradeNo)) {
+                recordWechatBillPaymentIfAbsent(bill, wxOutTradeNo, wxTransactionId, wxNotifyRaw);
+            }
 
             GbBillPaymentRecalcResult recalc = gbBillPaymentRecalcService.recalcBillPaymentState(bill.getGbDepartmentBillId());
             GbDepartmentBillEntity reloaded = gbDepartmentBillService.queryObject(bill.getGbDepartmentBillId());
             PlatformCheckoutConfirmResponse response = buildConfirmResponse(reloaded, false);
             response.setLines(confirmLines);
             enrichFromRecalc(response, recalc);
-            log.info("[platform/cart/checkoutConfirm] billId={} payStatus={} knownTotal={} pendingPriceItemCount={}",
+            String logTag = StringUtils.isBlank(wxOutTradeNo) ? "checkoutConfirm" : "checkoutPayNotify";
+            log.info("[platform/cart/{}] billId={} payStatus={} knownTotal={} pendingPriceItemCount={}",
+                    logTag,
                     reloaded.getGbDepartmentBillId(),
                     response.getPayStatus(),
                     response.getKnownTotal(),
@@ -292,10 +356,39 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
         } catch (DuplicateKeyException ex) {
             GbDepartmentBillEntity raced = gbDepartmentBillService.queryByPlatformSubmitToken(token);
             if (raced != null) {
+                if (StringUtils.isNotBlank(wxOutTradeNo)) {
+                    recordWechatBillPaymentIfAbsent(raced, wxOutTradeNo, wxTransactionId, wxNotifyRaw);
+                }
                 return buildConfirmResponse(raced, true);
             }
             throw ex;
         }
+    }
+
+    private void recordWechatBillPaymentIfAbsent(GbDepartmentBillEntity bill, String outTradeNo,
+                                                 String transactionId, String notifyRaw) {
+        GbDepartmentBillPaymentEntity existing = gbDepartmentBillPaymentDao.queryByOutTradeNo(outTradeNo);
+        if (existing != null) {
+            if (GbBillPlatformConstants.PAYMENT_STATUS_SUCCESS.equals(existing.getGbBpStatus())) {
+                return;
+            }
+            existing.setGbBpStatus(GbBillPlatformConstants.PAYMENT_STATUS_SUCCESS);
+            existing.setGbBpTransactionId(transactionId);
+            existing.setGbBpPaidAt(formatWhatYearDayTime(0));
+            existing.setGbBpNotifyRaw(notifyRaw);
+            gbDepartmentBillPaymentDao.update(existing);
+            return;
+        }
+        GbDepartmentBillPaymentEntity payment = new GbDepartmentBillPaymentEntity();
+        payment.setGbBpBillId(bill.getGbDepartmentBillId());
+        payment.setGbBpPayPhase(GbBillPlatformConstants.PAY_PHASE_FIRST);
+        payment.setGbBpAmount(parseMoney(bill.getGbDbKnownTotal()));
+        payment.setGbBpOutTradeNo(outTradeNo);
+        payment.setGbBpTransactionId(transactionId);
+        payment.setGbBpStatus(GbBillPlatformConstants.PAYMENT_STATUS_SUCCESS);
+        payment.setGbBpPaidAt(formatWhatYearDayTime(0));
+        payment.setGbBpNotifyRaw(notifyRaw);
+        gbDepartmentBillPaymentDao.save(payment);
     }
 
     private void finalizeCartLineForCheckout(ResolvedCartLine line, Integer billId,
@@ -427,10 +520,13 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
     }
 
     private List<ResolvedCartLine> loadAndValidateCartLines(Integer marketId, Integer gbDepartmentId,
-                                                            List<Integer> orderIds, boolean recalcPrice) {
+                                                            List<Integer> orderIds, boolean recalcPrice,
+                                                            Integer excludePaymentIdFromLock) {
         if (orderIds == null || orderIds.isEmpty()) {
             throw new IllegalArgumentException("orderIds 不能为空");
         }
+        platformCheckoutPaymentLockService.assertOrderIdsNotLockedByPendingPayment(
+                gbDepartmentId, orderIds, excludePaymentIdFromLock);
         Set<Integer> uniqueIds = new HashSet<>(orderIds);
         if (uniqueIds.size() != orderIds.size()) {
             throw new IllegalArgumentException("orderIds 存在重复");
@@ -546,6 +642,7 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
                 throw new IllegalArgumentException("GB 行已正式化，不可修改/删除: nxOrderId=" + nxOrderId);
             }
         }
+        platformCheckoutPaymentLockService.assertNxOrderNotLockedByPendingPayment(gbDepartmentId, nxOrderId);
         return nxOrder;
     }
 
@@ -626,7 +723,18 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
         return item;
     }
 
-    private PlatformCheckoutLineItem toCheckoutLineItem(ResolvedCartLine line, String assignStatus) {
+    private void applyPaymentLockDisplay(PlatformCartLineItem item, PlatformCheckoutPaymentEntity payment) {
+        if (item == null || payment == null) {
+            return;
+        }
+        item.setPaymentLocked(true);
+        item.setPaymentProcessing(true);
+        item.setPaymentProcessingMessage("支付处理中");
+        item.setEditable(false);
+    }
+
+    private PlatformCheckoutLineItem toCheckoutLineItem(ResolvedCartLine line, String assignStatus,
+                                                        Map<Integer, NxDistributerEntity> supplierCache) {
         PlatformCheckoutLineItem item = new PlatformCheckoutLineItem();
         item.setNxOrderId(line.nxOrder.getNxDepartmentOrdersId());
         if (line.gbOrder != null) {
@@ -641,6 +749,8 @@ public class PlatformCartCheckoutServiceImpl implements PlatformCartCheckoutServ
         item.setPriceConfirmStatus(line.priceConfirmStatus);
         item.setLineSubtotal(line.lineSubtotal);
         item.setAssignStatus(assignStatus);
+        platformCartLineDisplaySupport.enrichCheckoutLine(
+                item, line.nxOrder, line.gbOrder, line.priceConfirmStatus, supplierCache);
         return item;
     }
 

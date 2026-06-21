@@ -7,7 +7,10 @@ import com.nongxinle.dto.platform.customer.PlatformCartLineDeleteRequest;
 import com.nongxinle.dto.platform.customer.PlatformCartLineUpdateRequest;
 import com.nongxinle.dto.platform.customer.PlatformCartListRequest;
 import com.nongxinle.dto.platform.customer.PlatformCartSubmitRequest;
+import com.nongxinle.dto.platform.customer.PlatformCheckoutPayRequest;
 import com.nongxinle.dto.platform.customer.PlatformCheckoutConfirmRequest;
+import com.nongxinle.dto.platform.customer.PlatformCheckoutPaymentCancelRequest;
+import com.nongxinle.dto.platform.customer.PlatformCheckoutPaymentStatusRequest;
 import com.nongxinle.dto.platform.customer.PlatformCheckoutPreviewRequest;
 import com.nongxinle.dto.platform.customer.PlatformCustomerGoodsCatalogListRequest;
 import com.nongxinle.dto.platform.customer.PlatformCustomerGoodsCatalogTreeRequest;
@@ -26,9 +29,11 @@ import com.nongxinle.dto.platform.PlatformSubmitLineRequest;
 import com.nongxinle.service.platform.PlatformBillPaymentService;
 import com.nongxinle.service.platform.PlatformCartCheckoutService;
 import com.nongxinle.service.platform.PlatformCartSubmitService;
+import com.nongxinle.service.platform.PlatformCheckoutPaymentService;
 import com.nongxinle.service.platform.PlatformOutstandingBillBlockException;
 import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
+import com.nongxinle.utils.WxPayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +43,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -63,6 +70,8 @@ public class PlatformCustomerController {
     private PlatformCartCheckoutService platformCartCheckoutService;
     @Autowired
     private PlatformBillPaymentService platformBillPaymentService;
+    @Autowired
+    private PlatformCheckoutPaymentService platformCheckoutPaymentService;
 
     @RequestMapping(value = "/home/init", method = RequestMethod.POST)
     @ResponseBody
@@ -249,6 +258,65 @@ public class PlatformCustomerController {
             return R.error(4002, ex.getMessage());
         } catch (Exception e) {
             log.error("[platform/cart/checkout/confirm] failed request={}", request, e);
+            return R.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 生产支付主链：创建 PENDING 支付意图 + 微信 JSAPI；bill 在支付成功回调后才生成。
+     */
+    @RequestMapping(value = "/cart/checkout/pay", method = RequestMethod.POST)
+    @ResponseBody
+    public R checkoutPay(@RequestBody PlatformCheckoutPayRequest request) {
+        try {
+            return R.ok("success").put("data", platformCheckoutPaymentService.checkoutPay(request));
+        } catch (PlatformOutstandingBillBlockException ex) {
+            return R.error(4001, ex.getMessage())
+                    .put("message", ex.getMessage())
+                    .put("data", ex.getData());
+        } catch (IllegalArgumentException ex) {
+            return R.error(4002, ex.getMessage());
+        } catch (Exception e) {
+            log.error("[platform/cart/checkout/pay] failed request={}", request, e);
+            return R.error(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/cart/checkout/payment/notify/wechat", method = RequestMethod.POST)
+    @ResponseBody
+    public String checkoutWechatNotify(HttpServletRequest request) {
+        try {
+            InputStream in = request.getInputStream();
+            String xml = WxPayUtils.InputStream2String(in);
+            return platformCheckoutPaymentService.handleWechatNotify(xml);
+        } catch (Exception e) {
+            log.error("[platform/cart/checkout/payment/notify/wechat] failed", e);
+            return "<xml><return_code><![CDATA[FAIL]]></return_code></xml>";
+        }
+    }
+
+    @RequestMapping(value = "/cart/checkout/payment/status", method = RequestMethod.POST)
+    @ResponseBody
+    public R checkoutPaymentStatus(@RequestBody PlatformCheckoutPaymentStatusRequest request) {
+        try {
+            return R.ok("success").put("data", platformCheckoutPaymentService.queryPaymentStatus(request));
+        } catch (IllegalArgumentException ex) {
+            return R.error(4002, ex.getMessage());
+        } catch (Exception e) {
+            log.error("[platform/cart/checkout/payment/status] failed request={}", request, e);
+            return R.error(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/cart/checkout/payment/cancel", method = RequestMethod.POST)
+    @ResponseBody
+    public R checkoutPaymentCancel(@RequestBody PlatformCheckoutPaymentCancelRequest request) {
+        try {
+            return R.ok("success").put("data", platformCheckoutPaymentService.cancelPayment(request));
+        } catch (IllegalArgumentException ex) {
+            return R.error(4002, ex.getMessage());
+        } catch (Exception e) {
+            log.error("[platform/cart/checkout/payment/cancel] failed request={}", request, e);
             return R.error(e.getMessage());
         }
     }

@@ -21,4 +21,13 @@ public interface PlatformCartCheckoutService {
     PlatformCheckoutPreviewResponse checkoutPreview(PlatformCheckoutPreviewRequest request);
 
     PlatformCheckoutConfirmResponse checkoutConfirm(PlatformCheckoutConfirmRequest request);
+
+    /**
+     * 微信支付成功回调：执行 checkout 正式化（创建 bill、挂行、assign），并落库 bill payment。
+     * 本地 mock 请用 {@link #checkoutConfirm}。
+     */
+    PlatformCheckoutConfirmResponse finalizeCheckoutAfterWechatPayment(PlatformCheckoutConfirmRequest request,
+                                                                       String outTradeNo,
+                                                                       String transactionId,
+                                                                       String notifyRaw);
 }

@@ -14,9 +14,12 @@
 -- | nx_community_coupon.coupon_type / discount_amount 等规则列 | upgrade_coupon_rule_v1.sql |
 -- | 批发市场平台化 Phase 2a（4 表 + 订单分配）                  | upgrade_nx_platform_phase2a.sql |
 -- | Phase 2b 平台订单履约（出库完成→READY_FOR_PICKUP）        | upgrade_nx_platform_phase2b_fulfillment.sql |
+-- | 京采 P0：assign 表 GB 来源字段（批发商店铺 ASSIGNED）     | upgrade_nx_platform_assign_gb_source.sql |
 -- | Phase 2a 阶段 0：nx_DO_distributer_id 是否 NULL            | check_nx_department_orders_distributer_id.sql |
 -- | Phase 2a Round 1 测试种子                                   | seed_nx_platform_phase2a_test.sql |
--- | Phase 2b Round 2-B.1：历史 ASSIGNED 平台单 expectPrice 回填（可选） | backfill_nx_platform_expect_price.sql |
+-- | `platform_checkout_payment`（checkout 微信支付意图，bill 创建前） | upgrade_platform_checkout_payment.sql → v2 → v3 |
+-- | **服务器一次性全量升级（推荐）**                              | upgrade_platform_server_full.sql |
+-- | 京采市场后台用户 Phase 1a-0（platform_market_user）           | upgrade_platform_market_user_v1.sql |
 --
 -- =============================================================================
 -- Phase 2a Round 1 执行顺序（submitLine 验收，必须严格按序）
