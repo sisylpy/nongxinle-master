@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.PlatformCouponTemplateDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.PlatformCouponTemplateEntity">
+        select * from platform_coupon_template where pct_id = #{value}
+    </select>
+
+    <select id="queryByMarketAndId" resultType="com.nongxinle.entity.PlatformCouponTemplateEntity">
+        select * from platform_coupon_template
+        where pct_id = #{pctId} and market_id = #{marketId}
+        limit 1
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.PlatformCouponTemplateEntity">
+        select * from platform_coupon_template
+        <where>
+            market_id = #{marketId}
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="templateName != null and templateName != ''">
+                and template_name like concat('%', #{templateName}, '%')
+            </if>
+        </where>
+        order by pct_id desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="pctId">
+        insert into platform_coupon_template
+        (market_id, template_name, coupon_type, discount_amount, threshold_amount,
+         scope_type, scope_ref_ids, use_channel, biz_purpose, claim_strategy,
+         validity_type, validity_days, start_date, stop_date, status,
+         issue_count, use_count, created_by_market_user_id, updated_by_market_user_id)
+        values
+        (#{marketId}, #{templateName}, #{couponType}, #{discountAmount}, #{thresholdAmount},
+         #{scopeType}, #{scopeRefIds}, #{useChannel}, #{bizPurpose}, #{claimStrategy},
+         #{validityType}, #{validityDays}, #{startDate}, #{stopDate}, #{status},
+         #{issueCount}, #{useCount}, #{createdByMarketUserId}, #{updatedByMarketUserId})
+    </insert>
+
+    <update id="update">
+        update platform_coupon_template
+        <set>
+            <if test="templateName != null">template_name = #{templateName},</if>
+            <if test="couponType != null">coupon_type = #{couponType},</if>
+            <if test="discountAmount != null">discount_amount = #{discountAmount},</if>
+            <if test="thresholdAmount != null">threshold_amount = #{thresholdAmount},</if>
+            <if test="scopeType != null">scope_type = #{scopeType},</if>
+            <if test="scopeRefIds != null">scope_ref_ids = #{scopeRefIds},</if>
+            <if test="useChannel != null">use_channel = #{useChannel},</if>
+            <if test="bizPurpose != null">biz_purpose = #{bizPurpose},</if>
+            <if test="claimStrategy != null">claim_strategy = #{claimStrategy},</if>
+            <if test="validityType != null">validity_type = #{validityType},</if>
+            <if test="validityDays != null">validity_days = #{validityDays},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="stopDate != null">stop_date = #{stopDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updatedByMarketUserId != null">updated_by_market_user_id = #{updatedByMarketUserId},</if>
+        </set>
+        where pct_id = #{pctId} and market_id = #{marketId}
+    </update>
+
+    <update id="incrementIssueCount">
+        update platform_coupon_template
+        set issue_count = issue_count + #{delta}
+        where pct_id = #{pctId} and market_id = #{marketId}
+    </update>
+</mapper>

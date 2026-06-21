@@ -20,6 +20,7 @@
 -- | `platform_checkout_payment`（checkout 微信支付意图，bill 创建前） | upgrade_platform_checkout_payment.sql → v2 → v3 |
 -- | **服务器一次性全量升级（推荐）**                              | upgrade_platform_server_full.sql |
 -- | 京采市场后台用户 Phase 1a-0（platform_market_user）           | upgrade_platform_market_user_v1.sql |
+-- | 京采平台优惠券 Phase 1a（模板 + 门店券）                      | upgrade_platform_coupon_phase1a.sql |
 --
 -- =============================================================================
 -- Phase 2a Round 1 执行顺序（submitLine 验收，必须严格按序）

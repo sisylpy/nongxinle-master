@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.PlatformCouponUsageLogDao">
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="pculId">
+        insert into platform_coupon_usage_log
+        (store_coupon_id, template_id, market_id, store_gb_department_id, verify_type,
+         checkout_token, payment_id, bill_id, discount_amount, before_status, after_status,
+         operator_type, operator_id)
+        values
+        (#{storeCouponId}, #{templateId}, #{marketId}, #{storeGbDepartmentId}, #{verifyType},
+         #{checkoutToken}, #{paymentId}, #{billId}, #{discountAmount}, #{beforeStatus}, #{afterStatus},
+         #{operatorType}, #{operatorId})
+    </insert>
+</mapper>
