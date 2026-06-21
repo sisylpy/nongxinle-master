@@ -34,7 +34,7 @@ public class CORSFilter implements Filter {
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods", "*");
         response.setHeader("Access-Control-Max-Age", "3600");
-        response.setHeader("Access-Control-Allow-Headers", "Authorization,Origin, X-Requested-With, Content-Type, Accept,Access-Token");
+        response.setHeader("Access-Control-Allow-Headers", "Authorization,Origin, X-Requested-With, Content-Type, Accept,Access-Token,X-Platform-Market-Token");
         
         // 设置连接超时时间（10分钟 = 600秒 = 600000毫秒）
         // 注意：这个设置主要用于提示客户端，实际的超时时间主要由Tomcat的server.xml配置控制

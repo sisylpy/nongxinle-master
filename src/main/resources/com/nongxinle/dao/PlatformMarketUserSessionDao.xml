@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.PlatformMarketUserSessionDao">
+
+    <select id="queryByToken" resultType="com.nongxinle.entity.PlatformMarketUserSessionEntity">
+        select * from platform_market_user_session where token = #{value}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="pmsId">
+        insert into platform_market_user_session (pmu_id, token, expire_at)
+        values (#{pmuId}, #{token}, #{expireAt})
+    </insert>
+
+    <delete id="deleteByToken">
+        delete from platform_market_user_session where token = #{value}
+    </delete>
+
+    <delete id="deleteByPmuId">
+        delete from platform_market_user_session where pmu_id = #{value}
+    </delete>
+</mapper>

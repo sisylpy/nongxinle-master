@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.PlatformMarketUserDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.PlatformMarketUserEntity">
+        select * from platform_market_user where pmu_id = #{value}
+    </select>
+
+    <select id="queryByMarketAndLoginAccount" resultType="com.nongxinle.entity.PlatformMarketUserEntity">
+        select * from platform_market_user
+        where market_id = #{marketId}
+          and login_account = #{loginAccount}
+        limit 1
+    </select>
+
+    <select id="countByMarketId" resultType="int">
+        select count(*) from platform_market_user where market_id = #{value}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="pmuId">
+        insert into platform_market_user
+        (market_id, login_account, phone, password_hash, real_name, role_type, status, last_login_at)
+        values
+        (#{marketId}, #{loginAccount}, #{phone}, #{passwordHash}, #{realName}, #{roleType}, #{status}, #{lastLoginAt})
+    </insert>
+
+    <update id="update">
+        update platform_market_user
+        <set>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="passwordHash != null">password_hash = #{passwordHash},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="roleType != null">role_type = #{roleType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="lastLoginAt != null">last_login_at = #{lastLoginAt},</if>
+        </set>
+        where pmu_id = #{pmuId}
+    </update>
+</mapper>
