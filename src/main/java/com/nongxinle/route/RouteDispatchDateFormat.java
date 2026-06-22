@@ -17,4 +17,11 @@ public final class RouteDispatchDateFormat {
         }
         return new SimpleDateFormat(PATTERN).format(date);
     }
+
+    public static Date parse(String text) throws java.text.ParseException {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        return new SimpleDateFormat(PATTERN).parse(text.trim());
+    }
 }

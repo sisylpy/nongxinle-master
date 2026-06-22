@@ -19,6 +19,14 @@ public class DispatchWorkbenchDto {
     private String severity;
     private String primaryReason;
     private String operationHint;
+    /** Phase 2b-6：时间主权摘要 */
+    private String routeDate;
+    private String routeDateLabel;
+    private String dispatchBatch;
+    private String dispatchBatchLabel;
+    private String planTemporalStatus;
+    private String planTemporalStatusLabel;
+    private String serverNow;
     private DispatchWorkbenchMetricsDto metrics = new DispatchWorkbenchMetricsDto();
     private List<DispatchWorkbenchIssueDto> topIssues = new ArrayList<DispatchWorkbenchIssueDto>();
     private List<DispatchWorkbenchActionDto> nextActions = new ArrayList<DispatchWorkbenchActionDto>();

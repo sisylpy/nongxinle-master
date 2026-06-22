@@ -1,5 +1,6 @@
 package com.nongxinle.route.optimizer;
 
+import com.nongxinle.route.DisRouteDistanceTypes;
 import com.nongxinle.route.RouteOptimizer;
 import com.nongxinle.route.RouteOptimizerType;
 import com.nongxinle.route.model.*;
@@ -173,10 +174,16 @@ public class BalancedInsertion2OptRouteOptimizer implements RouteOptimizer {
             long routeDuration = 0;
             int prevIdx = 0;
             int seq = 1;
+            boolean hasStraightLeg = false;
+            String routeProvider = matrix.getDistanceProvider();
             for (Integer stopMatrixIdx : stopIdxList) {
                 RouteStopInput stop = request.getStops().get(stopMatrixIdx - 1);
                 long legDist = matrix.distance(prevIdx, stopMatrixIdx);
                 long legDur = matrix.duration(prevIdx, stopMatrixIdx);
+                String legType = matrix.distanceType(prevIdx, stopMatrixIdx);
+                if (DisRouteDistanceTypes.ESTIMATED_STRAIGHT_DISTANCE.equals(legType)) {
+                    hasStraightLeg = true;
+                }
                 routeDistance += legDist;
                 routeDuration += legDur;
 
@@ -189,10 +196,30 @@ public class BalancedInsertion2OptRouteOptimizer implements RouteOptimizer {
                 stopResult.setStopSeq(seq++);
                 stopResult.setLegDistanceM(legDist);
                 stopResult.setLegDurationS(legDur);
+                stopResult.setDistanceProvider(matrix.getDistanceProvider());
+                stopResult.setDistanceType(legType);
                 driverRoute.getStops().add(stopResult);
                 prevIdx = stopMatrixIdx;
             }
 
+            if (!stopIdxList.isEmpty()) {
+                long returnDist = matrix.distance(prevIdx, 0);
+                long returnDur = matrix.duration(prevIdx, 0);
+                String returnType = matrix.distanceType(prevIdx, 0);
+                if (DisRouteDistanceTypes.ESTIMATED_STRAIGHT_DISTANCE.equals(returnType)) {
+                    hasStraightLeg = true;
+                }
+                driverRoute.setReturnLegDistanceM(returnDist);
+                driverRoute.setReturnLegDurationS(returnDur);
+                driverRoute.setReturnLegDistanceType(returnType);
+                routeDistance += returnDist;
+                routeDuration += returnDur;
+            }
+
+            driverRoute.setDistanceProvider(routeProvider);
+            driverRoute.setRouteDistanceType(hasStraightLeg
+                    ? DisRouteDistanceTypes.ESTIMATED_STRAIGHT_DISTANCE
+                    : DisRouteDistanceTypes.ROUTE_DISTANCE);
             driverRoute.setTotalDistanceM(routeDistance);
             driverRoute.setTotalDurationS(routeDuration);
             result.getDriverRoutes().add(driverRoute);

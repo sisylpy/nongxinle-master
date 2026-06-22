@@ -45,6 +45,13 @@
         order by nx_dst_priority_level desc, nx_dst_id
     </select>
 
+    <select id="queryByDriverRouteId" resultType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        select * from nx_dis_shipment_task
+        where nx_dst_driver_route_id = #{driverRouteId}
+          and (nx_dst_stop_status is null or nx_dst_stop_status != 'CANCELLED')
+        order by nx_dst_route_seq, nx_dst_manual_stop_seq, nx_dst_id
+    </select>
+
     <insert id="save" parameterType="com.nongxinle.entity.NxDisShipmentTaskEntity"
             useGeneratedKeys="true" keyProperty="nxDstId">
         insert into nx_dis_shipment_task
@@ -91,6 +98,23 @@
             <if test="nxDstAssignReason != null">`nx_dst_assign_reason` = #{nxDstAssignReason},</if>
             <if test="nxDstAdjustReason != null">`nx_dst_adjust_reason` = #{nxDstAdjustReason},</if>
             <if test="nxDstPlanId != null">`nx_dst_plan_id` = #{nxDstPlanId},</if>
+            <if test="nxDstDriverRouteId != null">`nx_dst_driver_route_id` = #{nxDstDriverRouteId},</if>
+            <if test="nxDstRouteSeq != null">`nx_dst_route_seq` = #{nxDstRouteSeq},</if>
+            <if test="nxDstLegDistanceM != null">`nx_dst_leg_distance_m` = #{nxDstLegDistanceM},</if>
+            <if test="nxDstLegDurationS != null">`nx_dst_leg_duration_s` = #{nxDstLegDurationS},</if>
+            <if test="nxDstPlannedArrivalAt != null">`nx_dst_planned_arrival_at` = #{nxDstPlannedArrivalAt},</if>
+            <if test="nxDstPlannedServiceStartAt != null">`nx_dst_planned_service_start_at` = #{nxDstPlannedServiceStartAt},</if>
+            <if test="nxDstPlannedDepartureAt != null">`nx_dst_planned_departure_at` = #{nxDstPlannedDepartureAt},</if>
+            <if test="nxDstWaitMinutes != null">`nx_dst_wait_minutes` = #{nxDstWaitMinutes},</if>
+            <if test="nxDstLateMinutes != null">`nx_dst_late_minutes` = #{nxDstLateMinutes},</if>
+            <if test="nxDstTimeWindowStatus != null">`nx_dst_time_window_status` = #{nxDstTimeWindowStatus},</if>
+            <if test="nxDstStopStatus != null">`nx_dst_stop_status` = #{nxDstStopStatus},</if>
+            <if test="nxDstDeliveredAt != null">`nx_dst_delivered_at` = #{nxDstDeliveredAt},</if>
+            <if test="nxDstDeliveryRemark != null">`nx_dst_delivery_remark` = #{nxDstDeliveryRemark},</if>
+            <if test="nxDstDeliveryOperatorUserId != null">`nx_dst_delivery_operator_user_id` = #{nxDstDeliveryOperatorUserId},</if>
+            <if test="nxDstExceptionType != null">`nx_dst_exception_type` = #{nxDstExceptionType},</if>
+            <if test="nxDstExceptionRemark != null">`nx_dst_exception_remark` = #{nxDstExceptionRemark},</if>
+            <if test="nxDstExceptionAt != null">`nx_dst_exception_at` = #{nxDstExceptionAt},</if>
             <if test="clearOpenKey != null and clearOpenKey == true">`nx_dst_open_key` = NULL,</if>
             <if test="nxDstOpenKey != null">`nx_dst_open_key` = #{nxDstOpenKey},</if>
         </set>
@@ -99,5 +123,19 @@
 
     <update id="clearOpenKey">
         update nx_dis_shipment_task set nx_dst_open_key = null where nx_dst_id = #{taskId}
+    </update>
+
+    <update id="updateSchedule" parameterType="com.nongxinle.entity.NxDisShipmentTaskEntity">
+        update nx_dis_shipment_task
+        set nx_dst_earliest_delivery_time_s = #{nxDstEarliestDeliveryTimeS},
+            nx_dst_latest_delivery_time_s = #{nxDstLatestDeliveryTimeS},
+            nx_dst_service_minutes = #{nxDstServiceMinutes},
+            nx_dst_planned_arrival_at = #{nxDstPlannedArrivalAt},
+            nx_dst_planned_service_start_at = #{nxDstPlannedServiceStartAt},
+            nx_dst_planned_departure_at = #{nxDstPlannedDepartureAt},
+            nx_dst_wait_minutes = #{nxDstWaitMinutes},
+            nx_dst_late_minutes = #{nxDstLateMinutes},
+            nx_dst_time_window_status = #{nxDstTimeWindowStatus}
+        where nx_dst_id = #{nxDstId}
     </update>
 </mapper>

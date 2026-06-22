@@ -37,5 +37,6 @@ public interface NxDisRoutePlanDao {
     void cancelConfirmedByDisRouteDate(@Param("disId") Integer disId, @Param("routeDate") String routeDate);
 
     List<DisRouteOrderSnapshotDto> queryEligibleLiveOrderSnapshots(@Param("disId") Integer disId,
-                                                                 @Param("routeDate") String routeDate);
+                                                                 @Param("routeDate") String routeDate,
+                                                                 @Param("routeDateOnly") String routeDateOnly);
 }

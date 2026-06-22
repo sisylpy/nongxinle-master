@@ -5,15 +5,28 @@ import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
-import com.nongxinle.route.*;
+import com.nongxinle.route.DisRouteBatchEligibility;
+import com.nongxinle.route.DisRouteDispatchBatch;
+import com.nongxinle.route.DisRouteDispatchLabels;
+import com.nongxinle.route.DisRouteFeasibilityStatus;
+import com.nongxinle.route.DisRoutePlanTemporalStatus;
+import com.nongxinle.route.DisRouteScheduleStatus;
+import com.nongxinle.route.DisRouteStopTimeWindowStatus;
+import com.nongxinle.route.DisRouteTemporalHelper;
+import com.nongxinle.route.DisRouteWarningCode;
+import com.nongxinle.route.DisRouteWorkbenchActionCode;
+import com.nongxinle.route.DisRouteWorkbenchStatus;
+import com.nongxinle.route.RouteDispatchDateFormat;
 import com.nongxinle.service.DisRouteDispatchWorkbenchService;
 import com.nongxinle.service.DisRouteDriverDispatchListService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,11 +43,18 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
 
     @Override
     public DispatchWorkbenchDto buildEmpty(String routeDate, String dispatchBatch) {
-        String batchLabel = DisRouteDispatchLabels.label(normalizeBatch(dispatchBatch));
+        String batch = normalizeBatch(dispatchBatch);
+        String batchLabel = DisRouteDispatchLabels.label(batch);
+        Date serverNow = new Date();
         DispatchWorkbenchDto workbench = new DispatchWorkbenchDto();
+        workbench.setRouteDate(routeDate);
+        workbench.setRouteDateLabel(DisRouteTemporalHelper.formatRouteDateLabel(routeDate, serverNow));
+        workbench.setDispatchBatch(batch);
+        workbench.setDispatchBatchLabel(batchLabel);
+        workbench.setServerNow(RouteDispatchDateFormat.format(serverNow));
         workbench.setStatus(DisRouteWorkbenchStatus.EMPTY);
         workbench.setStatusLabel("暂无计划");
-        workbench.setTitle("今日暂无派车计划");
+        workbench.setTitle(buildDatedTitle(routeDate, serverNow, batchLabel, "暂无派车计划"));
         workbench.setSubtitle("请先生成或选择路线计划");
         workbench.setSeverity("INFO");
         workbench.setPrimaryReason("当前日期与批次下没有路线计划");
@@ -45,6 +65,299 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
     }
 
     @Override
+    public DispatchWorkbenchDto buildSandboxEmpty(String routeDate, Date serverNow) {
+        Date now = serverNow != null ? serverNow : new Date();
+        String dateLabel = DisRouteTemporalHelper.formatRouteDateLabel(routeDate, now);
+        if (dateLabel == null) {
+            dateLabel = routeDate != null ? routeDate : "当日";
+        }
+        DispatchWorkbenchDto workbench = new DispatchWorkbenchDto();
+        workbench.setRouteDate(routeDate);
+        workbench.setRouteDateLabel(dateLabel);
+        workbench.setServerNow(RouteDispatchDateFormat.format(now));
+        workbench.setStatus(DisRouteWorkbenchStatus.EMPTY);
+        workbench.setStatusLabel("暂无客户");
+        workbench.setTitle(dateLabel + "暂无订货客户");
+        workbench.setSubtitle("有新订单后会自动出现在动态沙盘");
+        workbench.setSeverity("INFO");
+        workbench.setPrimaryReason("今日暂无需要派车的客户");
+        workbench.setOperationHint("");
+        workbench.setTopIssues(Collections.<DispatchWorkbenchIssueDto>emptyList());
+        workbench.setNextActions(Collections.<DispatchWorkbenchActionDto>emptyList());
+        return workbench;
+    }
+
+    @Override
+    public DispatchWorkbenchDto buildSandbox(NxDisRoutePlanEntity plan,
+                                               List<NxDisShipmentTaskEntity> tasks,
+                                               RouteFeasibilityResult feasibility,
+                                               String routeDate,
+                                               String dispatchBatch,
+                                               int customerStopCount,
+                                               int confirmedStopCount,
+                                               Date serverNow) {
+        if (customerStopCount <= 0) {
+            return buildSandboxEmpty(routeDate, serverNow);
+        }
+        String batch = normalizeBatch(dispatchBatch != null ? dispatchBatch : plan.getNxDrpDispatchBatch());
+        Date now = serverNow != null ? serverNow : new Date();
+        String effectiveRouteDate = routeDate != null ? routeDate
+                : (plan.getNxDrpRouteDate() != null ? plan.getNxDrpRouteDate() : plan.getNxDrpPlanDate());
+        String dateLabel = plan.getRouteDateLabel() != null
+                ? plan.getRouteDateLabel()
+                : DisRouteTemporalHelper.formatRouteDateLabel(effectiveRouteDate, now);
+        if (dateLabel == null) {
+            dateLabel = effectiveRouteDate != null ? effectiveRouteDate : "当日";
+        }
+
+        List<RouteDispatchWarning> warnings = feasibility != null && feasibility.getWarnings() != null
+                ? feasibility.getWarnings() : Collections.<RouteDispatchWarning>emptyList();
+        String feasibilityStatus = feasibility != null ? feasibility.getFeasibilityStatus() : null;
+
+        DriverDispatchListResponse driverList = disRouteDriverDispatchListService.listDriversForBatch(
+                plan.getNxDrpDistributerId(), effectiveRouteDate, batch);
+
+        DispatchWorkbenchMetricsDto metrics = buildMetrics(plan, warnings, driverList, tasks);
+        if (customerStopCount > metrics.getTotalStopCount()) {
+            metrics.setTotalStopCount(customerStopCount);
+        }
+
+        boolean windowActive = isSandboxDispatchWindowActive(plan, now);
+        List<IssueCandidate> issueCandidates = windowActive
+                ? buildSandboxIssueCandidates(warnings, driverList, metrics, plan)
+                : Collections.<IssueCandidate>emptyList();
+        List<DispatchWorkbenchIssueDto> topIssues = pickTopIssues(issueCandidates);
+
+        String status = windowActive
+                ? resolveSandboxStatus(feasibilityStatus, metrics, topIssues)
+                : DisRouteWorkbenchStatus.READY;
+        String statusLabel = windowActive ? resolveSandboxStatusLabel(status, topIssues) : "";
+        String severity = windowActive ? resolveSeverity(status) : "INFO";
+
+        DispatchWorkbenchDto workbench = new DispatchWorkbenchDto();
+        workbench.setRouteDate(effectiveRouteDate);
+        workbench.setRouteDateLabel(dateLabel);
+        workbench.setDispatchBatch(batch);
+        workbench.setServerNow(RouteDispatchDateFormat.format(now));
+        workbench.setStatus(status);
+        workbench.setStatusLabel(statusLabel);
+        workbench.setTitle(buildSandboxTitle(dateLabel, topIssues, status, metrics, windowActive));
+        workbench.setSubtitle(buildSandboxSubtitle(windowActive, topIssues, status));
+        workbench.setSeverity(severity);
+        workbench.setPrimaryReason(buildSandboxPrimaryReason(windowActive, topIssues, status));
+        workbench.setOperationHint(buildSandboxOperationHint(windowActive, topIssues, status));
+        workbench.setMetrics(metrics);
+        workbench.setTopIssues(topIssues);
+        workbench.setNextActions(buildSandboxNextActions(
+                plan, tasks, metrics, driverList, status, confirmedStopCount, customerStopCount));
+        return workbench;
+    }
+
+    private List<DispatchWorkbenchActionDto> buildSandboxNextActions(NxDisRoutePlanEntity plan,
+                                                                     List<NxDisShipmentTaskEntity> tasks,
+                                                                     DispatchWorkbenchMetricsDto metrics,
+                                                                     DriverDispatchListResponse driverList,
+                                                                     String status,
+                                                                     int confirmedStopCount,
+                                                                     int sandboxSuggestedStopCount) {
+        boolean needEnableDrivers = hasOffDutyOrIneligibleDrivers(driverList);
+        boolean hasUnlock = metrics.getLockedConflictCount() != null && metrics.getLockedConflictCount() > 0
+                || hasUnlockableTask(tasks);
+        boolean canGoLoading = confirmedStopCount > 0 && Boolean.TRUE.equals(plan.getCanStartLoading());
+        boolean needConfirmCustomer = confirmedStopCount == 0 && sandboxSuggestedStopCount > 0;
+
+        List<DispatchWorkbenchActionDto> actions = new ArrayList<DispatchWorkbenchActionDto>();
+        if (needConfirmCustomer) {
+            actions.add(action(
+                    DisRouteWorkbenchActionCode.CONFIRM_CUSTOMER,
+                    "确认该店出货完成",
+                    true,
+                    "请在下方站点卡片逐店确认出货完成"));
+        }
+        actions.add(action(
+                DisRouteWorkbenchActionCode.CHECK_IN_DRIVER,
+                "开启可派",
+                needEnableDrivers,
+                needEnableDrivers ? "请在司机可派状态中开启司机" : "当前已有可派司机"));
+        actions.add(action(
+                DisRouteWorkbenchActionCode.UNLOCK_LOCKED_STOP,
+                "处理锁定站点",
+                hasUnlock,
+                hasUnlock ? buildUnlockHint(tasks, metrics) : "当前没有需解锁的锁定站点"));
+        actions.add(action(
+                DisRouteWorkbenchActionCode.GO_LOADING,
+                "去装车",
+                canGoLoading,
+                canGoLoading ? "存在可装车站点" : resolveSandboxLoadingDisabledHint(plan, status, confirmedStopCount)));
+        return actions;
+    }
+
+    private String resolveSandboxLoadingDisabledHint(NxDisRoutePlanEntity plan,
+                                                     String status,
+                                                     int confirmedStopCount) {
+        if (confirmedStopCount <= 0) {
+            return "请先在站点卡片确认出货完成";
+        }
+        return resolveLoadingDisabledHint(plan, status);
+    }
+
+    private boolean isSandboxDispatchWindowActive(NxDisRoutePlanEntity plan, Date serverNow) {
+        if (plan == null || serverNow == null) {
+            return false;
+        }
+        Date endAt = plan.getNxDrpPlannedEndAt();
+        if (endAt == null) {
+            return true;
+        }
+        return !serverNow.after(endAt);
+    }
+
+    private List<IssueCandidate> buildSandboxIssueCandidates(List<RouteDispatchWarning> warnings,
+                                                             DriverDispatchListResponse driverList,
+                                                             DispatchWorkbenchMetricsDto metrics,
+                                                             NxDisRoutePlanEntity plan) {
+        List<IssueCandidate> candidates = new ArrayList<IssueCandidate>();
+
+        if (containsWarning(warnings, DisRouteWarningCode.NO_AVAILABLE_DRIVER)
+                || (metrics.getEligibleDriverCount() != null && metrics.getEligibleDriverCount() == 0
+                && metrics.getTotalStopCount() != null && metrics.getTotalStopCount() > 0)) {
+            IssueCandidate issue = new IssueCandidate(10, "ERROR");
+            issue.type = DisRouteWarningCode.NO_AVAILABLE_DRIVER;
+            issue.title = "当前没有可派司机";
+            issue.description = buildNoAvailableDriverDescription(driverList);
+            issue.suggestion = "请在司机可派状态中开启司机";
+            candidates.add(issue);
+        }
+
+        List<RouteDispatchWarning> lockedWarnings = filterWarnings(warnings, DisRouteWarningCode.LOCKED_ON_INELIGIBLE_DRIVER);
+        if (!lockedWarnings.isEmpty()) {
+            IssueCandidate issue = new IssueCandidate(20, "ERROR");
+            issue.type = DisRouteWarningCode.LOCKED_ON_INELIGIBLE_DRIVER;
+            if (lockedWarnings.size() == 1) {
+                String dept = lockedWarnings.get(0).getDepartmentName();
+                issue.title = (dept != null && !dept.isEmpty() ? dept : "站点") + "已锁定在不可派司机上";
+            } else {
+                issue.title = lockedWarnings.size() + " 个站点已锁定在不可派司机上";
+            }
+            issue.description = "系统不会自动换司机";
+            issue.suggestion = "请先解锁或改派";
+            candidates.add(issue);
+        }
+
+        int lateCount = metrics.getLateStopCount() != null ? metrics.getLateStopCount() : 0;
+        if (lateCount > 0) {
+            IssueCandidate issue = new IssueCandidate(40, "WARN");
+            issue.type = DisRouteWarningCode.STOP_LATE;
+            issue.title = lateCount + " 个站点预计迟到";
+            issue.description = buildStopLateDescription(warnings, metrics);
+            issue.suggestion = "请调整路线或送达时间窗";
+            candidates.add(issue);
+        }
+
+        if (plan != null && DisRouteScheduleStatus.HAS_LATE.equals(plan.getNxDrpScheduleStatus()) && lateCount == 0) {
+            for (RouteDispatchWarning warning : warnings) {
+                if ("SANDBOX_LATE".equals(warning.getCode())) {
+                    IssueCandidate issue = new IssueCandidate(45, "WARN");
+                    issue.type = "SANDBOX_LATE";
+                    issue.title = warning.getMessage() != null ? warning.getMessage() : "部分站点预计迟到";
+                    issue.description = warning.getMessage();
+                    issue.suggestion = "请调整路线或送达时间窗";
+                    candidates.add(issue);
+                    break;
+                }
+            }
+        }
+
+        return candidates;
+    }
+
+    private String resolveSandboxStatus(String feasibilityStatus,
+                                        DispatchWorkbenchMetricsDto metrics,
+                                        List<DispatchWorkbenchIssueDto> topIssues) {
+        if (DisRouteFeasibilityStatus.INFEASIBLE.equals(feasibilityStatus)) {
+            return DisRouteWorkbenchStatus.BLOCKED;
+        }
+        if (DisRouteFeasibilityStatus.HAS_LATE.equals(feasibilityStatus)
+                || (metrics.getLateStopCount() != null && metrics.getLateStopCount() > 0)) {
+            return DisRouteWorkbenchStatus.WARNING;
+        }
+        if (hasErrorIssue(topIssues)) {
+            return DisRouteWorkbenchStatus.WARNING;
+        }
+        return DisRouteWorkbenchStatus.READY;
+    }
+
+    private String resolveSandboxStatusLabel(String status, List<DispatchWorkbenchIssueDto> topIssues) {
+        if (DisRouteWorkbenchStatus.READY.equals(status)) {
+            return "可派车";
+        }
+        if (DisRouteWorkbenchStatus.BLOCKED.equals(status)) {
+            return "不可派车";
+        }
+        return topIssues.isEmpty() ? "" : "待处理";
+    }
+
+    private String buildSandboxTitle(String dateLabel,
+                                     List<DispatchWorkbenchIssueDto> topIssues,
+                                     String status,
+                                     DispatchWorkbenchMetricsDto metrics,
+                                     boolean windowActive) {
+        if (!windowActive) {
+            return dateLabel;
+        }
+        if (DisRouteWorkbenchStatus.READY.equals(status)) {
+            int stops = metrics.getTotalStopCount() != null ? metrics.getTotalStopCount() : 0;
+            return dateLabel + " · " + stops + " 个客户待派";
+        }
+        if (!topIssues.isEmpty() && topIssues.get(0).getTitle() != null) {
+            return dateLabel + " · " + topIssues.get(0).getTitle();
+        }
+        return dateLabel;
+    }
+
+    private String buildSandboxSubtitle(boolean windowActive,
+                                        List<DispatchWorkbenchIssueDto> topIssues,
+                                        String status) {
+        if (!windowActive) {
+            return "";
+        }
+        if (DisRouteWorkbenchStatus.READY.equals(status)) {
+            return "动态沙盘已就绪，可确认装车";
+        }
+        if (!topIssues.isEmpty() && topIssues.get(0).getDescription() != null) {
+            return topIssues.get(0).getDescription();
+        }
+        return "";
+    }
+
+    private String buildSandboxPrimaryReason(boolean windowActive,
+                                             List<DispatchWorkbenchIssueDto> topIssues,
+                                             String status) {
+        if (!windowActive || DisRouteWorkbenchStatus.READY.equals(status)) {
+            return "";
+        }
+        if (!topIssues.isEmpty() && topIssues.get(0).getTitle() != null) {
+            return topIssues.get(0).getTitle();
+        }
+        return "";
+    }
+
+    private String buildSandboxOperationHint(boolean windowActive,
+                                           List<DispatchWorkbenchIssueDto> topIssues,
+                                           String status) {
+        if (!windowActive) {
+            return "";
+        }
+        if (DisRouteWorkbenchStatus.READY.equals(status)) {
+            return "可按沙盘建议确认装车";
+        }
+        if (!topIssues.isEmpty() && topIssues.get(0).getSuggestion() != null) {
+            return topIssues.get(0).getSuggestion();
+        }
+        return "";
+    }
+
+    @Override
     public DispatchWorkbenchDto build(NxDisRoutePlanEntity plan,
                                         List<NxDisShipmentTaskEntity> tasks,
                                         RouteFeasibilityResult feasibility,
@@ -52,15 +365,19 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
                                         String dispatchBatch) {
         String batch = normalizeBatch(dispatchBatch != null ? dispatchBatch : plan.getNxDrpDispatchBatch());
         String batchLabel = DisRouteDispatchLabels.label(batch);
+        Date serverNow = new Date();
+        String effectiveRouteDate = routeDate != null ? routeDate
+                : (plan.getNxDrpRouteDate() != null ? plan.getNxDrpRouteDate() : plan.getNxDrpPlanDate());
         List<RouteDispatchWarning> warnings = feasibility != null && feasibility.getWarnings() != null
                 ? feasibility.getWarnings() : Collections.<RouteDispatchWarning>emptyList();
         String feasibilityStatus = feasibility != null ? feasibility.getFeasibilityStatus() : null;
 
         DriverDispatchListResponse driverList = disRouteDriverDispatchListService.listDriversForBatch(
-                plan.getNxDrpDistributerId(), routeDate, batch);
+                plan.getNxDrpDistributerId(), effectiveRouteDate, batch);
 
         DispatchWorkbenchMetricsDto metrics = buildMetrics(plan, warnings, driverList, tasks);
-        List<IssueCandidate> issueCandidates = buildIssueCandidates(warnings, driverList, metrics);
+        List<IssueCandidate> issueCandidates = buildIssueCandidates(
+                warnings, driverList, metrics, plan, effectiveRouteDate, serverNow, batchLabel);
         List<DispatchWorkbenchIssueDto> topIssues = pickTopIssues(issueCandidates);
 
         String status = resolveStatus(plan, feasibilityStatus, metrics, topIssues);
@@ -68,12 +385,21 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
         String severity = resolveSeverity(status);
 
         DispatchWorkbenchDto workbench = new DispatchWorkbenchDto();
+        workbench.setRouteDate(effectiveRouteDate);
+        workbench.setRouteDateLabel(plan.getRouteDateLabel() != null
+                ? plan.getRouteDateLabel()
+                : DisRouteTemporalHelper.formatRouteDateLabel(effectiveRouteDate, serverNow));
+        workbench.setDispatchBatch(batch);
+        workbench.setDispatchBatchLabel(batchLabel);
+        workbench.setPlanTemporalStatus(plan.getPlanTemporalStatus());
+        workbench.setPlanTemporalStatusLabel(plan.getPlanTemporalStatusLabel());
+        workbench.setServerNow(RouteDispatchDateFormat.format(serverNow));
         workbench.setStatus(status);
         workbench.setStatusLabel(statusLabel);
-        workbench.setTitle(buildTitle(batchLabel, status, statusLabel));
+        workbench.setTitle(buildTitle(effectiveRouteDate, serverNow, batchLabel, status, statusLabel));
         workbench.setSubtitle(buildSubtitle(status, topIssues, metrics, driverList));
         workbench.setSeverity(severity);
-        workbench.setPrimaryReason(buildPrimaryReason(topIssues, status, metrics));
+        workbench.setPrimaryReason(buildPrimaryReason(topIssues, status, metrics, plan));
         workbench.setOperationHint(buildOperationHint(status, plan, topIssues, metrics));
         workbench.setMetrics(metrics);
         workbench.setTopIssues(topIssues);
@@ -146,8 +472,24 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
 
     private List<IssueCandidate> buildIssueCandidates(List<RouteDispatchWarning> warnings,
                                                       DriverDispatchListResponse driverList,
-                                                      DispatchWorkbenchMetricsDto metrics) {
+                                                      DispatchWorkbenchMetricsDto metrics,
+                                                      NxDisRoutePlanEntity plan,
+                                                      String routeDate,
+                                                      Date serverNow,
+                                                      String batchLabel) {
         List<IssueCandidate> candidates = new ArrayList<IssueCandidate>();
+
+        if (plan != null && DisRoutePlanTemporalStatus.EXPIRED.equals(plan.getPlanTemporalStatus())) {
+            IssueCandidate issue = new IssueCandidate(5, "ERROR");
+            issue.type = "PLAN_EXPIRED";
+            String dateLabel = plan.getRouteDateLabel() != null
+                    ? plan.getRouteDateLabel()
+                    : DisRouteTemporalHelper.formatRouteDateLabel(routeDate, serverNow);
+            issue.title = "当前" + dateLabel + batchLabel + "计划已过期";
+            issue.description = "请重新生成方案或切换送达日期/批次";
+            issue.suggestion = "可重新 simulate 或切换 routeDate / dispatchBatch";
+            candidates.add(issue);
+        }
 
         if (containsWarning(warnings, DisRouteWarningCode.NO_AVAILABLE_DRIVER)
                 || (metrics.getEligibleDriverCount() != null && metrics.getEligibleDriverCount() == 0
@@ -156,7 +498,7 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
             issue.type = DisRouteWarningCode.NO_AVAILABLE_DRIVER;
             issue.title = "当前没有可派司机";
             issue.description = buildNoAvailableDriverDescription(driverList);
-            issue.suggestion = "请先安排司机上岗，或切换批次";
+            issue.suggestion = "请在司机可派状态中开启司机";
             candidates.add(issue);
         }
 
@@ -172,16 +514,6 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
             }
             issue.description = "系统不会自动换司机";
             issue.suggestion = "请先解锁或改派";
-            candidates.add(issue);
-        }
-
-        List<RouteDispatchWarning> checkInLate = filterWarnings(warnings, DisRouteWarningCode.DRIVER_CHECKIN_TOO_LATE);
-        if (!checkInLate.isEmpty() && !containsWarning(warnings, DisRouteWarningCode.NO_AVAILABLE_DRIVER)) {
-            IssueCandidate issue = new IssueCandidate(30, "ERROR");
-            issue.type = DisRouteWarningCode.DRIVER_CHECKIN_TOO_LATE;
-            issue.title = "有司机上岗过晚";
-            issue.description = summarizeDriverNames(checkInLate);
-            issue.suggestion = "请切换批次或安排更早到岗";
             candidates.add(issue);
         }
 
@@ -229,6 +561,9 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
         if (DisRouteFeasibilityStatus.INFEASIBLE.equals(feasibilityStatus)) {
             return DisRouteWorkbenchStatus.BLOCKED;
         }
+        if (DisRoutePlanTemporalStatus.EXPIRED.equals(plan.getPlanTemporalStatus())) {
+            return DisRouteWorkbenchStatus.BLOCKED;
+        }
         if (DisRouteScheduleStatus.HAS_LATE.equals(plan.getNxDrpScheduleStatus())
                 || DisRouteFeasibilityStatus.HAS_LATE.equals(feasibilityStatus)
                 || (metrics.getLateStopCount() != null && metrics.getLateStopCount() > 0)) {
@@ -263,11 +598,27 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
         return "INFO";
     }
 
-    private String buildTitle(String batchLabel, String status, String statusLabel) {
+    private String buildTitle(String routeDate,
+                              Date serverNow,
+                              String batchLabel,
+                              String status,
+                              String statusLabel) {
         if (DisRouteWorkbenchStatus.EMPTY.equals(status)) {
-            return "今日暂无派车计划";
+            return buildDatedTitle(routeDate, serverNow, batchLabel, "暂无派车计划");
         }
-        return batchLabel + statusLabel;
+        String dateLabel = DisRouteTemporalHelper.formatRouteDateLabel(routeDate, serverNow);
+        if (dateLabel == null) {
+            dateLabel = routeDate != null ? routeDate : "当日";
+        }
+        return dateLabel + batchLabel + statusLabel;
+    }
+
+    private String buildDatedTitle(String routeDate, Date serverNow, String batchLabel, String suffix) {
+        String dateLabel = DisRouteTemporalHelper.formatRouteDateLabel(routeDate, serverNow);
+        if (dateLabel == null) {
+            dateLabel = routeDate != null ? routeDate : "当日";
+        }
+        return dateLabel + batchLabel + suffix;
     }
 
     private String buildSubtitle(String status,
@@ -279,7 +630,7 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
         }
         if (DisRouteWorkbenchStatus.BLOCKED.equals(status)
                 && metrics.getEligibleDriverCount() != null && metrics.getEligibleDriverCount() == 0) {
-            return "当前没有可派司机，请先处理司机上岗或改派";
+            return "当前没有可派司机，请在司机可派状态中开启司机";
         }
         if (!topIssues.isEmpty() && topIssues.get(0).getTitle() != null) {
             return topIssues.get(0).getTitle();
@@ -289,9 +640,13 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
 
     private String buildPrimaryReason(List<DispatchWorkbenchIssueDto> topIssues,
                                       String status,
-                                      DispatchWorkbenchMetricsDto metrics) {
+                                      DispatchWorkbenchMetricsDto metrics,
+                                      NxDisRoutePlanEntity plan) {
         if (!topIssues.isEmpty()) {
             return topIssues.get(0).getTitle();
+        }
+        if (plan != null && DisRoutePlanTemporalStatus.EXPIRED.equals(plan.getPlanTemporalStatus())) {
+            return "当前路线计划已过期";
         }
         if (DisRouteWorkbenchStatus.READY.equals(status)) {
             return "当前批次可正常发车";
@@ -314,7 +669,7 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
         }
         StringBuilder hint = new StringBuilder("请先处理");
         if (metrics.getEligibleDriverCount() != null && metrics.getEligibleDriverCount() == 0) {
-            hint.append("司机上岗");
+            hint.append("司机可派状态");
         }
         if (metrics.getLockedConflictCount() != null && metrics.getLockedConflictCount() > 0) {
             if (hint.length() > 3) {
@@ -339,7 +694,7 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
                                                               DispatchWorkbenchMetricsDto metrics,
                                                               DriverDispatchListResponse driverList,
                                                               String status) {
-        boolean needCheckIn = hasOffDutyOrIneligibleDrivers(driverList);
+        boolean needEnableDrivers = hasOffDutyOrIneligibleDrivers(driverList);
         boolean hasUnlock = metrics.getLockedConflictCount() != null && metrics.getLockedConflictCount() > 0
                 || hasUnlockableTask(tasks);
         boolean canReassign = hasAssignableOrMovableTask(tasks);
@@ -348,9 +703,9 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
         List<DispatchWorkbenchActionDto> actions = new ArrayList<DispatchWorkbenchActionDto>();
         actions.add(action(
                 DisRouteWorkbenchActionCode.CHECK_IN_DRIVER,
-                "司机上岗",
-                needCheckIn,
-                needCheckIn ? "先让可用司机上岗" : "当前已有可派司机"));
+                "开启可派",
+                needEnableDrivers,
+                needEnableDrivers ? "请在司机可派状态中开启司机" : "当前已有可派司机"));
         actions.add(action(
                 DisRouteWorkbenchActionCode.UNLOCK_LOCKED_STOP,
                 "处理锁定站点",
@@ -374,7 +729,7 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
 
     private List<DispatchWorkbenchActionDto> buildEmptyActions() {
         List<DispatchWorkbenchActionDto> actions = new ArrayList<DispatchWorkbenchActionDto>();
-        actions.add(action(DisRouteWorkbenchActionCode.CHECK_IN_DRIVER, "司机上岗", false, "请先生成计划"));
+        actions.add(action(DisRouteWorkbenchActionCode.CHECK_IN_DRIVER, "开启可派", false, "请先生成计划"));
         actions.add(action(DisRouteWorkbenchActionCode.UNLOCK_LOCKED_STOP, "处理锁定站点", false, "暂无计划"));
         actions.add(action(DisRouteWorkbenchActionCode.REASSIGN_DRIVER, "重新分派", false, "暂无计划"));
         actions.add(action(DisRouteWorkbenchActionCode.GO_LOADING, "去装车", false, "暂无计划"));
@@ -400,13 +755,7 @@ public class DisRouteDispatchWorkbenchServiceImpl implements DisRouteDispatchWor
                 continue;
             }
             String name = driver.getDriverName() != null ? driver.getDriverName() : String.valueOf(driver.getDriverUserId());
-            if (OFF_DUTY.equals(driver.getDutyStatus())) {
-                parts.add(name + "未上岗");
-            } else if (DisRouteBatchEligibility.INELIGIBLE_CHECKIN_TOO_LATE.equals(driver.getIneligibleReason())) {
-                parts.add(name + "上岗过晚");
-            } else {
-                parts.add(name + "不可派");
-            }
+            parts.add(name + "不可派");
         }
         if (parts.isEmpty()) {
             return "本批次无可派司机";

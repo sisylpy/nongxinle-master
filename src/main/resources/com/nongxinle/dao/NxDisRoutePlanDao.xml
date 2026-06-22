@@ -48,7 +48,7 @@
         order by nx_drp_id desc
     </select>
 
-    <!-- Phase 1.5a：eligible live order（沙盘候选，do_status < 3）；simulate 后续实现使用 -->
+    <!-- Phase 1.5a / 3a：eligible live order（do_status < 3）；routeDate 为空时不按送达日过滤（沙盘用） -->
     <select id="queryEligibleLiveOrderSnapshots" resultType="com.nongxinle.dto.route.DisRouteOrderSnapshotDto">
         select dor.nx_department_orders_id     as orderId,
                ds.nx_department_id             as departmentId,
@@ -59,14 +59,24 @@
                dor.nx_DO_goods_name            as goodsName,
                dor.nx_DO_quantity              as quantity,
                dor.nx_DO_standard              as standard,
-               dor.nx_DO_remark                as remark
+               dor.nx_DO_remark                as remark,
+               dor.nx_DO_arrive_date           as arriveDate,
+               dor.nx_DO_arrive_only_date      as arriveOnlyDate,
+               dor.nx_DO_apply_date            as applyDate
         from nx_department_orders dor
                  join nx_department ds on ds.nx_department_id = dor.nx_DO_department_father_id
         where dor.nx_DO_distributer_id = #{disId}
+          and ds.nx_department_dis_id = #{disId}
+          and dor.nx_DO_collaborative_nx_dis_id = -1
           and dor.nx_DO_status &lt; 3
           and dor.nx_DO_gb_department_id = -1
           and dor.nx_DO_nx_comm_restraunt_id = -1
-          and dor.nx_DO_apply_date = #{routeDate}
+        <if test="routeDate != null and routeDate != ''">
+          and (
+              dor.nx_DO_arrive_date = #{routeDate}
+              or dor.nx_DO_arrive_only_date = #{routeDateOnly}
+          )
+        </if>
         order by ds.nx_department_pinyin, dor.nx_department_orders_id
     </select>
 

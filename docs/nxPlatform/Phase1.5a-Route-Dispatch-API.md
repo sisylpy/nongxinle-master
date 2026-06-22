@@ -1,9 +1,36 @@
 # Phase 1.5a 路线派单 API 清单（OpenAPI 级）
 
+> ⚠️ **已废弃 — 不可作为当前合同（2026-06-22）**  
+> 归档副本：[`docs/route-dispatch/archive/old-contracts/Phase1.5a-Route-Dispatch-API-ARCHIVED.md`](../route-dispatch/archive/old-contracts/Phase1.5a-Route-Dispatch-API-ARCHIVED.md)  
+> 当前正式口径：[`Route-Dispatch-Backend-Handoff-20260622.md`](../route-dispatch/Route-Dispatch-Backend-Handoff-20260622.md)
+
+---
+
 > Base path: `/api/nxdisroutedispatch`  
 > 前置 SQL: `docs/sql/patches/upgrade_nx_dis_route_dispatch_phase1_5a.sql`  
 > 保留骨架: `RouteCostProvider` / `RouteOptimizer` / `route_plan` / `driver_route` / `route_stop`  
 > 不改: jcJieDan、旧 `disGetDriversOptimalRoute`、order/bill 原状态机
+
+---
+
+## ⚠️ Phase 3 动态沙盘（设计基准，优先阅读）
+
+**当前实现仍是「simulate 写库 + GET 只读」模式，与目标业务不符。**
+
+改造设计见：**[`Route-Dispatch-Sandbox-Design.md`](./Route-Dispatch-Sandbox-Design.md)**
+
+核心变更方向：
+
+| 概念 | 现状 | 目标 |
+|------|------|------|
+| 沙盘 | simulate 生成后像固定方案存 DB | **实时计算**建议分派，打开页面即最新 |
+| 确认 | assign 锁单 task（已部分正确） | **局部锁定**，其他客户继续流动 |
+| 读接口 | `GET /plan/today` 只读库 | `GET /sandbox/today` 读 + 自动 compute |
+| simulate | 老板日常按钮 | **deprecated** → 内部 `SandboxComputeService` |
+
+**订单主权**：未确认前 `nx_department_orders`；bill 后 `nx_department_order_history`；task_item 仅 ID 关联。
+
+**前端**：onShow 自动拉沙盘；**不要**把「重新生成派车方案」当主流程。
 
 ---
 
@@ -34,6 +61,11 @@
 ---
 
 ## 1. POST `/simulate`
+
+> **⚠️ Phase 3 起 deprecated（设计）**  
+> 对外不应再作为老板日常「重新生成方案」主流程。  
+> 语义将改为内部 **沙盘计算**（见 `Route-Dispatch-Sandbox-Design.md` §6）。  
+> 目标接口：`GET /sandbox/today`（autoCompute）替代手动调用。
 
 自动沙盘分派：从 eligible live order 生成/更新 task，运行优化器，产出/更新 `SIMULATED` plan。
 
@@ -504,3 +536,27 @@ reconcilePlanStatus:
 - `IN_DELIVERY` / `DELIVERED` 司机执行 API
 - Runner 自动化测试
 - stop_order 表 DROP（仅停止写入）
+
+---
+
+## 14. Phase 3 规划接口
+
+### GET `/sandbox/today` ✅ Phase 3a
+
+今日派车主读接口：**打开即内存 sandbox compute**，不写未确认客户到 DB。
+
+| 参数 | 默认 | 说明 |
+|------|------|------|
+| `disId` | 必填 | |
+| `routeDate` | 今天 | |
+| `batchCode` | `MORNING` | |
+
+响应关键字段：`confirmedStops[]`、`sandboxSuggestedStops[]`、`unassignedStops[]`、`invalidStops[]`、`sandboxVersion`、`orderVersion`、`actionPermissions`。
+
+### POST `/sandbox/stops/confirm` ✅ Phase 3a
+
+确认沙盘客户（**无需 taskId**）。响应为完整 `sandbox/today` 读模型。
+
+### POST `/tasks/{taskId}/return-to-sandbox`（Phase 3c，未实现）
+
+保留调试；日常由 GET sandbox 触发内部 compute。

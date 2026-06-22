@@ -8,14 +8,28 @@ import com.nongxinle.service.DisRouteDispatchService;
 import com.nongxinle.service.DisRouteDispatchWorkbenchService;
 import com.nongxinle.service.DisRouteDriverDispatchListService;
 import com.nongxinle.service.DisRouteDispatchOperationPolicy;
+import com.nongxinle.service.impl.DisRouteDispatchReadIntegrityHelper;
 import com.nongxinle.service.DisRouteFeasibilityService;
 import com.nongxinle.service.DisRouteScheduleService;
 import com.nongxinle.service.DisRouteTaskTimeWindowService;
+import com.nongxinle.route.model.GeoPoint;
+import com.nongxinle.service.DisRouteSandboxConfirmLoadingService;
+import com.nongxinle.service.DisRouteSandboxConfirmService;
+import com.nongxinle.service.DisRouteSandboxDeliveryExecutionService;
+import com.nongxinle.service.DisRouteSandboxDriverDepartService;
+import com.nongxinle.service.DisRouteSandboxRouteLoadingGateService;
+import com.nongxinle.service.DisRouteSandboxManualDispatchService;
+import com.nongxinle.service.DisRouteSandboxReturnService;
+import com.nongxinle.service.DisRouteSandboxTodayService;
 import com.nongxinle.service.DisShipmentTaskService;
+import com.nongxinle.route.DisRouteDispatchLabels;
+import com.nongxinle.route.DisRouteTemporalHelper;
+import com.nongxinle.route.RouteDispatchDateFormat;
 import com.nongxinle.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -48,9 +62,27 @@ public class NxDisRouteDispatchController {
     @Autowired
     private DisRouteDispatchWorkbenchService disRouteDispatchWorkbenchService;
     @Autowired
+    private DisRouteSandboxTodayService disRouteSandboxTodayService;
+    @Autowired
+    private DisRouteSandboxConfirmService disRouteSandboxConfirmService;
+    @Autowired
+    private DisRouteSandboxReturnService disRouteSandboxReturnService;
+    @Autowired
+    private DisRouteSandboxManualDispatchService disRouteSandboxManualDispatchService;
+    @Autowired
+    private DisRouteSandboxRouteLoadingGateService disRouteSandboxRouteLoadingGateService;
+    @Autowired
+    private DisRouteSandboxDriverDepartService disRouteSandboxDriverDepartService;
+    @Autowired
+    private DisRouteSandboxConfirmLoadingService disRouteSandboxConfirmLoadingService;
+    @Autowired
+    private DisRouteSandboxDeliveryExecutionService disRouteSandboxDeliveryExecutionService;
+    @Autowired
+    private DisRouteDispatchReadIntegrityHelper disRouteDispatchReadIntegrityHelper;
+    @Autowired
     private DisRouteTaskTimeWindowService disRouteTaskTimeWindowService;
 
-    /** 配送商下全部司机账号（含未上岗），不含 simulate 派车过滤 */
+    /** 配送商下全部司机账号（含不可派），不含 simulate 派车过滤 */
     @RequestMapping(value = "/drivers", method = RequestMethod.GET)
     @ResponseBody
     public R listDrivers(@RequestParam Integer disId) {
@@ -61,7 +93,7 @@ public class NxDisRouteDispatchController {
         }
     }
 
-    /** Phase 2b-3：司机可派列表（含上岗/批次可派性/当前路线摘要，读-only） */
+    /** Phase 2b-3：司机可派列表。正式合同：driverCards[] + summary（不含 drivers[]）。 */
     @RequestMapping(value = "/drivers/available", method = RequestMethod.GET)
     @ResponseBody
     public R listAvailableDrivers(@RequestParam Integer disId,
@@ -95,24 +127,6 @@ public class NxDisRouteDispatchController {
         } catch (Exception e) {
             return R.error(e.getMessage());
         }
-    }
-
-    /** Phase 1.5a：沙盘自动分派（骨架，业务后续实现） */
-    @RequestMapping(value = "/simulate", method = RequestMethod.POST)
-    @ResponseBody
-    public R simulate(@RequestBody DisRoutePreviewRequest request) {
-        try {
-            return R.ok().put("data", disRouteDispatchService.simulate(request));
-        } catch (Exception e) {
-            return R.error(e.getMessage());
-        }
-    }
-
-    /** @deprecated 旧主链已下线，请用 POST /simulate */
-    @RequestMapping(value = "/preview", method = RequestMethod.POST)
-    @ResponseBody
-    public R preview(@RequestBody DisRoutePreviewRequest request) {
-        return R.error(-1, "旧 preview 已下线，请使用 POST /api/nxdisroutedispatch/simulate");
     }
 
     @RequestMapping(value = "/plan/{planId}/reoptimize", method = RequestMethod.POST)
@@ -169,15 +183,35 @@ public class NxDisRouteDispatchController {
                                                    RouteFeasibilityResult feasibility) {
         Map<String, Object> data = new LinkedHashMap<String, Object>();
         String normalizedBatch = normalizeDispatchBatchParam(dispatchBatch);
-        data.put("routeDate", routeDate);
+        java.util.Date serverNow = new java.util.Date();
+        String effectiveRouteDate = routeDate;
+        if (plan != null && (effectiveRouteDate == null || effectiveRouteDate.trim().isEmpty())) {
+            effectiveRouteDate = plan.getNxDrpRouteDate() != null ? plan.getNxDrpRouteDate() : plan.getNxDrpPlanDate();
+        }
+        data.put("routeDate", effectiveRouteDate);
+        data.put("routeDateLabel", DisRouteTemporalHelper.formatRouteDateLabel(effectiveRouteDate, serverNow));
         data.put("dispatchBatch", normalizedBatch);
+        data.put("dispatchBatchLabel", DisRouteDispatchLabels.label(normalizedBatch));
+        data.put("serverNow", RouteDispatchDateFormat.format(serverNow));
+        data.put("currentServerTime", RouteDispatchDateFormat.format(serverNow));
         if (plan == null) {
             data.put("plan", null);
+            data.put("planTemporalStatus", null);
+            data.put("planTemporalStatusLabel", null);
             data.put("tasks", Collections.emptyList());
             data.put("feasibilityStatus", null);
             data.put("warnings", Collections.emptyList());
-            data.put("dispatchWorkbench", disRouteDispatchWorkbenchService.buildEmpty(routeDate, normalizedBatch));
+            data.put("dispatchWorkbench", disRouteDispatchWorkbenchService.buildEmpty(effectiveRouteDate, normalizedBatch));
             return data;
+        }
+        if (plan.getNxDrpBatchStartAt() != null) {
+            data.put("batchStartAt", RouteDispatchDateFormat.format(plan.getNxDrpBatchStartAt()));
+        }
+        if (plan.getNxDrpBatchEndAt() != null) {
+            data.put("batchEndAt", RouteDispatchDateFormat.format(plan.getNxDrpBatchEndAt()));
+        }
+        if (plan.getNxDrpDefaultDepartAt() != null) {
+            data.put("defaultDepartAt", RouteDispatchDateFormat.format(plan.getNxDrpDefaultDepartAt()));
         }
         RouteFeasibilityResult feasibilityResult;
         if (feasibility != null) {
@@ -190,14 +224,60 @@ public class NxDisRouteDispatchController {
             data.put("warnings", feasibilityResult.getWarnings());
         }
         List<NxDisShipmentTaskEntity> tasks = disShipmentTaskService.queryTasksByPlanId(plan.getNxDrpId());
+        DisRouteDispatchIntegrityResult integrity = disRouteDispatchReadIntegrityHelper.apply(
+                plan, tasks, effectiveRouteDate);
+        tasks = integrity.getDisplayTasks();
+        plan.setShipmentTasks(tasks);
         RouteDispatchReadModelAssembler.linkSharedTaskInstances(plan, tasks);
         disRouteDispatchOperationPolicy.enrichTasksReadModel(tasks, plan, feasibilityResult);
         disRouteDispatchOperationPolicy.enrichPlanReadModel(plan, feasibilityResult);
         data.put("plan", RouteDispatchReadModelAssembler.toPlanMap(plan));
         data.put("tasks", RouteDispatchReadModelAssembler.toTaskMaps(tasks));
-        data.put("dispatchWorkbench", disRouteDispatchWorkbenchService.build(
-                plan, tasks, feasibilityResult, routeDate, normalizedBatch));
+        data.put("invalidStops", integrity.getInvalidStops());
+        data.put("invalidStopCount", integrity.getInvalidStopCount());
+        data.put("planTemporalStatus", plan.getPlanTemporalStatus());
+        data.put("planTemporalStatusLabel", plan.getPlanTemporalStatusLabel());
+        DispatchWorkbenchDto workbench = disRouteDispatchWorkbenchService.build(
+                plan, tasks, feasibilityResult, effectiveRouteDate, normalizedBatch);
+        appendInvalidStopWorkbenchHint(workbench, integrity);
+        if ((tasks == null || tasks.isEmpty()) && integrity.getInvalidStopCount() > 0) {
+            appendNoEligibleOrdersHint(workbench);
+        }
+        data.put("dispatchWorkbench", workbench);
         return data;
+    }
+
+    private void appendInvalidStopWorkbenchHint(DispatchWorkbenchDto workbench,
+                                                DisRouteDispatchIntegrityResult integrity) {
+        if (workbench == null || integrity == null || integrity.getInvalidStopCount() <= 0) {
+            return;
+        }
+        List<DispatchWorkbenchIssueDto> issues = workbench.getTopIssues() != null
+                ? new ArrayList<DispatchWorkbenchIssueDto>(workbench.getTopIssues())
+                : new ArrayList<DispatchWorkbenchIssueDto>();
+        DispatchWorkbenchIssueDto issue = new DispatchWorkbenchIssueDto();
+        issue.setType("STALE_DISPATCH_STOPS");
+        issue.setSeverity("WARN");
+        issue.setTitle("存在无效旧派车站点");
+        issue.setDescription("有 " + integrity.getInvalidStopCount()
+                + " 个站点无当前有效订单，已从今日派车视图隐藏");
+        issue.setSuggestion("请刷新沙盘；旧 SIMULATED 残留站点需人工清理");
+        issues.add(0, issue);
+        if (issues.size() > 3) {
+            issues = issues.subList(0, 3);
+        }
+        workbench.setTopIssues(issues);
+        if (workbench.getOperationHint() == null || workbench.getOperationHint().trim().isEmpty()) {
+            workbench.setOperationHint(issue.getDescription() + "。" + issue.getSuggestion());
+        }
+    }
+
+    private void appendNoEligibleOrdersHint(DispatchWorkbenchDto workbench) {
+        if (workbench == null) {
+            return;
+        }
+        workbench.setPrimaryReason("今日暂无有效订货订单");
+        workbench.setOperationHint("当前无客户订货，动态沙盘为空；有新订单后打开页面即自动计算建议");
     }
 
     private String normalizeDispatchBatchParam(String batchCode) {
@@ -205,13 +285,6 @@ public class NxDisRouteDispatchController {
             return "MORNING";
         }
         return batchCode.trim().toUpperCase();
-    }
-
-    /** @deprecated 旧主链已下线，请用 POST /tasks/{taskId}/assign */
-    @RequestMapping(value = "/confirm", method = RequestMethod.POST)
-    @ResponseBody
-    public R confirm(@RequestBody Map<String, Object> body) {
-        return R.error(-1, "旧 confirm 已下线，请使用 POST /api/nxdisroutedispatch/tasks/{taskId}/assign");
     }
 
     @RequestMapping(value = "/tasks/{taskId}/assign", method = RequestMethod.POST)
@@ -262,8 +335,9 @@ public class NxDisRouteDispatchController {
             String routeDate = plan != null ? plan.getNxDrpRouteDate() : task.getNxDstRouteDate();
             String dispatchBatch = plan != null && plan.getNxDrpDispatchBatch() != null
                     ? plan.getNxDrpDispatchBatch() : "MORNING";
-            RouteFeasibilityResult feasibility = disRouteFeasibilityService.preview(task.getNxDstPlanId());
-            return R.ok().put("data", buildPlanQueryData(plan, routeDate, dispatchBatch, feasibility));
+            return R.ok().put("data", disRouteSandboxTodayService.buildToday(
+                    plan != null ? plan.getNxDrpDistributerId() : task.getNxDstDistributerId(),
+                    routeDate, dispatchBatch));
         } catch (Exception e) {
             return R.error(e.getMessage());
         }
@@ -315,6 +389,295 @@ public class NxDisRouteDispatchController {
         }
     }
 
+    /**
+     * Debug-only：全量沙盘快照（plan / workbench / executionDriverRoutes 等）。
+     * 正式老板页合同：{@link #getDispatchSandboxToday} → {@code data.pageViewModel} only。
+     * jcJieDan today.js 仍调用本路径但只读 pageViewModel，应迁正式路径。
+     */
+    @Deprecated
+    @RequestMapping(value = "/sandbox/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getSandboxToday(@RequestParam Integer disId,
+                             @RequestParam(required = false) String routeDate,
+                             @RequestParam(required = false, defaultValue = "MORNING") String batchCode,
+                             @RequestParam(required = false) Integer operatorUserId) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            Map<String, Object> data = disRouteSandboxTodayService.buildToday(
+                    disId, effectiveRouteDate, batchCode, operatorUserId);
+            return R.ok()
+                    .put("deprecated", true)
+                    .put("debugOnly", true)
+                    .put("formalEndpoint", "/api/nxdisroutedispatch/dispatch/sandbox/today")
+                    .put("message", "GET /sandbox/today 为 debug-only 全量快照；正式页面请用 GET /dispatch/sandbox/today")
+                    .put("data", data);
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 今日派单页正式接口：仅返回收缩后的 pageViewModel。调试全量见 GET /sandbox/today（deprecated）。 */
+    @RequestMapping(value = "/dispatch/sandbox/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getDispatchSandboxToday(@RequestParam Integer disId,
+                                     @RequestParam(required = false) String routeDate,
+                                     @RequestParam(required = false, defaultValue = "MORNING") String batchCode,
+                                     @RequestParam(required = false) Integer operatorUserId) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxTodayService.buildDispatchSandboxToday(
+                    disId, effectiveRouteDate, batchCode, operatorUserId));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    private static String formatDispatchError(Exception e) {
+        if (e == null) {
+            return "未知错误";
+        }
+        String message = e.getMessage();
+        if (message != null && !message.trim().isEmpty()) {
+            return message;
+        }
+        return e.getClass().getSimpleName();
+    }
+
+    /** Phase 3f：老板确认司机路线进入装车流程（路线级，保留站点确认关系） */
+    @RequestMapping(value = "/driver-routes/{driverRouteId}/enter-loading", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R enterDriverRouteLoading(@PathVariable("driverRouteId") Integer driverRouteId,
+                                     @RequestBody DriverRouteLoadingGateRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxRouteLoadingGateService.enterLoading(driverRouteId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 3f：撤销装车，整条路线回到今日派单（路线级，保留站点确认关系） */
+    @RequestMapping(value = "/driver-routes/{driverRouteId}/return-to-dispatch", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R returnDriverRouteToDispatch(@PathVariable("driverRouteId") Integer driverRouteId,
+                                         @RequestBody DriverRouteLoadingGateRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxRouteLoadingGateService.returnToDispatch(driverRouteId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 3a：确认沙盘客户装车/分派（无需预先 taskId） */
+    @RequestMapping(value = "/sandbox/stops/confirm", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R confirmSandboxStop(@RequestBody SandboxStopConfirmRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxConfirmService.confirmStop(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 2B-1：未分配客户 — 今日 ON_DUTY 司机全景 */
+    @RequestMapping(value = "/sandbox/manual-dispatch/driver-panorama", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R listManualDispatchDriverPanorama(@RequestBody SandboxManualDispatchBaseRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxManualDispatchService.listDriverPanorama(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 未分配客户：选择司机后的沙盘模拟与影响评估 */
+    @RequestMapping(value = "/sandbox/manual-dispatch/simulate", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R simulateManualDispatch(@RequestBody SandboxManualDispatchSimulateRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxManualDispatchService.simulate(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 未分配客户：人工路线编辑页 ViewModel（Phase 2B） */
+    @RequestMapping(value = "/sandbox/manual-dispatch/edit-page", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R buildManualDispatchEditPage(@RequestBody SandboxManualDispatchEditPageRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxManualDispatchService.buildEditPage(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 未分配客户：确认人工排单（写入正式任务快照） */
+    @RequestMapping(value = "/sandbox/manual-dispatch/confirm", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R confirmManualDispatch(@RequestBody SandboxStopConfirmRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxManualDispatchService.confirmManualDispatch(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 3c：已确认店返回动态沙盘（撤销派车确认，不删订单/配送单） */
+    @RequestMapping(value = "/sandbox/stops/{deliveryStopId}/return-to-sandbox", method = RequestMethod.POST)
+    @ResponseBody
+    public R returnSandboxStopToSandbox(@PathVariable("deliveryStopId") Integer deliveryStopId,
+                                        @RequestBody SandboxStopReturnToSandboxRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxReturnService.returnToSandbox(deliveryStopId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 3D：老板确认司机整车出发（driverRoute 级） */
+    @RequestMapping(value = "/driver-routes/{driverRouteId}/depart", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R departDriverRoute(@PathVariable("driverRouteId") Integer driverRouteId,
+                               @RequestBody DriverRouteDepartRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxDriverDepartService.depart(driverRouteId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 装车页：按司机确认出发，返回装车读模型 */
+    @RequestMapping(value = "/drivers/{driverUserId}/depart", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R departDriverByUserId(@PathVariable("driverUserId") Integer driverUserId,
+                                  @RequestBody DriverRouteDepartRequest request) {
+        try {
+            if (request == null) {
+                request = new DriverRouteDepartRequest();
+            }
+            request.setDriverUserId(driverUserId);
+            return R.ok().put("data", disRouteSandboxDriverDepartService.departByDriverUserId(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 单任务装车确认：ASSIGNED → READY_TO_GO，可选写 nx_do_purchase_status=5 */
+    @RequestMapping(value = "/tasks/{taskId}/confirm-loading", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R confirmTaskLoading(@PathVariable("taskId") Integer taskId,
+                                @RequestBody ConfirmLoadingRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxConfirmLoadingService.confirmTaskLoading(taskId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 整车装车确认：该 driverRoute 下全部 ASSIGNED task → READY_TO_GO */
+    @RequestMapping(value = "/driver-routes/{driverRouteId}/confirm-loading-all", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R confirmRouteLoadingAll(@PathVariable("driverRouteId") Integer driverRouteId,
+                                    @RequestBody ConfirmLoadingRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxConfirmLoadingService.confirmRouteLoadingAll(
+                    driverRouteId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 装车页正式接口：仅返回收缩后的 pageViewModel。调试数据见 GET /loading/today。 */
+    @RequestMapping(value = "/dispatch/loading/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getDispatchLoadingSandboxToday(@RequestParam Integer disId,
+                                            @RequestParam(required = false) String routeDate,
+                                            @RequestParam(required = false, defaultValue = "MORNING") String batchCode,
+                                            @RequestParam(required = false) Integer operatorUserId) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxTodayService.buildLoadingSandboxToday(
+                    disId, effectiveRouteDate, batchCode, operatorUserId));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 配送商今日装车读模型（老板/司机视角） */
+    @RequestMapping(value = "/loading/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getDispatchLoadingToday(@RequestParam Integer disId,
+                                     @RequestParam(required = false) String routeDate,
+                                     @RequestParam(required = false, defaultValue = "MORNING") String batchCode,
+                                     @RequestParam(required = false) Integer driverUserId,
+                                     @RequestParam(required = false) Integer operatorUserId) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxTodayService.buildLoadingToday(
+                    disId, effectiveRouteDate, batchCode, driverUserId, operatorUserId));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 配送商今日配送读模型（老板/司机视角，已出发路线） */
+    @RequestMapping(value = "/delivery/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getDispatchDeliveryToday(@RequestParam Integer disId,
+                                      @RequestParam(required = false) String routeDate,
+                                      @RequestParam(required = false, defaultValue = "MORNING") String batchCode,
+                                      @RequestParam(required = false) Integer driverUserId) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxTodayService.buildDeliveryToday(
+                    disId, effectiveRouteDate, batchCode, driverUserId));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 3E：司机端单店送货完成 */
+    @RequestMapping(value = "/delivery/stops/{deliveryStopId}/complete", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R completeDeliveryStop(@PathVariable("deliveryStopId") Integer deliveryStopId,
+                                  @RequestBody DeliveryStopCompleteRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxDeliveryExecutionService.completeStop(deliveryStopId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** Phase 3E：司机端配送异常记录 */
+    @RequestMapping(value = "/delivery/stops/{deliveryStopId}/exception", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R markDeliveryStopException(@PathVariable("deliveryStopId") Integer deliveryStopId,
+                                       @RequestBody DeliveryStopExceptionRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxDeliveryExecutionService.markException(deliveryStopId, request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
     @RequestMapping(value = "/plan/today", method = RequestMethod.GET)
     @ResponseBody
     public R getTodayPlan(@RequestParam Integer disId,
@@ -327,46 +690,5 @@ public class NxDisRouteDispatchController {
         } catch (Exception e) {
             return R.error(e.getMessage());
         }
-    }
-
-    @RequestMapping(value = "/driver/loading/today", method = RequestMethod.GET)
-    @ResponseBody
-    public R getDriverLoadingToday(@RequestParam Integer driverUserId) {
-        try {
-            return R.ok().put("data", toDriverTasksData(disRouteDispatchService.getDriverLoadingToday(driverUserId)));
-        } catch (Exception e) {
-            return R.error(e.getMessage());
-        }
-    }
-
-    @RequestMapping(value = "/driver/delivery/today", method = RequestMethod.GET)
-    @ResponseBody
-    public R getDriverDeliveryToday(@RequestParam Integer driverUserId) {
-        try {
-            return R.ok().put("data", toDriverTasksData(disRouteDispatchService.getDriverDeliveryToday(driverUserId)));
-        } catch (Exception e) {
-            return R.error(e.getMessage());
-        }
-    }
-
-    /** 显式 Map 输出，确保 Fastjson 序列化 data.driverRoute */
-    private Map<String, Object> toDriverTasksData(DriverRouteTasksResponse response) {
-        Map<String, Object> data = new LinkedHashMap<String, Object>();
-        if (response == null) {
-            return data;
-        }
-        data.put("routeDate", response.getRouteDate());
-        data.put("planId", response.getPlanId());
-        data.put("planStatus", response.getPlanStatus());
-        data.put("driverRoute", response.getDriverRoute());
-        data.put("tasks", response.getTasks());
-        return data;
-    }
-
-    /** @deprecated 请用 /driver/loading/today 或 /driver/delivery/today */
-    @RequestMapping(value = "/driver/route/today", method = RequestMethod.GET)
-    @ResponseBody
-    public R getDriverRouteToday(@RequestParam Integer driverUserId) {
-        return R.error(-1, "旧 driver/route/today 已下线，请使用 /driver/loading/today 或 /driver/delivery/today");
     }
 }

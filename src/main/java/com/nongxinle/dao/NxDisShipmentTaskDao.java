@@ -16,6 +16,8 @@ public interface NxDisShipmentTaskDao {
 
     List<NxDisShipmentTaskEntity> queryByPlanId(@Param("planId") Integer planId);
 
+    List<NxDisShipmentTaskEntity> queryByDriverRouteId(@Param("driverRouteId") Integer driverRouteId);
+
     List<NxDisShipmentTaskEntity> queryByDisRouteDateStatus(Map<String, Object> map);
 
     void save(NxDisShipmentTaskEntity entity);
@@ -23,4 +25,6 @@ public interface NxDisShipmentTaskDao {
     void update(NxDisShipmentTaskEntity entity);
 
     void clearOpenKey(@Param("taskId") Integer taskId);
+
+    void updateSchedule(NxDisShipmentTaskEntity entity);
 }

@@ -2,6 +2,8 @@ package com.nongxinle.route;
 
 import com.nongxinle.route.model.GeoPoint;
 
+import java.util.List;
+
 public final class RouteCoordinateUtils {
 
     private RouteCoordinateUtils() {
@@ -25,5 +27,30 @@ public final class RouteCoordinateUtils {
         point.setLat(lat);
         point.setLng(lng);
         return point;
+    }
+
+    /** 无市场坐标时，用站点坐标估算出发点（沙盘内存计算用）。 */
+    public static GeoPoint deriveCentroidDepot(List<GeoPoint> points) {
+        if (points == null || points.isEmpty()) {
+            return null;
+        }
+        double sumLat = 0;
+        double sumLng = 0;
+        int count = 0;
+        for (GeoPoint point : points) {
+            if (point == null || !isValidCoordinate(point.getLat(), point.getLng())) {
+                continue;
+            }
+            sumLat += Double.parseDouble(point.getLat().trim());
+            sumLng += Double.parseDouble(point.getLng().trim());
+            count++;
+        }
+        if (count == 0) {
+            return null;
+        }
+        GeoPoint centroid = new GeoPoint();
+        centroid.setLat(String.valueOf(sumLat / count));
+        centroid.setLng(String.valueOf(sumLng / count));
+        return centroid;
     }
 }

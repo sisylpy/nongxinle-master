@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 配送路线派单 Phase 2a + Phase 2b-1 SQL patch 一键执行
+# 配送路线派单 SQL patch 一键执行（Phase 2a ~ 3a.1）
 #
 # 用法:
 #   ./scripts/apply-route-dispatch-phase2-patches.sh
@@ -104,6 +104,10 @@ SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_dispatch%';
 SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_feasibility%';
 SHOW COLUMNS FROM nx_dis_route_plan LIKE 'nx_drp_dispatch%';
 SHOW COLUMNS FROM nx_dis_route_plan LIKE 'nx_drp_feasibility%';
+SHOW COLUMNS FROM nx_dis_shipment_task LIKE 'nx_dst_driver_route_id';
+SHOW COLUMNS FROM nx_dis_shipment_task LIKE 'nx_dst_route_seq';
+SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_route_status';
+SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_actual_depart_at';
 "
 }
 
@@ -117,9 +121,12 @@ main() {
 
   run_patch "Phase 2a schedule" "$PATCH_DIR/upgrade_nx_dis_route_schedule_phase2.sql"
   run_patch "Phase 2b-1 batch/feasibility" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase2b1.sql"
+  run_patch "Phase 2b-5 dispatch snapshot" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase2b5.sql"
+  run_patch "Phase 3a.1 task delivery stop fields" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase3a1.sql"
+  run_patch "Phase 3D driver route depart" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase3d.sql"
   verify_columns
 
-  log "全部完成。可重跑 assess / schedule 验收。"
+  log "全部完成。Phase 3a confirm / 3c return / 3D depart 依赖对应 SQL patch。"
 }
 
 main "$@"

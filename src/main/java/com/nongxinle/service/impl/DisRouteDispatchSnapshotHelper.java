@@ -16,7 +16,8 @@ import java.util.List;
 import static com.nongxinle.route.DisShipmentTaskItemStatus.ACTIVE;
 
 /**
- * Phase 2b-5：从 department + task items 生成派车快照，写入 task / stop。
+ * Phase 2b-5：从 department + task items（经 live/history 订单 enrich）生成派车汇总指标，写入 task / stop。
+ * 商品明细主权不在 task_item 列；applyItemMetrics 统计前经 OrderResolver 从订单表解析数量。
  */
 @Component
 public class DisRouteDispatchSnapshotHelper {
@@ -27,6 +28,8 @@ public class DisRouteDispatchSnapshotHelper {
     private NxDepartmentDao nxDepartmentDao;
     @Autowired
     private NxDisShipmentTaskItemDao nxDisShipmentTaskItemDao;
+    @Autowired
+    private DisRouteShipmentTaskItemOrderResolver disRouteShipmentTaskItemOrderResolver;
 
     public void refreshTaskSnapshot(NxDisShipmentTaskEntity task, boolean preserveTimeWindowOverride) {
         if (task == null || task.getNxDstId() == null) {
@@ -85,7 +88,9 @@ public class DisRouteDispatchSnapshotHelper {
         stop.setNxDrsTotalQuantity(task.getNxDstTotalQuantity());
         stop.setNxDrsEarliestDeliveryTimeS(task.getNxDstEarliestDeliveryTimeS());
         stop.setNxDrsLatestDeliveryTimeS(task.getNxDstLatestDeliveryTimeS());
-        stop.setNxDrsServiceMinutes(task.getNxDstServiceMinutes());
+        if (task.getNxDstServiceMinutes() != null) {
+            stop.setNxDrsServiceMinutes(task.getNxDstServiceMinutes());
+        }
         stop.setNxDrsTimeWindowOverrideFlag(task.getNxDstTimeWindowOverrideFlag());
         stop.setNxDrsTimeWindowAdjustReason(task.getNxDstTimeWindowAdjustReason());
     }
@@ -143,6 +148,7 @@ public class DisRouteDispatchSnapshotHelper {
             items = nxDisShipmentTaskItemDao.queryByTaskId(task.getNxDstId());
             task.setItems(items);
         }
+        disRouteShipmentTaskItemOrderResolver.enrichItems(items);
         int itemCount = 0;
         BigDecimal totalQty = BigDecimal.ZERO;
         if (items != null) {

@@ -2,6 +2,8 @@ package com.nongxinle.route.cost;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.nongxinle.route.DisRouteDistanceTypes;
+import com.nongxinle.route.RouteCoordinateUtils;
 import com.nongxinle.route.RouteCostProvider;
 import com.nongxinle.route.RouteCostProviderType;
 import com.nongxinle.route.model.CostMatrix;
@@ -33,6 +35,9 @@ public class TencentMatrixRouteCostProvider implements RouteCostProvider {
 
     @Override
     public CostMatrix buildMatrix(GeoPoint depot, List<RouteStopInput> stops) throws IOException {
+        if (depot == null || !RouteCoordinateUtils.isValidCoordinate(depot.getLat(), depot.getLng())) {
+            throw new IOException("出发点坐标无效，无法请求腾讯距离矩阵");
+        }
         List<GeoPoint> allPoints = new ArrayList<>();
         allPoints.add(depot);
         for (RouteStopInput stop : stops) {
@@ -42,14 +47,17 @@ public class TencentMatrixRouteCostProvider implements RouteCostProvider {
         int n = allPoints.size();
         long[][] distanceM = new long[n][n];
         long[][] durationS = new long[n][n];
+        String[][] distanceType = new String[n][n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 if (i == j) {
                     distanceM[i][j] = 0;
                     durationS[i][j] = 0;
+                    distanceType[i][j] = DisRouteDistanceTypes.ROUTE_DISTANCE;
                 } else {
                     distanceM[i][j] = Long.MAX_VALUE / 4;
                     durationS[i][j] = Long.MAX_VALUE / 4;
+                    distanceType[i][j] = DisRouteDistanceTypes.ROUTE_DISTANCE;
                 }
             }
         }
@@ -65,11 +73,17 @@ public class TencentMatrixRouteCostProvider implements RouteCostProvider {
                 targets.add(allPoints.get(to));
                 targetIndexes.add(to);
             }
-            MatrixLeg[] legs = queryMatrixLegs(fromPoint, targets);
+            MatrixLeg[] legs;
+            try {
+                legs = queryMatrixLegs(fromPoint, targets);
+            } catch (IOException ex) {
+                legs = fallbackLegs(fromPoint, targets);
+            }
             for (int k = 0; k < legs.length; k++) {
                 int to = targetIndexes.get(k);
                 distanceM[from][to] = legs[k].distanceM;
                 durationS[from][to] = legs[k].durationS;
+                distanceType[from][to] = legs[k].distanceType;
             }
             if (from > 0) {
                 try {
@@ -85,7 +99,21 @@ public class TencentMatrixRouteCostProvider implements RouteCostProvider {
         matrix.setStops(stops);
         matrix.setDistanceM(distanceM);
         matrix.setDurationS(durationS);
+        matrix.setDistanceType(distanceType);
+        matrix.setDistanceProvider(DisRouteDistanceTypes.PROVIDER_TENCENT_MATRIX);
         return matrix;
+    }
+
+    private MatrixLeg[] fallbackLegs(GeoPoint from, List<GeoPoint> targets) {
+        MatrixLeg[] legs = new MatrixLeg[targets.size()];
+        for (int i = 0; i < targets.size(); i++) {
+            MatrixLeg leg = new MatrixLeg();
+            leg.distanceM = HaversineStraightRouteCostProvider.haversineMeters(from, targets.get(i));
+            leg.durationS = Math.max(60L, Math.round(leg.distanceM / (30_000.0 / 3600.0)));
+            leg.distanceType = DisRouteDistanceTypes.ESTIMATED_STRAIGHT_DISTANCE;
+            legs[i] = leg;
+        }
+        return legs;
     }
 
     private MatrixLeg[] queryMatrixLegs(GeoPoint from, List<GeoPoint> targets) throws IOException {
@@ -119,6 +147,7 @@ public class TencentMatrixRouteCostProvider implements RouteCostProvider {
                 MatrixLeg leg = new MatrixLeg();
                 leg.distanceM = parseLongSafe(element.getString("distance"));
                 leg.durationS = parseLongSafe(element.getString("duration"));
+                leg.distanceType = DisRouteDistanceTypes.ROUTE_DISTANCE;
                 legs[start + j] = leg;
             }
         }
@@ -155,5 +184,6 @@ public class TencentMatrixRouteCostProvider implements RouteCostProvider {
     private static class MatrixLeg {
         long distanceM;
         long durationS;
+        String distanceType;
     }
 }

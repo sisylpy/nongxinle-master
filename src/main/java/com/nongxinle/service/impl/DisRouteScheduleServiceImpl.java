@@ -4,12 +4,12 @@ import com.nongxinle.dao.NxDepartmentDao;
 import com.nongxinle.dao.NxDisDriverDutyDao;
 import com.nongxinle.dao.NxDisDriverRouteDao;
 import com.nongxinle.dao.NxDisRoutePlanDao;
-import com.nongxinle.dao.NxDisRouteStopDao;
+import com.nongxinle.dao.NxDisShipmentTaskDao;
 import com.nongxinle.entity.NxDepartmentEntity;
 import com.nongxinle.entity.NxDisDriverDutyEntity;
 import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
-import com.nongxinle.entity.NxDisRouteStopEntity;
+import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.route.DisRouteBatchDefaults;
 import com.nongxinle.route.DisRouteScheduleStatus;
 import com.nongxinle.route.DisRouteStopTimeWindowStatus;
@@ -39,7 +39,7 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
     @Autowired
     private NxDisDriverRouteDao nxDisDriverRouteDao;
     @Autowired
-    private NxDisRouteStopDao nxDisRouteStopDao;
+    private NxDisShipmentTaskDao nxDisShipmentTaskDao;
     @Autowired
     private NxDepartmentDao nxDepartmentDao;
     @Autowired
@@ -115,11 +115,11 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
                                                            String routeDate,
                                                            Date dayStart,
                                                            Date defaultDepartAt) {
-        List<NxDisRouteStopEntity> allStops = nxDisRouteStopDao.queryByDriverRouteId(driverRoute.getNxDdrId());
-        List<NxDisRouteStopEntity> activeStops = new ArrayList<NxDisRouteStopEntity>();
-        for (NxDisRouteStopEntity stop : allStops) {
-            if (isCountableStop(stop)) {
-                activeStops.add(stop);
+        List<NxDisShipmentTaskEntity> allTasks = nxDisShipmentTaskDao.queryByDriverRouteId(driverRoute.getNxDdrId());
+        List<NxDisShipmentTaskEntity> activeTasks = new ArrayList<NxDisShipmentTaskEntity>();
+        for (NxDisShipmentTaskEntity task : allTasks) {
+            if (isCountableTask(task)) {
+                activeTasks.add(task);
             }
         }
 
@@ -131,13 +131,13 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
         int totalWaitMinutes = 0;
         int totalLateMinutes = 0;
         boolean routeHasLate = false;
-        boolean routeAllNoWindow = !activeStops.isEmpty();
+        boolean routeAllNoWindow = !activeTasks.isEmpty();
 
-        for (NxDisRouteStopEntity stop : activeStops) {
-            long legSeconds = stop.getNxDrsLegDurationS() != null ? stop.getNxDrsLegDurationS() : 0L;
+        for (NxDisShipmentTaskEntity task : activeTasks) {
+            long legSeconds = task.getNxDstLegDurationS() != null ? task.getNxDstLegDurationS() : 0L;
             Date plannedArrivalAt = addSeconds(cursor, legSeconds);
 
-            StopWindowConfig windowConfig = resolveStopWindowConfig(stop);
+            StopWindowConfig windowConfig = resolveTaskWindowConfig(task);
             Integer earliestSeconds = windowConfig.earliestSeconds;
             Integer latestSeconds = windowConfig.latestSeconds;
             int serviceMinutes = windowConfig.serviceMinutes;
@@ -149,18 +149,18 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
             Date plannedServiceStartAt = windowResult.plannedServiceStartAt;
             Date plannedDepartureAt = addMinutes(plannedServiceStartAt, serviceMinutes);
 
-            NxDisRouteStopEntity stopUpdate = new NxDisRouteStopEntity();
-            stopUpdate.setNxDrsId(stop.getNxDrsId());
-            stopUpdate.setNxDrsEarliestDeliveryTimeS(earliestSeconds);
-            stopUpdate.setNxDrsLatestDeliveryTimeS(latestSeconds);
-            stopUpdate.setNxDrsServiceMinutes(serviceMinutes);
-            stopUpdate.setNxDrsPlannedArrivalAt(plannedArrivalAt);
-            stopUpdate.setNxDrsPlannedServiceStartAt(plannedServiceStartAt);
-            stopUpdate.setNxDrsPlannedDepartureAt(plannedDepartureAt);
-            stopUpdate.setNxDrsWaitMinutes(windowResult.waitMinutes);
-            stopUpdate.setNxDrsLateMinutes(windowResult.lateMinutes);
-            stopUpdate.setNxDrsTimeWindowStatus(windowResult.timeWindowStatus);
-            nxDisRouteStopDao.updateSchedule(stopUpdate);
+            NxDisShipmentTaskEntity taskUpdate = new NxDisShipmentTaskEntity();
+            taskUpdate.setNxDstId(task.getNxDstId());
+            taskUpdate.setNxDstEarliestDeliveryTimeS(earliestSeconds);
+            taskUpdate.setNxDstLatestDeliveryTimeS(latestSeconds);
+            taskUpdate.setNxDstServiceMinutes(serviceMinutes);
+            taskUpdate.setNxDstPlannedArrivalAt(plannedArrivalAt);
+            taskUpdate.setNxDstPlannedServiceStartAt(plannedServiceStartAt);
+            taskUpdate.setNxDstPlannedDepartureAt(plannedDepartureAt);
+            taskUpdate.setNxDstWaitMinutes(windowResult.waitMinutes);
+            taskUpdate.setNxDstLateMinutes(windowResult.lateMinutes);
+            taskUpdate.setNxDstTimeWindowStatus(windowResult.timeWindowStatus);
+            nxDisShipmentTaskDao.updateSchedule(taskUpdate);
 
             totalServiceMinutes += serviceMinutes;
             totalWaitMinutes += windowResult.waitMinutes;
@@ -179,13 +179,13 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
         NxDisDriverRouteEntity routeUpdate = new NxDisDriverRouteEntity();
         routeUpdate.setNxDdrId(driverRoute.getNxDdrId());
         routeUpdate.setNxDdrPlannedDepartAt(plannedDepartAt);
-        routeUpdate.setNxDdrPlannedFinishAt(activeStops.isEmpty() ? plannedDepartAt : lastDeparture);
+        routeUpdate.setNxDdrPlannedFinishAt(activeTasks.isEmpty() ? plannedDepartAt : lastDeparture);
         routeUpdate.setNxDdrTotalServiceMinutes(totalServiceMinutes);
         routeUpdate.setNxDdrTotalWaitMinutes(totalWaitMinutes);
         routeUpdate.setNxDdrTotalLateMinutes(totalLateMinutes);
 
         String routeScheduleStatus;
-        if (activeStops.isEmpty()) {
+        if (activeTasks.isEmpty()) {
             routeScheduleStatus = DisRouteScheduleStatus.OK;
         } else if (routeHasLate) {
             routeScheduleStatus = DisRouteScheduleStatus.HAS_LATE;
@@ -210,30 +210,22 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
                                       NxDisDriverRouteEntity driverRoute,
                                       String routeDate,
                                       Date defaultDepartAt) {
-        Date plannedDepartAt = defaultDepartAt;
-        NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(
-                plan.getNxDrpDistributerId(), driverRoute.getNxDdrDriverUserId(), routeDate);
-        if (duty != null && ON_DUTY.equals(duty.getNxDddDutyStatus()) && duty.getNxDddCheckInAt() != null) {
-            if (duty.getNxDddCheckInAt().after(plannedDepartAt)) {
-                plannedDepartAt = duty.getNxDddCheckInAt();
-            }
-        }
-        return plannedDepartAt;
+        return defaultDepartAt;
     }
 
-    /** Phase 2b-5：优先使用 stop/task 当日快照，无快照时才回退 department 默认值。 */
-    private StopWindowConfig resolveStopWindowConfig(NxDisRouteStopEntity stop) {
+    /** Phase 3a.1：优先 task 当日快照，无快照时回退 department。 */
+    private StopWindowConfig resolveTaskWindowConfig(NxDisShipmentTaskEntity task) {
         StopWindowConfig config = new StopWindowConfig();
-        config.earliestSeconds = stop.getNxDrsEarliestDeliveryTimeS();
-        config.latestSeconds = stop.getNxDrsLatestDeliveryTimeS();
-        config.serviceMinutes = stop.getNxDrsServiceMinutes() != null
-                ? stop.getNxDrsServiceMinutes() : DEFAULT_SERVICE_MINUTES;
+        config.earliestSeconds = task.getNxDstEarliestDeliveryTimeS();
+        config.latestSeconds = task.getNxDstLatestDeliveryTimeS();
+        config.serviceMinutes = task.getNxDstServiceMinutes() != null
+                ? task.getNxDstServiceMinutes() : DEFAULT_SERVICE_MINUTES;
 
-        if (config.earliestSeconds == null && config.latestSeconds == null && stop.getNxDrsDepartmentId() != null) {
-            NxDepartmentEntity department = loadDepartment(stop.getNxDrsDepartmentId());
+        if (config.earliestSeconds == null && config.latestSeconds == null && task.getNxDstDepFatherId() != null) {
+            NxDepartmentEntity department = loadDepartment(task.getNxDstDepFatherId());
             config.earliestSeconds = department != null ? department.getNxDepartmentEarliestDeliveryTime() : null;
             config.latestSeconds = department != null ? department.getNxDepartmentLatestDeliveryTime() : null;
-            if (stop.getNxDrsServiceMinutes() == null) {
+            if (task.getNxDstServiceMinutes() == null) {
                 config.serviceMinutes = resolveServiceMinutes(department);
             }
         }
@@ -285,11 +277,11 @@ public class DisRouteScheduleServiceImpl implements DisRouteScheduleService {
         return DEFAULT_SERVICE_MINUTES;
     }
 
-    private boolean isCountableStop(NxDisRouteStopEntity stop) {
-        if (stop == null) {
+    private boolean isCountableTask(NxDisShipmentTaskEntity task) {
+        if (task == null) {
             return false;
         }
-        String status = stop.getNxDrsStopStatus();
+        String status = task.getNxDstStopStatus();
         return status == null || !STOP_CANCELLED.equalsIgnoreCase(status);
     }
 

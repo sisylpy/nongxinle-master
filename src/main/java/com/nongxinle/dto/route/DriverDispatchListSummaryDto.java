@@ -15,4 +15,6 @@ public class DriverDispatchListSummaryDto {
     private Integer ineligibleCount;
     private Integer idleCount;
     private Integer assignedRouteDriverCount;
+    /** 司机可派状态页顶部摘要一行文案 */
+    private String summaryLine;
 }

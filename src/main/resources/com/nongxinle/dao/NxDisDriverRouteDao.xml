@@ -67,6 +67,26 @@
         where nx_ddr_id = #{nxDdrId}
     </update>
 
+    <update id="updateExecution" parameterType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        update nx_dis_driver_route
+        <set>
+            <if test="nxDdrRouteStatus != null">nx_ddr_route_status = #{nxDdrRouteStatus},</if>
+            <if test="nxDdrActualDepartAt != null">nx_ddr_actual_depart_at = #{nxDdrActualDepartAt},</if>
+            <if test="nxDdrDepartOperatorUserId != null">nx_ddr_depart_operator_user_id = #{nxDdrDepartOperatorUserId},</if>
+            <if test="nxDdrDepartRemark != null">nx_ddr_depart_remark = #{nxDdrDepartRemark},</if>
+            <if test="nxDdrDispatchEligible != null">nx_ddr_dispatch_eligible = #{nxDdrDispatchEligible},</if>
+        </set>
+        where nx_ddr_id = #{nxDdrId}
+    </update>
+
+    <update id="updateLoadingGate" parameterType="com.nongxinle.entity.NxDisDriverRouteEntity">
+        update nx_dis_driver_route
+        set nx_ddr_loading_entered_at = #{nxDdrLoadingEnteredAt},
+            nx_ddr_loading_entered_operator_user_id = #{nxDdrLoadingEnteredOperatorUserId},
+            nx_ddr_route_status = #{nxDdrRouteStatus}
+        where nx_ddr_id = #{nxDdrId}
+    </update>
+
     <delete id="deleteByPlanId">
         delete from nx_dis_driver_route where nx_ddr_plan_id = #{value}
     </delete>

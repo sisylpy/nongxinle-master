@@ -32,6 +32,9 @@ public class NxDisRouteStopEntity implements Serializable {
     private String nxDrsTotalQuantity;
     private Long nxDrsLegDistanceM;
     private Long nxDrsLegDurationS;
+    /** 读模型：本段距离来源与类型 */
+    private String legDistanceProvider;
+    private String legDistanceType;
     private String nxDrsStopStatus;
 
     /** Phase 2a：排程快照与 ETA */
@@ -73,4 +76,49 @@ public class NxDisRouteStopEntity implements Serializable {
     private String customerTierLabel;
     private Integer priorityScorePreview;
     private String priorityReason;
+    /** Phase 2b-6：只读时间语义 */
+    private String plannedArrivalLabel;
+    private String stopTemporalStatus;
+    private String stopTemporalStatusLabel;
+
+    /** Phase 3a 读模型 */
+    private String sandboxStopKey;
+    private String stopSource;
+    private Boolean confirmViaSandbox;
+
+    /** Phase 3a：排程模式与展示文案（GET enrichment，不写库） */
+    private String scheduleMode;
+    private String scheduleModeLabel;
+    private Date timeAnchorAt;
+    private String timeAnchorLabel;
+    private String plannedDepartLabel;
+    /** Phase 3a：站点预计离开时间展示（与 plannedArrivalLabel 对称） */
+    private String plannedDepartureLabel;
+    private String fastestArrivalLabel;
+    private String customerWindowLabel;
+    /** Phase 3a：服务时长来源（DEFAULT / DEPARTMENT / TASK） */
+    private String serviceMinutesSource;
+    private String serviceDurationLabel;
+    private Boolean isAfterCustomerWindow;
+    private String timeBasis;
+    private String timeBasisLabel;
+
+    /** Phase 3a 读模型：客户名主权在 nx_department，GET 实时解析，非 DB 快照 */
+    private String liveDepartmentName;
+
+    /** Phase 3a.1b：沙盘建议站点 — 确认出货完成（非旧 assign） */
+    private Boolean canConfirmCustomer;
+    private String confirmCustomerActionLabel;
+    private String confirmCustomerBlockedReason;
+    /** Phase 3c：已确认店返回沙盘 */
+    private Boolean canReturnToSandbox;
+    private String returnToSandboxActionLabel;
+    private String returnToSandboxBlockedReason;
+    private String returnToSandboxWarning;
+    private String returnToSandboxConfirmMessage;
+    private Integer suggestedDriverUserId;
+    private String suggestedDriverName;
+
+    /** Phase 3D：读模型分层 SANDBOX | EXECUTION */
+    private String stopScope;
 }

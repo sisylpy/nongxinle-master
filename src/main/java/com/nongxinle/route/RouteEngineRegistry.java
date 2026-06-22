@@ -1,5 +1,6 @@
 package com.nongxinle.route;
 
+import com.nongxinle.route.cost.HaversineStraightRouteCostProvider;
 import com.nongxinle.route.cost.TencentMatrixRouteCostProvider;
 import com.nongxinle.route.optimizer.BalancedInsertion2OptRouteOptimizer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,10 @@ public class RouteEngineRegistry {
 
     @Autowired
     public RouteEngineRegistry(TencentMatrixRouteCostProvider tencentMatrixRouteCostProvider,
+                               HaversineStraightRouteCostProvider haversineStraightRouteCostProvider,
                                BalancedInsertion2OptRouteOptimizer balancedInsertion2OptRouteOptimizer) {
         registerCostProvider(tencentMatrixRouteCostProvider);
+        registerCostProvider(haversineStraightRouteCostProvider);
         registerOptimizer(balancedInsertion2OptRouteOptimizer);
     }
 

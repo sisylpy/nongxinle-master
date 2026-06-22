@@ -1,8 +1,10 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.config.DisRouteDispatchSettings;
 import com.nongxinle.dao.NxDisDriverDutyDao;
 import com.nongxinle.dao.NxDisDriverRouteDao;
 import com.nongxinle.dao.NxDisRoutePlanDao;
+import com.nongxinle.dao.NxDisShipmentTaskDao;
 import com.nongxinle.dao.NxDistributerUserDao;
 import com.nongxinle.dto.route.RouteDispatchOperationDecision;
 import com.nongxinle.dto.route.RouteFeasibilityResult;
@@ -36,16 +38,19 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         ASSIGN_REJECT.add(DisShipmentTaskStatus.READY_TO_GO);
         ASSIGN_REJECT.add(DisShipmentTaskStatus.IN_DELIVERY);
         ASSIGN_REJECT.add(DisShipmentTaskStatus.DELIVERED);
+        ASSIGN_REJECT.add(DisShipmentTaskStatus.EXCEPTION);
         ASSIGN_REJECT.add(DisShipmentTaskStatus.CANCELLED);
         ASSIGN_REJECT.add(DisShipmentTaskStatus.CLOSED);
 
         MOVE_REJECT.add(DisShipmentTaskStatus.IN_DELIVERY);
         MOVE_REJECT.add(DisShipmentTaskStatus.DELIVERED);
+        MOVE_REJECT.add(DisShipmentTaskStatus.EXCEPTION);
         MOVE_REJECT.add(DisShipmentTaskStatus.CANCELLED);
         MOVE_REJECT.add(DisShipmentTaskStatus.CLOSED);
 
         UNLOCK_REJECT.add(DisShipmentTaskStatus.IN_DELIVERY);
         UNLOCK_REJECT.add(DisShipmentTaskStatus.DELIVERED);
+        UNLOCK_REJECT.add(DisShipmentTaskStatus.EXCEPTION);
         UNLOCK_REJECT.add(DisShipmentTaskStatus.CANCELLED);
         UNLOCK_REJECT.add(DisShipmentTaskStatus.CLOSED);
         UNLOCK_REJECT.add(DisShipmentTaskStatus.READY_TO_GO);
@@ -54,6 +59,7 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         LOAD_REJECT.add(DisShipmentTaskStatus.UNASSIGNED);
         LOAD_REJECT.add(DisShipmentTaskStatus.IN_DELIVERY);
         LOAD_REJECT.add(DisShipmentTaskStatus.DELIVERED);
+        LOAD_REJECT.add(DisShipmentTaskStatus.EXCEPTION);
         LOAD_REJECT.add(DisShipmentTaskStatus.CANCELLED);
         LOAD_REJECT.add(DisShipmentTaskStatus.CLOSED);
     }
@@ -67,9 +73,13 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
     @Autowired
     private NxDistributerUserDao nxDistributerUserDao;
     @Autowired
+    private NxDisShipmentTaskDao nxDisShipmentTaskDao;
+    @Autowired
     private DisRouteFeasibilityService disRouteFeasibilityService;
     @Autowired
     private DisRouteDispatchSnapshotHelper disRouteDispatchSnapshotHelper;
+    @Autowired
+    private DisRouteDispatchSettings disRouteDispatchSettings;
 
     @Override
     public RouteDispatchOperationDecision evaluateAssign(NxDisShipmentTaskEntity task,
@@ -104,6 +114,10 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         if (MOVE_REJECT.contains(task.getNxDstStatus())) {
             return RouteDispatchOperationDecision.deny("当前状态不允许改派司机：" + labelStatus(task.getNxDstStatus()));
         }
+        NxDisDriverRouteEntity driverRoute = loadDriverRouteForTask(task);
+        if (driverRoute != null && DisRouteDriverDepartPolicy.isRouteDeparted(driverRoute)) {
+            return RouteDispatchOperationDecision.deny("司机已出发，不能改派");
+        }
         return RouteDispatchOperationDecision.allow();
     }
 
@@ -133,6 +147,10 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         }
         String status = task.getNxDstStatus();
         if (LOAD_REJECT.contains(status)) {
+            String blockedReason = resolveConfirmLoadBlockedReason(status);
+            if (blockedReason != null) {
+                return RouteDispatchOperationDecision.deny(blockedReason);
+            }
             if (DisShipmentTaskStatus.SIMULATED.equals(status)
                     || DisShipmentTaskStatus.UNASSIGNED.equals(status)) {
                 return RouteDispatchOperationDecision.deny("请先确认分派后再装车");
@@ -140,7 +158,7 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
             return RouteDispatchOperationDecision.deny("当前状态不允许装车：" + labelStatus(status));
         }
         if (DisShipmentTaskStatus.READY_TO_GO.equals(status)) {
-            return RouteDispatchOperationDecision.deny("当前站点已可出发，无需重复装车");
+            return RouteDispatchOperationDecision.deny("已装车");
         }
         if (!DisShipmentTaskStatus.ASSIGNED.equals(status)) {
             return RouteDispatchOperationDecision.deny("当前状态不允许装车：" + labelStatus(status));
@@ -155,6 +173,41 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         }
         RouteDispatchOperationDecision decision = RouteDispatchOperationDecision.allow();
         decision.setOperationHint("确认装车");
+        return decision;
+    }
+
+    @Override
+    public RouteDispatchOperationDecision evaluateConfirmCustomer(NxDisShipmentTaskEntity task,
+                                                                  Integer suggestedDriverUserId,
+                                                                  String sandboxRouteDate) {
+        if (task == null) {
+            return RouteDispatchOperationDecision.deny("配送任务不存在");
+        }
+        if (!hasActiveItems(task)) {
+            return RouteDispatchOperationDecision.deny("当前站点没有有效订单行");
+        }
+        if (suggestedDriverUserId == null) {
+            return RouteDispatchOperationDecision.deny("请选择可派司机或当前无可派司机");
+        }
+        NxDistributerUserEntity driver = nxDistributerUserDao.queryObject(suggestedDriverUserId);
+        if (driver == null) {
+            return RouteDispatchOperationDecision.deny("请选择可派司机或当前无可派司机");
+        }
+        if (!task.getNxDstDistributerId().equals(driver.getNxDiuDistributerId())) {
+            return RouteDispatchOperationDecision.deny("请选择可派司机或当前无可派司机");
+        }
+        if (!getNxDisUserDriver().equals(driver.getNxDiuAdmin())) {
+            return RouteDispatchOperationDecision.deny("请选择可派司机或当前无可派司机");
+        }
+        String dutyDate = sandboxRouteDate != null && !sandboxRouteDate.trim().isEmpty()
+                ? sandboxRouteDate.trim() : task.getNxDstRouteDate();
+        NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(
+                task.getNxDstDistributerId(), suggestedDriverUserId, dutyDate);
+        if (duty == null || !ON_DUTY.equals(duty.getNxDddDutyStatus())) {
+            return RouteDispatchOperationDecision.deny("请选择可派司机或当前无可派司机");
+        }
+        RouteDispatchOperationDecision decision = RouteDispatchOperationDecision.allow();
+        decision.setOperationHint("确认该店出货完成");
         return decision;
     }
 
@@ -211,10 +264,19 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         if (plan == null) {
             return;
         }
+        Date serverNow = new Date();
+        DisRouteTemporalHelper.enrichPlanTemporalFields(plan, serverNow);
+
         plan.setNxDrpDispatchBatchLabel(DisRouteDispatchLabels.label(plan.getNxDrpDispatchBatch()));
         plan.setNxDrpFeasibilityStatusLabel(DisRouteDispatchLabels.label(
                 feasibility != null ? feasibility.getFeasibilityStatus() : plan.getNxDrpFeasibilityStatus()));
         plan.setNxDrpScheduleStatusLabel(DisRouteDispatchLabels.label(plan.getNxDrpScheduleStatus()));
+
+        if (plan.getDriverRoutes() != null) {
+            for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
+                DisRouteDriverDutyOverlayHelper.overlayOnRoute(route, plan, nxDisDriverDutyDao, serverNow);
+            }
+        }
 
         boolean anyCanLoad = false;
         boolean anyCanAssign = false;
@@ -241,6 +303,17 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         plan.setCanStartLoading(planLoad.isAllowed());
         plan.setLoadingBlockedReason(planLoad.isAllowed() ? null : planLoad.getBlockedReason());
         plan.setOperationHint(planLoad.getOperationHint());
+
+        if (plan.getDriverRoutes() != null) {
+            for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
+                DisRouteTemporalHelper.enrichDriverRouteOperationFields(route, plan);
+                if (route.getStops() != null) {
+                    for (NxDisRouteStopEntity stop : route.getStops()) {
+                        DisRouteTemporalHelper.enrichStopTemporalFields(stop, serverNow);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -252,9 +325,68 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         }
         Map<Integer, NxDisDriverRouteEntity> routeByTaskId = buildTaskRouteMap(plan);
         for (NxDisShipmentTaskEntity task : tasks) {
-            NxDisDriverRouteEntity route = routeByTaskId.get(task.getNxDstId());
+            NxDisDriverRouteEntity route = resolveRouteForTask(task, plan, routeByTaskId);
             enrichTask(task, route, plan, feasibility);
         }
+    }
+
+    @Override
+    public void enrichEphemeralSandboxStops(List<NxDisRouteStopEntity> stops,
+                                            NxDisRoutePlanEntity plan,
+                                            RouteFeasibilityResult feasibility) {
+        if (stops == null || stops.isEmpty()) {
+            return;
+        }
+        Map<Integer, NxDisDriverRouteEntity> routeByDriver = new HashMap<Integer, NxDisDriverRouteEntity>();
+        if (plan != null && plan.getDriverRoutes() != null) {
+            for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
+                if (route != null && route.getNxDdrDriverUserId() != null) {
+                    routeByDriver.put(route.getNxDdrDriverUserId(), route);
+                }
+            }
+        }
+        for (NxDisRouteStopEntity stop : stops) {
+            if (stop == null || stop.getShipmentTask() == null) {
+                continue;
+            }
+            NxDisShipmentTaskEntity task = stop.getShipmentTask();
+            if (!isEphemeralSandboxTask(task)) {
+                continue;
+            }
+            Integer suggestedDriver = task.getNxDstSuggestedDriverUserId() != null
+                    ? task.getNxDstSuggestedDriverUserId() : task.getSuggestedDriverUserId();
+            NxDisDriverRouteEntity route = suggestedDriver != null
+                    ? routeByDriver.get(suggestedDriver) : null;
+            enrichEphemeralSandboxTask(task, route, plan);
+            mirrorStopFromTask(stop, task);
+        }
+    }
+
+    @Override
+    public void enrichExecutionRoutesReadModel(NxDisRoutePlanEntity plan,
+                                               RouteFeasibilityResult feasibility) {
+        if (plan == null || plan.getExecutionDriverRoutes() == null) {
+            return;
+        }
+        for (NxDisDriverRouteEntity route : plan.getExecutionDriverRoutes()) {
+            enrichDriverRoute(route, plan, feasibility);
+        }
+    }
+
+    private NxDisDriverRouteEntity resolveRouteForTask(NxDisShipmentTaskEntity task,
+                                                       NxDisRoutePlanEntity plan,
+                                                       Map<Integer, NxDisDriverRouteEntity> routeByTaskId) {
+        if (task == null) {
+            return null;
+        }
+        if (task.getNxDstDriverRouteId() != null && plan != null && plan.getDriverRoutes() != null) {
+            for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
+                if (task.getNxDstDriverRouteId().equals(route.getNxDdrId())) {
+                    return route;
+                }
+            }
+        }
+        return routeByTaskId.get(task.getNxDstId());
     }
 
     private Map<Integer, NxDisDriverRouteEntity> buildTaskRouteMap(NxDisRoutePlanEntity plan) {
@@ -278,16 +410,20 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
     private void enrichDriverRoute(NxDisDriverRouteEntity route,
                                    NxDisRoutePlanEntity plan,
                                    RouteFeasibilityResult feasibility) {
-        route.setNxDdrFeasibilityStatusLabel(DisRouteDispatchLabels.label(route.getNxDdrFeasibilityStatus()));
-        route.setNxDdrIneligibleReasonLabel(DisRouteDispatchLabels.label(route.getNxDdrIneligibleReason()));
+        route.setNxDdrFeasibilityStatusLabel(
+                DisRouteDriverDutyOverlayHelper.labelDriverRouteFeasibility(route, plan));
+        route.setNxDdrIneligibleReasonLabel(
+                DisRouteDriverDutyOverlayHelper.labelDriverRouteIneligibleReason(route));
 
         RouteDispatchOperationDecision loadDecision = evaluateRouteLoad(route, plan, feasibility);
         route.setCanLoad(loadDecision.isAllowed());
         route.setLoadBlockedReason(loadDecision.isAllowed() ? null : loadDecision.getBlockedReason());
 
-        RouteDispatchOperationDecision assignMore = evaluateRouteAssignMore(route);
+        RouteDispatchOperationDecision assignMore = evaluateRouteAssignMore(route, plan);
         route.setCanAssignMore(assignMore.isAllowed());
         route.setAssignBlockedReason(assignMore.isAllowed() ? null : assignMore.getBlockedReason());
+
+        enrichDriverRouteDepartFields(route, plan, feasibility);
 
         if (route.getStops() == null) {
             return;
@@ -309,6 +445,10 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         if (task == null) {
             return;
         }
+        if (isEphemeralSandboxTask(task)) {
+            enrichEphemeralSandboxTask(task, route, plan);
+            return;
+        }
         task.setNxDstStatusLabel(DisRouteDispatchLabels.label(task.getNxDstStatus()));
 
         Integer targetDriver = task.getNxDstAssignedDriverUserId() != null
@@ -320,12 +460,17 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         task.setAssignBlockedReason(assign.isAllowed() ? null : assign.getBlockedReason());
 
         RouteDispatchOperationDecision confirmLoad = evaluateConfirmLoad(task, targetDriver, feasibility);
-        task.setCanConfirmLoad(confirmLoad.isAllowed());
-        task.setConfirmLoadBlockedReason(confirmLoad.isAllowed() ? null : confirmLoad.getBlockedReason());
+        task.setCanConfirmLoad(Boolean.valueOf(confirmLoad.isAllowed()));
+        task.setConfirmLoadBlockedReason(confirmLoad.isAllowed()
+                ? null : confirmLoad.getBlockedReason());
 
         RouteDispatchOperationDecision move = evaluateMove(task, targetDriver, feasibility);
         task.setCanMove(move.isAllowed());
         task.setMoveBlockedReason(move.isAllowed() ? null : move.getBlockedReason());
+        if (route != null && DisRouteDriverDepartPolicy.isRouteDeparted(route)) {
+            task.setCanMove(false);
+            task.setMoveBlockedReason("司机已出发，不能改派");
+        }
 
         RouteDispatchOperationDecision unlock = evaluateUnlock(task);
         task.setCanUnlock(unlock.isAllowed());
@@ -334,7 +479,170 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         disRouteDispatchSnapshotHelper.applyItemMetrics(task);
         DisRoutePriorityPreviewHelper.enrichTask(task);
 
+        DisRouteBillPrintStatusHelper.BillPrintSummary billSummary = DisRouteBillPrintStatusHelper.summarize(task);
+        task.setBillPrintStatus(billSummary.status);
+        task.setUnprintedBillCount(billSummary.unprintedCount);
+        if (billSummary.unprintedCount > 0) {
+            task.setBillPrintWarning("还有 " + billSummary.unprintedCount + " 个订单配送单未打印，可继续装车/出发");
+        }
+
+        enrichReturnToSandboxFields(task);
+
         task.setOperationStatusLabel(buildTaskOperationLabel(task, assign, confirmLoad));
+    }
+
+    private void enrichDriverRouteDepartFields(NxDisDriverRouteEntity route,
+                                               NxDisRoutePlanEntity plan,
+                                               RouteFeasibilityResult feasibility) {
+        if (route == null) {
+            return;
+        }
+        String routeStatus = DisRouteRouteExecutionHelper.resolveRouteStatus(route);
+        route.setRouteStatus(routeStatus);
+        route.setRouteStatusLabel(DisRouteRouteExecutionHelper.resolveRouteStatusLabel(routeStatus));
+        if (route.getNxDdrRouteStatus() == null || route.getNxDdrRouteStatus().trim().isEmpty()) {
+            route.setNxDdrRouteStatus(routeStatus);
+        }
+
+        DisRouteDriverDepartPolicy.RouteStopCounts counts = DisRouteDriverDepartPolicy.countRouteStops(route);
+        route.setTotalStopCount(counts.totalStopCount);
+        route.setConfirmedStopCount(counts.confirmedStopCount);
+        route.setSuggestedStopCount(counts.unconfirmedStopCount);
+
+        int unprinted = DisRouteDriverDepartPolicy.countUnprintedBillsOnRoute(route);
+        route.setUnprintedBillCount(unprinted);
+        route.setDepartWarning(DisRouteDriverDepartPolicy.buildDepartWarning(route));
+        route.setDepartConfirmMessage(DisRouteDriverDepartPolicy.buildDepartConfirmMessage(route));
+        route.setDepartActionLabel(DisRouteDriverDepartPolicy.ACTION_LABEL);
+        route.setDepartedAt(route.getNxDdrActualDepartAt());
+
+        boolean driverOnDuty = false;
+        if (plan != null && route.getNxDdrDriverUserId() != null) {
+            String routeDate = plan.getNxDrpRouteDate() != null ? plan.getNxDrpRouteDate() : plan.getNxDrpPlanDate();
+            NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(
+                    plan.getNxDrpDistributerId(), route.getNxDdrDriverUserId(), routeDate);
+            driverOnDuty = duty != null && ON_DUTY.equals(duty.getNxDddDutyStatus());
+        }
+
+        List<NxDisShipmentTaskEntity> routeTasks = null;
+        if (route.getNxDdrId() != null) {
+            routeTasks = nxDisShipmentTaskDao.queryByDriverRouteId(route.getNxDdrId());
+        }
+        boolean requireLoadBeforeDepart = plan != null
+                && disRouteDispatchSettings.isRequireLoadBeforeDepart(plan.getNxDrpDistributerId());
+        RouteDispatchOperationDecision departDecision = DisRouteDriverDepartPolicy.evaluateDepart(
+                route, plan, routeTasks, driverOnDuty, feasibility, requireLoadBeforeDepart);
+        route.setCanDepart(departDecision.isAllowed());
+        if (departDecision.isAllowed()) {
+            route.setDepartBlockedReason(null);
+        } else if (DisRouteDriverRouteStatus.IN_DELIVERY.equals(routeStatus)
+                || DisRouteDriverRouteStatus.DELIVERED.equals(routeStatus)
+                || DisRouteDriverRouteStatus.CLOSED.equals(routeStatus)
+                || DisRouteDriverDepartPolicy.isRouteDeparted(route)) {
+            route.setDepartBlockedReason("该司机路线已在配送中或已完成");
+            route.setCanDepart(false);
+        } else if (counts.unconfirmedStopCount > 0) {
+            route.setDepartBlockedReason("请先确认全部门店出货完成");
+        } else {
+            route.setDepartBlockedReason(departDecision.getBlockedReason());
+        }
+        if (route.getNxDdrActualDepartAt() != null) {
+            route.setDepartedAt(route.getNxDdrActualDepartAt());
+        }
+        if (DisRouteRouteExecutionHelper.isExecutionRoute(route)) {
+            DisRouteRouteExecutionHelper.syncExecutionCanonicalFields(route);
+        }
+        boolean allDelivered = DisRouteRouteExecutionHelper.areAllStopsDelivered(route);
+        route.setAllStopsDelivered(allDelivered);
+        route.setCanCompleteRoute(allDelivered && !DisRouteRouteExecutionHelper.hasPendingExecutionStops(route));
+    }
+
+    private void enrichReturnToSandboxFields(NxDisShipmentTaskEntity task) {
+        if (task == null || task.getNxDstId() == null || isEphemeralSandboxTask(task)) {
+            return;
+        }
+        List<NxDisShipmentTaskEntity> siblings = task.getNxDstDriverRouteId() != null
+                ? nxDisShipmentTaskDao.queryByDriverRouteId(task.getNxDstDriverRouteId())
+                : null;
+        NxDisDriverRouteEntity driverRoute = loadDriverRouteForTask(task);
+        RouteDispatchOperationDecision returnDecision =
+                DisRouteReturnToSandboxPolicy.evaluate(task, siblings, driverRoute);
+        task.setCanReturnToSandbox(returnDecision.isAllowed());
+        task.setReturnToSandboxActionLabel(DisRouteReturnToSandboxPolicy.ACTION_LABEL);
+        task.setReturnToSandboxBlockedReason(returnDecision.isAllowed()
+                ? null : returnDecision.getBlockedReason());
+        task.setReturnToSandboxWarning(returnDecision.getOperationHint());
+        task.setReturnToSandboxConfirmMessage(DisRouteReturnToSandboxPolicy.buildConfirmDialogMessage(task));
+    }
+
+    private void enrichEphemeralSandboxTask(NxDisShipmentTaskEntity task,
+                                            NxDisDriverRouteEntity route,
+                                            NxDisRoutePlanEntity plan) {
+        task.setNxDstStatusLabel(DisRouteDispatchLabels.label(task.getNxDstStatus()));
+
+        Integer suggestedDriver = task.getNxDstSuggestedDriverUserId() != null
+                ? task.getNxDstSuggestedDriverUserId()
+                : (route != null ? route.getNxDdrDriverUserId() : null);
+        task.setSuggestedDriverUserId(suggestedDriver);
+        if (suggestedDriver != null) {
+            NxDistributerUserEntity driver = nxDistributerUserDao.queryObject(suggestedDriver);
+            task.setSuggestedDriverName(resolveDriverDisplayName(driver));
+        }
+
+        String sandboxRouteDate = plan != null ? plan.getNxDrpRouteDate() : task.getNxDstRouteDate();
+        RouteDispatchOperationDecision confirmCustomer = evaluateConfirmCustomer(
+                task, suggestedDriver, sandboxRouteDate);
+        task.setCanConfirmCustomer(confirmCustomer.isAllowed());
+        task.setConfirmCustomerActionLabel("确认该店出货完成");
+        task.setConfirmCustomerBlockedReason(confirmCustomer.isAllowed()
+                ? null : confirmCustomer.getBlockedReason());
+
+        task.setCanAssign(false);
+        task.setAssignBlockedReason(null);
+        task.setCanConfirmLoad(false);
+        task.setConfirmLoadBlockedReason(null);
+        task.setCanMove(false);
+        task.setMoveBlockedReason(null);
+        task.setCanUnlock(false);
+        task.setUnlockBlockedReason(null);
+
+        disRouteDispatchSnapshotHelper.applyItemMetrics(task);
+        DisRoutePriorityPreviewHelper.enrichTask(task);
+
+        DisRouteBillPrintStatusHelper.BillPrintSummary billSummary = DisRouteBillPrintStatusHelper.summarize(task);
+        task.setBillPrintStatus(billSummary.status);
+        task.setUnprintedBillCount(billSummary.unprintedCount);
+        if (billSummary.unprintedCount > 0) {
+            task.setBillPrintWarning("还有 " + billSummary.unprintedCount + " 个订单配送单未打印，可继续装车/出发");
+        }
+
+        task.setOperationStatusLabel(confirmCustomer.isAllowed()
+                ? "可确认出货" : "暂不可确认");
+    }
+
+    private boolean isEphemeralSandboxTask(NxDisShipmentTaskEntity task) {
+        if (task == null) {
+            return false;
+        }
+        if (task.getNxDstId() == null) {
+            return true;
+        }
+        if (Boolean.TRUE.equals(task.getConfirmViaSandbox())) {
+            return true;
+        }
+        String source = task.getStopSource();
+        return DisRouteSandboxStopSource.SANDBOX_SUGGESTED.equals(source)
+                || DisRouteSandboxStopSource.UNASSIGNED.equals(source);
+    }
+
+    private String resolveDriverDisplayName(NxDistributerUserEntity driver) {
+        if (driver == null) {
+            return null;
+        }
+        if (driver.getNxDiuWxNickName() != null && !driver.getNxDiuWxNickName().trim().isEmpty()) {
+            return driver.getNxDiuWxNickName().trim();
+        }
+        return "司机 " + driver.getNxDistributerUserId();
     }
 
     private void mirrorStopFromTask(NxDisRouteStopEntity stop, NxDisShipmentTaskEntity task) {
@@ -343,13 +651,24 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         }
         stop.setCanAssign(task.getCanAssign());
         stop.setAssignBlockedReason(task.getAssignBlockedReason());
-        stop.setCanConfirmLoad(task.getCanConfirmLoad());
+        stop.setCanConfirmLoad(task.getCanConfirmLoad() != null ? task.getCanConfirmLoad() : Boolean.FALSE);
         stop.setConfirmLoadBlockedReason(task.getConfirmLoadBlockedReason());
         stop.setCanMove(task.getCanMove());
         stop.setMoveBlockedReason(task.getMoveBlockedReason());
         stop.setCanUnlock(task.getCanUnlock());
         stop.setUnlockBlockedReason(task.getUnlockBlockedReason());
         stop.setOperationStatusLabel(task.getOperationStatusLabel());
+        stop.setCanConfirmCustomer(task.getCanConfirmCustomer());
+        stop.setConfirmCustomerActionLabel(task.getConfirmCustomerActionLabel());
+        stop.setConfirmCustomerBlockedReason(task.getConfirmCustomerBlockedReason());
+        stop.setCanReturnToSandbox(task.getCanReturnToSandbox());
+        stop.setReturnToSandboxActionLabel(task.getReturnToSandboxActionLabel());
+        stop.setReturnToSandboxBlockedReason(task.getReturnToSandboxBlockedReason());
+        stop.setReturnToSandboxWarning(task.getReturnToSandboxWarning());
+        stop.setReturnToSandboxConfirmMessage(task.getReturnToSandboxConfirmMessage());
+        stop.setSuggestedDriverUserId(task.getSuggestedDriverUserId() != null
+                ? task.getSuggestedDriverUserId() : task.getNxDstSuggestedDriverUserId());
+        stop.setSuggestedDriverName(task.getSuggestedDriverName());
         stop.setNxDrsTimeWindowStatusLabel(DisRouteDispatchLabels.label(stop.getNxDrsTimeWindowStatus()));
         mirrorDispatchSnapshotFields(stop, task);
     }
@@ -363,7 +682,9 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         stop.setNxDrsTotalQuantity(task.getNxDstTotalQuantity());
         stop.setNxDrsEarliestDeliveryTimeS(task.getNxDstEarliestDeliveryTimeS());
         stop.setNxDrsLatestDeliveryTimeS(task.getNxDstLatestDeliveryTimeS());
-        stop.setNxDrsServiceMinutes(task.getNxDstServiceMinutes());
+        if (task.getNxDstServiceMinutes() != null) {
+            stop.setNxDrsServiceMinutes(task.getNxDstServiceMinutes());
+        }
         stop.setNxDrsTimeWindowOverrideFlag(task.getNxDstTimeWindowOverrideFlag());
         stop.setNxDrsTimeWindowAdjustReason(task.getNxDstTimeWindowAdjustReason());
         stop.setCustomerTierLabel(task.getCustomerTierLabel());
@@ -446,13 +767,7 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(
                 task.getNxDstDistributerId(), targetDriverUserId, routeDate);
         if (duty == null || !ON_DUTY.equals(duty.getNxDddDutyStatus())) {
-            return RouteDispatchOperationDecision.deny("目标司机今日未上岗，不能分派");
-        }
-
-        Date latestCheckIn = resolveLatestCheckIn(plan);
-        if (latestCheckIn != null && duty.getNxDddCheckInAt() != null
-                && duty.getNxDddCheckInAt().after(latestCheckIn)) {
-            return denyDriverUnsuitableForBatch(context);
+            return RouteDispatchOperationDecision.deny("目标司机当前不可派，不能分派");
         }
 
         if (checkLockedIneligible && task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1
@@ -477,9 +792,9 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
 
     private RouteDispatchOperationDecision denyDriverUnsuitableForBatch(DriverCheckContext context) {
         if (context == DriverCheckContext.REPAIR) {
-            return RouteDispatchOperationDecision.deny("当前司机不适合本批次，不能分派");
+            return RouteDispatchOperationDecision.deny("目标司机当前不可派，不能分派");
         }
-        return RouteDispatchOperationDecision.deny("当前司机不适合本批次，不能装车");
+        return RouteDispatchOperationDecision.deny("目标司机当前不可派，不能装车");
     }
 
     private RouteDispatchOperationDecision evaluatePlanExecutionBlocking(RouteFeasibilityResult feasibility) {
@@ -501,7 +816,7 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
             return decision;
         }
         if (isRouteIneligible(route)) {
-            return RouteDispatchOperationDecision.deny("当前司机不适合本批次，不能装车");
+            return RouteDispatchOperationDecision.deny("当前司机不可派，不能装车");
         }
         RouteDispatchOperationDecision planDecision = evaluatePlanExecutionBlocking(feasibility);
         if (!planDecision.isAllowed()) {
@@ -525,9 +840,18 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         return RouteDispatchOperationDecision.deny("当前路线没有可装车的站点");
     }
 
-    private RouteDispatchOperationDecision evaluateRouteAssignMore(NxDisDriverRouteEntity route) {
+    private RouteDispatchOperationDecision evaluateRouteAssignMore(NxDisDriverRouteEntity route,
+                                                                   NxDisRoutePlanEntity plan) {
+        int stopCount = route.getNxDdrStopCount() != null ? route.getNxDdrStopCount() : 0;
         if (isRouteIneligible(route)) {
-            return RouteDispatchOperationDecision.deny("当前司机不适合本批次，不能继续分派");
+            if (stopCount > 0) {
+                return RouteDispatchOperationDecision.deny(
+                        "当前司机不可派，已有 " + stopCount + " 个站点方案待处理，不可继续分派");
+            }
+            return RouteDispatchOperationDecision.deny("当前司机不可派，不能继续分派");
+        }
+        if (plan != null && DisRoutePlanTemporalStatus.EXPIRED.equals(plan.getPlanTemporalStatus())) {
+            return RouteDispatchOperationDecision.deny("当前路线计划已过期，不可继续分派");
         }
         return RouteDispatchOperationDecision.allow();
     }
@@ -574,24 +898,25 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
         return disRouteFeasibilityService.preview(task.getNxDstPlanId());
     }
 
-    private Date resolveLatestCheckIn(NxDisRoutePlanEntity plan) {
-        if (plan == null) {
-            return null;
-        }
-        Date defaultDepart = DisRouteBatchDefaults.resolveDefaultDepartAt(plan);
-        return DisRouteBatchDefaults.latestAllowedCheckInAt(defaultDepart);
-    }
-
     private boolean isRouteIneligible(NxDisDriverRouteEntity route) {
         if (route == null) {
             return false;
+        }
+        if (DisRouteDriverDepartPolicy.isRouteDeparted(route)) {
+            return true;
         }
         if (route.getNxDdrDispatchEligible() != null && route.getNxDdrDispatchEligible() == 0) {
             return true;
         }
         String status = route.getNxDdrFeasibilityStatus();
-        return DisRouteFeasibilityStatus.DRIVER_TOO_LATE.equals(status)
-                || DisRouteFeasibilityStatus.IDLE.equals(status);
+        return DisRouteFeasibilityStatus.IDLE.equals(status);
+    }
+
+    private NxDisDriverRouteEntity loadDriverRouteForTask(NxDisShipmentTaskEntity task) {
+        if (task == null || task.getNxDstDriverRouteId() == null) {
+            return null;
+        }
+        return nxDisDriverRouteDao.queryObject(task.getNxDstDriverRouteId());
     }
 
     private boolean isRouteIdle(NxDisDriverRouteEntity route) {
@@ -609,6 +934,22 @@ public class DisRouteDispatchOperationPolicyImpl implements DisRouteDispatchOper
             }
         }
         return false;
+    }
+
+    private static String resolveConfirmLoadBlockedReason(String status) {
+        if (DisShipmentTaskStatus.READY_TO_GO.equals(status)) {
+            return "已装车";
+        }
+        if (DisShipmentTaskStatus.IN_DELIVERY.equals(status)) {
+            return "已出发";
+        }
+        if (DisShipmentTaskStatus.DELIVERED.equals(status)) {
+            return "已送达";
+        }
+        if (DisShipmentTaskStatus.EXCEPTION.equals(status)) {
+            return "配送异常";
+        }
+        return null;
     }
 
     private String labelStatus(String status) {

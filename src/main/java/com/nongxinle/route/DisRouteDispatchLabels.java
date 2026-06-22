@@ -14,6 +14,8 @@ public final class DisRouteDispatchLabels {
         map.put(DisRouteDispatchBatch.MORNING, "早班");
         map.put(DisRouteDispatchBatch.AFTERNOON, "下午班");
         map.put(DisRouteDispatchBatch.ADHOC, "临时批次");
+        map.put(DisRouteDaySegmentHelper.SEGMENT_MIDDAY, "中班");
+        map.put(DisRouteDaySegmentHelper.SEGMENT_EVENING, "晚班");
 
         map.put(DisShipmentTaskStatus.SIMULATED, "系统建议");
         map.put(DisShipmentTaskStatus.ASSIGNED, "已分派");
@@ -23,12 +25,13 @@ public final class DisRouteDispatchLabels {
         map.put(DisShipmentTaskStatus.CLOSED, "已关闭");
         map.put(DisShipmentTaskStatus.IN_DELIVERY, "配送中");
         map.put(DisShipmentTaskStatus.DELIVERED, "已送达");
+        map.put(DisShipmentTaskStatus.EXCEPTION, "配送异常");
 
         map.put(DisRouteFeasibilityStatus.FEASIBLE, "可执行");
         map.put(DisRouteFeasibilityStatus.HAS_WAIT, "有等待");
         map.put(DisRouteFeasibilityStatus.HAS_LATE, "有迟到");
-        map.put(DisRouteFeasibilityStatus.INFEASIBLE, "不可执行");
-        map.put(DisRouteFeasibilityStatus.DRIVER_TOO_LATE, "司机不适合本批次");
+        map.put(DisRouteFeasibilityStatus.INFEASIBLE, "当前不可执行");
+        map.put(DisRouteFeasibilityStatus.DRIVER_TOO_LATE, "当前不可执行");
         map.put(DisRouteFeasibilityStatus.NO_AVAILABLE_DRIVER, "无可派司机");
         map.put(DisRouteFeasibilityStatus.IDLE, "空闲");
         map.put(DisRouteFeasibilityStatus.HAS_LATE, "有迟到");
@@ -40,21 +43,37 @@ public final class DisRouteDispatchLabels {
         map.put(DisRouteStopTimeWindowStatus.OK, "正常");
         map.put(DisRouteStopTimeWindowStatus.EARLY_WAIT, "早到等待");
         map.put(DisRouteStopTimeWindowStatus.LATE, "预计迟到");
+        map.put(DisRouteStopTimeWindowStatus.SUPPLEMENT_AFTER_WINDOW, "已超常规送达窗口");
         map.put(DisRouteStopTimeWindowStatus.NO_WINDOW, "未设置送达窗口");
 
-        map.put(DisDriverDutyStatus.ON_DUTY, "已上岗");
-        map.put(DisDriverDutyStatus.OFF_DUTY, "未上岗");
-        map.put(DisRouteBatchEligibility.INELIGIBLE_OFF_DUTY, "未上岗");
-        map.put(DisRouteBatchEligibility.INELIGIBLE_CHECKIN_TOO_LATE, "上岗过晚");
+        map.put(DisDriverDutyStatus.ON_DUTY, "可派");
+        map.put(DisDriverDutyStatus.OFF_DUTY, "不可派");
+        map.put(DisRouteBatchEligibility.INELIGIBLE_OFF_DUTY, "不可派");
         map.put(DisRouteBatchEligibility.NOT_DRIVER_ROLE, "非司机角色");
         map.put(DisRouteBatchEligibility.NOT_BELONG_TO_DIS, "不属于当前配送商");
-        map.put(DisRouteWarningCode.DRIVER_CHECKIN_TOO_LATE, "上岗过晚");
-        map.put("DRIVER_CHECKIN_TOO_LATE", "上岗过晚");
 
         map.put(DisRouteCustomerTier.VIP, "VIP客户");
         map.put(DisRouteCustomerTier.NORMAL, "普通客户");
         map.put(DisRouteCustomerTier.SMALL, "小客户");
         map.put(DisRouteCustomerTier.NEW, "新客户");
+
+        map.put(DisRoutePlanTemporalStatus.UPCOMING, "未开始");
+        map.put(DisRoutePlanTemporalStatus.ACTIVE, "进行中");
+        map.put(DisRoutePlanTemporalStatus.EXPIRED, "已过期");
+
+        map.put(DisRouteDriverRouteStatus.IDLE, "空闲");
+        map.put(DisRouteDriverRouteStatus.DISPATCH_CONFIRMED, "已确认待装车");
+        map.put(DisRouteDriverRouteStatus.LOADING, "装车中");
+        map.put(DisRouteDriverRouteStatus.READY_TO_DEPART, "待出发");
+        map.put(DisRouteDriverRouteStatus.IN_DELIVERY, "配送中");
+        map.put(DisRouteDriverRouteStatus.DELIVERED, "已完成");
+        map.put(DisRouteDriverRouteStatus.COMPLETED, "已完成");
+        map.put(DisRouteDriverRouteStatus.CLOSED, "已关闭");
+
+        map.put(DisRouteStopTemporalStatus.UPCOMING, "未到达");
+        map.put(DisRouteStopTemporalStatus.OK, "正常");
+        map.put(DisRouteStopTemporalStatus.EXPIRED, "已过期");
+        map.put(DisRouteStopTemporalStatus.PAST_DUE, "已过期");
 
         LABELS = Collections.unmodifiableMap(map);
     }

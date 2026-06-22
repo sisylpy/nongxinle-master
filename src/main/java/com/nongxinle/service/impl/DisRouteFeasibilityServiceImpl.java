@@ -3,15 +3,12 @@ package com.nongxinle.service.impl;
 import com.nongxinle.dao.NxDisDriverDutyDao;
 import com.nongxinle.dao.NxDisDriverRouteDao;
 import com.nongxinle.dao.NxDisRoutePlanDao;
-import com.nongxinle.dao.NxDisRouteStopDao;
 import com.nongxinle.dao.NxDisShipmentTaskDao;
-import com.nongxinle.dto.route.DisRouteBatchContext;
 import com.nongxinle.dto.route.RouteDispatchWarning;
 import com.nongxinle.dto.route.RouteFeasibilityResult;
 import com.nongxinle.entity.NxDisDriverDutyEntity;
 import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
-import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.route.*;
 import com.nongxinle.service.DisRouteFeasibilityService;
@@ -19,10 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +37,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
     private NxDisRoutePlanDao nxDisRoutePlanDao;
     @Autowired
     private NxDisDriverRouteDao nxDisDriverRouteDao;
-    @Autowired
-    private NxDisRouteStopDao nxDisRouteStopDao;
     @Autowired
     private NxDisDriverDutyDao nxDisDriverDutyDao;
     @Autowired
@@ -70,9 +63,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         }
 
         String routeDate = resolveRouteDate(plan);
-        DisRouteBatchContext batch = DisRouteBatchDefaults.fromPlan(plan);
-        Date defaultDepartAt = batch.getDefaultDepartAt();
-        Date latestCheckInAt = DisRouteBatchDefaults.latestAllowedCheckInAt(defaultDepartAt);
 
         List<NxDisDriverRouteEntity> driverRoutes = nxDisDriverRouteDao.queryByPlanId(planId);
         Map<Integer, NxDisShipmentTaskEntity> taskById = loadTaskMap(planId);
@@ -81,14 +71,13 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         boolean anyWait = false;
         boolean anyLate = false;
         boolean anyInfeasibleLocked = false;
-        boolean anyDriverTooLate = false;
         int eligibleDriverCount = 0;
         int routesWithStops = 0;
 
         if (driverRoutes != null) {
             for (NxDisDriverRouteEntity driverRoute : driverRoutes) {
-                RouteDriverAssessment assessment = assessDriverRoute(
-                        plan, driverRoute, routeDate, latestCheckInAt, taskById);
+                DisRouteDriverDutyOverlayHelper.sanitizeLegacyFields(driverRoute);
+                RouteDriverAssessment assessment = assessDriverRoute(plan, driverRoute, routeDate, taskById);
                 warnings.addAll(assessment.warnings);
 
                 if (assessment.batchEligible) {
@@ -105,9 +94,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
                 }
                 if (assessment.infeasibleLocked) {
                     anyInfeasibleLocked = true;
-                }
-                if (assessment.driverTooLate) {
-                    anyDriverTooLate = true;
                 }
 
                 if (persist) {
@@ -132,15 +118,14 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
                     null,
                     null,
                     null,
-                    "本批次无可派司机（上岗时间晚于批次允许出发时间或未上岗）",
-                    "请安排司机提前上岗，或切换 AFTERNOON / ADHOC 批次后重试"));
+                    "本批次无可派司机",
+                    "请在司机可派状态中开启司机"));
         }
 
         String planFeasibility = resolvePlanFeasibility(
                 anyInfeasibleLocked,
                 eligibleDriverCount,
                 routesWithStops,
-                anyDriverTooLate,
                 anyLate,
                 anyWait);
 
@@ -161,56 +146,45 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
     private RouteDriverAssessment assessDriverRoute(NxDisRoutePlanEntity plan,
                                                     NxDisDriverRouteEntity driverRoute,
                                                     String routeDate,
-                                                    Date latestCheckInAt,
                                                     Map<Integer, NxDisShipmentTaskEntity> taskById) {
         RouteDriverAssessment assessment = new RouteDriverAssessment();
-        List<NxDisRouteStopEntity> stops = nxDisRouteStopDao.queryByDriverRouteId(driverRoute.getNxDdrId());
+        List<NxDisShipmentTaskEntity> tasks = nxDisShipmentTaskDao.queryByDriverRouteId(driverRoute.getNxDdrId());
 
         NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(
                 plan.getNxDrpDistributerId(), driverRoute.getNxDdrDriverUserId(), routeDate);
         boolean onDuty = duty != null && ON_DUTY.equals(duty.getNxDddDutyStatus());
-        Date checkInAt = duty != null ? duty.getNxDddCheckInAt() : null;
 
-        assessment.batchEligible = onDuty && isCheckInEligible(checkInAt, latestCheckInAt);
+        assessment.batchEligible = onDuty;
         if (!onDuty) {
             assessment.ineligibleReason = DisRouteBatchEligibility.INELIGIBLE_OFF_DUTY;
-        } else if (!assessment.batchEligible) {
-            assessment.ineligibleReason = DisRouteBatchEligibility.INELIGIBLE_CHECKIN_TOO_LATE;
         }
 
         int activeStopCount = 0;
         int routeLateMinutes = 0;
-        if (stops != null) {
-            for (NxDisRouteStopEntity stop : stops) {
-                if (!isCountableStop(stop)) {
+        if (tasks != null) {
+            for (NxDisShipmentTaskEntity task : tasks) {
+                if (!isCountableTask(task)) {
                     continue;
                 }
                 activeStopCount++;
-                if (DisRouteStopTimeWindowStatus.EARLY_WAIT.equals(stop.getNxDrsTimeWindowStatus())) {
+                if (DisRouteStopTimeWindowStatus.EARLY_WAIT.equals(task.getNxDstTimeWindowStatus())) {
                     assessment.anyWait = true;
                 }
-                if (DisRouteStopTimeWindowStatus.LATE.equals(stop.getNxDrsTimeWindowStatus())) {
+                if (DisRouteStopTimeWindowStatus.LATE.equals(task.getNxDstTimeWindowStatus())) {
                     assessment.anyLate = true;
-                    Integer lateMinutes = stop.getNxDrsLateMinutes() != null ? stop.getNxDrsLateMinutes() : 0;
+                    Integer lateMinutes = task.getNxDstLateMinutes() != null ? task.getNxDstLateMinutes() : 0;
                     routeLateMinutes += lateMinutes;
-                    assessment.warnings.add(buildStopLateWarning(
-                            driverRoute, stop, lateMinutes, assessment.batchEligible, checkInAt));
+                    assessment.warnings.add(buildTaskLateWarning(
+                            driverRoute, task, lateMinutes, assessment.batchEligible));
                 }
 
-                NxDisShipmentTaskEntity task = stop.getNxDrsShipmentTaskId() != null
-                        ? taskById.get(stop.getNxDrsShipmentTaskId()) : null;
-                if (task != null && isTaskProtected(task) && !assessment.batchEligible) {
+                if (isTaskProtected(task) && !assessment.batchEligible) {
                     assessment.infeasibleLocked = true;
-                    assessment.warnings.add(buildLockedIneligibleWarning(driverRoute, stop, task, checkInAt));
+                    assessment.warnings.add(buildLockedIneligibleWarning(driverRoute, task));
                 }
             }
         }
         assessment.activeStopCount = activeStopCount;
-
-        if (!assessment.batchEligible && onDuty && checkInAt != null && latestCheckInAt != null
-                && checkInAt.after(latestCheckInAt)) {
-            assessment.warnings.add(buildCheckInTooLateWarning(driverRoute, checkInAt, latestCheckInAt));
-        }
 
         if (activeStopCount == 0) {
             assessment.routeFeasibilityStatus = DisRouteFeasibilityStatus.IDLE;
@@ -230,8 +204,7 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         }
 
         if (!assessment.batchEligible) {
-            assessment.driverTooLate = true;
-            assessment.routeFeasibilityStatus = DisRouteFeasibilityStatus.DRIVER_TOO_LATE;
+            assessment.routeFeasibilityStatus = DisRouteFeasibilityStatus.INFEASIBLE;
             return assessment;
         }
 
@@ -267,7 +240,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
     private String resolvePlanFeasibility(boolean anyInfeasibleLocked,
                                           int eligibleDriverCount,
                                           int routesWithStops,
-                                          boolean anyDriverTooLate,
                                           boolean anyLate,
                                           boolean anyWait) {
         if (anyInfeasibleLocked) {
@@ -279,9 +251,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         if (eligibleDriverCount == 0) {
             return DisRouteFeasibilityStatus.NO_AVAILABLE_DRIVER;
         }
-        if (anyDriverTooLate) {
-            return DisRouteFeasibilityStatus.DRIVER_TOO_LATE;
-        }
         if (anyLate) {
             return DisRouteFeasibilityStatus.HAS_LATE;
         }
@@ -289,13 +258,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
             return DisRouteFeasibilityStatus.HAS_WAIT;
         }
         return DisRouteFeasibilityStatus.FEASIBLE;
-    }
-
-    private boolean isCheckInEligible(Date checkInAt, Date latestCheckInAt) {
-        if (checkInAt == null || latestCheckInAt == null) {
-            return checkInAt != null;
-        }
-        return !checkInAt.after(latestCheckInAt);
     }
 
     private Map<Integer, NxDisShipmentTaskEntity> loadTaskMap(Integer planId) {
@@ -321,9 +283,47 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
                 || DisShipmentTaskStatus.DELIVERED.equals(status);
     }
 
-    private boolean isCountableStop(NxDisRouteStopEntity stop) {
-        String status = stop.getNxDrsStopStatus();
+    private boolean isCountableTask(NxDisShipmentTaskEntity task) {
+        if (task == null) {
+            return false;
+        }
+        String status = task.getNxDstStopStatus();
         return status == null || !STOP_CANCELLED.equalsIgnoreCase(status);
+    }
+
+    private RouteDispatchWarning buildTaskLateWarning(NxDisDriverRouteEntity driverRoute,
+                                                      NxDisShipmentTaskEntity task,
+                                                      int lateMinutes,
+                                                      boolean batchEligible) {
+        String lateReason = inferStopLateReason(driverRoute, batchEligible);
+        return buildWarning(
+                DisRouteWarningCode.STOP_LATE,
+                SEVERITY_WARN,
+                driverRoute.getNxDdrDriverUserId(),
+                driverRoute.getDriverName(),
+                driverRoute.getNxDdrId(),
+                null,
+                task.getNxDstId(),
+                task.getNxDstDepName(),
+                lateMinutes,
+                task.getNxDstDepName() + " 预计迟到 " + lateMinutes + " 分钟",
+                lateReason);
+    }
+
+    private RouteDispatchWarning buildLockedIneligibleWarning(NxDisDriverRouteEntity driverRoute,
+                                                              NxDisShipmentTaskEntity task) {
+        return buildWarning(
+                DisRouteWarningCode.LOCKED_ON_INELIGIBLE_DRIVER,
+                SEVERITY_ERROR,
+                driverRoute.getNxDdrDriverUserId(),
+                driverRoute.getDriverName(),
+                driverRoute.getNxDdrId(),
+                null,
+                task.getNxDstId(),
+                task.getNxDstDepName(),
+                null,
+                "已锁定站点「" + task.getNxDstDepName() + "」分给了不可派司机",
+                "请改派司机或调整 duty");
     }
 
     private String resolveRouteDate(NxDisRoutePlanEntity plan) {
@@ -336,49 +336,9 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         throw new IllegalArgumentException("路线计划缺少 routeDate");
     }
 
-    private RouteDispatchWarning buildCheckInTooLateWarning(NxDisDriverRouteEntity driverRoute,
-                                                            Date checkInAt,
-                                                            Date latestCheckInAt) {
-        return buildWarning(
-                DisRouteWarningCode.DRIVER_CHECKIN_TOO_LATE,
-                SEVERITY_ERROR,
-                driverRoute.getNxDdrDriverUserId(),
-                driverRoute.getDriverName(),
-                driverRoute.getNxDdrId(),
-                null,
-                null,
-                null,
-                null,
-                "司机上岗时间 " + formatDateTime(checkInAt) + " 晚于本批次允许最晚上岗 "
-                        + formatDateTime(latestCheckInAt),
-                "不适合参与当前批次，请切换批次或安排更早到岗");
-    }
-
-    private RouteDispatchWarning buildStopLateWarning(NxDisDriverRouteEntity driverRoute,
-                                                        NxDisRouteStopEntity stop,
-                                                        int lateMinutes,
-                                                        boolean batchEligible,
-                                                        Date checkInAt) {
-        String lateReason = inferStopLateReason(driverRoute, batchEligible, checkInAt);
-        return buildWarning(
-                DisRouteWarningCode.STOP_LATE,
-                SEVERITY_WARN,
-                driverRoute.getNxDdrDriverUserId(),
-                driverRoute.getDriverName(),
-                driverRoute.getNxDdrId(),
-                stop.getNxDrsId(),
-                stop.getNxDrsShipmentTaskId(),
-                stop.getNxDrsDepartmentName(),
-                lateMinutes,
-                "站点「" + stop.getNxDrsDepartmentName() + "」预计迟到 " + lateMinutes + " 分钟（" + lateReason + "）",
-                "请检查路线顺序、出发时间或客户时间窗");
-    }
-
-    private String inferStopLateReason(NxDisDriverRouteEntity driverRoute,
-                                       boolean batchEligible,
-                                       Date checkInAt) {
+    private String inferStopLateReason(NxDisDriverRouteEntity driverRoute, boolean batchEligible) {
         if (!batchEligible) {
-            return "司机上岗过晚，不适合本批次";
+            return "司机当前不可派";
         }
         if (driverRoute.getNxDdrPlannedDepartAt() != null) {
             Calendar cal = Calendar.getInstance();
@@ -387,33 +347,7 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
                 return "司机出发过晚";
             }
         }
-        if (checkInAt != null && driverRoute.getNxDdrPlannedDepartAt() != null
-                && checkInAt.equals(driverRoute.getNxDdrPlannedDepartAt())) {
-            return "出发时间受 checkInAt 限制";
-        }
         return "路线时长超出客户最晚送达时间";
-    }
-
-    private RouteDispatchWarning buildLockedIneligibleWarning(NxDisDriverRouteEntity driverRoute,
-                                                              NxDisRouteStopEntity stop,
-                                                              NxDisShipmentTaskEntity task,
-                                                              Date checkInAt) {
-        String lockType = task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1
-                ? "manualLocked" : task.getNxDstStatus();
-        return buildWarning(
-                DisRouteWarningCode.LOCKED_ON_INELIGIBLE_DRIVER,
-                SEVERITY_ERROR,
-                driverRoute.getNxDdrDriverUserId(),
-                driverRoute.getDriverName(),
-                driverRoute.getNxDdrId(),
-                stop.getNxDrsId(),
-                task.getNxDstId(),
-                stop.getNxDrsDepartmentName(),
-                null,
-                "站点「" + stop.getNxDrsDepartmentName() + "」已锁定/已指派在不适合本批次的司机上（"
-                        + lockType + "，checkIn="
-                        + (checkInAt != null ? formatDateTime(checkInAt) : "未知") + "）",
-                "请人工 unlock/move 后再调整，本系统不会自动换司机");
     }
 
     private RouteDispatchWarning buildSuggestEarlierDepartWarning(NxDisDriverRouteEntity driverRoute,
@@ -458,13 +392,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         return warning;
     }
 
-    private String formatDateTime(Date date) {
-        if (date == null) {
-            return "";
-        }
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
-    }
-
     private static final class RouteDriverAssessment {
         private boolean batchEligible;
         private String ineligibleReason;
@@ -472,7 +399,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         private boolean anyWait;
         private boolean anyLate;
         private boolean infeasibleLocked;
-        private boolean driverTooLate;
         private String routeFeasibilityStatus;
         private final List<RouteDispatchWarning> warnings = new ArrayList<RouteDispatchWarning>();
     }

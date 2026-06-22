@@ -22,5 +22,9 @@ public interface NxDisDriverRouteDao {
 
     void updateFeasibility(NxDisDriverRouteEntity entity);
 
+    void updateExecution(NxDisDriverRouteEntity entity);
+
+    void updateLoadingGate(NxDisDriverRouteEntity entity);
+
     void deleteByPlanId(Integer planId);
 }

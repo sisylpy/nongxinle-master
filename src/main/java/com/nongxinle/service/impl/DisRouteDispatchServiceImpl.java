@@ -21,18 +21,22 @@ import java.util.*;
 import static com.nongxinle.route.DisDriverDutyStatus.ON_DUTY;
 import static com.nongxinle.route.DisRoutePlanStatus.*;
 import static com.nongxinle.route.DisShipmentTaskItemStatus.ACTIVE;
+import static com.nongxinle.route.DisShipmentTaskItemStatus.REMOVED;
+import static com.nongxinle.route.DisShipmentTaskStatus.CANCELLED;
 import static com.nongxinle.route.RouteCoordinateUtils.toPoint;
 import static com.nongxinle.route.RouteCoordinateUtils.isValidCoordinate;
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
+
+import com.nongxinle.route.DisRouteOrderArriveDateHelper;
 
 import static com.nongxinle.utils.NxDistributerTypeUtils.getNxDisUserDriver;
 
 @Service("disRouteDispatchService")
 public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
 
-    private static final String NO_ON_DUTY_DRIVERS_MSG = "当前没有已上岗司机，请先让司机上岗后再生成派车方案。";
+    private static final String NO_ON_DUTY_DRIVERS_MSG = "当前没有可派司机，请在司机可派状态中开启司机后再生成派车方案。";
     private static final String NO_BATCH_ELIGIBLE_DRIVERS_MSG =
-            "当前批次无可派司机（上岗时间晚于批次允许出发时间），请安排司机提前上岗或切换配送批次。";
+            "当前没有可派司机，请在司机可派状态中开启司机。";
 
     @Autowired
     private NxDisRoutePlanDao nxDisRoutePlanDao;
@@ -64,13 +68,29 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
     private NxDisDriverDutyDao nxDisDriverDutyDao;
     @Autowired
     private DisRouteDispatchSnapshotHelper disRouteDispatchSnapshotHelper;
+    @Autowired
+    private DisRouteDispatchReadIntegrityHelper disRouteDispatchReadIntegrityHelper;
 
+    /**
+     * 重新生成派车方案：关联 liveOrderId + 路线优化 + 排程 + 可执行性评估；不写订单商品快照。
+     */
     @Override
     @Transactional
     public DisRouteDispatchResult simulate(DisRoutePreviewRequest request) throws Exception {
         validatePreviewRequest(request);
 
-        String routeDate = resolveRouteDate(request);
+        String requestedRouteDate = resolveRequestedRouteDate(request);
+        List<DisRouteOrderSnapshotDto> orderRows = queryEligibleOrders(request.getDisId(), requestedRouteDate);
+        if (orderRows.isEmpty()) {
+            throw new IllegalArgumentException(buildNoOrdersMessage(requestedRouteDate));
+        }
+
+        String routeDate = resolveRouteDateFromOrders(request, orderRows);
+        orderRows = DisRouteOrderArriveDateHelper.filterByRouteDate(orderRows, routeDate);
+        if (orderRows.isEmpty()) {
+            throw new IllegalArgumentException("路线日 " + routeDate + " 没有可进入沙盘的 live 订单");
+        }
+
         DisRouteBatchContext batch = DisRouteBatchDefaults.resolve(request, routeDate);
         GeoPoint depot = resolveDepot(request);
         RouteCostProviderType costType = parseCostProviderType(request.getCostProviderType());
@@ -81,12 +101,6 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
             throw new IllegalArgumentException(NO_BATCH_ELIGIBLE_DRIVERS_MSG);
         }
 
-        List<DisRouteOrderSnapshotDto> orderRows = nxDisRoutePlanDao.queryEligibleLiveOrderSnapshots(
-                request.getDisId(), routeDate);
-        if (orderRows.isEmpty()) {
-            throw new IllegalArgumentException("路线日 " + routeDate + " 没有可进入沙盘的 live 订单");
-        }
-
         Map<Integer, List<DisRouteOrderSnapshotDto>> ordersByDep = groupOrdersByDepartment(orderRows);
         NxDisRoutePlanEntity plan = resolveOrCreateActivePlan(
                 request, routeDate, depot, costType, optimizerType, drivers, batch);
@@ -94,6 +108,7 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         for (List<DisRouteOrderSnapshotDto> depOrders : ordersByDep.values()) {
             upsertOpenTaskFromOrders(request.getDisId(), routeDate, plan.getNxDrpId(), depOrders);
         }
+        reconcileOrphanPlanTasks(plan.getNxDrpId(), request.getDisId(), routeDate, ordersByDep.keySet());
 
         ensureDriverRoutes(plan, drivers);
 
@@ -177,205 +192,30 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
     }
 
     @Override
-    public DriverRouteTasksResponse getDriverLoadingToday(Integer driverUserId) {
-        return buildDriverTasksResponse(driverUserId, DisShipmentTaskStatus.ASSIGNED);
-    }
-
-    @Override
-    public DriverRouteTasksResponse getDriverDeliveryToday(Integer driverUserId) {
-        return buildDriverTasksResponse(driverUserId, DisShipmentTaskStatus.READY_TO_GO);
-    }
-
-    private DriverRouteTasksResponse buildDriverTasksResponse(Integer driverUserId, String taskStatus) {
-        DriverRouteTasksResponse response = new DriverRouteTasksResponse();
-        NxDistributerUserEntity driver = nxDistributerUserDao.queryObject(driverUserId);
-        if (driver == null) {
-            response.setTasks(new ArrayList<NxDisShipmentTaskEntity>());
-            return response;
-        }
-        String routeDate = formatWhatDay(0);
-        response.setRouteDate(routeDate);
-
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("disId", driver.getNxDiuDistributerId());
-        map.put("routeDate", routeDate);
-        map.put("status", taskStatus);
-        map.put("assignedDriverUserId", driverUserId);
-        List<NxDisShipmentTaskEntity> tasks = nxDisShipmentTaskDao.queryByDisRouteDateStatus(map);
-        if (tasks == null) {
-            tasks = new ArrayList<NxDisShipmentTaskEntity>();
-        }
-        for (NxDisShipmentTaskEntity task : tasks) {
-            NxDisShipmentTaskEntity detail = disShipmentTaskService.queryTaskDetail(task.getNxDstId());
-            if (detail != null) {
-                task.setItems(detail.getItems());
-            }
-        }
-        response.setTasks(tasks);
-
-        Integer planId = resolvePlanIdForDriver(driver, routeDate, taskStatus, tasks);
-        if (planId != null) {
-            NxDisRoutePlanEntity plan = nxDisRoutePlanDao.queryObject(planId);
-            if (plan != null) {
-                response.setPlanId(plan.getNxDrpId());
-                response.setPlanStatus(plan.getNxDrpStatus());
-            }
-            NxDisDriverRouteEntity driverRoute = loadDriverRouteWithStops(planId, driverUserId, tasks);
-            response.setDriverRoute(driverRoute);
-        }
-        return response;
-    }
-
-    /** 优先从 task.planId 解析；否则按 routeDate + 状态级联查 plan */
-    private Integer resolvePlanIdForDriver(NxDistributerUserEntity driver,
-                                           String routeDate,
-                                           String taskStatus,
-                                           List<NxDisShipmentTaskEntity> tasks) {
-        if (tasks != null) {
-            for (NxDisShipmentTaskEntity task : tasks) {
-                if (task.getNxDstPlanId() != null) {
-                    return task.getNxDstPlanId();
-                }
-            }
-        }
-        Integer disId = driver.getNxDiuDistributerId();
-        if (DisShipmentTaskStatus.READY_TO_GO.equals(taskStatus)) {
-            NxDisRoutePlanEntity plan = nxDisRoutePlanDao.queryByDisRouteDateStatus(disId, routeDate, READY);
-            if (plan == null) {
-                plan = nxDisRoutePlanDao.queryByDisRouteDateStatus(disId, routeDate, ASSIGNED);
-            }
-            if (plan == null) {
-                plan = nxDisRoutePlanDao.queryByDisRouteDateStatus(disId, routeDate, SIMULATED);
-            }
-            return plan != null ? plan.getNxDrpId() : null;
-        }
-        NxDisRoutePlanEntity plan = nxDisRoutePlanDao.queryByDisRouteDateStatus(disId, routeDate, ASSIGNED);
-        if (plan == null) {
-            plan = nxDisRoutePlanDao.queryByDisRouteDateStatus(disId, routeDate, SIMULATED);
-        }
-        return plan != null ? plan.getNxDrpId() : null;
-    }
-
-    /** 单司机读模型：driver_route + stops（stopSeq 升序）+ stop.shipmentTask.items */
-    private NxDisDriverRouteEntity loadDriverRouteWithStops(Integer planId,
-                                                            Integer driverUserId,
-                                                            List<NxDisShipmentTaskEntity> tasks) {
-        NxDisDriverRouteEntity driverRoute = findDriverRouteInPlan(planId, driverUserId);
-        if (driverRoute == null) {
-            driverRoute = findDriverRouteFromTaskStops(tasks);
-        }
-        if (driverRoute == null) {
-            throw new IllegalStateException(buildMissingDriverRouteMessage(planId, driverUserId));
-        }
-        return driverRoute;
-    }
-
-    private NxDisDriverRouteEntity findDriverRouteInPlan(Integer planId, Integer driverUserId) {
-        NxDisRoutePlanEntity planDetail = loadPlanDetailWithTasks(planId);
-        if (planDetail == null || planDetail.getDriverRoutes() == null) {
-            return null;
-        }
-        for (NxDisDriverRouteEntity route : planDetail.getDriverRoutes()) {
-            if (Objects.equals(driverUserId, route.getNxDdrDriverUserId())) {
-                return route;
-            }
-        }
-        return null;
-    }
-
-    private NxDisDriverRouteEntity findDriverRouteFromTaskStops(List<NxDisShipmentTaskEntity> tasks) {
-        if (tasks == null) {
-            return null;
-        }
-        for (NxDisShipmentTaskEntity task : tasks) {
-            if (task == null || task.getNxDstId() == null) {
-                continue;
-            }
-            NxDisRouteStopEntity stop = nxDisRouteStopDao.queryByShipmentTaskId(task.getNxDstId());
-            if (stop == null || stop.getNxDrsDriverRouteId() == null) {
-                continue;
-            }
-            NxDisDriverRouteEntity route = nxDisDriverRouteDao.queryObject(stop.getNxDrsDriverRouteId());
-            if (route == null) {
-                continue;
-            }
-            attachStopsWithTasks(route);
-            return route;
-        }
-        return null;
-    }
-
-    private void attachStopsWithTasks(NxDisDriverRouteEntity driverRoute) {
-        List<NxDisRouteStopEntity> stops = nxDisRouteStopDao.queryByDriverRouteId(driverRoute.getNxDdrId());
-        List<NxDisRouteStopEntity> routeStops = stops != null
-                ? stops : new ArrayList<NxDisRouteStopEntity>();
-        DisRoutePlanPresentationHelper.prepareStopsForReadModel(routeStops);
-        for (NxDisRouteStopEntity stop : routeStops) {
-            stop.setOrders(null);
-            stop.setOrderIds(null);
-            if (stop.getNxDrsShipmentTaskId() != null) {
-                stop.setShipmentTask(disShipmentTaskService.queryTaskDetail(stop.getNxDrsShipmentTaskId()));
-            }
-        }
-        driverRoute.setStops(routeStops);
-    }
-
-    private String buildMissingDriverRouteMessage(Integer planId, Integer driverUserId) {
-        StringBuilder message = new StringBuilder();
-        message.append("driver_route 未找到：planId=").append(planId)
-                .append(", driverUserId=").append(driverUserId);
-        List<NxDisDriverRouteEntity> routes = nxDisDriverRouteDao.queryByPlanId(planId);
-        if (routes == null || routes.isEmpty()) {
-            message.append("；plan 下无 driver_route 记录");
-        } else {
-            message.append("；plan 下已有 driver_route driverUserId=[");
-            for (int i = 0; i < routes.size(); i++) {
-                if (i > 0) {
-                    message.append(',');
-                }
-                NxDisDriverRouteEntity route = routes.get(i);
-                message.append(route.getNxDdrDriverUserId())
-                        .append("(routeId=").append(route.getNxDdrId()).append(')');
-            }
-            message.append(']');
-        }
-        return message.toString();
-    }
-
-    @Override
     public List<NxDistributerUserEntity> listDrivers(Integer disId) {
         return queryDriverAccountsByDisId(disId);
     }
 
     /**
-     * simulate 司机来源（须 ON_DUTY 且适合当前批次）：
-     * 1. request.driverUserIds 非空 → 校验归属/角色/上岗/批次可派后使用；
-     * 2. 为空或缺失 → disId + routeDate 下 ON_DUTY 且 batchEligible 司机。
+     * simulate 司机来源（须 ON_DUTY / 可派）：
+     * 1. request.driverUserIds 非空 → 校验归属/角色/可派状态后使用；
+     * 2. 为空或缺失 → disId + routeDate 下全部 ON_DUTY 司机。
      */
     private List<NxDistributerUserEntity> resolveDrivers(DisRoutePreviewRequest request,
                                                          String routeDate,
                                                          DisRouteBatchContext batch) {
-        Date latestCheckInAt = DisRouteBatchDefaults.latestAllowedCheckInAt(batch.getDefaultDepartAt());
         if (hasExplicitDriverUserIds(request)) {
-            return resolveExplicitDrivers(request, routeDate, batch, latestCheckInAt);
+            return resolveExplicitDrivers(request, routeDate);
         }
-        return resolveAutoBatchEligibleDrivers(request.getDisId(), routeDate, latestCheckInAt);
+        return resolveAutoBatchEligibleDrivers(request.getDisId(), routeDate);
     }
 
-    private List<NxDistributerUserEntity> resolveAutoBatchEligibleDrivers(Integer disId,
-                                                                          String routeDate,
-                                                                          Date latestCheckInAt) {
+    private List<NxDistributerUserEntity> resolveAutoBatchEligibleDrivers(Integer disId, String routeDate) {
         List<NxDistributerUserEntity> onDutyDrivers = disDriverDutyService.listOnDutyDriverUsers(disId, routeDate);
         if (onDutyDrivers.isEmpty()) {
             throw new IllegalArgumentException(NO_ON_DUTY_DRIVERS_MSG);
         }
-        List<NxDistributerUserEntity> eligible = new ArrayList<NxDistributerUserEntity>();
-        for (NxDistributerUserEntity driver : onDutyDrivers) {
-            if (isDriverBatchEligible(disId, driver.getNxDistributerUserId(), routeDate, latestCheckInAt)) {
-                eligible.add(driver);
-            }
-        }
-        return eligible;
+        return onDutyDrivers;
     }
 
     private boolean hasExplicitDriverUserIds(DisRoutePreviewRequest request) {
@@ -383,9 +223,7 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
     }
 
     private List<NxDistributerUserEntity> resolveExplicitDrivers(DisRoutePreviewRequest request,
-                                                                 String routeDate,
-                                                                 DisRouteBatchContext batch,
-                                                                 Date latestCheckInAt) {
+                                                                 String routeDate) {
         List<NxDistributerUserEntity> selected = new ArrayList<NxDistributerUserEntity>();
         for (Integer driverUserId : request.getDriverUserIds()) {
             if (driverUserId == null) {
@@ -403,40 +241,12 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
             }
             disDriverDutyService.requireDriverOnDuty(
                     request.getDisId(), driverUserId, routeDate, driver.getNxDiuWxNickName());
-            if (!isDriverBatchEligible(request.getDisId(), driverUserId, routeDate, latestCheckInAt)) {
-                String label = driver.getNxDiuWxNickName() != null && !driver.getNxDiuWxNickName().trim().isEmpty()
-                        ? driver.getNxDiuWxNickName().trim() : String.valueOf(driverUserId);
-                throw new IllegalArgumentException(
-                        "司机不适合当前批次 " + batch.getBatchCode() + "：" + label
-                                + " 上岗时间晚于 " + formatDateTime(latestCheckInAt));
-            }
             selected.add(driver);
         }
         if (selected.isEmpty()) {
             throw new IllegalArgumentException(NO_ON_DUTY_DRIVERS_MSG);
         }
         return selected;
-    }
-
-    private boolean isDriverBatchEligible(Integer disId,
-                                          Integer driverUserId,
-                                          String routeDate,
-                                          Date latestCheckInAt) {
-        NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(disId, driverUserId, routeDate);
-        if (duty == null || !ON_DUTY.equals(duty.getNxDddDutyStatus()) || duty.getNxDddCheckInAt() == null) {
-            return false;
-        }
-        if (latestCheckInAt == null) {
-            return true;
-        }
-        return !duty.getNxDddCheckInAt().after(latestCheckInAt);
-    }
-
-    private String formatDateTime(Date date) {
-        if (date == null) {
-            return "";
-        }
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
     }
 
     private DisRouteDispatchResult buildDispatchResult(Integer planId, RouteFeasibilityResult feasibility) {
@@ -450,7 +260,7 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         return result;
     }
 
-    /** 配送商下全部司机账号（nx_DIU_admin=5），不含上岗过滤；供配置/列表用 */
+    /** 配送商下全部司机账号（nx_DIU_admin=5），不含可派状态过滤；供配置/列表用 */
     private List<NxDistributerUserEntity> queryDriverAccountsByDisId(Integer disId) {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("disId", disId);
@@ -485,12 +295,56 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         }
     }
 
-    private String resolveRouteDate(DisRoutePreviewRequest request) {
+    private String resolveRequestedRouteDate(DisRoutePreviewRequest request) {
         if (request.getRouteDate() != null && !request.getRouteDate().trim().isEmpty()) {
             return request.getRouteDate().trim();
         }
         if (request.getPlanDate() != null && !request.getPlanDate().trim().isEmpty()) {
             return request.getPlanDate().trim();
+        }
+        return null;
+    }
+
+    private List<DisRouteOrderSnapshotDto> queryEligibleOrders(Integer disId, String routeDate) {
+        if (routeDate != null && !routeDate.isEmpty()) {
+            return nxDisRoutePlanDao.queryEligibleLiveOrderSnapshots(
+                    disId, routeDate, DisRouteOrderArriveDateHelper.toRouteDateOnly(routeDate));
+        }
+        return nxDisRoutePlanDao.queryEligibleLiveOrderSnapshots(disId, null, null);
+    }
+
+    private String resolveRouteDateFromOrders(DisRoutePreviewRequest request,
+                                              List<DisRouteOrderSnapshotDto> orderRows) {
+        java.util.Set<String> distinctDates = DisRouteOrderArriveDateHelper.collectDistinctRouteDates(orderRows);
+        if (distinctDates.isEmpty()) {
+            throw new IllegalArgumentException("候选订单缺少送达日期（nx_DO_arrive_date），无法生成派车方案");
+        }
+        String requested = resolveRequestedRouteDate(request);
+        if (requested != null) {
+            if (!distinctDates.contains(requested)) {
+                throw new IllegalArgumentException("指定路线日 " + requested + " 与订单送达日期不一致，实际送达日期: "
+                        + distinctDates);
+            }
+            return requested;
+        }
+        if (distinctDates.size() > 1) {
+            throw new IllegalArgumentException("本次沙盘订单含多个送达日期 " + distinctDates
+                    + "，请指定 routeDate 后分日期派车");
+        }
+        return distinctDates.iterator().next();
+    }
+
+    private String buildNoOrdersMessage(String requestedRouteDate) {
+        if (requestedRouteDate != null) {
+            return "路线日 " + requestedRouteDate + "（订单送达日）没有可进入沙盘的 live 订单";
+        }
+        return "当前没有可进入沙盘的 live 订单";
+    }
+
+    private String resolveRouteDate(DisRoutePreviewRequest request) {
+        String requested = resolveRequestedRouteDate(request);
+        if (requested != null) {
+            return requested;
         }
         return formatWhatDay(0);
     }
@@ -644,8 +498,9 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         }
 
         for (DisRouteOrderSnapshotDto order : orders) {
-            upsertTaskItem(task.getNxDstId(), order);
+            upsertTaskItem(task.getNxDstId(), order.getOrderId());
         }
+        reconcileStaleTaskItems(task.getNxDstId(), orders, protectedTask);
 
         persistTaskDispatchSnapshot(task.getNxDstId());
 
@@ -656,15 +511,11 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         return nxDisShipmentTaskDao.queryObject(task.getNxDstId());
     }
 
-    private void upsertTaskItem(Integer taskId, DisRouteOrderSnapshotDto order) {
-        NxDisShipmentTaskItemEntity existing = nxDisShipmentTaskItemDao.queryByLiveOrderId(order.getOrderId());
+    private void upsertTaskItem(Integer taskId, Integer liveOrderId) {
+        NxDisShipmentTaskItemEntity existing = nxDisShipmentTaskItemDao.queryByLiveOrderId(liveOrderId);
         if (existing != null) {
             NxDisShipmentTaskItemEntity update = new NxDisShipmentTaskItemEntity();
             update.setNxDstiId(existing.getNxDstiId());
-            update.setNxDstiGoodsName(order.getGoodsName());
-            update.setNxDstiQuantity(order.getQuantity());
-            update.setNxDstiStandard(order.getStandard());
-            update.setNxDstiRemark(order.getRemark());
             if (!taskId.equals(existing.getNxDstiTaskId())) {
                 update.setNxDstiTaskId(taskId);
             }
@@ -673,13 +524,45 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         } else {
             NxDisShipmentTaskItemEntity item = new NxDisShipmentTaskItemEntity();
             item.setNxDstiTaskId(taskId);
-            item.setNxDstiLiveOrderId(order.getOrderId());
-            item.setNxDstiGoodsName(order.getGoodsName());
-            item.setNxDstiQuantity(order.getQuantity());
-            item.setNxDstiStandard(order.getStandard());
-            item.setNxDstiRemark(order.getRemark());
+            item.setNxDstiLiveOrderId(liveOrderId);
             item.setNxDstiItemStatus(ACTIVE);
             nxDisShipmentTaskItemDao.save(item);
+        }
+    }
+
+    /** simulate：移除不再 eligible 且未打单的 live 关联，不碰已 bill/history 的 item。 */
+    private void reconcileStaleTaskItems(Integer taskId,
+                                         List<DisRouteOrderSnapshotDto> orders,
+                                         boolean protectedTask) {
+        if (protectedTask || taskId == null) {
+            return;
+        }
+        Set<Integer> eligibleLiveOrderIds = new HashSet<Integer>();
+        if (orders != null) {
+            for (DisRouteOrderSnapshotDto order : orders) {
+                if (order != null && order.getOrderId() != null) {
+                    eligibleLiveOrderIds.add(order.getOrderId());
+                }
+            }
+        }
+        List<NxDisShipmentTaskItemEntity> items = nxDisShipmentTaskItemDao.queryByTaskId(taskId);
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (NxDisShipmentTaskItemEntity item : items) {
+            if (item == null || !ACTIVE.equals(item.getNxDstiItemStatus())) {
+                continue;
+            }
+            if (item.getNxDstiBillId() != null || item.getNxDstiHistoryOrderId() != null) {
+                continue;
+            }
+            Integer liveOrderId = item.getNxDstiLiveOrderId();
+            if (liveOrderId != null && !eligibleLiveOrderIds.contains(liveOrderId)) {
+                NxDisShipmentTaskItemEntity update = new NxDisShipmentTaskItemEntity();
+                update.setNxDstiId(item.getNxDstiId());
+                update.setNxDstiItemStatus(REMOVED);
+                nxDisShipmentTaskItemDao.update(update);
+            }
         }
     }
 
@@ -695,6 +578,63 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
                 || DisShipmentTaskStatus.READY_TO_GO.equals(status)
                 || DisShipmentTaskStatus.IN_DELIVERY.equals(status)
                 || DisShipmentTaskStatus.DELIVERED.equals(status);
+    }
+
+    /** simulate：清理 plan 上无有效 eligible 订单、且未锁定/未出车的残留 task/stop。 */
+    private void reconcileOrphanPlanTasks(Integer planId,
+                                          Integer disId,
+                                          String routeDate,
+                                          Set<Integer> eligibleDepFatherIds) {
+        if (planId == null) {
+            return;
+        }
+        List<NxDisShipmentTaskEntity> planTasks = nxDisShipmentTaskDao.queryByPlanId(planId);
+        if (planTasks == null || planTasks.isEmpty()) {
+            return;
+        }
+        for (NxDisShipmentTaskEntity task : planTasks) {
+            if (task == null || DisShipmentTaskStatus.CANCELLED.equals(task.getNxDstStatus())) {
+                continue;
+            }
+            if (isTaskSimulateProtected(task)) {
+                continue;
+            }
+            task.setItems(nxDisShipmentTaskItemDao.queryByTaskId(task.getNxDstId()));
+            boolean hasValidItems = disRouteDispatchReadIntegrityHelper.hasValidDisplayItems(task, disId, routeDate);
+            boolean depStillEligible = task.getNxDstDepFatherId() != null
+                    && eligibleDepFatherIds.contains(task.getNxDstDepFatherId());
+            if (hasValidItems && depStillEligible) {
+                continue;
+            }
+            cancelOrphanTask(task);
+        }
+    }
+
+    private void cancelOrphanTask(NxDisShipmentTaskEntity task) {
+        if (task == null || task.getNxDstId() == null) {
+            return;
+        }
+        List<NxDisShipmentTaskItemEntity> items = nxDisShipmentTaskItemDao.queryByTaskId(task.getNxDstId());
+        if (items != null) {
+            for (NxDisShipmentTaskItemEntity item : items) {
+                if (item == null || !ACTIVE.equals(item.getNxDstiItemStatus())) {
+                    continue;
+                }
+                if (item.getNxDstiBillId() != null || item.getNxDstiHistoryOrderId() != null) {
+                    continue;
+                }
+                NxDisShipmentTaskItemEntity update = new NxDisShipmentTaskItemEntity();
+                update.setNxDstiId(item.getNxDstiId());
+                update.setNxDstiItemStatus(REMOVED);
+                nxDisShipmentTaskItemDao.update(update);
+            }
+        }
+        NxDisShipmentTaskEntity taskUpdate = new NxDisShipmentTaskEntity();
+        taskUpdate.setNxDstId(task.getNxDstId());
+        taskUpdate.setNxDstStatus(CANCELLED);
+        taskUpdate.setClearOpenKey(true);
+        nxDisShipmentTaskDao.update(taskUpdate);
+        nxDisRouteStopDao.deleteByShipmentTaskId(task.getNxDstId());
     }
 
     private void removeStopForUnassignedTask(NxDisShipmentTaskEntity task) {
@@ -732,6 +672,9 @@ public class DisRouteDispatchServiceImpl implements DisRouteDispatchService {
         List<NxDisShipmentTaskEntity> optimizable = new ArrayList<NxDisShipmentTaskEntity>();
         for (NxDisShipmentTaskEntity task : planTasks) {
             if (isTaskSimulateProtected(task)) {
+                continue;
+            }
+            if (DisShipmentTaskStatus.CANCELLED.equals(task.getNxDstStatus())) {
                 continue;
             }
             if (!isValidCoordinate(task.getNxDstLat(), task.getNxDstLng())) {

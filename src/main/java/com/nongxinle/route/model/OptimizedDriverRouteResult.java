@@ -16,5 +16,11 @@ public class OptimizedDriverRouteResult {
     private int routeSeq;
     private long totalDistanceM;
     private long totalDurationS;
+    private long returnLegDistanceM;
+    private long returnLegDurationS;
+    private String returnLegDistanceType;
+    private String distanceProvider;
+    /** 路线中若任一段为直线估算则为 ESTIMATED_STRAIGHT_DISTANCE，否则 ROUTE_DISTANCE */
+    private String routeDistanceType;
     private List<OptimizedStopResult> stops = new ArrayList<>();
 }

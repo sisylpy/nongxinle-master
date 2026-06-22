@@ -3,6 +3,7 @@ package com.nongxinle.service;
 import com.nongxinle.dto.route.RouteDispatchOperationDecision;
 import com.nongxinle.dto.route.RouteFeasibilityResult;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
+import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public interface DisRouteDispatchOperationPolicy {
                                                        Integer targetDriverUserId,
                                                        RouteFeasibilityResult feasibility);
 
+    /** Phase 3a.1b：沙盘建议站点 — 老板确认该店出货完成 / 可装车 */
+    RouteDispatchOperationDecision evaluateConfirmCustomer(NxDisShipmentTaskEntity task,
+                                                           Integer suggestedDriverUserId,
+                                                           String sandboxRouteDate);
+
     RouteDispatchOperationDecision evaluateBillReadyPromotion(NxDisShipmentTaskEntity task,
                                                               RouteFeasibilityResult feasibility);
 
@@ -45,4 +51,12 @@ public interface DisRouteDispatchOperationPolicy {
     void enrichTasksReadModel(List<NxDisShipmentTaskEntity> tasks,
                               NxDisRoutePlanEntity plan,
                               RouteFeasibilityResult feasibility);
+
+    /** 只读：为 sandboxSuggestedStops / unassignedStops 填充确认出货操作态 */
+    void enrichEphemeralSandboxStops(List<NxDisRouteStopEntity> stops,
+                                     NxDisRoutePlanEntity plan,
+                                     RouteFeasibilityResult feasibility);
+
+    /** 只读：partition 后为 executionDriverRoutes 填充 route/stop 操作态 */
+    void enrichExecutionRoutesReadModel(NxDisRoutePlanEntity plan, RouteFeasibilityResult feasibility);
 }

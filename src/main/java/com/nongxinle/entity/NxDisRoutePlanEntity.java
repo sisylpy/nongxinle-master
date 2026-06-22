@@ -54,6 +54,10 @@ public class NxDisRoutePlanEntity implements Serializable {
     private Date nxDrpReadyAt;
 
     private List<NxDisDriverRouteEntity> driverRoutes;
+    /** Phase 3D+：已确认待装车路线 — 司机装车页读模型，不含沙箱建议/未确认站点。 */
+    private List<NxDisDriverRouteEntity> loadingDriverRoutes;
+    /** Phase 3D：已出发路线 — 只读配送执行摘要，不在沙箱 driverRoutes 时间轴。 */
+    private List<NxDisDriverRouteEntity> executionDriverRoutes;
     /** @deprecated Phase 1.5c 起新主链不再加载 unassigned_stop */
     private List<NxDisRouteUnassignedStopEntity> unassignedStops;
     /** simulate / plan 查询：plan 下全部 shipment_task（含 items） */
@@ -66,4 +70,8 @@ public class NxDisRoutePlanEntity implements Serializable {
     private String nxDrpDispatchBatchLabel;
     private String nxDrpFeasibilityStatusLabel;
     private String nxDrpScheduleStatusLabel;
+    /** Phase 2b-6：只读时间主权 */
+    private String routeDateLabel;
+    private String planTemporalStatus;
+    private String planTemporalStatusLabel;
 }

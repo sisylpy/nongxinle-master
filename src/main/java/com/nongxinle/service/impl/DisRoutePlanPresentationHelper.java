@@ -1,18 +1,19 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.dao.NxDisDriverRouteDao;
-import com.nongxinle.dao.NxDisRouteStopDao;
 import com.nongxinle.dao.NxDisShipmentTaskDao;
 import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
+import com.nongxinle.route.DisRouteDeliveryStopAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 /**
- * Phase 1.5c：driver_route 汇总与 stopSeq 展示连续化（尊重 manualLocked 固定位置）。
+ * Phase 1.5c：driver_route 汇总与 stopSeq 展示连续化。
+ * Phase 3a.1：task 驱动，route_stop 仅 legacy fallback。
  */
 @Component
 public class DisRoutePlanPresentationHelper {
@@ -22,15 +23,13 @@ public class DisRoutePlanPresentationHelper {
     @Autowired
     private NxDisDriverRouteDao nxDisDriverRouteDao;
     @Autowired
-    private NxDisRouteStopDao nxDisRouteStopDao;
-    @Autowired
     private NxDisShipmentTaskDao nxDisShipmentTaskDao;
 
     public void refreshPlanPresentation(Integer planId) {
         if (planId == null) {
             return;
         }
-        normalizeStopSeqForPlan(planId);
+        normalizeRouteSeqForPlan(planId);
         refreshDriverRouteSummaries(planId);
     }
 
@@ -48,21 +47,21 @@ public class DisRoutePlanPresentationHelper {
     }
 
     private void refreshDriverRouteSummary(Integer driverRouteId) {
-        List<NxDisRouteStopEntity> stops = nxDisRouteStopDao.queryByDriverRouteId(driverRouteId);
+        List<NxDisShipmentTaskEntity> tasks = nxDisShipmentTaskDao.queryByDriverRouteId(driverRouteId);
         int stopCount = 0;
         long totalDistanceM = 0L;
         long totalDurationS = 0L;
-        if (stops != null) {
-            for (NxDisRouteStopEntity stop : stops) {
-                if (!isCountableStop(stop)) {
+        if (tasks != null) {
+            for (NxDisShipmentTaskEntity task : tasks) {
+                if (!isCountableTask(task)) {
                     continue;
                 }
                 stopCount++;
-                if (stop.getNxDrsLegDistanceM() != null) {
-                    totalDistanceM += stop.getNxDrsLegDistanceM();
+                if (task.getNxDstLegDistanceM() != null) {
+                    totalDistanceM += task.getNxDstLegDistanceM();
                 }
-                if (stop.getNxDrsLegDurationS() != null) {
-                    totalDurationS += stop.getNxDrsLegDurationS();
+                if (task.getNxDstLegDurationS() != null) {
+                    totalDurationS += task.getNxDstLegDurationS();
                 }
             }
         }
@@ -74,42 +73,41 @@ public class DisRoutePlanPresentationHelper {
         nxDisDriverRouteDao.update(update);
     }
 
-    private void normalizeStopSeqForPlan(Integer planId) {
+    private void normalizeRouteSeqForPlan(Integer planId) {
         List<NxDisDriverRouteEntity> routes = nxDisDriverRouteDao.queryByPlanId(planId);
         if (routes == null) {
             return;
         }
         for (NxDisDriverRouteEntity route : routes) {
-            normalizeStopSeqForDriverRoute(route.getNxDdrId());
+            normalizeRouteSeqForDriverRoute(route.getNxDdrId());
         }
     }
 
-    private void normalizeStopSeqForDriverRoute(Integer driverRouteId) {
-        List<NxDisRouteStopEntity> stops = nxDisRouteStopDao.queryByDriverRouteId(driverRouteId);
-        if (stops == null || stops.isEmpty()) {
+    private void normalizeRouteSeqForDriverRoute(Integer driverRouteId) {
+        List<NxDisShipmentTaskEntity> tasks = nxDisShipmentTaskDao.queryByDriverRouteId(driverRouteId);
+        if (tasks == null || tasks.isEmpty()) {
             return;
         }
 
-        List<NxDisRouteStopEntity> activeStops = new ArrayList<NxDisRouteStopEntity>();
-        for (NxDisRouteStopEntity stop : stops) {
-            if (isCountableStop(stop)) {
-                activeStops.add(stop);
+        List<NxDisShipmentTaskEntity> activeTasks = new ArrayList<NxDisShipmentTaskEntity>();
+        for (NxDisShipmentTaskEntity task : tasks) {
+            if (isCountableTask(task)) {
+                activeTasks.add(task);
             }
         }
-        if (activeStops.isEmpty()) {
+        if (activeTasks.isEmpty()) {
             return;
         }
 
         Set<Integer> fixedSeqs = new HashSet<Integer>();
-        Map<Integer, Integer> targetSeqByStopId = new HashMap<Integer, Integer>();
-        List<NxDisRouteStopEntity> unlockedStops = new ArrayList<NxDisRouteStopEntity>();
+        Map<Integer, Integer> targetSeqByTaskId = new HashMap<Integer, Integer>();
+        List<NxDisShipmentTaskEntity> unlockedTasks = new ArrayList<NxDisShipmentTaskEntity>();
 
-        for (NxDisRouteStopEntity stop : activeStops) {
-            NxDisShipmentTaskEntity task = loadTask(stop.getNxDrsShipmentTaskId());
-            if (isManualLockedStop(task, stop)) {
-                Integer fixedSeq = resolveFixedStopSeq(task, stop);
+        for (NxDisShipmentTaskEntity task : activeTasks) {
+            if (isManualLockedTask(task)) {
+                Integer fixedSeq = resolveFixedRouteSeq(task);
                 if (fixedSeq == null) {
-                    unlockedStops.add(stop);
+                    unlockedTasks.add(task);
                     continue;
                 }
                 if (fixedSeqs.contains(fixedSeq)) {
@@ -118,93 +116,91 @@ public class DisRoutePlanPresentationHelper {
                                     + " 存在多个 manualLocked 停靠点占用 stopSeq=" + fixedSeq);
                 }
                 fixedSeqs.add(fixedSeq);
-                targetSeqByStopId.put(stop.getNxDrsId(), fixedSeq);
+                targetSeqByTaskId.put(task.getNxDstId(), fixedSeq);
             } else {
-                unlockedStops.add(stop);
+                unlockedTasks.add(task);
             }
         }
 
-        Collections.sort(unlockedStops, new Comparator<NxDisRouteStopEntity>() {
+        Collections.sort(unlockedTasks, new Comparator<NxDisShipmentTaskEntity>() {
             @Override
-            public int compare(NxDisRouteStopEntity a, NxDisRouteStopEntity b) {
-                int seqA = a.getNxDrsStopSeq() != null ? a.getNxDrsStopSeq() : Integer.MAX_VALUE;
-                int seqB = b.getNxDrsStopSeq() != null ? b.getNxDrsStopSeq() : Integer.MAX_VALUE;
+            public int compare(NxDisShipmentTaskEntity a, NxDisShipmentTaskEntity b) {
+                int seqA = a.getNxDstRouteSeq() != null ? a.getNxDstRouteSeq()
+                        : (a.getNxDstManualStopSeq() != null ? a.getNxDstManualStopSeq() : Integer.MAX_VALUE);
+                int seqB = b.getNxDstRouteSeq() != null ? b.getNxDstRouteSeq()
+                        : (b.getNxDstManualStopSeq() != null ? b.getNxDstManualStopSeq() : Integer.MAX_VALUE);
                 if (seqA != seqB) {
                     return Integer.compare(seqA, seqB);
                 }
-                return Integer.compare(a.getNxDrsId(), b.getNxDrsId());
+                return Integer.compare(a.getNxDstId(), b.getNxDstId());
             }
         });
 
         int nextSeq = 1;
-        for (NxDisRouteStopEntity stop : unlockedStops) {
+        for (NxDisShipmentTaskEntity task : unlockedTasks) {
             while (fixedSeqs.contains(nextSeq)) {
                 nextSeq++;
             }
-            targetSeqByStopId.put(stop.getNxDrsId(), nextSeq);
+            targetSeqByTaskId.put(task.getNxDstId(), nextSeq);
             nextSeq++;
         }
 
-        for (Map.Entry<Integer, Integer> entry : targetSeqByStopId.entrySet()) {
-            NxDisRouteStopEntity stop = findStop(activeStops, entry.getKey());
-            if (stop == null) {
+        for (Map.Entry<Integer, Integer> entry : targetSeqByTaskId.entrySet()) {
+            NxDisShipmentTaskEntity task = findTask(activeTasks, entry.getKey());
+            if (task == null) {
                 continue;
             }
             Integer targetSeq = entry.getValue();
-            if (stop.getNxDrsStopSeq() == null || !stop.getNxDrsStopSeq().equals(targetSeq)) {
-                NxDisRouteStopEntity update = new NxDisRouteStopEntity();
-                update.setNxDrsId(stop.getNxDrsId());
-                update.setNxDrsStopSeq(targetSeq);
-                nxDisRouteStopDao.update(update);
+            Integer currentSeq = task.getNxDstRouteSeq();
+            if (currentSeq == null || !currentSeq.equals(targetSeq)) {
+                NxDisShipmentTaskEntity update = new NxDisShipmentTaskEntity();
+                update.setNxDstId(task.getNxDstId());
+                update.setNxDstRouteSeq(targetSeq);
+                nxDisShipmentTaskDao.update(update);
             }
         }
     }
 
-    private NxDisRouteStopEntity findStop(List<NxDisRouteStopEntity> stops, Integer stopId) {
-        for (NxDisRouteStopEntity stop : stops) {
-            if (stopId.equals(stop.getNxDrsId())) {
-                return stop;
+    private NxDisShipmentTaskEntity findTask(List<NxDisShipmentTaskEntity> tasks, Integer taskId) {
+        for (NxDisShipmentTaskEntity task : tasks) {
+            if (taskId.equals(task.getNxDstId())) {
+                return task;
             }
         }
         return null;
     }
 
-    private NxDisShipmentTaskEntity loadTask(Integer taskId) {
-        if (taskId == null) {
-            return null;
-        }
-        return nxDisShipmentTaskDao.queryObject(taskId);
+    private boolean isManualLockedTask(NxDisShipmentTaskEntity task) {
+        return task != null && task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1
+                && resolveFixedRouteSeq(task) != null;
     }
 
-    private boolean isManualLockedStop(NxDisShipmentTaskEntity task, NxDisRouteStopEntity stop) {
+    private Integer resolveFixedRouteSeq(NxDisShipmentTaskEntity task) {
+        if (task.getNxDstManualStopSeq() != null) {
+            return task.getNxDstManualStopSeq();
+        }
+        return task.getNxDstRouteSeq();
+    }
+
+    private boolean isCountableTask(NxDisShipmentTaskEntity task) {
         if (task == null) {
             return false;
         }
-        if (task.getNxDstManualLocked() == null || task.getNxDstManualLocked() != 1) {
-            return false;
-        }
-        return resolveFixedStopSeq(task, stop) != null;
-    }
-
-    private Integer resolveFixedStopSeq(NxDisShipmentTaskEntity task, NxDisRouteStopEntity stop) {
-        if (task != null && task.getNxDstManualStopSeq() != null) {
-            return task.getNxDstManualStopSeq();
-        }
-        if (stop != null && stop.getNxDrsStopSeq() != null) {
-            return stop.getNxDrsStopSeq();
-        }
-        return null;
-    }
-
-    private boolean isCountableStop(NxDisRouteStopEntity stop) {
-        if (stop == null) {
-            return false;
-        }
-        if (stop.getNxDrsShipmentTaskId() == null) {
-            return false;
-        }
-        String status = stop.getNxDrsStopStatus();
+        String status = task.getNxDstStopStatus();
         return status == null || !STOP_CANCELLED.equalsIgnoreCase(status);
+    }
+
+    /** 读模型：从 task 构建内存 stop 列表（无 nxDrsId）。 */
+    public static List<NxDisRouteStopEntity> tasksToReadModelStops(List<NxDisShipmentTaskEntity> tasks) {
+        if (tasks == null || tasks.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<NxDisRouteStopEntity> stops = new ArrayList<NxDisRouteStopEntity>();
+        for (NxDisShipmentTaskEntity task : tasks) {
+            stops.add(DisRouteDeliveryStopAdapter.fromTask(task, null));
+        }
+        prepareStopsForReadModel(stops);
+        return stops;
     }
 
     /** 读模型：清空旧 stop_order 字段，按 stopSeq 排序。 */
@@ -224,7 +220,12 @@ public class DisRoutePlanPresentationHelper {
                 if (seqA != seqB) {
                     return Integer.compare(seqA, seqB);
                 }
-                return Integer.compare(a.getNxDrsId(), b.getNxDrsId());
+                Integer idA = a.getNxDrsShipmentTaskId();
+                Integer idB = b.getNxDrsShipmentTaskId();
+                if (idA != null && idB != null) {
+                    return Integer.compare(idA, idB);
+                }
+                return 0;
             }
         });
     }

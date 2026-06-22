@@ -1,11 +1,9 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.dao.NxDisRoutePlanDao;
-import com.nongxinle.dao.NxDisRouteStopDao;
 import com.nongxinle.dao.NxDisShipmentTaskDao;
 import com.nongxinle.dto.route.TaskTimeWindowRequest;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
-import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.route.DisRoutePlanStatus;
 import com.nongxinle.route.DisShipmentTaskStatus;
@@ -22,15 +20,11 @@ public class DisRouteTaskTimeWindowServiceImpl implements DisRouteTaskTimeWindow
     @Autowired
     private NxDisShipmentTaskDao nxDisShipmentTaskDao;
     @Autowired
-    private NxDisRouteStopDao nxDisRouteStopDao;
-    @Autowired
     private NxDisRoutePlanDao nxDisRoutePlanDao;
     @Autowired
     private DisRouteScheduleService disRouteScheduleService;
     @Autowired
     private DisRouteFeasibilityService disRouteFeasibilityService;
-    @Autowired
-    private DisRouteDispatchSnapshotHelper disRouteDispatchSnapshotHelper;
 
     @Override
     @Transactional
@@ -56,23 +50,11 @@ public class DisRouteTaskTimeWindowServiceImpl implements DisRouteTaskTimeWindow
         nxDisShipmentTaskDao.update(update);
 
         task = nxDisShipmentTaskDao.queryObject(taskId);
-        syncStopTimeWindow(task);
-
         if (task.getNxDstPlanId() != null) {
             disRouteScheduleService.computeSchedule(task.getNxDstPlanId());
             disRouteFeasibilityService.assess(task.getNxDstPlanId());
         }
         return nxDisShipmentTaskDao.queryObject(taskId);
-    }
-
-    private void syncStopTimeWindow(NxDisShipmentTaskEntity task) {
-        NxDisRouteStopEntity stop = nxDisRouteStopDao.queryByShipmentTaskId(task.getNxDstId());
-        if (stop == null) {
-            return;
-        }
-        NxDisRouteStopEntity stopUpdate = disRouteDispatchSnapshotHelper.buildStopTimeWindowUpdate(
-                task, stop.getNxDrsId());
-        nxDisRouteStopDao.updateDispatchSnapshot(stopUpdate);
     }
 
     private void validateRequest(Integer taskId, TaskTimeWindowRequest request) {

@@ -19,4 +19,6 @@ public class OptimizedStopResult {
     private int stopSeq;
     private long legDistanceM;
     private long legDurationS;
+    private String distanceProvider;
+    private String distanceType;
 }

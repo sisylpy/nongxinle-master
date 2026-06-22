@@ -1,13 +1,22 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.dao.NxDisDriverDutyDao;
+import com.nongxinle.dao.NxDisDriverRouteDao;
+import com.nongxinle.dao.NxDisRoutePlanDao;
+import com.nongxinle.dao.NxDisShipmentTaskDao;
 import com.nongxinle.dao.NxDistributerUserDao;
 import com.nongxinle.dto.route.DriverAvailableDto;
 import com.nongxinle.dto.route.DriverDutyRequest;
+import com.nongxinle.dto.route.RouteDispatchOperationDecision;
 import com.nongxinle.entity.NxDisDriverDutyEntity;
 import com.nongxinle.entity.NxDistributerUserEntity;
+import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.route.DisDriverDutyStatus;
+import com.nongxinle.route.DisRouteDriverDutyLockHelper;
+import com.nongxinle.route.DisRouteDispatchBatch;
+import com.nongxinle.route.DisRoutePlanStatus;
 import com.nongxinle.service.DisDriverDutyService;
+import com.nongxinle.service.DisRouteFeasibilityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +38,14 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
     private NxDisDriverDutyDao nxDisDriverDutyDao;
     @Autowired
     private NxDistributerUserDao nxDistributerUserDao;
+    @Autowired
+    private NxDisRoutePlanDao nxDisRoutePlanDao;
+    @Autowired
+    private NxDisDriverRouteDao nxDisDriverRouteDao;
+    @Autowired
+    private NxDisShipmentTaskDao nxDisShipmentTaskDao;
+    @Autowired
+    private DisRouteFeasibilityService disRouteFeasibilityService;
 
     @Override
     @Transactional
@@ -51,6 +68,7 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
             entity.setNxDddOperatorUserId(request.getOperatorUserId());
             entity.setNxDddUpdatedAt(now);
             nxDisDriverDutyDao.save(entity);
+            refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
             return entity;
         }
 
@@ -62,6 +80,7 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
         update.setNxDddOperatorUserId(request.getOperatorUserId());
         update.setNxDddUpdatedAt(now);
         nxDisDriverDutyDao.update(update);
+        refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
         return nxDisDriverDutyDao.queryByDisDriverDate(request.getDisId(), request.getDriverUserId(), dutyDate);
     }
 
@@ -71,6 +90,17 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
         validateDutyRequest(request);
         requireDriverAccount(request.getDisId(), request.getDriverUserId());
         String dutyDate = resolveDutyDate(request.getDutyDate());
+        RouteDispatchOperationDecision lockDecision = DisRouteDriverDutyLockHelper.evaluateCheckOut(
+                request.getDisId(),
+                dutyDate,
+                request.getDriverUserId(),
+                nxDisDriverRouteDao,
+                nxDisRoutePlanDao,
+                nxDisShipmentTaskDao);
+        if (!lockDecision.isAllowed()) {
+            String reason = lockDecision.getBlockedReason();
+            throw new IllegalArgumentException(reason != null ? reason : "司机当前不能关闭可派");
+        }
         Date now = new Date();
 
         NxDisDriverDutyEntity existing = nxDisDriverDutyDao.queryByDisDriverDate(
@@ -85,6 +115,7 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
             entity.setNxDddOperatorUserId(request.getOperatorUserId());
             entity.setNxDddUpdatedAt(now);
             nxDisDriverDutyDao.save(entity);
+            refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
             return entity;
         }
 
@@ -95,7 +126,34 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
         update.setNxDddOperatorUserId(request.getOperatorUserId());
         update.setNxDddUpdatedAt(now);
         nxDisDriverDutyDao.update(update);
+        refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
         return nxDisDriverDutyDao.queryByDisDriverDate(request.getDisId(), request.getDriverUserId(), dutyDate);
+    }
+
+    private void refreshActivePlansAfterDutyChange(Integer disId, String dutyDate) {
+        if (disId == null || dutyDate == null || dutyDate.trim().isEmpty()) {
+            return;
+        }
+        String date = dutyDate.trim();
+        String[] batches = {
+                DisRouteDispatchBatch.MORNING,
+                DisRouteDispatchBatch.AFTERNOON,
+                DisRouteDispatchBatch.ADHOC
+        };
+        String[] statuses = {
+                DisRoutePlanStatus.SIMULATED,
+                DisRoutePlanStatus.ASSIGNED,
+                DisRoutePlanStatus.READY
+        };
+        for (String batch : batches) {
+            for (String status : statuses) {
+                NxDisRoutePlanEntity plan = nxDisRoutePlanDao.queryByDisRouteDateBatchStatus(
+                        disId, date, batch, status);
+                if (plan != null && plan.getNxDrpId() != null) {
+                    disRouteFeasibilityService.assess(plan.getNxDrpId());
+                }
+            }
+        }
     }
 
     @Override
@@ -137,7 +195,7 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
         if (duty == null || !ON_DUTY.equals(duty.getNxDddDutyStatus())) {
             String label = driverName != null && !driverName.trim().isEmpty()
                     ? driverName.trim() : String.valueOf(driverUserId);
-            throw new IllegalArgumentException("司机未上岗，不能参与派车：" + label);
+            throw new IllegalArgumentException("司机当前不可派，不能参与派车：" + label);
         }
     }
 
