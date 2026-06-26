@@ -15,4 +15,5 @@ public class SandboxTodayPageViewModel {
     private SandboxTodayTopMetricsDto topMetrics;
     private List<SandboxTodaySectionDto> sections = new ArrayList<SandboxTodaySectionDto>();
     private List<SandboxTodayAvailableDriverDto> availableDrivers = new ArrayList<SandboxTodayAvailableDriverDto>();
+    private SandboxTodayMapOverviewDto mapOverview;
 }

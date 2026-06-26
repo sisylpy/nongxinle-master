@@ -8,10 +8,16 @@ import com.nongxinle.route.DisRouteSandboxDispatchEligibilityHelper;
 import com.nongxinle.route.DisRouteSandboxDriverDispatchStateHelper;
 import com.nongxinle.route.DisRouteSandboxUnassignedStopHelper;
 import com.nongxinle.route.dispatch.strategy.DispatchAssignmentPlan;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyContext;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyMode;
 import com.nongxinle.route.dispatch.strategy.FallbackStopAssignment;
+import com.nongxinle.route.dispatch.strategy.OwnerFixedRouteTimeWindowRouteSequencer;
 import com.nongxinle.route.dispatch.strategy.StopAssignment;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +41,13 @@ public final class SandboxProposalPlanBuilder {
     public static SandboxProposalPlan build(List<NxDisRouteStopEntity> suggestedStops,
                                             List<NxDisRouteStopEntity> unassignedStops,
                                             DispatchAssignmentPlan assignmentPlan) {
+        return build(suggestedStops, unassignedStops, assignmentPlan, null);
+    }
+
+    public static SandboxProposalPlan build(List<NxDisRouteStopEntity> suggestedStops,
+                                            List<NxDisRouteStopEntity> unassignedStops,
+                                            DispatchAssignmentPlan assignmentPlan,
+                                            DispatchStrategyContext sequencingContext) {
         Set<Integer> historyBoundDepIds = indexHistoryBoundDepIds(assignmentPlan);
         Set<Integer> fallbackDepIds = indexFallbackDepIds(assignmentPlan);
 
@@ -73,6 +86,7 @@ public final class SandboxProposalPlanBuilder {
 
         SandboxProposalPlan plan = new SandboxProposalPlan();
         for (ProposalDriverRoute route : routeByDriver.values()) {
+            finalizeRouteStopOrder(route, sequencingContext, assignmentPlan);
             enrichRouteTotals(route);
             if (route.getStops() != null && !route.getStops().isEmpty()) {
                 plan.getProposalRoutes().add(route);
@@ -255,5 +269,72 @@ public final class SandboxProposalPlanBuilder {
             }
         }
         return stops;
+    }
+
+    /** 按时间窗 sequencer 结果或 nxDrsStopSeq 统一 proposal route 内站序。 */
+    private static void finalizeRouteStopOrder(ProposalDriverRoute route,
+                                             DispatchStrategyContext sequencingContext,
+                                             DispatchAssignmentPlan assignmentPlan) {
+        if (route == null || route.getStops() == null || route.getStops().size() <= 1) {
+            return;
+        }
+        List<NxDisRouteStopEntity> entities = toStopEntities(route.getStops());
+        if (sequencingContext != null && assignmentPlan != null
+                && assignmentPlan.getStrategyMode() == DispatchStrategyMode.OWNER_FIXED_ROUTE) {
+            OwnerFixedRouteTimeWindowRouteSequencer.resequenceSuggestedStops(
+                    entities, sequencingContext, assignmentPlan);
+        } else {
+            sortEntitiesByStopSeq(entities);
+        }
+        Map<Integer, ProposalStop> byDep = new HashMap<Integer, ProposalStop>();
+        for (ProposalStop proposalStop : route.getStops()) {
+            if (proposalStop != null && proposalStop.getDepFatherId() != null) {
+                byDep.put(proposalStop.getDepFatherId(), proposalStop);
+            }
+        }
+        List<ProposalStop> ordered = new ArrayList<ProposalStop>();
+        for (NxDisRouteStopEntity entity : entities) {
+            if (entity == null) {
+                continue;
+            }
+            Integer depId = DisRouteSandboxUnassignedStopHelper.resolveDepartmentId(entity);
+            ProposalStop proposalStop = depId != null ? byDep.get(depId) : null;
+            if (proposalStop != null) {
+                ordered.add(proposalStop);
+            }
+        }
+        for (ProposalStop proposalStop : route.getStops()) {
+            if (proposalStop != null && !ordered.contains(proposalStop)) {
+                ordered.add(proposalStop);
+            }
+        }
+        route.setStops(ordered);
+    }
+
+    private static void sortEntitiesByStopSeq(List<NxDisRouteStopEntity> entities) {
+        if (entities == null || entities.size() <= 1) {
+            return;
+        }
+        Collections.sort(entities, new Comparator<NxDisRouteStopEntity>() {
+            @Override
+            public int compare(NxDisRouteStopEntity a, NxDisRouteStopEntity b) {
+                return Integer.compare(resolveEntityStopSeq(a), resolveEntityStopSeq(b));
+            }
+        });
+    }
+
+    private static int resolveEntityStopSeq(NxDisRouteStopEntity stop) {
+        if (stop == null) {
+            return Integer.MAX_VALUE;
+        }
+        if (stop.getNxDrsStopSeq() != null && stop.getNxDrsStopSeq() > 0) {
+            return stop.getNxDrsStopSeq();
+        }
+        NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        if (task != null && task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1
+                && task.getNxDstManualStopSeq() != null && task.getNxDstManualStopSeq() > 0) {
+            return task.getNxDstManualStopSeq();
+        }
+        return Integer.MAX_VALUE;
     }
 }

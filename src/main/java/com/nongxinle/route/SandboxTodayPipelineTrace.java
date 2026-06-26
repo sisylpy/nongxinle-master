@@ -14,10 +14,13 @@ import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.entity.NxDistributerUserEntity;
 import com.nongxinle.route.dispatch.strategy.DispatchAssignmentPlan;
-import com.nongxinle.route.proposal.SandboxProposalPlanBuilder;
+import com.nongxinle.route.dispatch.strategy.DispatchSequenceBucket;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyContext;
 import com.nongxinle.route.dispatch.strategy.DriverRoutePlan;
 import com.nongxinle.route.dispatch.strategy.FallbackStopAssignment;
+import com.nongxinle.route.dispatch.strategy.OwnerFixedRouteTimeWindowRouteSequencer;
 import com.nongxinle.route.dispatch.strategy.StopAssignment;
+import com.nongxinle.route.proposal.SandboxProposalPlanBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,6 +74,7 @@ public final class SandboxTodayPipelineTrace {
         ensurePhasePlaceholder("C_assignment", "compute 未调用 recordAssignment");
         ensurePhasePlaceholder("D_sandboxSuggestedStops", "compute 未调用 recordSandboxSuggestedStops（debug 镜像）");
         ensurePhasePlaceholder("P_proposalPlan", "compute 未调用 recordProposalPlan（分派中唯一主权）");
+        ensurePhasePlaceholder("R_routeSequence", "compute 未调用 recordRouteSequence（站序 debug）");
         ensurePhasePlaceholder("G_snapshot", "Today 未调用 recordSnapshotOutput（读 PROPOSAL_PLAN）");
         ensurePhasePlaceholder("H_pageViewModel", "Today 未调用 recordPageViewModel");
         ensureLegacyActiveRouteDebugPlaceholder();
@@ -266,6 +270,134 @@ public final class SandboxTodayPipelineTrace {
         phase.put("containsDeliveredLoadingInDeliveryStop", hasForbiddenStop);
         phase.put("sovereignty", "DISPATCH_PAGE_READS_PROPOSAL_PLAN_ONLY");
         root.put("P_proposalPlan", phase);
+    }
+
+    // ── R. route sequence（站序 debug）──────────────────────────────────
+
+    public void recordRouteSequence(com.nongxinle.route.proposal.SandboxProposalPlan plan,
+                                    DispatchAssignmentPlan assignmentPlan,
+                                    DispatchStrategyContext sequencingContext) {
+        Map<String, Object> phase = new LinkedHashMap<String, Object>();
+        if (plan == null || plan.getProposalRoutes() == null || plan.getProposalRoutes().isEmpty()) {
+            phase.put("recorded", Boolean.FALSE);
+            phase.put("note", "proposalPlan 无路线，跳过站序 debug");
+            root.put("R_routeSequence", phase);
+            return;
+        }
+        OwnerFixedRouteTimeWindowRouteSequencer.SequencingSnapshot seqCtx =
+                sequencingContext != null
+                        ? OwnerFixedRouteTimeWindowRouteSequencer.buildSequencingSnapshot(sequencingContext)
+                        : null;
+        Map<Integer, StopAssignment> planStopByDep = indexPlanStops(assignmentPlan);
+        List<Map<String, Object>> routeRows = new ArrayList<Map<String, Object>>();
+        for (com.nongxinle.route.proposal.ProposalDriverRoute route : plan.getProposalRoutes()) {
+            if (route == null || route.getStops() == null || route.getStops().isEmpty()) {
+                continue;
+            }
+            List<NxDisRouteStopEntity> entities =
+                    com.nongxinle.route.proposal.SandboxProposalPlanBuilder.toStopEntities(route.getStops());
+            List<OwnerFixedRouteTimeWindowRouteSequencer.RouteStopSnapshot> orderedNodes =
+                    OwnerFixedRouteTimeWindowRouteSequencer.toStopSnapshots(entities, planStopByDep);
+            OwnerFixedRouteTimeWindowRouteSequencer.RouteDepartSnapshot depart = seqCtx != null
+                    ? OwnerFixedRouteTimeWindowRouteSequencer.resolveSuggestedDepartSnapshot(orderedNodes, seqCtx)
+                    : null;
+            long cursor = depart != null ? depart.departSeconds : 0L;
+
+            Map<String, Object> routeRow = new LinkedHashMap<String, Object>();
+            routeRow.put("driverUserId", route.getDriverUserId());
+            routeRow.put("driverName", route.getDriverName());
+            List<Map<String, Object>> stopRows = new ArrayList<Map<String, Object>>();
+            int finalSeq = 0;
+            for (int i = 0; i < route.getStops().size(); i++) {
+                com.nongxinle.route.proposal.ProposalStop proposalStop = route.getStops().get(i);
+                if (proposalStop == null) {
+                    continue;
+                }
+                finalSeq++;
+                OwnerFixedRouteTimeWindowRouteSequencer.RouteStopSnapshot node =
+                        i < orderedNodes.size() ? orderedNodes.get(i) : null;
+                OwnerFixedRouteTimeWindowRouteSequencer.StopPreviewSnapshot preview = null;
+                DispatchSequenceBucket bucket = null;
+                String sequenceReason = null;
+                String distanceTieBreakReason = null;
+                if (node != null && seqCtx != null) {
+                    preview = OwnerFixedRouteTimeWindowRouteSequencer.computeStopPreviewSnapshot(
+                            node, seqCtx, cursor);
+                    bucket = OwnerFixedRouteTimeWindowRouteSequencer.classifySequenceBucket(
+                            node, seqCtx, cursor);
+                    sequenceReason = OwnerFixedRouteTimeWindowRouteSequencer.resolveSequenceReason(
+                            bucket, node, preview, seqCtx);
+                    distanceTieBreakReason = OwnerFixedRouteTimeWindowRouteSequencer.resolveDistanceTieBreakReason(
+                            node, bucket);
+                    cursor = preview.serviceEndSeconds;
+                }
+                NxDisRouteStopEntity entity = proposalStop.getStop();
+                StopAssignment planStop = proposalStop.getDepFatherId() != null
+                        ? planStopByDep.get(proposalStop.getDepFatherId()) : null;
+                Map<String, Object> stopRow = new LinkedHashMap<String, Object>();
+                stopRow.put("finalSeq", finalSeq);
+                stopRow.put("depFatherId", proposalStop.getDepFatherId());
+                stopRow.put("customerName", proposalStop.getCustomerName());
+                stopRow.put("proposalSource", proposalStop.getProposalSource() != null
+                        ? proposalStop.getProposalSource().name() : null);
+                stopRow.put("earliestDeliveryTimeS", resolveEarliestDeliveryTimeS(entity, planStop));
+                stopRow.put("latestDeliveryTimeS", resolveLatestDeliveryTimeS(entity, planStop));
+                stopRow.put("timeWindowOverrideFlag", resolveTimeWindowOverrideFlag(entity, planStop));
+                if (bucket != null) {
+                    stopRow.put("sequenceBucket", bucket.name());
+                }
+                stopRow.put("sequenceReason", sequenceReason);
+                stopRow.put("distanceTieBreakReason", distanceTieBreakReason);
+                stopRows.add(stopRow);
+            }
+            routeRow.put("stops", stopRows);
+            routeRows.add(routeRow);
+        }
+        phase.put("recorded", Boolean.TRUE);
+        phase.put("sequencer", "OwnerFixedRouteTimeWindowRouteSequencer");
+        phase.put("sortPolicy", "L0 manual → L1 on-time by latest → L2 late by overdue → L3 no window; "
+                + "history preference driver-only");
+        phase.put("proposalRoutes", routeRows);
+        root.put("R_routeSequence", phase);
+    }
+
+    private static Map<Integer, StopAssignment> indexPlanStops(DispatchAssignmentPlan plan) {
+        Map<Integer, StopAssignment> byDep = new HashMap<Integer, StopAssignment>();
+        if (plan == null || plan.getDriverRoutes() == null) {
+            return byDep;
+        }
+        for (DriverRoutePlan route : plan.getDriverRoutes()) {
+            if (route == null || route.getStops() == null) {
+                continue;
+            }
+            for (StopAssignment stop : route.getStops()) {
+                if (stop != null && stop.getDepFatherId() != null) {
+                    byDep.put(stop.getDepFatherId(), stop);
+                }
+            }
+        }
+        return byDep;
+    }
+
+    private static Integer resolveEarliestDeliveryTimeS(NxDisRouteStopEntity entity, StopAssignment planStop) {
+        if (entity != null && entity.getNxDrsEarliestDeliveryTimeS() != null) {
+            return entity.getNxDrsEarliestDeliveryTimeS();
+        }
+        return planStop != null ? planStop.getEarliestDeliveryTimeS() : null;
+    }
+
+    private static Integer resolveLatestDeliveryTimeS(NxDisRouteStopEntity entity, StopAssignment planStop) {
+        if (entity != null && entity.getNxDrsLatestDeliveryTimeS() != null) {
+            return entity.getNxDrsLatestDeliveryTimeS();
+        }
+        return planStop != null ? planStop.getLatestDeliveryTimeS() : null;
+    }
+
+    private static Boolean resolveTimeWindowOverrideFlag(NxDisRouteStopEntity entity, StopAssignment planStop) {
+        if (entity != null && entity.getNxDrsTimeWindowOverrideFlag() != null) {
+            return entity.getNxDrsTimeWindowOverrideFlag() == 1;
+        }
+        return planStop != null ? planStop.getTimeWindowOverrideFlag() : null;
     }
 
     // ── legacy active route debug（loading/delivery；非分派中主链）────────

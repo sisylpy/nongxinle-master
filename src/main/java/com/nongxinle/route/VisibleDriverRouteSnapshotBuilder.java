@@ -303,23 +303,37 @@ public final class VisibleDriverRouteSnapshotBuilder {
         }
         OwnerFixedRouteTimeWindowRouteSequencer.invalidateLegMetrics(working);
 
+        NxDisDriverRouteEntity scheduleRoute = route != null ? route : new NxDisDriverRouteEntity();
+        if (scheduleRoute.getNxDdrDriverUserId() == null && !working.isEmpty()) {
+            scheduleRoute.setNxDdrDriverUserId(
+                    DisRouteSandboxDriverDispatchStateHelper.resolveStopDriverUserId(working.get(0)));
+        }
+
+        NxDisDriverRouteEntity legRoute = new NxDisDriverRouteEntity();
+        legRoute.setNxDdrDriverUserId(scheduleRoute.getNxDdrDriverUserId());
+        legRoute.setStops(working);
+
         boolean legFallback = false;
         if (depot != null) {
             if (legMetricsHelper != null) {
                 try {
-                    NxDisDriverRouteEntity pseudoRoute = new NxDisDriverRouteEntity();
-                    pseudoRoute.setNxDdrDriverUserId(route != null ? route.getNxDdrDriverUserId() : null);
-                    pseudoRoute.setStops(new ArrayList<NxDisRouteStopEntity>(working));
-                    legMetricsHelper.applyToDriverRoute(depot, pseudoRoute);
+                    legMetricsHelper.applyToDriverRoute(depot, legRoute);
                 } catch (IOException ex) {
                     applyStraightLineLegFallback(depot, working);
+                    applyStraightLineReturnLegFallback(depot, working, scheduleRoute);
                     legFallback = true;
                 }
             } else {
                 applyStraightLineLegFallback(depot, working);
+                applyStraightLineReturnLegFallback(depot, working, scheduleRoute);
                 legFallback = true;
             }
             if (ensureLegMetricsPresent(depot, working)) {
+                legFallback = true;
+            }
+            copyReturnLeg(scheduleRoute, legRoute);
+            if (scheduleRoute.getReturnLegDurationS() == null || scheduleRoute.getReturnLegDurationS() <= 0L) {
+                applyStraightLineReturnLegFallback(depot, working, scheduleRoute);
                 legFallback = true;
             }
         } else {
@@ -327,11 +341,6 @@ public final class VisibleDriverRouteSnapshotBuilder {
             legFallback = true;
         }
 
-        NxDisDriverRouteEntity scheduleRoute = route != null ? route : new NxDisDriverRouteEntity();
-        if (scheduleRoute.getNxDdrDriverUserId() == null && !working.isEmpty()) {
-            scheduleRoute.setNxDdrDriverUserId(
-                    DisRouteSandboxDriverDispatchStateHelper.resolveStopDriverUserId(working.get(0)));
-        }
         OwnerFixedRouteTimeWindowRouteSequencer.recalculateVisibleScheduleForDriverRoute(
                 scheduleRoute, working, assignmentPlan, strategyContext);
 
@@ -382,6 +391,42 @@ public final class VisibleDriverRouteSnapshotBuilder {
                 cursor = stopPoint;
             }
         }
+    }
+
+    private static void applyStraightLineReturnLegFallback(GeoPoint depot,
+                                                           List<NxDisRouteStopEntity> orderedStops,
+                                                           NxDisDriverRouteEntity route) {
+        if (depot == null || orderedStops == null || orderedStops.isEmpty() || route == null) {
+            return;
+        }
+        NxDisRouteStopEntity lastStop = null;
+        for (int i = orderedStops.size() - 1; i >= 0; i--) {
+            if (orderedStops.get(i) != null) {
+                lastStop = orderedStops.get(i);
+                break;
+            }
+        }
+        if (lastStop == null) {
+            return;
+        }
+        GeoPoint lastPoint = resolveStopGeoPoint(lastStop);
+        long returnDistanceM = DEFAULT_FALLBACK_LEG_DISTANCE_M;
+        if (lastPoint != null) {
+            returnDistanceM = Math.max(1L, straightLineMeters(lastPoint, depot));
+        }
+        long returnDurationS = Math.max(1L, returnDistanceM / FALLBACK_SPEED_M_PER_S);
+        route.setReturnLegDistanceM(returnDistanceM);
+        route.setReturnLegDurationS(returnDurationS);
+    }
+
+    private static void copyReturnLeg(NxDisDriverRouteEntity target, NxDisDriverRouteEntity source) {
+        if (target == null || source == null) {
+            return;
+        }
+        target.setReturnLegDistanceM(source.getReturnLegDistanceM());
+        target.setReturnLegDurationS(source.getReturnLegDurationS());
+        target.setReturnLegDistanceType(source.getReturnLegDistanceType());
+        target.setReturnLegLabel(source.getReturnLegLabel());
     }
 
     /** @return true if any stop still required default leg fill */
@@ -520,7 +565,7 @@ public final class VisibleDriverRouteSnapshotBuilder {
             Integer projectedArrivalTimeS = null;
             if (includeSequenceDebug && node != null && seqCtx != null) {
                 preview = OwnerFixedRouteTimeWindowRouteSequencer.computeStopPreviewSnapshot(
-                        node, seqCtx, cursor);
+                        node, seqCtx, cursor, visibleSeq == 1);
                 bucket = OwnerFixedRouteTimeWindowRouteSequencer.classifySequenceBucket(
                         node, seqCtx, cursor);
                 sequenceReason = OwnerFixedRouteTimeWindowRouteSequencer.resolveSequenceReason(
@@ -555,7 +600,16 @@ public final class VisibleDriverRouteSnapshotBuilder {
             snapshot.setPlannedReturnLabel(firstNonBlank(route.getPlannedReturnLabel(), route.getPlannedFinishLabel()));
             snapshot.setScheduleHeadline(route.getRouteScheduleSummaryLabel());
         }
-        if (planRoute != null) {
+        OwnerFixedRouteTimeWindowRouteSequencer.SequencingSnapshot departCtx =
+                OwnerFixedRouteTimeWindowRouteSequencer.buildSequencingSnapshot(strategyContext);
+        if (route != null && route.getNxDdrPlannedDepartAt() != null
+                && departCtx != null && departCtx.dayStartMs > 0L) {
+            int departSec = (int) ((route.getNxDdrPlannedDepartAt().getTime() - departCtx.dayStartMs) / 1000L);
+            if (departSec >= 0) {
+                snapshot.setSuggestedDepartTimeS(departSec);
+                snapshot.setPlannedDepartTimeS(departSec);
+            }
+        } else if (planRoute != null) {
             snapshot.setSuggestedDepartTimeS(planRoute.getSuggestedDepartTimeS());
             snapshot.setPlannedDepartTimeS(planRoute.getPlannedDepartTimeS());
             snapshot.setSuggestedDepartReason(planRoute.getSuggestedDepartReason());

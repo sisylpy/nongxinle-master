@@ -57,6 +57,64 @@ public final class DisRouteTemporalHelper {
         return dayLabel + " " + time;
     }
 
+    /**
+     * 派车页时间 label：routeDate 当天仅 HH:mm；当前时刻「现在」；确跨日「次日 HH:mm」。
+     * 禁止在同 routeDate 凌晨把 05:54 显示成「明天 04:31」。
+     */
+    public static String formatRouteTimeLabel(Date at, Date serverNow, String routeDate) {
+        if (at == null) {
+            return null;
+        }
+        if (isSameInstant(at, serverNow)) {
+            return "现在";
+        }
+        String time = new SimpleDateFormat("HH:mm").format(at);
+        String atDate = new SimpleDateFormat("yyyy-MM-dd").format(at);
+        if (routeDate != null && !routeDate.trim().isEmpty()) {
+            if (routeDate.trim().equals(atDate)) {
+                return time;
+            }
+            if (isNextCalendarDay(routeDate.trim(), atDate)) {
+                return "次日 " + time;
+            }
+        }
+        if (serverNow != null) {
+            String today = formatTodayYyyyMmDd(serverNow);
+            if (today.equals(atDate)) {
+                return time;
+            }
+            Calendar next = Calendar.getInstance();
+            next.setTime(serverNow);
+            next.add(Calendar.DAY_OF_YEAR, 1);
+            String tomorrow = new SimpleDateFormat("yyyy-MM-dd").format(next.getTime());
+            if (tomorrow.equals(atDate)) {
+                return "次日 " + time;
+            }
+        }
+        String dayLabel = formatRouteDateLabel(atDate, serverNow);
+        return dayLabel != null ? dayLabel + " " + time : time;
+    }
+
+    private static boolean isSameInstant(Date a, Date b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        return Math.abs(a.getTime() - b.getTime()) <= 60_000L;
+    }
+
+    private static boolean isNextCalendarDay(String baseDate, String targetDate) {
+        try {
+            Date dayStart = DisRouteOrderArriveDateHelper.parseRouteDateStart(baseDate);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dayStart);
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+            String nextDay = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+            return nextDay.equals(targetDate);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
     public static String resolvePlanTemporalStatus(String routeDate,
                                                    Date batchStartAt,
                                                    Date batchEndAt,

@@ -315,7 +315,8 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         data.put("executionStops", toExecutionStopMaps(executionStops, mergedPlan != null
                 ? mergedPlan.getExecutionDriverRoutes() : null));
         data.put("sandboxSuggestedStops", toEphemeralStopMaps(compute.getSandboxSuggestedStops()));
-        data.put("proposalPlan", SandboxProposalPlanReadModelAssembler.toMap(compute.getProposalPlan()));
+        data.put("proposalPlan", SandboxProposalPlanReadModelAssembler.toMap(
+                compute.getProposalPlan(), compute.getDispatchAssignmentPlan()));
         data.put("unassignedStops", toEphemeralStopMaps(compute.getUnassignedStops()));
         data.put("deliveryHistoryPreferences",
                 DisRouteDeliveryHistoryPreferenceReadModelAssembler.toMap(compute.getDeliveryHistoryPreferences()));

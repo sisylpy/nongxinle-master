@@ -17,12 +17,17 @@ import com.nongxinle.service.DisRouteSandboxConfirmLoadingService;
 import com.nongxinle.service.DisRouteSandboxConfirmService;
 import com.nongxinle.service.DisRouteSandboxDeliveryExecutionService;
 import com.nongxinle.service.DisRouteSandboxDriverDepartService;
+import com.nongxinle.service.DisRouteSandboxDriverRouteEditService;
+import com.nongxinle.service.DisRouteSandboxDriverTerminalService;
 import com.nongxinle.service.DisRouteSandboxRouteLoadingGateService;
 import com.nongxinle.service.DisRouteSandboxManualDispatchService;
 import com.nongxinle.service.DisRouteSandboxReturnService;
 import com.nongxinle.service.DisRouteSandboxTodayService;
 import com.nongxinle.service.DisShipmentTaskService;
+import com.nongxinle.dao.NxDisShipmentTaskDao;
+import com.nongxinle.route.DisRouteDispatchBatch;
 import com.nongxinle.route.DisRouteDispatchLabels;
+import com.nongxinle.service.DisRouteSandboxStopTimeWindowService;
 import com.nongxinle.route.DisRouteTemporalHelper;
 import com.nongxinle.route.RouteDispatchDateFormat;
 import com.nongxinle.utils.R;
@@ -70,9 +75,13 @@ public class NxDisRouteDispatchController {
     @Autowired
     private DisRouteSandboxManualDispatchService disRouteSandboxManualDispatchService;
     @Autowired
+    private DisRouteSandboxDriverRouteEditService disRouteSandboxDriverRouteEditService;
+    @Autowired
     private DisRouteSandboxRouteLoadingGateService disRouteSandboxRouteLoadingGateService;
     @Autowired
     private DisRouteSandboxDriverDepartService disRouteSandboxDriverDepartService;
+    @Autowired
+    private DisRouteSandboxDriverTerminalService disRouteSandboxDriverTerminalService;
     @Autowired
     private DisRouteSandboxConfirmLoadingService disRouteSandboxConfirmLoadingService;
     @Autowired
@@ -81,6 +90,10 @@ public class NxDisRouteDispatchController {
     private DisRouteDispatchReadIntegrityHelper disRouteDispatchReadIntegrityHelper;
     @Autowired
     private DisRouteTaskTimeWindowService disRouteTaskTimeWindowService;
+    @Autowired
+    private DisRouteSandboxStopTimeWindowService disRouteSandboxStopTimeWindowService;
+    @Autowired
+    private NxDisShipmentTaskDao nxDisShipmentTaskDao;
 
     /** 配送商下全部司机账号（含不可派），不含 simulate 派车过滤 */
     @RequestMapping(value = "/drivers", method = RequestMethod.GET)
@@ -327,19 +340,29 @@ public class NxDisRouteDispatchController {
     public R updateTaskTimeWindow(@PathVariable Integer taskId,
                                   @RequestBody TaskTimeWindowRequest request) {
         try {
-            NxDisShipmentTaskEntity task = disRouteTaskTimeWindowService.updateTimeWindow(taskId, request);
-            if (task.getNxDstPlanId() == null) {
-                return R.ok().put("data", RouteDispatchReadModelAssembler.toTaskMap(task));
+            disRouteTaskTimeWindowService.updateTimeWindow(taskId, request);
+            NxDisShipmentTaskEntity task = nxDisShipmentTaskDao.queryObject(taskId);
+            if (task == null) {
+                return R.error("配送任务不存在");
             }
-            NxDisRoutePlanEntity plan = disRouteDispatchService.getPlan(task.getNxDstPlanId());
-            String routeDate = plan != null ? plan.getNxDrpRouteDate() : task.getNxDstRouteDate();
-            String dispatchBatch = plan != null && plan.getNxDrpDispatchBatch() != null
-                    ? plan.getNxDrpDispatchBatch() : "MORNING";
-            return R.ok().put("data", disRouteSandboxTodayService.buildToday(
-                    plan != null ? plan.getNxDrpDistributerId() : task.getNxDstDistributerId(),
-                    routeDate, dispatchBatch));
+            String routeDate = task.getNxDstRouteDate() != null ? task.getNxDstRouteDate() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxTodayService.buildDispatchSandboxToday(
+                    task.getNxDstDistributerId(), routeDate, DisRouteDispatchBatch.MORNING,
+                    request.getOperatorUserId()));
         } catch (Exception e) {
             return R.error(e.getMessage());
+        }
+    }
+
+    /** 沙箱站点当日送达时间窗 override（confirm 前按 depFatherId；confirm 后可带 deliveryStopId） */
+    @RequestMapping(value = "/dispatch/sandbox/stops/time-window", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R updateSandboxStopTimeWindow(@RequestBody SandboxStopTimeWindowRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxStopTimeWindowService.updateStopTimeWindow(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
         }
     }
 
@@ -531,6 +554,42 @@ public class NxDisRouteDispatchController {
         }
     }
 
+    /** 司机路线人工编辑：打开编辑页 */
+    @RequestMapping(value = "/sandbox/driver-route-edit/page", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R buildDriverRouteEditPage(@RequestBody SandboxDriverRouteEditBaseRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxDriverRouteEditService.buildEditPage(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 司机路线人工编辑：试算预览 */
+    @RequestMapping(value = "/sandbox/driver-route-edit/preview", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R previewDriverRouteEdit(@RequestBody SandboxDriverRouteEditPreviewRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxDriverRouteEditService.preview(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 司机路线人工编辑：确认写库 */
+    @RequestMapping(value = "/sandbox/driver-route-edit/confirm", method = RequestMethod.POST,
+            produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public R confirmDriverRouteEdit(@RequestBody SandboxDriverRouteEditConfirmRequest request) {
+        try {
+            return R.ok().put("data", disRouteSandboxDriverRouteEditService.confirm(request));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
     /** Phase 3c：已确认店返回动态沙盘（撤销派车确认，不删订单/配送单） */
     @RequestMapping(value = "/sandbox/stops/{deliveryStopId}/return-to-sandbox", method = RequestMethod.POST)
     @ResponseBody
@@ -556,7 +615,7 @@ public class NxDisRouteDispatchController {
         }
     }
 
-    /** 装车页：按司机确认出发，返回装车读模型 */
+    /** 装车页：按司机确认出发，返回司机配送读模型 */
     @RequestMapping(value = "/drivers/{driverUserId}/depart", method = RequestMethod.POST,
             produces = "application/json;charset=UTF-8")
     @ResponseBody
@@ -617,7 +676,7 @@ public class NxDisRouteDispatchController {
         }
     }
 
-    /** 配送商今日装车读模型（老板/司机视角） */
+    /** 配送商今日装车读模型（老板视角） */
     @RequestMapping(value = "/loading/today", method = RequestMethod.GET)
     @ResponseBody
     public R getDispatchLoadingToday(@RequestParam Integer disId,
@@ -635,7 +694,7 @@ public class NxDisRouteDispatchController {
         }
     }
 
-    /** 配送商今日配送读模型（老板/司机视角，已出发路线） */
+    /** 配送商今日配送读模型（老板视角，已出发路线） */
     @RequestMapping(value = "/delivery/today", method = RequestMethod.GET)
     @ResponseBody
     public R getDispatchDeliveryToday(@RequestParam Integer disId,
@@ -646,6 +705,40 @@ public class NxDisRouteDispatchController {
             String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
                     ? routeDate.trim() : formatWhatDay(0);
             return R.ok().put("data", disRouteSandboxTodayService.buildDeliveryToday(
+                    disId, effectiveRouteDate, batchCode, driverUserId));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 司机终端装车页：扁平 pageViewModel（stopList + mapOverview） */
+    @RequestMapping(value = "/driver-terminal/loading/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getDriverTerminalLoadingToday(@RequestParam Integer disId,
+                                           @RequestParam Integer driverUserId,
+                                           @RequestParam(required = false) String routeDate,
+                                           @RequestParam(required = false, defaultValue = "MORNING") String batchCode) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxDriverTerminalService.buildDriverLoadingToday(
+                    disId, effectiveRouteDate, batchCode, driverUserId));
+        } catch (Exception e) {
+            return R.error(formatDispatchError(e));
+        }
+    }
+
+    /** 司机终端配送页：扁平 pageViewModel（stopList + timeline + mapOverview） */
+    @RequestMapping(value = "/driver-terminal/delivery/today", method = RequestMethod.GET)
+    @ResponseBody
+    public R getDriverTerminalDeliveryToday(@RequestParam Integer disId,
+                                            @RequestParam Integer driverUserId,
+                                            @RequestParam(required = false) String routeDate,
+                                            @RequestParam(required = false, defaultValue = "MORNING") String batchCode) {
+        try {
+            String effectiveRouteDate = routeDate != null && !routeDate.trim().isEmpty()
+                    ? routeDate.trim() : formatWhatDay(0);
+            return R.ok().put("data", disRouteSandboxDriverTerminalService.buildDriverDeliveryToday(
                     disId, effectiveRouteDate, batchCode, driverUserId));
         } catch (Exception e) {
             return R.error(formatDispatchError(e));

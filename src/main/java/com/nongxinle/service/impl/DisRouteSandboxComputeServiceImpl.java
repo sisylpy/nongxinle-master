@@ -266,6 +266,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         reassignOptimizedUnassignedToEligibleDrivers(
                 suggestedStops, unassignedStops, dispatchEligibleDrivers, buildDriverNameIndex(onDutyDrivers));
 
+        DispatchStrategyContext sequencingContext = null;
         if (!persistedOnly
                 && dispatchAssignmentPlan != null
                 && !isSkippedStrategyPlanningPhase(dispatchAssignmentPlan)
@@ -276,19 +277,18 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                     departmentByDepId);
             DisRouteSandboxStopTimeWindowResolutionSupport.applyToStops(
                     suggestedStops, departmentByDepId, sandboxDayOverrideByDepId);
+            sequencingContext = DispatchStrategyContext.builder()
+                    .disId(disId)
+                    .routeDate(routeDate)
+                    .batchCode(batchCode)
+                    .depot(depot)
+                    .serverNow(new Date())
+                    .departmentByDepId(departmentByDepId)
+                    .sandboxDayOverrideByDepId(sandboxDayOverrideByDepId)
+                    .optimizableTasks(filterOptimizable(virtualTasks, confirmedDepIds))
+                    .build();
             OwnerFixedRouteTimeWindowRouteSequencer.resequenceSuggestedStops(
-                    suggestedStops,
-                    DispatchStrategyContext.builder()
-                            .disId(disId)
-                            .routeDate(routeDate)
-                            .batchCode(batchCode)
-                            .depot(depot)
-                            .serverNow(new Date())
-                            .departmentByDepId(departmentByDepId)
-                            .sandboxDayOverrideByDepId(sandboxDayOverrideByDepId)
-                            .optimizableTasks(filterOptimizable(virtualTasks, confirmedDepIds))
-                            .build(),
-                    dispatchAssignmentPlan);
+                    suggestedStops, sequencingContext, dispatchAssignmentPlan);
             OwnerFixedRouteTimeWindowRouteSequencer.invalidateLegMetrics(suggestedStops);
         }
 
@@ -312,10 +312,11 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         }
 
         SandboxProposalPlan proposalPlan = SandboxProposalPlanBuilder.build(
-                suggestedStops, unassignedStops, dispatchAssignmentPlan);
+                suggestedStops, unassignedStops, dispatchAssignmentPlan, sequencingContext);
         result.setProposalPlan(proposalPlan);
         if (pipelineTrace != null) {
             pipelineTrace.recordProposalPlan(proposalPlan);
+            pipelineTrace.recordRouteSequence(proposalPlan, dispatchAssignmentPlan, sequencingContext);
         }
 
         NxDisRoutePlanEntity mergedPlan = buildMergedPlan(

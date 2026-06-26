@@ -91,6 +91,97 @@ public final class DisRouteSandboxTodayTimelineBuilder {
         return build(route, stopCards, depotName);
     }
 
+    /** 老板端分派中：市场地址 + 站点三列时间 + 回程 leg，不在站点卡底部重复 leg。 */
+    public static List<Map<String, Object>> buildDispatchBossTimeline(
+            SandboxTodaySectionCardDto routeCard,
+            List<SandboxTodayStopCardDto> stopCards,
+            List<VisibleDriverRouteStopSnapshot> stopSnapshots,
+            String depotName,
+            String depotAddress,
+            NxDisDriverRouteEntity route) {
+        List<Map<String, Object>> timeline = new ArrayList<Map<String, Object>>();
+        String depot = depotName != null && !depotName.trim().isEmpty()
+                ? depotName.trim() : DEPOT_NAME;
+
+        Map<String, Object> start = new LinkedHashMap<String, Object>();
+        start.put("type", "start");
+        start.put("marker", "起");
+        start.put("name", depot);
+        start.put("depotName", depot);
+        start.put("depotAddress", depotAddress);
+        String departLabel = routeCard != null
+                ? firstNonBlank(routeCard.getPlannedDepartLabel(), extractTimeFromLabel(routeCard.getRouteSuggestedDepartLabel()))
+                : null;
+        start.put("timeRight", departLabel != null ? departLabel + " 出发" : firstNonBlank(depotAddress, ""));
+        timeline.add(start);
+
+        int seq = 0;
+        for (int i = 0; i < stopCards.size(); i++) {
+            SandboxTodayStopCardDto stopCard = stopCards.get(i);
+            if (stopCard == null) {
+                continue;
+            }
+            seq++;
+            Map<String, Object> stopNode = new LinkedHashMap<String, Object>();
+            stopNode.put("type", "stop");
+            stopNode.put("seq", stopCard.getStopSeq() != null ? stopCard.getStopSeq() : seq);
+            putIfNotNull(stopNode, "cardKey", stopCard.getCardKey());
+            stopNode.put("name", stopCard.getCustomerName());
+            stopNode.put("customerName", stopCard.getCustomerName());
+            putIfNotNull(stopNode, "deliveryWindowLabel", stopCard.getDeliveryWindowLabel());
+            putIfNotNull(stopNode, "windowLabel", stopCard.getDeliveryWindowLabel());
+            putIfNotNull(stopNode, "windowRequirementLabel", stopCard.getWindowRequirementLabel());
+            putIfNotNull(stopNode, "windowStatusLabel", stopCard.getWindowStatusLabel());
+            putIfNotNull(stopNode, "plannedArrivalLabel", stopCard.getPlannedArrivalLabel());
+            putIfNotNull(stopNode, "arrivalStatusLabel", stopCard.getArrivalStatusLabel());
+            putIfNotNull(stopNode, "arrivalStatusTone", stopCard.getArrivalStatusTone());
+            putIfNotNull(stopNode, "serviceDurationLabel", stopCard.getServiceDurationLabel());
+            putIfNotNull(stopNode, "plannedDepartureLabel", stopCard.getPlannedDepartureLabel());
+            putIfNotNull(stopNode, "statusLabel", stopCard.getStatusLabel());
+            if (stopCard.getPrimaryAction() != null) {
+                stopNode.put("primaryAction", stopCard.getPrimaryAction());
+            }
+            VisibleDriverRouteStopSnapshot stopSnap = stopSnapshots != null && i < stopSnapshots.size()
+                    ? stopSnapshots.get(i) : null;
+            String legText = resolveStopLegText(stopCard, stopSnap);
+            putIfNotNull(stopNode, "distanceText", stopCard.getDistanceText());
+            putIfNotNull(stopNode, "durationText", stopCard.getDurationText());
+            if (legText != null && !legText.trim().isEmpty()) {
+                stopNode.put("legText", legText);
+            }
+            timeline.add(stopNode);
+        }
+
+        if (route != null && (route.getReturnLegDistanceM() != null || route.getReturnLegDurationS() != null)) {
+            Map<String, Object> returnLeg = new LinkedHashMap<String, Object>();
+            returnLeg.put("type", "leg");
+            returnLeg.put("legRole", "RETURN");
+            returnLeg.put("legText", joinLegText(
+                    DisRouteSandboxDisplayFormatHelper.formatDistanceText(route.getReturnLegDistanceM()),
+                    DisRouteSandboxDisplayFormatHelper.formatDurationText(route.getReturnLegDurationS())));
+            timeline.add(returnLeg);
+        } else if (routeCard != null && routeCard.getReturnDistanceText() != null) {
+            Map<String, Object> returnLeg = new LinkedHashMap<String, Object>();
+            returnLeg.put("type", "leg");
+            returnLeg.put("legRole", "RETURN");
+            returnLeg.put("legText", joinLegText(routeCard.getReturnDistanceText(),
+                    route != null ? DisRouteSandboxDisplayFormatHelper.formatDurationText(
+                            route.getReturnLegDurationS()) : null));
+            timeline.add(returnLeg);
+        }
+
+        Map<String, Object> end = new LinkedHashMap<String, Object>();
+        end.put("type", "end");
+        end.put("marker", "终");
+        String returnDepotName = "返回" + depot;
+        end.put("name", returnDepotName);
+        end.put("depotName", depot);
+        String returnLabel = routeCard != null ? routeCard.getPlannedReturnLabel() : null;
+        end.put("timeRight", returnLabel != null ? "预计返回 " + returnLabel : "预计返回");
+        timeline.add(end);
+        return timeline;
+    }
+
     public static List<Map<String, Object>> build(NxDisDriverRouteEntity route,
                                                   List<SandboxTodayStopCardDto> stopCards,
                                                   String depotName) {
@@ -267,6 +358,28 @@ public final class DisRouteSandboxTodayTimelineBuilder {
         return distanceText != null ? distanceText : durationText;
     }
 
+    private static String resolveStopLegText(SandboxTodayStopCardDto stopCard,
+                                             VisibleDriverRouteStopSnapshot stopSnap) {
+        String legText = joinLegText(
+                stopCard != null ? stopCard.getDistanceText() : null,
+                stopCard != null ? stopCard.getDurationText() : null);
+        if (legText != null && !legText.trim().isEmpty()) {
+            return legText;
+        }
+        if (stopSnap == null) {
+            return null;
+        }
+        legText = firstNonBlank(
+                stopSnap.getLegText(),
+                joinLegText(stopSnap.getDistanceText(), stopSnap.getDurationText()));
+        if (legText != null && !legText.trim().isEmpty()) {
+            return legText;
+        }
+        return joinLegText(
+                DisRouteSandboxDisplayFormatHelper.formatDistanceText(stopSnap.getLegDistanceM()),
+                DisRouteSandboxDisplayFormatHelper.formatDurationText(stopSnap.getLegDurationS()));
+    }
+
     private static void putIfNotNull(Map<String, Object> map, String key, Object value) {
         if (value != null) {
             map.put(key, value);
@@ -283,5 +396,21 @@ public final class DisRouteSandboxTodayTimelineBuilder {
             }
         }
         return null;
+    }
+
+    private static String extractTimeFromLabel(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return null;
+        }
+        String trimmed = label.trim();
+        int colon = trimmed.indexOf('：');
+        if (colon >= 0 && colon + 1 < trimmed.length()) {
+            return trimmed.substring(colon + 1).trim();
+        }
+        int asciiColon = trimmed.indexOf(':');
+        if (asciiColon >= 0 && trimmed.indexOf("建议") >= 0 && asciiColon + 1 < trimmed.length()) {
+            return trimmed.substring(asciiColon + 1).trim();
+        }
+        return trimmed;
     }
 }

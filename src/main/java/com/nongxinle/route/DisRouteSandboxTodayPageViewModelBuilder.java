@@ -253,14 +253,12 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
 
     private static String buildProgressLine(SandboxTodayPageBuildContext ctx) {
         int total = countPendingCustomerStops(ctx);
-        int confirmed = countPendingConfirmedStops(ctx);
         if (total <= 0) {
             return "暂无待派客户";
         }
-        if (confirmed >= total) {
-            return "已确认 " + confirmed + "/" + total + " 站 · 全部确认后司机可出发";
-        }
-        return "已确认 " + confirmed + "/" + total + " 站 · 全部确认后司机可出发";
+        int suggested = countSuggestedCustomerStops(ctx);
+        int unassigned = Math.max(0, total - suggested);
+        return "分派中 " + total + " 站 · 已建议 " + suggested + " 站 · 待分配 " + unassigned + " 站";
     }
 
     private static SandboxTodayPageProgressDto buildProgress(SandboxTodayPageBuildContext ctx) {
@@ -270,23 +268,44 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
             progress.setMainLine("暂无待确认站点");
             return progress;
         }
-        int confirmed = countPendingConfirmedStops(ctx);
-        String highlightText = confirmed + "/" + total;
+        int suggested = countSuggestedCustomerStops(ctx);
+        int unassigned = Math.max(0, total - suggested);
+        String highlightText = String.valueOf(total);
         progress.setHighlightText(highlightText);
-        progress.setMainLine("已确认 " + highlightText + " 站 · 全部确认后司机可出发");
+        progress.setMainLine("分派中 " + total + " 站 · 已建议 " + suggested
+                + " 站 · 待分配 " + unassigned + " 站");
         return progress;
     }
 
     private static int countPendingCustomerStops(SandboxTodayPageBuildContext ctx) {
         return DisRouteSandboxUnassignedStopHelper.countUniqueCustomerStops(
-                ctx.getSuggestedStops(),
-                ctx.getConfirmedStops(),
-                ctx.getLoadingStops(),
+                collectVisibleSuggestedStops(ctx),
                 ctx.getUnassignedStops());
     }
 
-    private static int countPendingConfirmedStops(SandboxTodayPageBuildContext ctx) {
-        return sizeOf(ctx.getConfirmedStops()) + sizeOf(ctx.getLoadingStops());
+    private static int countSuggestedCustomerStops(SandboxTodayPageBuildContext ctx) {
+        return DisRouteSandboxUnassignedStopHelper.countUniqueCustomerStops(
+                collectVisibleSuggestedStops(ctx));
+    }
+
+    private static List<NxDisRouteStopEntity> collectVisibleSuggestedStops(SandboxTodayPageBuildContext ctx) {
+        List<NxDisRouteStopEntity> stops = new ArrayList<NxDisRouteStopEntity>();
+        if (ctx == null || ctx.getVisibleDriverRoutes() == null) {
+            return stops;
+        }
+        for (VisibleDriverRouteSnapshot route : ctx.getVisibleDriverRoutes()) {
+            if (route == null
+                    || !VisibleDriverRouteSnapshotBuilder.SECTION_SUGGESTED.equals(route.getSectionKey())
+                    || route.getStops() == null) {
+                continue;
+            }
+            for (VisibleDriverRouteStopSnapshot stop : route.getStops()) {
+                if (stop != null && stop.getSourceStop() != null) {
+                    stops.add(stop.getSourceStop());
+                }
+            }
+        }
+        return stops;
     }
 
     private static int sizeOf(List<?> list) {
@@ -355,17 +374,21 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
 
     private static long[] sumPendingRouteTotals(SandboxTodayPageBuildContext ctx) {
         long[] totals = new long[2];
-        NxDisRoutePlanEntity plan = ctx.getMergedPlan();
-        if (plan != null) {
-            accumulateRouteTotals(plan.getDriverRoutes(), totals);
-            accumulateRouteTotals(plan.getLoadingDriverRoutes(), totals);
+        if (ctx != null && ctx.getVisibleDriverRoutes() != null) {
+            for (VisibleDriverRouteSnapshot route : ctx.getVisibleDriverRoutes()) {
+                if (route == null
+                        || !VisibleDriverRouteSnapshotBuilder.SECTION_SUGGESTED.equals(route.getSectionKey())) {
+                    continue;
+                }
+                if (route.getTotalDistanceM() != null) {
+                    totals[0] += route.getTotalDistanceM();
+                }
+                if (route.getTotalDurationS() != null) {
+                    totals[1] += route.getTotalDurationS();
+                }
+            }
         }
-        if (totals[0] <= 0L && totals[1] <= 0L) {
-            accumulateStopLegTotals(ctx.getSuggestedStops(), totals);
-            accumulateStopLegTotals(ctx.getConfirmedStops(), totals);
-            accumulateStopLegTotals(ctx.getLoadingStops(), totals);
-            accumulateStopLegTotals(ctx.getUnassignedStops(), totals);
-        }
+        accumulateStopLegTotals(ctx != null ? ctx.getUnassignedStops() : null, totals);
         return totals;
     }
 
@@ -643,13 +666,15 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
 
     private static Set<Integer> collectPendingRoutedDriverIds(SandboxTodayPageBuildContext ctx) {
         Set<Integer> ids = new HashSet<Integer>();
-        collectDriverIdsFromStops(ctx.getSuggestedStops(), ids);
-        collectDriverIdsFromStops(ctx.getConfirmedStops(), ids);
-        collectDriverIdsFromStops(ctx.getLoadingStops(), ids);
-        NxDisRoutePlanEntity plan = ctx.getMergedPlan();
-        if (plan != null) {
-            collectDriverIdsFromRoutes(plan.getLoadingDriverRoutes(), ids);
-            collectDriverIdsFromRoutes(plan.getDriverRoutes(), ids);
+        if (ctx == null || ctx.getVisibleDriverRoutes() == null) {
+            return ids;
+        }
+        for (VisibleDriverRouteSnapshot route : ctx.getVisibleDriverRoutes()) {
+            if (route != null
+                    && route.getDriverUserId() != null
+                    && VisibleDriverRouteSnapshotBuilder.SECTION_SUGGESTED.equals(route.getSectionKey())) {
+                ids.add(route.getDriverUserId());
+            }
         }
         return ids;
     }
@@ -660,9 +685,12 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
      */
     private static Set<Integer> collectUnavailableDriverIds(SandboxTodayPageBuildContext ctx) {
         Set<Integer> ids = collectPendingRoutedDriverIds(ctx);
+        collectDriverIdsFromStops(ctx.getConfirmedStops(), ids);
+        collectDriverIdsFromStops(ctx.getLoadingStops(), ids);
         collectBlockingExecutionDriverIdsFromStops(ctx.getExecutionStops(), ids);
         NxDisRoutePlanEntity plan = ctx.getMergedPlan();
         if (plan != null) {
+            collectDriverIdsFromRoutes(plan.getLoadingDriverRoutes(), ids);
             collectBlockingExecutionDriverIdsFromRoutes(plan.getExecutionDriverRoutes(), ids);
         }
         return ids;

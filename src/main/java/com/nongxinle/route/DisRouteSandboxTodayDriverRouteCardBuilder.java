@@ -121,6 +121,8 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         if (kind == DisRouteSandboxTodayRouteKind.EXECUTION) {
             applyExecutionDriverCardEnrichment(card, route, driverMeta);
         }
+        DisRouteSandboxTodayDriverRoutePresentationHelper.applyDispatchBossPresentation(
+                card, routeSnapshot, stopCards, ctx);
         return card;
     }
 

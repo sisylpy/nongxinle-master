@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +31,38 @@ public class SandboxTodaySectionCardDto {
     private Long totalDurationS;
     private String totalDistanceText;
     private String totalDurationText;
+
+    /** 老板端分派/装车/配送：往返里程与出发-返回时长展示 */
+    private String recommendedDepartLabel;
+    private String routeSuggestedDepartLabel;
+    private String firstStopPlannedArrivalLabel;
+    /** 司机卡三列布局：首站到达时刻（如 06:00） */
+    private String firstStopPlannedArrivalTimeLabel;
+    /** 司机卡首站到达状态（如 准时 / 预计迟到） */
+    private String firstStopArrivalStatusLabel;
+    /** ok | early | warn */
+    private String firstStopArrivalStatusTone;
+    private String routeHeadlineLine;
+    private String routeRoundTripSummaryLine;
+    private String firstStopWindowLabel;
+    private Integer firstStopWindowStartS;
+    private Integer firstStopWindowEndS;
+    private String depotName;
+    private String depotAddress;
+    private Long outboundDistanceM;
+    private Long returnDistanceM;
+    private Long totalRoundTripDistanceM;
+    private String outboundDistanceText;
+    private String returnDistanceText;
+    private String totalRoundTripDistanceText;
+    private Date recommendedDepartAt;
+    private Date routeSuggestedDepartAt;
+    private Date plannedReturnAt;
+    private String plannedDepartLabel;
+    private String plannedReturnLabel;
+    private Long totalRoundTripDurationS;
+    private String totalRoundTripDurationText;
+
     private List<Map<String, Object>> timeline = new ArrayList<Map<String, Object>>();
     private List<SandboxTodayStopCardDto> stopCards = new ArrayList<SandboxTodayStopCardDto>();
 
@@ -62,4 +95,6 @@ public class SandboxTodaySectionCardDto {
     private String timeLabel;
     private String statusLabel;
     private Map<String, Object> primaryAction;
+    /** 司机路线人工编辑入口（与 primaryAction 并列，不替代装车等主操作）。 */
+    private Map<String, Object> routeEditAction;
 }
