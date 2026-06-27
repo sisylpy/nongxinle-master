@@ -14,28 +14,60 @@ public final class DisRouteSandboxTodayPlanStopSyncHelper {
     private DisRouteSandboxTodayPlanStopSyncHelper() {
     }
 
-    public static void syncScheduleFromPlan(NxDisRoutePlanEntity plan,
-                                            List<NxDisRouteStopEntity> suggestedStops,
-                                            List<NxDisRouteStopEntity> confirmedStops,
-                                            List<NxDisRouteStopEntity> loadingStops,
-                                            List<NxDisRouteStopEntity> executionStops,
-                                            List<NxDisRouteStopEntity> unassignedStops) {
+    /** 正式 Today dispatch page：仅同步 sandbox 窗口/服务展示标签，不复制 seq / leg / planned Date。 */
+    public static void syncSandboxScheduleLabelsFromPlan(NxDisRoutePlanEntity plan,
+                                                         List<NxDisRouteStopEntity> suggestedStops,
+                                                         List<NxDisRouteStopEntity> confirmedStops,
+                                                         List<NxDisRouteStopEntity> unassignedStops) {
         if (plan == null) {
             return;
         }
-        Map<String, NxDisRouteStopEntity> planStopsByKey = indexPlanStops(plan);
+        Map<String, NxDisRouteStopEntity> planStopsByKey = indexSandboxPlanStops(plan);
         if (planStopsByKey.isEmpty()) {
             return;
         }
-        syncStopList(planStopsByKey, suggestedStops);
-        syncStopList(planStopsByKey, confirmedStops);
-        syncStopList(planStopsByKey, loadingStops);
-        syncStopList(planStopsByKey, executionStops);
-        syncStopList(planStopsByKey, unassignedStops);
+        syncSandboxLabelStopList(planStopsByKey, suggestedStops);
+        syncSandboxLabelStopList(planStopsByKey, confirmedStops);
+        syncSandboxLabelStopList(planStopsByKey, unassignedStops);
     }
 
-    private static void syncStopList(Map<String, NxDisRouteStopEntity> planStopsByKey,
-                                     List<NxDisRouteStopEntity> stops) {
+    /** 装车 / 配送 / 司机终端：从 plan 全量同步 seq / leg / ETA（含 loading / execution routes）。 */
+    public static void syncFullScheduleFromPlan(NxDisRoutePlanEntity plan,
+                                                List<NxDisRouteStopEntity> suggestedStops,
+                                                List<NxDisRouteStopEntity> confirmedStops,
+                                                List<NxDisRouteStopEntity> loadingStops,
+                                                List<NxDisRouteStopEntity> executionStops,
+                                                List<NxDisRouteStopEntity> unassignedStops) {
+        if (plan == null) {
+            return;
+        }
+        Map<String, NxDisRouteStopEntity> planStopsByKey = indexExecutionPlanStops(plan);
+        if (planStopsByKey.isEmpty()) {
+            return;
+        }
+        syncFullScheduleStopList(planStopsByKey, suggestedStops);
+        syncFullScheduleStopList(planStopsByKey, confirmedStops);
+        syncFullScheduleStopList(planStopsByKey, loadingStops);
+        syncFullScheduleStopList(planStopsByKey, executionStops);
+        syncFullScheduleStopList(planStopsByKey, unassignedStops);
+    }
+
+    private static Map<String, NxDisRouteStopEntity> indexSandboxPlanStops(NxDisRoutePlanEntity plan) {
+        Map<String, NxDisRouteStopEntity> index = new HashMap<String, NxDisRouteStopEntity>();
+        indexRoutes(plan.getDriverRoutes(), index);
+        return index;
+    }
+
+    private static Map<String, NxDisRouteStopEntity> indexExecutionPlanStops(NxDisRoutePlanEntity plan) {
+        Map<String, NxDisRouteStopEntity> index = new HashMap<String, NxDisRouteStopEntity>();
+        indexRoutes(plan.getDriverRoutes(), index);
+        indexRoutes(plan.getLoadingDriverRoutes(), index);
+        indexRoutes(plan.getExecutionDriverRoutes(), index);
+        return index;
+    }
+
+    private static void syncSandboxLabelStopList(Map<String, NxDisRouteStopEntity> planStopsByKey,
+                                                 List<NxDisRouteStopEntity> stops) {
         if (stops == null) {
             return;
         }
@@ -43,20 +75,27 @@ public final class DisRouteSandboxTodayPlanStopSyncHelper {
             if (stop == null) {
                 continue;
             }
-            String key = resolveStopKey(stop);
-            NxDisRouteStopEntity planStop = planStopsByKey.get(key);
+            NxDisRouteStopEntity planStop = planStopsByKey.get(resolveStopKey(stop));
             if (planStop != null) {
-                DisRouteSandboxTodayStopScheduleHelper.copyScheduleFields(planStop, stop);
+                DisRouteSandboxTodayStopScheduleHelper.copySandboxScheduleLabelFields(planStop, stop);
             }
         }
     }
 
-    private static Map<String, NxDisRouteStopEntity> indexPlanStops(NxDisRoutePlanEntity plan) {
-        Map<String, NxDisRouteStopEntity> index = new HashMap<String, NxDisRouteStopEntity>();
-        indexRoutes(plan.getDriverRoutes(), index);
-        indexRoutes(plan.getLoadingDriverRoutes(), index);
-        indexRoutes(plan.getExecutionDriverRoutes(), index);
-        return index;
+    private static void syncFullScheduleStopList(Map<String, NxDisRouteStopEntity> planStopsByKey,
+                                                 List<NxDisRouteStopEntity> stops) {
+        if (stops == null) {
+            return;
+        }
+        for (NxDisRouteStopEntity stop : stops) {
+            if (stop == null) {
+                continue;
+            }
+            NxDisRouteStopEntity planStop = planStopsByKey.get(resolveStopKey(stop));
+            if (planStop != null) {
+                DisRouteSandboxTodayStopScheduleHelper.copyFullScheduleFieldsForExecutionView(planStop, stop);
+            }
+        }
     }
 
     private static void indexRoutes(List<NxDisDriverRouteEntity> routes,

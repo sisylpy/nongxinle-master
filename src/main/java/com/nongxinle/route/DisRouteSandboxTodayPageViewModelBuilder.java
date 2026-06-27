@@ -17,6 +17,7 @@ import java.util.Set;
 
 /**
  * 构建 GET /dispatch/sandbox/today 页面 ViewModel（完整 Hero / 指标 / 分区 / timeline）。
+ * sections / mapOverview 共用 {@link VisibleDriverRouteSnapshot}。
  */
 public final class DisRouteSandboxTodayPageViewModelBuilder {
 
@@ -43,6 +44,8 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
         viewModel.setTopMetrics(buildTopMetrics(ctx, pendingRoutedDriverIds, unavailableDriverIds));
         viewModel.setSections(buildSections(ctx));
         viewModel.setAvailableDrivers(buildIdleAvailableDrivers(ctx, unavailableDriverIds));
+        SandboxTodayMapOverviewDto mapOverview = DisRouteSandboxTodayMapOverviewBuilder.build(ctx);
+        viewModel.setMapOverview(mapOverview != null ? mapOverview : DisRouteSandboxTodayMapOverviewBuilder.emptyOverview());
         return viewModel;
     }
 
@@ -411,7 +414,7 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
         List<SandboxTodaySectionCardDto> suggestedCards = buildSuggestedSectionCards(ctx, plan);
         if (!suggestedCards.isEmpty()) {
             sections.add(section(SECTION_SUGGESTED, "建议派车",
-                    "系统已匹配司机，确认后进入装车", suggestedCards));
+                    "系统已匹配司机，请编辑路线确认分派", suggestedCards));
         }
 
         List<SandboxTodaySectionCardDto> confirmedCards = buildConfirmedSectionCards(ctx, plan);
@@ -435,38 +438,51 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
         return sections;
     }
 
-    /** 未确认站点 → 建议派车；同一司机路线不得含已确认站点。 */
+    /** 未确认站点 → 建议派车；已有确认站点的司机不再单独出卡（合并到已确认区）。 */
     private static List<SandboxTodaySectionCardDto> buildSuggestedSectionCards(
             SandboxTodayPageBuildContext ctx, NxDisRoutePlanEntity plan) {
-        if (ctx.getSuggestedStops() != null && !ctx.getSuggestedStops().isEmpty()) {
-            return DisRouteSandboxTodayDriverRouteCardBuilder.buildFromStopsGrouped(
-                    ctx.getSuggestedStops(), DisRouteSandboxTodayRouteKind.SUGGESTED, ctx);
-        }
-        if (plan != null && plan.getDriverRoutes() != null && !plan.getDriverRoutes().isEmpty()) {
-            return DisRouteSandboxTodayDriverRouteCardBuilder.buildFromPlanRoutesFiltered(
-                    plan.getDriverRoutes(),
-                    DisRouteSandboxTodayRouteKind.SUGGESTED,
-                    DisRouteSandboxTodayDriverRouteCardBuilder::isSuggestedDispatchStop,
-                    ctx);
-        }
-        return Collections.emptyList();
+        return buildDriverRouteCardsFromSnapshots(ctx, VisibleDriverRouteSnapshotBuilder.SECTION_SUGGESTED);
     }
 
-    /** 已确认、未进入装车 → 已确认待装车；不得与建议派车重复。 */
+    /** 已确认、未进入装车 → 已确认待装车。 */
     private static List<SandboxTodaySectionCardDto> buildConfirmedSectionCards(
             SandboxTodayPageBuildContext ctx, NxDisRoutePlanEntity plan) {
-        if (ctx.getConfirmedStops() != null && !ctx.getConfirmedStops().isEmpty()) {
-            return DisRouteSandboxTodayDriverRouteCardBuilder.buildFromStopsGrouped(
-                    ctx.getConfirmedStops(), DisRouteSandboxTodayRouteKind.CONFIRMED, ctx);
+        return buildDriverRouteCardsFromSnapshots(ctx, VisibleDriverRouteSnapshotBuilder.SECTION_CONFIRMED);
+    }
+
+    private static List<SandboxTodaySectionCardDto> buildDriverRouteCardsFromSnapshots(
+            SandboxTodayPageBuildContext ctx,
+            String sectionKey) {
+        if (ctx == null || ctx.getVisibleDriverRoutes() == null || ctx.getVisibleDriverRoutes().isEmpty()) {
+            return Collections.emptyList();
         }
-        if (plan != null && plan.getDriverRoutes() != null && !plan.getDriverRoutes().isEmpty()) {
-            return DisRouteSandboxTodayDriverRouteCardBuilder.buildFromPlanRoutesFiltered(
-                    plan.getDriverRoutes(),
-                    DisRouteSandboxTodayRouteKind.CONFIRMED,
-                    DisRouteSandboxTodayDriverRouteCardBuilder::isConfirmedDispatchStop,
-                    ctx);
+        List<SandboxTodaySectionCardDto> cards = new ArrayList<SandboxTodaySectionCardDto>();
+        for (VisibleDriverRouteSnapshot routeSnapshot : ctx.getVisibleDriverRoutes()) {
+            if (routeSnapshot == null || !sectionKey.equals(routeSnapshot.getSectionKey())) {
+                continue;
+            }
+            SandboxTodaySectionCardDto card = DisRouteSandboxTodayDriverRouteCardBuilder
+                    .buildFromVisibleRouteSnapshot(routeSnapshot, ctx);
+            if (card != null) {
+                cards.add(card);
+            }
         }
-        return Collections.emptyList();
+        return cards;
+    }
+
+    private static Integer resolveDriverIdFromStop(NxDisRouteStopEntity stop) {
+        if (stop == null) {
+            return null;
+        }
+        Integer driverId = stop.getSuggestedDriverUserId();
+        NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        if (driverId == null && task != null) {
+            driverId = task.getNxDstAssignedDriverUserId() != null
+                    ? task.getNxDstAssignedDriverUserId()
+                    : (task.getNxDstSuggestedDriverUserId() != null
+                    ? task.getNxDstSuggestedDriverUserId() : task.getSuggestedDriverUserId());
+        }
+        return driverId;
     }
 
     private static SandboxTodaySectionDto section(String key,
@@ -638,16 +654,52 @@ public final class DisRouteSandboxTodayPageViewModelBuilder {
         return ids;
     }
 
-    /** 已有建议/确认/装车/配送中路线的司机，均不可进入 availableDrivers。 */
+    /**
+     * 已有建议/确认/装车/在途配送路线的司机不可进入 availableDrivers。
+     * 仅 DELIVERED 的历史 execution 路线不算占用（已完成可再派）。
+     */
     private static Set<Integer> collectUnavailableDriverIds(SandboxTodayPageBuildContext ctx) {
         Set<Integer> ids = collectPendingRoutedDriverIds(ctx);
-        collectDriverIdsFromStops(ctx.getExecutionStops(), ids);
+        collectBlockingExecutionDriverIdsFromStops(ctx.getExecutionStops(), ids);
         NxDisRoutePlanEntity plan = ctx.getMergedPlan();
         if (plan != null) {
-            collectDriverIdsFromRoutes(plan.getExecutionDriverRoutes(), ids);
+            collectBlockingExecutionDriverIdsFromRoutes(plan.getExecutionDriverRoutes(), ids);
         }
         return ids;
     }
+
+    private static void collectBlockingExecutionDriverIdsFromStops(List<NxDisRouteStopEntity> stops,
+                                                                   Set<Integer> ids) {
+        if (stops == null || ids == null) {
+            return;
+        }
+        for (NxDisRouteStopEntity stop : stops) {
+            if (stop == null || !DisRouteSandboxDriverDispatchStateHelper.isBlockingExecutionTaskStop(stop)) {
+                continue;
+            }
+            Integer driverId = resolveDriverIdFromStop(stop);
+            if (driverId != null) {
+                ids.add(driverId);
+            }
+        }
+    }
+
+    private static void collectBlockingExecutionDriverIdsFromRoutes(
+            List<com.nongxinle.entity.NxDisDriverRouteEntity> routes,
+            Set<Integer> ids) {
+        if (routes == null || ids == null) {
+            return;
+        }
+        for (com.nongxinle.entity.NxDisDriverRouteEntity route : routes) {
+            if (route == null || route.getNxDdrDriverUserId() == null) {
+                continue;
+            }
+            if (DisRouteSandboxDriverDispatchStateHelper.blocksAvailableIdleSlot(route)) {
+                ids.add(route.getNxDdrDriverUserId());
+            }
+        }
+    }
+
 
     private static void collectDriverIdsFromStops(List<NxDisRouteStopEntity> stops, Set<Integer> ids) {
         if (stops == null) {

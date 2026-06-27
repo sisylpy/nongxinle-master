@@ -11,7 +11,11 @@ public final class DisRouteSandboxTodayStopScheduleHelper {
     private DisRouteSandboxTodayStopScheduleHelper() {
     }
 
-    public static void copyScheduleFields(NxDisRouteStopEntity from, NxDisRouteStopEntity to) {
+    /**
+     * 正式 Today sandbox：仅同步窗口/服务展示标签，不复制 seq / leg / planned Date。
+     * visible seq / leg / ETA 由 {@link VisibleDriverRouteSnapshotBuilder} 统一写入。
+     */
+    public static void copySandboxScheduleLabelFields(NxDisRouteStopEntity from, NxDisRouteStopEntity to) {
         if (from == null || to == null) {
             return;
         }
@@ -30,6 +34,56 @@ public final class DisRouteSandboxTodayStopScheduleHelper {
         if (from.getFastestArrivalLabel() != null) {
             to.setFastestArrivalLabel(from.getFastestArrivalLabel());
         }
+        if (from.getNxDrsServiceMinutes() != null) {
+            to.setNxDrsServiceMinutes(from.getNxDrsServiceMinutes());
+        }
+        if (from.getResolvedEarliestDeliveryTimeS() != null) {
+            to.setResolvedEarliestDeliveryTimeS(from.getResolvedEarliestDeliveryTimeS());
+        }
+        if (from.getResolvedLatestDeliveryTimeS() != null) {
+            to.setResolvedLatestDeliveryTimeS(from.getResolvedLatestDeliveryTimeS());
+        }
+        if (from.getResolvedWindowSource() != null) {
+            to.setResolvedWindowSource(from.getResolvedWindowSource());
+        }
+        if (from.getNxDrsEarliestDeliveryTimeS() != null) {
+            to.setNxDrsEarliestDeliveryTimeS(from.getNxDrsEarliestDeliveryTimeS());
+        }
+        if (from.getNxDrsLatestDeliveryTimeS() != null) {
+            to.setNxDrsLatestDeliveryTimeS(from.getNxDrsLatestDeliveryTimeS());
+        }
+        if (from.getScheduleMode() != null) {
+            to.setScheduleMode(from.getScheduleMode());
+        }
+        if (from.getNxDrsTimeWindowStatus() != null) {
+            to.setNxDrsTimeWindowStatus(from.getNxDrsTimeWindowStatus());
+        }
+        if (from.getNxDrsTimeWindowStatusLabel() != null) {
+            to.setNxDrsTimeWindowStatusLabel(from.getNxDrsTimeWindowStatusLabel());
+        }
+        if (from.getNxDrsLateMinutes() != null) {
+            to.setNxDrsLateMinutes(from.getNxDrsLateMinutes());
+        }
+        if (from.getNxDrsWaitMinutes() != null) {
+            to.setNxDrsWaitMinutes(from.getNxDrsWaitMinutes());
+        }
+    }
+
+    /**
+     * 装车 / 配送 / 司机终端：从 plan route stop 完整同步 seq、leg、planned Date 及展示字段。
+     * 禁止用于正式 Today suggested route 主链。
+     */
+    public static void copyFullScheduleFieldsForExecutionView(NxDisRouteStopEntity from, NxDisRouteStopEntity to) {
+        if (from == null || to == null) {
+            return;
+        }
+        copySandboxScheduleLabelFields(from, to);
+
+        if (from.getNxDrsStopSeq() != null) {
+            to.setNxDrsStopSeq(from.getNxDrsStopSeq());
+        }
+        copyLegMetrics(from, to);
+
         if (from.getNxDrsPlannedArrivalAt() != null) {
             to.setNxDrsPlannedArrivalAt(from.getNxDrsPlannedArrivalAt());
         }
@@ -39,11 +93,88 @@ public final class DisRouteSandboxTodayStopScheduleHelper {
         if (from.getNxDrsPlannedServiceStartAt() != null) {
             to.setNxDrsPlannedServiceStartAt(from.getNxDrsPlannedServiceStartAt());
         }
-        if (from.getNxDrsServiceMinutes() != null) {
-            to.setNxDrsServiceMinutes(from.getNxDrsServiceMinutes());
+
+        mirrorScheduleToTask(from, to);
+    }
+
+    private static void copyLegMetrics(NxDisRouteStopEntity from, NxDisRouteStopEntity to) {
+        if (from.getNxDrsLegDistanceM() != null) {
+            to.setNxDrsLegDistanceM(from.getNxDrsLegDistanceM());
         }
-        if (from.getScheduleMode() != null) {
-            to.setScheduleMode(from.getScheduleMode());
+        if (from.getNxDrsLegDurationS() != null) {
+            to.setNxDrsLegDurationS(from.getNxDrsLegDurationS());
+        }
+        if (from.getLegDistanceProvider() != null) {
+            to.setLegDistanceProvider(from.getLegDistanceProvider());
+        }
+        if (from.getLegDistanceType() != null) {
+            to.setLegDistanceType(from.getLegDistanceType());
+        }
+    }
+
+    private static void mirrorScheduleToTask(NxDisRouteStopEntity from, NxDisRouteStopEntity to) {
+        NxDisShipmentTaskEntity toTask = to.getShipmentTask();
+        if (toTask == null) {
+            return;
+        }
+        NxDisShipmentTaskEntity fromTask = from.getShipmentTask();
+
+        Integer routeSeq = from.getNxDrsStopSeq();
+        if (routeSeq == null && fromTask != null) {
+            routeSeq = fromTask.getNxDstRouteSeq();
+        }
+        if (routeSeq != null) {
+            toTask.setNxDstRouteSeq(routeSeq);
+        }
+        if (fromTask != null && fromTask.getNxDstManualStopSeq() != null) {
+            toTask.setNxDstManualStopSeq(fromTask.getNxDstManualStopSeq());
+        }
+
+        Long legDistanceM = from.getNxDrsLegDistanceM();
+        Long legDurationS = from.getNxDrsLegDurationS();
+        String legProvider = from.getLegDistanceProvider();
+        String legType = from.getLegDistanceType();
+        if (fromTask != null) {
+            if (legDistanceM == null) {
+                legDistanceM = fromTask.getNxDstLegDistanceM();
+            }
+            if (legDurationS == null) {
+                legDurationS = fromTask.getNxDstLegDurationS();
+            }
+            if (legProvider == null) {
+                legProvider = fromTask.getLegDistanceProvider();
+            }
+            if (legType == null) {
+                legType = fromTask.getLegDistanceType();
+            }
+        }
+        if (legDistanceM != null) {
+            toTask.setNxDstLegDistanceM(legDistanceM);
+        }
+        if (legDurationS != null) {
+            toTask.setNxDstLegDurationS(legDurationS);
+        }
+        if (legProvider != null) {
+            toTask.setLegDistanceProvider(legProvider);
+        }
+        if (legType != null) {
+            toTask.setLegDistanceType(legType);
+        }
+
+        Date plannedArrivalAt = from.getNxDrsPlannedArrivalAt();
+        if (plannedArrivalAt == null && fromTask != null) {
+            plannedArrivalAt = fromTask.getNxDstPlannedArrivalAt();
+        }
+        if (plannedArrivalAt != null) {
+            toTask.setNxDstPlannedArrivalAt(plannedArrivalAt);
+        }
+
+        Date plannedDepartureAt = from.getNxDrsPlannedDepartureAt();
+        if (plannedDepartureAt == null && fromTask != null) {
+            plannedDepartureAt = fromTask.getNxDstPlannedDepartureAt();
+        }
+        if (plannedDepartureAt != null) {
+            toTask.setNxDstPlannedDepartureAt(plannedDepartureAt);
         }
     }
 
@@ -89,23 +220,43 @@ public final class DisRouteSandboxTodayStopScheduleHelper {
         if (stop == null) {
             return null;
         }
-        if (stop.getCustomerWindowLabel() != null && !stop.getCustomerWindowLabel().trim().isEmpty()) {
-            return stop.getCustomerWindowLabel().trim();
-        }
         NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        if (stop.getCustomerWindowLabel() != null && !stop.getCustomerWindowLabel().trim().isEmpty()) {
+            String cached = stop.getCustomerWindowLabel().trim();
+            if (DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop)) {
+                return applyTodayOverridePrefix(cached);
+            }
+            return cached;
+        }
         if (task == null) {
             return null;
         }
-        Integer earliest = stop.getNxDrsEarliestDeliveryTimeS() != null
-                ? stop.getNxDrsEarliestDeliveryTimeS() : task.getNxDstEarliestDeliveryTimeS();
-        Integer latest = stop.getNxDrsLatestDeliveryTimeS() != null
-                ? stop.getNxDrsLatestDeliveryTimeS() : task.getNxDstLatestDeliveryTimeS();
+        Integer earliest = DisRouteSandboxStopTimeWindowResolver.readResolvedEarliest(stop);
+        Integer latest = DisRouteSandboxStopTimeWindowResolver.readResolvedLatest(stop);
         if (earliest == null && latest == null) {
             return null;
         }
         Date anchor = serverNow != null ? serverNow : new Date();
-        return DisRouteSandboxScheduleLabelHelper.formatCustomerWindowLabel(
+        String label = DisRouteSandboxScheduleLabelHelper.formatCustomerWindowLabel(
                 task.getNxDstRouteDate(), earliest, latest, anchor);
+        if (DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop) && label != null) {
+            return applyTodayOverridePrefix(label);
+        }
+        return label;
+    }
+
+    public static String applyTodayOverridePrefix(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return label;
+        }
+        String trimmed = label.trim();
+        if (trimmed.startsWith("今日调整 ")) {
+            return trimmed;
+        }
+        if (trimmed.startsWith("常规窗口 ")) {
+            return "今日调整 " + trimmed.substring("常规窗口 ".length());
+        }
+        return "今日调整 " + trimmed;
     }
 
     public static String resolveServiceDurationLabel(NxDisRouteStopEntity stop) {

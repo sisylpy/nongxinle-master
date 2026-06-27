@@ -34,6 +34,8 @@ public class SandboxTodayPageBuildContext {
     private List<NxDisRouteStopEntity> loadingStops;
     private List<NxDisRouteStopEntity> executionStops;
     private List<InvalidDispatchStopDto> invalidStops;
+    /** PR-2c：sections / map / debug 唯一主权源（建议派车 + 已确认待装车）。 */
+    private List<VisibleDriverRouteSnapshot> visibleDriverRoutes;
 
     public Integer getDisId() {
         return disId;
@@ -217,5 +219,13 @@ public class SandboxTodayPageBuildContext {
 
     public void setInvalidStops(List<InvalidDispatchStopDto> invalidStops) {
         this.invalidStops = invalidStops;
+    }
+
+    public List<VisibleDriverRouteSnapshot> getVisibleDriverRoutes() {
+        return visibleDriverRoutes;
+    }
+
+    public void setVisibleDriverRoutes(List<VisibleDriverRouteSnapshot> visibleDriverRoutes) {
+        this.visibleDriverRoutes = visibleDriverRoutes;
     }
 }

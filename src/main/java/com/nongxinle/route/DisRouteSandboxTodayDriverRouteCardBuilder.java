@@ -14,9 +14,11 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.nongxinle.route.DisShipmentTaskStatus.ASSIGNED;
 import static com.nongxinle.route.DisShipmentTaskStatus.CANCELLED;
+import static com.nongxinle.route.DisShipmentTaskStatus.EXCEPTION;
 import static com.nongxinle.route.DisShipmentTaskStatus.READY_TO_GO;
 
 /** DRIVER_ROUTE 卡片组装（含 stopCards / timeline / 路线摘要）。 */
@@ -43,17 +45,141 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         return DisRouteLoadingGateHelper.isConfirmedAssignedStopForView(stop, route);
     }
 
+    public static List<NxDisRouteStopEntity> filterDispatchStopsForRoute(
+            List<NxDisRouteStopEntity> stops,
+            NxDisDriverRouteEntity route,
+            DispatchStopFilter stopFilter) {
+        return filterStops(stops, route, stopFilter);
+    }
+
+    /** PR-2c：从 VisibleDriverRouteSnapshot 组装 DRIVER_ROUTE 卡（唯一主权源）。 */
+    public static SandboxTodaySectionCardDto buildFromVisibleRouteSnapshot(
+            VisibleDriverRouteSnapshot routeSnapshot,
+            SandboxTodayPageBuildContext ctx) {
+        if (routeSnapshot == null || routeSnapshot.getStops() == null || routeSnapshot.getStops().isEmpty()) {
+            return null;
+        }
+        Integer driverUserId = routeSnapshot.getDriverUserId();
+        DisRouteSandboxTodayRouteKind kind = routeSnapshot.getRouteKind();
+        NxDisDriverRouteEntity route = routeSnapshot.getSourceRoute();
+        Map<Integer, DriverDispatchCandidateDto> driverIndex = indexDrivers(
+                ctx != null ? ctx.getDrivers() : null);
+
+        List<SandboxTodayStopCardDto> stopCards = new ArrayList<SandboxTodayStopCardDto>();
+        List<NxDisRouteStopEntity> sourceStops = new ArrayList<NxDisRouteStopEntity>();
+        for (VisibleDriverRouteStopSnapshot stopSnap : routeSnapshot.getStops()) {
+            if (stopSnap == null) {
+                continue;
+            }
+            stopCards.add(buildStopCardFromSnapshot(stopSnap, driverUserId, kind, ctx));
+            if (stopSnap.getSourceStop() != null) {
+                sourceStops.add(stopSnap.getSourceStop());
+            }
+        }
+
+        String driverName = routeSnapshot.getDriverName();
+        DriverDispatchCandidateDto driverMeta = driverIndex.get(driverUserId);
+        String totalDistanceText = routeSnapshot.getTotalDistanceText();
+        String totalDurationText = routeSnapshot.getTotalDurationText();
+        if (totalDistanceText == null) {
+            totalDistanceText = DisRouteSandboxDisplayFormatHelper.formatDistanceText(routeSnapshot.getTotalDistanceM());
+        }
+        if (totalDurationText == null) {
+            totalDurationText = DisRouteSandboxDisplayFormatHelper.formatDurationText(routeSnapshot.getTotalDurationS());
+        }
+
+        SandboxTodaySectionCardDto card = new SandboxTodaySectionCardDto();
+        card.setCardType(CARD_TYPE_DRIVER_ROUTE);
+        card.setDriverUserId(driverUserId);
+        card.setDriverName(driverName);
+        card.setDriverAvatarUrl(resolveDriverAvatarUrl(driverMeta));
+        card.setDriverStatusLabel(resolveDriverStatusLabel(kind, route, driverMeta));
+        card.setDriverStatusTone(resolveDriverStatusTone(kind, route, driverMeta));
+        card.setBadgeLabel(resolveRouteBadgeLabel(kind));
+        card.setScheduleHeadline(firstNonBlank(routeSnapshot.getScheduleHeadline(),
+                resolveScheduleHeadline(route, stopCards, ctx)));
+        card.setCustomerStopCount(stopCards.size());
+        card.setTotalDistanceM(routeSnapshot.getTotalDistanceM());
+        card.setTotalDurationS(routeSnapshot.getTotalDurationS());
+        card.setTotalDistanceText(totalDistanceText);
+        card.setTotalDurationText(totalDurationText);
+        card.setRouteSummary(buildRouteSummary(stopCards.size(), totalDistanceText, totalDurationText));
+        card.setRouteStatsLine(buildRouteStatsLine(stopCards.size(), totalDistanceText, totalDurationText));
+        card.setStopCards(stopCards);
+        card.setTimeline(DisRouteSandboxTodayTimelineBuilder.buildFromVisibleStopSnapshots(
+                routeSnapshot, stopCards, ctx != null ? ctx.getDepotName() : null));
+        Map<String, Object> routePrimaryAction = buildRoutePrimaryAction(
+                route, sourceStops, driverUserId, driverName, kind, ctx);
+        if (routePrimaryAction != null) {
+            card.setPrimaryAction(routePrimaryAction);
+        }
+        Map<String, Object> routeEditAction = buildRouteEditAction(
+                route, sourceStops, driverUserId, driverName, kind, ctx);
+        if (routeEditAction != null) {
+            card.setRouteEditAction(routeEditAction);
+        }
+        if (kind == DisRouteSandboxTodayRouteKind.EXECUTION) {
+            applyExecutionDriverCardEnrichment(card, route, driverMeta);
+        }
+        return card;
+    }
+
+    private static SandboxTodayStopCardDto buildStopCardFromSnapshot(
+            VisibleDriverRouteStopSnapshot stopSnap,
+            Integer driverUserId,
+            DisRouteSandboxTodayRouteKind cardKind,
+            SandboxTodayPageBuildContext ctx) {
+        NxDisRouteStopEntity stop = stopSnap.getSourceStop();
+        DisRouteSandboxTodayRouteKind stopKind = stopSnap.getStopKind() != null
+                ? stopSnap.getStopKind() : cardKind;
+        SandboxTodayStopCardDto card = new SandboxTodayStopCardDto();
+        card.setCardKey(stopSnap.getCardKey());
+        card.setStopSeq(stopSnap.getVisibleSeq());
+        card.setCustomerName(stopSnap.getCustomerName());
+        card.setDepartmentId(stopSnap.getDepartmentId());
+        card.setGoodsSummary(stopSnap.getGoodsSummary());
+        card.setItems(stopSnap.getItems() != null ? stopSnap.getItems() : Collections.<SandboxTodayCardItemDto>emptyList());
+        card.setPlannedArrivalLabel(stopSnap.getArrivalLabel());
+        card.setPlannedDepartureLabel(stopSnap.getDepartureLabel());
+        card.setCustomerWindowLabel(stopSnap.getCustomerWindowLabel());
+        card.setServiceDurationLabel(stopSnap.getServiceDurationLabel());
+        card.setDistanceText(stopSnap.getDistanceText());
+        card.setDurationText(stopSnap.getDurationText());
+        card.setTimeLabel(stopSnap.getTimeLabel());
+        card.setStatusLabel(stopSnap.getStatusLabel());
+        if (stop != null) {
+            NxDisShipmentTaskEntity task = stop.getShipmentTask();
+            Map<String, Object> primaryAction = buildStopPrimaryAction(stop, task, driverUserId, stopKind, ctx);
+            if (primaryAction != null) {
+                card.setPrimaryAction(primaryAction);
+            }
+        }
+        return card;
+    }
+
     public static List<SandboxTodaySectionCardDto> buildFromPlanRoutesFiltered(
             List<NxDisDriverRouteEntity> routes,
             DisRouteSandboxTodayRouteKind kind,
             DispatchStopFilter stopFilter,
             SandboxTodayPageBuildContext ctx) {
+        return buildFromPlanRoutesFiltered(routes, kind, stopFilter, ctx, null);
+    }
+
+    public static List<SandboxTodaySectionCardDto> buildFromPlanRoutesFiltered(
+            List<NxDisDriverRouteEntity> routes,
+            DisRouteSandboxTodayRouteKind kind,
+            DispatchStopFilter stopFilter,
+            SandboxTodayPageBuildContext ctx,
+            Set<Integer> excludedDriverUserIds) {
         if (routes == null || routes.isEmpty() || stopFilter == null) {
             return Collections.emptyList();
         }
         List<SandboxTodaySectionCardDto> cards = new ArrayList<SandboxTodaySectionCardDto>();
         for (NxDisDriverRouteEntity route : routes) {
             if (route == null || route.getNxDdrDriverUserId() == null) {
+                continue;
+            }
+            if (excludedDriverUserIds != null && excludedDriverUserIds.contains(route.getNxDdrDriverUserId())) {
                 continue;
             }
             if (shouldSkipIneligibleDriverRoute(route.getNxDdrDriverUserId(), kind, ctx)) {
@@ -137,6 +263,19 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         return cards;
     }
 
+    /** 司机终端：单司机路线卡（与老板装车页 DRIVER_ROUTE 卡片同口径）。 */
+    public static SandboxTodaySectionCardDto buildForSingleDriver(
+            Integer driverUserId,
+            List<NxDisRouteStopEntity> stops,
+            NxDisDriverRouteEntity route,
+            DisRouteSandboxTodayRouteKind kind,
+            SandboxTodayPageBuildContext ctx) {
+        if (driverUserId == null || stops == null || stops.isEmpty()) {
+            return null;
+        }
+        return buildDriverRouteCard(driverUserId, stops, route, kind, ctx);
+    }
+
     private static SandboxTodaySectionCardDto buildDriverRouteCard(
             Integer driverUserId,
             List<NxDisRouteStopEntity> stops,
@@ -150,7 +289,7 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         long totalDurationS = 0L;
         List<SandboxTodayStopCardDto> stopCards = new ArrayList<SandboxTodayStopCardDto>();
         int seq = 0;
-        for (NxDisRouteStopEntity stop : stops) {
+        for (NxDisRouteStopEntity stop : sortStopsForDisplay(stops)) {
             if (stop == null) {
                 continue;
             }
@@ -163,7 +302,8 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
             if (legDurationS != null) {
                 totalDurationS += legDurationS;
             }
-            stopCards.add(buildStopCard(stop, driverUserId, kind, seq, serverNow, ctx));
+            DisRouteSandboxTodayRouteKind stopKind = resolveStopKindForCard(stop, route, kind);
+            stopCards.add(buildStopCard(stop, driverUserId, kind, stopKind, seq, serverNow, ctx));
         }
 
         if (route != null) {
@@ -202,6 +342,11 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
                 route, stops, driverUserId, driverName, kind, ctx);
         if (routePrimaryAction != null) {
             card.setPrimaryAction(routePrimaryAction);
+        }
+        Map<String, Object> routeEditAction = buildRouteEditAction(
+                route, stops, driverUserId, driverName, kind, ctx);
+        if (routeEditAction != null) {
+            card.setRouteEditAction(routeEditAction);
         }
         if (kind == DisRouteSandboxTodayRouteKind.EXECUTION) {
             applyExecutionDriverCardEnrichment(card, route, driverMeta);
@@ -348,6 +493,40 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         return null;
     }
 
+    private static Map<String, Object> buildRouteEditAction(NxDisDriverRouteEntity route,
+                                                            List<NxDisRouteStopEntity> stops,
+                                                            Integer driverUserId,
+                                                            String driverName,
+                                                            DisRouteSandboxTodayRouteKind kind,
+                                                            SandboxTodayPageBuildContext ctx) {
+        if (kind == DisRouteSandboxTodayRouteKind.LOADING
+                || kind == DisRouteSandboxTodayRouteKind.EXECUTION) {
+            return null;
+        }
+        if (stops == null || stops.isEmpty()) {
+            return null;
+        }
+        if (route != null && DisRouteDriverDepartPolicy.isRouteDeparted(route)) {
+            return null;
+        }
+        if (route != null && DisRouteLoadingGateHelper.isRouteEnteredLoading(route)) {
+            return DriverRouteEditPrimaryActionMaps.disabledEditRoute("编辑路线", "司机装车中，不可新增分派");
+        }
+        if (isRouteInDeliveryOrCompleted(route)) {
+            return null;
+        }
+        if (!isDriverBatchEligibleForDispatch(driverUserId, ctx)) {
+            return DriverRouteEditPrimaryActionMaps.disabledEditRoute("编辑路线", "司机当前不可派");
+        }
+        return DriverRouteEditPrimaryActionMaps.enabledEditRoute("编辑路线",
+                DriverRouteEditPrimaryActionMaps.buildPayload(
+                        ctx != null ? ctx.getDisId() : null,
+                        ctx != null ? ctx.getRouteDate() : null,
+                        ctx != null ? ctx.getBatchCode() : null,
+                        ctx != null ? ctx.getOperatorUserId() : null,
+                        driverUserId));
+    }
+
     private static Map<String, Object> buildLoadingRouteReturnAction(NxDisDriverRouteEntity route,
                                                                      Integer driverUserId,
                                                                      SandboxTodayPageBuildContext ctx) {
@@ -370,14 +549,12 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
     private static boolean shouldSkipIneligibleDriverRoute(Integer driverUserId,
                                                            DisRouteSandboxTodayRouteKind kind,
                                                            SandboxTodayPageBuildContext ctx) {
-        if (driverUserId == null || kind == null) {
-            return false;
-        }
-        if (kind == DisRouteSandboxTodayRouteKind.LOADING
-                || kind == DisRouteSandboxTodayRouteKind.EXECUTION) {
-            return false;
-        }
-        return !isDriverBatchEligibleForDispatch(driverUserId, ctx);
+        return !DisRouteSandboxDriverDispatchStateHelper.shouldRenderSuggestedDriverRouteCard(
+                driverUserId, kind, ctx);
+    }
+
+    private static Integer resolveStopDriverUserId(NxDisRouteStopEntity stop) {
+        return DisRouteSandboxDriverDispatchStateHelper.resolveStopDriverUserId(stop);
     }
 
     private static boolean isDriverBatchEligibleForDispatch(Integer driverUserId,
@@ -469,6 +646,9 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         if (stop == null) {
             return false;
         }
+        if (DisRouteLoadingGateHelper.isConfirmedAssignedStopForView(stop, null)) {
+            return false;
+        }
         if (Boolean.TRUE.equals(stop.getCanConfirmCustomer())) {
             return true;
         }
@@ -557,17 +737,74 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
                 || reason.contains("装车页");
     }
 
+    private static DisRouteSandboxTodayRouteKind resolveStopKindForCard(NxDisRouteStopEntity stop,
+                                                                      NxDisDriverRouteEntity route,
+                                                                      DisRouteSandboxTodayRouteKind cardKind) {
+        if (cardKind == DisRouteSandboxTodayRouteKind.EXECUTION
+                || cardKind == DisRouteSandboxTodayRouteKind.LOADING) {
+            return cardKind;
+        }
+        if (isConfirmedDispatchStop(stop, route)) {
+            return DisRouteSandboxTodayRouteKind.CONFIRMED;
+        }
+        return DisRouteSandboxTodayRouteKind.SUGGESTED;
+    }
+
+    public static List<NxDisRouteStopEntity> sortStopsForSectionDisplay(List<NxDisRouteStopEntity> stops) {
+        return sortStopsForDisplay(stops);
+    }
+
+    private static List<NxDisRouteStopEntity> sortStopsForDisplay(List<NxDisRouteStopEntity> stops) {
+        if (stops == null || stops.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<NxDisRouteStopEntity> ordered = new ArrayList<NxDisRouteStopEntity>(stops);
+        Collections.sort(ordered, new Comparator<NxDisRouteStopEntity>() {
+            @Override
+            public int compare(NxDisRouteStopEntity a, NxDisRouteStopEntity b) {
+                return Integer.compare(resolveStopSortSeq(a), resolveStopSortSeq(b));
+            }
+        });
+        return ordered;
+    }
+
+    private static int resolveStopSortSeq(NxDisRouteStopEntity stop) {
+        if (stop == null) {
+            return 0;
+        }
+        if (stop.getNxDrsStopSeq() != null && stop.getNxDrsStopSeq() > 0) {
+            return stop.getNxDrsStopSeq();
+        }
+        NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        if (task != null && task.getNxDstManualStopSeq() != null && task.getNxDstManualStopSeq() > 0) {
+            return task.getNxDstManualStopSeq();
+        }
+        return 0;
+    }
+
+    private static int resolveVisibleStopSeq(NxDisRouteStopEntity stop,
+                                           DisRouteSandboxTodayRouteKind kind,
+                                           int visibleSeq) {
+        if (kind == DisRouteSandboxTodayRouteKind.SUGGESTED) {
+            return visibleSeq;
+        }
+        if (stop != null && stop.getNxDrsStopSeq() != null && stop.getNxDrsStopSeq() > 0) {
+            return stop.getNxDrsStopSeq();
+        }
+        return visibleSeq;
+    }
+
     private static SandboxTodayStopCardDto buildStopCard(NxDisRouteStopEntity stop,
                                                          Integer driverUserId,
-                                                         DisRouteSandboxTodayRouteKind kind,
+                                                         DisRouteSandboxTodayRouteKind cardKind,
+                                                         DisRouteSandboxTodayRouteKind stopKind,
                                                          int stopSeq,
                                                          Date serverNow,
                                                          SandboxTodayPageBuildContext ctx) {
         NxDisShipmentTaskEntity task = stop.getShipmentTask();
         SandboxTodayStopCardDto card = new SandboxTodayStopCardDto();
         card.setCardKey(resolveCardKey(stop));
-        card.setStopSeq(stop.getNxDrsStopSeq() != null && stop.getNxDrsStopSeq() > 0
-                ? stop.getNxDrsStopSeq() : stopSeq);
+        card.setStopSeq(resolveVisibleStopSeq(stop, cardKind, stopSeq));
         card.setCustomerName(resolveCustomerName(stop, task));
         card.setDepartmentId(stop.getNxDrsDepartmentId());
         card.setGoodsSummary(DisRouteSandboxDisplayFormatHelper.buildGoodsSummary(task));
@@ -581,8 +818,8 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         card.setDurationText(DisRouteSandboxDisplayFormatHelper.formatDurationText(
                 DisRouteSandboxDisplayFormatHelper.resolveLegDurationS(stop)));
         card.setTimeLabel(resolveTimeLabel(stop, serverNow));
-        card.setStatusLabel(resolveStopStatusLabel(stop, task, kind, driverUserId, ctx));
-        Map<String, Object> primaryAction = buildStopPrimaryAction(stop, task, driverUserId, kind, ctx);
+        card.setStatusLabel(resolveStopStatusLabel(stop, task, stopKind, driverUserId, ctx));
+        Map<String, Object> primaryAction = buildStopPrimaryAction(stop, task, driverUserId, stopKind, ctx);
         if (primaryAction != null) {
             card.setPrimaryAction(primaryAction);
         }
@@ -594,42 +831,70 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
                                                               Integer driverUserId,
                                                               DisRouteSandboxTodayRouteKind kind,
                                                               SandboxTodayPageBuildContext ctx) {
+        if (kind == DisRouteSandboxTodayRouteKind.EXECUTION
+                || kind == DisRouteSandboxTodayRouteKind.LOADING
+                || kind == DisRouteSandboxTodayRouteKind.CONFIRMED) {
+            Map<String, Object> cancelAction = buildConfirmedStopPrimaryAction(stop, task, driverUserId, ctx);
+            if (cancelAction != null) {
+                return cancelAction;
+            }
+        }
         if (kind == DisRouteSandboxTodayRouteKind.EXECUTION) {
             return SandboxTodayPrimaryActionMaps.statusOnly("配送中", "路线已出发");
         }
-        if (kind == DisRouteSandboxTodayRouteKind.LOADING
-                || kind == DisRouteSandboxTodayRouteKind.CONFIRMED) {
-            return buildConfirmedStopPrimaryAction(stop, task, driverUserId, ctx);
+        if (kind == DisRouteSandboxTodayRouteKind.SUGGESTED) {
+            return buildEditTodayTimeWindowAction(stop, task, ctx);
         }
-        return buildSuggestedStopPrimaryAction(stop, task, driverUserId, ctx);
-    }
-
-    private static Map<String, Object> buildSuggestedStopPrimaryAction(NxDisRouteStopEntity stop,
-                                                                       NxDisShipmentTaskEntity task,
-                                                                       Integer driverUserId,
-                                                                       SandboxTodayPageBuildContext ctx) {
-        Boolean enabled = stop != null ? stop.getCanConfirmCustomer() : null;
-        if (enabled == null && task != null) {
-            enabled = task.getCanConfirmCustomer();
-        }
-        String label = buildConfirmAssignLabel(driverUserId, stop, task, ctx);
-        String blockedReason = stop != null ? stop.getConfirmCustomerBlockedReason() : null;
-        if (blockedReason == null && task != null) {
-            blockedReason = task.getConfirmCustomerBlockedReason();
-        }
-        Map<String, Object> payload = SandboxTodayPrimaryActionMaps.buildConfirmPayload(
-                ctx != null ? ctx.getDisId() : null,
-                ctx != null ? ctx.getRouteDate() : null,
-                ctx != null ? ctx.getBatchCode() : null,
-                ctx != null ? ctx.getOperatorUserId() : null,
-                resolveCardKey(stop),
-                stop.getNxDrsDepartmentId(),
-                collectLiveOrderIds(task),
-                driverUserId);
-        if (Boolean.TRUE.equals(enabled)) {
-            return SandboxTodayPrimaryActionMaps.enabledConfirmSandboxStop(label, payload);
+        if (kind == DisRouteSandboxTodayRouteKind.CONFIRMED) {
+            return buildEditTodayTimeWindowAction(stop, task, ctx);
         }
         return null;
+    }
+
+    private static Map<String, Object> buildEditTodayTimeWindowAction(NxDisRouteStopEntity stop,
+                                                                      NxDisShipmentTaskEntity task,
+                                                                      SandboxTodayPageBuildContext ctx) {
+        if (stop == null || ctx == null) {
+            return null;
+        }
+        Integer depId = stop.getNxDrsDepartmentId();
+        if (depId == null && task != null) {
+            depId = task.getNxDstDepFatherId();
+        }
+        if (depId == null) {
+            return null;
+        }
+        Integer earliest = DisRouteSandboxStopTimeWindowResolver.readResolvedEarliest(stop);
+        Integer latest = DisRouteSandboxStopTimeWindowResolver.readResolvedLatest(stop);
+        Integer serviceMinutes = stop.getNxDrsServiceMinutes();
+        if (task != null) {
+            if (serviceMinutes == null) {
+                serviceMinutes = task.getNxDstServiceMinutes();
+            }
+        }
+        boolean overrideFlag = DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop);
+        String sandboxStopKey = stop.getSandboxStopKey();
+        if (sandboxStopKey == null && depId != null) {
+            sandboxStopKey = DisRouteSandboxStopKeyUtils.build(depId);
+        }
+        Integer deliveryStopId = resolveDeliveryStopId(stop, task);
+        String windowLabel = DisRouteSandboxTodayStopScheduleHelper.resolveCustomerWindowLabel(
+                stop, ctx.getServerNow());
+        return SandboxTodayPrimaryActionMaps.enabledEditTodayTimeWindow(
+                SandboxTodayPrimaryActionMaps.buildEditTodayTimeWindowPayload(
+                        ctx.getDisId(),
+                        ctx.getRouteDate(),
+                        ctx.getBatchCode(),
+                        ctx.getOperatorUserId(),
+                        depId,
+                        sandboxStopKey,
+                        deliveryStopId,
+                        earliest,
+                        latest,
+                        serviceMinutes,
+                        overrideFlag,
+                        windowLabel,
+                        resolveCustomerName(stop, task)));
     }
 
     private static Map<String, Object> buildConfirmedStopPrimaryAction(NxDisRouteStopEntity stop,
@@ -650,11 +915,23 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
                         ctx != null ? ctx.getBatchCode() : null,
                         ctx != null ? ctx.getOperatorUserId() : null,
                         deliveryStopId,
-                        "取消确认",
+                        "取消分派",
                         resolveReturnConfirmMessage(stop, task));
                 return SandboxTodayPrimaryActionMaps.enabledReturnToSandbox(cancelLabel, payload);
             }
             canReturn = Boolean.FALSE;
+        }
+        if (task != null && EXCEPTION.equals(task.getNxDstStatus())) {
+            Integer deliveryStopId = resolveDeliveryStopId(stop, task);
+            String blocked = task.getReturnToSandboxBlockedReason() != null
+                    ? task.getReturnToSandboxBlockedReason()
+                    : (stop != null ? stop.getReturnToSandboxBlockedReason() : null);
+            String label = resolveReturnActionLabel(stop, task);
+            if (deliveryStopId != null) {
+                return SandboxTodayPrimaryActionMaps.disabledReturnToSandbox(
+                        label != null ? label : "取消分派",
+                        blocked != null ? blocked : "当前不可取消分派");
+            }
         }
 
         return null;
@@ -675,20 +952,20 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         if (stop != null && stop.getReturnToSandboxActionLabel() != null
                 && !stop.getReturnToSandboxActionLabel().trim().isEmpty()) {
             String label = stop.getReturnToSandboxActionLabel().trim();
-            if ("返回沙盘".equals(label)) {
-                return "取消确认";
+            if ("返回沙盘".equals(label) || "取消确认".equals(label)) {
+                return "取消分派";
             }
             return label;
         }
         if (task != null && task.getReturnToSandboxActionLabel() != null
                 && !task.getReturnToSandboxActionLabel().trim().isEmpty()) {
             String label = task.getReturnToSandboxActionLabel().trim();
-            if ("返回沙盘".equals(label)) {
-                return "取消确认";
+            if ("返回沙盘".equals(label) || "取消确认".equals(label)) {
+                return "取消分派";
             }
             return label;
         }
-        return "取消确认";
+        return "取消分派";
     }
 
     private static String resolveReturnConfirmMessage(NxDisRouteStopEntity stop, NxDisShipmentTaskEntity task) {
@@ -1064,6 +1341,18 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
         if (kind == DisRouteSandboxTodayRouteKind.CONFIRMED) {
             return "已分派 / 可装车";
         }
+        if (kind == DisRouteSandboxTodayRouteKind.SUGGESTED) {
+            String windowStatus = stop != null ? stop.getNxDrsTimeWindowStatus() : null;
+            if (DisRouteStopTimeWindowStatus.LATE.equals(windowStatus)
+                    || DisRouteStopTimeWindowStatus.SUPPLEMENT_AFTER_WINDOW.equals(windowStatus)
+                    || DisRouteStopTimeWindowStatus.EARLY_WAIT.equals(windowStatus)) {
+                if (stop.getNxDrsTimeWindowStatusLabel() != null
+                        && !stop.getNxDrsTimeWindowStatusLabel().trim().isEmpty()) {
+                    return stop.getNxDrsTimeWindowStatusLabel().trim();
+                }
+            }
+            return null;
+        }
         if (stop.getOperationStatusLabel() != null && !stop.getOperationStatusLabel().trim().isEmpty()) {
             return stop.getOperationStatusLabel().trim();
         }
@@ -1073,7 +1362,7 @@ public final class DisRouteSandboxTodayDriverRouteCardBuilder {
             }
             return "配送中";
         }
-        return "待确认分派";
+        return null;
     }
 
     public static List<SandboxTodayCardItemDto> buildCardItemsForView(NxDisShipmentTaskEntity task) {
