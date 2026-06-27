@@ -9,12 +9,17 @@ import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.entity.NxDisShipmentTaskItemEntity;
+import com.nongxinle.entity.NxDistributerEntity;
 import com.nongxinle.entity.NxDepartmentOrdersEntity;
 import com.nongxinle.route.DisRouteBatchEligibility;
 import com.nongxinle.route.DisRouteDispatchDisIdGuard;
 import com.nongxinle.route.DisRouteDeliveryHistoryPreferenceReadModelAssembler;
 import com.nongxinle.route.VisibleDriverRouteSnapshot;
 import com.nongxinle.route.VisibleDriverRouteSnapshotBuilder;
+import com.nongxinle.route.SandboxTodayPipelineTrace;
+import com.nongxinle.route.proposal.SandboxProposalPlan;
+import com.nongxinle.route.proposal.SandboxProposalPlanBuilder;
+import com.nongxinle.route.proposal.SandboxProposalPlanReadModelAssembler;
 import com.nongxinle.route.dispatch.strategy.DispatchAssignmentPlan;
 import com.nongxinle.route.dispatch.strategy.DispatchAssignmentPlanReadModelAssembler;
 import com.nongxinle.route.dispatch.strategy.DispatchFinalRouteDebugAssembler;
@@ -25,6 +30,7 @@ import com.nongxinle.route.DisRouteSandboxDriverDispatchPhase;
 import com.nongxinle.route.DisRouteSandboxDriverDispatchStateHelper;
 import com.nongxinle.route.DisRouteDaySegmentHelper;
 import com.nongxinle.route.DisRouteDispatchLabels;
+import com.nongxinle.route.DisRouteDriverRouteStatus;
 import com.nongxinle.route.DisRouteExecutionRouteSnapshotHelper;
 import com.nongxinle.route.DisRouteRouteExecutionHelper;
 import com.nongxinle.route.DisRouteDispatchOperatorResolver;
@@ -77,6 +83,8 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
     private NxDisShipmentTaskDao nxDisShipmentTaskDao;
     @Autowired
     private DisRouteSandboxLegMetricsHelper disRouteSandboxLegMetricsHelper;
+    @Autowired
+    private NxDistributerService nxDistributerService;
 
     @Override
     public Map<String, Object> buildToday(Integer disId, String routeDate, String batchCode) throws Exception {
@@ -98,7 +106,16 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         computeRequest.setRouteDate(routeDate);
         computeRequest.setBatchCode(batchCode);
         computeRequest.setFormalPageContractMode(!includeFullDebugPayload);
+        SandboxTodayPipelineTrace pipelineTrace = null;
+        if (includeFullDebugPayload) {
+            pipelineTrace = SandboxTodayPipelineTrace.create(false);
+            computeRequest.setEnablePipelineTrace(true);
+            computeRequest.setSharedPipelineTrace(pipelineTrace);
+        }
         SandboxComputeResult compute = disRouteSandboxComputeService.compute(computeRequest);
+        if (pipelineTrace == null) {
+            pipelineTrace = compute.getPipelineTrace();
+        }
 
         Map<String, Object> data = new LinkedHashMap<String, Object>();
         Date serverNow = new Date();
@@ -140,7 +157,15 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
                     DisRouteSandboxReadModelPartitionHelper.partitionConfirmedStops(
                             compute.getConfirmedStops(),
                             DisRouteSandboxReadModelPartitionHelper.buildRouteIndex(mergedPlan));
+            if (pipelineTrace != null) {
+                pipelineTrace.recordConfirmedStopPartition(
+                        stopPartition.sandboxStops, stopPartition.loadingStops, stopPartition.executionStops);
+                pipelineTrace.recordPartitionBefore(mergedPlan.getDriverRoutes());
+            }
             DisRouteSandboxReadModelPartitionHelper.partitionPlanRoutes(mergedPlan);
+            if (pipelineTrace != null) {
+                pipelineTrace.recordPartitionAfter(mergedPlan, nxDisDriverRouteDao, nxDisShipmentTaskDao);
+            }
             reconcileSandboxPlanAfterPartition(mergedPlan, feasibility, stopPartition);
             disRouteDispatchOperationPolicy.enrichExecutionRoutesReadModel(mergedPlan, feasibility);
             disRouteDispatchOperationPolicy.enrichLoadingDriverRoutesReadModel(mergedPlan, feasibility);
@@ -227,6 +252,9 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         applySandboxScheduleSummary(data, mergedPlan, serverNow, hasSandboxScheduledStops);
         applyDisplayShiftLabels(data, effectiveRouteDate, serverNow, mergedPlan, workbench, drivers);
         enrichSandboxDriverStopCounts(drivers, mergedPlan, sandboxConfirmedStops);
+        if (pipelineTrace != null) {
+            pipelineTrace.recordDriverCardsOverlay(drivers);
+        }
         if (mergedPlan != null) {
             Map<String, Object> sandboxSummary = buildSandboxMetricsSummary(
                     compute, sandboxCustomerStopCount, drivers);
@@ -239,6 +267,9 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
                 sandboxCustomerStopCount, sandboxConfirmedStopCount,
                 loadingCustomerStopCount, loadingStops, executionStops,
                 serverNow, disId, normalizedBatch, operatorUserId);
+        pageCtx.setPipelineTrace(pipelineTrace);
+        SandboxProposalPlan proposalPlan = compute.getProposalPlan();
+        pageCtx.setProposalPlan(proposalPlan);
         if (mergedPlan != null) {
             DisRouteSandboxTodayPlanStopSyncHelper.syncSandboxScheduleLabelsFromPlan(
                     mergedPlan,
@@ -246,12 +277,29 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
                     compute.getConfirmedStops(),
                     compute.getUnassignedStops());
         }
+        if (pipelineTrace != null) {
+            int proposalRouteCount = proposalPlan != null && proposalPlan.getProposalRoutes() != null
+                    ? proposalPlan.getProposalRoutes().size() : 0;
+            pipelineTrace.recordSnapshotInput(proposalRouteCount, "PROPOSAL_PLAN");
+        }
         pageCtx.setVisibleDriverRoutes(buildVisibleDriverRouteSnapshots(
-                pageCtx, compute.getDispatchAssignmentPlan(), mergedPlan));
+                pageCtx, proposalPlan, compute.getDispatchAssignmentPlan(), mergedPlan));
+        if (pipelineTrace != null) {
+            pipelineTrace.recordSnapshotOutput(pageCtx.getVisibleDriverRoutes());
+        }
         SandboxTodayPageViewModel pageViewModel = buildPageViewModelFromContext(
                 pageCtx, compute, mergedPlan, loadingStops, executionStops);
+        if (pipelineTrace != null) {
+            pipelineTrace.recordPageViewModel(
+                    pageViewModel, pageCtx.getVisibleDriverRoutes(),
+                    countProposalCustomerStops(proposalPlan), mergedPlan, proposalPlan);
+        }
         Map<String, Object> pageViewModelMap = DisRouteSandboxTodayViewModelMaps.toMap(pageViewModel);
         data.put("pageViewModel", pageViewModelMap);
+
+        if (includeFullDebugPayload) {
+            attachDebugTraceToResponse(data, compute, pipelineTrace);
+        }
 
         if (!includeFullDebugPayload) {
             return data;
@@ -267,6 +315,7 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         data.put("executionStops", toExecutionStopMaps(executionStops, mergedPlan != null
                 ? mergedPlan.getExecutionDriverRoutes() : null));
         data.put("sandboxSuggestedStops", toEphemeralStopMaps(compute.getSandboxSuggestedStops()));
+        data.put("proposalPlan", SandboxProposalPlanReadModelAssembler.toMap(compute.getProposalPlan()));
         data.put("unassignedStops", toEphemeralStopMaps(compute.getUnassignedStops()));
         data.put("deliveryHistoryPreferences",
                 DisRouteDeliveryHistoryPreferenceReadModelAssembler.toMap(compute.getDeliveryHistoryPreferences()));
@@ -323,8 +372,38 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         data.put("topMetrics", pageViewModelMap.get("topMetrics"));
         data.put("sections", pageViewModelMap.get("sections"));
         data.put("availableDrivers", pageViewModelMap.get("availableDrivers"));
+        attachDebugTraceToResponse(data, compute, pipelineTrace);
         stampSandboxTodayDebugContract(data);
         return data;
+    }
+
+    private void attachDebugTraceToResponse(Map<String, Object> data,
+                                            SandboxComputeResult compute,
+                                            SandboxTodayPipelineTrace pipelineTrace) {
+        SandboxTodayPipelineTrace effectiveTrace = resolvePipelineTrace(compute, pipelineTrace);
+        Map<String, Object> traceMap;
+        if (effectiveTrace != null) {
+            traceMap = effectiveTrace.toResponseMap();
+        } else if (compute != null && compute.getDebugTrace() != null && !compute.getDebugTrace().isEmpty()) {
+            traceMap = new LinkedHashMap<String, Object>(compute.getDebugTrace());
+        } else {
+            traceMap = SandboxTodayPipelineTrace.diagnosticStub(
+                    "pipelineTrace was null at response assembly; check enablePipelineTrace wiring");
+        }
+        if (compute != null) {
+            compute.setDebugTrace(traceMap);
+        }
+        data.put("debugTrace", traceMap);
+        data.put("hasDebugTrace", Boolean.TRUE);
+        data.put("traceKeys", new ArrayList<String>(traceMap.keySet()));
+    }
+
+    private static SandboxTodayPipelineTrace resolvePipelineTrace(SandboxComputeResult compute,
+                                                                  SandboxTodayPipelineTrace pipelineTrace) {
+        if (pipelineTrace != null) {
+            return pipelineTrace;
+        }
+        return compute != null ? compute.getPipelineTrace() : null;
     }
 
     /** GET /sandbox/today（debug-only）响应内标记，防与正式 /dispatch/sandbox/today 混淆。 */
@@ -335,6 +414,10 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         data.put("_debugOnly", Boolean.TRUE);
         data.put("_formalEndpoint", "/api/nxdisroutedispatch/dispatch/sandbox/today");
         data.put("_formalContract", "pageViewModel only");
+        if (!data.containsKey("hasDebugTrace")) {
+            data.put("hasDebugTrace", Boolean.FALSE);
+            data.put("traceKeys", Collections.emptyList());
+        }
     }
 
     private SandboxTodayPageBuildContext createPageBuildContext(SandboxComputeResult compute,
@@ -369,7 +452,7 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         ctx.setConfirmedCustomerStopCount(sandboxConfirmedStopCount + loadingCustomerStopCount);
         ctx.setServerNow(serverNow);
         ctx.setMergedPlan(mergedPlan);
-        ctx.setDepotName(DisRouteSandboxTodayTimelineBuilder.DEPOT_NAME);
+        enrichDepotPresentation(ctx, disId);
         Object summaryObj = data.get("sandboxSummary");
         if (summaryObj instanceof Map) {
             @SuppressWarnings("unchecked")
@@ -379,7 +462,13 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         ctx.setWorkbench(workbench);
         ctx.setDrivers(drivers);
         ctx.setSuggestedStops(compute.getSandboxSuggestedStops());
-        ctx.setUnassignedStops(compute.getUnassignedStops());
+        ctx.setProposalPlan(compute.getProposalPlan());
+        if (compute.getProposalPlan() != null) {
+            ctx.setUnassignedStops(SandboxProposalPlanBuilder.toStopEntities(
+                    compute.getProposalPlan().getUnassignedStops()));
+        } else {
+            ctx.setUnassignedStops(compute.getUnassignedStops());
+        }
         ctx.setConfirmedStops(compute.getConfirmedStops());
         ctx.setLoadingStops(loadingStops);
         ctx.setExecutionStops(executionStops);
@@ -399,10 +488,15 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
 
     private List<VisibleDriverRouteSnapshot> buildVisibleDriverRouteSnapshots(
             SandboxTodayPageBuildContext ctx,
+            SandboxProposalPlan proposalPlan,
             DispatchAssignmentPlan assignmentPlan,
             NxDisRoutePlanEntity mergedPlan) {
         GeoPoint depot = resolveDepotForVisibleRouteSchedule(mergedPlan);
-        return VisibleDriverRouteSnapshotBuilder.build(ctx, assignmentPlan, depot, disRouteSandboxLegMetricsHelper);
+        if (proposalPlan != null) {
+            return VisibleDriverRouteSnapshotBuilder.buildFromProposalPlan(
+                    ctx, proposalPlan, assignmentPlan, depot, disRouteSandboxLegMetricsHelper);
+        }
+        return Collections.emptyList();
     }
 
     private SandboxTodayPageViewModel buildLoadingPageViewModel(SandboxComputeResult compute,
@@ -428,7 +522,7 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
                 ? String.valueOf(data.get("scheduleBannerLine")) : null);
         ctx.setServerNow(serverNow);
         ctx.setMergedPlan(mergedPlan);
-        ctx.setDepotName(DisRouteSandboxTodayTimelineBuilder.DEPOT_NAME);
+        enrichDepotPresentation(ctx, disId);
         ctx.setDrivers(drivers);
         ctx.setLoadingStops(loadingStops);
         ctx.setExecutionStops(executionStops);
@@ -466,7 +560,7 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
                 ? String.valueOf(data.get("scheduleBannerLine")) : null);
         ctx.setServerNow(serverNow);
         ctx.setMergedPlan(mergedPlan);
-        ctx.setDepotName(DisRouteSandboxTodayTimelineBuilder.DEPOT_NAME);
+        enrichDepotPresentation(ctx, disId);
         ctx.setDrivers(drivers);
         ctx.setExecutionStops(executionStops);
         if (mergedPlan != null) {
@@ -970,7 +1064,8 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
             dto.setUnprintedBillCount(route.getUnprintedBillCount());
             DisRouteSandboxDriverDispatchStateHelper.applyDriverListOverlay(
                     dto, route, nxDisDriverRouteDao, nxDisShipmentTaskDao);
-            if (dto.getRouteStatus() == null) {
+            if (dto.getRouteStatus() == null && routeStatus != null
+                    && !DisRouteDriverRouteStatus.isTerminal(routeStatus.trim().toUpperCase())) {
                 dto.setRouteStatus(routeStatus);
                 dto.setRouteStatusLabel(DisRouteRouteExecutionHelper.resolveRouteStatusLabel(routeStatus));
             }
@@ -1249,10 +1344,21 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         if (compute == null) {
             return 0;
         }
+        SandboxProposalPlan proposalPlan = compute.getProposalPlan();
+        if (proposalPlan != null && proposalPlan.getSummary() != null) {
+            return proposalPlan.getSummary().getCustomerStopCount();
+        }
         return DisRouteSandboxUnassignedStopHelper.countUniqueCustomerStops(
                 compute.getSandboxSuggestedStops(),
                 compute.getUnassignedStops(),
-                compute.getConfirmedStops());
+                Collections.<NxDisRouteStopEntity>emptyList());
+    }
+
+    private static int countProposalCustomerStops(SandboxProposalPlan proposalPlan) {
+        if (proposalPlan == null || proposalPlan.getSummary() == null) {
+            return 0;
+        }
+        return proposalPlan.getSummary().getCustomerStopCount();
     }
 
     private int countLoadingCustomerStops(SandboxComputeResult compute,
@@ -1655,6 +1761,39 @@ public class DisRouteSandboxTodayServiceImpl implements DisRouteSandboxTodayServ
         }
         if (isValidCoordinate(plan.getNxDrpDepotLat(), plan.getNxDrpDepotLng())) {
             return toPoint(plan.getNxDrpDepotLat(), plan.getNxDrpDepotLng());
+        }
+        return null;
+    }
+
+    private void enrichDepotPresentation(SandboxTodayPageBuildContext ctx, Integer disId) {
+        ctx.setDepotName(DisRouteSandboxTodayTimelineBuilder.DEPOT_NAME);
+        if (disId == null) {
+            return;
+        }
+        NxDistributerEntity dis = nxDistributerService.queryObject(disId);
+        if (dis == null) {
+            return;
+        }
+        String name = firstNonBlank(
+                dis.getNxDistributerShowName(),
+                dis.getNxDistributerName(),
+                dis.getNxDistributerMarketName());
+        if (name != null) {
+            ctx.setDepotName(name.trim());
+        }
+        if (dis.getNxDistributerAddress() != null && !dis.getNxDistributerAddress().trim().isEmpty()) {
+            ctx.setDepotAddress(dis.getNxDistributerAddress().trim());
+        }
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
         }
         return null;
     }

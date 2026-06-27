@@ -4,11 +4,16 @@ import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.entity.NxDistributerUserEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.nongxinle.route.SandboxTodayPipelineTrace;
+import com.nongxinle.route.dispatch.strategy.DispatchAssignmentPlan;
+import com.nongxinle.route.proposal.SandboxProposalPlan;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Setter
 @Getter
@@ -38,4 +43,20 @@ public class SandboxComputeResult {
     /** 合并后的展示 plan（内存，含 driverRoutes） */
     private NxDisRoutePlanEntity mergedPlan;
     private List<NxDisShipmentTaskEntity> allDisplayTasks = new ArrayList<NxDisShipmentTaskEntity>();
+
+    /** 历史配送偏好（只读；P1 供 debug / 后续 H2 预分配输入）。 */
+    private DeliveryHistoryPreferenceBatchResult deliveryHistoryPreferences;
+
+    /** Phase 2 策略分派计划（debug；PR-2a 为 LEGACY_OPTIMIZER_DELEGATION 占位）。 */
+    private DispatchAssignmentPlan dispatchAssignmentPlan;
+
+    /** 分派中页面唯一 Proposal 主权（与 mixed mergedPlan 分离）。 */
+    private SandboxProposalPlan proposalPlan;
+
+    /** debug 接口：今日派车分派中链路 trace（仅 enablePipelineTrace 时填充；不参与 JSON）。 */
+    @JsonIgnore
+    private SandboxTodayPipelineTrace pipelineTrace;
+
+    /** debug 接口：可 JSON 序列化的 trace Map（buildToday 收尾时写入）。 */
+    private Map<String, Object> debugTrace;
 }

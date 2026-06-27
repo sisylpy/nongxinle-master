@@ -9,7 +9,19 @@ import com.nongxinle.entity.*;
 import com.nongxinle.route.*;
 import com.nongxinle.route.cost.ResilientTencentRouteCostProvider;
 import com.nongxinle.route.cost.TencentMatrixRouteCostProvider;
+import com.nongxinle.route.dispatch.strategy.DispatchAssignmentPlan;
+import com.nongxinle.route.dispatch.strategy.DispatchPlanningPhase;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyContext;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyMode;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyOrchestrator;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyOutcome;
+import com.nongxinle.route.dispatch.strategy.DispatchStrategyOptimizerEligibility;
+import com.nongxinle.route.dispatch.strategy.DriverRoutePlan;
+import com.nongxinle.route.dispatch.strategy.OwnerFixedRouteTimeWindowRouteSequencer;
+import com.nongxinle.route.dispatch.strategy.StopAssignment;
 import com.nongxinle.route.model.*;
+import com.nongxinle.route.proposal.SandboxProposalPlan;
+import com.nongxinle.route.proposal.SandboxProposalPlanBuilder;
 import com.nongxinle.service.DisDriverDutyService;
 import com.nongxinle.service.DisRouteSandboxComputeService;
 import com.nongxinle.service.DisShipmentTaskService;
@@ -75,6 +87,12 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
     private NxDepartmentDao nxDepartmentDao;
     @Autowired
     private com.nongxinle.service.DisRouteDispatchService disRouteDispatchService;
+    @Autowired
+    private com.nongxinle.service.DisRouteDeliveryHistoryPreferenceService disRouteDeliveryHistoryPreferenceService;
+    @Autowired
+    private NxDisSandboxDayTimeWindowDao nxDisSandboxDayTimeWindowDao;
+    @Autowired
+    private DispatchStrategyOrchestrator dispatchStrategyOrchestrator;
 
     @Override
     public SandboxComputeResult compute(SandboxComputeRequest request) throws Exception {
@@ -86,20 +104,18 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         SandboxComputeResult result = new SandboxComputeResult();
         result.setRouteDate(routeDate);
         result.setDispatchBatch(batchCode);
-
-        List<DisRouteOrderSnapshotDto> allOrders = queryEligibleOrders(disId);
-        result.setEffectiveOrders(allOrders);
+        boolean formalPage = request.isFormalPageContractMode();
+        boolean persistedOnly = request.isPersistedRoutesOnlyMode();
+        SandboxTodayPipelineTrace pipelineTrace = request.getSharedPipelineTrace();
+        if (pipelineTrace == null && request.isEnablePipelineTrace()) {
+            pipelineTrace = SandboxTodayPipelineTrace.create(formalPage);
+        }
+        result.setPipelineTrace(pipelineTrace);
 
         NxDisRoutePlanEntity planContext = loadPlanContext(disId, routeDate, batchCode);
         result.setPlanContext(planContext);
 
-        GeoPoint depot = resolveDepot(request, disId, planContext, allOrders);
-        if (planContext != null && depot != null) {
-            planContext.setNxDrpDepotLat(depot.getLat());
-            planContext.setNxDrpDepotLng(depot.getLng());
-        }
-
-        List<NxDisShipmentTaskEntity> dbTasks = loadDbTasks(disId);
+        List<NxDisShipmentTaskEntity> dbTasks = loadDbTasks(disId, routeDate);
         attachItems(dbTasks);
 
         Set<Integer> confirmedDepIds = new HashSet<Integer>();
@@ -109,7 +125,24 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         partitionDbTasks(dbTasks, disId, routeDate, planContext, confirmedDepIds, confirmedStops, invalidStops);
         supplementExecutionConfirmedStops(disId, routeDate, planContext, confirmedDepIds, confirmedStops, invalidStops);
 
-        Map<Integer, List<DisRouteOrderSnapshotDto>> ordersByDep = groupOrdersByDepartment(allOrders);
+        List<Integer> excludeDepIds = confirmedDepIds.isEmpty()
+                ? null : new ArrayList<Integer>(confirmedDepIds);
+        List<DisRouteOrderSnapshotDto> pendingOrders = persistedOnly
+                ? Collections.<DisRouteOrderSnapshotDto>emptyList()
+                : queryEligibleOrders(disId, excludeDepIds);
+        if (formalPage) {
+            result.setEffectiveOrders(Collections.<DisRouteOrderSnapshotDto>emptyList());
+        } else {
+            result.setEffectiveOrders(pendingOrders);
+        }
+
+        GeoPoint depot = resolveDepot(request, disId, planContext, pendingOrders);
+        if (planContext != null && depot != null) {
+            planContext.setNxDrpDepotLat(depot.getLat());
+            planContext.setNxDrpDepotLng(depot.getLng());
+        }
+
+        Map<Integer, List<DisRouteOrderSnapshotDto>> ordersByDep = groupOrdersByDepartment(pendingOrders);
         List<NxDistributerUserEntity> onDutyDrivers = listOnDutyDrivers(disId, routeDate);
         result.setOnDutyDrivers(onDutyDrivers);
         Set<Integer> sandboxIneligibleDrivers = DisRouteSandboxDispatchEligibilityHelper
@@ -132,27 +165,132 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         List<NxDisShipmentTaskEntity> virtualTasks = buildVirtualTasks(
                 disId, routeDate, ordersByDep, confirmedDepIds, dbTasks);
 
-        RouteOptimizeResult optimizeResult = null;
+        if (pipelineTrace != null) {
+            pipelineTrace.recordInputStage(
+                    dbTasks != null ? dbTasks.size() : 0,
+                    formalPage ? 0 : (pendingOrders != null ? pendingOrders.size() : 0),
+                    virtualTasks.size(),
+                    confirmedStops.size(),
+                    0,
+                    0,
+                    0,
+                    confirmedStops,
+                    Collections.<NxDisRouteStopEntity>emptyList(),
+                    Collections.<NxDisRouteStopEntity>emptyList());
+            pipelineTrace.recordDriverEligibility(
+                    onDutyDrivers, dispatchEligibleDrivers, sandboxIneligibleDrivers, offDutyDriverIds,
+                    nxDisDriverRouteDao, nxDisShipmentTaskDao, planContext);
+        }
 
-        if (!virtualTasks.isEmpty() && !dispatchEligibleDrivers.isEmpty()) {
-            List<NxDisShipmentTaskEntity> optimizable = filterOptimizable(virtualTasks);
-            if (!optimizable.isEmpty()) {
-                optimizeResult = runOptimization(depot, dispatchEligibleDrivers, optimizable);
-                applyOptimizationInMemory(optimizable, optimizeResult, suggestedStops, unassignedStops,
-                        dispatchEligibleDrivers);
-            } else {
+        Map<Integer, NxDisSandboxDayTimeWindowEntity> sandboxDayOverrideByDepId =
+                loadSandboxDayTimeWindowOverrides(disId, routeDate);
+        Map<Integer, NxDepartmentEntity> departmentByDepId =
+                DisRouteSandboxStopTimeWindowResolutionSupport.loadDepartmentsByDepId(
+                        nxDepartmentDao,
+                        DisRouteSandboxStopTimeWindowResolutionSupport.collectDepIdsFromTasks(virtualTasks));
+
+        if (!formalPage && !dispatchEligibleDrivers.isEmpty() && !virtualTasks.isEmpty()) {
+            result.setDeliveryHistoryPreferences(resolveDeliveryHistoryPreferences(
+                    disId, routeDate, virtualTasks, dispatchEligibleDrivers));
+        }
+        DeliveryHistoryPreferenceBatchResult historyPreferencesForStrategy = null;
+        if (!persistedOnly && !virtualTasks.isEmpty() && !dispatchEligibleDrivers.isEmpty()) {
+            historyPreferencesForStrategy = result.getDeliveryHistoryPreferences() != null
+                    ? result.getDeliveryHistoryPreferences()
+                    : resolveDeliveryHistoryPreferences(disId, routeDate, virtualTasks, dispatchEligibleDrivers);
+        }
+
+        RouteOptimizeResult optimizeResult = null;
+        DispatchAssignmentPlan dispatchAssignmentPlan = null;
+
+        if (!persistedOnly) {
+            List<NxDisShipmentTaskEntity> optimizable = filterOptimizable(virtualTasks, confirmedDepIds);
+            DispatchStrategyOutcome strategyOutcome = dispatchStrategyOrchestrator.plan(
+                    DispatchStrategyContext.builder()
+                            .disId(disId)
+                            .routeDate(routeDate)
+                            .batchCode(batchCode)
+                            .depot(depot)
+                            .virtualTasks(virtualTasks)
+                            .optimizableTasks(optimizable)
+                            .dispatchEligibleDrivers(dispatchEligibleDrivers)
+                            .confirmedStops(confirmedStops)
+                            .confirmedDepIds(confirmedDepIds)
+                            .deliveryHistoryPreferences(historyPreferencesForStrategy)
+                            .departmentByDepId(departmentByDepId)
+                            .sandboxDayOverrideByDepId(sandboxDayOverrideByDepId)
+                            .build());
+            if (strategyOutcome != null && strategyOutcome.getPlan() != null) {
+                dispatchAssignmentPlan = strategyOutcome.getPlan();
+            }
+
+            Set<Integer> historyBoundDepIds = new HashSet<Integer>();
+            if (dispatchAssignmentPlan != null && !isSkippedStrategyPlanningPhase(dispatchAssignmentPlan)) {
+                historyBoundDepIds = applyHistoryDriverBindingsFromPlan(
+                        dispatchAssignmentPlan, optimizable, suggestedStops, dispatchEligibleDrivers);
+                enrichPlanFrozenDebug(dispatchAssignmentPlan, confirmedDepIds, confirmedStops);
+            }
+
+            List<NxDisShipmentTaskEntity> fallbackOptimizable = filterPendingOptimizerCandidates(
+                    optimizable, historyBoundDepIds, confirmedDepIds);
+
+            if (strategyOutcome != null && strategyOutcome.isDelegateLegacyOptimizer()) {
+                if (!fallbackOptimizable.isEmpty()) {
+                    optimizeResult = runOptimization(depot, dispatchEligibleDrivers, fallbackOptimizable);
+                    applyOptimizationInMemory(fallbackOptimizable, optimizeResult, suggestedStops, unassignedStops,
+                            dispatchEligibleDrivers);
+                }
+            } else if (strategyOutcome == null) {
+                throw new IllegalStateException("dispatch strategy outcome missing");
+            } else if (isSkippedStrategyPlanningPhase(dispatchAssignmentPlan) && !virtualTasks.isEmpty()) {
                 for (NxDisShipmentTaskEntity task : virtualTasks) {
                     unassignedStops.add(buildUnassignedStop(task));
                 }
+            }
+
+            if (pipelineTrace != null) {
+                pipelineTrace.recordAssignment(
+                        dispatchAssignmentPlan,
+                        historyBoundDepIds,
+                        strategyOutcome != null && strategyOutcome.isDelegateLegacyOptimizer(),
+                        fallbackOptimizable != null ? fallbackOptimizable.size() : 0);
             }
         } else if (!virtualTasks.isEmpty()) {
             for (NxDisShipmentTaskEntity task : virtualTasks) {
                 unassignedStops.add(buildUnassignedStop(task));
             }
         }
+        result.setDispatchAssignmentPlan(dispatchAssignmentPlan);
         sanitizeSuggestedDriverAssignments(suggestedStops, unassignedStops, dispatchBlockedDriverIds);
+        sanitizeSuggestedAgainstConfirmedDepartments(suggestedStops, confirmedDepIds);
         reassignOptimizedUnassignedToEligibleDrivers(
                 suggestedStops, unassignedStops, dispatchEligibleDrivers, buildDriverNameIndex(onDutyDrivers));
+
+        if (!persistedOnly
+                && dispatchAssignmentPlan != null
+                && !isSkippedStrategyPlanningPhase(dispatchAssignmentPlan)
+                && dispatchAssignmentPlan.getStrategyMode() == DispatchStrategyMode.OWNER_FIXED_ROUTE) {
+            DisRouteSandboxStopTimeWindowResolutionSupport.ensureDepartmentsLoaded(
+                    nxDepartmentDao,
+                    DisRouteSandboxStopTimeWindowResolutionSupport.collectDepIdsFromStops(suggestedStops),
+                    departmentByDepId);
+            DisRouteSandboxStopTimeWindowResolutionSupport.applyToStops(
+                    suggestedStops, departmentByDepId, sandboxDayOverrideByDepId);
+            OwnerFixedRouteTimeWindowRouteSequencer.resequenceSuggestedStops(
+                    suggestedStops,
+                    DispatchStrategyContext.builder()
+                            .disId(disId)
+                            .routeDate(routeDate)
+                            .batchCode(batchCode)
+                            .depot(depot)
+                            .serverNow(new Date())
+                            .departmentByDepId(departmentByDepId)
+                            .sandboxDayOverrideByDepId(sandboxDayOverrideByDepId)
+                            .optimizableTasks(filterOptimizable(virtualTasks, confirmedDepIds))
+                            .build(),
+                    dispatchAssignmentPlan);
+            OwnerFixedRouteTimeWindowRouteSequencer.invalidateLegMetrics(suggestedStops);
+        }
 
         markSandboxMetadata(suggestedStops, DisRouteSandboxStopSource.SANDBOX_SUGGESTED, true);
         markSandboxMetadata(unassignedStops, DisRouteSandboxStopSource.UNASSIGNED, true);
@@ -166,18 +304,55 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         result.setInvalidStops(invalidStops);
         result.setHasLockedStops(!confirmedStops.isEmpty());
 
+        if (pipelineTrace != null) {
+            Set<Integer> historyBoundForTrace = extractHistoryBoundDepIdsFromSuggested(
+                    suggestedStops, dispatchAssignmentPlan);
+            pipelineTrace.recordSandboxSuggestedStops(
+                    suggestedStops, historyBoundForTrace, dispatchAssignmentPlan);
+        }
+
+        SandboxProposalPlan proposalPlan = SandboxProposalPlanBuilder.build(
+                suggestedStops, unassignedStops, dispatchAssignmentPlan);
+        result.setProposalPlan(proposalPlan);
+        if (pipelineTrace != null) {
+            pipelineTrace.recordProposalPlan(proposalPlan);
+        }
+
         NxDisRoutePlanEntity mergedPlan = buildMergedPlan(
                 planContext, disId, routeDate, batchCode, depot, onDutyDrivers,
-                confirmedStops, suggestedStops, unassignedStops, dispatchBlockedDriverIds, offDutyDriverIds);
+                confirmedStops, suggestedStops, unassignedStops, dispatchBlockedDriverIds, offDutyDriverIds,
+                pipelineTrace);
         hydrateExecutionRouteSnapshots(mergedPlan);
-        disRouteSandboxLegMetricsHelper.applyToPlan(depot, mergedPlan);
-        try {
-            disRouteSandboxLegMetricsHelper.applyDepotLegToStops(depot, unassignedStops);
-        } catch (IOException ex) {
-            // 未分配 leg 失败时不阻断整页
+        if (!persistedOnly) {
+            disRouteSandboxLegMetricsHelper.applyToPlan(depot, mergedPlan);
+            if (!onDutyDrivers.isEmpty()) {
+                try {
+                    disRouteSandboxLegMetricsHelper.applyDepotLegToStops(depot, unassignedStops);
+                } catch (IOException ex) {
+                    // 未分配 leg 失败时不阻断整页
+                }
+            }
         }
+        DisRouteSandboxStopTimeWindowResolutionSupport.ensureDepartmentsLoaded(
+                nxDepartmentDao,
+                DisRouteSandboxStopTimeWindowResolutionSupport.collectDepIdsFromStops(suggestedStops),
+                departmentByDepId);
+        DisRouteSandboxStopTimeWindowResolutionSupport.ensureDepartmentsLoaded(
+                nxDepartmentDao,
+                DisRouteSandboxStopTimeWindowResolutionSupport.collectDepIdsFromStops(confirmedStops),
+                departmentByDepId);
+        DisRouteSandboxStopTimeWindowResolutionSupport.applyToPlan(
+                mergedPlan, departmentByDepId, sandboxDayOverrideByDepId);
         applySchedulePreviewToMergedPlan(mergedPlan, routeDate);
-        applySchedulePreviewToUnassignedStops(unassignedStops, routeDate);
+        if (!persistedOnly) {
+            DisRouteSandboxStopTimeWindowResolutionSupport.ensureDepartmentsLoaded(
+                    nxDepartmentDao,
+                    DisRouteSandboxStopTimeWindowResolutionSupport.collectDepIdsFromStops(unassignedStops),
+                    departmentByDepId);
+            DisRouteSandboxStopTimeWindowResolutionSupport.applyToStops(
+                    unassignedStops, departmentByDepId, sandboxDayOverrideByDepId);
+            applySchedulePreviewToUnassignedStops(unassignedStops, routeDate);
+        }
         reconcileExecutionRoutesAfterSnapshot(mergedPlan);
         applyLiveDepartmentNames(mergedPlan, confirmedStops, suggestedStops, unassignedStops);
         result.setMergedPlan(mergedPlan);
@@ -185,11 +360,16 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         List<NxDisShipmentTaskEntity> displayTasks = collectDisplayTasks(mergedPlan);
         result.setAllDisplayTasks(displayTasks);
 
-        result.setOrderVersion(buildOrderVersion(allOrders));
+        result.setOrderVersion(buildOrderVersion(pendingOrders, disId, excludeDepIds, formalPage));
         result.setDutyVersion(buildDutyVersion(disId, routeDate, onDutyDrivers));
         result.setSandboxVersion(buildSandboxVersion(result));
-        result.setHasNewOrders(!allOrders.isEmpty() && confirmedDepIds.size() < ordersByDep.size());
+        result.setHasNewOrders(pendingOrders != null && !pendingOrders.isEmpty());
         result.setHasOrderChanges(false);
+
+        if (pipelineTrace != null) {
+            result.setPipelineTrace(pipelineTrace);
+            result.setDebugTrace(pipelineTrace.toResponseMap());
+        }
 
         return result;
     }
@@ -214,8 +394,9 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         return batchCode.trim().toUpperCase();
     }
 
-    private List<DisRouteOrderSnapshotDto> queryEligibleOrders(Integer disId) {
-        return nxDisRoutePlanDao.queryEligibleLiveOrderSnapshots(disId, null, null);
+    /** 沙盘：仅 disId + status&lt;3 等业务口径；不按送达日过滤。可排除已确认客户部门。 */
+    private List<DisRouteOrderSnapshotDto> queryEligibleOrders(Integer disId, List<Integer> excludeDepartmentIds) {
+        return nxDisRoutePlanDao.queryEligibleLiveOrderSnapshots(disId, null, null, excludeDepartmentIds);
     }
 
     private NxDisRoutePlanEntity loadPlanContext(Integer disId, String routeDate, String batchCode) {
@@ -344,9 +525,10 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         return RouteCoordinateUtils.deriveCentroidDepot(points);
     }
 
-    private List<NxDisShipmentTaskEntity> loadDbTasks(Integer disId) {
+    private List<NxDisShipmentTaskEntity> loadDbTasks(Integer disId, String routeDate) {
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("disId", disId);
+        map.put("routeDate", routeDate);
         List<NxDisShipmentTaskEntity> tasks = nxDisShipmentTaskDao.queryList(map);
         return tasks != null ? tasks : new ArrayList<NxDisShipmentTaskEntity>();
     }
@@ -396,7 +578,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                     || disRouteDispatchReadIntegrityHelper.hasValidDisplayItems(task, disId, null);
 
             if (protectedTask) {
-                if (task.getNxDstDepFatherId() != null) {
+                if (task.getNxDstDepFatherId() != null && isDispatchLockedDepForNewOrders(task)) {
                     confirmedDepIds.add(task.getNxDstDepFatherId());
                 }
                 if (hasValidItems) {
@@ -524,7 +706,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 existingTaskIds.add(task.getNxDstId());
                 continue;
             }
-            if (task.getNxDstDepFatherId() != null) {
+            if (task.getNxDstDepFatherId() != null && isDispatchLockedDepForNewOrders(task)) {
                 confirmedDepIds.add(task.getNxDstDepFatherId());
             }
             confirmedStops.add(buildConfirmedStopFromDb(task, planContext));
@@ -556,6 +738,8 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                                                             Set<Integer> confirmedDepIds,
                                                             List<NxDisShipmentTaskEntity> dbTasks) {
         Map<Integer, NxDisShipmentTaskEntity> overrideByDep = loadTimeWindowOverrides(dbTasks);
+        Map<Integer, NxDisSandboxDayTimeWindowEntity> sandboxDayOverrides =
+                loadSandboxDayTimeWindowOverrides(disId, routeDate);
         List<NxDisShipmentTaskEntity> virtualTasks = new ArrayList<NxDisShipmentTaskEntity>();
         for (Map.Entry<Integer, List<DisRouteOrderSnapshotDto>> entry : ordersByDep.entrySet()) {
             Integer depId = entry.getKey();
@@ -585,20 +769,53 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
             task.setStopSource(DisRouteSandboxStopSource.SANDBOX_SUGGESTED);
             task.setConfirmViaSandbox(true);
             task.setItems(buildVirtualItems(orders));
-            disRouteShipmentTaskItemOrderResolver.enrichItems(task.getItems());
+            disRouteDispatchSnapshotHelper.applyItemMetrics(task);
 
-            NxDisShipmentTaskEntity override = overrideByDep.get(depId);
-            if (override != null) {
-                task.setNxDstEarliestDeliveryTimeS(override.getNxDstEarliestDeliveryTimeS());
-                task.setNxDstLatestDeliveryTimeS(override.getNxDstLatestDeliveryTimeS());
-                task.setNxDstServiceMinutes(override.getNxDstServiceMinutes());
-                task.setNxDstTimeWindowOverrideFlag(override.getNxDstTimeWindowOverrideFlag());
-                task.setNxDstTimeWindowAdjustReason(override.getNxDstTimeWindowAdjustReason());
-            }
+            applyTimeWindowOverrideToVirtualTask(task, overrideByDep.get(depId), sandboxDayOverrides.get(depId));
             disRouteDispatchSnapshotHelper.refreshTaskSnapshot(task, true);
             virtualTasks.add(task);
         }
         return virtualTasks;
+    }
+
+    private static void applyTimeWindowOverrideToVirtualTask(NxDisShipmentTaskEntity task,
+                                                             NxDisShipmentTaskEntity taskOverride,
+                                                             NxDisSandboxDayTimeWindowEntity dayOverride) {
+        if (taskOverride != null) {
+            task.setNxDstEarliestDeliveryTimeS(taskOverride.getNxDstEarliestDeliveryTimeS());
+            task.setNxDstLatestDeliveryTimeS(taskOverride.getNxDstLatestDeliveryTimeS());
+            task.setNxDstServiceMinutes(taskOverride.getNxDstServiceMinutes());
+            task.setNxDstTimeWindowOverrideFlag(taskOverride.getNxDstTimeWindowOverrideFlag());
+            task.setNxDstTimeWindowAdjustReason(taskOverride.getNxDstTimeWindowAdjustReason());
+            return;
+        }
+        if (dayOverride == null) {
+            return;
+        }
+        task.setNxDstEarliestDeliveryTimeS(dayOverride.getNxDsdtwEarliestDeliveryTimeS());
+        task.setNxDstLatestDeliveryTimeS(dayOverride.getNxDsdtwLatestDeliveryTimeS());
+        task.setNxDstServiceMinutes(dayOverride.getNxDsdtwServiceMinutes());
+        task.setNxDstTimeWindowOverrideFlag(1);
+        task.setNxDstTimeWindowAdjustReason(dayOverride.getNxDsdtwAdjustReason());
+    }
+
+    private Map<Integer, NxDisSandboxDayTimeWindowEntity> loadSandboxDayTimeWindowOverrides(Integer disId,
+                                                                                            String routeDate) {
+        Map<Integer, NxDisSandboxDayTimeWindowEntity> map = new HashMap<Integer, NxDisSandboxDayTimeWindowEntity>();
+        if (disId == null || routeDate == null || routeDate.trim().isEmpty()) {
+            return map;
+        }
+        List<NxDisSandboxDayTimeWindowEntity> rows = nxDisSandboxDayTimeWindowDao.queryByDisRouteDate(
+                disId, routeDate.trim());
+        if (rows == null) {
+            return map;
+        }
+        for (NxDisSandboxDayTimeWindowEntity row : rows) {
+            if (row != null && row.getNxDsdtwDepFatherId() != null) {
+                map.put(row.getNxDsdtwDepFatherId(), row);
+            }
+        }
+        return map;
     }
 
     private Map<Integer, NxDisShipmentTaskEntity> loadTimeWindowOverrides(List<NxDisShipmentTaskEntity> dbTasks) {
@@ -623,16 +840,21 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
             NxDisShipmentTaskItemEntity item = new NxDisShipmentTaskItemEntity();
             item.setNxDstiLiveOrderId(order.getOrderId());
             item.setNxDstiItemStatus(ACTIVE);
+            item.setNxDstiGoodsName(order.getGoodsName());
+            item.setNxDstiQuantity(order.getQuantity());
+            item.setNxDstiStandard(order.getStandard());
+            item.setNxDstiRemark(order.getRemark());
+            item.setOrderResolved(true);
             items.add(item);
         }
         return items;
     }
 
-    private List<NxDisShipmentTaskEntity> filterOptimizable(List<NxDisShipmentTaskEntity> virtualTasks) {
+    private List<NxDisShipmentTaskEntity> filterOptimizable(List<NxDisShipmentTaskEntity> virtualTasks,
+                                                            Set<Integer> confirmedDepIds) {
         List<NxDisShipmentTaskEntity> list = new ArrayList<NxDisShipmentTaskEntity>();
         for (NxDisShipmentTaskEntity task : virtualTasks) {
-            if (isValidCoordinate(task.getNxDstLat(), task.getNxDstLng())
-                    && DisShipmentTaskStatus.SIMULATED.equals(task.getNxDstStatus())) {
+            if (DispatchStrategyOptimizerEligibility.isPendingOptimizerCandidate(task, confirmedDepIds)) {
                 list.add(task);
             }
         }
@@ -722,6 +944,137 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         }
     }
 
+    private static boolean isSkippedStrategyPlanningPhase(DispatchAssignmentPlan plan) {
+        if (plan == null || plan.getPlanningPhase() == null) {
+            return false;
+        }
+        DispatchPlanningPhase phase = plan.getPlanningPhase();
+        return phase == DispatchPlanningPhase.SKIPPED_NO_PENDING_STOPS
+                || phase == DispatchPlanningPhase.SKIPPED_NO_ELIGIBLE_DRIVERS
+                || phase == DispatchPlanningPhase.SKIPPED_NOT_OPTIMIZABLE;
+    }
+
+    private Set<Integer> applyHistoryDriverBindingsFromPlan(DispatchAssignmentPlan plan,
+                                                            List<NxDisShipmentTaskEntity> optimizableTasks,
+                                                            List<NxDisRouteStopEntity> suggestedStops,
+                                                            List<NxDistributerUserEntity> dispatchEligibleDrivers) {
+        Set<Integer> boundDepIds = new HashSet<Integer>();
+        if (plan == null || plan.getDriverRoutes() == null || optimizableTasks == null) {
+            return boundDepIds;
+        }
+        Map<Integer, NxDisShipmentTaskEntity> taskByDep = new HashMap<Integer, NxDisShipmentTaskEntity>();
+        for (NxDisShipmentTaskEntity task : optimizableTasks) {
+            if (task != null && task.getNxDstDepFatherId() != null) {
+                taskByDep.put(task.getNxDstDepFatherId(), task);
+            }
+        }
+        Map<Integer, String> driverNameById = buildDriverNameIndex(dispatchEligibleDrivers);
+        for (DriverRoutePlan driverRoute : plan.getDriverRoutes()) {
+            if (driverRoute == null || driverRoute.getStops() == null) {
+                continue;
+            }
+            Integer driverUserId = driverRoute.getDriverUserId();
+            String driverName = driverRoute.getDriverName();
+            if (driverName == null && driverUserId != null) {
+                driverName = driverNameById.get(driverUserId);
+            }
+            for (StopAssignment assignment : driverRoute.getStops()) {
+                if (assignment == null || assignment.getDepFatherId() == null) {
+                    continue;
+                }
+                NxDisShipmentTaskEntity task = taskByDep.get(assignment.getDepFatherId());
+                if (task == null) {
+                    continue;
+                }
+                task.setNxDstSuggestedDriverUserId(driverUserId);
+                task.setSuggestedDriverUserId(driverUserId);
+                task.setSuggestedDriverName(driverName);
+                int stopSeq = assignment.getStopSeq() > 0 ? assignment.getStopSeq() : 1;
+                NxDisRouteStopEntity stop = buildStopShellFromTask(task, stopSeq);
+                stop.setSuggestedDriverUserId(driverUserId);
+                stop.setSuggestedDriverName(driverName);
+                copyTaskSnapshotToStop(task, stop);
+                suggestedStops.add(stop);
+                boundDepIds.add(task.getNxDstDepFatherId());
+            }
+        }
+        return boundDepIds;
+    }
+
+    private static List<NxDisShipmentTaskEntity> filterPendingOptimizerCandidates(
+            List<NxDisShipmentTaskEntity> optimizableTasks,
+            Set<Integer> historyBoundDepIds,
+            Set<Integer> confirmedDepIds) {
+        List<NxDisShipmentTaskEntity> filtered = new ArrayList<NxDisShipmentTaskEntity>();
+        if (optimizableTasks == null || optimizableTasks.isEmpty()) {
+            return filtered;
+        }
+        Set<Integer> excludedDepIds = new HashSet<Integer>();
+        if (historyBoundDepIds != null) {
+            excludedDepIds.addAll(historyBoundDepIds);
+        }
+        if (confirmedDepIds != null) {
+            excludedDepIds.addAll(confirmedDepIds);
+        }
+        for (NxDisShipmentTaskEntity task : optimizableTasks) {
+            if (task == null || task.getNxDstDepFatherId() == null) {
+                continue;
+            }
+            if (excludedDepIds.contains(task.getNxDstDepFatherId())) {
+                continue;
+            }
+            if (!DispatchStrategyOptimizerEligibility.isPendingOptimizerCandidate(task, confirmedDepIds)) {
+                continue;
+            }
+            filtered.add(task);
+        }
+        return filtered;
+    }
+
+    private static void enrichPlanFrozenDebug(DispatchAssignmentPlan plan,
+                                              Set<Integer> confirmedDepIds,
+                                              List<NxDisRouteStopEntity> confirmedStops) {
+        if (plan == null) {
+            return;
+        }
+        Set<Integer> seen = new HashSet<Integer>();
+        if (confirmedDepIds != null) {
+            for (Integer depId : confirmedDepIds) {
+                if (depId == null || !seen.add(depId)) {
+                    continue;
+                }
+                DispatchStrategyOptimizerEligibility.addFrozenDebugEntry(
+                        plan, depId, DisRouteSandboxStopKeyUtils.build(depId), "confirmedOrExecuting");
+            }
+        }
+        if (confirmedStops != null) {
+            for (NxDisRouteStopEntity stop : confirmedStops) {
+                if (stop == null) {
+                    continue;
+                }
+                Integer depId = stop.getNxDrsDepartmentId();
+                if (depId == null && stop.getShipmentTask() != null) {
+                    depId = stop.getShipmentTask().getNxDstDepFatherId();
+                }
+                if (depId == null || !seen.add(depId)) {
+                    continue;
+                }
+                String reason = "confirmedStop";
+                NxDisShipmentTaskEntity task = stop.getShipmentTask();
+                if (task != null && task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1) {
+                    reason = "manualLocked";
+                }
+                DispatchStrategyOptimizerEligibility.addFrozenDebugEntry(
+                        plan, depId, stop.getSandboxStopKey(), reason);
+            }
+        }
+        plan.setFrozenStopCount(plan.getFrozenStops() != null ? plan.getFrozenStops().size() : 0);
+        if (plan.getFrozenStopCount() > 0) {
+            plan.getWarnings().add("frozen stops excluded from legacy optimizer count="
+                    + plan.getFrozenStopCount());
+        }
+    }
+
     private NxDisRouteStopEntity buildStopShellFromTask(NxDisShipmentTaskEntity task, int stopSeq) {
         NxDisRouteStopEntity stop = new NxDisRouteStopEntity();
         stop.setNxDrsStopSeq(stopSeq);
@@ -778,7 +1131,8 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                                                  List<NxDisRouteStopEntity> suggestedStops,
                                                  List<NxDisRouteStopEntity> unassignedStops,
                                                  Set<Integer> sandboxIneligibleDrivers,
-                                                 Set<Integer> offDutyDriverIds) {
+                                                 Set<Integer> offDutyDriverIds,
+                                                 SandboxTodayPipelineTrace pipelineTrace) {
         NxDisRoutePlanEntity plan = planContext != null ? planContext : new NxDisRoutePlanEntity();
         plan.setNxDrpDistributerId(disId);
         plan.setNxDrpRouteDate(routeDate);
@@ -802,6 +1156,11 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
 
         appendStopsToDriverRoutes(routeByDriver, confirmedStops, sandboxIneligibleDrivers);
         appendStopsToDriverRoutes(routeByDriver, suggestedStops, sandboxIneligibleDrivers);
+        if (pipelineTrace != null) {
+            pipelineTrace.recordMergedPlanBeforeDbMerge(
+                    routeByDriver, suggestedStops, confirmedStops, sandboxIneligibleDrivers,
+                    nxDisDriverRouteDao, nxDisShipmentTaskDao);
+        }
         resolveDriverRouteIdsFromStops(routeByDriver);
         attachExecutionPlanContext(plan, routeByDriver);
         mergeDbDriverRoutes(routeByDriver, plan.getNxDrpId(), offDutyDriverIds);
@@ -814,7 +1173,29 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
 
         stabilizePlanStatusForExecution(plan, routeByDriver);
         plan.setDriverRoutes(new ArrayList<NxDisDriverRouteEntity>(routeByDriver.values()));
+        if (pipelineTrace != null) {
+            pipelineTrace.recordMergedPlanAfterDbMerge(plan);
+        }
         return plan;
+    }
+
+    private static Set<Integer> extractHistoryBoundDepIdsFromSuggested(
+            List<NxDisRouteStopEntity> suggestedStops,
+            DispatchAssignmentPlan assignmentPlan) {
+        Set<Integer> depIds = new HashSet<Integer>();
+        if (assignmentPlan != null && assignmentPlan.getDriverRoutes() != null) {
+            for (DriverRoutePlan route : assignmentPlan.getDriverRoutes()) {
+                if (route == null || route.getStops() == null) {
+                    continue;
+                }
+                for (StopAssignment assignment : route.getStops()) {
+                    if (assignment != null && assignment.getDepFatherId() != null) {
+                        depIds.add(assignment.getDepFatherId());
+                    }
+                }
+            }
+        }
+        return depIds;
     }
 
     /** 出发后 plan 头不得为 SIMULATED/null；从 execution route 找回 DB plan。 */
@@ -1006,6 +1387,14 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
             }
             NxDisDriverRouteEntity existing = routeByDriver.get(dbRoute.getNxDdrDriverUserId());
             if (existing != null) {
+                if (hasSandboxSuggestedStops(existing)
+                        && DisRouteSandboxDriverDispatchStateHelper.hasOnlyTerminalActiveTasks(
+                        dbRoute, nxDisDriverRouteDao, nxDisShipmentTaskDao)) {
+                    if (existing.getDriverName() == null || existing.getDriverName().trim().isEmpty()) {
+                        existing.setDriverName(dbRoute.getDriverName());
+                    }
+                    continue;
+                }
                 existing.setNxDdrId(dbRoute.getNxDdrId());
                 DisRouteExecutionRouteSnapshotHelper.mergeRouteSnapshotFromDb(existing, dbRoute);
                 if (existing.getDriverName() == null || existing.getDriverName().trim().isEmpty()) {
@@ -1021,6 +1410,18 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 routeByDriver.put(dbRoute.getNxDdrDriverUserId(), dbRoute);
             }
         }
+    }
+
+    private static boolean hasSandboxSuggestedStops(NxDisDriverRouteEntity route) {
+        if (route == null || route.getStops() == null || route.getStops().isEmpty()) {
+            return false;
+        }
+        for (NxDisRouteStopEntity stop : route.getStops()) {
+            if (stop != null && DisRouteSandboxDispatchEligibilityHelper.isSandboxEphemeralStop(stop)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 不可派司机的沙盘路线（非装车/非执行）不参与今日派单读模型。 */
@@ -1093,7 +1494,8 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
             if (driverId == null) {
                 continue;
             }
-            if (!DisRouteSandboxDispatchEligibilityHelper.isDriverEligibleForSandboxDispatch(
+            boolean ephemeral = DisRouteSandboxDispatchEligibilityHelper.isSandboxEphemeralStop(stop);
+            if (ephemeral && !DisRouteSandboxDispatchEligibilityHelper.isDriverEligibleForSandboxDispatch(
                     driverId, sandboxIneligibleDrivers)) {
                 continue;
             }
@@ -1104,8 +1506,9 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 route.setStops(new ArrayList<NxDisRouteStopEntity>());
                 routeByDriver.put(driverId, route);
             }
-            if (DisRouteRouteExecutionHelper.isExecutionRoute(route)
-                    && DisRouteSandboxDispatchEligibilityHelper.isSandboxEphemeralStop(stop)) {
+            if (ephemeral && route != null
+                    && !DisRouteSandboxDispatchEligibilityHelper.acceptsSandboxEphemeralStops(
+                            route, nxDisDriverRouteDao, nxDisShipmentTaskDao)) {
                 continue;
             }
             route.getStops().add(stop);
@@ -1201,6 +1604,52 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         return inputs;
     }
 
+    private DeliveryHistoryPreferenceBatchResult resolveDeliveryHistoryPreferences(
+            Integer disId,
+            String routeDate,
+            List<NxDisShipmentTaskEntity> virtualTasks,
+            List<NxDistributerUserEntity> dispatchEligibleDrivers) {
+        List<Integer> pendingDepIds = extractDepFatherIds(virtualTasks);
+        List<Integer> eligibleDriverIds = extractDriverUserIds(dispatchEligibleDrivers);
+        return disRouteDeliveryHistoryPreferenceService.resolve(
+                DeliveryHistoryPreferenceResolveRequest.of(
+                        disId, pendingDepIds, eligibleDriverIds, routeDate));
+    }
+
+    private static List<Integer> extractDepFatherIds(List<NxDisShipmentTaskEntity> virtualTasks) {
+        List<Integer> depIds = new ArrayList<Integer>();
+        if (virtualTasks == null) {
+            return depIds;
+        }
+        Set<Integer> seen = new LinkedHashSet<Integer>();
+        for (NxDisShipmentTaskEntity task : virtualTasks) {
+            if (task == null || task.getNxDstDepFatherId() == null) {
+                continue;
+            }
+            if (seen.add(task.getNxDstDepFatherId())) {
+                depIds.add(task.getNxDstDepFatherId());
+            }
+        }
+        return depIds;
+    }
+
+    private static List<Integer> extractDriverUserIds(List<NxDistributerUserEntity> drivers) {
+        List<Integer> ids = new ArrayList<Integer>();
+        if (drivers == null) {
+            return ids;
+        }
+        Set<Integer> seen = new LinkedHashSet<Integer>();
+        for (NxDistributerUserEntity driver : drivers) {
+            if (driver == null || driver.getNxDistributerUserId() == null) {
+                continue;
+            }
+            if (seen.add(driver.getNxDistributerUserId())) {
+                ids.add(driver.getNxDistributerUserId());
+            }
+        }
+        return ids;
+    }
+
     private boolean isTaskProtected(NxDisShipmentTaskEntity task) {
         if (task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1) {
             return true;
@@ -1213,7 +1662,31 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 || DisShipmentTaskStatus.EXCEPTION.equals(status);
     }
 
-    private String buildOrderVersion(List<DisRouteOrderSnapshotDto> orders) {
+    /**
+     * 仅「在途派单」锁定客户部门：阻止同 dep 新 live 单进入 suggested。
+     * 已 DELIVERED / EXCEPTION 的历史 task 仍展示在执行区，但不阻挡同店补单。
+     */
+    private static boolean isDispatchLockedDepForNewOrders(NxDisShipmentTaskEntity task) {
+        if (task == null) {
+            return false;
+        }
+        String status = task.getNxDstStatus();
+        return DisShipmentTaskStatus.ASSIGNED.equals(status)
+                || DisShipmentTaskStatus.READY_TO_GO.equals(status)
+                || DisShipmentTaskStatus.IN_DELIVERY.equals(status);
+    }
+
+    private String buildOrderVersion(List<DisRouteOrderSnapshotDto> orders,
+                                     Integer disId,
+                                     List<Integer> excludeDepartmentIds,
+                                     boolean formalPage) {
+        if (formalPage) {
+            int pendingCount = orders != null ? orders.size() : 0;
+            int totalEligible = nxDisRoutePlanDao.countEligibleLiveOrders(disId, null);
+            StringBuilder sb = new StringBuilder();
+            sb.append(totalEligible).append('/').append(pendingCount);
+            return Integer.toHexString(sb.toString().hashCode());
+        }
         StringBuilder sb = new StringBuilder();
         sb.append(orders != null ? orders.size() : 0);
         if (orders != null) {
@@ -1472,6 +1945,31 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         NxDisShipmentTaskEntity task = stop.getShipmentTask();
         return task != null
                 && (task.getNxDstLegDistanceM() != null || task.getNxDstLegDurationS() != null);
+    }
+
+    /** 已确认落库的客户不得再出现在系统建议列表（避免与已确认区重复）。 */
+    private void sanitizeSuggestedAgainstConfirmedDepartments(List<NxDisRouteStopEntity> suggestedStops,
+                                                              Set<Integer> confirmedDepIds) {
+        if (suggestedStops == null || suggestedStops.isEmpty()
+                || confirmedDepIds == null || confirmedDepIds.isEmpty()) {
+            return;
+        }
+        java.util.Iterator<NxDisRouteStopEntity> iterator = suggestedStops.iterator();
+        while (iterator.hasNext()) {
+            NxDisRouteStopEntity stop = iterator.next();
+            if (stop == null) {
+                iterator.remove();
+                continue;
+            }
+            Integer depId = stop.getNxDrsDepartmentId();
+            NxDisShipmentTaskEntity task = stop.getShipmentTask();
+            if (depId == null && task != null) {
+                depId = task.getNxDstDepFatherId();
+            }
+            if (depId != null && confirmedDepIds.contains(depId)) {
+                iterator.remove();
+            }
+        }
     }
 
     private void sanitizeSuggestedDriverAssignments(List<NxDisRouteStopEntity> suggestedStops,

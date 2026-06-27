@@ -22,7 +22,7 @@ public class DispatchDriverCardDto {
     /** ON_DUTY / OFF_DUTY */
     private String dutyStatus;
     private String dutyStatusLabel;
-    /** IDLE / SANDBOX / CONFIRMED / LOADING / EXECUTION / COMPLETED */
+    /** 今日派车 duty card：IDLE / LOADING / EXECUTION。delivery 页 execution 卡仍可能为 COMPLETED（DB 记录）。 */
     private String dispatchStage;
     private String dispatchStageLabel;
     private String plannedDepartAt;
@@ -41,6 +41,17 @@ public class DispatchDriverCardDto {
     private String totalDurationText;
     /** 路线摘要（客户数 + 距离 + 耗时，便于一行展示） */
     private String routeSummary;
+    /** 主描述一行：准备出发 / 现在可送 / 预计返回 */
+    private String headline;
+    /** 路线指标一行：15.2 公里 · 49 分钟 */
+    private String metricsLine;
+    /** 当前任务一行：1 个客户 · 待送 1 */
+    private String currentTaskLine;
+    /** ok / warn / muted — 前端 badge 色调 */
+    private String dutyBadgeTone;
+    private String stageBadgeTone;
+    /** ok / warn — operationHint 色调 */
+    private String hintTone;
     private Integer currentStopCount;
     /** 司机可派状态页别名（与 currentStopCount 同口径） */
     private Integer customerCount;

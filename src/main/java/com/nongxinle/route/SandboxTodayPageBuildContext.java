@@ -3,6 +3,7 @@ package com.nongxinle.route;
 import com.nongxinle.dto.route.*;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
+import com.nongxinle.route.proposal.SandboxProposalPlan;
 
 import java.util.Date;
 import java.util.List;
@@ -28,6 +29,7 @@ public class SandboxTodayPageBuildContext {
     private DriverDispatchListResponse drivers;
     private NxDisRoutePlanEntity mergedPlan;
     private String depotName;
+    private String depotAddress;
     private List<NxDisRouteStopEntity> suggestedStops;
     private List<NxDisRouteStopEntity> unassignedStops;
     private List<NxDisRouteStopEntity> confirmedStops;
@@ -36,6 +38,10 @@ public class SandboxTodayPageBuildContext {
     private List<InvalidDispatchStopDto> invalidStops;
     /** PR-2c：sections / map / debug 唯一主权源（建议派车 + 已确认待装车）。 */
     private List<VisibleDriverRouteSnapshot> visibleDriverRoutes;
+    /** 分派中 Proposal 主权（page 主链输入）。 */
+    private SandboxProposalPlan proposalPlan;
+    /** debug：分派中链路 trace（仅 debug 接口传入 pageBuildContext）。 */
+    private SandboxTodayPipelineTrace pipelineTrace;
 
     public Integer getDisId() {
         return disId;
@@ -173,6 +179,14 @@ public class SandboxTodayPageBuildContext {
         this.depotName = depotName;
     }
 
+    public String getDepotAddress() {
+        return depotAddress;
+    }
+
+    public void setDepotAddress(String depotAddress) {
+        this.depotAddress = depotAddress;
+    }
+
     public List<NxDisRouteStopEntity> getSuggestedStops() {
         return suggestedStops;
     }
@@ -227,5 +241,21 @@ public class SandboxTodayPageBuildContext {
 
     public void setVisibleDriverRoutes(List<VisibleDriverRouteSnapshot> visibleDriverRoutes) {
         this.visibleDriverRoutes = visibleDriverRoutes;
+    }
+
+    public SandboxProposalPlan getProposalPlan() {
+        return proposalPlan;
+    }
+
+    public void setProposalPlan(SandboxProposalPlan proposalPlan) {
+        this.proposalPlan = proposalPlan;
+    }
+
+    public SandboxTodayPipelineTrace getPipelineTrace() {
+        return pipelineTrace;
+    }
+
+    public void setPipelineTrace(SandboxTodayPipelineTrace pipelineTrace) {
+        this.pipelineTrace = pipelineTrace;
     }
 }

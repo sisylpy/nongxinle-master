@@ -119,6 +119,10 @@ public final class DisRouteDispatchCardTemplateBuilder {
                 route, stopCounts, dispatchStage));
 
         if (capabilities != null) {
+            applyManualDispatchPresentation(card, dispatchStage, stopCounts);
+        }
+
+        if (capabilities != null) {
             card.setCanSimulate(capabilities.isCanSimulate());
             card.setCanConfirm(capabilities.isCanConfirm());
             card.setConfirmMode(capabilities.getConfirmMode());
@@ -144,6 +148,7 @@ public final class DisRouteDispatchCardTemplateBuilder {
                 DisRouteDriverDutyToggleHelper.buildDutyRiskHints(dispatchStage));
         DispatchDriverCardDto card = buildDriverCard(
                 driverMeta, route, dispatchStage, null, stopCounts, operationHint, toggleAction);
+        card.setDispatchStageLabel(ManualDispatchDispatchStage.todayDutyCardStageLabel(dispatchStage));
         card.setCanToggleDuty(canToggleDuty);
         card.setToggleDisabledReason(toggleDisabledReason);
         card.setRiskHints(riskHints);
@@ -249,6 +254,46 @@ public final class DisRouteDispatchCardTemplateBuilder {
         card.setEstimatedReturnAt(card.getPlannedReturnAt());
         card.setEstimatedReturnLabel(card.getPlannedReturnLabel());
         card.setCustomerCount(card.getCurrentStopCount());
+    }
+
+    private static void applyManualDispatchPresentation(DispatchDriverCardDto card,
+                                                          String dispatchStage,
+                                                          DriverStopCounts stopCounts) {
+        if (card == null) {
+            return;
+        }
+        NxDisDriverRouteEntity routeProxy = new NxDisDriverRouteEntity();
+        routeProxy.setNxDdrTotalDistanceM(card.getTotalDistanceM());
+        routeProxy.setNxDdrTotalDurationS(card.getTotalDurationS());
+        routeProxy.setPlannedDepartLabel(card.getPlannedDepartLabel());
+        routeProxy.setPlannedReturnLabel(card.getPlannedReturnLabel());
+        routeProxy.setPlannedReturnAt(parseDateTime(card.getPlannedReturnAt()));
+        routeProxy.setNxDdrPlannedDepartAt(parseDateTime(card.getPlannedDepartAt()));
+        routeProxy.setNxDdrPlannedFinishAt(parseDateTime(card.getPlannedReturnAt()));
+
+        card.setHeadline(DisRouteSandboxManualDispatchPanoramaHelper.buildHeadline(routeProxy, dispatchStage));
+        card.setMetricsLine(DisRouteSandboxManualDispatchPanoramaHelper.buildMetricsLine(routeProxy));
+        card.setCurrentTaskLine(DisRouteSandboxManualDispatchPanoramaHelper.buildCurrentTaskLine(
+                stopCounts, dispatchStage));
+        card.setDutyBadgeTone("ok");
+        card.setStageBadgeTone(DisRouteSandboxManualDispatchPanoramaHelper.resolveStageBadgeTone(dispatchStage));
+        card.setHintTone(DisRouteSandboxManualDispatchPanoramaHelper.resolveHintTone(
+                dispatchStage, card.getRiskHints()));
+        if (card.getBlockedReason() != null && !card.getBlockedReason().trim().isEmpty()) {
+            card.setDutyBadgeTone("muted");
+            card.setStageBadgeTone("muted");
+        }
+    }
+
+    private static java.util.Date parseDateTime(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return com.nongxinle.route.RouteDispatchDateFormat.parse(text.trim());
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     public static SandboxManualDispatchManualTimeConstraintDto emptyManualTimeConstraint() {

@@ -61,11 +61,22 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
 
     @Override
     public DriverDispatchListResponse listDriversForBatch(Integer disId, String routeDate, String batchCode) {
+        return listDriversForBatch(disId, routeDate, batchCode, true);
+    }
+
+    @Override
+    public DriverDispatchListResponse listDriversForBatch(Integer disId, String routeDate, String batchCode,
+                                                            boolean includeDutyCards) {
         if (disId == null) {
             throw new IllegalArgumentException("disId 不能为空");
         }
         String queryRouteDate = resolveRouteDate(routeDate);
         String dispatchBatch = normalizeBatchCode(batchCode);
+
+        Map<Integer, NxDisDriverDutyEntity> dutyByDriver = loadDutyByDriver(disId, queryRouteDate);
+        if (!hasAnyOnDutyDriver(dutyByDriver)) {
+            return buildOffDutyOnlyResponse(disId, queryRouteDate, dispatchBatch);
+        }
 
         NxDisRoutePlanEntity planHeader = findPlanHeader(disId, queryRouteDate, dispatchBatch);
         if (planHeader != null) {
@@ -79,7 +90,7 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
         List<DriverDispatchCandidateDto> candidates = new ArrayList<DriverDispatchCandidateDto>();
         for (NxDistributerUserEntity driver : driverAccounts) {
             candidates.add(buildCandidate(driver, disId, queryRouteDate, dispatchBatch, planHeader, routeByDriver,
-                    validStopCountByDriver));
+                    validStopCountByDriver, dutyByDriver));
         }
         sortCandidates(candidates);
 
@@ -89,9 +100,109 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
         response.setDispatchBatchLabel(DisRouteDispatchLabels.label(dispatchBatch));
         response.setSummary(buildSummary(candidates));
         response.setDrivers(candidates);
-        response.setDriverCards(buildDriverDutyCards(
-                candidates, disId, queryRouteDate, dispatchBatch, planHeader, routeByDriver));
+        if (includeDutyCards) {
+            response.setDriverCards(buildDriverDutyCards(
+                    candidates, disId, queryRouteDate, dispatchBatch, planHeader, routeByDriver));
+        }
         return response;
+    }
+
+    private Map<Integer, NxDisDriverDutyEntity> loadDutyByDriver(Integer disId, String routeDate) {
+        Map<Integer, NxDisDriverDutyEntity> dutyByDriver = new HashMap<Integer, NxDisDriverDutyEntity>();
+        List<NxDisDriverDutyEntity> duties = nxDisDriverDutyDao.queryByDisDate(disId, routeDate);
+        if (duties == null) {
+            return dutyByDriver;
+        }
+        for (NxDisDriverDutyEntity duty : duties) {
+            if (duty != null && duty.getNxDddDriverUserId() != null) {
+                dutyByDriver.put(duty.getNxDddDriverUserId(), duty);
+            }
+        }
+        return dutyByDriver;
+    }
+
+    private boolean hasAnyOnDutyDriver(Map<Integer, NxDisDriverDutyEntity> dutyByDriver) {
+        if (dutyByDriver == null || dutyByDriver.isEmpty()) {
+            return false;
+        }
+        for (NxDisDriverDutyEntity duty : dutyByDriver.values()) {
+            if (duty != null && ON_DUTY.equals(duty.getNxDddDutyStatus())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 当日无人上岗：只返回司机账号 + 未上岗状态，不查 plan / 路线 / 沙盘。 */
+    private DriverDispatchListResponse buildOffDutyOnlyResponse(Integer disId,
+                                                                String routeDate,
+                                                                String dispatchBatch) {
+        List<NxDistributerUserEntity> driverAccounts = disRouteDispatchService.listDrivers(disId);
+        List<DriverDispatchCandidateDto> candidates = new ArrayList<DriverDispatchCandidateDto>();
+        for (NxDistributerUserEntity driver : driverAccounts) {
+            if (driver == null) {
+                continue;
+            }
+            candidates.add(buildOffDutyCandidate(driver, dispatchBatch));
+        }
+        sortCandidates(candidates);
+
+        List<DispatchDriverCardDto> cards = new ArrayList<DispatchDriverCardDto>();
+        for (DriverDispatchCandidateDto candidate : candidates) {
+            cards.add(buildOffDutyDriverCard(candidate, disId, routeDate));
+        }
+
+        DriverDispatchListResponse response = new DriverDispatchListResponse();
+        response.setRouteDate(routeDate);
+        response.setDispatchBatch(dispatchBatch);
+        response.setDispatchBatchLabel(DisRouteDispatchLabels.label(dispatchBatch));
+        response.setSummary(buildSummary(candidates));
+        response.setDrivers(candidates);
+        response.setDriverCards(cards);
+        return response;
+    }
+
+    private DriverDispatchCandidateDto buildOffDutyCandidate(NxDistributerUserEntity driver, String dispatchBatch) {
+        DriverDispatchCandidateDto dto = new DriverDispatchCandidateDto();
+        dto.setDriverUserId(driver.getNxDistributerUserId());
+        dto.setDriverName(resolveDriverName(driver));
+        dto.setDriverPhone(driver.getNxDiuWxPhone());
+        if (driver.getNxDiuWxAvartraUrl() != null && !driver.getNxDiuWxAvartraUrl().trim().isEmpty()) {
+            dto.setDriverAvatarUrl(driver.getNxDiuWxAvartraUrl().trim());
+        }
+        dto.setDispatchBatch(dispatchBatch);
+        dto.setDispatchBatchLabel(DisRouteDispatchLabels.label(dispatchBatch));
+        dto.setDutyStatus(OFF_DUTY);
+        dto.setDutyStatusLabel(DisRouteDispatchLabels.label(OFF_DUTY));
+        dto.setBatchEligible(false);
+        dto.setBatchEligibleLabel("不参与派车");
+        dto.setIneligibleReason(DisRouteBatchEligibility.INELIGIBLE_OFF_DUTY);
+        dto.setIneligibleReasonLabel("不可派");
+        dto.setConfirmedStopCount(0);
+        dto.setSandboxSuggestedStopCount(0);
+        dto.setCurrentLateMinutes(0);
+        dto.setCurrentWaitMinutes(0);
+        dto.setOperationHint("开启后可参与今日派车");
+        dto.setCanToggleDutyOff(Boolean.FALSE);
+        return dto;
+    }
+
+    private DispatchDriverCardDto buildOffDutyDriverCard(DriverDispatchCandidateDto candidate,
+                                                         Integer disId,
+                                                         String routeDate) {
+        Map<String, Object> toggleAction = DriverDutyPrimaryActionMaps.enabledToggleDutyOn(
+                "开启可派",
+                DriverDutyPrimaryActionMaps.buildToggleDutyOffPayload(
+                        disId, routeDate, candidate.getDriverUserId(), null));
+        return DisRouteDispatchCardTemplateBuilder.buildDriverDutyCard(
+                candidate,
+                null,
+                ManualDispatchDispatchStage.IDLE,
+                new DriverStopCounts(0, 0, 0),
+                true,
+                null,
+                toggleAction,
+                "开启后可参与今日派车");
     }
 
     private DriverDispatchCandidateDto buildCandidate(NxDistributerUserEntity driver,
@@ -100,7 +211,8 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
                                                       String dispatchBatch,
                                                       NxDisRoutePlanEntity planHeader,
                                                       Map<Integer, NxDisDriverRouteEntity> routeByDriver,
-                                                      Map<Integer, Integer> validStopCountByDriver) {
+                                                      Map<Integer, Integer> validStopCountByDriver,
+                                                      Map<Integer, NxDisDriverDutyEntity> dutyByDriver) {
         DriverDispatchCandidateDto dto = new DriverDispatchCandidateDto();
         dto.setDriverUserId(driver.getNxDistributerUserId());
         dto.setDriverName(resolveDriverName(driver));
@@ -111,8 +223,8 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
         dto.setDispatchBatch(dispatchBatch);
         dto.setDispatchBatchLabel(DisRouteDispatchLabels.label(dispatchBatch));
 
-        NxDisDriverDutyEntity duty = nxDisDriverDutyDao.queryByDisDriverDate(
-                disId, driver.getNxDistributerUserId(), routeDate);
+        NxDisDriverDutyEntity duty = dutyByDriver != null
+                ? dutyByDriver.get(driver.getNxDistributerUserId()) : null;
         boolean onDuty = duty != null && ON_DUTY.equals(duty.getNxDddDutyStatus());
         dto.setDutyStatus(onDuty ? ON_DUTY : OFF_DUTY);
         dto.setDutyStatusLabel(DisRouteDispatchLabels.label(dto.getDutyStatus()));
@@ -125,6 +237,16 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
         dto.setBatchEligibleLabel(batchEligible ? "可参与当前批次" : "不参与派车");
         dto.setIneligibleReason(ineligibleReason);
         dto.setIneligibleReasonLabel(ineligibleReason != null ? "不可派" : null);
+
+        if (!onDuty) {
+            dto.setConfirmedStopCount(0);
+            dto.setSandboxSuggestedStopCount(0);
+            dto.setCurrentLateMinutes(0);
+            dto.setCurrentWaitMinutes(0);
+            dto.setOperationHint("开启后可参与今日派车");
+            dto.setCanToggleDutyOff(Boolean.FALSE);
+            return dto;
+        }
 
         NxDisDriverRouteEntity route = routeByDriver.get(driver.getNxDistributerUserId());
         Integer validStopCount = validStopCountByDriver.get(driver.getNxDistributerUserId());
@@ -192,48 +314,71 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
         if (candidates == null || candidates.isEmpty()) {
             return cards;
         }
-        SandboxComputeResult compute = computeSandboxOptional(disId, routeDate, dispatchBatch);
+        SandboxComputeResult compute = needsSandboxCompute(candidates, routeByDriver)
+                ? computeSandboxOptional(disId, routeDate, dispatchBatch)
+                : null;
         Map<Integer, NxDisDriverRouteEntity> mergedRoutes = mergeRoutesByDriver(routeByDriver, compute);
         Date serverNow = new Date();
         for (DriverDispatchCandidateDto candidate : candidates) {
             if (candidate == null) {
                 continue;
             }
+            if (!ON_DUTY.equals(candidate.getDutyStatus())) {
+                cards.add(buildOffDutyDriverCard(candidate, disId, routeDate));
+                continue;
+            }
             NxDisDriverRouteEntity route = mergedRoutes.get(candidate.getDriverUserId());
             if (route != null && planHeader != null) {
                 DisRouteDriverDutyOverlayHelper.overlayOnRoute(route, planHeader, nxDisDriverDutyDao, serverNow);
             }
-            String dispatchStage = resolveDriverDispatchStage(route, compute, candidate);
+            String internalStage = resolveDriverDispatchStage(route, compute, candidate);
+            String dutyCardStage = ManualDispatchDispatchStage.toTodayDutyCardStage(internalStage);
             DriverStopCounts stopCounts = resolveDriverStopCounts(compute, route, candidate);
-            boolean onDuty = ON_DUTY.equals(candidate.getDutyStatus());
             boolean canToggleDuty;
             String toggleDisabledReason = null;
             Map<String, Object> toggleAction;
-            if (onDuty) {
-                canToggleDuty = DisRouteDriverDutyToggleHelper.canCloseDuty(dispatchStage);
-                if (!canToggleDuty) {
-                    toggleDisabledReason = DisRouteDriverDutyToggleHelper.resolveToggleDisabledReason(dispatchStage);
-                    toggleAction = DriverDutyPrimaryActionMaps.disabledToggleDutyOff("不可关闭", toggleDisabledReason);
-                } else {
-                    toggleAction = DriverDutyPrimaryActionMaps.enabledToggleDutyOff(
-                            "关闭可派",
-                            DriverDutyPrimaryActionMaps.buildToggleDutyOffPayload(
-                                    disId, routeDate, candidate.getDriverUserId(), null));
-                }
+            canToggleDuty = DisRouteDriverDutyToggleHelper.canCloseDuty(internalStage);
+            if (!canToggleDuty) {
+                toggleDisabledReason = DisRouteDriverDutyToggleHelper.resolveToggleDisabledReason(internalStage);
+                toggleAction = DriverDutyPrimaryActionMaps.disabledToggleDutyOff("不可关闭", toggleDisabledReason);
             } else {
-                canToggleDuty = true;
-                toggleAction = DriverDutyPrimaryActionMaps.enabledToggleDutyOn(
-                        "开启可派",
+                toggleAction = DriverDutyPrimaryActionMaps.enabledToggleDutyOff(
+                        "关闭可派",
                         DriverDutyPrimaryActionMaps.buildToggleDutyOffPayload(
                                 disId, routeDate, candidate.getDriverUserId(), null));
             }
-            String operationHint = buildDutyCardOperationHint(dispatchBatch, candidate, dispatchStage, stopCounts);
+            String operationHint = buildDutyCardOperationHint(dispatchBatch, candidate, internalStage, stopCounts);
             cards.add(DisRouteDispatchCardTemplateBuilder.buildDriverDutyCard(
-                    candidate, route, dispatchStage, stopCounts,
+                    candidate, route, dutyCardStage, stopCounts,
                     canToggleDuty, toggleDisabledReason, toggleAction, operationHint));
-            applyDutyToggleFields(candidate, disId, routeDate, dispatchStage);
+            applyDutyToggleFields(candidate, disId, routeDate, internalStage);
         }
         return cards;
+    }
+
+    /** 无人开启可派且无在途路线时，duty 页无需跑完整沙盘（订单/优化/腾讯矩阵）。 */
+    private boolean needsSandboxCompute(List<DriverDispatchCandidateDto> candidates,
+                                        Map<Integer, NxDisDriverRouteEntity> routeByDriver) {
+        if (candidates != null) {
+            for (DriverDispatchCandidateDto candidate : candidates) {
+                if (candidate != null && ON_DUTY.equals(candidate.getDutyStatus())) {
+                    return true;
+                }
+            }
+        }
+        if (routeByDriver == null || routeByDriver.isEmpty()) {
+            return false;
+        }
+        for (NxDisDriverRouteEntity route : routeByDriver.values()) {
+            if (route == null) {
+                continue;
+            }
+            if (DisRouteRouteExecutionHelper.isExecutionRoute(route)
+                    || DisRouteLoadingGateHelper.isRouteEnteredLoading(route)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private SandboxComputeResult computeSandboxOptional(Integer disId, String routeDate, String batchCode) {
@@ -314,9 +459,6 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
                                               DriverStopCounts stopCounts) {
         if (!ON_DUTY.equals(candidate.getDutyStatus())) {
             return "开启后可参与今日派车";
-        }
-        if (ManualDispatchDispatchStage.COMPLETED.equals(dispatchStage)) {
-            return "今日路线已完成，仍在岗可再派；不需要再派可关闭可派";
         }
         if (stopCounts != null && stopCounts.getPendingStopCount() > 0) {
             return "当前路线待送 " + stopCounts.getPendingStopCount() + " 站";
@@ -572,26 +714,18 @@ public class DisRouteDriverDispatchListServiceImpl implements DisRouteDriverDisp
     }
 
     private void applyDepartedDriverOverlay(DriverDispatchCandidateDto dto, NxDisDriverRouteEntity route) {
-        if (dto == null || route == null || !DisRouteRouteExecutionHelper.isExecutionRoute(route)) {
+        if (dto == null || route == null) {
             return;
         }
-        dto.setBatchEligible(false);
-        dto.setBatchEligibleLabel("配送中");
-        dto.setIneligibleReason("IN_DELIVERY");
-        dto.setIneligibleReasonLabel("配送中");
-        String routeStatus = DisRouteRouteExecutionHelper.resolveRouteStatus(route);
-        dto.setRouteStatus(routeStatus);
-        dto.setRouteStatusLabel(DisRouteDispatchLabels.label(routeStatus));
-        dto.setDriverRouteId(route.getNxDdrId());
-        dto.setCanDepart(false);
-        dto.setDepartBlockedReason("该司机路线已在配送中或已完成");
-        if (route.getNxDdrActualDepartAt() != null) {
-            String formatted = RouteDispatchDateFormat.format(route.getNxDdrActualDepartAt());
-            dto.setActualDepartAt(formatted);
-            dto.setDepartedAt(formatted);
+        DisRouteSandboxDriverDispatchStateHelper.applyDriverListOverlay(
+                dto, route, nxDisDriverRouteDao, nxDisShipmentTaskDao);
+        if (DisRouteSandboxDriverDispatchPhase.LOADING.equals(
+                DisRouteSandboxDriverDispatchStateHelper.resolveRoutePhase(
+                        route, nxDisDriverRouteDao, nxDisShipmentTaskDao))) {
+            dto.setCanToggleDutyOff(Boolean.FALSE);
+            dto.setDutyOffLockReason("装车中不可关闭可派");
         }
     }
-
     private String resolveDriverName(NxDistributerUserEntity driver) {
         if (driver.getNxDiuWxNickName() != null && !driver.getNxDiuWxNickName().trim().isEmpty()) {
             return driver.getNxDiuWxNickName().trim();

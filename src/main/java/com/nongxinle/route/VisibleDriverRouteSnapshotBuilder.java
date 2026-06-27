@@ -14,6 +14,10 @@ import com.nongxinle.route.dispatch.strategy.DriverRoutePlan;
 import com.nongxinle.route.dispatch.strategy.OwnerFixedRouteTimeWindowRouteSequencer;
 import com.nongxinle.route.dispatch.strategy.StopAssignment;
 import com.nongxinle.route.model.GeoPoint;
+import com.nongxinle.route.proposal.ProposalDriverRoute;
+import com.nongxinle.route.proposal.ProposalStop;
+import com.nongxinle.route.proposal.SandboxProposalPlan;
+import com.nongxinle.route.proposal.SandboxProposalPlanBuilder;
 import com.nongxinle.service.impl.DisRouteSandboxLegMetricsHelper;
 
 import java.io.IOException;
@@ -56,6 +60,90 @@ public final class VisibleDriverRouteSnapshotBuilder {
         return routes;
     }
 
+    /**
+     * 分派中专用：只读 {@link SandboxProposalPlan}，不读 mergedPlan.driverRoutes / confirmed / execution。
+     */
+    public static List<VisibleDriverRouteSnapshot> buildFromProposalPlan(
+            SandboxTodayPageBuildContext ctx,
+            SandboxProposalPlan proposalPlan,
+            DispatchAssignmentPlan assignmentPlan,
+            GeoPoint depot,
+            DisRouteSandboxLegMetricsHelper legMetricsHelper) {
+        if (ctx == null || proposalPlan == null || proposalPlan.getProposalRoutes() == null) {
+            return Collections.emptyList();
+        }
+        syncProposalUnassignedToContext(ctx, proposalPlan);
+
+        List<VisibleDriverRouteSnapshot> routes = new ArrayList<VisibleDriverRouteSnapshot>();
+        DispatchStrategyContext strategyContext = buildStrategyContext(ctx);
+        boolean ownerFixed = assignmentPlan != null
+                && assignmentPlan.getStrategyMode() == DispatchStrategyMode.OWNER_FIXED_ROUTE;
+
+        for (ProposalDriverRoute proposalRoute : proposalPlan.getProposalRoutes()) {
+            if (proposalRoute == null || proposalRoute.getDriverUserId() == null) {
+                continue;
+            }
+            Integer driverUserId = proposalRoute.getDriverUserId();
+            List<NxDisRouteStopEntity> visible = SandboxProposalPlanBuilder.toStopEntities(proposalRoute.getStops());
+            if (visible.isEmpty()) {
+                continue;
+            }
+            if (!DisRouteSandboxDriverDispatchStateHelper.shouldRenderSuggestedDriverRouteCard(
+                    driverUserId, DisRouteSandboxTodayRouteKind.SUGGESTED, ctx)) {
+                exposeAsUnassigned(ctx, visible);
+                traceSnapshotSkip(ctx, driverUserId, null,
+                        visible.size(), 0,
+                        "DRIVER_IN_LOADING_OR_EXECUTION_ON_PAGE -> exposeAsUnassigned");
+                continue;
+            }
+
+            NxDisDriverRouteEntity pseudoRoute = toProposalPseudoRoute(proposalRoute);
+            VisibleScheduleResult scheduled = prepareVisibleStopsForSnapshot(
+                    pseudoRoute, visible, assignmentPlan, strategyContext, depot, legMetricsHelper,
+                    ownerFixed && assignmentPlan != null);
+            VisibleDriverRouteSnapshot snapshot = assembleRouteSnapshot(
+                    driverUserId, pseudoRoute, scheduled.orderedStops, DisRouteSandboxTodayRouteKind.SUGGESTED,
+                    SECTION_SUGGESTED, ctx, assignmentPlan, strategyContext, ownerFixed,
+                    scheduled.legMetricsFallbackUsed, scheduled.scheduleWarning);
+            if (snapshot != null && !snapshot.getStops().isEmpty()) {
+                routes.add(snapshot);
+            } else {
+                traceSnapshotSkip(ctx, driverUserId, pseudoRoute,
+                        visible.size(), 0, "SNAPSHOT_ASSEMBLY_EMPTY");
+            }
+        }
+
+        sortRouteSnapshots(routes);
+        return routes;
+    }
+
+    private static void syncProposalUnassignedToContext(SandboxTodayPageBuildContext ctx,
+                                                      SandboxProposalPlan proposalPlan) {
+        if (ctx == null || proposalPlan == null) {
+            return;
+        }
+        List<NxDisRouteStopEntity> unassigned = SandboxProposalPlanBuilder.toStopEntities(
+                proposalPlan.getUnassignedStops());
+        ctx.setUnassignedStops(unassigned);
+    }
+
+    private static NxDisDriverRouteEntity toProposalPseudoRoute(ProposalDriverRoute proposalRoute) {
+        NxDisDriverRouteEntity route = new NxDisDriverRouteEntity();
+        if (proposalRoute == null) {
+            return route;
+        }
+        route.setNxDdrDriverUserId(proposalRoute.getDriverUserId());
+        route.setDriverName(proposalRoute.getDriverName());
+        route.setStops(SandboxProposalPlanBuilder.toStopEntities(proposalRoute.getStops()));
+        route.setNxDdrStopCount(route.getStops() != null ? route.getStops().size() : 0);
+        route.setNxDdrTotalDistanceM(proposalRoute.getTotalDistanceM());
+        route.setNxDdrTotalDurationS(proposalRoute.getTotalDurationS());
+        route.setRouteScheduleSummaryLabel(proposalRoute.getScheduleHeadline());
+        route.setPlannedDepartLabel(proposalRoute.getPlannedDepartLabel());
+        route.setPlannedReturnLabel(proposalRoute.getPlannedReturnLabel());
+        return route;
+    }
+
     private static List<VisibleDriverRouteSnapshot> buildSuggestedSnapshots(
             SandboxTodayPageBuildContext ctx,
             DispatchAssignmentPlan assignmentPlan,
@@ -79,15 +167,24 @@ public final class VisibleDriverRouteSnapshotBuilder {
             }
             Integer driverUserId = route.getNxDdrDriverUserId();
             if (driversWithConfirmed.contains(driverUserId)) {
-                continue;
-            }
-            if (!DisRouteSandboxDriverDispatchStateHelper.shouldRenderSuggestedDriverRouteCard(
-                    driverUserId, DisRouteSandboxTodayRouteKind.SUGGESTED, ctx)) {
+                traceSnapshotSkip(ctx, driverUserId, route, route.getStops() != null ? route.getStops().size() : 0,
+                        0, "DRIVER_HAS_CONFIRMED_ROUTE");
                 continue;
             }
             List<NxDisRouteStopEntity> visible = collectVisibleSuggestedStops(route);
             visible = excludeConfirmedDepartments(visible, confirmedDepIds);
             if (visible.isEmpty()) {
+                traceSnapshotSkip(ctx, driverUserId, route,
+                        route.getStops() != null ? route.getStops().size() : 0, 0,
+                        "NO_VISIBLE_SUGGESTED_STOPS");
+                continue;
+            }
+            if (!DisRouteSandboxDriverDispatchStateHelper.shouldRenderSuggestedDriverRouteCard(
+                    driverUserId, DisRouteSandboxTodayRouteKind.SUGGESTED, ctx)) {
+                exposeAsUnassigned(ctx, visible);
+                traceSnapshotSkip(ctx, driverUserId, route,
+                        route.getStops() != null ? route.getStops().size() : 0, visible.size(),
+                        "DRIVER_IN_LOADING_OR_EXECUTION_ON_PAGE -> exposeAsUnassigned");
                 continue;
             }
 
@@ -100,11 +197,55 @@ public final class VisibleDriverRouteSnapshotBuilder {
                     scheduled.legMetricsFallbackUsed, scheduled.scheduleWarning);
             if (snapshot != null && !snapshot.getStops().isEmpty()) {
                 routes.add(snapshot);
+            } else if (snapshot == null || snapshot.getStops().isEmpty()) {
+                traceSnapshotSkip(ctx, driverUserId, route,
+                        route.getStops() != null ? route.getStops().size() : 0,
+                        visible.size(), "SNAPSHOT_ASSEMBLY_EMPTY");
             }
         }
 
         sortRouteSnapshots(routes);
         return routes;
+    }
+
+    private static void traceSnapshotSkip(SandboxTodayPageBuildContext ctx,
+                                          Integer driverUserId,
+                                          NxDisDriverRouteEntity route,
+                                          int rawStopCount,
+                                          int visibleStopCount,
+                                          String skipReason) {
+        SandboxTodayPipelineTrace trace = ctx != null ? ctx.getPipelineTrace() : null;
+        if (trace == null) {
+            return;
+        }
+        trace.addSnapshotSkip(driverUserId,
+                route != null ? route.getDriverName() : null,
+                rawStopCount, visibleStopCount, skipReason);
+    }
+
+    /**
+     * 司机处于装车/配送阶段时不展示其 suggested route，但 sandbox 客户仍必须进入待重新分派区。
+     */
+    private static void exposeAsUnassigned(SandboxTodayPageBuildContext ctx,
+                                           List<NxDisRouteStopEntity> stops) {
+        if (ctx == null || stops == null || stops.isEmpty()) {
+            return;
+        }
+        List<NxDisRouteStopEntity> unassigned = ctx.getUnassignedStops();
+        if (unassigned == null) {
+            unassigned = new ArrayList<NxDisRouteStopEntity>();
+            ctx.setUnassignedStops(unassigned);
+        }
+        Set<Integer> existingDepIds = indexDepartmentIds(unassigned);
+        for (NxDisRouteStopEntity stop : stops) {
+            if (stop == null) {
+                continue;
+            }
+            Integer depId = DisRouteSandboxUnassignedStopHelper.resolveDepartmentId(stop);
+            if (depId == null || existingDepIds.add(depId)) {
+                unassigned.add(stop);
+            }
+        }
     }
 
     private static List<VisibleDriverRouteSnapshot> buildConfirmedSnapshots(

@@ -13,6 +13,31 @@ public final class ManualDispatchDispatchStage {
     private ManualDispatchDispatchStage() {
     }
 
+    /**
+     * 今日派车 duty card / listDrivers：ON_DUTY 且无 LOADING/EXECUTION 时统一为 IDLE。
+     * 不再向客户端输出 COMPLETED / SANDBOX / CONFIRMED 作为当前运行时阶段。
+     */
+    public static String toTodayDutyCardStage(String stage) {
+        if (stage == null || stage.trim().isEmpty()) {
+            return IDLE;
+        }
+        String normalized = stage.trim().toUpperCase();
+        if (LOADING.equals(normalized) || EXECUTION.equals(normalized)) {
+            return normalized;
+        }
+        return IDLE;
+    }
+
+    public static String todayDutyCardStageLabel(String dutyCardStage) {
+        if (LOADING.equals(dutyCardStage)) {
+            return label(LOADING);
+        }
+        if (EXECUTION.equals(dutyCardStage)) {
+            return label(EXECUTION);
+        }
+        return label(IDLE);
+    }
+
     public static String label(String stage) {
         if (stage == null || stage.trim().isEmpty()) {
             return null;
