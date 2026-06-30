@@ -76,5 +76,6 @@ src/main/webapp/foodImage/
 src/main/webapp/numberRecord/
 
 # SQL files (too large for GitHub)
-*.sql out/
+*.sql
+out/
 stockImagesMac/
