@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityDispatchDriverRouteDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCommunityDispatchDriverRouteEntity">
+        select * from nx_community_dispatch_driver_route where nx_community_dispatch_driver_route_id = #{value}
+    </select>
+
+    <select id="queryByPlanAndDriver" resultType="com.nongxinle.entity.NxCommunityDispatchDriverRouteEntity">
+        select * from nx_community_dispatch_driver_route
+        where nx_cddr_plan_id = #{planId}
+          and nx_cddr_driver_user_id = #{driverUserId}
+        limit 1
+    </select>
+
+    <select id="queryByPlanId" resultType="com.nongxinle.entity.NxCommunityDispatchDriverRouteEntity">
+        select * from nx_community_dispatch_driver_route where nx_cddr_plan_id = #{value}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverRouteEntity" useGeneratedKeys="true"
+            keyProperty="nxCommunityDispatchDriverRouteId">
+        insert into nx_community_dispatch_driver_route
+        (nx_cddr_plan_id, nx_cddr_community_id, nx_cddr_driver_user_id, nx_cddr_route_status,
+         nx_cddr_loading_entered_at, nx_cddr_actual_depart_at, nx_cddr_stop_count)
+        values (#{nxCddrPlanId}, #{nxCddrCommunityId}, #{nxCddrDriverUserId}, #{nxCddrRouteStatus},
+                #{nxCddrLoadingEnteredAt}, #{nxCddrActualDepartAt}, #{nxCddrStopCount})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverRouteEntity">
+        update nx_community_dispatch_driver_route
+        <set>
+            <if test="nxCddrRouteStatus != null">nx_cddr_route_status = #{nxCddrRouteStatus},</if>
+            <if test="nxCddrLoadingEnteredAt != null">nx_cddr_loading_entered_at = #{nxCddrLoadingEnteredAt},</if>
+            <if test="nxCddrActualDepartAt != null">nx_cddr_actual_depart_at = #{nxCddrActualDepartAt},</if>
+            <if test="nxCddrStopCount != null">nx_cddr_stop_count = #{nxCddrStopCount},</if>
+        </set>
+        where nx_community_dispatch_driver_route_id = #{nxCommunityDispatchDriverRouteId}
+    </update>
+</mapper>

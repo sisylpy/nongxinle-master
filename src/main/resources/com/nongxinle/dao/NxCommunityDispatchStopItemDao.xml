@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityDispatchStopItemDao">
+
+    <select id="queryByStopId" resultType="com.nongxinle.entity.NxCommunityDispatchStopItemEntity">
+        select * from nx_community_dispatch_stop_item where nx_cdsi_stop_id = #{value}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityDispatchStopItemEntity" useGeneratedKeys="true"
+            keyProperty="nxCommunityDispatchStopItemId">
+        insert into nx_community_dispatch_stop_item
+        (nx_cdsi_stop_id, nx_cdsi_community_order_id, nx_cdsi_goods_summary, nx_cdsi_order_total)
+        values (#{nxCdsiStopId}, #{nxCdsiCommunityOrderId}, #{nxCdsiGoodsSummary}, #{nxCdsiOrderTotal})
+    </insert>
+
+    <delete id="deleteByStopId">
+        delete from nx_community_dispatch_stop_item where nx_cdsi_stop_id = #{value}
+    </delete>
+</mapper>

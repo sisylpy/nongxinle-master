@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityDispatchDriverDutyDao">
+
+    <select id="queryOnDutyDrivers" resultType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
+        select * from nx_community_dispatch_driver_duty
+        where nx_cdd_community_id = #{communityId}
+          and nx_cdd_route_date = #{routeDate}
+          and nx_cdd_status = 'ON_DUTY'
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity" useGeneratedKeys="true"
+            keyProperty="nxCommunityDispatchDriverDutyId">
+        insert into nx_community_dispatch_driver_duty
+        (nx_cdd_community_id, nx_cdd_driver_user_id, nx_cdd_route_date, nx_cdd_status,
+         nx_cdd_checked_in_at, nx_cdd_checked_out_at)
+        values (#{nxCddCommunityId}, #{nxCddDriverUserId}, #{nxCddRouteDate}, #{nxCddStatus},
+                #{nxCddCheckedInAt}, #{nxCddCheckedOutAt})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
+        update nx_community_dispatch_driver_duty
+        <set>
+            <if test="nxCddStatus != null">nx_cdd_status = #{nxCddStatus},</if>
+            <if test="nxCddCheckedInAt != null">nx_cdd_checked_in_at = #{nxCddCheckedInAt},</if>
+            <if test="nxCddCheckedOutAt != null">nx_cdd_checked_out_at = #{nxCddCheckedOutAt},</if>
+        </set>
+        where nx_community_dispatch_driver_duty_id = #{nxCommunityDispatchDriverDutyId}
+    </update>
+</mapper>

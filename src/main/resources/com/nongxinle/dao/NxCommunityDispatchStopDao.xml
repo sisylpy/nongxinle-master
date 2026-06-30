@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityDispatchStopDao">
+
+    <resultMap id="stopWithItems" type="com.nongxinle.entity.NxCommunityDispatchStopEntity">
+        <id property="nxCommunityDispatchStopId" column="nx_community_dispatch_stop_id"/>
+        <result property="nxCdsPlanId" column="nx_cds_plan_id"/>
+        <result property="nxCdsDriverRouteId" column="nx_cds_driver_route_id"/>
+        <result property="nxCdsCommunityId" column="nx_cds_community_id"/>
+        <result property="nxCdsAddressId" column="nx_cds_address_id"/>
+        <result property="nxCdsCustomerName" column="nx_cds_customer_name"/>
+        <result property="nxCdsCustomerPhone" column="nx_cds_customer_phone"/>
+        <result property="nxCdsLat" column="nx_cds_lat"/>
+        <result property="nxCdsLng" column="nx_cds_lng"/>
+        <result property="nxCdsAddressText" column="nx_cds_address_text"/>
+        <result property="nxCdsStopStatus" column="nx_cds_stop_status"/>
+        <result property="nxCdsRouteSeq" column="nx_cds_route_seq"/>
+        <result property="nxCdsServiceDate" column="nx_cds_service_date"/>
+        <result property="nxCdsServiceTime" column="nx_cds_service_time"/>
+        <result property="nxCdsAssignedDriverUserId" column="nx_cds_assigned_driver_user_id"/>
+        <result property="nxCdsOrderCount" column="nx_cds_order_count"/>
+        <result property="nxCdsConfirmedAt" column="nx_cds_confirmed_at"/>
+        <result property="nxCdsDeliveredAt" column="nx_cds_delivered_at"/>
+        <collection property="items" ofType="com.nongxinle.entity.NxCommunityDispatchStopItemEntity"
+                    column="nx_community_dispatch_stop_id"
+                    select="com.nongxinle.dao.NxCommunityDispatchStopItemDao.queryByStopId"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="stopWithItems">
+        select * from nx_community_dispatch_stop where nx_community_dispatch_stop_id = #{value}
+    </select>
+
+    <select id="queryByPlanId" resultMap="stopWithItems">
+        select * from nx_community_dispatch_stop where nx_cds_plan_id = #{value} order by nx_cds_route_seq
+    </select>
+
+    <select id="queryByDriverRouteId" resultMap="stopWithItems">
+        select * from nx_community_dispatch_stop where nx_cds_driver_route_id = #{value} order by nx_cds_route_seq
+    </select>
+
+    <select id="queryActiveByPlanId" resultMap="stopWithItems">
+        select * from nx_community_dispatch_stop
+        where nx_cds_plan_id = #{planId}
+          and nx_cds_stop_status != #{cancelledStatus}
+        order by nx_cds_route_seq
+    </select>
+
+    <select id="countActiveByDriverRouteId" resultType="int">
+        select count(*) from nx_community_dispatch_stop
+        where nx_cds_driver_route_id = #{value}
+          and nx_cds_stop_status not in ('CANCELLED', 'DELIVERED')
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityDispatchStopEntity" useGeneratedKeys="true"
+            keyProperty="nxCommunityDispatchStopId">
+        insert into nx_community_dispatch_stop
+        (nx_cds_plan_id, nx_cds_driver_route_id, nx_cds_community_id, nx_cds_address_id,
+         nx_cds_customer_name, nx_cds_customer_phone, nx_cds_lat, nx_cds_lng, nx_cds_address_text,
+         nx_cds_stop_status, nx_cds_route_seq, nx_cds_service_date, nx_cds_service_time,
+         nx_cds_assigned_driver_user_id, nx_cds_order_count, nx_cds_confirmed_at)
+        values (#{nxCdsPlanId}, #{nxCdsDriverRouteId}, #{nxCdsCommunityId}, #{nxCdsAddressId},
+                #{nxCdsCustomerName}, #{nxCdsCustomerPhone}, #{nxCdsLat}, #{nxCdsLng}, #{nxCdsAddressText},
+                #{nxCdsStopStatus}, #{nxCdsRouteSeq}, #{nxCdsServiceDate}, #{nxCdsServiceTime},
+                #{nxCdsAssignedDriverUserId}, #{nxCdsOrderCount}, #{nxCdsConfirmedAt})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCommunityDispatchStopEntity">
+        update nx_community_dispatch_stop
+        <set>
+            <if test="nxCdsDriverRouteId != null">nx_cds_driver_route_id = #{nxCdsDriverRouteId},</if>
+            <if test="nxCdsStopStatus != null">nx_cds_stop_status = #{nxCdsStopStatus},</if>
+            <if test="nxCdsRouteSeq != null">nx_cds_route_seq = #{nxCdsRouteSeq},</if>
+            <if test="nxCdsDeliveredAt != null">nx_cds_delivered_at = #{nxCdsDeliveredAt},</if>
+            <if test="nxCdsOrderCount != null">nx_cds_order_count = #{nxCdsOrderCount},</if>
+        </set>
+        where nx_community_dispatch_stop_id = #{nxCommunityDispatchStopId}
+    </update>
+</mapper>

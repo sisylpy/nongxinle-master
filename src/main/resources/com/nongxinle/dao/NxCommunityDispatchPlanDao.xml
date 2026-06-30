@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityDispatchPlanDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCommunityDispatchPlanEntity">
+        select * from nx_community_dispatch_plan where nx_community_dispatch_plan_id = #{value}
+    </select>
+
+    <select id="queryByCommunityAndRouteDate" resultType="com.nongxinle.entity.NxCommunityDispatchPlanEntity">
+        select * from nx_community_dispatch_plan
+        where nx_cdp_community_id = #{communityId}
+          and nx_cdp_route_date = #{routeDate}
+        limit 1
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityDispatchPlanEntity" useGeneratedKeys="true"
+            keyProperty="nxCommunityDispatchPlanId">
+        insert into nx_community_dispatch_plan
+        (nx_cdp_community_id, nx_cdp_route_date, nx_cdp_status, nx_cdp_depot_lat, nx_cdp_depot_lng)
+        values (#{nxCdpCommunityId}, #{nxCdpRouteDate}, #{nxCdpStatus}, #{nxCdpDepotLat}, #{nxCdpDepotLng})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCommunityDispatchPlanEntity">
+        update nx_community_dispatch_plan
+        <set>
+            <if test="nxCdpStatus != null">nx_cdp_status = #{nxCdpStatus},</if>
+            <if test="nxCdpDepotLat != null">nx_cdp_depot_lat = #{nxCdpDepotLat},</if>
+            <if test="nxCdpDepotLng != null">nx_cdp_depot_lng = #{nxCdpDepotLng},</if>
+        </set>
+        where nx_community_dispatch_plan_id = #{nxCommunityDispatchPlanId}
+    </update>
+
+    <delete id="delete">
+        delete from nx_community_dispatch_plan where nx_community_dispatch_plan_id = #{value}
+    </delete>
+</mapper>

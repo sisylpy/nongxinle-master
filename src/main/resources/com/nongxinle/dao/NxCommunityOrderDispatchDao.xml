@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityOrderDispatchDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCommunityOrderDispatchEntity">
+        select * from nx_community_order_dispatch where nx_community_order_dispatch_id = #{value}
+    </select>
+
+    <select id="queryByOrderId" resultType="com.nongxinle.entity.NxCommunityOrderDispatchEntity">
+        select * from nx_community_order_dispatch where nx_cod_community_order_id = #{value}
+    </select>
+
+    <!-- eligible：仅被“当前有效派单态”占用的订单排除；UNASSIGNED/CANCELLED 仍可重派 -->
+    <select id="queryEligibleDeliveryOrders" resultType="com.nongxinle.entity.NxCommunityOrdersEntity">
+        select o.*
+        from nx_community_orders o
+        left join nx_community_order_dispatch d
+            on d.nx_cod_community_order_id = o.nx_community_orders_id
+           and d.nx_cod_dispatch_status in ('ASSIGNED', 'LOADING', 'IN_DELIVERY', 'DELIVERED', 'EXCEPTION')
+        where o.nx_CO_community_id = #{communityId}
+          and o.nx_CO_service_type = 1
+          and o.nx_CO_status &gt;= 2
+          and o.nx_CO_status not in (5, 99)
+          and o.nx_CO_delivery_address_id is not null
+          and d.nx_community_order_dispatch_id is null
+        <if test="routeDate != null and routeDate != ''">
+            and (o.nx_CO_service_date is null or o.nx_CO_service_date = '' or o.nx_CO_service_date = #{routeDate})
+        </if>
+        order by o.nx_community_orders_id
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityOrderDispatchEntity" useGeneratedKeys="true"
+            keyProperty="nxCommunityOrderDispatchId">
+        insert into nx_community_order_dispatch
+        (nx_cod_community_order_id, nx_cod_community_id, nx_cod_dispatch_status,
+         nx_cod_dispatch_stop_id, nx_cod_assigned_driver_user_id, nx_cod_route_date)
+        values (#{nxCodCommunityOrderId}, #{nxCodCommunityId}, #{nxCodDispatchStatus},
+                #{nxCodDispatchStopId}, #{nxCodAssignedDriverUserId}, #{nxCodRouteDate})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCommunityOrderDispatchEntity">
+        update nx_community_order_dispatch
+        <set>
+            <if test="nxCodCommunityId != null">nx_cod_community_id = #{nxCodCommunityId},</if>
+            <if test="nxCodDispatchStatus != null">nx_cod_dispatch_status = #{nxCodDispatchStatus},</if>
+            <if test="nxCodDispatchStopId != null">nx_cod_dispatch_stop_id = #{nxCodDispatchStopId},</if>
+            <if test="nxCodAssignedDriverUserId != null">nx_cod_assigned_driver_user_id = #{nxCodAssignedDriverUserId},</if>
+            <if test="nxCodRouteDate != null">nx_cod_route_date = #{nxCodRouteDate},</if>
+        </set>
+        where nx_community_order_dispatch_id = #{nxCommunityOrderDispatchId}
+    </update>
+
+    <update id="updateStatusByStopId">
+        update nx_community_order_dispatch
+        set nx_cod_dispatch_status = #{dispatchStatus}
+        where nx_cod_dispatch_stop_id = #{stopId}
+    </update>
+
+    <update id="resetToUnassignedByStopId">
+        update nx_community_order_dispatch
+        set nx_cod_dispatch_status = 'UNASSIGNED',
+            nx_cod_dispatch_stop_id = null,
+            nx_cod_assigned_driver_user_id = null
+        where nx_cod_dispatch_stop_id = #{value}
+          and nx_cod_dispatch_status in ('ASSIGNED', 'LOADING')
+    </update>
+</mapper>

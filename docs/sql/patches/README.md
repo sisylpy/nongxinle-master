@@ -38,6 +38,7 @@
 | Unknown column `nx_dst_driver_route_id`（confirm 500）        | 执行 upgrade_nx_dis_route_dispatch_phase3a1.sql |
 | Unknown column `nx_ddr_route_status`（depart 500）              | 执行 upgrade_nx_dis_route_dispatch_phase3d.sql |
 | Unknown column `nx_ddr_loading_entered_at`（进入装车 / loading 页空） | 执行 upgrade_nx_dis_route_dispatch_phase3f_route_loading_gate.sql |
+| nxCommunity 商城派单 M1（6 表：plan / driver_route / stop / stop_item / order_dispatch / driver_duty） | upgrade_nx_community_dispatch_m1.sql |
 --
 -- =============================================================================
 -- Phase 2a Round 1 执行顺序（submitLine 验收，必须严格按序）
