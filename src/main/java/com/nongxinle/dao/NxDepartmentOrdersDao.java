@@ -17,6 +17,8 @@ import java.util.Map;
 
 public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity> {
 
+    List<NxDepartmentOrdersEntity> queryByOrderIds(@Param("orderIds") List<Integer> orderIds);
+
     List<NxDepartmentOrdersEntity> queryDisOrdersByParams(Map<String, Object> map);
 
     List<NxDepartmentEntity> queryDistributerTodayDepartments(Map<String, Object> map);
@@ -28,8 +30,6 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     int queryTotalByParams(Map<String, Object> map);
 
     List<NxDepartmentOrdersEntity> disQueryDisOrdersByParams(Map<String, Object> map);
-
-//    List<GbDepartmentEntity> queryDistributerTodayGbDepartments(Map<String, Object> map1);
 
     List<NxDepartmentOrdersEntity> queryDisOrdersGbByParams(Map<String, Object> map);
 
@@ -48,8 +48,6 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     Double queryDepOrdersCostSubtotal(Map<String, Object> map2);
 
     Double queryDepOrdersProfitSubtotal(Map<String, Object> map2);
-
-    List<NxRestrauntEntity> queryOrderNxRestrauntList(Map<String, Object> map1);
 
     List<GbDepartmentEntity> queryOrderGbDepartmentList(Map<String, Object> map1);
 
@@ -288,8 +286,6 @@ public interface NxDepartmentOrdersDao extends BaseDao<NxDepartmentOrdersEntity>
     Integer queryCollReplyPartnerCount(Map<String, Object> map);
 
     List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map);
-
-    NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId);
 
     List<NxDepartmentEntity> queryRetailOrderNxDepartment(Map<String, Object> map);
 

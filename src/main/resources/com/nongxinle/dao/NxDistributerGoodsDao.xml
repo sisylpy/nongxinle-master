@@ -3971,9 +3971,33 @@
             ng.nx_goods_brand as nxGoodsBrand,
             ng.nx_goods_items_per_carton as nxGoodsItemsPerCarton,
             ng.nx_goods_carton_unit as nxGoodsCartonUnit,
-            nxo.nx_department_orders_id as platformOrderId,
-            nxo.nx_DO_quantity as platformOrderQuantity,
-            nxo.nx_DO_standard as platformOrderStandard
+            (
+                select min(cast(dgP.nx_dg_will_price_one as decimal(10, 2)))
+                from nx_distributer_goods dgP
+                inner join nx_distributer ndP on ndP.nx_distributer_id = dgP.nx_dg_distributer_id
+                where dgP.nx_dg_nx_goods_id = ng.nx_goods_id
+                  and ndP.nx_distributer_sys_market_id = #{marketId}
+                  and dgP.nx_dg_nx_goods_id is not null
+                  and dgP.nx_dg_nx_goods_id != 0
+                  and dgP.nx_dg_dfg_goods_father_id is not null
+                  and (dgP.nx_dg_pull_off is null or dgP.nx_dg_pull_off = 0)
+                  and (dgP.nx_dg_goods_is_hidden is null or dgP.nx_dg_goods_is_hidden = 0)
+                  and dgP.nx_dg_will_price_one is not null and trim(dgP.nx_dg_will_price_one) != ''
+                  and dgP.nx_dg_will_price_one != '0' and dgP.nx_dg_will_price_one != '0.1'
+                  and cast(dgP.nx_dg_will_price_one as decimal(10, 2)) &gt; 0.1
+            ) as nxDgWillPrice,
+            <choose>
+                <when test="departmentId != null">
+                    nxo.nx_department_orders_id as platformOrderId,
+                    nxo.nx_DO_quantity as platformOrderQuantity,
+                    nxo.nx_DO_standard as platformOrderStandard
+                </when>
+                <otherwise>
+                    null as platformOrderId,
+                    null as platformOrderQuantity,
+                    null as platformOrderStandard
+                </otherwise>
+            </choose>
         from nx_goods ng
         inner join nx_goods f on f.nx_goods_id = ng.nx_goods_father_id
         inner join nx_goods g on g.nx_goods_id = f.nx_goods_father_id

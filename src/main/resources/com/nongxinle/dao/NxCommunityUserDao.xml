@@ -117,33 +117,6 @@
     <select id="queryUserByPhone" resultType="com.nongxinle.entity.NxCommunityUserEntity">
 		select * from nx_community_user where nx_COU_wx_phone = #{nxCouWxPhone}
 	</select>
-	<resultMap id="restraunts" type="NxRestrauntEntity">
-		<id property="nxRestrauntId" column="nx_restraunt_id"/>
-		<result property="nxRestrauntName" column="nx_restraunt_name"/>
-		<result property="nxRestrauntFatherId" column="nx_restraunt_father_id"/>
-		<result property="nxRestrauntIsGroupDep" column="nx_restraunt_is_group_dep"/>
-		<result property="nxRestrauntComId" column="nx_restraunt_com_id"/>
-		<result property="nxRestrauntType" column="nx_restraunt_type"/>
-		<result property="nxRestrauntNumber" column="nx_restraunt_number"/>
-		<result property="nxRestrauntServiceLevel" column="nx_restraunt_service_level"/>
-		<result property="nxRestrauntSettleType" column="nx_restraunt_settle_type"/>
-		<result property="nxRestrauntOweBoxNumber" column="nx_restraunt_owe_box_number"/>
-		<result property="nxRestrauntDeliveryBoxNumber" column="nx_restraunt_delivery_box_number"/>
-		<result property="nxRestrauntMinTime" column="nx_restraunt_min_time"/>
-		<result property="nxRestrauntMaxTime" column="nx_restraunt_max_time"/>
-	</resultMap>
-	<select id="queryDeliveryRestrauntsByDriverId" resultMap="restraunts">
-		select * from nx_community_user  as u
-		left join nx_restraunt as r on r.nx_restraunt_driver_id = u.nx_community_user_id
-		<where>
-			<if test="userId != null">
-				and  r.nx_restraunt_driver_id = #{userId}
-			</if>
-			and r.nx_restraunt_working_status = 3
-		</where>
-
-	</select>
-
 
     <insert id="save" parameterType="com.nongxinle.entity.NxCommunityUserEntity" useGeneratedKeys="true"
 	 keyProperty="nxCommunityUserId">

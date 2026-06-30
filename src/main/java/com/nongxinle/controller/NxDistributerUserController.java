@@ -284,25 +284,31 @@ public class NxDistributerUserController {
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiziDriverAppID() + "&secret=" +
                 myAPPIDConfig.getLiziDriverScreat() + "&js_code=" + distributerUserEntity.getNxDiuCode() +
                 "&grant_type=authorization_code";
-        // 发送请求，返回Json字符串
         String str = WeChatUtil.httpRequest(url, "GET", null);
-        // 转成Json对象 获取openid
         JSONObject jsonObject = JSONObject.parseObject(str);
 
-        // 我们需要的openid，在一个小程序中，openid是唯一的
+        if (jsonObject.containsKey("errcode")) {
+            return R.error(-1, "微信登录失败：" + jsonObject.getString("errmsg"));
+        }
+
         String openid = jsonObject.get("openid").toString();
         Map<String, Object> map = new HashMap<>();
         map.put("openId", openid);
-        map.put("roleId", 5);
-        System.out.println(map);
+        map.put("roleId", getNxDisUserDriver());
         NxDistributerUserEntity nxDistributerUserEntity = nxDistributerUserService.queryDisUserByRoleAndOpen(map);
 
-        if(nxDistributerUserEntity != null){
+        if (nxDistributerUserEntity != null) {
             Integer distributerUserId = nxDistributerUserEntity.getNxDistributerUserId();
             Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(distributerUserId);
+            Integer loginTimes = nxDistributerUserEntity.getNxDiuLoginTimes();
+            if (loginTimes == null) {
+                loginTimes = 0;
+            }
+            nxDistributerUserEntity.setNxDiuLoginTimes(loginTimes + 1);
+            nxDistributerUserService.update(nxDistributerUserEntity);
             return R.ok().put("data", stringObjectMap);
-        }else {
-            return R.error(-1,"用户不存在");
+        } else {
+            return R.error(-1, "用户不存在，请先注册");
         }
     }
 
@@ -324,7 +330,7 @@ public class NxDistributerUserController {
 
         Map<String, Object> map1 = new HashMap<>();
         map1.put("openId", openId);
-        map1.put("roleId", 5);
+        map1.put("roleId", getNxDisUserDriver());
         NxDistributerUserEntity nxDistributerUserEntity = nxDistributerUserService.queryDisUserByRoleAndOpen(map1);
         if(nxDistributerUserEntity != null){
             return R.error(-1,"请直接登陆");
@@ -336,6 +342,59 @@ public class NxDistributerUserController {
             Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(disUserId);
             return R.ok().put("data",stringObjectMap);
         }
+    }
+
+    /**
+     * 司机小程序注册（头像上传，与称重 inviteAdmin 交互一致）
+     */
+    @RequestMapping(value = "/disUserDriverSaveWithFile", produces = "text/html;charset=UTF-8")
+    @ResponseBody
+    public R disUserDriverSaveWithFile(@RequestParam("file") MultipartFile file,
+                                       @RequestParam("userName") String userName,
+                                       @RequestParam("code") String code,
+                                       @RequestParam("disId") Integer disId,
+                                       HttpSession session) {
+
+        MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiziDriverAppID() + "&secret=" +
+                myAPPIDConfig.getLiziDriverScreat() + "&js_code=" + code + "&grant_type=authorization_code";
+        String str = WeChatUtil.httpRequest(url, "GET", null);
+        JSONObject jsonObject = JSONObject.parseObject(str);
+
+        if (jsonObject.containsKey("errcode")) {
+            return R.error(-1, "微信登录失败：" + jsonObject.getString("errmsg"));
+        }
+
+        String openId = jsonObject.get("openid").toString();
+        Map<String, Object> roleMap = new HashMap<>();
+        roleMap.put("openId", openId);
+        roleMap.put("roleId", getNxDisUserDriver());
+        if (nxDistributerUserService.queryDisUserByRoleAndOpen(roleMap) != null) {
+            return R.error(-1, "用户已存在，请直接登录");
+        }
+        if (disId == null) {
+            return R.error(-1, "配送商ID不能为空");
+        }
+
+        NxDistributerUserEntity entity = new NxDistributerUserEntity();
+        entity.setNxDiuWxOpenId(openId);
+        entity.setNxDiuDistributerId(disId);
+        entity.setNxDiuAdmin(getNxDisUserDriver());
+        entity.setNxDiuPrintBillDeviceId("-1");
+        entity.setNxDiuPrintDeviceId("-1");
+        entity.setNxDiuLoginTimes(0);
+        entity.setNxDiuWxNickName(userName);
+
+        String newUploadName = "uploadImage";
+        UploadFile.upload(session, newUploadName, file);
+        String filename = file.getOriginalFilename();
+        String filePath = newUploadName + "/" + filename;
+        entity.setNxDiuWxAvartraUrl(filePath);
+        entity.setNxDiuUrlChange(1);
+        nxDistributerUserService.save(entity);
+
+        Map<String, Object> stringObjectMap = nxDistributerUserService.queryNxDisAndUserInfo(entity.getNxDistributerUserId());
+        return R.ok().put("data", stringObjectMap);
     }
 
     
@@ -400,16 +459,15 @@ public class NxDistributerUserController {
 
         List<NxWeightUserEntity> nxWeightUserEntities = nxWeightUserService.queryUsersByDistributerId(disId);
 
-//        map.put("admin",  getNxDisUserKufng());
-//        List<NxDistributerUserEntity> kufang = nxDistributerUserService.getAdminUserByParams(map);
-//        map.put("admin",  getNxDisUserDriver());
-//        List<NxDistributerUserEntity> diriver = nxDistributerUserService.getAdminUserByParams(map);
+        Map<String, Object> driverMap = new HashMap<>();
+        driverMap.put("disId", disId);
+        driverMap.put("admin", getNxDisUserDriver());
+        List<NxDistributerUserEntity> driverList = nxDistributerUserService.getAdminUserByParams(driverMap);
 
         Map<String, Object> mapRe = new HashMap<>();
         mapRe.put("zero", zeroList);
-        mapRe.put("one",  nxWeightUserEntities);
-//        mapRe.put("two",  kufang);
-//        mapRe.put("three",  diriver);
+        mapRe.put("one", nxWeightUserEntities);
+        mapRe.put("driver", driverList);
 
         return R.ok().put("data", mapRe);
     }

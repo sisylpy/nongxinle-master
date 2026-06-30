@@ -24,4 +24,12 @@ public class SandboxStopConfirmRequest {
     private List<Integer> liveOrderIds;
     /** 若已有 taskId（旧数据），可传入走 assign 快路径 */
     private Integer taskId;
+    /** 批量路线编辑：跳过每次确认后的 Today 重建 */
+    private Boolean suppressTodayResponse;
+    /** 批量路线编辑：延迟到批次结束后再刷新计划排程 */
+    private Boolean deferPlanRefresh;
+    /** todaydispatch 批次确认：统一 planId，避免 task 上过期 plan 漂移 */
+    private Integer planId;
+    /** 同一次 confirm 内复用，避免每个 stop 重复扫 nx_department_orders */
+    private List<DisRouteOrderSnapshotDto> eligibleOrderSnapshotCache;
 }

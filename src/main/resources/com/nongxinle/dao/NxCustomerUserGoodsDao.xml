@@ -175,7 +175,6 @@
         <result property="nxCosDeskId" column="nx_COS_desk_id"/>
         <result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
         <result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
-		<result property="nxCosCucId" column="nx_COS_cuc_id"/>
 		<result property="nxCosStatus" column="nx_cos_status"/>
 		<result property="nxCosRemark" column="nx_COS_remark"/>
 		<result property="nxCosType" column="nx_COS_type"/>

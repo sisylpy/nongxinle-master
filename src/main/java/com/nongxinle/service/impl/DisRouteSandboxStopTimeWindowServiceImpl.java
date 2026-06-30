@@ -11,8 +11,8 @@ import com.nongxinle.route.DisRouteDispatchOperatorResolver;
 import com.nongxinle.route.DisRouteSandboxStopKeyUtils;
 import com.nongxinle.route.DisShipmentTaskStatus;
 import com.nongxinle.service.DisRouteSandboxStopTimeWindowService;
-import com.nongxinle.service.DisRouteSandboxTodayService;
 import com.nongxinle.service.DisRouteTaskTimeWindowService;
+import com.nongxinle.todaydispatch.TodayDispatchFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ public class DisRouteSandboxStopTimeWindowServiceImpl implements DisRouteSandbox
     @Autowired
     private DisRouteTaskTimeWindowService disRouteTaskTimeWindowService;
     @Autowired
-    private DisRouteSandboxTodayService disRouteSandboxTodayService;
+    private TodayDispatchFacade todayDispatchFacade;
     @Autowired
     private DisRouteDispatchOperatorResolver disRouteDispatchOperatorResolver;
 
@@ -59,15 +59,28 @@ public class DisRouteSandboxStopTimeWindowServiceImpl implements DisRouteSandbox
             taskRequest.setEarliestDeliveryTimeS(request.getEarliestDeliveryTimeS());
             taskRequest.setLatestDeliveryTimeS(request.getLatestDeliveryTimeS());
             taskRequest.setServiceMinutes(request.getServiceMinutes());
-            taskRequest.setReason(request.getReason().trim());
+            taskRequest.setReason(normalizeReason(request.getReason()));
             taskRequest.setOperatorUserId(operatorUserId);
             disRouteTaskTimeWindowService.updateTimeWindow(deliveryStopId, taskRequest);
-        } else {
-            upsertSandboxDayOverride(disId, routeDate, depFatherId, request, operatorUserId);
         }
+        // 同一门店当日只保留一条调整：task 与 day override 表同步写入
+        upsertSandboxDayOverride(disId, routeDate, depFatherId, request, operatorUserId);
 
-        return disRouteSandboxTodayService.buildDispatchSandboxToday(
+        if ("LOADING".equalsIgnoreCase(request.getResponsePage())) {
+            return todayDispatchFacade.buildLoadingPage(
+                    disId, routeDate, batchCode, operatorUserId);
+        }
+        return todayDispatchFacade.buildDispatchPage(
                 disId, routeDate, batchCode, operatorUserId);
+    }
+
+    @Override
+    public void clearTodayOverride(Integer disId, String routeDate, Integer depFatherId) {
+        if (disId == null || depFatherId == null) {
+            return;
+        }
+        String effectiveDate = resolveRouteDate(routeDate);
+        nxDisSandboxDayTimeWindowDao.deleteByDisRouteDep(disId, effectiveDate, depFatherId);
     }
 
     private void upsertSandboxDayOverride(Integer disId,
@@ -82,7 +95,7 @@ public class DisRouteSandboxStopTimeWindowServiceImpl implements DisRouteSandbox
         entity.setNxDsdtwEarliestDeliveryTimeS(request.getEarliestDeliveryTimeS());
         entity.setNxDsdtwLatestDeliveryTimeS(request.getLatestDeliveryTimeS());
         entity.setNxDsdtwServiceMinutes(request.getServiceMinutes());
-        entity.setNxDsdtwAdjustReason(request.getReason().trim());
+        entity.setNxDsdtwAdjustReason(normalizeReason(request.getReason()));
         entity.setNxDsdtwOperatorUserId(operatorUserId);
         entity.setNxDsdtwUpdatedAt(new Date());
         nxDisSandboxDayTimeWindowDao.upsert(entity);
@@ -112,9 +125,6 @@ public class DisRouteSandboxStopTimeWindowServiceImpl implements DisRouteSandbox
         if (request.getLatestDeliveryTimeS() == null) {
             throw new IllegalArgumentException("latestDeliveryTimeS 不能为空");
         }
-        if (request.getReason() == null || request.getReason().trim().isEmpty()) {
-            throw new IllegalArgumentException("reason 不能为空");
-        }
         if (request.getEarliestDeliveryTimeS() != null
                 && request.getEarliestDeliveryTimeS() > request.getLatestDeliveryTimeS()) {
             throw new IllegalArgumentException("earliestDeliveryTimeS 不能晚于 latestDeliveryTimeS");
@@ -142,6 +152,13 @@ public class DisRouteSandboxStopTimeWindowServiceImpl implements DisRouteSandbox
             return routeDate.trim();
         }
         return formatWhatDay(0);
+    }
+
+    private static String normalizeReason(String reason) {
+        if (reason == null) {
+            return "";
+        }
+        return reason.trim();
     }
 
     private static String normalizeBatch(String batchCode) {

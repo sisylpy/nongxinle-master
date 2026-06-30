@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCustomerPromoterDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCustomerPromoterEntity">
+        select p.*, comm.nx_community_name as community_name
+        from nx_customer_promoter p
+        left join nx_community comm on p.community_id = comm.nx_community_id
+        where p.nx_customer_promoter_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxCustomerPromoterEntity">
+        select p.*, comm.nx_community_name as community_name
+        from nx_customer_promoter p
+        left join nx_community comm on p.community_id = comm.nx_community_id
+        <where>
+            <if test="communityId != null">and p.community_id = #{communityId}</if>
+            <if test="commerceId != null">and p.commerce_id = #{commerceId}</if>
+            <if test="promoterStatus != null">and p.promoter_status = #{promoterStatus}</if>
+        </where>
+        order by p.created_at desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="nxCustomerPromoterId">
+        insert into nx_customer_promoter
+        (promoter_name, promoter_phone, promoter_type, commerce_id, community_id, promoter_status,
+         cooperation_start_at, cooperation_end_at)
+        values
+        (#{promoterName}, #{promoterPhone}, #{promoterType}, #{commerceId}, #{communityId}, #{promoterStatus},
+         #{cooperationStartAt}, #{cooperationEndAt})
+    </insert>
+
+    <update id="update">
+        update nx_customer_promoter
+        <set>
+            <if test="promoterName != null">promoter_name = #{promoterName},</if>
+            <if test="promoterPhone != null">promoter_phone = #{promoterPhone},</if>
+            <if test="promoterType != null">promoter_type = #{promoterType},</if>
+            <if test="promoterStatus != null">promoter_status = #{promoterStatus},</if>
+            <if test="cooperationStartAt != null">cooperation_start_at = #{cooperationStartAt},</if>
+            <if test="cooperationEndAt != null">cooperation_end_at = #{cooperationEndAt},</if>
+            <if test="disabledAt != null">disabled_at = #{disabledAt},</if>
+            <if test="disabledReason != null">disabled_reason = #{disabledReason},</if>
+        </set>
+        where nx_customer_promoter_id = #{nxCustomerPromoterId}
+    </update>
+
+    <select id="countQualifiedReferrals" resultType="int">
+        select count(*) from nx_customer_user_referral
+        where source_owner_type = 'EXTERNAL_PROMOTER'
+          and source_owner_id = #{value}
+          and qualification_status = 'QUALIFIED'
+    </select>
+
+    <delete id="delete">
+        delete from nx_customer_promoter where nx_customer_promoter_id = #{value}
+    </delete>
+</mapper>

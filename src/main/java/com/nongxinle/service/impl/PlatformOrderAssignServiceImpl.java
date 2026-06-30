@@ -1,8 +1,10 @@
 package com.nongxinle.service.impl;
 
+import com.nongxinle.dao.GbDepartmentDao;
 import com.nongxinle.dao.NxDepartmentNxGoodsDefaultDao;
 import com.nongxinle.dao.NxDepartmentOrdersDao;
 import com.nongxinle.dao.NxPlatformOrderAssignDao;
+import com.nongxinle.dao.NxPlatformOrderFulfillmentDao;
 import com.nongxinle.dao.NxSupplierSwitchLogDao;
 import com.nongxinle.dto.platform.PlatformAssignRequest;
 import com.nongxinle.dto.platform.PlatformAssignResponse;
@@ -16,8 +18,10 @@ import com.nongxinle.dto.platform.PlatformPendingCustomerItem;
 import com.nongxinle.dto.platform.PlatformPendingGroupRow;
 import com.nongxinle.dto.platform.PlatformPendingRequest;
 import com.nongxinle.dto.platform.PlatformPendingResponse;
+import com.nongxinle.dto.platform.PlatformUnassignRequest;
 import com.nongxinle.dto.platform.PlatformSubmitLineRequest;
 import com.nongxinle.dto.platform.PlatformSubmitLineResponse;
+import com.nongxinle.entity.GbDepartmentEntity;
 import com.nongxinle.entity.NxDepartmentDisGoodsEntity;
 import com.nongxinle.entity.NxDepartmentEntity;
 import com.nongxinle.entity.NxDepartmentNxGoodsDefaultEntity;
@@ -79,11 +83,15 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
     @Autowired
     private NxDepartmentService nxDepartmentService;
     @Autowired
+    private GbDepartmentDao gbDepartmentDao;
+    @Autowired
     private NxGoodsService nxGoodsService;
     @Autowired
     private NxDepartmentOrdersDao nxDepartmentOrdersDao;
     @Autowired
     private NxPlatformOrderAssignDao nxPlatformOrderAssignDao;
+    @Autowired
+    private NxPlatformOrderFulfillmentDao nxPlatformOrderFulfillmentDao;
     @Autowired
     private NxDepartmentNxGoodsDefaultDao nxDepartmentNxGoodsDefaultDao;
     @Autowired
@@ -165,6 +173,8 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
             item.setDepartmentName(row.getDepartmentName());
             item.setDepartmentOrderCode(row.getDepartmentOrderCode());
             item.setPendingLineCount(row.getPendingLineCount());
+            item.setAssignedLineCount(row.getAssignedLineCount());
+            item.setTotalLineCount(row.getTotalLineCount());
             item.setOrderIds(parseOrderIds(row.getOrderIdsCsv()));
             item.setFirstPendingAt(row.getFirstPendingAt());
             item.setLastPendingAt(row.getLastPendingAt());
@@ -213,8 +223,10 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
             line.setRemark(row.getRemark());
             line.setAssignStatus(row.getAssignStatus());
             line.setAssignMode(row.getAssignMode());
+            line.setAssignSource(row.getAssignSource());
             line.setAssignedDistributerId(row.getAssignedDistributerId());
             line.setAssignedDisGoodsId(row.getAssignedDisGoodsId());
+            line.setAssignedDistributerName(row.getAssignedDistributerName());
             line.setOrderPrice(row.getOrderPrice());
             line.setOrderSubtotal(row.getOrderSubtotal());
             if (row.getDefaultId() != null) {
@@ -237,7 +249,7 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         PlatformOrderDetailResponse response = new PlatformOrderDetailResponse();
         response.setMarketId(request.getMarketId());
         response.setDepartmentId(request.getDepartmentId());
-        response.setDepartmentName(department != null ? department.getNxDepartmentName() : null);
+        response.setDepartmentName(resolveDepartmentDisplayName(request.getDepartmentId(), department));
         response.setApplyDate(applyDate);
         response.setLines(lines);
         response.setDistributerSummary(new ArrayList<>(summaryMap.values()));
@@ -290,6 +302,8 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         switchLogId = sideEffect.switchLogId;
 
         poa.setNxPoaAssignStatus(PlatformConstants.ASSIGN_STATUS_ASSIGNED);
+        poa.setNxPoaAssignSource(PlatformConstants.ASSIGN_SOURCE_PLATFORM_MANUAL);
+        poa.setNxPoaSourceType(PlatformConstants.SOURCE_TYPE_NX);
         poa.setNxPoaAssignedDistributerId(targetDisId);
         poa.setNxPoaAssignedDisGoodsId(disGoods.getNxDistributerGoodsId());
         poa.setNxPoaAssignedPrice(parsePriceDecimal(order.getNxDoPrice()));
@@ -317,6 +331,78 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         response.setSwitchLogId(switchLogId);
         response.setFulfillmentStatus(fulfillment.getNxPofFulfillmentStatus());
         response.setCostMissing(fulfillment.getNxPofCostMissing());
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public PlatformAssignResponse unassign(PlatformUnassignRequest request) {
+        validateUnassignRequest(request);
+
+        NxPlatformOrderAssignEntity poa = nxPlatformOrderAssignDao.queryByOrderId(request.getOrderId());
+        if (poa == null) {
+            throw new IllegalArgumentException("平台分配记录不存在: orderId=" + request.getOrderId());
+        }
+        if (!request.getMarketId().equals(poa.getNxPoaMarketId())) {
+            throw new IllegalArgumentException("marketId 与平台分配记录不匹配");
+        }
+        if (!PlatformConstants.ASSIGN_MODE_PLATFORM.equals(poa.getNxPoaAssignMode())) {
+            throw new IllegalArgumentException("非平台订单，不可取消分配");
+        }
+        if (!PlatformConstants.ASSIGN_STATUS_ASSIGNED.equals(poa.getNxPoaAssignStatus())) {
+            throw new IllegalArgumentException("订单不是 ASSIGNED 状态，当前: " + poa.getNxPoaAssignStatus());
+        }
+        if (PlatformConstants.ASSIGN_SOURCE_CUSTOMER_SELECTED_SUPPLIER.equals(poa.getNxPoaAssignSource())) {
+            throw new IllegalArgumentException("客户自选配送商订单不可取消分配");
+        }
+
+        NxDepartmentOrdersEntity order = nxDepartmentOrdersDao.queryObject(request.getOrderId());
+        if (order == null) {
+            throw new IllegalArgumentException("订单不存在: orderId=" + request.getOrderId());
+        }
+
+        assertUnassignAllowed(order, request.getOrderId());
+
+        Integer previousDisId = poa.getNxPoaAssignedDistributerId();
+        Integer previousDisGoodsId = poa.getNxPoaAssignedDisGoodsId();
+        appendUnassignSwitchLog(request, poa, order, previousDisId, previousDisGoodsId);
+
+        nxPlatformOrderFulfillmentDao.deleteByOrderId(request.getOrderId());
+
+        Integer nxGoodsId = poa.getNxPoaNxGoodsId() != null ? poa.getNxPoaNxGoodsId() : order.getNxDoNxGoodsId();
+        Integer nxGoodsFatherId = order.getNxDoNxGoodsFatherId();
+        if (nxGoodsId != null) {
+            NxGoodsEntity goods = nxGoodsService.queryObject(nxGoodsId);
+            if (goods != null && goods.getNxGoodsFatherId() != null) {
+                nxGoodsFatherId = goods.getNxGoodsFatherId();
+            }
+        }
+
+        nxDepartmentOrdersDao.resetPlatformOrderAfterUnassign(
+                request.getOrderId(),
+                platformDistributerIdResolver.resolvePendingDistributerId(request.getMarketId()),
+                nxGoodsId,
+                nxGoodsFatherId,
+                getNxDepOrderBuyStatusUnPurchase());
+
+        nxPlatformOrderAssignDao.resetAssignToPending(poa.getNxPoaId());
+
+        poa = nxPlatformOrderAssignDao.queryByOrderId(request.getOrderId());
+        order = nxDepartmentOrdersDao.queryObject(request.getOrderId());
+
+        PlatformAssignResponse response = new PlatformAssignResponse();
+        response.setOrderId(order.getNxDepartmentOrdersId());
+        response.setPlatformAssignId(poa.getNxPoaId());
+        response.setAssignStatus(poa.getNxPoaAssignStatus());
+        response.setNxDoDistributerId(order.getNxDoDistributerId());
+        response.setNxDoDisGoodsId(order.getNxDoDisGoodsId());
+        response.setNxDoCollaborativeNxDisId(order.getNxDoCollaborativeNxDisId());
+        response.setNxDoPrice(order.getNxDoPrice());
+        response.setNxDoExpectPrice(order.getNxDoExpectPrice());
+        response.setNxDoPriceDifferent(order.getNxDoPriceDifferent());
+        response.setNxDoSubtotal(order.getNxDoSubtotal());
+        logger.info("[unassign] orderId={} restored to PENDING, previousDisId={} previousDisGoodsId={}",
+                request.getOrderId(), previousDisId, previousDisGoodsId);
         return response;
     }
 
@@ -593,6 +679,60 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
                 + ", finalNxDoPrice=" + trace.finalNxDoPrice + "]");
     }
 
+    private void validateUnassignRequest(PlatformUnassignRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("请求体不能为空");
+        }
+        if (request.getMarketId() == null) {
+            throw new IllegalArgumentException("marketId 不能为空");
+        }
+        if (request.getOrderId() == null) {
+            throw new IllegalArgumentException("orderId 不能为空");
+        }
+        if (request.getOperatorId() == null) {
+            throw new IllegalArgumentException("operatorId 不能为空");
+        }
+    }
+
+    private void assertUnassignAllowed(NxDepartmentOrdersEntity order, Integer orderId) {
+        if (order.getNxDoPurchaseStatus() != null && order.getNxDoPurchaseStatus() >= 4) {
+            throw new IllegalArgumentException("订单已出库，无法取消分配");
+        }
+        NxPlatformOrderFulfillmentEntity fulfillment = nxPlatformOrderFulfillmentDao.queryByOrderId(orderId);
+        if (fulfillment == null) {
+            return;
+        }
+        String status = fulfillment.getNxPofFulfillmentStatus();
+        if (PlatformConstants.FULFILLMENT_STATUS_ASSIGNED.equals(status)) {
+            return;
+        }
+        throw new IllegalArgumentException("订单已进入履约流程，无法取消分配: " + status);
+    }
+
+    private void appendUnassignSwitchLog(
+            PlatformUnassignRequest request,
+            NxPlatformOrderAssignEntity poa,
+            NxDepartmentOrdersEntity order,
+            Integer previousDisId,
+            Integer previousDisGoodsId) {
+        NxSupplierSwitchLogEntity log = new NxSupplierSwitchLogEntity();
+        log.setNxSslMarketId(request.getMarketId());
+        log.setNxSslDepartmentId(poa.getNxPoaDepartmentId());
+        log.setNxSslNxGoodsId(order.getNxDoNxGoodsId());
+        log.setNxSslOrderId(order.getNxDepartmentOrdersId());
+        log.setNxSslFromDistributerId(previousDisId != null ? previousDisId : -1);
+        log.setNxSslFromDisGoodsId(previousDisGoodsId != null ? previousDisGoodsId : -1);
+        log.setNxSslToDistributerId(-1);
+        log.setNxSslToDisGoodsId(-1);
+        log.setNxSslSwitchScope(PlatformConstants.SWITCH_SCOPE_ORDER_ONLY);
+        log.setNxSslReasonCode("UNASSIGN");
+        log.setNxSslReasonNote(StringUtils.isNotBlank(request.getReasonNote())
+                ? request.getReasonNote().trim() : "取消分配");
+        log.setNxSslSnapshotAction("NONE");
+        log.setNxSslOperatorId(request.getOperatorId());
+        nxSupplierSwitchLogDao.save(log);
+    }
+
     private void validateAssignRequest(PlatformAssignRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("请求体不能为空");
@@ -625,6 +765,20 @@ public class PlatformOrderAssignServiceImpl implements PlatformOrderAssignServic
         if (md == null) {
             throw new IllegalArgumentException("客户不属于该市场或未激活");
         }
+    }
+
+    private String resolveDepartmentDisplayName(Integer departmentId, NxDepartmentEntity nxDepartment) {
+        if (nxDepartment != null && StringUtils.isNotBlank(nxDepartment.getNxDepartmentName())) {
+            return nxDepartment.getNxDepartmentName().trim();
+        }
+        if (departmentId == null) {
+            return null;
+        }
+        GbDepartmentEntity gbDepartment = gbDepartmentDao.queryObject(departmentId);
+        if (gbDepartment != null && StringUtils.isNotBlank(gbDepartment.getGbDepartmentName())) {
+            return gbDepartment.getGbDepartmentName().trim();
+        }
+        return null;
     }
 
     private void accumulateDistributerSummary(

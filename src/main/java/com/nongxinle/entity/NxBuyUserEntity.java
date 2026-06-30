@@ -58,7 +58,6 @@ public class NxBuyUserEntity implements Serializable {
 	private String nxBuyType;
 
 	private NxDistributerEntity nxDistributerEntity;
-	private NxRetailerEntity nxRetailerEntity;
 	private NxDistributerUserEntity nxDistributerUserEntity;
 
 	private List<NxDistributerPurchaseBatchEntity> nxDisPurBatchEntityList;

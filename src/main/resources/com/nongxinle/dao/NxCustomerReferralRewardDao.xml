@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerReferralRewardDao">
+
+    <resultMap id="rewardDetail" type="com.nongxinle.entity.NxCustomerReferralRewardEntity">
+        <id property="nxCustomerReferralRewardId" column="nx_customer_referral_reward_id"/>
+        <result property="beneficiaryType" column="beneficiary_type"/>
+        <result property="beneficiaryUserId" column="beneficiary_user_id"/>
+        <result property="triggerUserId" column="trigger_user_id"/>
+        <result property="referralId" column="referral_id"/>
+        <result property="communityId" column="community_id"/>
+        <result property="rewardLevel" column="reward_level"/>
+        <result property="rewardKind" column="reward_kind"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="couponTemplateId" column="coupon_template_id"/>
+        <result property="couponNameSnapshot" column="coupon_name_snapshot"/>
+        <result property="couponPriceSnapshot" column="coupon_price_snapshot"/>
+        <result property="couponOriginalPriceSnapshot" column="coupon_original_price_snapshot"/>
+        <result property="couponWordsSnapshot" column="coupon_words_snapshot"/>
+        <result property="couponStartDateSnapshot" column="coupon_start_date_snapshot"/>
+        <result property="couponStopDateSnapshot" column="coupon_stop_date_snapshot"/>
+        <result property="couponValidityTypeSnapshot" column="coupon_validity_type_snapshot"/>
+        <result property="couponValidityDaysSnapshot" column="coupon_validity_days_snapshot"/>
+        <result property="pointsAmount" column="points_amount"/>
+        <result property="status" column="status"/>
+        <result property="userCouponId" column="user_coupon_id"/>
+        <result property="claimedAt" column="claimed_at"/>
+        <result property="createdAt" column="created_at"/>
+        <association property="triggerUser" javaType="com.nongxinle.entity.NxCustomerUserEntity">
+            <id property="nxCuUserId" column="trigger_nx_CU_user_id"/>
+            <result property="nxCuWxNickName" column="trigger_nx_CU_wx_nick_name"/>
+            <result property="nxCuWxAvatarUrl" column="trigger_nx_CU_wx_avatar_url"/>
+            <result property="nxCuJoinDate" column="trigger_nx_CU_join_date"/>
+        </association>
+        <association property="couponTemplate" javaType="com.nongxinle.entity.NxCommunityCouponEntity">
+            <id property="nxCommunityCouponId" column="tpl_nx_community_coupon_id"/>
+            <result property="nxCommunityCouponName" column="tpl_nx_community_coupon_name"/>
+            <result property="discountAmount" column="tpl_discount_amount"/>
+            <result property="nxCpWords" column="tpl_nx_cp_words"/>
+            <result property="nxCpStartDate" column="tpl_nx_cp_start_date"/>
+            <result property="nxCpStopDate" column="tpl_nx_cp_stop_date"/>
+            <result property="nxCpFilePath" column="tpl_nx_cp_file_path"/>
+            <result property="nxCpBizPurpose" column="tpl_nx_cp_biz_purpose"/>
+            <result property="nxCpClaimStrategy" column="tpl_nx_cp_claim_strategy"/>
+        </association>
+    </resultMap>
+
+    <select id="queryObject" resultMap="rewardDetail">
+        select rw.*,
+               tu.nx_CU_user_id as trigger_nx_CU_user_id,
+               tu.nx_CU_wx_nick_name as trigger_nx_CU_wx_nick_name,
+               tu.nx_CU_wx_avatar_url as trigger_nx_CU_wx_avatar_url,
+               tu.nx_CU_join_date as trigger_nx_CU_join_date,
+               tpl.nx_community_coupon_id as tpl_nx_community_coupon_id,
+               tpl.nx_community_coupon_name as tpl_nx_community_coupon_name,
+               tpl.discount_amount as tpl_discount_amount,
+               tpl.nx_cp_words as tpl_nx_cp_words,
+               tpl.nx_cp_start_date as tpl_nx_cp_start_date,
+               tpl.nx_cp_stop_date as tpl_nx_cp_stop_date,
+               tpl.nx_cp_file_path as tpl_nx_cp_file_path,
+               tpl.nx_cp_biz_purpose as tpl_nx_cp_biz_purpose,
+               tpl.nx_cp_claim_strategy as tpl_nx_cp_claim_strategy
+        from nx_customer_referral_reward rw
+        left join nx_customer_user tu on tu.nx_CU_user_id = rw.trigger_user_id
+        left join nx_community_coupon tpl on tpl.nx_community_coupon_id = rw.coupon_template_id
+        where rw.nx_customer_referral_reward_id = #{value}
+    </select>
+
+    <select id="queryObjectForUpdate" resultType="com.nongxinle.entity.NxCustomerReferralRewardEntity">
+        select * from nx_customer_referral_reward where nx_customer_referral_reward_id = #{value} for update
+    </select>
+
+    <select id="queryByUniqueKey" resultType="com.nongxinle.entity.NxCustomerReferralRewardEntity">
+        select * from nx_customer_referral_reward
+        where beneficiary_user_id = #{beneficiaryUserId}
+          and trigger_user_id = #{triggerUserId}
+          and rule_id = #{ruleId}
+        limit 1
+    </select>
+
+    <select id="queryPendingRewardIds" resultType="java.lang.Integer">
+        select nx_customer_referral_reward_id
+        from nx_customer_referral_reward
+        where beneficiary_user_id = #{value}
+          and status = 0
+        order by created_at asc
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCustomerReferralRewardEntity"
+            useGeneratedKeys="true" keyProperty="nxCustomerReferralRewardId">
+        insert into nx_customer_referral_reward
+        (beneficiary_type, beneficiary_user_id, trigger_user_id, referral_id, community_id, reward_level, reward_kind,
+         rule_id, coupon_template_id, coupon_name_snapshot, coupon_price_snapshot,
+         coupon_original_price_snapshot, coupon_words_snapshot, coupon_start_date_snapshot,
+         coupon_stop_date_snapshot, coupon_validity_type_snapshot, coupon_validity_days_snapshot,
+         points_amount, status)
+        values
+        (#{beneficiaryType}, #{beneficiaryUserId}, #{triggerUserId}, #{referralId}, #{communityId}, #{rewardLevel}, #{rewardKind},
+         #{ruleId}, #{couponTemplateId}, #{couponNameSnapshot}, #{couponPriceSnapshot},
+         #{couponOriginalPriceSnapshot}, #{couponWordsSnapshot}, #{couponStartDateSnapshot},
+         #{couponStopDateSnapshot}, #{couponValidityTypeSnapshot}, #{couponValidityDaysSnapshot},
+         #{pointsAmount}, #{status})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCustomerReferralRewardEntity">
+        update nx_customer_referral_reward
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="userCouponId != null">user_coupon_id = #{userCouponId},</if>
+            <if test="claimedAt != null">claimed_at = #{claimedAt}</if>
+        </set>
+        where nx_customer_referral_reward_id = #{nxCustomerReferralRewardId}
+    </update>
+
+    <select id="countByBeneficiaryAndStatus" resultType="int">
+        select count(*) from nx_customer_referral_reward
+        <where>
+            <if test="beneficiaryUserId != null">
+                and beneficiary_user_id = #{beneficiaryUserId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryList" resultMap="rewardDetail">
+        select rw.*,
+               tu.nx_CU_user_id as trigger_nx_CU_user_id,
+               tu.nx_CU_wx_nick_name as trigger_nx_CU_wx_nick_name,
+               tu.nx_CU_wx_avatar_url as trigger_nx_CU_wx_avatar_url,
+               tu.nx_CU_join_date as trigger_nx_CU_join_date,
+               tpl.nx_community_coupon_id as tpl_nx_community_coupon_id,
+               tpl.nx_community_coupon_name as tpl_nx_community_coupon_name,
+               tpl.discount_amount as tpl_discount_amount,
+               tpl.nx_cp_words as tpl_nx_cp_words,
+               tpl.nx_cp_start_date as tpl_nx_cp_start_date,
+               tpl.nx_cp_stop_date as tpl_nx_cp_stop_date,
+               tpl.nx_cp_file_path as tpl_nx_cp_file_path,
+               tpl.nx_cp_biz_purpose as tpl_nx_cp_biz_purpose,
+               tpl.nx_cp_claim_strategy as tpl_nx_cp_claim_strategy
+        from nx_customer_referral_reward rw
+        left join nx_customer_user tu on tu.nx_CU_user_id = rw.trigger_user_id
+        left join nx_community_coupon tpl on tpl.nx_community_coupon_id = rw.coupon_template_id
+        <where>
+            <if test="beneficiaryUserId != null">
+                and rw.beneficiary_user_id = #{beneficiaryUserId}
+            </if>
+            <if test="triggerUserId != null">
+                and rw.trigger_user_id = #{triggerUserId}
+            </if>
+            <if test="status != null">
+                and rw.status = #{status}
+            </if>
+            <if test="rewardLevel != null">
+                and rw.reward_level = #{rewardLevel}
+            </if>
+        </where>
+        order by rw.created_at desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryPendingByBeneficiary" resultMap="rewardDetail">
+        select rw.*,
+               tu.nx_CU_user_id as trigger_nx_CU_user_id,
+               tu.nx_CU_wx_nick_name as trigger_nx_CU_wx_nick_name,
+               tu.nx_CU_wx_avatar_url as trigger_nx_CU_wx_avatar_url,
+               tu.nx_CU_join_date as trigger_nx_CU_join_date,
+               tpl.nx_community_coupon_id as tpl_nx_community_coupon_id,
+               tpl.nx_community_coupon_name as tpl_nx_community_coupon_name,
+               tpl.discount_amount as tpl_discount_amount,
+               tpl.nx_cp_words as tpl_nx_cp_words,
+               tpl.nx_cp_start_date as tpl_nx_cp_start_date,
+               tpl.nx_cp_stop_date as tpl_nx_cp_stop_date,
+               tpl.nx_cp_file_path as tpl_nx_cp_file_path,
+               tpl.nx_cp_biz_purpose as tpl_nx_cp_biz_purpose,
+               tpl.nx_cp_claim_strategy as tpl_nx_cp_claim_strategy
+        from nx_customer_referral_reward rw
+        left join nx_customer_user tu on tu.nx_CU_user_id = rw.trigger_user_id
+        left join nx_community_coupon tpl on tpl.nx_community_coupon_id = rw.coupon_template_id
+        where rw.beneficiary_user_id = #{value}
+          and rw.status = 0
+        order by rw.created_at desc
+    </select>
+
+    <delete id="deleteBySourceOwner">
+        delete rw from nx_customer_referral_reward rw
+        inner join nx_customer_user_referral r on r.nx_customer_user_referral_id = rw.referral_id
+        where r.source_owner_type = #{sourceOwnerType}
+          and r.source_owner_id = #{sourceOwnerId}
+    </delete>
+
+    <delete id="deleteByPromoter">
+        delete rw from nx_customer_referral_reward rw
+        inner join nx_customer_user_referral r on r.nx_customer_user_referral_id = rw.referral_id
+        where (r.source_owner_type = #{sourceOwnerType} and r.source_owner_id = #{sourceOwnerId})
+           or r.promoter_id = #{sourceOwnerId}
+    </delete>
+
+</mapper>

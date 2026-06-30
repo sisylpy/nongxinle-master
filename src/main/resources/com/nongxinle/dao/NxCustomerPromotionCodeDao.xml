@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCustomerPromotionCodeDao">
+
+    <sql id="promotionCodeOwnerJoinSelect">
+        select c.*,
+               case c.owner_type
+                   when 'EXTERNAL_PROMOTER' then p.promoter_name
+                   when 'CUSTOMER_USER' then cu.nx_CU_wx_nick_name
+                   when 'COMMUNITY_USER' then cou.nx_COU_wx_nick_name
+               end as owner_name,
+               case c.owner_type
+                   when 'EXTERNAL_PROMOTER' then p.promoter_phone
+                   when 'CUSTOMER_USER' then cu.nx_CU_wx_phone_number
+                   when 'COMMUNITY_USER' then cou.nx_COU_wx_phone
+               end as owner_phone,
+               comm.nx_community_name as community_name
+        from nx_customer_promotion_code c
+        left join nx_customer_promoter p
+            on c.owner_type = 'EXTERNAL_PROMOTER' and c.owner_id = p.nx_customer_promoter_id
+        left join nx_customer_user cu
+            on c.owner_type = 'CUSTOMER_USER' and c.owner_id = cu.nx_CU_user_id
+        left join nx_community_user cou
+            on c.owner_type = 'COMMUNITY_USER' and c.owner_id = cou.nx_community_user_id
+        left join nx_community comm on c.community_id = comm.nx_community_id
+    </sql>
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCustomerPromotionCodeEntity">
+        <include refid="promotionCodeOwnerJoinSelect"/>
+        where c.nx_customer_promotion_code_id = #{value}
+    </select>
+
+    <select id="queryByCode" resultType="com.nongxinle.entity.NxCustomerPromotionCodeEntity">
+        select * from nx_customer_promotion_code where promotion_code = #{value} limit 1
+    </select>
+
+    <select id="queryActiveByOwner" resultType="com.nongxinle.entity.NxCustomerPromotionCodeEntity">
+        select * from nx_customer_promotion_code
+        where owner_type = #{ownerType}
+          and owner_id = #{ownerId}
+          and code_status = 'ACTIVE'
+        order by created_at desc
+        limit 1
+    </select>
+
+    <select id="queryLatestByOwner" resultType="com.nongxinle.entity.NxCustomerPromotionCodeEntity">
+        select * from nx_customer_promotion_code
+        where owner_type = #{ownerType}
+          and owner_id = #{ownerId}
+        order by field(code_status, 'ACTIVE', 'SUSPENDED', 'DISABLED'), created_at desc
+        limit 1
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxCustomerPromotionCodeEntity">
+        <include refid="promotionCodeOwnerJoinSelect"/>
+        <where>
+            <if test="ownerType != null">and c.owner_type = #{ownerType}</if>
+            <if test="ownerId != null">and c.owner_id = #{ownerId}</if>
+            <if test="communityId != null">and c.community_id = #{communityId}</if>
+            <if test="commerceId != null">and c.commerce_id = #{commerceId}</if>
+            <if test="codeStatus != null">and c.code_status = #{codeStatus}</if>
+            <if test="promotionCode != null and promotionCode != ''">
+                and c.promotion_code like concat('%', #{promotionCode}, '%')
+            </if>
+            <if test="ownerName != null and ownerName != ''">
+                and (
+                    (c.owner_type = 'EXTERNAL_PROMOTER' and p.promoter_name like concat('%', #{ownerName}, '%'))
+                    or (c.owner_type = 'CUSTOMER_USER' and cu.nx_CU_wx_nick_name like concat('%', #{ownerName}, '%'))
+                    or (c.owner_type = 'COMMUNITY_USER' and cou.nx_COU_wx_nick_name like concat('%', #{ownerName}, '%'))
+                )
+            </if>
+        </where>
+        order by c.created_at desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="nxCustomerPromotionCodeId">
+        insert into nx_customer_promotion_code
+        (promotion_code, owner_type, owner_id, commerce_id, community_id, code_status,
+         valid_start_at, valid_end_at, reward_rule_id)
+        values
+        (#{promotionCode}, #{ownerType}, #{ownerId}, #{commerceId}, #{communityId}, #{codeStatus},
+         #{validStartAt}, #{validEndAt}, #{rewardRuleId})
+    </insert>
+
+    <update id="update">
+        update nx_customer_promotion_code
+        <set>
+            <if test="codeStatus != null">code_status = #{codeStatus},</if>
+            <if test="validStartAt != null">valid_start_at = #{validStartAt},</if>
+            <if test="validEndAt != null">valid_end_at = #{validEndAt},</if>
+            <if test="disabledAt != null">disabled_at = #{disabledAt},</if>
+            <if test="disabledReason != null">disabled_reason = #{disabledReason},</if>
+        </set>
+        where nx_customer_promotion_code_id = #{nxCustomerPromotionCodeId}
+    </update>
+
+    <update id="incrementUseCount">
+        update nx_customer_promotion_code set use_count = use_count + 1 where nx_customer_promotion_code_id = #{value}
+    </update>
+
+    <update id="incrementValidRegisterCount">
+        update nx_customer_promotion_code set valid_register_count = valid_register_count + 1
+        where nx_customer_promotion_code_id = #{value}
+    </update>
+
+    <update id="incrementInvalidRegisterCount">
+        update nx_customer_promotion_code set invalid_register_count = invalid_register_count + 1
+        where nx_customer_promotion_code_id = #{value}
+    </update>
+
+    <update id="disableAllActiveByOwner">
+        update nx_customer_promotion_code
+        set code_status = 'DISABLED',
+            disabled_at = #{disabledAt},
+            disabled_reason = #{disabledReason}
+        where owner_type = #{ownerType}
+          and owner_id = #{ownerId}
+          and code_status = 'ACTIVE'
+    </update>
+
+    <select id="countActiveByOwner" resultType="int">
+        select count(*) from nx_customer_promotion_code
+        where owner_type = #{ownerType}
+          and owner_id = #{ownerId}
+          and code_status = 'ACTIVE'
+    </select>
+
+    <delete id="deleteByOwner">
+        delete from nx_customer_promotion_code
+        where owner_type = #{ownerType}
+          and owner_id = #{ownerId}
+    </delete>
+</mapper>

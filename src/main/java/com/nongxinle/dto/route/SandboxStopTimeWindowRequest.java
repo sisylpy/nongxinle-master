@@ -22,4 +22,6 @@ public class SandboxStopTimeWindowRequest {
     private Integer serviceMinutes;
     private String reason;
     private Integer operatorUserId;
+    /** 前端回刷页：LOADING 时返回装车 pageViewModel */
+    private String responsePage;
 }

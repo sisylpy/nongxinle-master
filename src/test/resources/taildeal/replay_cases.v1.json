@@ -1,0 +1,36 @@
+[
+  {
+    "id": "replay_01_litchi_publish",
+    "rawText": "福建黑叶荔枝还有20箱，90一箱，2箱起订，每人限购2箱，11点结束，发首页",
+    "expectFlowState": "DRAFT_READY",
+    "expectFields": {
+      "goodsName": "福建黑叶荔枝",
+      "dealPrice": 90,
+      "totalStock": 20,
+      "minOrderQty": 2,
+      "limitPerCustomer": 2
+    }
+  },
+  {
+    "id": "replay_02_missing_price",
+    "rawText": "黑叶荔枝还有20箱，11点结束",
+    "expectFlowState": "NEED_CLARIFY",
+    "expectMissing": ["dealPrice"]
+  },
+  {
+    "id": "replay_03_market_close",
+    "rawText": "口蘑10箱，50一箱，闭市前卖完",
+    "defaultMarketCloseTime": "12:00",
+    "expectFlowState": "DRAFT_READY"
+  },
+  {
+    "id": "replay_04_save_not_publish",
+    "confirmAction": "CONFIRM_SAVE",
+    "expectNxCaStatus": 1
+  },
+  {
+    "id": "replay_05_publish_visible",
+    "confirmAction": "CONFIRM_PUBLISH",
+    "expectNxCaStatus": 0
+  }
+]

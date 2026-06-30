@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtMemberJoinSourceDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberJoinSourceEntity">
+        select * from ygt_member_join_source where ygt_member_join_source_id = #{value}
+    </select>
+    <select id="queryByCustomerAndShareCode" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberJoinSourceEntity">
+        select * from ygt_member_join_source
+        where ygt_mjs_customer_user_id = #{customerUserId}
+        and ygt_mjs_source_share_code = #{shareCode}
+        limit 1
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberJoinSourceEntity">
+        select * from ygt_member_join_source
+        <where>
+            <if test="campaignId != null">and ygt_mjs_source_campaign_id = #{campaignId}</if>
+            <if test="wecomGroupId != null">and ygt_mjs_source_wecom_group_id = #{wecomGroupId}</if>
+            <if test="customerUserId != null">and ygt_mjs_customer_user_id = #{customerUserId}</if>
+            <if test="bindStatus != null and bindStatus != ''">and ygt_mjs_bind_status = #{bindStatus}</if>
+        </where>
+        order by ygt_member_join_source_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">
+        select count(*) from ygt_member_join_source
+        <where>
+            <if test="campaignId != null">and ygt_mjs_source_campaign_id = #{campaignId}</if>
+            <if test="wecomGroupId != null">and ygt_mjs_source_wecom_group_id = #{wecomGroupId}</if>
+            <if test="customerUserId != null">and ygt_mjs_customer_user_id = #{customerUserId}</if>
+            <if test="bindStatus != null and bindStatus != ''">and ygt_mjs_bind_status = #{bindStatus}</if>
+        </where>
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtMemberJoinSourceEntity" useGeneratedKeys="true" keyProperty="ygtMemberJoinSourceId">
+        insert into ygt_member_join_source
+        (ygt_mjs_customer_user_id, ygt_mjs_open_id, ygt_mjs_union_id, ygt_mjs_wecom_external_user_id,
+         ygt_mjs_wecom_user_id, ygt_mjs_phone_snapshot,
+         ygt_mjs_nickname_snapshot, ygt_mjs_source_campaign_id, ygt_mjs_source_wecom_group_id,
+         ygt_mjs_source_share_code, ygt_mjs_inviter_customer_user_id, ygt_mjs_bind_status,
+         ygt_mjs_bind_source, ygt_mjs_match_method, ygt_mjs_create_time, ygt_mjs_update_time)
+        values
+        (#{ygtMjsCustomerUserId}, #{ygtMjsOpenId}, #{ygtMjsUnionId}, #{ygtMjsWecomExternalUserId},
+         #{ygtMjsWecomUserId}, #{ygtMjsPhoneSnapshot},
+         #{ygtMjsNicknameSnapshot}, #{ygtMjsSourceCampaignId}, #{ygtMjsSourceWecomGroupId},
+         #{ygtMjsSourceShareCode}, #{ygtMjsInviterCustomerUserId}, #{ygtMjsBindStatus},
+         #{ygtMjsBindSource}, #{ygtMjsMatchMethod}, #{ygtMjsCreateTime}, #{ygtMjsUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtMemberJoinSourceEntity">
+        update ygt_member_join_source
+        <set>
+            <if test="ygtMjsOpenId != null">ygt_mjs_open_id = #{ygtMjsOpenId},</if>
+            <if test="ygtMjsUnionId != null">ygt_mjs_union_id = #{ygtMjsUnionId},</if>
+            <if test="ygtMjsWecomExternalUserId != null">ygt_mjs_wecom_external_user_id = #{ygtMjsWecomExternalUserId},</if>
+            <if test="ygtMjsWecomUserId != null">ygt_mjs_wecom_user_id = #{ygtMjsWecomUserId},</if>
+            <if test="ygtMjsPhoneSnapshot != null">ygt_mjs_phone_snapshot = #{ygtMjsPhoneSnapshot},</if>
+            <if test="ygtMjsNicknameSnapshot != null">ygt_mjs_nickname_snapshot = #{ygtMjsNicknameSnapshot},</if>
+            <if test="ygtMjsBindStatus != null">ygt_mjs_bind_status = #{ygtMjsBindStatus},</if>
+            <if test="ygtMjsMatchMethod != null">ygt_mjs_match_method = #{ygtMjsMatchMethod},</if>
+            ygt_mjs_update_time = now()
+        </set>
+        where ygt_member_join_source_id = #{ygtMemberJoinSourceId}
+    </update>
+    <delete id="delete">delete from ygt_member_join_source where ygt_member_join_source_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_member_join_source where ygt_member_join_source_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

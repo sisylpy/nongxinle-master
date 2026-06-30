@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityPosPaymentDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCommunityPosPaymentEntity">
+        select * from nx_community_pos_payment where nx_pos_payment_id = #{value}
+    </select>
+
+    <select id="queryByOutTradeNo" resultType="com.nongxinle.entity.NxCommunityPosPaymentEntity">
+        select * from nx_community_pos_payment where nx_pp_out_trade_no = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxCommunityPosPaymentEntity">
+        select * from nx_community_pos_payment
+        <where>
+            <if test="orderId != null">and nx_pp_order_id = #{orderId}</if>
+            <if test="status != null">and nx_pp_status = #{status}</if>
+        </where>
+        order by nx_pos_payment_id desc
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityPosPaymentEntity"
+            useGeneratedKeys="true" keyProperty="nxPosPaymentId">
+        insert into nx_community_pos_payment
+        (`nx_pp_order_id`, `nx_pp_community_id`, `nx_pp_pay_channel`, `nx_pp_out_trade_no`,
+         `nx_pp_transaction_id`, `nx_pp_amount`, `nx_pp_status`, `nx_pp_qr_code_url`,
+         `nx_pp_operator_id`, `nx_pp_paid_at`, `nx_pp_notify_raw`, `nx_pp_create_at`, `nx_pp_expire_at`)
+        values
+        (#{nxPpOrderId}, #{nxPpCommunityId}, #{nxPpPayChannel}, #{nxPpOutTradeNo},
+         #{nxPpTransactionId}, #{nxPpAmount}, #{nxPpStatus}, #{nxPpQrCodeUrl},
+         #{nxPpOperatorId}, #{nxPpPaidAt}, #{nxPpNotifyRaw}, #{nxPpCreateAt}, #{nxPpExpireAt})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCommunityPosPaymentEntity">
+        update nx_community_pos_payment
+        <set>
+            <if test="nxPpTransactionId != null">`nx_pp_transaction_id` = #{nxPpTransactionId},</if>
+            <if test="nxPpStatus != null">`nx_pp_status` = #{nxPpStatus},</if>
+            <if test="nxPpQrCodeUrl != null">`nx_pp_qr_code_url` = #{nxPpQrCodeUrl},</if>
+            <if test="nxPpPaidAt != null">`nx_pp_paid_at` = #{nxPpPaidAt},</if>
+            <if test="nxPpNotifyRaw != null">`nx_pp_notify_raw` = #{nxPpNotifyRaw},</if>
+        </set>
+        where nx_pos_payment_id = #{nxPosPaymentId}
+    </update>
+</mapper>

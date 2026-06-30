@@ -11,8 +11,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.nongxinle.entity.NxCommunityOrdersEntity;
 import com.nongxinle.entity.Value;
-import com.nongxinle.service.NxCustomerUserService;
-import com.nongxinle.service.NxCommunityOrdersService;
+import com.nongxinle.community.customer.service.NxCustomerUserService;
+import com.nongxinle.community.order.service.NxCommunityOrdersService;
 import com.nongxinle.utils.HttpUtils;
 import com.nongxinle.utils.MyAPPIDConfig;
 import com.nongxinle.utils.R;
@@ -48,6 +48,13 @@ public class WxSendController {
     @ResponseBody
     public String grainServiceClub( ) {
         return "bb7a0c73e61112c45ebd6ad3743bb05e";
+    }
+
+    /** 企业微信可信域名校验（需 Nginx 80/443 根路径可访问） */
+    @RequestMapping(value = "/WW_verify_Vha8a9CuTEfZff67.txt")
+    @ResponseBody
+    public String wwVerifyDomain() {
+        return "Vha8a9CuTEfZff67";
     }
 
 

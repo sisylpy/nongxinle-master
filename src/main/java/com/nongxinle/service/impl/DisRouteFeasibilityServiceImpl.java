@@ -51,11 +51,6 @@ public class DisRouteFeasibilityServiceImpl implements DisRouteFeasibilityServic
         return evaluate(planId, true);
     }
 
-    @Override
-    public RouteFeasibilityResult preview(Integer planId) {
-        return evaluate(planId, false);
-    }
-
     private RouteFeasibilityResult evaluate(Integer planId, boolean persist) {
         NxDisRoutePlanEntity plan = nxDisRoutePlanDao.queryObject(planId);
         if (plan == null) {

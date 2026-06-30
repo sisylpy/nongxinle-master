@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtCampaignGoodsDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtCampaignGoodsEntity">
+        select * from ygt_campaign_goods where ygt_campaign_goods_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtCampaignGoodsEntity">
+        select * from ygt_campaign_goods
+        <where><if test="campaignId != null">and ygt_cg_campaign_id = #{campaignId}</if></where>
+        order by ygt_cg_sort asc, ygt_campaign_goods_id asc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_campaign_goods</select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtCampaignGoodsEntity" useGeneratedKeys="true" keyProperty="ygtCampaignGoodsId">
+        insert into ygt_campaign_goods
+        (ygt_cg_campaign_id, ygt_cg_nx_community_goods_id, ygt_cg_goods_name_snapshot,
+         ygt_cg_standard_snapshot, ygt_cg_unit_snapshot, ygt_cg_price_snapshot, ygt_cg_sort, ygt_cg_status, ygt_cg_create_time, ygt_cg_update_time)
+        values
+        (#{ygtCgCampaignId}, #{ygtCgNxCommunityGoodsId}, #{ygtCgGoodsNameSnapshot},
+         #{ygtCgStandardSnapshot}, #{ygtCgUnitSnapshot}, #{ygtCgPriceSnapshot}, #{ygtCgSort}, #{ygtCgStatus}, #{ygtCgCreateTime}, #{ygtCgUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtCampaignGoodsEntity">
+        update ygt_campaign_goods
+        <set>
+            <if test="ygtCgGoodsNameSnapshot != null">ygt_cg_goods_name_snapshot = #{ygtCgGoodsNameSnapshot},</if>
+            <if test="ygtCgStandardSnapshot != null">ygt_cg_standard_snapshot = #{ygtCgStandardSnapshot},</if>
+            <if test="ygtCgUnitSnapshot != null">ygt_cg_unit_snapshot = #{ygtCgUnitSnapshot},</if>
+            <if test="ygtCgPriceSnapshot != null">ygt_cg_price_snapshot = #{ygtCgPriceSnapshot},</if>
+            <if test="ygtCgSort != null">ygt_cg_sort = #{ygtCgSort},</if>
+            <if test="ygtCgStatus != null">ygt_cg_status = #{ygtCgStatus},</if>
+            ygt_cg_update_time = now()
+        </set>
+        where ygt_campaign_goods_id = #{ygtCampaignGoodsId}
+    </update>
+    <delete id="delete">delete from ygt_campaign_goods where ygt_campaign_goods_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_campaign_goods where ygt_campaign_goods_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

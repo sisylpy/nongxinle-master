@@ -13,7 +13,6 @@ public class NxCommunityTypeUtils {
 
     public final static Integer Nx_COMMUNITY_GOODS_SELL_TYPE_ALL_TIME = 1; //全时段
     public final static Integer Nx_COMMUNITY_GOODS_SELL_TYPE_PART_TIME = 2; //部分时段
-    public final static Integer Nx_COMMUNITY_GOODS_SELL_TYPE_COUPON = 3; //优惠卷商品
 
     public final static Integer NX_COMMUNITY_ORDER_STATUS_PINDAN_NEW = -1;  //新拼单
     public final static Integer NX_COMMUNITY_ORDER_STATUS_NEW = 0;  //新订单
@@ -65,9 +64,6 @@ public class NxCommunityTypeUtils {
     }
     public static Integer getNxCommunityGoodsSellTypePratTime() {
         return Nx_COMMUNITY_GOODS_SELL_TYPE_PART_TIME;
-    }
-    public static Integer getNxCommunityGoodsSellTypeCoupon() {
-        return Nx_COMMUNITY_GOODS_SELL_TYPE_COUPON;
     }
     public static Integer getNxCommunityGoodsPromotionNone() {
         return NX_COMMUNITY_GOODS_PROMOTION_TYPE_NONE;

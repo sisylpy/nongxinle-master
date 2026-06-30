@@ -2,5 +2,10 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Eshop/coupon" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Eshop/xiaguan" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Eshop/xiguanAdmin-wrong" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/jcJieDan" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/jingcaiMarket" vcs="Git" />
   </component>
 </project>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtOrderCandidateDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateEntity">
+        select * from ygt_order_candidate where ygt_order_candidate_id = #{value}
+    </select>
+    <select id="queryObjectForUpdate" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateEntity">
+        select * from ygt_order_candidate where ygt_order_candidate_id = #{id} for update
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateEntity">
+        select * from ygt_order_candidate
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_oc_corp_id = #{corpId}</if>
+            <if test="groupId != null">and ygt_oc_group_id = #{groupId}</if>
+            <if test="campaignId != null">and ygt_oc_campaign_id = #{campaignId}</if>
+            <if test="chatId != null and chatId != ''">and ygt_oc_chat_id = #{chatId}</if>
+            <if test="status != null and status != ''">and ygt_oc_status = #{status}</if>
+        </where>
+        order by ygt_order_candidate_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">
+        select count(*) from ygt_order_candidate
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_oc_corp_id = #{corpId}</if>
+            <if test="groupId != null">and ygt_oc_group_id = #{groupId}</if>
+            <if test="campaignId != null">and ygt_oc_campaign_id = #{campaignId}</if>
+            <if test="chatId != null and chatId != ''">and ygt_oc_chat_id = #{chatId}</if>
+            <if test="status != null and status != ''">and ygt_oc_status = #{status}</if>
+        </where>
+    </select>
+    <select id="queryByMessageId" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateEntity">
+        select * from ygt_order_candidate where ygt_oc_message_id = #{messageId} limit 1
+    </select>
+    <select id="countByCampaignAndStatus" resultType="int">
+        select count(*) from ygt_order_candidate
+        where ygt_oc_campaign_id = #{campaignId}
+        and ygt_oc_status = #{status}
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateEntity" useGeneratedKeys="true" keyProperty="ygtOrderCandidateId">
+        insert into ygt_order_candidate
+        (ygt_oc_corp_id, ygt_oc_group_id, ygt_oc_chat_id, ygt_oc_message_id, ygt_oc_campaign_id,
+         ygt_oc_from_user, ygt_oc_external_user_id, ygt_oc_customer_name_snapshot, ygt_oc_member_identifier,
+         ygt_oc_msg_time, ygt_oc_original_text, ygt_oc_parse_status, ygt_oc_status,
+         ygt_oc_review_remark, ygt_oc_reviewer_user_id, ygt_oc_reviewed_time, ygt_oc_create_time, ygt_oc_update_time)
+        values
+        (#{ygtOcCorpId}, #{ygtOcGroupId}, #{ygtOcChatId}, #{ygtOcMessageId}, #{ygtOcCampaignId},
+         #{ygtOcFromUser}, #{ygtOcExternalUserId}, #{ygtOcCustomerNameSnapshot}, #{ygtOcMemberIdentifier},
+         #{ygtOcMsgTime}, #{ygtOcOriginalText}, #{ygtOcParseStatus}, #{ygtOcStatus},
+         #{ygtOcReviewRemark}, #{ygtOcReviewerUserId}, #{ygtOcReviewedTime}, #{ygtOcCreateTime}, #{ygtOcUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateEntity">
+        update ygt_order_candidate
+        <set>
+            <if test="ygtOcCampaignId != null">ygt_oc_campaign_id = #{ygtOcCampaignId},</if>
+            <if test="ygtOcExternalUserId != null">ygt_oc_external_user_id = #{ygtOcExternalUserId},</if>
+            <if test="ygtOcCustomerNameSnapshot != null">ygt_oc_customer_name_snapshot = #{ygtOcCustomerNameSnapshot},</if>
+            <if test="ygtOcMemberIdentifier != null">ygt_oc_member_identifier = #{ygtOcMemberIdentifier},</if>
+            <if test="ygtOcParseStatus != null">ygt_oc_parse_status = #{ygtOcParseStatus},</if>
+            <if test="ygtOcStatus != null">ygt_oc_status = #{ygtOcStatus},</if>
+            <if test="ygtOcReviewRemark != null">ygt_oc_review_remark = #{ygtOcReviewRemark},</if>
+            <if test="ygtOcReviewerUserId != null">ygt_oc_reviewer_user_id = #{ygtOcReviewerUserId},</if>
+            <if test="ygtOcReviewedTime != null">ygt_oc_reviewed_time = #{ygtOcReviewedTime},</if>
+            ygt_oc_update_time = now()
+        </set>
+        where ygt_order_candidate_id = #{ygtOrderCandidateId}
+    </update>
+    <delete id="delete">delete from ygt_order_candidate where ygt_order_candidate_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_order_candidate where ygt_order_candidate_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

@@ -14,13 +14,12 @@ import java.util.Map;
 import com.alibaba.fastjson.JSONObject;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.community.purchase.service.NxCommunityPurchaseBatchService;
 import com.nongxinle.utils.MyAPPIDConfig;
 import com.nongxinle.utils.WeChatUtil;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
@@ -31,8 +30,6 @@ import static com.nongxinle.utils.DateUtils.formatWhatDay;
 public class NxSellUserController {
 	@Autowired
 	private NxSellUserService nxSellUserService;
-	@Autowired
-	private NxRetailerPurchaseBatchService nxRetPurchaseBatchService;
 	@Autowired
 	private NxDistributerPurchaseBatchService nxDisPurchaseBatchService;
 	@Autowired
@@ -191,18 +188,7 @@ public class NxSellUserController {
 		nxSellUserService.save(sellUserEntity);
 
 		if(sellUserEntity.getNxSellerType().equals("ret")){
-			//改batch selluser
-			Integer sellUserId = sellUserEntity.getNxSellUserId();
-			Integer sellerSellBatchId = sellUserEntity.getNxSellerSellBatchId();
-			Map<String, Object> map = new HashMap<>();
-			map.put("batchId", sellerSellBatchId);
-			NxRetailerPurchaseBatchEntity nxRetailerPurchaseBatchEntity = nxRetPurchaseBatchService.queryObject(sellerSellBatchId);
-			nxRetailerPurchaseBatchEntity.setNxRpbSellUserId(sellUserId);
-			nxRetPurchaseBatchService.update(nxRetailerPurchaseBatchEntity);
-
-			NxRetailerPurchaseBatchEntity purchaseBatchEntities = nxRetPurchaseBatchService.queryRetPurBatchDetail(map);
-
-			return R.ok().put("data", purchaseBatchEntities);
+			return R.error(-1, "零售商销售功能已下线");
 		}
 
 //		if(sellUserEntity.getNxSellerType().equals("gbDis")){

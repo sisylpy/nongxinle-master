@@ -24,7 +24,7 @@ public class WeChatUtil {
 
 
     public static String httpRequest(String requestUrl,String requestMethod,String output){
-        System.out.println("requestUrl-====" + requestUrl);
+        // 不再打印完整 URL，避免泄露 corpsecret/access_token 等敏感参数
         try{
             URL url = new URL(requestUrl);
             HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();

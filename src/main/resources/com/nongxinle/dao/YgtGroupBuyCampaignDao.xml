@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtGroupBuyCampaignDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupBuyCampaignEntity">
+        select * from ygt_group_buy_campaign where ygt_group_buy_campaign_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupBuyCampaignEntity">
+        select * from ygt_group_buy_campaign
+        <where>
+            <if test="groupId != null">and ygt_gbc_group_id = #{groupId}</if>
+            <if test="status != null and status != ''">and ygt_gbc_status = #{status}</if>
+            <if test="corpId != null and corpId != ''">and ygt_gbc_corp_id = #{corpId}</if>
+        </where>
+        order by ygt_group_buy_campaign_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">
+        select count(*) from ygt_group_buy_campaign
+        <where>
+            <if test="groupId != null">and ygt_gbc_group_id = #{groupId}</if>
+            <if test="status != null and status != ''">and ygt_gbc_status = #{status}</if>
+            <if test="corpId != null and corpId != ''">and ygt_gbc_corp_id = #{corpId}</if>
+        </where>
+    </select>
+    <select id="queryActiveByGroupId" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupBuyCampaignEntity">
+        select * from ygt_group_buy_campaign
+        where ygt_gbc_group_id = #{groupId}
+        and ygt_gbc_status = 'OPEN'
+        order by ygt_group_buy_campaign_id desc
+        limit 1
+    </select>
+    <select id="queryOpenByGroupId" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupBuyCampaignEntity">
+        select * from ygt_group_buy_campaign
+        where ygt_gbc_group_id = #{groupId}
+        and ygt_gbc_status = 'OPEN'
+        order by ygt_group_buy_campaign_id desc
+        limit 1
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtGroupBuyCampaignEntity" useGeneratedKeys="true" keyProperty="ygtGroupBuyCampaignId">
+        insert into ygt_group_buy_campaign
+        (ygt_gbc_corp_id, ygt_gbc_group_id, ygt_gbc_nx_community_id, ygt_gbc_title, ygt_gbc_status,
+         ygt_gbc_open_time, ygt_gbc_close_time, ygt_gbc_pickup_time, ygt_gbc_remark,
+         ygt_gbc_create_user_id, ygt_gbc_create_time, ygt_gbc_update_time)
+        values
+        (#{ygtGbcCorpId}, #{ygtGbcGroupId}, #{ygtGbcNxCommunityId}, #{ygtGbcTitle}, #{ygtGbcStatus},
+         #{ygtGbcOpenTime}, #{ygtGbcCloseTime}, #{ygtGbcPickupTime}, #{ygtGbcRemark},
+         #{ygtGbcCreateUserId}, #{ygtGbcCreateTime}, #{ygtGbcUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtGroupBuyCampaignEntity">
+        update ygt_group_buy_campaign
+        <set>
+            <if test="ygtGbcTitle != null">ygt_gbc_title = #{ygtGbcTitle},</if>
+            <if test="ygtGbcStatus != null">ygt_gbc_status = #{ygtGbcStatus},</if>
+            <if test="ygtGbcOpenTime != null">ygt_gbc_open_time = #{ygtGbcOpenTime},</if>
+            <if test="ygtGbcCloseTime != null">ygt_gbc_close_time = #{ygtGbcCloseTime},</if>
+            <if test="ygtGbcPickupTime != null">ygt_gbc_pickup_time = #{ygtGbcPickupTime},</if>
+            <if test="ygtGbcRemark != null">ygt_gbc_remark = #{ygtGbcRemark},</if>
+            ygt_gbc_update_time = now()
+        </set>
+        where ygt_group_buy_campaign_id = #{ygtGroupBuyCampaignId}
+    </update>
+    <delete id="delete">delete from ygt_group_buy_campaign where ygt_group_buy_campaign_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_group_buy_campaign where ygt_group_buy_campaign_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

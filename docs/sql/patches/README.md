@@ -30,7 +30,14 @@
 | Phase 2a：固定顺序配送时间窗排程结果字段                        | upgrade_nx_dis_route_schedule_phase2.sql |
 | Phase 2b-1：配送批次 + 可执行性状态                             | upgrade_nx_dis_route_dispatch_phase2b1.sql |
 | Phase 2b-5：客户调度参数 + 当日送达窗口快照 / override          | upgrade_nx_dis_route_dispatch_phase2b5.sql |
-| **一键执行 Phase 2a + 2b-1 patch（本地）**                    | `scripts/apply-route-dispatch-phase2-patches.sh` |
+| **Phase 3a.1：task 承担 delivery stop 执行字段**               | upgrade_nx_dis_route_dispatch_phase3a1.sql |
+| **Phase 3 动态沙盘（设计，Java 为主；表结构可选 route_kind）**   | 见 `docs/nxPlatform/Route-Dispatch-Sandbox-Design.md` |
+| **清理旧 simulate 沙盘残留（SIMULATED task/plan/stop）**        | cleanup_nx_dis_route_sandbox_stale_data.sql |
+| **一键执行 Phase 2a ~ 3a.1 patch（本地）**                    | `scripts/apply-route-dispatch-phase2-patches.sh` |
+| **Phase 3D：司机路线确认出发（route 级 depart）**               | upgrade_nx_dis_route_dispatch_phase3d.sql |
+| Unknown column `nx_dst_driver_route_id`（confirm 500）        | 执行 upgrade_nx_dis_route_dispatch_phase3a1.sql |
+| Unknown column `nx_ddr_route_status`（depart 500）              | 执行 upgrade_nx_dis_route_dispatch_phase3d.sql |
+| Unknown column `nx_ddr_loading_entered_at`（进入装车 / loading 页空） | 执行 upgrade_nx_dis_route_dispatch_phase3f_route_loading_gate.sql |
 --
 -- =============================================================================
 -- Phase 2a Round 1 执行顺序（submitLine 验收，必须严格按序）

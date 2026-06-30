@@ -97,7 +97,6 @@ public class NxCommunityPurchaseGoodsEntity implements Serializable, Comparable 
 
 	private NxCommunityGoodsEntity nxCommunityGoodsEntity;
 
-	private List<NxRestrauntOrdersEntity> nxRestrauntOrdersEntityList;
 	private List<NxCommunityOrdersSubEntity> nxCommunityOrdersSubEntities;
 
 	@Override
@@ -123,13 +122,12 @@ public class NxCommunityPurchaseGoodsEntity implements Serializable, Comparable 
 				Objects.equals(nxCpgApplyDate, that.nxCpgApplyDate) &&
 				Objects.equals(nxCpgPurchaseDate, that.nxCpgPurchaseDate) &&
 				Objects.equals(nxCpgInputType, that.nxCpgInputType) &&
-				Objects.equals(nxCommunityGoodsEntity, that.nxCommunityGoodsEntity) &&
-				Objects.equals(nxRestrauntOrdersEntityList, that.nxRestrauntOrdersEntityList);
+				Objects.equals(nxCommunityGoodsEntity, that.nxCommunityGoodsEntity);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(nxCommunityPurchaseGoodsId, nxCpgComGoodsId, nxCpgComGoodsFatherId, nxCpgQuantity, nxCpgStandard, nxCpgStatus, nxCpgCommunityId, nxCpgPurchaseType, nxCpgTime, nxCpgBatchId, nxCpgBuyUserId, nxCpgBuyPrice, nxCpgBuyQuantity, nxCpgOrdersAmount, nxCpgTypeAddUserId, nxCpgApplyDate, nxCpgPurchaseDate, nxCpgInputType, nxCommunityGoodsEntity, nxRestrauntOrdersEntityList);
+		return Objects.hash(nxCommunityPurchaseGoodsId, nxCpgComGoodsId, nxCpgComGoodsFatherId, nxCpgQuantity, nxCpgStandard, nxCpgStatus, nxCpgCommunityId, nxCpgPurchaseType, nxCpgTime, nxCpgBatchId, nxCpgBuyUserId, nxCpgBuyPrice, nxCpgBuyQuantity, nxCpgOrdersAmount, nxCpgTypeAddUserId, nxCpgApplyDate, nxCpgPurchaseDate, nxCpgInputType, nxCommunityGoodsEntity);
 	}
 
 	@Override

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtWecomGroupDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtWecomGroupEntity">
+        select * from ygt_wecom_group where ygt_wecom_group_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtWecomGroupEntity">
+        select * from ygt_wecom_group
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_wg_corp_id = #{corpId}</if>
+            <if test="status != null">and ygt_wg_status = #{status}</if>
+            <if test="nxCommunityId != null">and ygt_wg_nx_community_id = #{nxCommunityId}</if>
+        </where>
+        order by ygt_wecom_group_id desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*) from ygt_wecom_group
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_wg_corp_id = #{corpId}</if>
+            <if test="status != null">and ygt_wg_status = #{status}</if>
+            <if test="nxCommunityId != null">and ygt_wg_nx_community_id = #{nxCommunityId}</if>
+        </where>
+    </select>
+
+    <select id="queryByCorpAndChatId" resultType="com.nongxinle.community.yunguotuan.entity.YgtWecomGroupEntity">
+        select * from ygt_wecom_group
+        where ygt_wg_corp_id = #{corpId}
+        and ygt_wg_chat_id = #{chatId}
+        limit 1
+    </select>
+
+    <select id="queryEnabledGroups" resultType="com.nongxinle.community.yunguotuan.entity.YgtWecomGroupEntity">
+        select * from ygt_wecom_group
+        where ygt_wg_status = 1
+        <if test="corpId != null and corpId != ''">and ygt_wg_corp_id = #{corpId}</if>
+        order by ygt_wecom_group_id desc
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtWecomGroupEntity" useGeneratedKeys="true" keyProperty="ygtWecomGroupId">
+        insert into ygt_wecom_group
+        (
+            ygt_wg_corp_id, ygt_wg_chat_id, ygt_wg_chat_name, ygt_wg_owner_user_id,
+            ygt_wg_member_count, ygt_wg_status, ygt_wg_nx_community_id,
+            ygt_wg_leader_user_id, ygt_wg_admin_user_id, ygt_wg_source,
+            ygt_wg_create_time, ygt_wg_update_time
+        )
+        values
+        (
+            #{ygtWgCorpId}, #{ygtWgChatId}, #{ygtWgChatName}, #{ygtWgOwnerUserId},
+            #{ygtWgMemberCount}, #{ygtWgStatus}, #{ygtWgNxCommunityId},
+            #{ygtWgLeaderUserId}, #{ygtWgAdminUserId}, #{ygtWgSource},
+            #{ygtWgCreateTime}, #{ygtWgUpdateTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtWecomGroupEntity">
+        update ygt_wecom_group
+        <set>
+            <if test="ygtWgChatName != null">ygt_wg_chat_name = #{ygtWgChatName},</if>
+            <if test="ygtWgOwnerUserId != null">ygt_wg_owner_user_id = #{ygtWgOwnerUserId},</if>
+            <if test="ygtWgMemberCount != null">ygt_wg_member_count = #{ygtWgMemberCount},</if>
+            <if test="ygtWgStatus != null">ygt_wg_status = #{ygtWgStatus},</if>
+            <if test="ygtWgNxCommunityId != null">ygt_wg_nx_community_id = #{ygtWgNxCommunityId},</if>
+            <if test="ygtWgLeaderUserId != null">ygt_wg_leader_user_id = #{ygtWgLeaderUserId},</if>
+            <if test="ygtWgAdminUserId != null">ygt_wg_admin_user_id = #{ygtWgAdminUserId},</if>
+            <if test="ygtWgSource != null">ygt_wg_source = #{ygtWgSource},</if>
+            ygt_wg_update_time = now()
+        </set>
+        where ygt_wecom_group_id = #{ygtWecomGroupId}
+    </update>
+
+    <update id="updateStatus">
+        update ygt_wecom_group set ygt_wg_status = #{status}, ygt_wg_update_time = now()
+        where ygt_wecom_group_id = #{id}
+    </update>
+
+    <delete id="delete">delete from ygt_wecom_group where ygt_wecom_group_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_wecom_group where ygt_wecom_group_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

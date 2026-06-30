@@ -87,6 +87,16 @@
         where nx_ddr_id = #{nxDdrId}
     </update>
 
+    <update id="reopenForRedispatch">
+        update nx_dis_driver_route
+        set nx_ddr_route_status = #{routeStatus},
+            nx_ddr_actual_depart_at = null,
+            nx_ddr_depart_operator_user_id = null,
+            nx_ddr_depart_remark = null,
+            nx_ddr_dispatch_eligible = 1
+        where nx_ddr_id = #{driverRouteId}
+    </update>
+
     <delete id="deleteByPlanId">
         delete from nx_dis_driver_route where nx_ddr_plan_id = #{value}
     </delete>

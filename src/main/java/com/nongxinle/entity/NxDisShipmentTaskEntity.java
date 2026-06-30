@@ -74,6 +74,8 @@ public class NxDisShipmentTaskEntity implements Serializable {
 
     /** MyBatis 动态更新：置 true 时清空 open_key */
     private Boolean clearOpenKey;
+    /** MyBatis 动态更新：置 true 时清空送达/异常字段（重新出发或重新分派） */
+    private Boolean clearDeliveryCompletion;
 
     private List<NxDisShipmentTaskItemEntity> items;
 

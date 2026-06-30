@@ -1,6 +1,7 @@
 package com.nongxinle.dao;
 
 import com.nongxinle.entity.NxPlatformOrderFulfillmentEntity;
+import org.apache.ibatis.annotations.Param;
 
 public interface NxPlatformOrderFulfillmentDao {
 
@@ -13,4 +14,8 @@ public interface NxPlatformOrderFulfillmentDao {
     void save(NxPlatformOrderFulfillmentEntity entity);
 
     int updateFulfillment(NxPlatformOrderFulfillmentEntity entity);
+
+    int revertReadyForPickupToAssigned(@Param("orderId") Integer orderId, @Param("operatorId") Integer operatorId);
+
+    int deleteByOrderId(Integer orderId);
 }

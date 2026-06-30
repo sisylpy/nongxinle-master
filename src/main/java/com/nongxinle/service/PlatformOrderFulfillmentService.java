@@ -32,4 +32,9 @@ public interface PlatformOrderFulfillmentService {
      * 现有出库完成后：PLATFORM+ASSIGNED 平台单同步 fulfillment → READY_FOR_PICKUP（幂等）。
      */
     void syncReadyForPickupAfterOutboundFinish(NxDepartmentOrdersEntity order, Integer operatorId);
+
+    /**
+     * 配送商取消出库：READY_FOR_PICKUP 回退 ASSIGNED（已取货及之后状态不回退）。
+     */
+    void revertReadyForPickupAfterOutboundCancel(NxDepartmentOrdersEntity order, Integer operatorId);
 }

@@ -162,7 +162,6 @@
         <result property="nxCosWeighUserId" column="nx_COS_weigh_user_id"/>
         <result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
 		<result property="nxCosHuaxianSubtotal" column="nx_cos_huaxian_subtotal"/>
-		<result property="nxCosCucId" column="nx_cos_cuc_id"/>
 		<result property="nxCosStatus" column="nx_cos_status"/>
 		<result property="nxCosRemark" column="nx_COS_remark"/>
 		<result property="nxCosType" column="nx_COS_type"/>
@@ -638,7 +637,6 @@
          `nx_COS_service_time`,
          `nx_COS_print_time`,
          `nx_COS_print_log`,
-         `nx_COS_cuc_id`,
          `nx_COS_huaxian_subtotal`,
          `nx_COS_splicing_orders_id`,
          `nx_COS_commerce_id`,
@@ -677,7 +675,6 @@
                 #{nxCosServiceTime},
                 #{nxCosPrintTime},
                 #{nxCosPrintLog},
-                #{nxCosCucId},
                 #{nxCosHuaxianSubtotal},
                 #{nxCosSplicingOrdersId},
                 #{nxCosCommerceId},
@@ -720,7 +717,6 @@
             <if test="nxCosServiceTime != null and nxCosServiceTime != ''">`nx_COS_service_time` = #{nxCosServiceTime},</if>
             <if test="nxCosPrintTime != null">`nx_COS_print_time` = #{nxCosPrintTime},</if>
             <if test="nxCosPrintLog != null">`nx_COS_print_log` = #{nxCosPrintLog},</if>
-            <if test="nxCosCucId != null">`nx_COS_cuc_id` = #{nxCosCucId},</if>
             <if test="nxCosSplicingOrdersId != null">`nx_COS_splicing_orders_id` = #{nxCosSplicingOrdersId},</if>
             <if test="nxCosHuaxianSubtotal != null">`nx_COS_huaxian_subtotal` = #{nxCosHuaxianSubtotal},</if>
             <if test="nxCosCommerceId != null">`nx_COS_commerce_id` = #{nxCosCommerceId},</if>

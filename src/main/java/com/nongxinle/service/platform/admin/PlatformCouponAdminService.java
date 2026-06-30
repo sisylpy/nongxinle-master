@@ -1,5 +1,7 @@
 package com.nongxinle.service.platform.admin;
 
+import com.nongxinle.dto.platform.admin.coupon.PlatformCouponNxGoodsCategoryOptionDto;
+import com.nongxinle.dto.platform.admin.coupon.PlatformCouponStoreOptionDto;
 import com.nongxinle.dto.platform.admin.coupon.PlatformCouponTemplateListRequest;
 import com.nongxinle.dto.platform.admin.coupon.PlatformCouponTemplateSaveRequest;
 import com.nongxinle.dto.platform.admin.coupon.PlatformCouponTemplateUpdateRequest;
@@ -27,4 +29,8 @@ public interface PlatformCouponAdminService {
     List<PlatformStoreCouponEntity> listStoreCoupons(PlatformStoreCouponListRequest request);
 
     PlatformStoreCouponEntity voidStoreCoupon(Integer pscId);
+
+    List<PlatformCouponStoreOptionDto> listStoreOptions();
+
+    List<PlatformCouponNxGoodsCategoryOptionDto> listNxGoodsCategoryOptions();
 }

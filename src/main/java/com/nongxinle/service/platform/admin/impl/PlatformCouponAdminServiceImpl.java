@@ -1,18 +1,24 @@
 package com.nongxinle.service.platform.admin.impl;
 
+import com.nongxinle.dao.NxMarketDepartmentDao;
 import com.nongxinle.dao.PlatformCouponTemplateDao;
 import com.nongxinle.dao.PlatformCouponUsageLogDao;
 import com.nongxinle.dao.PlatformStoreCouponDao;
+import com.nongxinle.dto.platform.admin.coupon.PlatformCouponNxGoodsCategoryOptionDto;
+import com.nongxinle.dto.platform.admin.coupon.PlatformCouponStoreOptionDto;
 import com.nongxinle.dto.platform.admin.coupon.PlatformCouponTemplateListRequest;
 import com.nongxinle.dto.platform.admin.coupon.PlatformCouponTemplateSaveRequest;
 import com.nongxinle.dto.platform.admin.coupon.PlatformCouponTemplateUpdateRequest;
 import com.nongxinle.dto.platform.admin.coupon.PlatformStoreCouponIssueRequest;
 import com.nongxinle.dto.platform.admin.coupon.PlatformStoreCouponListRequest;
 import com.nongxinle.entity.GbDepartmentEntity;
+import com.nongxinle.entity.NxGoodsEntity;
+import com.nongxinle.entity.NxMarketDepartmentEntity;
 import com.nongxinle.entity.PlatformCouponTemplateEntity;
 import com.nongxinle.entity.PlatformCouponUsageLogEntity;
 import com.nongxinle.entity.PlatformStoreCouponEntity;
 import com.nongxinle.platform.admin.PlatformMarketAdminContext;
+import com.nongxinle.service.NxGoodsService;
 import com.nongxinle.service.platform.PlatformStoreDepartmentResolver;
 import com.nongxinle.service.platform.admin.PlatformCouponAdminService;
 import com.nongxinle.utils.PlatformCouponConstants;
@@ -24,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +48,10 @@ public class PlatformCouponAdminServiceImpl implements PlatformCouponAdminServic
     private PlatformCouponUsageLogDao platformCouponUsageLogDao;
     @Autowired
     private PlatformStoreDepartmentResolver platformStoreDepartmentResolver;
+    @Autowired
+    private NxMarketDepartmentDao nxMarketDepartmentDao;
+    @Autowired
+    private NxGoodsService nxGoodsService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -202,6 +213,96 @@ public class PlatformCouponAdminServiceImpl implements PlatformCouponAdminServic
         writeUsageLog(coupon, template, PlatformCouponConstants.VERIFY_VOID,
                 beforeStatus, PlatformCouponConstants.STORE_STATUS_VOID, scope.marketUserId);
         return coupon;
+    }
+
+    @Override
+    public List<PlatformCouponStoreOptionDto> listStoreOptions() {
+        AdminScope scope = requireAdminScope();
+        List<NxMarketDepartmentEntity> bindings =
+                nxMarketDepartmentDao.queryActiveListByMarketId(scope.marketId);
+        Map<Integer, PlatformCouponStoreOptionDto> dedup = new LinkedHashMap<>();
+        for (NxMarketDepartmentEntity binding : bindings) {
+            if (binding == null || binding.getNxMdDepartmentId() == null) {
+                continue;
+            }
+            try {
+                GbDepartmentEntity store = platformStoreDepartmentResolver
+                        .resolveStoreDepartmentForMarket(scope.marketId, binding.getNxMdDepartmentId());
+                if (!dedup.containsKey(store.getGbDepartmentId())) {
+                    PlatformCouponStoreOptionDto option = new PlatformCouponStoreOptionDto();
+                    option.setStoreGbDepartmentId(store.getGbDepartmentId());
+                    option.setStoreName(store.getGbDepartmentName());
+                    dedup.put(store.getGbDepartmentId(), option);
+                }
+            } catch (IllegalArgumentException ignored) {
+                // 跳过无法解析为门店的市场部门绑定
+            }
+        }
+        return new ArrayList<>(dedup.values());
+    }
+
+    @Override
+    public List<PlatformCouponNxGoodsCategoryOptionDto> listNxGoodsCategoryOptions() {
+        requireAdminScope();
+        List<NxGoodsEntity> greatGrands = nxGoodsService.queryNxFatherGoods();
+        List<PlatformCouponNxGoodsCategoryOptionDto> options = new ArrayList<>();
+        if (greatGrands == null) {
+            return options;
+        }
+        for (NxGoodsEntity greatGrand : greatGrands) {
+            if (greatGrand == null || greatGrand.getNxGoodsId() == null) {
+                continue;
+            }
+            appendCategoryOption(options, greatGrand.getNxGoodsId(), greatGrand.getNxGoodsName(),
+                    "一级", greatGrand.getNxGoodsName());
+            List<NxGoodsEntity> grands = greatGrand.getNxGoodsGrandEntityList();
+            if (grands == null) {
+                continue;
+            }
+            for (NxGoodsEntity grand : grands) {
+                if (grand == null || grand.getNxGoodsId() == null) {
+                    continue;
+                }
+                String grandPath = joinPath(greatGrand.getNxGoodsName(), grand.getNxGoodsName());
+                appendCategoryOption(options, grand.getNxGoodsId(), grand.getNxGoodsName(), "二级", grandPath);
+                List<NxGoodsEntity> fathers = grand.getNxGoodsFatherEntityList();
+                if (fathers == null) {
+                    continue;
+                }
+                for (NxGoodsEntity father : fathers) {
+                    if (father == null || father.getNxGoodsId() == null) {
+                        continue;
+                    }
+                    String fatherPath = joinPath(grandPath, father.getNxGoodsName());
+                    appendCategoryOption(options, father.getNxGoodsId(), father.getNxGoodsName(),
+                            "三级", fatherPath);
+                }
+            }
+        }
+        return options;
+    }
+
+    private void appendCategoryOption(List<PlatformCouponNxGoodsCategoryOptionDto> options,
+                                      Integer nxGoodsId,
+                                      String nxGoodsName,
+                                      String levelLabel,
+                                      String categoryPath) {
+        PlatformCouponNxGoodsCategoryOptionDto option = new PlatformCouponNxGoodsCategoryOptionDto();
+        option.setNxGoodsId(nxGoodsId);
+        option.setNxGoodsName(nxGoodsName);
+        option.setLevelLabel(levelLabel);
+        option.setCategoryPath(categoryPath);
+        options.add(option);
+    }
+
+    private String joinPath(String parent, String child) {
+        if (parent == null || parent.isEmpty()) {
+            return child == null ? "" : child;
+        }
+        if (child == null || child.isEmpty()) {
+            return parent;
+        }
+        return parent + " / " + child;
     }
 
     private PlatformStoreCouponEntity buildStoreCouponInstance(PlatformCouponTemplateEntity template,

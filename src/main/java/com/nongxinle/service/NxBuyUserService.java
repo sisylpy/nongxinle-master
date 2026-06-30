@@ -9,7 +9,6 @@ package com.nongxinle.service;
 
 import com.nongxinle.entity.NxBuyUserEntity;
 import com.nongxinle.entity.NxDistributerPurchaseBatchEntity;
-import com.nongxinle.entity.NxRestrauntUserEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,6 @@ public interface NxBuyUserService {
 
     List<NxDistributerPurchaseBatchEntity> queryBuyerPurchaseBatchDayWork(Map<String, Object> mapZero);
 
-    List<NxBuyUserEntity> queryAllNxBuyerUsers();
 
 
 }

@@ -78,6 +78,7 @@ public class GbTypeUtils {
     public final static Integer GB_DEPART_GOODS_STOCK_REDUCE_TYPE_STARS = 5;
 
 
+    public final static Integer GB_ORDER_STATUS_GOUWU = -1;  //购物车
     public final static Integer GB_ORDER_STATUS_NEW = 0;  //新订单
     public final static Integer GB_ORDER_STATUS_PROCUREMENT = 1;  //有重量
     public final static Integer GB_ORDER_STATUS_HAS_FINISHED = 2;  //
@@ -236,6 +237,7 @@ public class GbTypeUtils {
     public static Integer getGbDepUserAdminPeisongyuan(){ return GB_DEP_USER_ADMIN_PEISONGYUAN; }
 
 
+    public static Integer getGbOrderStatusGouwu(){ return GB_ORDER_STATUS_GOUWU; }
     public static Integer getGbOrderStatusNew(){ return GB_ORDER_STATUS_NEW; }
     public static Integer getGbOrderStatusProcurement(){ return GB_ORDER_STATUS_PROCUREMENT; }
     public static Integer getGbOrderStatusHasFinished(){ return GB_ORDER_STATUS_HAS_FINISHED; }

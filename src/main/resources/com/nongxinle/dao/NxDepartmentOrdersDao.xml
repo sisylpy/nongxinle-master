@@ -5803,6 +5803,15 @@
         from nx_department_orders
         where nx_department_orders_id = #{nxDepartmentOrdersId}
     </select>
+
+    <select id="queryByOrderIds" resultType="com.nongxinle.entity.NxDepartmentOrdersEntity">
+        select *
+        from nx_department_orders
+        where nx_department_orders_id in
+        <foreach collection="orderIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
     <resultMap id="grandDisGoods" type="NxDistributerFatherGoodsEntity">
         <id property="nxDistributerFatherGoodsId" column="grand_nx_distributer_father_goods_id"/>
         <result property="nxDfgFathersFatherId" column="grand_nx_dfg_fathers_father_id"/>

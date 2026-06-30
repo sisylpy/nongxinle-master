@@ -126,9 +126,7 @@ public final class DisRouteSandboxScheduleLabelHelper {
         if (earliestSeconds == null && latestSeconds == null) {
             return "未配置常规送达窗口";
         }
-        String start = secondsToHm(earliestSeconds);
-        String end = secondsToHm(latestSeconds);
-        String window = (start != null ? start : "--") + "–" + (end != null ? end : "--");
+        String window = formatPlainTimeRange(earliestSeconds, latestSeconds);
         if (deliveryRouteDate == null || serverNow == null) {
             return "常规窗口 " + window;
         }
@@ -137,6 +135,16 @@ public final class DisRouteSandboxScheduleLabelHelper {
             return "常规窗口 " + window + "（送达日 " + formatRouteDateLabel(deliveryRouteDate, serverNow) + "）";
         }
         return "常规窗口 " + window;
+    }
+
+    /** 页面展示用：仅 HH:mm–HH:mm，不含「常规窗口 / 要求」等前缀。 */
+    public static String formatPlainTimeRange(Integer earliestSeconds, Integer latestSeconds) {
+        if (earliestSeconds == null && latestSeconds == null) {
+            return null;
+        }
+        String start = secondsToHm(earliestSeconds);
+        String end = secondsToHm(latestSeconds);
+        return (start != null ? start : "--") + "–" + (end != null ? end : "--");
     }
 
     public static String formatDepartLabel(Date departAt, Date serverNow, String mode) {

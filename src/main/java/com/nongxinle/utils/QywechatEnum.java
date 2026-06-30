@@ -12,12 +12,16 @@ public enum QywechatEnum {
     JXPPRX("测试", Constant.CorpID, Constant.TOKENRX, Constant.EncodingAESKeyRx),
     JXPPSX("测试", Constant.CorpID, Constant.TOKENSX, Constant.EncodingAESKeySx),
     DJ("测试", Constant.CorpID, Constant.TOKENDj, Constant.EncodingAESKeyDj),
-    DJPOST("测试", Constant.SUITEIDDj, Constant.TOKENDj, Constant.EncodingAESKeyDj),
+    DJPOST("测试", Constant.CorpID, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJAPP("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJAPPPOST("测试", Constant.CORPIDDjTRS, Constant.TOKENDj, Constant.EncodingAESKeyDj),
     DJAPPDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh),
     DJAPPPOSTDH("测试", Constant.CORPIDDjTRS, Constant.TOKENDjDh, Constant.EncodingAESKeyDjDh),
-    MSGAUDIT("会话存档", Constant.CorpID, Constant.TOKEN_MSGAUDIT, Constant.EncodingAESKey_MSGAUDIT);
+    MSGAUDIT("会话存档", Constant.CorpID, Constant.TOKEN_MSGAUDIT, Constant.EncodingAESKey_MSGAUDIT),
+    // GET 验签 / 指令回调 POST：receiveid 为服务商 CorpID
+    YGT("优果优惠卷", Constant.CorpID, Constant.TOKENYGT, Constant.EncodingAESKeyYGT),
+    // 数据回调 POST：receiveid 为 SuiteID（或由 ToUserName 覆盖）
+    YGTBACK("优果优惠卷", Constant.SuiteIDYGT, Constant.TOKENYGT, Constant.EncodingAESKeyYGT);
 
     /**
      * 应用名

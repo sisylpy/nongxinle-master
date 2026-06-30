@@ -6,6 +6,7 @@ import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.route.DisRouteDeliveryStopAdapter;
+import com.nongxinle.route.DisRouteRouteExecutionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,8 +18,6 @@ import java.util.*;
  */
 @Component
 public class DisRoutePlanPresentationHelper {
-
-    private static final String STOP_CANCELLED = "CANCELLED";
 
     @Autowired
     private NxDisDriverRouteDao nxDisDriverRouteDao;
@@ -183,11 +182,7 @@ public class DisRoutePlanPresentationHelper {
     }
 
     private boolean isCountableTask(NxDisShipmentTaskEntity task) {
-        if (task == null) {
-            return false;
-        }
-        String status = task.getNxDstStopStatus();
-        return status == null || !STOP_CANCELLED.equalsIgnoreCase(status);
+        return DisRouteRouteExecutionHelper.isRouteSeqActiveTask(task);
     }
 
     /** 读模型：从 task 构建内存 stop 列表（无 nxDrsId）。 */
@@ -203,20 +198,34 @@ public class DisRoutePlanPresentationHelper {
         return stops;
     }
 
+    private static int resolveReadModelStopSeq(NxDisRouteStopEntity stop) {
+        if (stop == null) {
+            return Integer.MAX_VALUE;
+        }
+        NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        Integer seq = DisRouteDeliveryStopAdapter.resolveReadModelStopSeq(task);
+        if (seq != null && seq > 0) {
+            return seq;
+        }
+        if (stop.getNxDrsStopSeq() != null && stop.getNxDrsStopSeq() > 0) {
+            return stop.getNxDrsStopSeq();
+        }
+        return Integer.MAX_VALUE;
+    }
+
     /** 读模型：清空旧 stop_order 字段，按 stopSeq 排序。 */
     public static void prepareStopsForReadModel(List<NxDisRouteStopEntity> stops) {
         if (stops == null || stops.isEmpty()) {
             return;
         }
         for (NxDisRouteStopEntity stop : stops) {
-            stop.setOrders(null);
             stop.setOrderIds(null);
         }
         Collections.sort(stops, new Comparator<NxDisRouteStopEntity>() {
             @Override
             public int compare(NxDisRouteStopEntity a, NxDisRouteStopEntity b) {
-                int seqA = a.getNxDrsStopSeq() != null ? a.getNxDrsStopSeq() : Integer.MAX_VALUE;
-                int seqB = b.getNxDrsStopSeq() != null ? b.getNxDrsStopSeq() : Integer.MAX_VALUE;
+                int seqA = resolveReadModelStopSeq(a);
+                int seqB = resolveReadModelStopSeq(b);
                 if (seqA != seqB) {
                     return Integer.compare(seqA, seqB);
                 }

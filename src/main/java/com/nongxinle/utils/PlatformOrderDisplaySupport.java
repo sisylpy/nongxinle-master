@@ -3,6 +3,7 @@ package com.nongxinle.utils;
 import com.nongxinle.entity.NxDepartmentEntity;
 import com.nongxinle.entity.OutGoodsSimpleDTO;
 import com.nongxinle.entity.OutOrderSimpleDTO;
+import com.nongxinle.dto.NxDepartmentOrdersSimpleDTO;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -85,6 +86,46 @@ public final class PlatformOrderDisplaySupport {
         orders.sort(Comparator
                 .comparingInt((OutOrderSimpleDTO o) -> o.getPlatformSort() != null ? o.getPlatformSort() : platformSortKey(isPlatformOrder(o)))
                 .thenComparing(o -> o.getNxDoDepartmentFatherId() != null ? o.getNxDoDepartmentFatherId() : 0)
+                .thenComparing(o -> o.getNxDepartmentOrdersId() != null ? o.getNxDepartmentOrdersId() : 0));
+    }
+
+    /** 客户订单页 phoneGetToFillDepOrders：简化 DTO 平台字段补全 */
+    public static void enrichSimpleOrderList(List<NxDepartmentOrdersSimpleDTO> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return;
+        }
+        for (NxDepartmentOrdersSimpleDTO order : orders) {
+            enrichSimpleOrder(order);
+        }
+        sortSimpleOrderLines(orders);
+    }
+
+    public static void enrichSimpleOrder(NxDepartmentOrdersSimpleDTO order) {
+        if (order == null) {
+            return;
+        }
+        boolean platform = isPlatformFlag(order.getIsPlatformOrder())
+                || ORDER_SOURCE_PLATFORM.equals(order.getOrderSource());
+        order.setIsPlatformOrder(platform ? 1 : 0);
+        order.setOrderSource(platform ? ORDER_SOURCE_PLATFORM : ORDER_SOURCE_OWN);
+        order.setPlatformLabel(platform ? PLATFORM_LABEL : null);
+        if (order.getPriceEditable() == null) {
+            order.setPriceEditable(platform ? 1 : 0);
+        }
+        if (order.getPlatformSort() == null) {
+            order.setPlatformSort(platformSortKey(platform));
+        }
+        order.setActualPrice(order.getNxDoPrice());
+        order.setExpectPrice(order.getNxDoExpectPrice());
+        order.setPriceDifferent(order.getNxDoPriceDifferent());
+    }
+
+    public static void sortSimpleOrderLines(List<NxDepartmentOrdersSimpleDTO> orders) {
+        if (orders == null || orders.size() < 2) {
+            return;
+        }
+        orders.sort(Comparator
+                .comparingInt((NxDepartmentOrdersSimpleDTO o) -> o.getPlatformSort() != null ? o.getPlatformSort() : platformSortKey(isPlatformFlag(o.getIsPlatformOrder())))
                 .thenComparing(o -> o.getNxDepartmentOrdersId() != null ? o.getNxDepartmentOrdersId() : 0));
     }
 

@@ -47,13 +47,6 @@ public interface NxCommunityGoodsDao extends BaseDao<NxCommunityGoodsEntity> {
 
     List<NxCommunityGoodsEntity> queryCgSubNameByFatherId(Map<String, Object> map);
 
-
-    List<NxCommunityGoodsEntity> queryComResGoodsByParams(Map<String, Object> map);
-
-//    List<NxCommunityGoodsEntity> resManQueryComResGoodsQuickSearchStr(Map<String, Object> map);
-
-//    List<NxCommunityGoodsEntity> comQueryDisComGoodsByParams(Map<String, Object> map);
-
     List<NxCommunityGoodsEntity> queryComGoodsWithSupplierByParams(Map<String, Object> map);
 
 //    List<NxCommunityGoodsEntity> queryChainComResGoodsByParams(Map<String, Object> map);

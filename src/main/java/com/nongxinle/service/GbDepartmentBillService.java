@@ -53,6 +53,10 @@ public interface GbDepartmentBillService {
 
     GbDepartmentBillEntity queryDepartBillByTsxTradeNo(String nxDbTradeNo);
 
+    GbDepartmentBillEntity queryByPlatformSubmitToken(String submitToken);
+
+    GbDepartmentBillEntity queryBlockingPlatformCashBillByDep(Integer depId);
+
     List<GbDepartmentBillEntity> queryBillFromWhichDepartment(Map<String, Object> map4);
 
 

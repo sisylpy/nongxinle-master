@@ -30,4 +30,7 @@ public class PlatformCatalogGoodsRow implements Serializable {
     private Integer platformOrderId;
     private String platformOrderQuantity;
     private String platformOrderStandard;
+
+    /** 市场内可售配送商最低参考单价（nx_dg_will_price_one，>0.1） */
+    private String nxDgWillPrice;
 }

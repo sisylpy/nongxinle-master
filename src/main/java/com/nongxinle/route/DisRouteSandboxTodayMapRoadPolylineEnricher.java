@@ -53,7 +53,7 @@ public class DisRouteSandboxTodayMapRoadPolylineEnricher {
             }
         }
         if (viewportDirty) {
-            DisRouteSandboxTodayMapOverviewBuilder.refreshViewport(overview);
+            DisRouteSandboxMapViewportHelper.refreshViewport(overview);
         }
     }
 

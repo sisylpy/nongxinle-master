@@ -63,13 +63,12 @@ public class QyWxTokenUtil {
             String secret = config.getQyGbDisCorpMsgAuditSecret();
             
             String url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpId + "&corpsecret=" + secret;
-            System.out.println("获取会话存档token，URL: " + url);
+            System.out.println("获取token，corpId=" + corpId);
             
             String response = WeChatUtil.httpRequest(url, "GET", null);
             
-            System.out.println("获取token响应: " + response);
-            
             JSONObject jsonObject = JSONObject.parseObject(response);
+            System.out.println("获取token响应 errcode=" + jsonObject.getInteger("errcode"));
             if (jsonObject.getInteger("errcode") == 0) {
                 String accessToken = jsonObject.getString("access_token");
                 int expiresIn = jsonObject.getInteger("expires_in");
@@ -80,7 +79,7 @@ public class QyWxTokenUtil {
                 // 更新数据库
                 qyGbDisCorpMsgAuditService.updateAccessToken(config.getQyGbDisQyCorpId(), accessToken, expireTime);
                 
-                System.out.println("Token刷新成功: " + accessToken);
+                System.out.println("Token刷新成功，过期时间=" + expireTime);
                 return accessToken;
             } else {
                 String errorMsg = "获取access_token失败: " + jsonObject.getString("errmsg");

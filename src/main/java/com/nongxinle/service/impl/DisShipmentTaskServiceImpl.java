@@ -1,14 +1,10 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.dao.*;
-import com.nongxinle.dto.route.AssignTaskRequest;
 import com.nongxinle.dto.route.BillPrintedOrderRef;
-import com.nongxinle.dto.route.MoveTaskRequest;
-import com.nongxinle.dto.route.UnlockTaskRequest;
 import com.nongxinle.entity.*;
 import com.nongxinle.route.DisRoutePlanStatus;
 import com.nongxinle.route.DisShipmentTaskStatus;
-import com.nongxinle.service.DisRouteDispatchOperationPolicy;
 import com.nongxinle.service.DisShipmentTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,12 +24,6 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
     private NxDisShipmentTaskItemDao nxDisShipmentTaskItemDao;
     @Autowired
     private NxDisRoutePlanDao nxDisRoutePlanDao;
-    @Autowired
-    private NxDisDriverRouteDao nxDisDriverRouteDao;
-    @Autowired
-    private DisRoutePlanPresentationHelper disRoutePlanPresentationHelper;
-    @Autowired
-    private DisRouteDispatchOperationPolicy disRouteDispatchOperationPolicy;
     @Autowired
     private DisRouteShipmentTaskItemOrderResolver disRouteShipmentTaskItemOrderResolver;
 
@@ -61,96 +51,6 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
 
     @Override
     @Transactional
-    public NxDisShipmentTaskEntity assignTask(AssignTaskRequest request) {
-        validateAssignRequest(request);
-        NxDisShipmentTaskEntity task = requireTaskWithItems(request.getTaskId());
-        disRouteDispatchOperationPolicy.requireAssign(task, request.getAssignedDriverUserId());
-
-        Date now = new Date();
-        NxDisShipmentTaskEntity update = new NxDisShipmentTaskEntity();
-        update.setNxDstId(task.getNxDstId());
-        update.setNxDstStatus(DisShipmentTaskStatus.ASSIGNED);
-        update.setNxDstAssignedDriverUserId(request.getAssignedDriverUserId());
-        update.setNxDstManualLocked(1);
-        update.setNxDstAssignConfirmedAt(now);
-        update.setNxDstOperatorUserId(request.getOperatorUserId());
-        update.setNxDstAssignReason(request.getAssignReason());
-        if (request.getManualStopSeq() != null) {
-            update.setNxDstManualStopSeq(request.getManualStopSeq());
-        }
-        nxDisShipmentTaskDao.update(update);
-
-        syncTaskToDriverRoute(task, request.getAssignedDriverUserId(), request.getManualStopSeq());
-
-        if (task.getNxDstPlanId() != null) {
-            disRoutePlanPresentationHelper.refreshPlanPresentation(task.getNxDstPlanId());
-            reconcilePlanStatus(task.getNxDstPlanId());
-        }
-        return queryTaskDetail(task.getNxDstId());
-    }
-
-    @Override
-    @Transactional
-    public NxDisShipmentTaskEntity moveTask(MoveTaskRequest request) {
-        validateMoveRequest(request);
-        NxDisShipmentTaskEntity task = requireTaskWithItems(request.getTaskId());
-        disRouteDispatchOperationPolicy.requireMove(task, request.getAssignedDriverUserId());
-
-        NxDisShipmentTaskEntity update = new NxDisShipmentTaskEntity();
-        update.setNxDstId(task.getNxDstId());
-        update.setNxDstAssignedDriverUserId(request.getAssignedDriverUserId());
-        update.setNxDstManualLocked(1);
-        update.setNxDstOperatorUserId(request.getOperatorUserId());
-        update.setNxDstAdjustReason(request.getAdjustReason());
-        if (request.getManualStopSeq() != null) {
-            update.setNxDstManualStopSeq(request.getManualStopSeq());
-        }
-        if (!DisShipmentTaskStatus.ASSIGNED.equals(task.getNxDstStatus())
-                && !DisShipmentTaskStatus.READY_TO_GO.equals(task.getNxDstStatus())) {
-            update.setNxDstStatus(DisShipmentTaskStatus.ASSIGNED);
-        }
-        nxDisShipmentTaskDao.update(update);
-
-        syncTaskToDriverRoute(task, request.getAssignedDriverUserId(), request.getManualStopSeq());
-
-        if (task.getNxDstPlanId() != null) {
-            disRoutePlanPresentationHelper.refreshPlanPresentation(task.getNxDstPlanId());
-            reconcilePlanStatus(task.getNxDstPlanId());
-        }
-        return queryTaskDetail(task.getNxDstId());
-    }
-
-    @Override
-    @Transactional
-    public NxDisShipmentTaskEntity unlockTask(UnlockTaskRequest request) {
-        if (request == null || request.getTaskId() == null) {
-            throw new IllegalArgumentException("taskId 不能为空");
-        }
-        if (request.getOperatorUserId() == null) {
-            throw new IllegalArgumentException("operatorUserId 不能为空");
-        }
-
-        NxDisShipmentTaskEntity task = requireTaskWithItems(request.getTaskId());
-        disRouteDispatchOperationPolicy.requireUnlock(task);
-
-        NxDisShipmentTaskEntity update = new NxDisShipmentTaskEntity();
-        update.setNxDstId(task.getNxDstId());
-        update.setNxDstManualLocked(0);
-        update.setNxDstOperatorUserId(request.getOperatorUserId());
-        if (request.getAdjustReason() != null) {
-            update.setNxDstAdjustReason(request.getAdjustReason());
-        }
-        nxDisShipmentTaskDao.update(update);
-
-        if (task.getNxDstPlanId() != null) {
-            disRoutePlanPresentationHelper.refreshPlanPresentation(task.getNxDstPlanId());
-            reconcilePlanStatus(task.getNxDstPlanId());
-        }
-        return queryTaskDetail(task.getNxDstId());
-    }
-
-    @Override
-    @Transactional
     public void onBillPrinted(Integer billId, List<BillPrintedOrderRef> refs) {
         if (billId == null) {
             throw new IllegalArgumentException("billId 不能为空");
@@ -174,8 +74,9 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
             }
 
             NxDisShipmentTaskEntity task = nxDisShipmentTaskDao.queryObject(item.getNxDstiTaskId());
-            if (task != null) {
-                rejectBillMutationOnTerminalTask(task);
+            // bill 与派单弱连接：送达/配送中后补打单仅回填 item.billId，不阻断打印保存。
+            if (task != null && isBillPrintSkippedTask(task)) {
+                continue;
             }
 
             NxDisShipmentTaskItemEntity itemUpdate = new NxDisShipmentTaskItemEntity();
@@ -215,7 +116,7 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
         for (NxDisShipmentTaskItemEntity item : items) {
             NxDisShipmentTaskEntity task = nxDisShipmentTaskDao.queryObject(item.getNxDstiTaskId());
             if (task != null) {
-                rejectBillMutationOnTerminalTask(task);
+                rejectBillRevertOnTerminalTask(task);
             }
 
             NxDisShipmentTaskItemEntity itemUpdate = new NxDisShipmentTaskItemEntity();
@@ -317,15 +218,8 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
         return DisRoutePlanStatus.SIMULATED;
     }
 
-    private void promoteTaskToReadyToGoIfEligible(Integer taskId) {
-        // Phase 3a.1：bill 打印不作 READY_TO_GO 自动晋升门槛；出发由老板/司机确认操作驱动。
-    }
-
-    private void revertTaskFromReadyToGoIfNeeded(Integer taskId) {
-        // Phase 3a.1：bill 回退不自动降级 READY_TO_GO。
-    }
-
-    private void rejectBillMutationOnTerminalTask(NxDisShipmentTaskEntity task) {
+    /** bill 回退仍保护执行终态；打印回填见 {@link #isBillPrintSkippedTask}。 */
+    private void rejectBillRevertOnTerminalTask(NxDisShipmentTaskEntity task) {
         String status = task.getNxDstStatus();
         if (DisShipmentTaskStatus.CANCELLED.equals(status)
                 || DisShipmentTaskStatus.CLOSED.equals(status)
@@ -333,6 +227,16 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
                 || DisShipmentTaskStatus.DELIVERED.equals(status)) {
             throw new IllegalStateException("task " + task.getNxDstId() + " 状态 " + status + " 不允许 bill 回填/回退");
         }
+    }
+
+    /** 仅作废 task 跳过打印 hook；DELIVERED / IN_DELIVERY 允许弱参考回填。 */
+    private static boolean isBillPrintSkippedTask(NxDisShipmentTaskEntity task) {
+        if (task == null) {
+            return true;
+        }
+        String status = task.getNxDstStatus();
+        return DisShipmentTaskStatus.CANCELLED.equals(status)
+                || DisShipmentTaskStatus.CLOSED.equals(status);
     }
 
     private boolean isActiveTask(NxDisShipmentTaskEntity task) {
@@ -349,86 +253,6 @@ public class DisShipmentTaskServiceImpl implements DisShipmentTaskService {
             }
         }
         return false;
-    }
-
-    /** Phase 3a.1：task 挂 driver_route，不再写 route_stop。 */
-    private void syncTaskToDriverRoute(NxDisShipmentTaskEntity task,
-                                       Integer driverUserId,
-                                       Integer manualStopSeq) {
-        if (task.getNxDstPlanId() == null || driverUserId == null) {
-            return;
-        }
-        NxDisDriverRouteEntity driverRoute = nxDisDriverRouteDao.queryByPlanAndDriver(
-                task.getNxDstPlanId(), driverUserId);
-        if (driverRoute == null) {
-            return;
-        }
-        int routeSeq = manualStopSeq != null ? manualStopSeq : nextTaskRouteSeq(driverRoute.getNxDdrId());
-        NxDisShipmentTaskEntity taskUpdate = new NxDisShipmentTaskEntity();
-        taskUpdate.setNxDstId(task.getNxDstId());
-        taskUpdate.setNxDstDriverRouteId(driverRoute.getNxDdrId());
-        taskUpdate.setNxDstRouteSeq(routeSeq);
-        if (manualStopSeq != null) {
-            taskUpdate.setNxDstManualStopSeq(manualStopSeq);
-        }
-        nxDisShipmentTaskDao.update(taskUpdate);
-    }
-
-    private int nextTaskRouteSeq(Integer driverRouteId) {
-        List<NxDisShipmentTaskEntity> tasks = nxDisShipmentTaskDao.queryByDriverRouteId(driverRouteId);
-        int max = 0;
-        if (tasks != null) {
-            for (NxDisShipmentTaskEntity task : tasks) {
-                Integer seq = task.getNxDstRouteSeq() != null ? task.getNxDstRouteSeq() : task.getNxDstManualStopSeq();
-                if (seq != null && seq > max) {
-                    max = seq;
-                }
-            }
-        }
-        return max + 1;
-    }
-
-    private NxDisShipmentTaskEntity requireTask(Integer taskId) {
-        NxDisShipmentTaskEntity task = nxDisShipmentTaskDao.queryObject(taskId);
-        if (task == null) {
-            throw new IllegalArgumentException("配送任务不存在: " + taskId);
-        }
-        return task;
-    }
-
-    private NxDisShipmentTaskEntity requireTaskWithItems(Integer taskId) {
-        NxDisShipmentTaskEntity task = requireTask(taskId);
-        List<NxDisShipmentTaskItemEntity> items = nxDisShipmentTaskItemDao.queryByTaskId(taskId);
-        disRouteShipmentTaskItemOrderResolver.enrichItems(items);
-        task.setItems(items);
-        return task;
-    }
-
-    private void validateAssignRequest(AssignTaskRequest request) {
-        if (request == null || request.getTaskId() == null) {
-            throw new IllegalArgumentException("taskId 不能为空");
-        }
-        if (request.getAssignedDriverUserId() == null) {
-            throw new IllegalArgumentException("assignedDriverUserId 不能为空");
-        }
-        if (request.getOperatorUserId() == null) {
-            throw new IllegalArgumentException("operatorUserId 不能为空");
-        }
-    }
-
-    private void validateMoveRequest(MoveTaskRequest request) {
-        if (request == null || request.getTaskId() == null) {
-            throw new IllegalArgumentException("taskId 不能为空");
-        }
-        if (request.getAssignedDriverUserId() == null) {
-            throw new IllegalArgumentException("assignedDriverUserId 不能为空");
-        }
-        if (request.getOperatorUserId() == null) {
-            throw new IllegalArgumentException("operatorUserId 不能为空");
-        }
-        if (request.getAdjustReason() == null || request.getAdjustReason().trim().isEmpty()) {
-            throw new IllegalArgumentException("adjustReason 不能为空");
-        }
     }
 
     private void attachItems(List<NxDisShipmentTaskEntity> tasks) {

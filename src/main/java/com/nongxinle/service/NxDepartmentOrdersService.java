@@ -58,8 +58,6 @@ public interface NxDepartmentOrdersService {
 
     Double queryDepOrdersProfitSubtotal(Map<String, Object> map2);
 
-    List<NxRestrauntEntity> queryOrderNxRestrauntList(Map<String, Object> map1);
-
     List<GbDepartmentEntity> queryOrderGbDepartmentList(Map<String, Object> map1);
 
     List<NxDepartmentOrdersEntity> queryDepWeightOrder(Map<String, Object> map);
@@ -334,8 +332,6 @@ public interface NxDepartmentOrdersService {
     Integer queryCollReplyPartnerCount(Map<String, Object> map);
 
     List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map);
-
-    NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId);
 
     List<NxDepartmentEntity> queryRetailOrderNxDepartment(Map<String, Object> map);
 }

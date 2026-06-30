@@ -108,58 +108,6 @@
         order by dor.nx_DO_today_order asc, dor.nx_department_orders_id asc
     </select>
 
-    <select id="queryCustomerPlatformOrderLines"
-            resultType="com.nongxinle.dto.platform.customer.PlatformCustomerOrderLineItem">
-        select
-            dor.nx_department_orders_id as orderId,
-            poa.nx_poa_id as platformAssignId,
-            dor.nx_DO_nx_goods_id as nxGoodsId,
-            coalesce(nullif(trim(dor.nx_DO_goods_name), ''), ng.nx_goods_name) as goodsName,
-            ng.nx_goods_brand as goodsBrand,
-            dor.nx_DO_quantity as quantity,
-            dor.nx_DO_standard as standard,
-            dor.nx_DO_weight as weight,
-            dor.nx_DO_price as orderPrice,
-            dor.nx_DO_subtotal as orderSubtotal,
-            dor.nx_DO_remark as remark,
-            poa.nx_poa_assign_status as assignStatus,
-            poa.nx_poa_assign_source as assignSource,
-            poa.nx_poa_assigned_distributer_id as assignedDistributerId,
-            ndis.nx_distributer_name as assignedDistributerName,
-            poa.nx_poa_assigned_price as assignedPrice,
-            dor.nx_DO_gb_department_order_id as gbDepartmentOrderId,
-            dngd.nx_dngd_default_distributer_id as defaultDistributerId,
-            nddef.nx_distributer_name as defaultDistributerName
-        from nx_platform_order_assign poa
-        inner join nx_department_orders dor on dor.nx_department_orders_id = poa.nx_poa_order_id
-        left join nx_goods ng on ng.nx_goods_id = dor.nx_DO_nx_goods_id
-        left join nx_distributer ndis on ndis.nx_distributer_id = poa.nx_poa_assigned_distributer_id
-        left join nx_department_nx_goods_default dngd
-            on dngd.nx_dngd_market_id = poa.nx_poa_market_id
-           and dngd.nx_dngd_department_id = coalesce(nullif(poa.nx_poa_gb_department_id, 0), poa.nx_poa_department_id)
-           and dngd.nx_dngd_nx_goods_id = dor.nx_DO_nx_goods_id
-           and dngd.nx_dngd_status = 'ACTIVE'
-        left join nx_distributer nddef on nddef.nx_distributer_id = dngd.nx_dngd_default_distributer_id
-        where poa.nx_poa_market_id = #{marketId}
-          and poa.nx_poa_assign_mode = 'PLATFORM'
-          and (
-                poa.nx_poa_department_id = #{departmentId}
-             or poa.nx_poa_gb_department_id = #{departmentId}
-          )
-          and poa.nx_poa_assign_status in ('PENDING', 'ASSIGNED')
-          and dor.nx_DO_status &gt;= 0
-        <if test="applyDate != null and applyDate != ''">
-            and dor.nx_DO_apply_date = #{applyDate}
-        </if>
-        <if test="orderIds != null and orderIds.size() > 0">
-            and poa.nx_poa_order_id in
-            <foreach collection="orderIds" item="oid" open="(" separator="," close=")">
-                #{oid}
-            </foreach>
-        </if>
-        order by dor.nx_DO_today_order asc, dor.nx_department_orders_id asc
-    </select>
-
     <delete id="deleteByOrderId">
         delete from nx_platform_order_assign where nx_poa_order_id = #{value}
     </delete>

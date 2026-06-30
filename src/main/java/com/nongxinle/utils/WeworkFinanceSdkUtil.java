@@ -107,32 +107,14 @@ public class WeworkFinanceSdkUtil {
      */
     public void addPrivateKey(int publickeyVer, String privateKeyPem) {
         try {
-            System.out.println("[私钥] 🔍 开始添加版本 " + publickeyVer + " 的私钥");
-            System.out.println("[私钥] 私钥长度: " + (privateKeyPem != null ? privateKeyPem.length() : "null") + " 字符");
-            
             if (privateKeyPem == null || privateKeyPem.trim().isEmpty()) {
                 System.err.println("[私钥] ❌ 版本 " + publickeyVer + " 的私钥为空");
                 return;
             }
-            
-            System.out.println("[私钥] 私钥开头: " + privateKeyPem.substring(0, Math.min(50, privateKeyPem.length())));
-            System.out.println("[私钥] 私钥结尾: " + privateKeyPem.substring(Math.max(0, privateKeyPem.length() - 50)));
-            
-            System.out.println("[私钥] 🔍 开始解析PEM格式...");
+
             PrivateKey pk = loadPrivateKeyPem(privateKeyPem);
-            System.out.println("[私钥] 🔍 PEM解析成功，开始存储到Map...");
-            
-            // 🔥 临时调试：打印私钥对象信息
-            System.out.println("[私钥] 🔥 私钥对象信息:");
-            System.out.println("  - 私钥算法: " + pk.getAlgorithm());
-            System.out.println("  - 私钥格式: " + pk.getFormat());
-            System.out.println("  - 私钥编码长度: " + pk.getEncoded().length + " 字节");
-            System.out.println("  - 私钥编码前32字节: " + java.util.Arrays.toString(java.util.Arrays.copyOf(pk.getEncoded(), Math.min(32, pk.getEncoded().length))));
-            
             privateKeyMap.put(publickeyVer, pk);
             System.out.println("[私钥] ✅ 已添加版本 " + publickeyVer + " 的私钥");
-            System.out.println("[私钥] 当前私钥版本: " + privateKeyMap.keySet());
-            System.out.println("[私钥] Map大小: " + privateKeyMap.size());
         } catch (Exception e) {
             System.err.println("[私钥] ❌ 添加版本 " + publickeyVer + " 私钥失败: " + e.getMessage());
             System.err.println("[私钥] 异常类型: " + e.getClass().getSimpleName());
@@ -205,8 +187,7 @@ public class WeworkFinanceSdkUtil {
 
             // 2) 根据企业微信文档，直接使用解密结果作为encrypt_key
             String encryptKey = new String(aesKeyBytes, StandardCharsets.UTF_8);
-            System.out.println("[解密] 🔥 使用解密结果作为encrypt_key: " + encryptKey);
-            System.out.println("[解密] 🔥 encrypt_key长度: " + encryptKey.length());
+            System.out.println("[解密] 已获取encrypt_key，长度: " + encryptKey.length());
 
             // 3) 调用 SDK 解密消息正文
             long slice = Finance.NewSlice();
@@ -215,7 +196,6 @@ public class WeworkFinanceSdkUtil {
                 if (ret != 0) {
                     System.err.println("[解密] ❌ SDK DecryptData 失败, ret=" + ret);
                     System.err.println("       错误码: 10003=解密失败, 10007=未初始化, 10008=私钥/密钥问题");
-                    System.err.println("       encrypt_key: " + encryptKey);
                     System.err.println("       encrypt_chat_msg长度: " + encryptChatMsg.length());
                 return null;
             }
@@ -336,10 +316,7 @@ public class WeworkFinanceSdkUtil {
             System.out.println("[解密] 🔍 开始解密版本 " + publickeyVer + " 的消息");
             System.out.println("[解密] 当前私钥版本: " + privateKeyMap.keySet());
             System.out.println("[解密] encrypt_random_key长度: " + encryptRandomKeyB64.length());
-            
-            // 🔥 临时调试：打印加密的随机密钥
-            System.out.println("[解密] 🔥 encrypt_random_key内容: " + encryptRandomKeyB64);
-            
+
             // 1) 获取对应版本的私钥
             PrivateKey pk = privateKeyMap.get(publickeyVer);
             if (pk == null) {
@@ -352,10 +329,8 @@ public class WeworkFinanceSdkUtil {
             System.out.println("[解密] ✅ 找到版本 " + publickeyVer + " 的私钥");
 
             // 2) Base64 解码 encrypt_random_key
-            System.out.println("[解密] 🔥 开始Base64解码 encrypt_random_key");
             byte[] encryptedBytes = Base64.getDecoder().decode(encryptRandomKeyB64);
-            System.out.println("[解密] 🔥 Base64解码完成，长度: " + encryptedBytes.length + " 字节");
-            System.out.println("[解密] 🔥 解码后的前16字节: " + java.util.Arrays.toString(java.util.Arrays.copyOf(encryptedBytes, Math.min(16, encryptedBytes.length))));
+            System.out.println("[解密] encrypt_random_key Base64解码完成，长度: " + encryptedBytes.length + " 字节");
             if (encryptedBytes.length != 256) {
                 System.err.println("[解密] ⚠️ encrypt_random_key 解码长度: " + encryptedBytes.length + " (期望256字节)");
             }
@@ -382,10 +357,10 @@ public class WeworkFinanceSdkUtil {
             }
 
             // 4) 尝试每种算法
-            System.out.println("[解密] 🔥 将要尝试的算法列表: " + algos);
+            System.out.println("[解密] 将要尝试的算法列表: " + algos);
             for (String algo : algos) {
                 try {
-                    System.out.println("[解密] 🔥 开始尝试算法: " + algo);
+                    System.out.println("[解密] 开始尝试算法: " + algo);
                     javax.crypto.Cipher cipher;
                     switch (algo) {
                         case "OAEP-SHA256": {
@@ -414,19 +389,9 @@ public class WeworkFinanceSdkUtil {
                             cipher.init(javax.crypto.Cipher.DECRYPT_MODE, pk);
                         }
                     }
-                    
-                    System.out.println("[解密] 🔥 算法 " + algo + " 初始化完成，开始解密...");
+
                     byte[] aesKeyBytes = cipher.doFinal(encryptedBytes);
-                    System.out.println("[解密] 🔥 算法 " + algo + " 解密完成！");
-                    
-                    // 🔥 临时调试：打印解密结果
-                    System.out.println("[解密] 🔥 " + algo + " 解密结果:");
-                    System.out.println("  - 解密结果长度: " + aesKeyBytes.length + " 字节");
-                    System.out.println("  - 解密结果前32字节: " + java.util.Arrays.toString(java.util.Arrays.copyOf(aesKeyBytes, Math.min(32, aesKeyBytes.length))));
-                    if (aesKeyBytes.length > 32) {
-                        System.out.println("  - 解密结果后32字节: " + java.util.Arrays.toString(java.util.Arrays.copyOfRange(aesKeyBytes, aesKeyBytes.length - 32, aesKeyBytes.length)));
-                    }
-                    
+
                     // 5) 根据企业微信文档，解密结果就是encrypt_key，不需要校验长度
                     System.out.println("[解密] ✅ " + algo + " 解密成功，获得 " + aesKeyBytes.length + " 字节的encrypt_key");
                     return aesKeyBytes;
@@ -589,23 +554,33 @@ public class WeworkFinanceSdkUtil {
     // ============================= 模拟（macOS 开发） =============================
 
     private String mockChatData(long seq, int limit) {
+        long firstSeq = seq + 1;
+        long secondSeq = seq + 2;
+        long duplicateSeq = seq + 3;
+        // 前两条按 seq 动态生成，第三条固定 msgid，用于本地重复消息幂等测试。
         return "{\n" +
                 "  \"errcode\": 0,\n" +
                 "  \"errmsg\": \"ok\",\n" +
                 "  \"chatdata\": [\n" +
-                "    {\"seq\":" + (seq + 1) + ",\"msgid\":\"mock1\",\"publickey_ver\":1,\n" +
+                "    {\"seq\":" + firstSeq + ",\"msgid\":\"mock_msg_" + firstSeq + "\",\"publickey_ver\":1,\n" +
                 "     \"encrypt_random_key\":\"" + Base64.getEncoder().encodeToString(new byte[256]) + "\",\n" +
-                "     \"encrypt_chat_msg\":\"mock_enc_msg_1\"},\n" +
-                "    {\"seq\":" + (seq + 2) + ",\"msgid\":\"mock2\",\"publickey_ver\":2,\n" +
+                "     \"encrypt_chat_msg\":\"mock_enc_msg_" + firstSeq + "\"},\n" +
+                "    {\"seq\":" + secondSeq + ",\"msgid\":\"mock_msg_" + secondSeq + "\",\"publickey_ver\":2,\n" +
                 "     \"encrypt_random_key\":\"" + Base64.getEncoder().encodeToString(new byte[256]) + "\",\n" +
-                "     \"encrypt_chat_msg\":\"mock_enc_msg_2\"}\n" +
+                "     \"encrypt_chat_msg\":\"mock_enc_msg_" + secondSeq + "\"},\n" +
+                "    {\"seq\":" + duplicateSeq + ",\"msgid\":\"mock_msg\",\"publickey_ver\":2,\n" +
+                "     \"encrypt_random_key\":\"" + Base64.getEncoder().encodeToString(new byte[256]) + "\",\n" +
+                "     \"encrypt_chat_msg\":\"mock_enc_msg_duplicate\"}\n" +
                 "  ]\n" +
                 "}";
     }
 
     private String mockDecrypted(String encryptRandomKey, String encryptChatMsg) {
+        String msgId = "mock_enc_msg_duplicate".equals(encryptChatMsg)
+                ? "mock_msg"
+                : encryptChatMsg.replace("mock_enc_msg_", "mock_msg_");
         return "{\n" +
-                "  \"msgid\": \"mock_msg\",\n" +
+                "  \"msgid\": \"" + msgId + "\",\n" +
                 "  \"action\": \"send\",\n" +
                 "  \"from\": \"u_1\",\n" +
                 "  \"tolist\": [\"u_2\"],\n" +

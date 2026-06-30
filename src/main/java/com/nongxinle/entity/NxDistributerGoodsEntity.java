@@ -173,7 +173,6 @@ public class NxDistributerGoodsEntity implements Serializable, Comparable  {
 	private List<NxDepartmentOrdersEntity> histfyOrdersEntities;
 	private List<NxDepartmentOrdersEntity> neetNotPurOrders;
 	private NxDepartmentOrdersEntity nxDepartmentOrdersEntity;
-	private List<NxRestrauntOrdersEntity> nxRestrauntOrdersEntities;
 
 	private List<NxDepartmentOrdersHistoryEntity> nxDepartmentOrdersHistoryEntities;
 

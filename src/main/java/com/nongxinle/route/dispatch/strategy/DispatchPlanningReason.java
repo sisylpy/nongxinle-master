@@ -1,0 +1,11 @@
+package com.nongxinle.route.dispatch.strategy;
+
+public enum DispatchPlanningReason {
+    LEGACY_OPTIMIZER_DELEGATION,
+    HISTORY_DRIVER_BIND,
+    PREFERRED_DRIVER_NOT_ELIGIBLE,
+    TIME_WINDOW_EARLIEST_FIRST,
+    LATE_BUCKET_TRAIL,
+    DISTANCE_FALLBACK,
+    MANUAL_LOCKED_FROZEN
+}

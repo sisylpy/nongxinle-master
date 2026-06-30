@@ -180,6 +180,12 @@ public class NxCommunityGoodsEntity implements Serializable, Comparable {
 	private String nxCgAdsenseStopTimeZone;
 	private Integer nxCgAdsenseStockQuantity;
 	private Integer nxCgAdsenseRestQuantity;
+	/** Adsense 起订量 */
+	private Integer nxCgAdsenseMinOrderQty;
+	/** Adsense 购买倍数，默认 1 */
+	private Integer nxCgAdsenseOrderMultiple;
+	/** Adsense 每人限购 */
+	private Integer nxCgAdsenseLimitPerCustomer;
 	private Integer nxCgPromotionAmount;
 	private Integer nxCgServiceType;
 	private String nxCgPromotionPrice;

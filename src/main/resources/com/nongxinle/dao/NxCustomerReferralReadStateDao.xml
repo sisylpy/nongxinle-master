@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerReferralReadStateDao">
+
+    <select id="queryByUserId" resultType="com.nongxinle.entity.NxCustomerReferralReadStateEntity">
+        select * from nx_customer_referral_read_state where user_id = #{value}
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCustomerReferralReadStateEntity">
+        insert into nx_customer_referral_read_state (user_id, last_read_referral_id, last_read_at)
+        values (#{userId}, #{lastReadReferralId}, #{lastReadAt})
+    </insert>
+
+    <update id="update" parameterType="com.nongxinle.entity.NxCustomerReferralReadStateEntity">
+        update nx_customer_referral_read_state
+        set last_read_referral_id = #{lastReadReferralId},
+            last_read_at = #{lastReadAt}
+        where user_id = #{userId}
+          and last_read_referral_id &lt; #{lastReadReferralId}
+    </update>
+
+</mapper>

@@ -36,14 +36,7 @@
 		<result property="nxDistributerMarketName" column="nx_distributer_market_name"/>
 	</resultMap>
 
-	<resultMap id="retalier" type="NxRetailerEntity">
-		<id property="nxRetailerId" column="nx_retailer_id"/>
-		<result property="nxRetailerName" column="nx_retailer_name"/>
-		<result property="nxRetailerLng" column="nx_retailer_lng"/>
-		<result property="nxRetailerLat" column="nx_retailer_lat"/>
-		<result property="nxRetailerImg" column="nx_retailer_img"/>
-		<result property="nxRetailerDescribe" column="nx_retailer_describe"/>
-	</resultMap>
+
 	<resultMap id="disUser" type="NxDistributerUserEntity">
 		 <id property="nxDistributerUserId" column="nx_distributer_user_id"/>
         <result property="nxDiuLoginPhone" column="nx_DIU_login_phone"/>
@@ -71,7 +64,6 @@
 		<result property="nxBuNxDisUserId" column="nx_BU_nx_dis_user_id"/>
 		<result property="nxBuWxPhone" column="nx_BU_wx_phone"/>
 		<association property="nxDistributerEntity" resultMap="nxDis"/>
-		<association property="nxRetailerEntity" resultMap="retalier"/>
 		<association property="nxDistributerUserEntity" resultMap="disUser"/>
 	</resultMap>
 

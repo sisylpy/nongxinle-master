@@ -171,13 +171,6 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
     }
 
     @Override
-    public List<NxRestrauntEntity> queryOrderNxRestrauntList(Map<String, Object> map1) {
-
-        return nxDepartmentOrdersDao.queryOrderNxRestrauntList(map1);
-
-    }
-
-    @Override
     public List<GbDepartmentEntity> queryOrderGbDepartmentList(Map<String, Object> map1) {
 
         return nxDepartmentOrdersDao.queryOrderGbDepartmentList(map1);
@@ -1644,12 +1637,6 @@ public class NxDepartmentOrdersServiceImpl implements NxDepartmentOrdersService 
     public List<NxDistributerGoodsEntity> queryOfferOrdersGoods(Map<String, Object> map) {
 
         return nxDepartmentOrdersDao.queryOfferOrdersGoods(map);
-    }
-
-    @Override
-    public NxDepartmentOrdersEntity queryByRestrauntId(Integer nxDoNxRestrauntOrderId) {
-
-        return  nxDepartmentOrdersDao.queryByRestrauntId(nxDoNxRestrauntOrderId);
     }
 
     @Override

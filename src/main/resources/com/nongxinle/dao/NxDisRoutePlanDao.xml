@@ -77,7 +77,31 @@
               or dor.nx_DO_arrive_only_date = #{routeDateOnly}
           )
         </if>
+        <if test="excludeDepartmentIds != null and excludeDepartmentIds.size() &gt; 0">
+          and dor.nx_DO_department_father_id not in
+          <foreach collection="excludeDepartmentIds" item="depId" open="(" separator="," close=")">
+              #{depId}
+          </foreach>
+        </if>
         order by ds.nx_department_pinyin, dor.nx_department_orders_id
+    </select>
+
+    <select id="countEligibleLiveOrders" resultType="int">
+        select count(1)
+        from nx_department_orders dor
+                 join nx_department ds on ds.nx_department_id = dor.nx_DO_department_father_id
+        where dor.nx_DO_distributer_id = #{disId}
+          and ds.nx_department_dis_id = #{disId}
+          and dor.nx_DO_collaborative_nx_dis_id = -1
+          and dor.nx_DO_status &lt; 3
+          and dor.nx_DO_gb_department_id = -1
+          and dor.nx_DO_nx_comm_restraunt_id = -1
+        <if test="excludeDepartmentIds != null and excludeDepartmentIds.size() &gt; 0">
+          and dor.nx_DO_department_father_id not in
+          <foreach collection="excludeDepartmentIds" item="depId" open="(" separator="," close=")">
+              #{depId}
+          </foreach>
+        </if>
     </select>
 
     <insert id="save" parameterType="com.nongxinle.entity.NxDisRoutePlanEntity"

@@ -52,7 +52,7 @@ public final class DisRouteSandboxDispatchEligibilityHelper {
     }
 
     /**
-     * 沙盘派车：装车中/已出发/配送中司机不得参与新单建议。除主 plan 外，扫描当日全部 plan 与执行态 task，
+     * 沙盘派车：装车中/已出发/配送中司机不得参与新单建议。除主 plan 外，扫描当日全部 plan 与当日执行态 task，
      * 与司机列表 {@code batchEligible} 判定一致。
      */
     public static Set<Integer> resolveSandboxDispatchIneligibleDriverUserIds(
@@ -88,7 +88,7 @@ public final class DisRouteSandboxDispatchEligibilityHelper {
                 }
             }
         }
-        collectIneligibleDriversFromActiveTasks(routeDao, taskDao, disId, ids);
+        collectIneligibleDriversFromActiveTasks(routeDao, taskDao, disId, routeDate, ids);
         return ids;
     }
 
@@ -96,6 +96,7 @@ public final class DisRouteSandboxDispatchEligibilityHelper {
             NxDisDriverRouteDao routeDao,
             NxDisShipmentTaskDao taskDao,
             Integer disId,
+            String routeDate,
             Set<Integer> target) {
         if (taskDao == null || target == null) {
             return;
@@ -103,6 +104,9 @@ public final class DisRouteSandboxDispatchEligibilityHelper {
         for (String status : new String[]{ASSIGNED, READY_TO_GO, IN_DELIVERY, EXCEPTION}) {
             Map<String, Object> params = new HashMap<String, Object>();
             params.put("disId", disId);
+            if (routeDate != null && !routeDate.trim().isEmpty()) {
+                params.put("routeDate", routeDate.trim());
+            }
             params.put("status", status);
             List<NxDisShipmentTaskEntity> tasks = taskDao.queryList(params);
             if (tasks == null) {

@@ -24,7 +24,6 @@ import com.nongxinle.route.proposal.SandboxProposalPlan;
 import com.nongxinle.route.proposal.SandboxProposalPlanBuilder;
 import com.nongxinle.service.DisDriverDutyService;
 import com.nongxinle.service.DisRouteSandboxComputeService;
-import com.nongxinle.service.DisShipmentTaskService;
 import com.nongxinle.service.NxDistributerService;
 import com.nongxinle.service.SysCityMarketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,17 +69,15 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
     @Autowired
     private DisDriverDutyService disDriverDutyService;
     @Autowired
-    private DisShipmentTaskService disShipmentTaskService;
-    @Autowired
     private DisRouteDispatchSnapshotHelper disRouteDispatchSnapshotHelper;
     @Autowired
     private DisRouteDispatchReadIntegrityHelper disRouteDispatchReadIntegrityHelper;
     @Autowired
     private DisRouteShipmentTaskItemOrderResolver disRouteShipmentTaskItemOrderResolver;
     @Autowired
-    private DisRouteSandboxSchedulePreviewHelper disRouteSandboxSchedulePreviewHelper;
-    @Autowired
     private DisRouteSandboxLegMetricsHelper disRouteSandboxLegMetricsHelper;
+    @Autowired
+    private DisRouteSandboxComputeMergedPlanBuilder mergedPlanBuilder;
     @Autowired
     private NxDisDriverDutyDao nxDisDriverDutyDao;
     @Autowired
@@ -106,11 +103,6 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         result.setDispatchBatch(batchCode);
         boolean formalPage = request.isFormalPageContractMode();
         boolean persistedOnly = request.isPersistedRoutesOnlyMode();
-        SandboxTodayPipelineTrace pipelineTrace = request.getSharedPipelineTrace();
-        if (pipelineTrace == null && request.isEnablePipelineTrace()) {
-            pipelineTrace = SandboxTodayPipelineTrace.create(formalPage);
-        }
-        result.setPipelineTrace(pipelineTrace);
 
         NxDisRoutePlanEntity planContext = loadPlanContext(disId, routeDate, batchCode);
         result.setPlanContext(planContext);
@@ -164,23 +156,6 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
 
         List<NxDisShipmentTaskEntity> virtualTasks = buildVirtualTasks(
                 disId, routeDate, ordersByDep, confirmedDepIds, dbTasks);
-
-        if (pipelineTrace != null) {
-            pipelineTrace.recordInputStage(
-                    dbTasks != null ? dbTasks.size() : 0,
-                    formalPage ? 0 : (pendingOrders != null ? pendingOrders.size() : 0),
-                    virtualTasks.size(),
-                    confirmedStops.size(),
-                    0,
-                    0,
-                    0,
-                    confirmedStops,
-                    Collections.<NxDisRouteStopEntity>emptyList(),
-                    Collections.<NxDisRouteStopEntity>emptyList());
-            pipelineTrace.recordDriverEligibility(
-                    onDutyDrivers, dispatchEligibleDrivers, sandboxIneligibleDrivers, offDutyDriverIds,
-                    nxDisDriverRouteDao, nxDisShipmentTaskDao, planContext);
-        }
 
         Map<Integer, NxDisSandboxDayTimeWindowEntity> sandboxDayOverrideByDepId =
                 loadSandboxDayTimeWindowOverrides(disId, routeDate);
@@ -248,13 +223,6 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 }
             }
 
-            if (pipelineTrace != null) {
-                pipelineTrace.recordAssignment(
-                        dispatchAssignmentPlan,
-                        historyBoundDepIds,
-                        strategyOutcome != null && strategyOutcome.isDelegateLegacyOptimizer(),
-                        fallbackOptimizable != null ? fallbackOptimizable.size() : 0);
-            }
         } else if (!virtualTasks.isEmpty()) {
             for (NxDisShipmentTaskEntity task : virtualTasks) {
                 unassignedStops.add(buildUnassignedStop(task));
@@ -304,34 +272,20 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         result.setInvalidStops(invalidStops);
         result.setHasLockedStops(!confirmedStops.isEmpty());
 
-        if (pipelineTrace != null) {
-            Set<Integer> historyBoundForTrace = extractHistoryBoundDepIdsFromSuggested(
-                    suggestedStops, dispatchAssignmentPlan);
-            pipelineTrace.recordSandboxSuggestedStops(
-                    suggestedStops, historyBoundForTrace, dispatchAssignmentPlan);
-        }
-
         SandboxProposalPlan proposalPlan = SandboxProposalPlanBuilder.build(
                 suggestedStops, unassignedStops, dispatchAssignmentPlan, sequencingContext);
         result.setProposalPlan(proposalPlan);
-        if (pipelineTrace != null) {
-            pipelineTrace.recordProposalPlan(proposalPlan);
-            pipelineTrace.recordRouteSequence(proposalPlan, dispatchAssignmentPlan, sequencingContext);
-        }
 
-        NxDisRoutePlanEntity mergedPlan = buildMergedPlan(
+        NxDisRoutePlanEntity mergedPlan = mergedPlanBuilder.buildMergedPlan(
                 planContext, disId, routeDate, batchCode, depot, onDutyDrivers,
-                confirmedStops, suggestedStops, unassignedStops, dispatchBlockedDriverIds, offDutyDriverIds,
-                pipelineTrace);
-        hydrateExecutionRouteSnapshots(mergedPlan);
+                confirmedStops, suggestedStops, dispatchBlockedDriverIds, offDutyDriverIds);
+        mergedPlanBuilder.hydrateExecutionRouteSnapshots(mergedPlan);
         if (!persistedOnly) {
             disRouteSandboxLegMetricsHelper.applyToPlan(depot, mergedPlan);
-            if (!onDutyDrivers.isEmpty()) {
-                try {
-                    disRouteSandboxLegMetricsHelper.applyDepotLegToStops(depot, unassignedStops);
-                } catch (IOException ex) {
-                    // 未分配 leg 失败时不阻断整页
-                }
+            try {
+                disRouteSandboxLegMetricsHelper.applyDepotLegToStops(depot, unassignedStops);
+            } catch (IOException ex) {
+                // 未分配 leg 失败时不阻断整页
             }
         }
         DisRouteSandboxStopTimeWindowResolutionSupport.ensureDepartmentsLoaded(
@@ -344,7 +298,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 departmentByDepId);
         DisRouteSandboxStopTimeWindowResolutionSupport.applyToPlan(
                 mergedPlan, departmentByDepId, sandboxDayOverrideByDepId);
-        applySchedulePreviewToMergedPlan(mergedPlan, routeDate);
+        mergedPlanBuilder.applySchedulePreviewToMergedPlan(mergedPlan, routeDate);
         if (!persistedOnly) {
             DisRouteSandboxStopTimeWindowResolutionSupport.ensureDepartmentsLoaded(
                     nxDepartmentDao,
@@ -352,25 +306,17 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                     departmentByDepId);
             DisRouteSandboxStopTimeWindowResolutionSupport.applyToStops(
                     unassignedStops, departmentByDepId, sandboxDayOverrideByDepId);
-            applySchedulePreviewToUnassignedStops(unassignedStops, routeDate);
+            mergedPlanBuilder.applySchedulePreviewToUnassignedStops(unassignedStops, routeDate);
         }
-        reconcileExecutionRoutesAfterSnapshot(mergedPlan);
+        mergedPlanBuilder.reconcileExecutionRoutesAfterSnapshot(mergedPlan);
         applyLiveDepartmentNames(mergedPlan, confirmedStops, suggestedStops, unassignedStops);
         result.setMergedPlan(mergedPlan);
 
         List<NxDisShipmentTaskEntity> displayTasks = collectDisplayTasks(mergedPlan);
         result.setAllDisplayTasks(displayTasks);
 
-        result.setOrderVersion(buildOrderVersion(pendingOrders, disId, excludeDepIds, formalPage));
-        result.setDutyVersion(buildDutyVersion(disId, routeDate, onDutyDrivers));
-        result.setSandboxVersion(buildSandboxVersion(result));
+        DisRouteSandboxManualDispatchComputeEnricher.enrich(result);
         result.setHasNewOrders(pendingOrders != null && !pendingOrders.isEmpty());
-        result.setHasOrderChanges(false);
-
-        if (pipelineTrace != null) {
-            result.setPipelineTrace(pipelineTrace);
-            result.setDebugTrace(pipelineTrace.toResponseMap());
-        }
 
         return result;
     }
@@ -585,6 +531,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 if (hasValidItems) {
                     confirmedStops.add(buildConfirmedStopFromDb(task, planContext));
                 } else {
+                    confirmedStops.add(buildConfirmedStopFromDb(task, planContext));
                     invalidStops.add(buildInvalidStop(task, "CONFIRMED_NO_VALID_ORDERS",
                             "已确认客户无有效订单，需人工处理"));
                 }
@@ -822,10 +769,10 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
     private Map<Integer, NxDisShipmentTaskEntity> loadTimeWindowOverrides(List<NxDisShipmentTaskEntity> dbTasks) {
         Map<Integer, NxDisShipmentTaskEntity> map = new HashMap<Integer, NxDisShipmentTaskEntity>();
         for (NxDisShipmentTaskEntity task : dbTasks) {
-            if (task == null || !isTaskProtected(task)) {
+            if (task == null || !DisRouteSandboxStopTimeWindowResolver.isActiveOverrideSourceTask(task)) {
                 continue;
             }
-            if (task.getNxDstTimeWindowOverrideFlag() != null && task.getNxDstTimeWindowOverrideFlag() == 1) {
+            if (task.getNxDstDepFatherId() != null) {
                 map.put(task.getNxDstDepFatherId(), task);
             }
         }
@@ -933,7 +880,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 task.setNxDstLegDurationS(stopResult.getLegDurationS());
                 task.setLegDistanceProvider(stopResult.getDistanceProvider());
                 task.setLegDistanceType(stopResult.getDistanceType());
-                copyTaskSnapshotToStop(task, stop);
+                disRouteDispatchSnapshotHelper.copyTaskSnapshotToStop(task, stop);
                 suggestedStops.add(stop);
                 assignedDeps.add(task.getNxDstDepFatherId());
             }
@@ -994,7 +941,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 NxDisRouteStopEntity stop = buildStopShellFromTask(task, stopSeq);
                 stop.setSuggestedDriverUserId(driverUserId);
                 stop.setSuggestedDriverName(driverName);
-                copyTaskSnapshotToStop(task, stop);
+                disRouteDispatchSnapshotHelper.copyTaskSnapshotToStop(task, stop);
                 suggestedStops.add(stop);
                 boundDepIds.add(task.getNxDstDepFatherId());
             }
@@ -1101,10 +1048,6 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         return stop;
     }
 
-    private void copyTaskSnapshotToStop(NxDisShipmentTaskEntity task, NxDisRouteStopEntity stop) {
-        disRouteDispatchSnapshotHelper.copyTaskSnapshotToStop(task, stop);
-    }
-
     private void markSandboxMetadata(List<NxDisRouteStopEntity> stops, String source, boolean confirmViaSandbox) {
         for (NxDisRouteStopEntity stop : stops) {
             stop.setStopSource(source);
@@ -1122,430 +1065,6 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
         }
     }
 
-    private NxDisRoutePlanEntity buildMergedPlan(NxDisRoutePlanEntity planContext,
-                                                 Integer disId,
-                                                 String routeDate,
-                                                 String batchCode,
-                                                 GeoPoint depot,
-                                                 List<NxDistributerUserEntity> onDutyDrivers,
-                                                 List<NxDisRouteStopEntity> confirmedStops,
-                                                 List<NxDisRouteStopEntity> suggestedStops,
-                                                 List<NxDisRouteStopEntity> unassignedStops,
-                                                 Set<Integer> sandboxIneligibleDrivers,
-                                                 Set<Integer> offDutyDriverIds,
-                                                 SandboxTodayPipelineTrace pipelineTrace) {
-        NxDisRoutePlanEntity plan = planContext != null ? planContext : new NxDisRoutePlanEntity();
-        plan.setNxDrpDistributerId(disId);
-        plan.setNxDrpRouteDate(routeDate);
-        plan.setNxDrpDispatchBatch(batchCode);
-        if (depot != null) {
-            plan.setNxDrpDepotLat(depot.getLat());
-            plan.setNxDrpDepotLng(depot.getLng());
-        }
-
-        Map<Integer, NxDisDriverRouteEntity> routeByDriver = new LinkedHashMap<Integer, NxDisDriverRouteEntity>();
-        int routeSeq = 1;
-        for (NxDistributerUserEntity driver : onDutyDrivers) {
-            NxDisDriverRouteEntity route = new NxDisDriverRouteEntity();
-            route.setNxDdrDriverUserId(driver.getNxDistributerUserId());
-            route.setNxDdrRouteSeq(routeSeq++);
-            route.setDriverName(driver.getNxDiuWxNickName());
-            route.setStops(new ArrayList<NxDisRouteStopEntity>());
-            route.setNxDdrStopCount(0);
-            routeByDriver.put(driver.getNxDistributerUserId(), route);
-        }
-
-        appendStopsToDriverRoutes(routeByDriver, confirmedStops, sandboxIneligibleDrivers);
-        appendStopsToDriverRoutes(routeByDriver, suggestedStops, sandboxIneligibleDrivers);
-        if (pipelineTrace != null) {
-            pipelineTrace.recordMergedPlanBeforeDbMerge(
-                    routeByDriver, suggestedStops, confirmedStops, sandboxIneligibleDrivers,
-                    nxDisDriverRouteDao, nxDisShipmentTaskDao);
-        }
-        resolveDriverRouteIdsFromStops(routeByDriver);
-        attachExecutionPlanContext(plan, routeByDriver);
-        mergeDbDriverRoutes(routeByDriver, plan.getNxDrpId(), offDutyDriverIds);
-        hydrateDriverRouteExecutionFromDb(routeByDriver);
-        reconcileExecutionRouteReadState(routeByDriver);
-
-        for (NxDisDriverRouteEntity route : routeByDriver.values()) {
-            resequenceStops(route.getStops());
-        }
-
-        stabilizePlanStatusForExecution(plan, routeByDriver);
-        plan.setDriverRoutes(new ArrayList<NxDisDriverRouteEntity>(routeByDriver.values()));
-        if (pipelineTrace != null) {
-            pipelineTrace.recordMergedPlanAfterDbMerge(plan);
-        }
-        return plan;
-    }
-
-    private static Set<Integer> extractHistoryBoundDepIdsFromSuggested(
-            List<NxDisRouteStopEntity> suggestedStops,
-            DispatchAssignmentPlan assignmentPlan) {
-        Set<Integer> depIds = new HashSet<Integer>();
-        if (assignmentPlan != null && assignmentPlan.getDriverRoutes() != null) {
-            for (DriverRoutePlan route : assignmentPlan.getDriverRoutes()) {
-                if (route == null || route.getStops() == null) {
-                    continue;
-                }
-                for (StopAssignment assignment : route.getStops()) {
-                    if (assignment != null && assignment.getDepFatherId() != null) {
-                        depIds.add(assignment.getDepFatherId());
-                    }
-                }
-            }
-        }
-        return depIds;
-    }
-
-    /** 出发后 plan 头不得为 SIMULATED/null；从 execution route 找回 DB plan。 */
-    private void attachExecutionPlanContext(NxDisRoutePlanEntity plan,
-                                            Map<Integer, NxDisDriverRouteEntity> routeByDriver) {
-        if (plan == null || routeByDriver == null || routeByDriver.isEmpty()) {
-            return;
-        }
-        List<NxDisDriverRouteEntity> routes = new ArrayList<NxDisDriverRouteEntity>(routeByDriver.values());
-        if (DisRouteExecutionPlanHelper.isPersistedPlan(plan)) {
-            return;
-        }
-        for (NxDisDriverRouteEntity route : routes) {
-            if (route == null || route.getNxDdrId() == null) {
-                continue;
-            }
-            NxDisDriverRouteEntity dbRoute = nxDisDriverRouteDao.queryObject(route.getNxDdrId());
-            if (dbRoute != null) {
-                DisRouteRouteExecutionHelper.mergeExecutionFieldsFromDb(route, dbRoute);
-            }
-        }
-        DisRouteExecutionPlanHelper.attachPlanHeaderFromRoutes(plan, routes);
-        if (plan.getNxDrpId() != null) {
-            loadAndMergePlanHeader(plan, plan.getNxDrpId(), routes);
-            return;
-        }
-        for (NxDisDriverRouteEntity route : routes) {
-            if (route == null || route.getNxDdrPlanId() == null) {
-                continue;
-            }
-            NxDisRoutePlanEntity dbPlan = nxDisRoutePlanDao.queryObject(route.getNxDdrPlanId());
-            if (dbPlan != null && !DisRouteExecutionPlanHelper.isCancelledPlan(dbPlan)) {
-                DisRouteExecutionPlanHelper.copyPlanFields(plan, dbPlan);
-                break;
-            }
-        }
-        if (plan.getNxDrpId() != null) {
-            loadAndMergePlanHeader(plan, plan.getNxDrpId(), routes);
-        }
-    }
-
-    private void loadAndMergePlanHeader(NxDisRoutePlanEntity plan,
-                                        Integer planId,
-                                        List<NxDisDriverRouteEntity> routes) {
-        NxDisRoutePlanEntity dbPlan = nxDisRoutePlanDao.queryObject(planId);
-        if (dbPlan == null) {
-            return;
-        }
-        DisRouteExecutionPlanHelper.copyPlanFields(plan, dbPlan);
-        if (DisRouteExecutionPlanHelper.hasExecutionDriverRoute(routes)
-                && (DisRouteExecutionPlanHelper.isEmptySimulatedPlan(plan)
-                || SIMULATED.equals(plan.getNxDrpStatus()))) {
-            plan.setNxDrpStatus(ASSIGNED);
-        }
-    }
-
-    private void reconcileExecutionRouteReadState(Map<Integer, NxDisDriverRouteEntity> routeByDriver) {
-        if (routeByDriver == null) {
-            return;
-        }
-        for (NxDisDriverRouteEntity route : routeByDriver.values()) {
-            if (route == null) {
-                continue;
-            }
-            DisRouteRouteExecutionHelper.syncExecutionCanonicalFields(route);
-        }
-    }
-
-    private void stabilizePlanStatusForExecution(NxDisRoutePlanEntity plan,
-                                                 Map<Integer, NxDisDriverRouteEntity> routeByDriver) {
-        if (plan == null || routeByDriver == null) {
-            return;
-        }
-        if (DisRouteExecutionPlanHelper.hasExecutionDriverRoute(
-                new ArrayList<NxDisDriverRouteEntity>(routeByDriver.values()))) {
-            if (plan.getNxDrpId() == null || DisRouteExecutionPlanHelper.isEmptySimulatedPlan(plan)
-                    || SIMULATED.equals(plan.getNxDrpStatus())) {
-                if (plan.getNxDrpId() != null) {
-                    plan.setNxDrpStatus(ASSIGNED);
-                }
-            }
-        }
-    }
-
-    private void applySchedulePreviewToMergedPlan(NxDisRoutePlanEntity plan, String routeDate) {
-        if (plan == null || plan.getDriverRoutes() == null) {
-            return;
-        }
-        for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
-            String scheduleRouteDate = resolveScheduleRouteDate(route, routeDate);
-            disRouteSandboxSchedulePreviewHelper.applySchedulePreview(plan, route, scheduleRouteDate);
-        }
-        DisRouteSandboxPlanTimelineHelper.applyAggregatedTimeline(plan);
-    }
-
-    /** 未分配客户：单站临时路线排程预览（市场→客户）。 */
-    private void applySchedulePreviewToUnassignedStops(List<NxDisRouteStopEntity> unassignedStops,
-                                                       String routeDate) {
-        if (unassignedStops == null || unassignedStops.isEmpty()) {
-            return;
-        }
-        for (NxDisRouteStopEntity stop : unassignedStops) {
-            if (stop == null) {
-                continue;
-            }
-            NxDisDriverRouteEntity pseudoRoute = new NxDisDriverRouteEntity();
-            pseudoRoute.setStops(new ArrayList<NxDisRouteStopEntity>());
-            pseudoRoute.getStops().add(stop);
-            stop.setNxDrsStopSeq(1);
-            disRouteSandboxSchedulePreviewHelper.applySchedulePreview(null, pseudoRoute, routeDate);
-        }
-    }
-
-    /** 已出发路线：先从 DB / legacy stop 恢复快照，再决定是否坐标重算 leg。 */
-    private void hydrateExecutionRouteSnapshots(NxDisRoutePlanEntity plan) {
-        if (plan == null || plan.getDriverRoutes() == null) {
-            return;
-        }
-        for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
-            if (route == null || !DisRouteRouteExecutionHelper.isExecutionRoute(route)) {
-                continue;
-            }
-            if (route.getNxDdrId() != null) {
-                NxDisDriverRouteEntity dbRoute = nxDisDriverRouteDao.queryObject(route.getNxDdrId());
-                if (dbRoute != null) {
-                    DisRouteExecutionRouteSnapshotHelper.mergeRouteSnapshotFromDb(route, dbRoute);
-                }
-            }
-            if (route.getStops() == null) {
-                continue;
-            }
-            for (NxDisRouteStopEntity stop : route.getStops()) {
-                if (stop == null || stop.getShipmentTask() == null) {
-                    continue;
-                }
-                NxDisRouteStopEntity legacyStop = nxDisRouteStopDao.queryByShipmentTaskId(
-                        stop.getShipmentTask().getNxDstId());
-                DisRouteExecutionRouteSnapshotHelper.hydrateStopSnapshotFromPersistence(
-                        stop, stop.getShipmentTask(), legacyStop);
-            }
-        }
-    }
-
-    /** leg/排程 enrichment 后重新锁定 execution 态，不丢失里程/标签。 */
-    private void reconcileExecutionRoutesAfterSnapshot(NxDisRoutePlanEntity plan) {
-        if (plan == null || plan.getDriverRoutes() == null) {
-            return;
-        }
-        for (NxDisDriverRouteEntity route : plan.getDriverRoutes()) {
-            if (route == null || !DisRouteRouteExecutionHelper.isExecutionRoute(route)) {
-                continue;
-            }
-            DisRouteRouteExecutionHelper.syncExecutionCanonicalFields(route);
-            if (route.getNxDdrStopCount() == null && route.getStops() != null) {
-                route.setNxDdrStopCount(route.getStops().size());
-            }
-        }
-    }
-
-    private String resolveScheduleRouteDate(NxDisDriverRouteEntity route, String fallbackRouteDate) {
-        if (route != null && route.getStops() != null) {
-            for (NxDisRouteStopEntity stop : route.getStops()) {
-                if (stop != null && stop.getShipmentTask() != null
-                        && stop.getShipmentTask().getNxDstRouteDate() != null
-                        && !stop.getShipmentTask().getNxDstRouteDate().trim().isEmpty()) {
-                    return stop.getShipmentTask().getNxDstRouteDate().trim();
-                }
-            }
-        }
-        return fallbackRouteDate;
-    }
-
-    private void mergeDbDriverRoutes(Map<Integer, NxDisDriverRouteEntity> routeByDriver,
-                                     Integer planId,
-                                     Set<Integer> offDutyDriverIds) {
-        if (planId == null) {
-            return;
-        }
-        List<NxDisDriverRouteEntity> dbRoutes = nxDisDriverRouteDao.queryByPlanId(planId);
-        if (dbRoutes == null || dbRoutes.isEmpty()) {
-            return;
-        }
-        for (NxDisDriverRouteEntity dbRoute : dbRoutes) {
-            if (dbRoute == null || dbRoute.getNxDdrDriverUserId() == null) {
-                continue;
-            }
-            if (isOffDutySandboxRouteOnly(dbRoute, offDutyDriverIds)) {
-                continue;
-            }
-            NxDisDriverRouteEntity existing = routeByDriver.get(dbRoute.getNxDdrDriverUserId());
-            if (existing != null) {
-                if (hasSandboxSuggestedStops(existing)
-                        && DisRouteSandboxDriverDispatchStateHelper.hasOnlyTerminalActiveTasks(
-                        dbRoute, nxDisDriverRouteDao, nxDisShipmentTaskDao)) {
-                    if (existing.getDriverName() == null || existing.getDriverName().trim().isEmpty()) {
-                        existing.setDriverName(dbRoute.getDriverName());
-                    }
-                    continue;
-                }
-                existing.setNxDdrId(dbRoute.getNxDdrId());
-                DisRouteExecutionRouteSnapshotHelper.mergeRouteSnapshotFromDb(existing, dbRoute);
-                if (existing.getDriverName() == null || existing.getDriverName().trim().isEmpty()) {
-                    existing.setDriverName(dbRoute.getDriverName());
-                }
-                if (existing.getNxDdrRouteSeq() == null && dbRoute.getNxDdrRouteSeq() != null) {
-                    existing.setNxDdrRouteSeq(dbRoute.getNxDdrRouteSeq());
-                }
-            } else {
-                if (dbRoute.getStops() == null) {
-                    dbRoute.setStops(new ArrayList<NxDisRouteStopEntity>());
-                }
-                routeByDriver.put(dbRoute.getNxDdrDriverUserId(), dbRoute);
-            }
-        }
-    }
-
-    private static boolean hasSandboxSuggestedStops(NxDisDriverRouteEntity route) {
-        if (route == null || route.getStops() == null || route.getStops().isEmpty()) {
-            return false;
-        }
-        for (NxDisRouteStopEntity stop : route.getStops()) {
-            if (stop != null && DisRouteSandboxDispatchEligibilityHelper.isSandboxEphemeralStop(stop)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** 不可派司机的沙盘路线（非装车/非执行）不参与今日派单读模型。 */
-    private static boolean isOffDutySandboxRouteOnly(NxDisDriverRouteEntity dbRoute,
-                                                     Set<Integer> offDutyDriverIds) {
-        if (dbRoute == null || offDutyDriverIds == null || offDutyDriverIds.isEmpty()) {
-            return false;
-        }
-        Integer driverId = dbRoute.getNxDdrDriverUserId();
-        if (driverId == null || !offDutyDriverIds.contains(driverId)) {
-            return false;
-        }
-        return !DisRouteDriverDutyLockHelper.isRouteLockedForDutyToggle(dbRoute)
-                && !DisRouteRouteExecutionHelper.isExecutionRoute(dbRoute);
-    }
-
-    /** 按 driverRouteId 补全 execution 字段（plan 合并失败或 planId 为空时仍可读 actualDepartAt）。 */
-    private void hydrateDriverRouteExecutionFromDb(Map<Integer, NxDisDriverRouteEntity> routeByDriver) {
-        if (routeByDriver == null || routeByDriver.isEmpty()) {
-            return;
-        }
-        for (NxDisDriverRouteEntity route : routeByDriver.values()) {
-            if (route == null || route.getNxDdrId() == null) {
-                continue;
-            }
-            NxDisDriverRouteEntity dbRoute = nxDisDriverRouteDao.queryObject(route.getNxDdrId());
-            if (dbRoute == null) {
-                continue;
-            }
-            DisRouteRouteExecutionHelper.mergeExecutionFieldsFromDb(route, dbRoute);
-        }
-    }
-
-    private void resolveDriverRouteIdsFromStops(Map<Integer, NxDisDriverRouteEntity> routeByDriver) {
-        for (NxDisDriverRouteEntity route : routeByDriver.values()) {
-            if (route == null || route.getNxDdrId() != null) {
-                continue;
-            }
-            if (route.getStops() == null || route.getStops().isEmpty()) {
-                continue;
-            }
-            for (NxDisRouteStopEntity stop : route.getStops()) {
-                if (stop == null) {
-                    continue;
-                }
-                if (stop.getNxDrsDriverRouteId() != null) {
-                    route.setNxDdrId(stop.getNxDrsDriverRouteId());
-                    break;
-                }
-                NxDisShipmentTaskEntity task = stop.getShipmentTask();
-                if (task != null && task.getNxDstDriverRouteId() != null) {
-                    route.setNxDdrId(task.getNxDstDriverRouteId());
-                    break;
-                }
-            }
-        }
-    }
-
-    private void appendStopsToDriverRoutes(Map<Integer, NxDisDriverRouteEntity> routeByDriver,
-                                           List<NxDisRouteStopEntity> stops,
-                                           Set<Integer> sandboxIneligibleDrivers) {
-        for (NxDisRouteStopEntity stop : stops) {
-            if (stop == null || stop.getShipmentTask() == null) {
-                continue;
-            }
-            NxDisShipmentTaskEntity task = stop.getShipmentTask();
-            Integer driverId = task.getNxDstAssignedDriverUserId() != null
-                    ? task.getNxDstAssignedDriverUserId()
-                    : task.getNxDstSuggestedDriverUserId();
-            if (driverId == null) {
-                continue;
-            }
-            boolean ephemeral = DisRouteSandboxDispatchEligibilityHelper.isSandboxEphemeralStop(stop);
-            if (ephemeral && !DisRouteSandboxDispatchEligibilityHelper.isDriverEligibleForSandboxDispatch(
-                    driverId, sandboxIneligibleDrivers)) {
-                continue;
-            }
-            NxDisDriverRouteEntity route = routeByDriver.get(driverId);
-            if (route == null) {
-                route = new NxDisDriverRouteEntity();
-                route.setNxDdrDriverUserId(driverId);
-                route.setStops(new ArrayList<NxDisRouteStopEntity>());
-                routeByDriver.put(driverId, route);
-            }
-            if (ephemeral && route != null
-                    && !DisRouteSandboxDispatchEligibilityHelper.acceptsSandboxEphemeralStops(
-                            route, nxDisDriverRouteDao, nxDisShipmentTaskDao)) {
-                continue;
-            }
-            route.getStops().add(stop);
-        }
-    }
-
-    private void resequenceStops(List<NxDisRouteStopEntity> stops) {
-        if (stops == null || stops.isEmpty()) {
-            return;
-        }
-        Collections.sort(stops, new Comparator<NxDisRouteStopEntity>() {
-            @Override
-            public int compare(NxDisRouteStopEntity a, NxDisRouteStopEntity b) {
-                boolean lockedA = a.getShipmentTask() != null && a.getShipmentTask().getNxDstManualLocked() != null
-                        && a.getShipmentTask().getNxDstManualLocked() == 1;
-                boolean lockedB = b.getShipmentTask() != null && b.getShipmentTask().getNxDstManualLocked() != null
-                        && b.getShipmentTask().getNxDstManualLocked() == 1;
-                if (lockedA != lockedB) {
-                    return lockedA ? -1 : 1;
-                }
-                int seqA = a.getNxDrsStopSeq() != null ? a.getNxDrsStopSeq() : 999;
-                int seqB = b.getNxDrsStopSeq() != null ? b.getNxDrsStopSeq() : 999;
-                return Integer.compare(seqA, seqB);
-            }
-        });
-        int seq = 1;
-        for (NxDisRouteStopEntity stop : stops) {
-            if (stop.getShipmentTask() != null && stop.getShipmentTask().getNxDstManualLocked() != null
-                    && stop.getShipmentTask().getNxDstManualLocked() == 1
-                    && stop.getShipmentTask().getNxDstManualStopSeq() != null) {
-                stop.setNxDrsStopSeq(stop.getShipmentTask().getNxDstManualStopSeq());
-            } else {
-                stop.setNxDrsStopSeq(seq++);
-            }
-        }
-    }
 
     private List<NxDisShipmentTaskEntity> collectDisplayTasks(NxDisRoutePlanEntity plan) {
         List<NxDisShipmentTaskEntity> tasks = new ArrayList<NxDisShipmentTaskEntity>();
@@ -1677,61 +1196,7 @@ public class DisRouteSandboxComputeServiceImpl implements DisRouteSandboxCompute
                 || DisShipmentTaskStatus.IN_DELIVERY.equals(status);
     }
 
-    private String buildOrderVersion(List<DisRouteOrderSnapshotDto> orders,
-                                     Integer disId,
-                                     List<Integer> excludeDepartmentIds,
-                                     boolean formalPage) {
-        if (formalPage) {
-            int pendingCount = orders != null ? orders.size() : 0;
-            int totalEligible = nxDisRoutePlanDao.countEligibleLiveOrders(disId, null);
-            StringBuilder sb = new StringBuilder();
-            sb.append(totalEligible).append('/').append(pendingCount);
-            return Integer.toHexString(sb.toString().hashCode());
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append(orders != null ? orders.size() : 0);
-        if (orders != null) {
-            List<Integer> ids = new ArrayList<Integer>();
-            for (DisRouteOrderSnapshotDto o : orders) {
-                if (o.getOrderId() != null) {
-                    ids.add(o.getOrderId());
-                }
-            }
-            Collections.sort(ids);
-            for (Integer id : ids) {
-                sb.append(':').append(id);
-            }
-        }
-        return Integer.toHexString(sb.toString().hashCode());
-    }
-
-    private String buildDutyVersion(Integer disId, String routeDate, List<NxDistributerUserEntity> drivers) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(disId).append('@').append(routeDate).append('#');
-        if (drivers != null) {
-            List<Integer> ids = new ArrayList<Integer>();
-            for (NxDistributerUserEntity d : drivers) {
-                ids.add(d.getNxDistributerUserId());
-            }
-            Collections.sort(ids);
-            for (Integer id : ids) {
-                sb.append(id).append(',');
-            }
-        }
-        return Integer.toHexString(sb.toString().hashCode());
-    }
-
-    private String buildSandboxVersion(SandboxComputeResult result) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(result.getOrderVersion()).append('|').append(result.getDutyVersion());
-        sb.append('|').append(result.getConfirmedStops().size());
-        sb.append('|').append(result.getSandboxSuggestedStops().size());
-        return Integer.toHexString(sb.toString().hashCode());
-    }
-
-    /**
-     * Phase 3a：展示用客户名始终读 nx_department 最新值（仅内存读模型，不写库）。
-     */
+    /** Phase 3a：展示用客户名始终读 nx_department 最新值（仅内存读模型，不写库）。 */
     private void applyLiveDepartmentNames(NxDisRoutePlanEntity plan,
                                           List<NxDisRouteStopEntity> confirmedStops,
                                           List<NxDisRouteStopEntity> suggestedStops,

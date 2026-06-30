@@ -15,6 +15,13 @@
         limit 1
     </select>
 
+    <select id="queryActiveListByMarketId" resultType="com.nongxinle.entity.NxMarketDepartmentEntity">
+        select * from nx_market_department
+        where nx_md_market_id = #{value}
+          and nx_md_status = 'ACTIVE'
+        order by nx_md_department_id asc
+    </select>
+
     <insert id="save" parameterType="com.nongxinle.entity.NxMarketDepartmentEntity"
             useGeneratedKeys="true" keyProperty="nxMarketDepartmentId">
         insert into nx_market_department

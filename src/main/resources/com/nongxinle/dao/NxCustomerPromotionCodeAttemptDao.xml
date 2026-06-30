@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCustomerPromotionCodeAttemptDao">
+
+    <resultMap id="attemptWithInvitee" type="com.nongxinle.entity.NxCustomerPromotionCodeAttemptEntity">
+        <id property="nxCustomerPromotionCodeAttemptId" column="nx_customer_promotion_code_attempt_id"/>
+        <result property="inviteeUserId" column="invitee_user_id"/>
+        <result property="promotionCodeId" column="promotion_code_id"/>
+        <result property="promotionCodeSnapshot" column="promotion_code_snapshot"/>
+        <result property="sourceOwnerType" column="source_owner_type"/>
+        <result property="sourceOwnerId" column="source_owner_id"/>
+        <result property="invalidReason" column="invalid_reason"/>
+        <result property="commerceId" column="commerce_id"/>
+        <result property="communityId" column="community_id"/>
+        <result property="shareEntry" column="share_entry"/>
+        <result property="attemptedAt" column="attempted_at"/>
+        <association property="inviteeUser" javaType="com.nongxinle.entity.NxCustomerUserEntity">
+            <id property="nxCuUserId" column="invitee_nx_CU_user_id"/>
+            <result property="nxCuWxNickName" column="invitee_nx_CU_wx_nick_name"/>
+            <result property="nxCuWxAvatarUrl" column="invitee_nx_CU_wx_avatar_url"/>
+            <result property="nxCuWxPhoneNumber" column="invitee_nx_CU_wx_phone_number"/>
+            <result property="nxCuJoinDate" column="invitee_nx_CU_join_date"/>
+        </association>
+    </resultMap>
+
+    <sql id="listWhere">
+        where a.source_owner_type = #{sourceOwnerType}
+          and a.source_owner_id = #{sourceOwnerId}
+        <if test="communityId != null">
+          and a.community_id = #{communityId}
+        </if>
+    </sql>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="nxCustomerPromotionCodeAttemptId">
+        insert into nx_customer_promotion_code_attempt
+        (invitee_user_id, promotion_code_id, promotion_code_snapshot, source_owner_type, source_owner_id,
+         invalid_reason, commerce_id, community_id, share_entry, attempted_at)
+        values
+        (#{inviteeUserId}, #{promotionCodeId}, #{promotionCodeSnapshot}, #{sourceOwnerType}, #{sourceOwnerId},
+         #{invalidReason}, #{commerceId}, #{communityId}, #{shareEntry}, #{attemptedAt})
+    </insert>
+
+    <select id="queryList" resultMap="attemptWithInvitee">
+        select a.*,
+               u.nx_CU_user_id as invitee_nx_CU_user_id,
+               u.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               u.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               u.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               u.nx_CU_join_date as invitee_nx_CU_join_date
+        from nx_customer_promotion_code_attempt a
+        left join nx_customer_user u on u.nx_CU_user_id = a.invitee_user_id
+        <include refid="listWhere"/>
+        order by a.attempted_at desc, a.nx_customer_promotion_code_attempt_id desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*)
+        from nx_customer_promotion_code_attempt a
+        <include refid="listWhere"/>
+    </select>
+
+    <delete id="deleteBySourceOwner">
+        delete from nx_customer_promotion_code_attempt
+        where source_owner_type = #{sourceOwnerType}
+          and source_owner_id = #{sourceOwnerId}
+    </delete>
+</mapper>

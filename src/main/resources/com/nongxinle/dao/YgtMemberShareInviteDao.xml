@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtMemberShareInviteDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberShareInviteEntity">
+        select * from ygt_member_share_invite where ygt_member_share_invite_id = #{value}
+    </select>
+    <select id="queryByShareCode" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberShareInviteEntity">
+        select * from ygt_member_share_invite where ygt_msi_share_code = #{shareCode} limit 1
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberShareInviteEntity">
+        select * from ygt_member_share_invite
+        <where>
+            <if test="campaignId != null">and ygt_msi_campaign_id = #{campaignId}</if>
+            <if test="wecomGroupId != null">and ygt_msi_wecom_group_id = #{wecomGroupId}</if>
+            <if test="status != null and status != ''">and ygt_msi_status = #{status}</if>
+        </where>
+        order by ygt_member_share_invite_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_member_share_invite</select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtMemberShareInviteEntity" useGeneratedKeys="true" keyProperty="ygtMemberShareInviteId">
+        insert into ygt_member_share_invite
+        (ygt_msi_share_code, ygt_msi_source_type, ygt_msi_inviter_customer_user_id,
+         ygt_msi_wecom_group_id, ygt_msi_campaign_id, ygt_msi_corp_id, ygt_msi_chat_id,
+         ygt_msi_community_id, ygt_msi_status, ygt_msi_expire_time, ygt_msi_create_time, ygt_msi_update_time)
+        values
+        (#{ygtMsiShareCode}, #{ygtMsiSourceType}, #{ygtMsiInviterCustomerUserId},
+         #{ygtMsiWecomGroupId}, #{ygtMsiCampaignId}, #{ygtMsiCorpId}, #{ygtMsiChatId},
+         #{ygtMsiCommunityId}, #{ygtMsiStatus}, #{ygtMsiExpireTime}, #{ygtMsiCreateTime}, #{ygtMsiUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtMemberShareInviteEntity">
+        update ygt_member_share_invite
+        <set>
+            <if test="ygtMsiStatus != null">ygt_msi_status = #{ygtMsiStatus},</if>
+            ygt_msi_update_time = now()
+        </set>
+        where ygt_member_share_invite_id = #{ygtMemberShareInviteId}
+    </update>
+    <delete id="delete">delete from ygt_member_share_invite where ygt_member_share_invite_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_member_share_invite where ygt_member_share_invite_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

@@ -24,17 +24,27 @@ public class WXBizMsgCrypt {
      * @throws AesException 执行失败，请查看该异常的错误码和具体的错误信息
      */
     public WXBizMsgCrypt(final QywechatEnum qywechatEnum) throws AesException {
-        this.token = qywechatEnum.getToken();
-        this.receiveid = qywechatEnum.getCorpid();
-        System.out.println("token====" + qywechatEnum.getToken());
-        System.out.println("receiveid====dddvvvv" + qywechatEnum.getCorpid());
-        String encodingAesKey = qywechatEnum.getEncodingAESKey();
-        System.out.println("encodingAesKeyencodingAesKey==" + encodingAesKey);
-        if (encodingAesKey.length() != 43) {
+        this(qywechatEnum.getToken(), qywechatEnum.getEncodingAESKey(), qywechatEnum.getCorpid());
+    }
+
+    public WXBizMsgCrypt(String token, String encodingAESKey, String receiveid) throws AesException {
+        this.token = token;
+        this.receiveid = receiveid;
+        if (encodingAESKey.length() != 43) {
             throw new AesException(AesException.IllegalAesKey);
         }
-        aesKey = Base64.decodeBase64(encodingAesKey + "=");
+        aesKey = Base64.decodeBase64(encodingAESKey + "=");
+    }
 
+    public String decryptPostData(String msgSignature, String timestamp, String nonce, String postData)
+            throws AesException {
+        Object[] encrypt = XMLParse.extract(postData);
+        String encryptStr = encrypt[1].toString();
+        String signature = SHA1.getSHA1(token, timestamp, nonce, encryptStr);
+        if (!signature.equals(msgSignature)) {
+            throw new AesException(AesException.ValidateSignatureError);
+        }
+        return decrypt(encryptStr);
     }
 
 
@@ -125,7 +135,6 @@ public class WXBizMsgCrypt {
      * @throws AesException aes解密失败
      */
     String decrypt(String text) throws AesException {
-        System.out.println("decrypt-----------------------------");
         byte[] original;
         try {
             // 设置解密模式为AES的CBC模式
@@ -164,9 +173,6 @@ public class WXBizMsgCrypt {
 
         // receiveid不相同的情况
         if (!from_receiveid.equals(receiveid)) {
-            System.out.println("receiveidreceiveid======   " + receiveid);
-            System.out.println("from_receiveidfrom_receiveid======  " + from_receiveid);
-            System.out.println("zhelireceveiddewent-------------------------------------guess 企业没有认证");
             throw new AesException(AesException.ValidateCorpidError);
         }
 
@@ -231,37 +237,14 @@ public class WXBizMsgCrypt {
          * @param postData 密文，对应POST请求的数据
          */
         // 验证安全签名
-        System.out.println("========== 签名验证四件套（原始值） ==========");
-        System.out.println("token=[\"" + token + "\"]");
-        System.out.println("timestamp=[\"" + qywechatInfo.getTimestamp() + "\"]");
-        System.out.println("nonce=[\"" + qywechatInfo.getNonce() + "\"]");
-        System.out.println("encrypt=[\"" + encrypt[1].toString() + "\"]");
-        System.out.println("encrypt长度=" + encrypt[1].toString().length());
-        System.out.println("encrypt是否包含+号=" + encrypt[1].toString().contains("+"));
-        System.out.println("encrypt是否包含空格=" + encrypt[1].toString().contains(" "));
-        System.out.println("微信传来的msg_signature=[\"" + qywechatInfo.getMsgSignature() + "\"]");
-        System.out.println("===========================================");
         String signature = SHA1.getSHA1(token, qywechatInfo.getTimestamp(), qywechatInfo.getNonce(), encrypt[1].toString());
 
         // 和URL中的签名比较是否相等
-        System.out.println("========== 签名验证结果对比 ==========");
-        System.out.println("我方计算的签名=[\"" + signature + "\"]");
-        System.out.println("微信传来的签名=[\"" + qywechatInfo.getMsgSignature() + "\"]");
-        System.out.println("签名是否匹配=" + signature.equals(qywechatInfo.getMsgSignature()));
-        System.out.println("===========================================");
-
         if (!signature.equals(qywechatInfo.getMsgSignature())) {
-            System.err.println("❌ 签名验证失败！");
-            System.err.println("   我方计算：" + signature);
-            System.err.println("   微信传来：" + qywechatInfo.getMsgSignature());
             throw new AesException(AesException.ValidateSignatureError);
         }
-        
-        System.out.println("✅ 签名验证成功！");
 
         // 解
-        System.out.println("encryptencryptwhatisthis--------------------------" + encrypt);
-        System.out.println("decryptMsgresultltl--------------------------" + encrypt[1].toString());
         String result = decrypt(encrypt[1].toString());
         return result;
     }
@@ -278,14 +261,12 @@ public class WXBizMsgCrypt {
      */
     public String verifyURL(String msgSignature, String timeStamp, String nonce, String echoStr)
             throws AesException {
-        System.out.println("verifyURLverifyURLverifyURL------------------");
         String signature = SHA1.getSHA1(token, timeStamp, nonce, echoStr);
 
         if (!signature.equals(msgSignature)) {
             throw new AesException(AesException.ValidateSignatureError);
         }
 
-        System.out.println("verifyURL-------resultresultresultresult==========");
         String result = decrypt(echoStr);
         return result;
     }

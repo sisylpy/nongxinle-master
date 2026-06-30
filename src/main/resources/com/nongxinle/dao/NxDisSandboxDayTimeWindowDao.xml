@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxDisSandboxDayTimeWindowDao">
+
+    <select id="queryByDisRouteDep" resultType="com.nongxinle.entity.NxDisSandboxDayTimeWindowEntity">
+        select * from nx_dis_sandbox_day_time_window
+        where nx_dsdtw_distributer_id = #{disId}
+          and nx_dsdtw_route_date = #{routeDate}
+          and nx_dsdtw_dep_father_id = #{depFatherId}
+        limit 1
+    </select>
+
+    <select id="queryByDisRouteDate" resultType="com.nongxinle.entity.NxDisSandboxDayTimeWindowEntity">
+        select * from nx_dis_sandbox_day_time_window
+        where nx_dsdtw_distributer_id = #{disId}
+          and nx_dsdtw_route_date = #{routeDate}
+    </select>
+
+    <insert id="upsert" parameterType="com.nongxinle.entity.NxDisSandboxDayTimeWindowEntity">
+        insert into nx_dis_sandbox_day_time_window
+        (`nx_dsdtw_distributer_id`, `nx_dsdtw_route_date`, `nx_dsdtw_dep_father_id`,
+         `nx_dsdtw_earliest_delivery_time_s`, `nx_dsdtw_latest_delivery_time_s`, `nx_dsdtw_service_minutes`,
+         `nx_dsdtw_adjust_reason`, `nx_dsdtw_operator_user_id`, `nx_dsdtw_updated_at`)
+        values
+        (#{nxDsdtwDistributerId}, #{nxDsdtwRouteDate}, #{nxDsdtwDepFatherId},
+         #{nxDsdtwEarliestDeliveryTimeS}, #{nxDsdtwLatestDeliveryTimeS}, #{nxDsdtwServiceMinutes},
+         #{nxDsdtwAdjustReason}, #{nxDsdtwOperatorUserId}, #{nxDsdtwUpdatedAt})
+        on duplicate key update
+            `nx_dsdtw_earliest_delivery_time_s` = values(`nx_dsdtw_earliest_delivery_time_s`),
+            `nx_dsdtw_latest_delivery_time_s` = values(`nx_dsdtw_latest_delivery_time_s`),
+            `nx_dsdtw_service_minutes` = values(`nx_dsdtw_service_minutes`),
+            `nx_dsdtw_adjust_reason` = values(`nx_dsdtw_adjust_reason`),
+            `nx_dsdtw_operator_user_id` = values(`nx_dsdtw_operator_user_id`),
+            `nx_dsdtw_updated_at` = values(`nx_dsdtw_updated_at`)
+    </insert>
+
+    <delete id="deleteByDisRouteDep">
+        delete from nx_dis_sandbox_day_time_window
+        where nx_dsdtw_distributer_id = #{disId}
+          and nx_dsdtw_route_date = #{routeDate}
+          and nx_dsdtw_dep_father_id = #{depFatherId}
+    </delete>
+
+</mapper>

@@ -201,7 +201,6 @@
 		</where>
 	</select>
 
-
     <insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserEntity" useGeneratedKeys="true" keyProperty="nxCuUserId">
 		insert into nx_customer_user
 		(
@@ -263,5 +262,31 @@
 			#{nxCuUserId}
 		</foreach>
 	</delete>
+
+	<select id="posSearchMembersByKeyword" resultType="com.nongxinle.entity.NxCustomerUserEntity">
+		select distinct ncu.*
+		from nx_customer_user ncu
+		where (
+			ncu.nx_CU_community_id = #{communityId}
+			or exists (
+				select 1 from nx_customer_user_coupon ncuc
+				where ncuc.nx_cuc_customer_user_id = ncu.nx_CU_user_id
+				and ncuc.nx_cuc_community_id = #{communityId}
+			)
+		)
+		<if test="searchUserId != null and searchUserId">
+			and (
+				ncu.nx_CU_user_id = #{userId}
+				<if test="searchPhone != null and searchPhone">
+					or ncu.nx_CU_wx_phone_number like concat('%', #{phone}, '%')
+				</if>
+			)
+		</if>
+		<if test="searchUserId == null or !searchUserId">
+			<if test="searchPhone != null and searchPhone">
+				and ncu.nx_CU_wx_phone_number like concat('%', #{phone}, '%')
+			</if>
+		</if>
+	</select>
 
 </mapper>

@@ -152,6 +152,13 @@ public class NxGoodsEntity implements Serializable, Comparable {
 
     private int gbDepOrderCount = 0;
 
+
+    private Integer subNxGoodsId;
+    private String subNxGoodsName;
+    private String subNxGoodsDetail;
+    private String subNxGoodsFile;
+    private Integer subNxGoodsFatherId;
+    private Integer subNxGoodsSort;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

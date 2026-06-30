@@ -2,7 +2,6 @@ package com.nongxinle.dao;
 
 import com.nongxinle.dto.platform.PlatformOrderDetailRow;
 import com.nongxinle.dto.platform.PlatformPendingGroupRow;
-import com.nongxinle.dto.platform.customer.PlatformCustomerOrderLineItem;
 import com.nongxinle.dto.platform.distributer.PlatformDistributerCustomerRow;
 import com.nongxinle.entity.NxPlatformOrderAssignEntity;
 
@@ -20,9 +19,6 @@ public interface NxPlatformOrderAssignDao {
     List<PlatformPendingGroupRow> queryPendingGroupedByDepartment(Map<String, Object> params);
 
     List<PlatformOrderDetailRow> queryPlatformOrderDetailLines(Map<String, Object> params);
-
-    List<PlatformCustomerOrderLineItem> queryCustomerPlatformOrderLines(
-            Map<String, Object> params);
 
     int countPendingByMarket(Map<String, Object> params);
 

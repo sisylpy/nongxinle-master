@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCustomerPromotionCampaignDao">
+
+    <resultMap id="campaignReferralWithInvitee" type="com.nongxinle.entity.NxCustomerUserReferralEntity">
+        <id property="nxCustomerUserReferralId" column="nx_customer_user_referral_id"/>
+        <result property="inviteeUserId" column="invitee_user_id"/>
+        <result property="promotionCodeId" column="promotion_code_id"/>
+        <result property="promotionCodeSnapshot" column="promotion_code_snapshot"/>
+        <result property="sourceOwnerType" column="source_owner_type"/>
+        <result property="sourceOwnerId" column="source_owner_id"/>
+        <result property="promoterId" column="promoter_id"/>
+        <result property="communityId" column="community_id"/>
+        <result property="commerceId" column="commerce_id"/>
+        <result property="shareEntry" column="share_entry"/>
+        <result property="qualificationStatus" column="qualification_status"/>
+        <result property="invalidReason" column="invalid_reason"/>
+        <result property="rewardQualified" column="reward_qualified"/>
+        <result property="rewardRuleId" column="reward_rule_id"/>
+        <result property="campaignId" column="campaign_id"/>
+        <result property="bindTime" column="bind_time"/>
+        <result property="createdAt" column="created_at"/>
+        <association property="inviteeUser" javaType="com.nongxinle.entity.NxCustomerUserEntity">
+            <id property="nxCuUserId" column="invitee_nx_CU_user_id"/>
+            <result property="nxCuWxNickName" column="invitee_nx_CU_wx_nick_name"/>
+            <result property="nxCuWxAvatarUrl" column="invitee_nx_CU_wx_avatar_url"/>
+            <result property="nxCuWxPhoneNumber" column="invitee_nx_CU_wx_phone_number"/>
+            <result property="nxCuJoinDate" column="invitee_nx_CU_join_date"/>
+        </association>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCustomerPromotionCampaignEntity">
+        select * from nx_customer_promotion_campaign where nx_customer_promotion_campaign_id = #{value}
+    </select>
+
+    <select id="queryObjectForUpdate" resultType="com.nongxinle.entity.NxCustomerPromotionCampaignEntity">
+        select * from nx_customer_promotion_campaign where nx_customer_promotion_campaign_id = #{value} for update
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxCustomerPromotionCampaignEntity">
+        select * from nx_customer_promotion_campaign
+        <where>
+            <if test="communityId != null">and community_id = #{communityId}</if>
+            <if test="commerceId != null">and commerce_id = #{commerceId}</if>
+            <if test="ownerScope != null">and owner_scope = #{ownerScope}</if>
+            <if test="campaignStatus != null">and campaign_status = #{campaignStatus}</if>
+            <if test="campaignScene != null">and campaign_scene = #{campaignScene}</if>
+            <if test="campaignCode != null">and campaign_code = #{campaignCode}</if>
+        </where>
+        order by created_at desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+
+    <select id="queryActiveCampaignMatches" resultType="com.nongxinle.entity.NxCustomerPromotionCampaignEntity">
+        select * from nx_customer_promotion_campaign
+        where community_id = #{communityId}
+          and commerce_id = #{commerceId}
+          and campaign_scene = #{campaignScene}
+          and campaign_status = 'ACTIVE'
+          and (owner_scope = #{ownerScope} or owner_scope = 'ALL')
+          and (effective_start_at is null or effective_start_at &lt;= #{now})
+          and (effective_end_at is null or effective_end_at &gt;= #{now})
+        order by nx_customer_promotion_campaign_id asc
+    </select>
+
+    <select id="countOverlappingCampaign" resultType="int">
+        select count(*) from nx_customer_promotion_campaign
+        where community_id = #{communityId}
+          and commerce_id = #{commerceId}
+          and campaign_scene = #{campaignScene}
+          and campaign_status != 'TERMINATED'
+          and (
+            owner_scope = #{ownerScope}
+            or owner_scope = 'ALL'
+            or #{ownerScope} = 'ALL'
+          )
+          <if test="excludeCampaignId != null">
+              and nx_customer_promotion_campaign_id != #{excludeCampaignId}
+          </if>
+          and (
+            (effective_start_at is null and effective_end_at is null)
+            or (#{effectiveStartAt} is null and #{effectiveEndAt} is null)
+            or (
+              (effective_start_at is null or effective_start_at &lt;= IFNULL(#{effectiveEndAt}, '9999-12-31 23:59:59'))
+              and (effective_end_at is null or effective_end_at &gt;= IFNULL(#{effectiveStartAt}, '1970-01-01 00:00:00'))
+            )
+          )
+    </select>
+
+    <select id="countReferralsByCampaign" resultType="int">
+        select count(*) from nx_customer_user_referral where campaign_id = #{value}
+    </select>
+
+    <select id="countQualifiedReferralsByCampaign" resultType="int">
+        select count(*) from nx_customer_user_referral
+        where campaign_id = #{value}
+          and qualification_status = 'QUALIFIED'
+    </select>
+
+    <select id="statsByOwnerForCampaign" resultType="java.util.HashMap">
+        select source_owner_type as ownerType,
+               source_owner_id as ownerId,
+               count(*) as qualifiedReferralCount
+        from nx_customer_user_referral
+        where campaign_id = #{value}
+          and qualification_status = 'QUALIFIED'
+        group by source_owner_type, source_owner_id
+        order by qualifiedReferralCount desc
+    </select>
+
+    <select id="queryReferralsByCampaign" resultMap="campaignReferralWithInvitee">
+        select r.*,
+               u.nx_CU_user_id as invitee_nx_CU_user_id,
+               u.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               u.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               u.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               u.nx_CU_join_date as invitee_nx_CU_join_date,
+               0 as sub_referral_count
+        from nx_customer_user_referral r
+        inner join nx_customer_user u on u.nx_CU_user_id = r.invitee_user_id
+        where r.campaign_id = #{campaignId}
+        <if test="sourceOwnerType != null">and r.source_owner_type = #{sourceOwnerType}</if>
+        <if test="sourceOwnerId != null">and r.source_owner_id = #{sourceOwnerId}</if>
+        order by r.bind_time desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="nxCustomerPromotionCampaignId">
+        insert into nx_customer_promotion_campaign
+        (community_id, commerce_id, campaign_code, campaign_scene, campaign_name, owner_scope, campaign_status,
+         effective_start_at, effective_end_at, campaign_version)
+        values
+        (#{communityId}, #{commerceId}, #{campaignCode}, #{campaignScene}, #{campaignName}, #{ownerScope}, #{campaignStatus},
+         #{effectiveStartAt}, #{effectiveEndAt}, #{campaignVersion})
+    </insert>
+
+    <update id="update">
+        update nx_customer_promotion_campaign
+        <set>
+            <if test="campaignName != null">campaign_name = #{campaignName},</if>
+            <if test="campaignStatus != null">campaign_status = #{campaignStatus},</if>
+            <if test="effectiveStartAt != null">effective_start_at = #{effectiveStartAt},</if>
+            <if test="effectiveEndAt != null">effective_end_at = #{effectiveEndAt},</if>
+            <if test="terminatedAt != null">terminated_at = #{terminatedAt},</if>
+            <if test="statusReason != null">status_reason = #{statusReason},</if>
+            <if test="campaignVersion != null">campaign_version = #{campaignVersion},</if>
+        </set>
+        where nx_customer_promotion_campaign_id = #{nxCustomerPromotionCampaignId}
+    </update>
+</mapper>

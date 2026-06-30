@@ -11,6 +11,12 @@
         limit 1
     </select>
 
+    <select id="queryByDisDate" resultType="com.nongxinle.entity.NxDisDriverDutyEntity">
+        select * from nx_dis_driver_duty
+        where nx_ddd_distributer_id = #{disId}
+          and nx_ddd_duty_date = #{dutyDate}
+    </select>
+
     <select id="queryOnDutyDrivers" resultType="com.nongxinle.dto.route.DriverAvailableDto">
         select u.nx_distributer_user_id as driverUserId,
                u.nx_DIU_wx_nick_name    as driverName,
@@ -48,4 +54,33 @@
         </set>
         where nx_ddd_id = #{nxDddId}
     </update>
+
+    <insert id="upsertCheckIn" parameterType="com.nongxinle.entity.NxDisDriverDutyEntity">
+        insert into nx_dis_driver_duty
+        (`nx_ddd_distributer_id`, `nx_ddd_driver_user_id`, `nx_ddd_duty_date`, `nx_ddd_duty_status`,
+         `nx_ddd_check_in_at`, `nx_ddd_check_out_at`, `nx_ddd_operator_user_id`, `nx_ddd_updated_at`)
+        values
+        (#{nxDddDistributerId}, #{nxDddDriverUserId}, #{nxDddDutyDate}, #{nxDddDutyStatus},
+         #{nxDddCheckInAt}, #{nxDddCheckOutAt}, #{nxDddOperatorUserId}, #{nxDddUpdatedAt})
+        on duplicate key update
+            `nx_ddd_duty_status` = values(`nx_ddd_duty_status`),
+            `nx_ddd_check_in_at` = coalesce(`nx_ddd_check_in_at`, values(`nx_ddd_check_in_at`)),
+            `nx_ddd_check_out_at` = null,
+            `nx_ddd_operator_user_id` = values(`nx_ddd_operator_user_id`),
+            `nx_ddd_updated_at` = values(`nx_ddd_updated_at`)
+    </insert>
+
+    <insert id="upsertCheckOut" parameterType="com.nongxinle.entity.NxDisDriverDutyEntity">
+        insert into nx_dis_driver_duty
+        (`nx_ddd_distributer_id`, `nx_ddd_driver_user_id`, `nx_ddd_duty_date`, `nx_ddd_duty_status`,
+         `nx_ddd_check_in_at`, `nx_ddd_check_out_at`, `nx_ddd_operator_user_id`, `nx_ddd_updated_at`)
+        values
+        (#{nxDddDistributerId}, #{nxDddDriverUserId}, #{nxDddDutyDate}, #{nxDddDutyStatus},
+         #{nxDddCheckInAt}, #{nxDddCheckOutAt}, #{nxDddOperatorUserId}, #{nxDddUpdatedAt})
+        on duplicate key update
+            `nx_ddd_duty_status` = values(`nx_ddd_duty_status`),
+            `nx_ddd_check_out_at` = values(`nx_ddd_check_out_at`),
+            `nx_ddd_operator_user_id` = values(`nx_ddd_operator_user_id`),
+            `nx_ddd_updated_at` = values(`nx_ddd_updated_at`)
+    </insert>
 </mapper>

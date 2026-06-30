@@ -10,16 +10,11 @@ import com.nongxinle.dto.route.DriverDutyRequest;
 import com.nongxinle.dto.route.RouteDispatchOperationDecision;
 import com.nongxinle.entity.NxDisDriverDutyEntity;
 import com.nongxinle.entity.NxDistributerUserEntity;
-import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.route.DisDriverDutyStatus;
-import com.nongxinle.route.DisRouteDriverDutyLockHelper;
-import com.nongxinle.route.DisRouteDispatchBatch;
-import com.nongxinle.route.DisRoutePlanStatus;
+import com.nongxinle.todaydispatch.TodayDispatchDutyLockHelper;
 import com.nongxinle.service.DisDriverDutyService;
-import com.nongxinle.service.DisRouteFeasibilityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,115 +40,53 @@ public class DisDriverDutyServiceImpl implements DisDriverDutyService {
     @Autowired
     private NxDisShipmentTaskDao nxDisShipmentTaskDao;
     @Autowired
-    private DisRouteFeasibilityService disRouteFeasibilityService;
+    private TodayDispatchDutyLockHelper todayDispatchDutyLockHelper;
 
     @Override
-    @Transactional
     public NxDisDriverDutyEntity checkIn(DriverDutyRequest request) {
         validateDutyRequest(request);
-        NxDistributerUserEntity driver = requireDriverAccount(request.getDisId(), request.getDriverUserId());
+        requireDriverAccount(request.getDisId(), request.getDriverUserId());
         String dutyDate = resolveDutyDate(request.getDutyDate());
         Date now = new Date();
 
-        NxDisDriverDutyEntity existing = nxDisDriverDutyDao.queryByDisDriverDate(
-                request.getDisId(), request.getDriverUserId(), dutyDate);
-        if (existing == null) {
-            NxDisDriverDutyEntity entity = new NxDisDriverDutyEntity();
-            entity.setNxDddDistributerId(request.getDisId());
-            entity.setNxDddDriverUserId(request.getDriverUserId());
-            entity.setNxDddDutyDate(dutyDate);
-            entity.setNxDddDutyStatus(ON_DUTY);
-            entity.setNxDddCheckInAt(now);
-            entity.setNxDddCheckOutAt(null);
-            entity.setNxDddOperatorUserId(request.getOperatorUserId());
-            entity.setNxDddUpdatedAt(now);
-            nxDisDriverDutyDao.save(entity);
-            refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
-            return entity;
-        }
-
-        NxDisDriverDutyEntity update = new NxDisDriverDutyEntity();
-        update.setNxDddId(existing.getNxDddId());
-        update.setNxDddDutyStatus(ON_DUTY);
-        update.setNxDddCheckInAt(existing.getNxDddCheckInAt() != null ? existing.getNxDddCheckInAt() : now);
-        update.setNxDddCheckOutAt(null);
-        update.setNxDddOperatorUserId(request.getOperatorUserId());
-        update.setNxDddUpdatedAt(now);
-        nxDisDriverDutyDao.update(update);
-        refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
-        return nxDisDriverDutyDao.queryByDisDriverDate(request.getDisId(), request.getDriverUserId(), dutyDate);
+        NxDisDriverDutyEntity entity = new NxDisDriverDutyEntity();
+        entity.setNxDddDistributerId(request.getDisId());
+        entity.setNxDddDriverUserId(request.getDriverUserId());
+        entity.setNxDddDutyDate(dutyDate);
+        entity.setNxDddDutyStatus(ON_DUTY);
+        entity.setNxDddCheckInAt(now);
+        entity.setNxDddCheckOutAt(null);
+        entity.setNxDddOperatorUserId(request.getOperatorUserId());
+        entity.setNxDddUpdatedAt(now);
+        nxDisDriverDutyDao.upsertCheckIn(entity);
+        return entity;
     }
 
     @Override
-    @Transactional
     public NxDisDriverDutyEntity checkOut(DriverDutyRequest request) {
         validateDutyRequest(request);
         requireDriverAccount(request.getDisId(), request.getDriverUserId());
         String dutyDate = resolveDutyDate(request.getDutyDate());
-        RouteDispatchOperationDecision lockDecision = DisRouteDriverDutyLockHelper.evaluateCheckOut(
+        RouteDispatchOperationDecision lockDecision = todayDispatchDutyLockHelper.evaluateCheckOut(
                 request.getDisId(),
                 dutyDate,
-                request.getDriverUserId(),
-                nxDisDriverRouteDao,
-                nxDisRoutePlanDao,
-                nxDisShipmentTaskDao);
+                request.getDriverUserId());
         if (!lockDecision.isAllowed()) {
             String reason = lockDecision.getBlockedReason();
             throw new IllegalArgumentException(reason != null ? reason : "司机当前不能关闭可派");
         }
         Date now = new Date();
 
-        NxDisDriverDutyEntity existing = nxDisDriverDutyDao.queryByDisDriverDate(
-                request.getDisId(), request.getDriverUserId(), dutyDate);
-        if (existing == null) {
-            NxDisDriverDutyEntity entity = new NxDisDriverDutyEntity();
-            entity.setNxDddDistributerId(request.getDisId());
-            entity.setNxDddDriverUserId(request.getDriverUserId());
-            entity.setNxDddDutyDate(dutyDate);
-            entity.setNxDddDutyStatus(DisDriverDutyStatus.OFF_DUTY);
-            entity.setNxDddCheckOutAt(now);
-            entity.setNxDddOperatorUserId(request.getOperatorUserId());
-            entity.setNxDddUpdatedAt(now);
-            nxDisDriverDutyDao.save(entity);
-            refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
-            return entity;
-        }
-
-        NxDisDriverDutyEntity update = new NxDisDriverDutyEntity();
-        update.setNxDddId(existing.getNxDddId());
-        update.setNxDddDutyStatus(DisDriverDutyStatus.OFF_DUTY);
-        update.setNxDddCheckOutAt(now);
-        update.setNxDddOperatorUserId(request.getOperatorUserId());
-        update.setNxDddUpdatedAt(now);
-        nxDisDriverDutyDao.update(update);
-        refreshActivePlansAfterDutyChange(request.getDisId(), dutyDate);
-        return nxDisDriverDutyDao.queryByDisDriverDate(request.getDisId(), request.getDriverUserId(), dutyDate);
-    }
-
-    private void refreshActivePlansAfterDutyChange(Integer disId, String dutyDate) {
-        if (disId == null || dutyDate == null || dutyDate.trim().isEmpty()) {
-            return;
-        }
-        String date = dutyDate.trim();
-        String[] batches = {
-                DisRouteDispatchBatch.MORNING,
-                DisRouteDispatchBatch.AFTERNOON,
-                DisRouteDispatchBatch.ADHOC
-        };
-        String[] statuses = {
-                DisRoutePlanStatus.SIMULATED,
-                DisRoutePlanStatus.ASSIGNED,
-                DisRoutePlanStatus.READY
-        };
-        for (String batch : batches) {
-            for (String status : statuses) {
-                NxDisRoutePlanEntity plan = nxDisRoutePlanDao.queryByDisRouteDateBatchStatus(
-                        disId, date, batch, status);
-                if (plan != null && plan.getNxDrpId() != null) {
-                    disRouteFeasibilityService.assess(plan.getNxDrpId());
-                }
-            }
-        }
+        NxDisDriverDutyEntity entity = new NxDisDriverDutyEntity();
+        entity.setNxDddDistributerId(request.getDisId());
+        entity.setNxDddDriverUserId(request.getDriverUserId());
+        entity.setNxDddDutyDate(dutyDate);
+        entity.setNxDddDutyStatus(DisDriverDutyStatus.OFF_DUTY);
+        entity.setNxDddCheckOutAt(now);
+        entity.setNxDddOperatorUserId(request.getOperatorUserId());
+        entity.setNxDddUpdatedAt(now);
+        nxDisDriverDutyDao.upsertCheckOut(entity);
+        return entity;
     }
 
     @Override

@@ -162,6 +162,31 @@ public class PlatformOrderFulfillmentServiceImpl implements PlatformOrderFulfill
                 order.getNxDepartmentOrdersId(), pof.getNxPofId(), patch.getNxPofCostMissing());
     }
 
+    @Override
+    @Transactional
+    public void revertReadyForPickupAfterOutboundCancel(NxDepartmentOrdersEntity order, Integer operatorId) {
+        if (order == null || order.getNxDepartmentOrdersId() == null) {
+            return;
+        }
+        NxPlatformOrderAssignEntity poa = nxPlatformOrderAssignDao.queryByOrderId(order.getNxDepartmentOrdersId());
+        if (!isPlatformAssigned(poa)) {
+            return;
+        }
+        NxPlatformOrderFulfillmentEntity pof = nxPlatformOrderFulfillmentDao.queryByOrderId(order.getNxDepartmentOrdersId());
+        if (pof == null) {
+            return;
+        }
+        String status = pof.getNxPofFulfillmentStatus();
+        if (!PlatformConstants.FULFILLMENT_STATUS_READY_FOR_PICKUP.equals(status)) {
+            logger.info("[revertReadyForPickup] 跳过非 READY 状态 orderId={} status={}",
+                    order.getNxDepartmentOrdersId(), status);
+            return;
+        }
+        int rows = nxPlatformOrderFulfillmentDao.revertReadyForPickupToAssigned(
+                order.getNxDepartmentOrdersId(), operatorId);
+        logger.info("[revertReadyForPickup] orderId={} rows={}", order.getNxDepartmentOrdersId(), rows);
+    }
+
     private PlatformDisGoodsCostResolver.CostResolveResult resolveOutboundCostResult(
             NxDepartmentOrdersEntity order) {
         if (PlatformOutboundFinishSupport.hasValidOrderCostPrice(order)) {

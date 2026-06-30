@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtGroupOrderDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderEntity">
+        select * from ygt_group_order where ygt_group_order_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderEntity">
+        select * from ygt_group_order
+        <where>
+            <if test="campaignId != null">and ygt_go_campaign_id = #{campaignId}</if>
+            <if test="groupId != null">and ygt_go_group_id = #{groupId}</if>
+            <if test="status != null and status != ''">and ygt_go_status = #{status}</if>
+        </where>
+        order by ygt_group_order_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_group_order</select>
+    <select id="queryByCandidateId" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderEntity">
+        select * from ygt_group_order where ygt_go_candidate_id = #{candidateId} limit 1
+    </select>
+    <select id="queryCampaignOrderSummary" resultType="java.util.HashMap">
+        select
+            count(*) as orderCount,
+            count(distinct coalesce(ygt_go_external_user_id, ygt_go_member_identifier, ygt_go_from_user)) as customerCount,
+            coalesce(sum(ygt_go_total_amount), 0) as totalAmount
+        from ygt_group_order
+        where ygt_go_campaign_id = #{campaignId}
+        and ygt_go_status = 'CONFIRMED'
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderEntity" useGeneratedKeys="true" keyProperty="ygtGroupOrderId">
+        insert into ygt_group_order
+        (ygt_go_candidate_id, ygt_go_campaign_id, ygt_go_corp_id, ygt_go_group_id, ygt_go_nx_community_id,
+         ygt_go_chat_id, ygt_go_source_chat_message_id, ygt_go_from_user, ygt_go_member_identifier, ygt_go_external_user_id,
+         ygt_go_customer_name_snapshot, ygt_go_status, ygt_go_pickup_code, ygt_go_total_amount,
+         ygt_go_confirm_user_id, ygt_go_confirm_time, ygt_go_remark, ygt_go_create_time, ygt_go_update_time)
+        values
+        (#{ygtGoCandidateId}, #{ygtGoCampaignId}, #{ygtGoCorpId}, #{ygtGoGroupId}, #{ygtGoNxCommunityId},
+         #{ygtGoChatId}, #{ygtGoSourceChatMessageId}, #{ygtGoFromUser}, #{ygtGoMemberIdentifier}, #{ygtGoExternalUserId},
+         #{ygtGoCustomerNameSnapshot}, #{ygtGoStatus}, #{ygtGoPickupCode}, #{ygtGoTotalAmount},
+         #{ygtGoConfirmUserId}, #{ygtGoConfirmTime}, #{ygtGoRemark}, #{ygtGoCreateTime}, #{ygtGoUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderEntity">
+        update ygt_group_order
+        <set>
+            <if test="ygtGoStatus != null">ygt_go_status = #{ygtGoStatus},</if>
+            <if test="ygtGoTotalAmount != null">ygt_go_total_amount = #{ygtGoTotalAmount},</if>
+            <if test="ygtGoRemark != null">ygt_go_remark = #{ygtGoRemark},</if>
+            ygt_go_update_time = now()
+        </set>
+        where ygt_group_order_id = #{ygtGroupOrderId}
+    </update>
+    <delete id="delete">delete from ygt_group_order where ygt_group_order_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_group_order where ygt_group_order_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

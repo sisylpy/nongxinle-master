@@ -37,8 +37,6 @@ public class NxDistributerWeightController {
 	@Autowired
 	private NxDistributerPurchaseGoodsService nxDisPurchaseGoodsService;
 	@Autowired
-	private NxRestrauntOrdersService nxRestrauntOrdersService;
-	@Autowired
 	private GbDepartmentOrdersService gbDepartmentOrdersService;
 	@Autowired
 	private NxDistributerGoodsService nxDistributerGoodsService;

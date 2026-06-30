@@ -34,4 +34,8 @@ public final class PlatformConstants {
     public static final String FULFILLMENT_STATUS_DELIVERING = "DELIVERING";
     public static final String FULFILLMENT_STATUS_DELIVERED = "DELIVERED";
     public static final String FULFILLMENT_STATUS_SUPPLIER_EXCEPTION = "SUPPLIER_EXCEPTION";
+
+    /** application.properties 中 platform.checkout.wechat.notify-url 的默认值（生产 grainservice） */
+    public static final String DEFAULT_CHECKOUT_WECHAT_NOTIFY_URL =
+            "https://grainservice.club:8443/nongxinle/api/platform/customer/cart/checkout/payment/notify/wechat";
 }

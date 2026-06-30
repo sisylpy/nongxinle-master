@@ -151,10 +151,8 @@
         <result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
         <result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
 		<result property="nxCosHuaxianSubtotal" column="nx_cos_huaxian_subtotal"/>
-		<result property="nxCosCucId" column="nx_cos_cuc_id"/>
 		<result property="nxCosStatus" column="nx_cos_status"/>
 		<result property="nxCosRemark" column="nx_COS_remark"/>
-		<result property="nxCosCucId" column="nx_cos_cuc_id"/>
 		<result property="nxCosRemark" column="nx_COS_remark"/>
 		<result property="nxCosType" column="nx_COS_type"/>
 		<result property="nxCosService" column="nx_COS_service"/>

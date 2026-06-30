@@ -36,6 +36,9 @@ public final class DisRouteDriverDepartPolicy {
             if (stop == null || isCancelledStop(stop)) {
                 continue;
             }
+            if (isHistoricalCompletedStop(stop)) {
+                continue;
+            }
             counts.totalStopCount++;
             if (isConfirmedStop(stop)) {
                 counts.confirmedStopCount++;
@@ -166,6 +169,9 @@ public final class DisRouteDriverDepartPolicy {
             if (stop == null || isCancelledStop(stop)) {
                 continue;
             }
+            if (isHistoricalCompletedStop(stop)) {
+                continue;
+            }
             if (!isConfirmedStop(stop)) {
                 return "请先确认全部门店出货完成";
             }
@@ -209,6 +215,48 @@ public final class DisRouteDriverDepartPolicy {
         }
         NxDisShipmentTaskEntity task = stop.getShipmentTask();
         return task != null && DisRouteSandboxStopSource.CONFIRMED.equals(task.getStopSource());
+    }
+
+    private static boolean isHistoricalCompletedStop(NxDisRouteStopEntity stop) {
+        NxDisShipmentTaskEntity task = stop != null ? stop.getShipmentTask() : null;
+        return isHistoricalCompletedTask(task, null);
+    }
+
+    /** 上一轮已送达的任务；本轮出发后仍 DELIVERED 且送达时间早于出发时间的视为脏数据。 */
+    public static boolean isHistoricalCompletedTask(NxDisShipmentTaskEntity task,
+                                                    NxDisDriverRouteEntity route) {
+        if (task == null || task.getNxDstStatus() == null) {
+            return false;
+        }
+        String status = task.getNxDstStatus().trim().toUpperCase();
+        if (CLOSED.equals(status)) {
+            return true;
+        }
+        if (DELIVERED.equals(status)) {
+            if (route == null || route.getNxDdrActualDepartAt() == null) {
+                return task.getNxDstDeliveredAt() != null;
+            }
+            if (task.getNxDstDeliveredAt() == null) {
+                return false;
+            }
+            return !task.getNxDstDeliveredAt().before(route.getNxDdrActualDepartAt());
+        }
+        return false;
+    }
+
+    /** 老板确认出发时，仅新确认待送站从 ASSIGNED/READY_TO_GO 进入 IN_DELIVERY。 */
+    public static boolean shouldTransitionToInDeliveryOnDepart(NxDisShipmentTaskEntity task) {
+        if (task == null || task.getNxDstId() == null || isHistoricalCompletedTask(task, null)) {
+            return false;
+        }
+        String status = task.getNxDstStatus();
+        if (status == null || CANCELLED.equals(status) || IN_DELIVERY.equals(status)) {
+            return false;
+        }
+        if (DisShipmentTaskStatus.EXCEPTION.equals(status)) {
+            return false;
+        }
+        return ASSIGNED.equals(status) || READY_TO_GO.equals(status);
     }
 
     private static boolean isStopInTerminalDeliveryState(NxDisRouteStopEntity stop) {

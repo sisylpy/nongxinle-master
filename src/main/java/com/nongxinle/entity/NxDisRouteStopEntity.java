@@ -52,13 +52,16 @@ public class NxDisRouteStopEntity implements Serializable {
     private Integer nxDrsTimeWindowOverrideFlag;
     private String nxDrsTimeWindowAdjustReason;
 
+    /** PR-2c：统一解析后的时间窗（读模型，不落库）。 */
+    private Integer resolvedEarliestDeliveryTimeS;
+    private Integer resolvedLatestDeliveryTimeS;
+    private String resolvedWindowSource;
+
     /** Phase 1.5a：嵌套 task（只读接口加载） */
     private NxDisShipmentTaskEntity shipmentTask;
 
     /** @deprecated Phase 1.5c 起请走 stop.shipmentTask.items，新读模型恒为空 */
     private List<Integer> orderIds;
-    /** @deprecated Phase 1.5c 起不再加载 stop_order */
-    private List<NxDisRouteStopOrderEntity> orders;
 
     /** Phase 2b-2：只读操作态（与嵌套 shipmentTask 镜像） */
     private Boolean canAssign;

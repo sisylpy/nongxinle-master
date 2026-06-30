@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCommunityCouponVerifyLogDao">
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCommunityCouponVerifyLogEntity"
+            useGeneratedKeys="true" keyProperty="nxCouponVerifyLogId">
+        insert into nx_community_coupon_verify_log
+        (`nx_cvl_user_coupon_id`, `nx_cvl_coupon_id`, `nx_cvl_community_id`, `nx_cvl_verify_type`,
+         `nx_cvl_order_id`, `nx_cvl_order_sub_id`, `nx_cvl_desk_id`, `nx_cvl_operator_id`,
+         `nx_cvl_before_status`, `nx_cvl_after_status`, `nx_cvl_remark`, `nx_cvl_create_at`)
+        values
+        (#{nxCvlUserCouponId}, #{nxCvlCouponId}, #{nxCvlCommunityId}, #{nxCvlVerifyType},
+         #{nxCvlOrderId}, #{nxCvlOrderSubId}, #{nxCvlDeskId}, #{nxCvlOperatorId},
+         #{nxCvlBeforeStatus}, #{nxCvlAfterStatus}, #{nxCvlRemark}, #{nxCvlCreateAt})
+    </insert>
+</mapper>

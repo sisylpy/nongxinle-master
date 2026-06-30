@@ -2,7 +2,6 @@ package com.nongxinle.platform;
 
 import com.nongxinle.dto.platform.LineAmountConfirmResult;
 import com.nongxinle.entity.GbDepartmentBillEntity;
-import com.nongxinle.entity.GbDepartmentOrdersEntity;
 import com.nongxinle.entity.NxDistributerGoodsEntity;
 import com.nongxinle.service.platform.GbBillPaymentRecalcServiceImpl;
 import com.nongxinle.service.platform.PlatformLineAmountConfirmServiceImpl;
@@ -11,8 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
+
 
 public class PlatformGbBillPaymentP0P2Test {
 

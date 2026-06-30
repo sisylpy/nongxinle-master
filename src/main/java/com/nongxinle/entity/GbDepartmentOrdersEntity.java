@@ -64,6 +64,8 @@ public class GbDepartmentOrdersEntity implements Serializable, Comparable{
 	 *  部门订单商品单价
 	 */
 	private String gbDoPrice;
+	/** 平台现金行级价态：PENDING | CONFIRMED */
+	private String gbDoPriceConfirmStatus;
 	/**
 	 *  部门订单申请商品小计
 	 */

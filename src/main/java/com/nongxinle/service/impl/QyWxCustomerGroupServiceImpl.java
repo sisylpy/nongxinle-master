@@ -172,9 +172,9 @@ public class QyWxCustomerGroupServiceImpl implements QyWxCustomerGroupService {
 
             String url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpId + "&corpsecret=" + secret;
             String result = WeChatUtil.httpRequest(url, "GET", null);
-            System.out.println("获取access_token响应: " + result);
 
             JSONObject jsonObject = JSON.parseObject(result);
+            System.out.println("获取access_token响应 errcode=" + jsonObject.getInteger("errcode"));
             if (jsonObject.getInteger("errcode") == 0) {
                 String accessToken = jsonObject.getString("access_token");
                 Integer expiresIn = jsonObject.getInteger("expires_in");

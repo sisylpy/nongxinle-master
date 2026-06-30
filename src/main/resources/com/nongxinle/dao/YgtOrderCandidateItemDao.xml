@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtOrderCandidateItemDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateItemEntity">
+        select * from ygt_order_candidate_item where ygt_order_candidate_item_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateItemEntity">
+        select * from ygt_order_candidate_item
+        <where><if test="candidateId != null">and ygt_oci_candidate_id = #{candidateId}</if></where>
+        order by ygt_order_candidate_item_id asc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_order_candidate_item</select>
+    <select id="queryByCandidateId" resultType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateItemEntity">
+        select * from ygt_order_candidate_item where ygt_oci_candidate_id = #{candidateId} order by ygt_order_candidate_item_id asc
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateItemEntity" useGeneratedKeys="true" keyProperty="ygtOrderCandidateItemId">
+        insert into ygt_order_candidate_item
+        (ygt_oci_candidate_id, ygt_oci_campaign_goods_id, ygt_oci_nx_community_goods_id,
+         ygt_oci_goods_name_snapshot, ygt_oci_quantity, ygt_oci_unit, ygt_oci_price_snapshot,
+         ygt_oci_amount, ygt_oci_remark, ygt_oci_confidence, ygt_oci_manual_adjusted,
+         ygt_oci_create_time, ygt_oci_update_time)
+        values
+        (#{ygtOciCandidateId}, #{ygtOciCampaignGoodsId}, #{ygtOciNxCommunityGoodsId},
+         #{ygtOciGoodsNameSnapshot}, #{ygtOciQuantity}, #{ygtOciUnit}, #{ygtOciPriceSnapshot},
+         #{ygtOciAmount}, #{ygtOciRemark}, #{ygtOciConfidence}, #{ygtOciManualAdjusted},
+         #{ygtOciCreateTime}, #{ygtOciUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtOrderCandidateItemEntity">
+        update ygt_order_candidate_item
+        <set>
+            <if test="ygtOciCampaignGoodsId != null">ygt_oci_campaign_goods_id = #{ygtOciCampaignGoodsId},</if>
+            <if test="ygtOciNxCommunityGoodsId != null">ygt_oci_nx_community_goods_id = #{ygtOciNxCommunityGoodsId},</if>
+            <if test="ygtOciGoodsNameSnapshot != null">ygt_oci_goods_name_snapshot = #{ygtOciGoodsNameSnapshot},</if>
+            <if test="ygtOciQuantity != null">ygt_oci_quantity = #{ygtOciQuantity},</if>
+            <if test="ygtOciUnit != null">ygt_oci_unit = #{ygtOciUnit},</if>
+            <if test="ygtOciPriceSnapshot != null">ygt_oci_price_snapshot = #{ygtOciPriceSnapshot},</if>
+            <if test="ygtOciAmount != null">ygt_oci_amount = #{ygtOciAmount},</if>
+            <if test="ygtOciRemark != null">ygt_oci_remark = #{ygtOciRemark},</if>
+            <if test="ygtOciConfidence != null">ygt_oci_confidence = #{ygtOciConfidence},</if>
+            <if test="ygtOciManualAdjusted != null">ygt_oci_manual_adjusted = #{ygtOciManualAdjusted},</if>
+            ygt_oci_update_time = now()
+        </set>
+        where ygt_order_candidate_item_id = #{ygtOrderCandidateItemId}
+    </update>
+    <delete id="delete">delete from ygt_order_candidate_item where ygt_order_candidate_item_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_order_candidate_item where ygt_order_candidate_item_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+    <delete id="deleteByCandidateId">
+        delete from ygt_order_candidate_item where ygt_oci_candidate_id = #{candidateId}
+    </delete>
+</mapper>

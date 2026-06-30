@@ -19,6 +19,8 @@ public final class GbBillPlatformConstants {
 
     public static final String PRICE_CONFIRM_PENDING = "PENDING";
     public static final String PRICE_CONFIRM_CONFIRMED = "CONFIRMED";
+    /** bill 内部分行已确认、部分待确认 */
+    public static final String PRICE_CONFIRM_PARTIAL_PENDING = "PARTIAL_PENDING";
 
     public static final String PAY_PHASE_FIRST = "FIRST";
     public static final String PAY_PHASE_SUPPLEMENT = "SUPPLEMENT";
@@ -26,9 +28,21 @@ public final class GbBillPlatformConstants {
     public static final String PAYMENT_STATUS_PENDING = "PENDING";
     public static final String PAYMENT_STATUS_SUCCESS = "SUCCESS";
     public static final String PAYMENT_STATUS_FAILED = "FAILED";
+    /** 用户主动取消（cancelPayment） */
+    public static final String PAYMENT_STATUS_CANCELLED = "CANCELLED";
+    /** PENDING 超时自动关闭 */
+    public static final String PAYMENT_STATUS_EXPIRED = "EXPIRED";
+    /** 兼容旧称；新代码优先用 CANCELLED / EXPIRED */
     public static final String PAYMENT_STATUS_CLOSED = "CLOSED";
 
     private GbBillPlatformConstants() {
+    }
+
+    public static boolean isCheckoutPaymentUnlockStatus(String status) {
+        return PAYMENT_STATUS_FAILED.equals(status)
+                || PAYMENT_STATUS_CANCELLED.equals(status)
+                || PAYMENT_STATUS_EXPIRED.equals(status)
+                || PAYMENT_STATUS_CLOSED.equals(status);
     }
 
     public static boolean blocksNewOrder(String payStatus) {

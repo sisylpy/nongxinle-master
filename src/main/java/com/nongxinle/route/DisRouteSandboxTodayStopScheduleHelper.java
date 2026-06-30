@@ -13,7 +13,7 @@ public final class DisRouteSandboxTodayStopScheduleHelper {
 
     /**
      * 正式 Today sandbox：仅同步窗口/服务展示标签，不复制 seq / leg / planned Date。
-     * visible seq / leg / ETA 由 {@link VisibleDriverRouteSnapshotBuilder} 统一写入。
+     * visible seq / leg / ETA 由 {@link com.nongxinle.todaydispatch.TodayDispatchComputeService} 排程管线写入。
      */
     public static void copySandboxScheduleLabelFields(NxDisRouteStopEntity from, NxDisRouteStopEntity to) {
         if (from == null || to == null) {
@@ -221,28 +221,58 @@ public final class DisRouteSandboxTodayStopScheduleHelper {
             return null;
         }
         NxDisShipmentTaskEntity task = stop.getShipmentTask();
-        if (stop.getCustomerWindowLabel() != null && !stop.getCustomerWindowLabel().trim().isEmpty()) {
-            String cached = stop.getCustomerWindowLabel().trim();
-            if (DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop)) {
-                return applyTodayOverridePrefix(cached);
+        Integer earliest = DisRouteSandboxStopTimeWindowResolver.readResolvedEarliest(stop);
+        Integer latest = DisRouteSandboxStopTimeWindowResolver.readResolvedLatest(stop);
+        if (DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop)) {
+            String timeRange = DisRouteSandboxScheduleLabelHelper.formatPlainTimeRange(earliest, latest);
+            if (timeRange != null) {
+                return applyTodayOverridePrefix(timeRange);
             }
-            return cached;
+        }
+        if (stop.getCustomerWindowLabel() != null && !stop.getCustomerWindowLabel().trim().isEmpty()) {
+            return stop.getCustomerWindowLabel().trim();
         }
         if (task == null) {
             return null;
         }
-        Integer earliest = DisRouteSandboxStopTimeWindowResolver.readResolvedEarliest(stop);
-        Integer latest = DisRouteSandboxStopTimeWindowResolver.readResolvedLatest(stop);
         if (earliest == null && latest == null) {
             return null;
         }
         Date anchor = serverNow != null ? serverNow : new Date();
-        String label = DisRouteSandboxScheduleLabelHelper.formatCustomerWindowLabel(
+        return DisRouteSandboxScheduleLabelHelper.formatCustomerWindowLabel(
                 task.getNxDstRouteDate(), earliest, latest, anchor);
-        if (DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop) && label != null) {
-            return applyTodayOverridePrefix(label);
+    }
+
+    public static WindowRequirementView buildWindowRequirementView(NxDisRouteStopEntity stop) {
+        if (stop == null) {
+            return null;
         }
-        return label;
+        Integer earliest = DisRouteSandboxStopTimeWindowResolver.readResolvedEarliest(stop);
+        Integer latest = DisRouteSandboxStopTimeWindowResolver.readResolvedLatest(stop);
+        String label = DisRouteSandboxScheduleLabelHelper.formatPlainTimeRange(earliest, latest);
+        if (label == null || label.trim().isEmpty()) {
+            return null;
+        }
+        return new WindowRequirementView(label.trim(),
+                DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop));
+    }
+
+    public static final class WindowRequirementView {
+        private final String label;
+        private final boolean modified;
+
+        public WindowRequirementView(String label, boolean modified) {
+            this.label = label;
+            this.modified = modified;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public boolean isModified() {
+            return modified;
+        }
     }
 
     public static String applyTodayOverridePrefix(String label) {

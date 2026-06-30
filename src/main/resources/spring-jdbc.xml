@@ -30,6 +30,19 @@
 		<property name="maxActive">
 			<value>${jdbc.maxActive}</value>
 		</property>
+		<property name="maxWait">
+			<value>${jdbc.maxWait}</value>
+		</property>
+		<property name="validationQuery" value="SELECT 1"/>
+		<property name="testWhileIdle" value="true"/>
+		<property name="testOnBorrow" value="true"/>
+		<property name="testOnReturn" value="false"/>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>${jdbc.timeBetweenEvictionRunsMillis}</value>
+		</property>
+		<property name="minEvictableIdleTimeMillis">
+			<value>${jdbc.minEvictableIdleTimeMillis}</value>
+		</property>
 		<property name="proxyFilters">
 			<list>
 				<ref bean="stat-filter" />

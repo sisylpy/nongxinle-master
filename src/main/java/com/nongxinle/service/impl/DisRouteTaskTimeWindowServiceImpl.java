@@ -45,7 +45,7 @@ public class DisRouteTaskTimeWindowServiceImpl implements DisRouteTaskTimeWindow
             update.setNxDstServiceMinutes(request.getServiceMinutes());
         }
         update.setNxDstTimeWindowOverrideFlag(1);
-        update.setNxDstTimeWindowAdjustReason(request.getReason().trim());
+        update.setNxDstTimeWindowAdjustReason(normalizeReason(request.getReason()));
         update.setNxDstOperatorUserId(request.getOperatorUserId());
         nxDisShipmentTaskDao.update(update);
 
@@ -70,13 +70,17 @@ public class DisRouteTaskTimeWindowServiceImpl implements DisRouteTaskTimeWindow
         if (request.getOperatorUserId() == null) {
             throw new IllegalArgumentException("operatorUserId 不能为空");
         }
-        if (request.getReason() == null || request.getReason().trim().isEmpty()) {
-            throw new IllegalArgumentException("reason 不能为空");
-        }
         if (request.getEarliestDeliveryTimeS() != null
                 && request.getEarliestDeliveryTimeS() > request.getLatestDeliveryTimeS()) {
             throw new IllegalArgumentException("earliestDeliveryTimeS 不能晚于 latestDeliveryTimeS");
         }
+    }
+
+    private static String normalizeReason(String reason) {
+        if (reason == null) {
+            return "";
+        }
+        return reason.trim();
     }
 
     private void assertTaskMutable(NxDisShipmentTaskEntity task) {

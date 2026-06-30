@@ -30,4 +30,7 @@ public interface NxCustomerUserDao extends BaseDao<NxCustomerUserEntity> {
     NxCustomerUserEntity queryUserWithAddress(Integer gbDepartmentUserId);
 
     NxCustomerUserEntity queryUserByOpenIdAndCommerceId(Map<String, Object> mapU);
+
+    /** POS 会员搜索：本店注册或拥有本店券的会员 */
+    List<NxCustomerUserEntity> posSearchMembersByKeyword(Map<String, Object> map);
 }

@@ -7,6 +7,7 @@ package com.nongxinle.entity;
  */
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -101,6 +102,21 @@ public class GbDepartmentBillEntity implements Serializable {
 	private  String gbDbReturnTotal;
 	private  String gbDbGreatCouponTotal;
 	private  String gbDbChaTotal;
+
+	/** 平台现金：提交时已知价合计，首付基准 */
+	private BigDecimal gbDbKnownTotal;
+	/** 平台现金：累计已支付 */
+	private BigDecimal gbDbPaidTotal;
+	/** 平台现金：待补款 */
+	private BigDecimal gbDbSupplementDue;
+	/** 平台现金：待确认价行数 */
+	private Integer gbDbPendingItemCount;
+	/** 平台现金：支付状态 */
+	private String gbDbPayStatus;
+	/** LEGACY | PLATFORM_CASH */
+	private String gbDbBillSource;
+	/** 平台现金购物车提交幂等 token */
+	private String gbDbPlatformSubmitToken;
 
 
 	private List<GbDepartmentOrdersEntity> gbDepartmentOrdersEntities;

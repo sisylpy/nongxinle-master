@@ -9,6 +9,15 @@
         where nx_department_orders_id = #{value}
     </select>
 
+    <select id="queryByOrderIds" resultType="com.nongxinle.entity.NxDepartmentOrderHistoryEntity">
+        select *
+        from nx_department_order_history
+        where nx_department_orders_id in
+        <foreach collection="orderIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
     <select id="queryList" resultType="com.nongxinle.entity.NxDepartmentOrderHistoryEntity">
         select * from nx_department_order_history
         <if test="offset != null and limit != null">

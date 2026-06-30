@@ -57,8 +57,8 @@ public class PlatformCouponPhase1aRunner {
     private static final int OTHER_MARKET_ID = 2;
     private static final int SUB_DEP_ID = 58;
     private static final int STORE_DEP_ID = 57;
-    private static final String LOGIN_ACCOUNT = "platform_coupon_phase1a";
-    private static final String PASSWORD = "Admin@123";
+    private static final String LOGIN_ACCOUNT = "123";
+    private static final String PASSWORD = "123";
 
     public static void main(String[] args) throws Exception {
         ClassPathXmlApplicationContext ctx =

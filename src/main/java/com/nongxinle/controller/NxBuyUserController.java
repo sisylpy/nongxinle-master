@@ -6,19 +6,17 @@ package com.nongxinle.controller;
  */
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.community.purchase.service.NxCommunityPurchaseBatchService;
 import com.nongxinle.utils.MyAPPIDConfig;
 import com.nongxinle.utils.WeChatUtil;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.nongxinle.utils.PageUtils;
 import com.nongxinle.utils.R;
 
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
@@ -29,8 +27,7 @@ import static com.nongxinle.utils.DateUtils.formatWhatDay;
 public class NxBuyUserController {
     @Autowired
     private NxBuyUserService nxBuyUserService;
-    @Autowired
-	private NxRetailerPurchaseBatchService nxRetPurchaseBatchService;
+
     @Autowired
     private NxDistributerPurchaseBatchService nxDisPurchaseBatchService;
     @Autowired
@@ -65,17 +62,7 @@ public class NxBuyUserController {
 
         String nxBuyType = buyUserEntity.getNxBuyType();
         if(nxBuyType.equals("ret")){
-            //改batch buyuser
-            Integer restrauntUserId = buyUserEntity.getNxBuyUserId();
-            Integer nxBuyerPurBatchId = buyUserEntity.getNxBuyerPurBatchId();
-            NxRetailerPurchaseBatchEntity nxRetailerPurchaseBatchEntity = nxRetPurchaseBatchService.queryObject(nxBuyerPurBatchId);
-            nxRetailerPurchaseBatchEntity.setNxRpbBuyUserId(restrauntUserId);
-            nxRetPurchaseBatchService.update(nxRetailerPurchaseBatchEntity);
-            Map<String, Object> map = new HashMap<>();
-            map.put("batchId", nxBuyerPurBatchId);
-            NxRetailerPurchaseBatchEntity nxRetailerPurchaseBatchEntity1 = nxRetPurchaseBatchService.queryRetPurBatchDetail(map);
-
-            return R.ok().put("data", nxRetailerPurchaseBatchEntity1);
+            return R.error(-1, "零售商采购功能已下线");
         }
         if(nxBuyType.equals("dis")){
             //改batch buyuser

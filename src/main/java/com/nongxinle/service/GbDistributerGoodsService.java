@@ -98,4 +98,6 @@ public interface GbDistributerGoodsService {
     List<GbDistributerGoodsEntity> queryDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
 
     void getStockTotal(GbDistributerGoodsEntity distributerGoodsEntity);
+
+    GbDistributerGoodsEntity postDgnGbGoods(Integer gbDisId, Integer depId, Integer nxGoodsId);
 }

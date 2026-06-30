@@ -21,6 +21,7 @@ public class PlatformCouponTemplateEntity implements Serializable {
     private BigDecimal discountAmount;
     private BigDecimal thresholdAmount;
     private String scopeType;
+    /** CATEGORY: nx_goods 分类 id JSON 数组；GOODS: nx_goods_id JSON 数组 */
     private String scopeRefIds;
     private String useChannel;
     private String bizPurpose;

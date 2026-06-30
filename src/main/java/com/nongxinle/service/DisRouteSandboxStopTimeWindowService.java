@@ -8,4 +8,7 @@ import java.util.Map;
 public interface DisRouteSandboxStopTimeWindowService {
 
     Map<String, Object> updateStopTimeWindow(SandboxStopTimeWindowRequest request) throws Exception;
+
+    /** 送达或回沙盘后清除当日门店时间窗调整（同店新单走常规窗）。 */
+    void clearTodayOverride(Integer disId, String routeDate, Integer depFatherId);
 }

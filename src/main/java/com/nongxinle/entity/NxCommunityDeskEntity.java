@@ -48,6 +48,10 @@ public class NxCommunityDeskEntity implements Serializable {
 	 *  
 	 */
 	private Integer nxCdStatus;
+	/**
+	 * 当前绑定待支付 POS 订单
+	 */
+	private Integer nxCdCurrentOrderId;
 
 	private List<NxCommunityOrdersSubEntity> ordersSubEntities;
 

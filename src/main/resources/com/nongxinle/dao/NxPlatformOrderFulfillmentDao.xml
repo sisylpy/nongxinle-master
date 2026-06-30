@@ -43,4 +43,18 @@
         </set>
         where nx_pof_id = #{nxPofId}
     </update>
+
+    <update id="revertReadyForPickupToAssigned">
+        update nx_platform_order_fulfillment
+        set nx_pof_fulfillment_status = 'ASSIGNED',
+            nx_pof_ready_for_pickup_at = null,
+            nx_pof_updated_at = now(),
+            nx_pof_updated_by = #{operatorId}
+        where nx_pof_order_id = #{orderId}
+          and nx_pof_fulfillment_status = 'READY_FOR_PICKUP'
+    </update>
+
+    <delete id="deleteByOrderId">
+        delete from nx_platform_order_fulfillment where nx_pof_order_id = #{value}
+    </delete>
 </mapper>

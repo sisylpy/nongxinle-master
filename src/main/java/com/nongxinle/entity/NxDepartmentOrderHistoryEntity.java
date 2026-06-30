@@ -309,7 +309,6 @@ public class NxDepartmentOrderHistoryEntity implements Serializable {
 
 	private NxDepartmentEntity nxDepartmentEntity;
 	private GbDepartmentEntity gbDepartmentEntity;
-	private NxRestrauntEntity nxRestrauntEntity;
 	private NxDistributerWeightEntity nxDistributerWeightEntity;
 	private GbDepartmentOrdersEntity gbDepartmentOrdersEntity;
 	private List<NxDistributerGoodsEntity> nxDistributerGoodsEntityList;

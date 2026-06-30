@@ -27,6 +27,7 @@ public class NxDistributerTypeUtils {
     public final static Integer NX_DEP_ORDER_IS_PURCHASE = 2; //订单买了
     public final static Integer NX_DEP_ORDER_FINISH_PURCHASE = 3; //订单完成采购
     public final static Integer NX_DEP_ORDER_FINISH_OUT = 4; //订单完成分拣
+    public final static Integer NX_DEP_ORDER_FINISH_LOAD = 5; //订单装车确认
 
 
     public final static Integer NX_ORDER_STATUS_GOUWU = -1;  //购物车订单
@@ -153,6 +154,9 @@ public class NxDistributerTypeUtils {
     }
     public static Integer getNxDepOrderBuyStatusFinishOut() {
         return NX_DEP_ORDER_FINISH_OUT;
+    }
+    public static Integer getNxDepOrderBuyStatusFinishLoad() {
+        return NX_DEP_ORDER_FINISH_LOAD;
     }
 
     public static Integer getNxOrderStatusGouwu() {

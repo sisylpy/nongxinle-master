@@ -51,7 +51,6 @@ public class GbDistributerWeightGoodsEntity implements Serializable {
 	private List<GbDepartmentOrdersEntity> appendOrdersEntities;
 	private GbDistributerWeightTotalEntity gbDisWeightTotalEntity;
 	private GbDepartmentDisGoodsEntity gbDepartmentDisGoodsEntity;
-	private GbDepInventoryGoodsDailyTotalEntity gbDepInventoryGoodsDailyTotalEntity;
 
 
 }

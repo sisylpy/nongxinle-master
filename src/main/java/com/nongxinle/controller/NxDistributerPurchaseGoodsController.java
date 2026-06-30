@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import com.nongxinle.entity.*;
 import com.nongxinle.service.*;
+import com.nongxinle.community.catalog.service.NxCommunityGoodsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +55,6 @@ public class NxDistributerPurchaseGoodsController {
     private NxDistributerGoodsService nxDgService;
     @Autowired
     private NxDistributerFatherGoodsService nxDistributerFatherGoodsService;
-    @Autowired
-    private NxRestrauntOrdersService nxRestrauntOrdersService;
     @Autowired
     private NxDistributerWeightService nxDistributerWeightService;
     @Autowired
@@ -1514,26 +1513,6 @@ public class NxDistributerPurchaseGoodsController {
 
     }
 
-    private void transUpdateNxRestrauntOrder(NxDepartmentOrdersEntity nxOrdersEntity) {
-        Integer nxDoNxRestrauntOrderId = nxOrdersEntity.getNxDoNxRestrauntOrderId();
-        if (nxDoNxRestrauntOrderId != null) {
-            NxRestrauntOrdersEntity restrauntOrdersEntity = nxRestrauntOrdersService.queryObject(nxDoNxRestrauntOrderId);
-            restrauntOrdersEntity.setNxRoWeight(nxOrdersEntity.getNxDoWeight());
-            restrauntOrdersEntity.setNxRoCostPrice(nxOrdersEntity.getNxDoPrice());
-            BigDecimal decimal = new BigDecimal(nxOrdersEntity.getNxDoPrice()).multiply(new BigDecimal(nxOrdersEntity.getNxDoWeight())).setScale(1, BigDecimal.ROUND_HALF_UP);
-            restrauntOrdersEntity.setNxRoCostSubtotal(decimal.toString());
-            restrauntOrdersEntity.setNxRoBuyStatus(nxOrdersEntity.getNxDoPurchaseStatus());
-            restrauntOrdersEntity.setNxRoStatus(nxOrdersEntity.getNxDoStatus());
-            nxRestrauntOrdersService.update(restrauntOrdersEntity);
-
-            Integer comGoodsId = restrauntOrdersEntity.getNxRoComGoodsId();
-            NxCommunityGoodsEntity nxCommunityGoodsEntity = nxCommunityGoodsService.queryObject(comGoodsId);
-            nxCommunityGoodsEntity.setNxCgBuyingPrice(nxOrdersEntity.getNxDoPrice());
-            nxCommunityGoodsService.update(nxCommunityGoodsEntity);
-        }
-    }
-
-
     @RequestMapping(value = "/deleteIsPurchase", method = RequestMethod.POST)
     @ResponseBody
     public R deleteIsPurchase(@RequestBody NxDistributerPurchaseGoodsEntity purgoods) {
@@ -1543,8 +1522,6 @@ public class NxDistributerPurchaseGoodsController {
                 orders.setNxDoPurchaseStatus(getNxDepOrderBuyStatusUnPurchase());
                 orders.setNxDoCostPrice(null);
                 nxDepartmentOrdersService.update(orders);
-                //更新restraunt订单数据
-                deleteUpdateNxRestrauntOrderData(orders);
             }
         }
         purgoods.setNxDpgStatus(getNxDisPurchaseGoodsUnBuy());
@@ -3232,11 +3209,6 @@ public class NxDistributerPurchaseGoodsController {
                     gbOrdersEntity.setGbDoBuyStatus(1);
                     gbDepartmentOrdersService.update(gbOrdersEntity);
                 }
-                if (order.getNxDoDepartmentId() == -1 && order.getNxDoNxCommRestrauntFatherId() > 0) {
-                    NxRestrauntOrdersEntity resOrdersEntity = nxRestrauntOrdersService.queryNxRestrauntOrderByNxOrderId(order.getNxDepartmentOrdersId());
-                    resOrdersEntity.setNxRoBuyStatus(1);
-                    nxRestrauntOrdersService.update(resOrdersEntity);
-                }
             }
         }
 
@@ -3273,19 +3245,6 @@ public class NxDistributerPurchaseGoodsController {
         }
 
     }
-
-    private void deleteUpdateNxRestrauntOrderData(NxDepartmentOrdersEntity orders) {
-        Integer nxDoNxCommRestrauntId = orders.getNxDoNxCommRestrauntId();
-        if (nxDoNxCommRestrauntId != -1) {
-            NxRestrauntOrdersEntity resOrdersEntity = nxRestrauntOrdersService.queryObject(orders.getNxDoNxRestrauntOrderId());
-            resOrdersEntity.setNxRoWeight(null);
-            resOrdersEntity.setNxRoBuyStatus(getNxDepOrderBuyStatusUnPurchase());
-            resOrdersEntity.setNxRoCostPrice(null);
-            resOrdersEntity.setNxRoCostSubtotal(null);
-            nxRestrauntOrdersService.update(resOrdersEntity);
-        }
-    }
-
 
 
 

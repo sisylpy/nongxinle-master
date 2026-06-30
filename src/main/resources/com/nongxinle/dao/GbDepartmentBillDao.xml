@@ -983,6 +983,35 @@
         limit 1
     </select>
 
+    <select id="queryPlatformCashBillsByParams" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
+        select * from gb_department_bill
+        where gb_db_bill_source = 'PLATFORM_CASH'
+          and (gb_DB_dep_id = #{depId} or gb_DB_dep_father_id = #{depId})
+        <if test="startDate != null and startDate != ''">
+            and gb_db_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            and gb_db_date &lt;= #{endDate}
+        </if>
+        <if test="payStatus != null and payStatus != ''">
+            and gb_db_pay_status = #{payStatus}
+        </if>
+        order by gb_department_bill_id desc
+    </select>
+
+    <select id="queryPlatformCashOutstandingBillsByDep" resultType="com.nongxinle.entity.GbDepartmentBillEntity">
+        select * from gb_department_bill
+        where gb_db_bill_source = 'PLATFORM_CASH'
+          and (gb_DB_dep_id = #{value} or gb_DB_dep_father_id = #{value})
+          and gb_db_pay_status in ('AWAIT_FIRST_PAY', 'AWAIT_SUPPLEMENT', 'PARTIAL_PAID')
+        order by case gb_db_pay_status
+                     when 'AWAIT_FIRST_PAY' then 1
+                     when 'AWAIT_SUPPLEMENT' then 2
+                     when 'PARTIAL_PAID' then 3
+                     else 4 end,
+                 gb_department_bill_id desc
+    </select>
+
 
     <select id="queryBillFromWhichDepartment" resultMap="billDetail">
         select *,

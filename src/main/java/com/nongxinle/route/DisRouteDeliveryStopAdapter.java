@@ -42,7 +42,7 @@ public final class DisRouteDeliveryStopAdapter {
         }
         stop.setNxDrsDriverRouteId(driverRouteId);
 
-        Integer stopSeq = task.getNxDstRouteSeq() != null ? task.getNxDstRouteSeq() : task.getNxDstManualStopSeq();
+        Integer stopSeq = resolveReadModelStopSeq(task);
         if (stopSeq == null && legacyStop != null) {
             stopSeq = legacyStop.getNxDrsStopSeq();
         }
@@ -81,6 +81,21 @@ public final class DisRouteDeliveryStopAdapter {
         stop.setConfirmViaSandbox(task.getConfirmViaSandbox());
         stop.setLiveDepartmentName(task.getLiveDepartmentName());
         return stop;
+    }
+
+    /** manualLocked 路线以 manualStopSeq 为准，避免 routeSeq 滞后导致读模型乱序。 */
+    public static Integer resolveReadModelStopSeq(NxDisShipmentTaskEntity task) {
+        if (task == null) {
+            return null;
+        }
+        if (task.getNxDstManualLocked() != null && task.getNxDstManualLocked() == 1
+                && task.getNxDstManualStopSeq() != null && task.getNxDstManualStopSeq() > 0) {
+            return task.getNxDstManualStopSeq();
+        }
+        if (task.getNxDstRouteSeq() != null && task.getNxDstRouteSeq() > 0) {
+            return task.getNxDstRouteSeq();
+        }
+        return task.getNxDstManualStopSeq();
     }
 
     private static <T> T firstNonNull(T primary, T fallback) {

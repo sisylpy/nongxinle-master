@@ -191,8 +191,6 @@
         <result property="nxCosServiceType" column="nx_COS_service_type"/>
         <result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
         <result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
-		<result property="nxCosCucId" column="nx_COS_cuc_id"/>
-        <result property="nxCosCucId" column="nx_cos_cuc_id"/>
         <result property="nxCosStatus" column="nx_cos_status"/>
         <result property="nxCosRemark" column="nx_COS_remark"/>
         <result property="nxCosType" column="nx_COS_type"/>
@@ -584,19 +582,23 @@
         left join nx_community_orders_sub as ncos on ncos.nx_COS_community_goods_id = ncg.nx_community_goods_id
         and ncos.nx_COS_order_user_id = #{orderUserId} and ncos.nx_COS_status = -1 and ncos.nx_COS_type =
         #{orderType} and ncos.nx_COS_huaxian_different_price = 0 and ncos.nx_COS_splicing_orders_id = #{splicingOrderId}
+        and ncos.nx_COS_service_type = #{serviceType}
         left join nx_community_orders_sub as huaxianCos on huaxianCos.nx_COS_community_goods_id =
         ncg.nx_community_goods_id
         and huaxianCos.nx_COS_order_user_id = #{orderUserId} and huaxianCos.nx_COS_status = -1 and huaxianCos.nx_COS_type =
         #{orderType} and huaxianCos.nx_COS_huaxian_different_price &gt; 0  and huaxianCos.nx_COS_splicing_orders_id = #{splicingOrderId}
+        and huaxianCos.nx_COS_service_type = #{serviceType}
         left join nx_community_orders_sub as ncosRemark on ncosRemark.nx_COS_community_goods_id =
         ncg.nx_community_goods_id
         and ncosRemark.nx_COS_order_user_id = #{orderUserId} and ncosRemark.nx_COS_status = -1 and ncosRemark.nx_COS_type =
         #{orderType} and ncosRemark.nx_COS_huaxian_different_price = 0 and ncosRemark.nx_COS_splicing_orders_id = #{splicingOrderId}
+        and ncosRemark.nx_COS_service_type = #{serviceType}
         left join nx_community_orders_sub as huaxianCosRemark on huaxianCosRemark.nx_COS_community_goods_id =
         ncg.nx_community_goods_id
         and huaxianCosRemark.nx_COS_order_user_id = #{orderUserId} and huaxianCosRemark.nx_COS_status = -1 and
         huaxianCosRemark.nx_COS_type = #{orderType}  and huaxianCosRemark.nx_COS_huaxian_different_price &gt; 0
         and huaxianCosRemark.nx_COS_splicing_orders_id = #{splicingOrderId}
+        and huaxianCosRemark.nx_COS_service_type = #{serviceType}
         <where>
             <if test="commId != null">
                 and grand.nx_cfg_community_id = #{commId}

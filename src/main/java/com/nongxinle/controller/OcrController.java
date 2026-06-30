@@ -82,6 +82,12 @@ public class OcrController {
     // 图片大小限制：Base64 字符串最大 10MB（约对应 7.5MB 原图）
     private static final int MAX_IMAGE_BASE64_SIZE = 10 * 1024 * 1024; // 10MB
 
+    /**
+     * 与表 nx_department_orders 中 nx_DO_goods_name / nx_DO_goods_original_name 列长度一致（按常见库表为 varchar(200)，若实际更短请改小或 ALTER 扩列）。
+     * OCR 可能解析出整行超长文本，截断避免 MysqlDataTruncation。
+     */
+    private static final int NX_DO_GOODS_NAME_DB_MAX_CHARS = 200;
+
     @Value("${tencentcloud.ocr.secret.id}")
     private String secretId;
 
@@ -655,6 +661,7 @@ public class OcrController {
             Map<Integer, NxDepartmentOrdersEntity> responseMap
 
     ) {
+        applyNxDepartmentOrderGoodsNameDbLimit(orderBasic);
         // 协作伙伴商品判别与保存已统一在 saveOrderWithGoods 中处理
         NxDepartmentOrdersEntity savedOrder = nxDepartmentOrdersService.saveOrderWithGoods(orderBasic, distributerGoodsEntity);
         // 确保保存后的订单实体包含包装结构字段和任务ID（从orderBasic中复制）
@@ -709,6 +716,7 @@ public class OcrController {
             String cartonUnit) {
         // 弱查询找到商品，订单状态统一为 -2（不更新训练数据，等待人工确认）
         orderBasic.setNxDoStatus(-2);
+        applyNxDepartmentOrderGoodsNameDbLimit(orderBasic);
         
         NxDepartmentOrdersEntity savedOrder = nxDepartmentOrdersService.saveOrderWithGoods(orderBasic, distributerGoodsEntity);
         // 确保保存后的订单实体包含包装结构字段和任务ID（从orderBasic中复制）
@@ -3296,6 +3304,27 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
     }
 
     /**
+     * 部门订单商品名字段入库长度保护（与 {@link #NX_DO_GOODS_NAME_DB_MAX_CHARS} 一致）。
+     */
+    private void applyNxDepartmentOrderGoodsNameDbLimit(NxDepartmentOrdersEntity order) {
+        if (order == null) {
+            return;
+        }
+        String name = order.getNxDoGoodsName();
+        if (name != null && name.length() > NX_DO_GOODS_NAME_DB_MAX_CHARS) {
+            logger.warn("[applyNxDepartmentOrderGoodsNameDbLimit] nxDoGoodsName 过长 ({} 字符)，截断为 {} 字符",
+                    name.length(), NX_DO_GOODS_NAME_DB_MAX_CHARS);
+            order.setNxDoGoodsName(name.substring(0, NX_DO_GOODS_NAME_DB_MAX_CHARS));
+        }
+        String orig = order.getNxDoGoodsOriginalName();
+        if (orig != null && orig.length() > NX_DO_GOODS_NAME_DB_MAX_CHARS) {
+            logger.warn("[applyNxDepartmentOrderGoodsNameDbLimit] nxDoGoodsOriginalName 过长 ({} 字符)，截断为 {} 字符",
+                    orig.length(), NX_DO_GOODS_NAME_DB_MAX_CHARS);
+            order.setNxDoGoodsOriginalName(orig.substring(0, NX_DO_GOODS_NAME_DB_MAX_CHARS));
+        }
+    }
+
+    /**
      * 保存订单（无商品ID，用于强查询失败的情况）
      * 
      * @param orderBasic 订单实体（已设置状态=-2，商品ID=null，关联训练数据ID）
@@ -3340,6 +3369,8 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
         } else {
             logger.info("[saveOrderWithoutGoods] 订单关联OCR任务ID: {}", orderBasic.getNxDoOcrTaskId());
         }
+
+        applyNxDepartmentOrderGoodsNameDbLimit(orderBasic);
         
         // 保存订单
         nxDepartmentOrdersDao.save(orderBasic);
@@ -4394,6 +4425,9 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
         // 记录整个方法开始时间
         long methodStartTime = System.currentTimeMillis();
         Integer ocrTaskId = null;
+        String ocrTextContent = null;
+        List<Map<String, Object>> itemsList = null;
+        NxOcrTaskEntity ocrTask = null;
         try {
             // ========== 第一步：验证必填参数 ==========
             Integer depId, disId, depFatherId, userId;
@@ -4432,7 +4466,7 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
             String fileName = fileNameObj != null ? fileNameObj.toString() : "ocr_image_" + System.currentTimeMillis();
             
             // 创建OCR任务记录
-            NxOcrTaskEntity ocrTask = new NxOcrTaskEntity();
+            ocrTask = new NxOcrTaskEntity();
 
             NxDepartmentEntity nxDepartmentEntity = nxDepartmentService.queryObject(depFatherId);
             String  depName = nxDepartmentEntity.getNxDepartmentAttrName();
@@ -4497,7 +4531,7 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
             logger.info("[recognizeOrderFast] 开始识别和解析，图片大小: {} bytes", imageBase64.length());
             
             // ========== 第四步：OCR识别 ==========
-            String ocrTextContent = performOcrRecognition(imageBase64);
+            ocrTextContent = performOcrRecognition(imageBase64);
             
             if (ocrTextContent == null || ocrTextContent.trim().isEmpty()) {
                 logger.error("[recognizeOrderFast] OCR识别结果为空，任务ID: {}", ocrTaskId);
@@ -4531,7 +4565,7 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
             
             // ========== 第七步：使用规则解析（不使用DeepSeek） ==========
             logger.info("[recognizeOrderFast] 开始使用规则解析订单文本...");
-            List<Map<String, Object>> itemsList = parseOrderTextByRule(ocrTextContent);
+            itemsList = parseOrderTextByRule(ocrTextContent);
             
             // 验证解析结果
             if (itemsList.isEmpty()) {
@@ -4581,6 +4615,7 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                     Map<Integer, Map<String, String>> orderIndexToPackagingFields = new HashMap<>();
 
                     for (int i = 0; i < itemsList.size(); i++) {
+                        try {
                         Map<String, Object> item = itemsList.get(i);
 
                         // 订单中的商品名称使用 name（纠错后的名称）
@@ -4958,6 +4993,7 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
 
                             // 保存订单到 orderList，后续统一调用 searchGoods
                             // 同时保存包装结构字段，以便后续转换为 DTO 时使用
+                            applyNxDepartmentOrderGoodsNameDbLimit(orderBasic);
                             orderList.add(orderBasic);
                             orderIndexList.add(i);
                             // 保存包装结构字段到 Map，key 为原始索引
@@ -4967,6 +5003,10 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                             packagingFields.put("itemsPerCarton", itemsPerCarton);
                             packagingFields.put("cartonUnit", cartonUnit);
                             orderIndexToPackagingFields.put(i, packagingFields);
+                        }
+                        } catch (Throwable lineEx) {
+                            logger.error("[recognizeOrderFast] 第 {}/{} 条解析行处理失败，已跳过: {}",
+                                    i + 1, itemsList.size(), lineEx.getMessage(), lineEx);
                         }
                     }
 
@@ -5085,13 +5125,24 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
                             .put("taskId", ocrTaskId)
                             .put("task", ocrTask);
 
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     logger.error("[recognizeOrderFast] 处理订单失败: {}", e.getMessage(), e);
-                    // 即使处理失败，也返回识别结果和任务ID
-                    return R.ok().put("ocrText", ocrTextContent)
+                    if (ocrTask != null && ocrTaskId != null) {
+                        try {
+                            ocrTask.setNxOcrTaskStatus(-1);
+                            ocrTask.setNxOcrTaskUpdateDate(formatWhatYearDayTime(0));
+                            nxOcrTaskService.update(ocrTask);
+                        } catch (Exception ex) {
+                            logger.warn("[recognizeOrderFast] 更新任务为失败状态时出错: {}", ex.getMessage());
+                        }
+                    }
+                    // 即使处理失败，也返回识别结果和任务ID（保证接口始终有 JSON 响应）
+                    return R.ok()
+                            .put("ocrText", ocrTextContent != null ? ocrTextContent : "")
                             .put("items", itemsList != null ? itemsList : new ArrayList<>())
                             .put("taskId", ocrTaskId)
-                            .put("error", "处理订单失败: " + e.getMessage());
+                            .put("task", ocrTask)
+                            .put("error", "处理订单失败: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
                 }
             }
 
@@ -5104,15 +5155,27 @@ public R pasteSearchGoods(@RequestBody Map<String, Object> request) {
             logger.info("[recognizeOrderFast] 总耗时: {} ms ({} 秒)", methodTotalTime, methodTotalTime / 1000.0);
             logger.info("[recognizeOrderFast] ====================================");
 
-            return R.ok().put("ocrText", ocrTextContent)
+            return R.ok().put("ocrText", ocrTextContent != null ? ocrTextContent : "")
                     .put("items", itemsList != null ? itemsList : new ArrayList<>())
                     .put("task", ocrTask)
                     .put("taskId", ocrTaskId);
-        }
-        catch (Exception e) {
-            // 处理其他异常
-            logger.error("[OCR] 系统错误: {}", e.getMessage(), e);
-            return R.error("系统错误: " + e.getMessage());
+        } catch (Throwable e) {
+            logger.error("[recognizeOrderFast] 系统错误: {}", e.getMessage(), e);
+            String msg = "系统错误: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            R r = R.error(msg);
+            if (ocrTaskId != null) {
+                r.put("taskId", ocrTaskId);
+            }
+            if (ocrTextContent != null) {
+                r.put("ocrText", ocrTextContent);
+            }
+            if (itemsList != null) {
+                r.put("items", itemsList);
+            }
+            if (ocrTask != null) {
+                r.put("task", ocrTask);
+            }
+            return r;
         }
     }
 

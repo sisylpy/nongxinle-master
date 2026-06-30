@@ -145,4 +145,20 @@ public interface NxDistributerGoodsDao extends BaseDao<NxDistributerGoodsEntity>
     List<NxDistributerGoodsEntity> queryDepDisGoodsQuickSearchStrWithDepOrders(Map<String, Object> map);
 
     List<com.nongxinle.dto.platform.PlatformSupplierRow> queryPlatformSuppliersByNxGoods(Map<String, Object> map);
+
+    List<com.nongxinle.dto.platform.PlatformMarketSupplierHomeRow> queryPlatformMarketSupplierHomeList(Map<String, Object> map);
+
+    List<com.nongxinle.dto.platform.PlatformCategoryHomeRow> queryPlatformCategoryHomeList(Map<String, Object> map);
+
+    int countPlatformMarketSuppliers(Map<String, Object> map);
+
+    int countPlatformMarketCategories(Map<String, Object> map);
+
+    int countPlatformMarketDistinctGoods(Map<String, Object> map);
+
+    List<com.nongxinle.dto.platform.PlatformCatalogGoodsRow> queryPlatformCatalogGoodsByGreatGrandId(Map<String, Object> map);
+
+    int countPlatformCatalogGoodsByGreatGrandId(Map<String, Object> map);
+
+    List<Integer> queryPlatformCatalogGoodsIdsSort(Map<String, Object> map);
 }

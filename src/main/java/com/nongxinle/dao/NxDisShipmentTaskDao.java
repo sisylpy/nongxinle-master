@@ -1,5 +1,6 @@
 package com.nongxinle.dao;
 
+import com.nongxinle.dto.route.DeliveryHistoryPreferenceAggRow;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import org.apache.ibatis.annotations.Param;
 
@@ -27,4 +28,10 @@ public interface NxDisShipmentTaskDao {
     void clearOpenKey(@Param("taskId") Integer taskId);
 
     void updateSchedule(NxDisShipmentTaskEntity entity);
+
+    List<DeliveryHistoryPreferenceAggRow> queryDeliveryHistoryAggByDepAndDriver(
+            @Param("disId") Integer disId,
+            @Param("depFatherIds") List<Integer> depFatherIds,
+            @Param("lookbackDays") Integer lookbackDays,
+            @Param("manualLockedWeight") double manualLockedWeight);
 }

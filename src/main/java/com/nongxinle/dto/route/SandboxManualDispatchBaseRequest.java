@@ -2,13 +2,13 @@ package com.nongxinle.dto.route;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Setter
+/** 人工调度（单站选司机）基础请求。 */
 @Getter
-@ToString
+@Setter
 public class SandboxManualDispatchBaseRequest {
     private Integer disId;
     private String routeDate;
@@ -17,5 +17,5 @@ public class SandboxManualDispatchBaseRequest {
     private Integer departmentId;
     private Integer depFatherId;
     private String sandboxStopKey;
-    private List<Integer> liveOrderIds;
+    private List<Integer> liveOrderIds = new ArrayList<Integer>();
 }

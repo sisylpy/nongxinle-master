@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nongxinle.dao.NxCommunityUserPromotionEligibleDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCommunityUserPromotionEligibleEntity">
+        select * from nx_community_user_promotion_eligible where community_user_id = #{value}
+    </select>
+
+    <insert id="save">
+        insert into nx_community_user_promotion_eligible
+        (community_user_id, enabled, valid_start_at, valid_end_at)
+        values
+        (#{communityUserId}, #{enabled}, #{validStartAt}, #{validEndAt})
+    </insert>
+
+    <update id="update">
+        update nx_community_user_promotion_eligible
+        <set>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="validStartAt != null">valid_start_at = #{validStartAt},</if>
+            <if test="validEndAt != null">valid_end_at = #{validEndAt},</if>
+        </set>
+        where community_user_id = #{communityUserId}
+    </update>
+</mapper>

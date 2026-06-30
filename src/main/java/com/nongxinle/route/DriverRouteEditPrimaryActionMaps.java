@@ -43,6 +43,15 @@ public final class DriverRouteEditPrimaryActionMaps {
                                                    String batchCode,
                                                    Integer operatorUserId,
                                                    Integer driverUserId) {
+        return buildPayload(disId, routeDate, batchCode, operatorUserId, driverUserId, null);
+    }
+
+    public static Map<String, Object> buildPayload(Integer disId,
+                                                   String routeDate,
+                                                   String batchCode,
+                                                   Integer operatorUserId,
+                                                   Integer driverUserId,
+                                                   String sourcePage) {
         Map<String, Object> payload = new LinkedHashMap<String, Object>();
         payload.put("disId", disId);
         payload.put("routeDate", routeDate);
@@ -52,6 +61,9 @@ public final class DriverRouteEditPrimaryActionMaps {
         payload.put("editPagePath", EDIT_PAGE_PATH);
         payload.put("previewPath", PREVIEW_PATH);
         payload.put("confirmPath", CONFIRM_PATH);
+        if (sourcePage != null && !sourcePage.trim().isEmpty()) {
+            payload.put("sourcePage", sourcePage.trim());
+        }
         return payload;
     }
 

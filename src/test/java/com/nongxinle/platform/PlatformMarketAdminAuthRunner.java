@@ -18,8 +18,8 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class PlatformMarketAdminAuthRunner {
 
     private static final int MARKET_ID = 1;
-    private static final String LOGIN_ACCOUNT = "platform_admin_smoke";
-    private static final String PASSWORD = "Admin@123";
+    private static final String LOGIN_ACCOUNT = "123";
+    private static final String PASSWORD = "123";
 
     public static void main(String[] args) {
         ClassPathXmlApplicationContext ctx =

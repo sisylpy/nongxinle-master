@@ -6133,6 +6133,7 @@ public class NxDepartmentOrdersController {
 
         // 使用简化版DTO查询，只查询必要字段
         List<NxDepartmentOrdersSimpleDTO> ordersEntities = nxDepartmentOrdersService.queryNotWeightDisOrdersSimpleByParams(map);
+        PlatformOrderDisplaySupport.enrichSimpleOrderList(ordersEntities);
         System.out.println("mapaappaaaaa"+ordersEntities.size());
 
         // 优化：合并统计查询，减少数据库查询次数
@@ -6167,52 +6168,43 @@ public class NxDepartmentOrdersController {
         System.out.println("phoneGetToFillDepOrderssisyabcdetest1233 ⑤ getHeadStringByString 完成 headPinyin=" + headPinyin);
         String s = headPinyin + "-" + formatDayNumber(0) + "-" + myRandom();
 
+        System.out.println("[platformOrder][phoneGetToFillDepOrders] 入参 disId=" + disId + " depFatherId=" + depFatherId
+                + " gbDepFatherId=" + gbDepFatherId + " resFatherId=" + resFatherId);
+        logSimpleOrdersForDebug(ordersEntities, "depFatherId全量查询");
+
         System.out.println("depfaidiabcccdddjdjdabc" + depFatherId);
         List<NxDepartmentEntity> entities = nxDepartmentService.querySubDepartments(depFatherId);
 
-        System.out.println("querySubDepartmentsquerySubDepartmentsaa" + entities.size());
+        System.out.println("[platformOrder][phoneGetToFillDepOrders] 子部门数=" + entities.size());
         if (entities.size() > 0) {
             System.out.println("querySubDepartmentsquerySubDepartmentsaa00000" + entities.size());
 
-            // 优化：批量查询所有子部门的订单，避免N+1问题
-            List<Integer> depIds = entities.stream()
-                    .map(NxDepartmentEntity::getNxDepartmentId)
-                    .collect(Collectors.toList());
-
-            Map<String, Object> batchMap = new HashMap<>();
-            batchMap.put("orderDisId", disId);
-            batchMap.put("status", 3);
-            batchMap.put("depIds", depIds);
-            List<NxDepartmentOrdersSimpleDTO> allDepOrders = nxDepartmentOrdersService.queryDisOrdersSimpleByDepIds(batchMap);
-
-            // 按部门分组订单
-            Map<Integer, List<NxDepartmentOrdersSimpleDTO>> ordersByDep = allDepOrders.stream()
-                    .collect(Collectors.groupingBy(NxDepartmentOrdersSimpleDTO::getNxDoDepartmentId));
+            // 按 nx_DO_department_id 分组（必须用 depFatherId 全量查询结果，不能只查子部门 ID 列表）
+            Map<Integer, List<NxDepartmentOrdersSimpleDTO>> ordersByDep = ordersEntities.stream()
+                    .collect(Collectors.groupingBy(o -> o.getNxDoDepartmentId() != null ? o.getNxDoDepartmentId() : 0));
 
             List<Map<String, Object>> mapList = new ArrayList<>();
+
+            // 平台单常落在父部门 depId=depFatherId，旧逻辑只查子部门会漏单
+            List<NxDepartmentOrdersSimpleDTO> fatherDepOrders = ordersByDep.getOrDefault(depFatherId, new ArrayList<>());
+            if (!fatherDepOrders.isEmpty()) {
+                NxDepartmentEntity fatherDep = nxDepartmentService.queryObject(depFatherId);
+                String fatherName = fatherDep != null ? fatherDep.getNxDepartmentName() : ("dep-" + depFatherId);
+                System.out.println("[platformOrder][phoneGetToFillDepOrders] 父部门 depId=" + depFatherId
+                        + " name=" + fatherName + " 订单数=" + fatherDepOrders.size());
+                logSimpleOrdersForDebug(fatherDepOrders, "父部门");
+                mapList.add(buildPhoneDepOrderGroup(depFatherId, fatherName, fatherDepOrders, disId));
+            }
+
             for (NxDepartmentEntity dep : entities) {
-                Map<String, Object> mapDep = new HashMap<>();
-                mapDep.put("depId", dep.getNxDepartmentId());
-                mapDep.put("depName", dep.getNxDepartmentName());
-
-                // 从批量查询结果中获取该部门的订单
-                List<NxDepartmentOrdersSimpleDTO> depOrders = ordersByDep.getOrDefault(dep.getNxDepartmentId(), new ArrayList<>());
-                mapDep.put("depOrders", depOrders);
-
-                // 计算该部门的小计
-                Map<String, Object> map1 = new HashMap<>();
-                map1.put("status", 3);
-                map1.put("depId", dep.getNxDepartmentId());
-                map1.put("subtotal", 0);
-                map1.put("isSelfOrder", 1);
-                Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
-                Double sutotal = 0.0;
-                if (integer > 0) {
-                    sutotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(map1);
+                if (dep.getNxDepartmentId() != null && dep.getNxDepartmentId().equals(depFatherId)) {
+                    continue;
                 }
-                mapDep.put("depSubtotal", new BigDecimal(sutotal).setScale(1, BigDecimal.ROUND_HALF_UP));
-                mapDep.put("depSubtotalHanzi", convertDoubleToChineseCurrency(sutotal));
-                mapList.add(mapDep);
+                List<NxDepartmentOrdersSimpleDTO> depOrders = ordersByDep.getOrDefault(dep.getNxDepartmentId(), new ArrayList<>());
+                System.out.println("[platformOrder][phoneGetToFillDepOrders] 子部门 depId=" + dep.getNxDepartmentId()
+                        + " name=" + dep.getNxDepartmentName() + " 订单数=" + depOrders.size());
+                logSimpleOrdersForDebug(depOrders, "子部门-" + dep.getNxDepartmentName());
+                mapList.add(buildPhoneDepOrderGroup(dep.getNxDepartmentId(), dep.getNxDepartmentName(), depOrders, disId));
             }
 
             Map<String, Object> mapR = new HashMap<>();
@@ -6233,6 +6225,8 @@ public class NxDepartmentOrdersController {
             mapR.put("totalHanzi", convertDoubleToChineseCurrency(total));
             mapR.put("total", new BigDecimal(total).setScale(1, BigDecimal.ROUND_HALF_UP));
 
+            System.out.println("[platformOrder][phoneGetToFillDepOrders] 返回分组数=" + mapList.size()
+                    + " 总订单数=" + ordersEntities.size());
             return R.ok().put("data", mapR);
         } else {
             Map<String, Object> mapR = new HashMap<>();
@@ -6256,8 +6250,71 @@ public class NxDepartmentOrdersController {
             mapR.put("hasPriceCount", hasPriceCount);
             mapR.put("hasWeightCount", hasWeightCount);
             mapR.put("totalCount", ordersEntities.size());
+            logSimpleOrdersForDebug(ordersEntities, "无子部门-平铺");
+            System.out.println("[platformOrder][phoneGetToFillDepOrders] 无子部门 返回订单数=" + ordersEntities.size());
             return R.ok().put("data", mapR);
         }
+    }
+
+    private Map<String, Object> buildPhoneDepOrderGroup(Integer depId, String depName,
+            List<NxDepartmentOrdersSimpleDTO> depOrders, Integer disId) {
+        Map<String, Object> mapDep = new HashMap<>();
+        mapDep.put("depId", depId);
+        mapDep.put("depName", depName);
+        mapDep.put("depOrders", depOrders);
+
+        Map<String, Object> map1 = new HashMap<>();
+        map1.put("status", 3);
+        map1.put("depId", depId);
+        map1.put("subtotal", 0);
+        map1.put("isSelfOrder", 1);
+        if (disId != null) {
+            map1.put("orderDisId", disId);
+        }
+        Integer integer = nxDepartmentOrdersService.queryDepOrdersAcount(map1);
+        Double sutotal = 0.0;
+        if (integer != null && integer > 0) {
+            sutotal = nxDepartmentOrdersService.queryDepOrdersSubtotal(map1);
+        }
+        mapDep.put("depSubtotal", new BigDecimal(sutotal != null ? sutotal : 0.0).setScale(1, BigDecimal.ROUND_HALF_UP));
+        mapDep.put("depSubtotalHanzi", convertDoubleToChineseCurrency(sutotal != null ? sutotal : 0.0));
+        return mapDep;
+    }
+
+    private void logSimpleOrdersForDebug(List<NxDepartmentOrdersSimpleDTO> orders, String tag) {
+        if (orders == null) {
+            System.out.println("[platformOrder][phoneGetToFillDepOrders][" + tag + "] orders=null");
+            return;
+        }
+        int platformCount = 0;
+        System.out.println("[platformOrder][phoneGetToFillDepOrders][" + tag + "] 条数=" + orders.size());
+        int limit = Math.min(orders.size(), 30);
+        for (int i = 0; i < limit; i++) {
+            NxDepartmentOrdersSimpleDTO o = orders.get(i);
+            if (o == null) {
+                continue;
+            }
+            boolean platform = o.getIsPlatformOrder() != null && o.getIsPlatformOrder() == 1;
+            if (platform) {
+                platformCount++;
+            }
+            System.out.println("[platformOrder][phoneGetToFillDepOrders][" + tag + "][" + i + "] orderId="
+                    + o.getNxDepartmentOrdersId()
+                    + " goods=" + o.getNxDoGoodsName()
+                    + " depId=" + o.getNxDoDepartmentId()
+                    + " isPlatform=" + o.getIsPlatformOrder()
+                    + " assignId=" + o.getPlatformAssignId()
+                    + " expect=" + o.getNxDoExpectPrice()
+                    + " actual=" + o.getNxDoPrice()
+                    + " diff=" + o.getNxDoPriceDifferent()
+                    + " status=" + o.getNxDoStatus());
+        }
+        if (orders.size() > limit) {
+            System.out.println("[platformOrder][phoneGetToFillDepOrders][" + tag + "] ... 省略 "
+                    + (orders.size() - limit) + " 条");
+        }
+        System.out.println("[platformOrder][phoneGetToFillDepOrders][" + tag + "] 平台行合计=" + platformCount
+                + " / " + orders.size());
     }
 
 
@@ -8301,6 +8358,8 @@ public class NxDepartmentOrdersController {
 
         List<NxDepartmentEntity> departmentEntities = nxDepartmentOrdersService.queryOrderDepartmentList(map1);
         System.out.println("mapapapapapddiidididi" + map1);
+        Set<Integer> platformDepIdSet = PlatformOrderDisplaySupport.toPlatformDepIdSet(
+                nxDepartmentOrdersService.queryPlatformCustomerDepFatherIds(map1));
         List<GbDistributerEntity> distributerEntitiesAA = nxDepartmentOrdersService.queryOrderGbDistributerList(map1);
         System.out.println("gbbgbgbgbbgbbgbgb" + distributerEntitiesAA.size());
         Map<String, Object> mapData = new HashMap<>();
@@ -8325,6 +8384,10 @@ public class NxDepartmentOrdersController {
                 Integer depId = departmentEntity.getNxDepartmentId();
                 // 跳过部门ID为null的情况
                 if (depId == null) {
+                    continue;
+                }
+                // 平台客户改走 api/platform/distributer/customers/today，此处仅保留配送商自有 nx 客户
+                if (platformDepIdSet.contains(depId)) {
                     continue;
                 }
                 Map<String, Object> stats = statsMap.get(depId);
@@ -8357,17 +8420,8 @@ public class NxDepartmentOrdersController {
                 }
             }
             resultNx.sort(PlatformOrderDisplaySupport.customerDepMapComparator());
-            List<Map<String, Object>> platformDep = new ArrayList<>();
-            List<Map<String, Object>> ownDep = new ArrayList<>();
-            for (Map<String, Object> item : resultNx) {
-                if (Integer.valueOf(1).equals(item.get("isPlatformCustomer"))) {
-                    platformDep.add(item);
-                } else {
-                    ownDep.add(item);
-                }
-            }
-            mapData.put("platformDep", platformDep);
-            mapData.put("ownDep", ownDep);
+            mapData.put("platformDep", new ArrayList<>());
+            mapData.put("ownDep", resultNx);
             mapData.put("nxDep", resultNx);
         } else {
             mapData.put("nxDep", new ArrayList<>());

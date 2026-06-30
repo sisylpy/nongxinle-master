@@ -6,13 +6,7 @@ import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
-import com.nongxinle.route.DisRouteDispatchLabels;
-import com.nongxinle.route.DisRouteSandboxScheduleLabelHelper;
-import com.nongxinle.route.DisRouteSandboxScheduleMode;
-import com.nongxinle.route.DisRouteSandboxScheduleModeResolver;
-import com.nongxinle.route.DisRouteSandboxScheduleTimeBasis;
-import com.nongxinle.route.DisRouteStopTimeWindowStatus;
-import com.nongxinle.route.DisRouteTemporalHelper;
+import com.nongxinle.route.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -224,8 +218,13 @@ public class DisRouteSandboxSchedulePreviewHelper {
         stop.setTimeAnchorAt(adhocStop ? serverNow : null);
         stop.setTimeAnchorLabel(DisRouteSandboxScheduleLabelHelper.timeAnchorLabel(stopMode));
         stop.setIsAfterCustomerWindow(afterCustomerWindow);
-        stop.setCustomerWindowLabel(DisRouteSandboxScheduleLabelHelper.formatCustomerWindowLabel(
-                deliveryRouteDate, window.earliestSeconds, window.latestSeconds, serverNow));
+        String customerWindowLabel = DisRouteSandboxScheduleLabelHelper.formatCustomerWindowLabel(
+                deliveryRouteDate, window.earliestSeconds, window.latestSeconds, serverNow);
+        if (DisRouteSandboxStopTimeWindowResolver.isTodayOverride(stop) && customerWindowLabel != null) {
+            customerWindowLabel = DisRouteSandboxTodayStopScheduleHelper.applyTodayOverridePrefix(
+                    customerWindowLabel);
+        }
+        stop.setCustomerWindowLabel(customerWindowLabel);
         if (adhocStop) {
             stop.setFastestArrivalLabel(DisRouteSandboxScheduleLabelHelper.formatAdhocFastestArrivalLabel(
                     plannedArrivalAt, serverNow));
@@ -378,34 +377,35 @@ public class DisRouteSandboxSchedulePreviewHelper {
         WindowConfig config = new WindowConfig();
         config.serviceMinutes = DEFAULT_SERVICE_MINUTES;
         config.serviceMinutesSource = com.nongxinle.route.DisRouteServiceMinutesSource.DEFAULT;
-        config.earliestSeconds = stop.getNxDrsEarliestDeliveryTimeS();
-        config.latestSeconds = stop.getNxDrsLatestDeliveryTimeS();
+        config.earliestSeconds = DisRouteSandboxStopTimeWindowResolver.readResolvedEarliest(stop);
+        config.latestSeconds = DisRouteSandboxStopTimeWindowResolver.readResolvedLatest(stop);
         if (stop.getNxDrsServiceMinutes() != null) {
             config.serviceMinutes = stop.getNxDrsServiceMinutes();
         }
-        if (config.earliestSeconds == null && config.latestSeconds == null && stop.getNxDrsDepartmentId() != null) {
-            NxDepartmentEntity department = nxDepartmentDao.queryObject(stop.getNxDrsDepartmentId());
-            if (department != null) {
-                config.earliestSeconds = department.getNxDepartmentEarliestDeliveryTime();
-                config.latestSeconds = department.getNxDepartmentLatestDeliveryTime();
-                if (department.getNxDepartmentUnloadDuration() != null) {
-                    config.serviceMinutes = department.getNxDepartmentUnloadDuration();
-                    config.serviceMinutesSource = com.nongxinle.route.DisRouteServiceMinutesSource.DEPARTMENT;
-                }
+        if (config.earliestSeconds == null && config.latestSeconds == null) {
+            NxDepartmentEntity department = null;
+            if (stop.getNxDrsDepartmentId() != null) {
+                department = nxDepartmentDao.queryObject(stop.getNxDrsDepartmentId());
             }
-        }
-        if (stop.getShipmentTask() != null) {
-            NxDisShipmentTaskEntity task = stop.getShipmentTask();
-            if (config.earliestSeconds == null) {
-                config.earliestSeconds = task.getNxDstEarliestDeliveryTimeS();
+            SandboxStopResolvedTimeWindow resolved = DisRouteSandboxStopTimeWindowResolver.resolve(
+                    stop, stop.getShipmentTask(), department, null);
+            DisRouteSandboxStopTimeWindowResolver.applyToStop(stop, resolved);
+            config.earliestSeconds = resolved.getResolvedEarliestDeliveryTimeS();
+            config.latestSeconds = resolved.getResolvedLatestDeliveryTimeS();
+            if (resolved.getResolvedServiceMinutes() != null) {
+                config.serviceMinutes = resolved.getResolvedServiceMinutes();
             }
-            if (config.latestSeconds == null) {
-                config.latestSeconds = task.getNxDstLatestDeliveryTimeS();
-            }
-            if (task.getNxDstServiceMinutes() != null) {
-                config.serviceMinutes = task.getNxDstServiceMinutes();
+            if (department != null && stop.getNxDrsServiceMinutes() == null
+                    && (stop.getShipmentTask() == null
+                    || stop.getShipmentTask().getNxDstServiceMinutes() == null)
+                    && department.getNxDepartmentUnloadDuration() != null) {
+                config.serviceMinutesSource = com.nongxinle.route.DisRouteServiceMinutesSource.DEPARTMENT;
+            } else if (stop.getShipmentTask() != null && stop.getShipmentTask().getNxDstServiceMinutes() != null) {
                 config.serviceMinutesSource = com.nongxinle.route.DisRouteServiceMinutesSource.TASK;
             }
+        } else if (stop.getShipmentTask() != null && stop.getShipmentTask().getNxDstServiceMinutes() != null) {
+            config.serviceMinutes = stop.getShipmentTask().getNxDstServiceMinutes();
+            config.serviceMinutesSource = com.nongxinle.route.DisRouteServiceMinutesSource.TASK;
         }
         return config;
     }

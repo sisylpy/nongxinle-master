@@ -8,5 +8,7 @@ public interface NxMarketDepartmentDao {
 
     NxMarketDepartmentEntity queryActiveByMarketAndDepartment(Integer marketId, Integer departmentId);
 
+    java.util.List<NxMarketDepartmentEntity> queryActiveListByMarketId(Integer marketId);
+
     void save(NxMarketDepartmentEntity entity);
 }

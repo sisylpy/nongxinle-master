@@ -127,6 +127,16 @@ public class GbDepartmentBillServiceImpl implements GbDepartmentBillService {
     }
 
     @Override
+    public GbDepartmentBillEntity queryByPlatformSubmitToken(String submitToken) {
+        return gbDepartmentBillDao.queryByPlatformSubmitToken(submitToken);
+    }
+
+    @Override
+    public GbDepartmentBillEntity queryBlockingPlatformCashBillByDep(Integer depId) {
+        return gbDepartmentBillDao.queryBlockingPlatformCashBillByDep(depId);
+    }
+
+    @Override
     public List<GbDepartmentBillEntity> queryBillFromWhichDepartment(Map<String, Object> map4) {
 
 

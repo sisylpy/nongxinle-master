@@ -8,7 +8,6 @@ package com.nongxinle.dao;
  */
 
 import com.nongxinle.entity.NxCommunityUserEntity;
-import com.nongxinle.entity.NxRestrauntEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -28,5 +27,4 @@ public interface NxCommunityUserDao extends BaseDao<NxCommunityUserEntity> {
 
     NxCommunityUserEntity queryUserByPhone(String nxCouWxPhone);
 
-    List<NxRestrauntEntity> queryDeliveryRestrauntsByDriverId(Map<String, Object> map4);
 }

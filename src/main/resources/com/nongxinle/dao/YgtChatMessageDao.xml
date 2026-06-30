@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtChatMessageDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity">
+        select * from ygt_chat_message where ygt_chat_message_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity">
+        select * from ygt_chat_message
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_cm_corp_id = #{corpId}</if>
+            <if test="chatId != null and chatId != ''">and ygt_cm_chat_id = #{chatId}</if>
+            <if test="parseStatus != null and parseStatus != ''">and ygt_cm_parse_status = #{parseStatus}</if>
+        </where>
+        order by ygt_cm_seq desc, ygt_chat_message_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">
+        select count(*) from ygt_chat_message
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_cm_corp_id = #{corpId}</if>
+            <if test="chatId != null and chatId != ''">and ygt_cm_chat_id = #{chatId}</if>
+            <if test="parseStatus != null and parseStatus != ''">and ygt_cm_parse_status = #{parseStatus}</if>
+        </where>
+    </select>
+    <select id="queryByMsgId" resultType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity">
+        select * from ygt_chat_message where ygt_cm_corp_id = #{corpId} and ygt_cm_msg_id = #{msgId} limit 1
+    </select>
+    <select id="queryBySeq" resultType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity">
+        select * from ygt_chat_message where ygt_cm_corp_id = #{corpId} and ygt_cm_seq = #{seq} limit 1
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity" useGeneratedKeys="true" keyProperty="ygtChatMessageId">
+        insert into ygt_chat_message
+        (ygt_cm_corp_id, ygt_cm_group_id, ygt_cm_chat_id, ygt_cm_msg_id, ygt_cm_seq, ygt_cm_public_key_ver,
+         ygt_cm_action, ygt_cm_from_user, ygt_cm_msg_time, ygt_cm_msg_type, ygt_cm_content,
+         ygt_cm_raw_json, ygt_cm_parse_status, ygt_cm_parse_error, ygt_cm_create_time, ygt_cm_update_time)
+        values
+        (#{ygtCmCorpId}, #{ygtCmGroupId}, #{ygtCmChatId}, #{ygtCmMsgId}, #{ygtCmSeq}, #{ygtCmPublicKeyVer},
+         #{ygtCmAction}, #{ygtCmFromUser}, #{ygtCmMsgTime}, #{ygtCmMsgType}, #{ygtCmContent},
+         #{ygtCmRawJson}, #{ygtCmParseStatus}, #{ygtCmParseError}, #{ygtCmCreateTime}, #{ygtCmUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity">
+        update ygt_chat_message
+        <set>
+            <if test="ygtCmParseStatus != null">ygt_cm_parse_status = #{ygtCmParseStatus},</if>
+            <if test="ygtCmParseError != null">ygt_cm_parse_error = #{ygtCmParseError},</if>
+            ygt_cm_update_time = now()
+        </set>
+        where ygt_chat_message_id = #{ygtChatMessageId}
+    </update>
+    <update id="updateParseStatus" parameterType="com.nongxinle.community.yunguotuan.entity.YgtChatMessageEntity">
+        update ygt_chat_message
+        set ygt_cm_parse_status = #{ygtCmParseStatus},
+            ygt_cm_parse_error = #{ygtCmParseError},
+            ygt_cm_update_time = now()
+        where ygt_chat_message_id = #{ygtChatMessageId}
+    </update>
+    <delete id="delete">delete from ygt_chat_message where ygt_chat_message_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_chat_message where ygt_chat_message_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

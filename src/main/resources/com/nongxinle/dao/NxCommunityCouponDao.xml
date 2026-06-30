@@ -3,10 +3,35 @@
 
 <mapper namespace="com.nongxinle.dao.NxCommunityCouponDao">
 
-	<select id="queryCouponListByParams" resultMap="coupon">
-		select * from nx_community_coupon as ncc
-		left join nx_community_goods  as ncg on ncg.nx_community_goods_id = ncc.nx_cp_cg_goods_id
+	<resultMap id="coupon" type="NxCommunityCouponEntity">
+		<id property="nxCommunityCouponId" column="nx_community_coupon_id"/>
+		<result property="nxCommunityCouponName" column="nx_community_coupon_name"/>
+		<result property="couponType" column="coupon_type"/>
+		<result property="discountAmount" column="discount_amount"/>
+		<result property="thresholdAmount" column="threshold_amount"/>
+		<result property="scopeType" column="scope_type"/>
+		<result property="scopeRefIds" column="scope_ref_ids"/>
+		<result property="useChannel" column="use_channel"/>
+		<result property="nxCpDownCount" column="nx_cp_down_count"/>
+		<result property="nxCpUseCount" column="nx_cp_use_count"/>
+		<result property="nxCpFilePath" column="nx_cp_file_path"/>
+		<result property="nxCpStartTime" column="nx_cp_start_time"/>
+		<result property="nxCpStopTime" column="nx_cp_stop_time"/>
+		<result property="nxCpStartDate" column="nx_cp_start_date"/>
+		<result property="nxCpStopDate" column="nx_cp_stop_date"/>
+		<result property="nxCpStartTimeZone" column="nx_cp_start_time_zone" jdbcType="TIMESTAMP" typeHandler="com.nongxinle.utils.LocalDateTimeTypeHandler"/>
+		<result property="nxCpStopTimeZone" column="nx_cp_stop_time_zone" jdbcType="TIMESTAMP" typeHandler="com.nongxinle.utils.LocalDateTimeTypeHandler"/>
+		<result property="nxCpBizPurpose" column="nx_cp_biz_purpose"/>
+		<result property="nxCpClaimStrategy" column="nx_cp_claim_strategy"/>
+		<result property="nxCpValidityType" column="nx_cp_validity_type"/>
+		<result property="nxCpValidityDays" column="nx_cp_validity_days"/>
+		<result property="nxCpStatus" column="nx_cp_status"/>
+		<result property="nxCpWords" column="nx_cp_words"/>
+		<result property="nxCpCommunityId" column="nx_cp_community_id"/>
+	</resultMap>
 
+	<select id="queryCouponListByParams" resultMap="coupon">
+		select * from nx_community_coupon
 		<where>
 			<if test="commId != null">
 				and nx_cp_community_id = #{commId}
@@ -17,12 +42,12 @@
 		</where>
 	</select>
 
-	<select id="queryObject" resultType="com.nongxinle.entity.NxCommunityCouponEntity">
+	<select id="queryObject" resultMap="coupon">
 		select * from nx_community_coupon where nx_community_coupon_id = #{value}
 	</select>
+
 	<select id="queryCustomerShowCoupon" resultMap="coupon">
-		select * from nx_community_coupon as ncc
-		left join nx_community_goods  as ncg on ncg.nx_community_goods_id = ncc.nx_cp_cg_goods_id
+		select * from nx_community_coupon
 		<where>
 			<if test="commId != null">
 				and nx_cp_community_id = #{commId}
@@ -33,7 +58,6 @@
 			<if test="xiaoyuStatus != null">
 				and nx_cp_status &lt; #{xiaoyuStatus}
 			</if>
-
 			<if test="stopDate != null">
 				and nx_cp_stop_date &lt;= #{stopDate}
 			</if>
@@ -46,170 +70,17 @@
 			<if test="dayuStopTime != null">
 				and nx_cp_stop_time_zone &gt; #{dayuStopTime}
 			</if>
+			<if test="publicActiveOnly != null and publicActiveOnly == true">
+				and (nx_cp_claim_strategy is null or nx_cp_claim_strategy = 'public_active')
+			</if>
+			<if test="claimStrategy != null">
+				and nx_cp_claim_strategy = #{claimStrategy}
+			</if>
 		</where>
 	</select>
 
-	<resultMap id="goodsItem" type="NxCommunityGoodsSetItemEntity">
-		<id property="nxCommunityGoodsSetItemId" column="p_nx_community_goods_set_item_id"/>
-		<result property="nxCgsiCgPropertyId" column="p_nx_cgsi_cg_property_id"/>
-		<result property="nxCgsiItemStatus" column="p_nx_cgsi_item_status"/>
-		<result property="nxCgsiItemQuantity" column="p_nx_cgsi_item_quantity"/>
-		<result property="nxCgsiItemCgGoodsId" column="p_nx_cgsi_item_cg_goods_id"/>
-		<result property="nxCgsiItemName" column="p_nx_cgsi_item_name"/>
-		<result property="nxCgsiItemFilePath" column="p_nx_cgsi_item_file_path"/>
-		<result property="nxCgsiItemPrice" column="p_nx_cgsi_item_price"/>
-		<result property="nxCgsiItemHuaxianPrice" column="p_nx_cgsi_item_huaxian_price"/>
-		<result property="nxCgsiItemType" column="p_nx_cgsi_item_type"/>
-		<result property="nxCgsiItemSort" column="p_nx_cgsi_item_sort"/>
-		<result property="nxCgsiItemLimitCount" column="p_nx_cgsi_item_limit_count"/>
-
-	</resultMap>
-	<resultMap id="goodsItemGoods" type="NxCommunityGoodsSetItemEntity">
-		<id property="nxCommunityGoodsSetItemId" column="goods_nx_community_goods_set_item_id"/>
-		<result property="nxCgsiItemQuantity" column="goods_nx_cgsi_item_quantity"/>
-		<result property="nxCgsiItemStatus" column="goods_nx_cgsi_item_status"/>
-		<result property="nxCgsiCgPropertyId" column="goods_nx_cgsi_cg_property_id"/>
-		<result property="nxCgsiItemCgGoodsId" column="goods_nx_cgsi_item_cg_goods_id"/>
-		<result property="nxCgsiItemName" column="goods_nx_cgsi_item_name"/>
-		<result property="nxCgsiItemFilePath" column="goods_nx_cgsi_item_file_path"/>
-		<result property="nxCgsiItemPrice" column="goods_nx_cgsi_item_price"/>
-		<result property="nxCgsiItemType" column="goods_nx_cgsi_item_type"/>
-		<result property="nxCgsiItemSort" column="goods_nx_cgsi_item_sort"/>
-		<result property="nxCgsiItemHuaxianPrice" column="goods_nx_cgsi_item_huaxian_price"/>
-		<result property="nxCgsiItemLimitCount" column="goods_nx_cgsi_item_limit_count"/>
-	</resultMap>
-
-	<resultMap id="cgGoodProperty" type="NxCommunityGoodsSetPropertyEntity">
-		<id property="nxCommunityGoodsSetPropertyId" column="nx_community_goods_set_property_id"/>
-		<result property="nxCgspName" column="nx_cgsp_name"/>
-		<result property="nxCgspLimitAmount" column="nx_cgsp_limit_amount"/>
-		<result property="nxCgspSort" column="nx_cgsp_sort"/>
-		<result property="nxCgspCgGoodsId" column="nx_cgsp_cg_goods_id"/>
-		<collection property="nxCommunityGoodsSetItemEntities" resultMap="goodsItem"/>
-	</resultMap>
-
-	<resultMap id="comGoods" type="NxCommunityGoodsEntity">
-		<id property="nxCommunityGoodsId" column="nx_community_goods_id"/>
-		<result property="nxCgPromotionWords" column="nx_cg_promotion_words"/>
-		<result property="nxCgPromotionType" column="nx_cg_promotion_type"/>
-		<result property="nxCgPromotionAmount" column="nx_cg_promotion_amount"/>
-		<result property="nxCgPromotionPrice" column="nx_cg_promotion_price"/>
-		<result property="nxCgAdsenseStartTimeZone" column="nx_cg_adsense_start_time_zone"/>
-		<result property="nxCgAdsenseStopTimeZone" column="nx_cg_adsense_stop_time_zone"/>
-		<result property="nxCgAdsenseStartTime" column="nx_cg_adsense_start_time"/>
-		<result property="nxCgAdsenseStopTime" column="nx_cg_adsense_stop_time"/>
-		<result property="nxCgAdsenseStockQuantity" column="nx_cg_adsense_stock_quantity"/>
-		<result property="nxCgAdsenseRestQuantity" column="nx_cg_adsense_rest_quantity"/>
-        <result property="nxCgIsOpenAdsense" column="nx_cg_is_open_adsense"/>
-		<result property="nxCgSellType" column="nx_cg_sell_type"/>
-		<result property="nxCgCardId" column="nx_cg_card_id"/>
-		<result property="nxCgStartTime" column="nx_cg_start_time"/>
-		<result property="nxCgStartTimeZone" column="nx_cg_start_time_zone"/>
-		<result property="nxCgStopTime" column="nx_cg_stop_time"/>
-		<result property="nxCgStopTimeZone" column="nx_cg_stop_time_zone"/>
-		<result property="nxCgGoodsSort" column="nx_cg_goods_sort"/>
-		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
-		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
-		<result property="nxCgCommunityId" column="nx_cg_community_id"/>
-		<result property="nxCgGoodsHuaxianPrice" column="nx_cg_goods_huaxian_price"/>
-		<result property="nxCgGoodsHuaxianPriceDifferent" column="nx_cg_goods_huaxian_price_different"/>
-		<result property="nxCgGoodsHuaxianQuantity" column="nx_cg_goods_huaxian_quantity"/>
-		 <result property="nxCgSetSubNumber" column="nx_cg_set_sub_number"/>
-        <result property="nxCgSetSubLimitNumber" column="nx_cg_set_sub_limit_number"/>
-		<result property="nxCgNxGoodsFilePath" column="nx_cg_nx_goods_file_path"/>
-		<result property="nxCgNxGoodsTopFilePath" column="nx_cg_nx_goods_top_file_path"/>
-		<result property="nxCgGoodsIntroVideo" column="nx_cg_goods_intro_video"/>
-		<result property="nxCgGoodsName" column="nx_cg_goods_name"/>
-		<result property="nxCgGoodsStandardname" column="nx_cg_goods_standardname"/>
-		<result property="nxCgGoodsBrand" column="nx_cg_goods_brand"/>
-		<result property="nxCgGoodsPlace" column="nx_cg_goods_place"/>
-		<result property="nxCgGoodsDetail" column="nx_cg_goods_detail"/>
-		<result property="nxCgGoodsStandardWeight" column="nx_cg_goods_standard_weight"/>
-		<result property="nxCgGoodsPrice" column="nx_cg_goods_price"/>
-		<result property="nxCgGoodsPriceInteger" column="nx_cg_goods_price_integer"/>
-		<result property="nxCgGoodsPriceDecimal" column="nx_cg_goods_price_decimal"/>
-		<result property="nxCgGoodsTwoPrice" column="nx_cg_goods_two_price"/>
-		<result property="nxCgGoodsThreePrice" column="nx_cg_goods_three_price"/>
-		<result property="nxCgGoodsIsWeight" column="nx_cg_goods_is_weight"/>
-		<result property="nxCgGoodsStatus" column="nx_cg_goods_status"/>
-		<result property="nxCgPurchaseQuantity" column="nx_cg_purchase_quantity"/>
-		<result property="nxCgBuyStatus" column="nx_cg_buy_status"/>
-		<result property="nxCgGoodsTotalHits" column="nx_cg_goods_total_hits"/>
-		<result property="nxCgGoodsStandardType" column="nx_cg_goods_standard_type"/>
-		<result property="nxCgCfgGoodsFatherId" column="nx_cg_cfg_goods_father_id"/>
-		<result property="nxCgPullOff" column="nx_cg_pull_off"/>
-		<result property="nxCgGoodsPriceExchange" column="nx_cg_goods_price_exchange"/>
-		<result property="nxCgGoodsPriceExchangeDate" column="nx_cg_goods_price_exchange_date"/>
-		<result property="nxCgGoodsTwoPriceExchange" column="nx_cg_goods_two_price_exchange"/>
-		<result property="nxCgGoodsTwoPriceExchangeDate" column="nx_cg_goods_two_price_exchange_date"/>
-		<result property="nxCgGoodsThreePriceExchange" column="nx_cg_goods_three_price_exchange"/>
-		<result property="nxCgGoodsThreePriceExchangeDate" column="nx_cg_goods_three_price_exchange_date"/>
-		<result property="nxCgBuyingPriceExchange" column="nx_cg_buying_price_exchange"/>
-		<result property="nxCgBuyingPriceExchangeDate" column="nx_cg_buying_price_exchange_date"/>
-		<result property="nxCgCommunitySupplierId" column="nx_cg_community_supplier_id"/>
-		<result property="nxCgDistributerId" column="nx_cg_distributer_id"/>
-		<result property="nxCgDistributerGoodsId" column="nx_cg_distributer_goods_id"/>
-		<result property="nxCgGoodsType" column="nx_cg_goods_type"/>
-		<result property="nxCgBuyingPrice" column="nx_cg_buying_price"/>
-		<collection property="nxCommunityGoodsSetItemEntities" resultMap="goodsItemGoods"/>
-		<collection property="nxCommunityGoodsSetPropertyEntities" resultMap="cgGoodProperty"/>
-	</resultMap>
-	<resultMap id="coupon" type="NxCommunityCouponEntity">
-		<id property="nxCommunityCouponId" column="nx_community_coupon_id"/>
-		<result property="nxCpDownCount" column="nx_cp_down_count"/>
-		<result property="nxCpUseCount" column="nx_cp_use_count"/>
-		<result property="nxCommunityCouponName" column="nx_community_coupon_name"/>
-		<result property="nxCpOriginalPrice" column="nx_cp_original_price"/>
-		<result property="nxCpQuantity" column="nx_cp_quantity"/>
-		<result property="nxCpCgGoodsId" column="nx_cp_cg_goods_id"/>
-		<result property="nxCpPrice" column="nx_cp_price"/>
-		<result property="nxCpFilePath" column="nx_cp_file_path"/>
-		<result property="nxCpStartTime" column="nx_cp_start_time"/>
-		<result property="nxCpStopTime" column="nx_cp_stop_time"/>
-		<result property="nxCpStartDate" column="nx_cp_start_date"/>
-		<result property="nxCpStopDate" column="nx_cp_stop_date"/>
-		<result property="nxCpStartTimeZone" column="nx_cp_start_time_zone" jdbcType="TIMESTAMP" typeHandler="com.nongxinle.utils.LocalDateTimeTypeHandler"/>
-		<result property="nxCpStopTimeZone" column="nx_cp_stop_time_zone" jdbcType="TIMESTAMP" typeHandler="com.nongxinle.utils.LocalDateTimeTypeHandler"/>
-		<result property="nxCpType" column="nx_cp_type"/>
-		<result property="nxCpStatus" column="nx_cp_status"/>
-		<result property="nxCpWords" column="nx_cp_words"/>
-		<association property="nxCommunityGoodsEntity" resultMap="comGoods"/>
-	</resultMap>
-
 	<select id="queryCouponDetail" resultMap="coupon">
-		select * ,
-		ncgsiGoods.nx_community_goods_set_item_id 'goods_nx_community_goods_set_item_id',
-		ncgsiGoods.nx_cgsi_item_name 'goods_nx_cgsi_item_name',
-		ncgsiGoods.nx_cgsi_item_status 'goods_nx_cgsi_item_status',
-		ncgsiGoods.nx_cgsi_item_cg_goods_id 'goods_nx_cgsi_item_cg_goods_id',
-		ncgsiGoods.nx_cgsi_item_quantity 'goods_nx_cgsi_item_quantity',
-		ncgsiGoods.nx_cgsi_item_type 'goods_nx_cgsi_item_type',
-		ncgsiGoods.nx_cgsi_item_file_path 'goods_nx_cgsi_item_file_path',
-		ncgsiGoods.nx_cgsi_item_price 'goods_nx_cgsi_item_price',
-		ncgsiGoods.nx_cgsi_item_sort 'goods_nx_cgsi_item_sort',
-		ncgsiGoods.nx_cgsi_item_huaxian_price'goods_nx_cgsi_item_huaxian_price',
-		ncgsiGoods.nx_cgsi_item_limit_count'goods_nx_cgsi_item_limit_count',
-
-		ncgsi.nx_community_goods_set_item_id 'p_nx_community_goods_set_item_id',
-		ncgsi.nx_cgsi_item_name 'p_nx_cgsi_item_name',
-		ncgsi.nx_cgsi_item_status 'p_nx_cgsi_item_status',
-		ncgsi.nx_cgsi_cg_property_id 'p_nx_cgsi_cg_property_id',
-		ncgsi.nx_cgsi_item_quantity 'p_nx_cgsi_item_quantity',
-		ncgsi.nx_cgsi_item_cg_goods_id 'p_nx_cgsi_item_cg_goods_id',
-		ncgsi.nx_cgsi_item_type 'p_nx_cgsi_item_type',
-		ncgsi.nx_cgsi_item_file_path 'p_nx_cgsi_item_file_path',
-		ncgsi.nx_cgsi_item_price 'p_nx_cgsi_item_price',
-		ncgsi.nx_cgsi_item_huaxian_price 'p_nx_cgsi_item_huaxian_price',
-		ncgsi.nx_cgsi_item_limit_count 'p_nx_cgsi_item_limit_count',
-		ncgsi.nx_cgsi_item_sort 'p_nx_cgsi_item_sort'
-		       from nx_community_coupon as ncc
-		left join nx_community_goods  as ncg on ncg.nx_community_goods_id = ncc.nx_cp_cg_goods_id
-		left join nx_community_goods_set_item as ncgsiGoods on ncgsiGoods.nx_cgsi_item_cg_goods_id = ncg.nx_community_goods_id
-		and ncgsiGoods.nx_cgsi_item_status  &gt; -1
-		left join nx_community_goods_set_property as ncgsp on ncgsp.nx_cgsp_cg_goods_id = ncg.nx_community_goods_id
-		left join nx_community_goods_set_item as ncgsi on ncgsi.nx_cgsi_cg_property_id =ncgsp.nx_community_goods_set_property_id
-		and ncgsi.nx_cgsi_item_status  &gt; -1
-
+		select * from nx_community_coupon
 		<where>
 			<if test="id != null">
 				and nx_community_coupon_id = #{id}
@@ -221,32 +92,32 @@
 				and nx_cp_status = #{status}
 			</if>
 		</where>
-
 	</select>
-
 
 	<insert id="save" parameterType="com.nongxinle.entity.NxCommunityCouponEntity"
 			useGeneratedKeys="true" keyProperty="nxCommunityCouponId">
 		insert into nx_community_coupon
 		(
 			`nx_community_coupon_id`,
-			`nx_cp_cg_goods_id`,
-			`nx_cp_original_price`,
-			`nx_cp_price`, 
-			`nx_cp_standard`, 
-			`nx_cp_quantity`,
-			`nx_cp_stop_time`, 
-			`nx_cp_start_time`, 
-			`nx_cp_words`, 
-			`nx_cp_recommand_goods`, 
-			`nx_cp_file_path`, 
-			`nx_cp_community_id`, 
-			`nx_promote_cg_father_id`, 
-			`nx_cp_type`, 
+			`nx_community_coupon_name`,
+			`coupon_type`,
+			`discount_amount`,
+			`threshold_amount`,
+			`scope_type`,
+			`scope_ref_ids`,
+			`use_channel`,
+			`nx_cp_stop_time`,
+			`nx_cp_start_time`,
+			`nx_cp_words`,
+			`nx_cp_file_path`,
+			`nx_cp_community_id`,
+			`nx_cp_biz_purpose`,
+			`nx_cp_claim_strategy`,
+			`nx_cp_validity_type`,
+			`nx_cp_validity_days`,
 			`nx_cp_status`,
 			`nx_cp_start_time_zone`,
 			`nx_cp_stop_time_zone`,
-			`nx_community_coupon_name`,
 			`nx_cp_start_date`,
 			`nx_cp_stop_date`,
 			`nx_cp_down_count`,
@@ -255,49 +126,53 @@
 		values
 		(
 			#{nxCommunityCouponId},
-			#{nxCpCgGoodsId},
-			#{nxCpOriginalPrice},
-			#{nxCpPrice}, 
-			#{nxCpStandard}, 
-			#{nxCpQuantity},
-			#{nxCpStopTime}, 
-			#{nxCpStartTime}, 
-			#{nxCpWords}, 
-			#{nxCpRecommandGoods}, 
-			#{nxCpFilePath}, 
-			#{nxCpCommunityId}, 
-			#{nxPromoteCgFatherId}, 
-			#{nxCpType}, 
+			#{nxCommunityCouponName},
+			#{couponType},
+			#{discountAmount},
+			#{thresholdAmount},
+			#{scopeType},
+			#{scopeRefIds},
+			#{useChannel},
+			#{nxCpStopTime},
+			#{nxCpStartTime},
+			#{nxCpWords},
+			#{nxCpFilePath},
+			#{nxCpCommunityId},
+			#{nxCpBizPurpose},
+			#{nxCpClaimStrategy},
+			#{nxCpValidityType},
+			#{nxCpValidityDays},
 			#{nxCpStatus},
 			#{nxCpStartTimeZone},
 			#{nxCpStopTimeZone},
-			#{nxCommunityCouponName},
 			#{nxCpStartDate},
 			#{nxCpStopDate},
 			#{nxCpDownCount},
 			#{nxCpUseCount}
 		)
 	</insert>
-	 
+
 	<update id="update" parameterType="com.nongxinle.entity.NxCommunityCouponEntity">
-		update nx_community_coupon 
+		update nx_community_coupon
 		<set>
-			<if test="nxCpCgGoodsId != null">`nx_cp_cg_goods_id` = #{nxCpCgGoodsId}, </if>
-			<if test="nxCpOriginalPrice != null">`nx_cp_original_price` = #{nxCpOriginalPrice}, </if>
-			<if test="nxCpPrice != null">`nx_cp_price` = #{nxCpPrice}, </if>
-			<if test="nxCpStandard != null">`nx_cp_standard` = #{nxCpStandard}, </if>
-			<if test="nxCpQuantity != null">`nx_cp_quantity` = #{nxCpQuantity}, </if>
+			<if test="nxCommunityCouponName != null">`nx_community_coupon_name` = #{nxCommunityCouponName}, </if>
+			<if test="couponType != null">`coupon_type` = #{couponType}, </if>
+			<if test="discountAmount != null">`discount_amount` = #{discountAmount}, </if>
+			<if test="thresholdAmount != null">`threshold_amount` = #{thresholdAmount}, </if>
+			<if test="scopeType != null">`scope_type` = #{scopeType}, </if>
+			<if test="scopeRefIds != null">`scope_ref_ids` = #{scopeRefIds}, </if>
+			<if test="useChannel != null">`use_channel` = #{useChannel}, </if>
 			<if test="nxCpStopTime != null">`nx_cp_stop_time` = #{nxCpStopTime}, </if>
 			<if test="nxCpStartTime != null">`nx_cp_start_time` = #{nxCpStartTime}, </if>
 			<if test="nxCpWords != null">`nx_cp_words` = #{nxCpWords}, </if>
-			<if test="nxCpRecommandGoods != null">`nx_cp_recommand_goods` = #{nxCpRecommandGoods}, </if>
 			<if test="nxCpFilePath != null">`nx_cp_file_path` = #{nxCpFilePath}, </if>
 			<if test="nxCpCommunityId != null">`nx_cp_community_id` = #{nxCpCommunityId}, </if>
-			<if test="nxPromoteCgFatherId != null">`nx_promote_cg_father_id` = #{nxPromoteCgFatherId}, </if>
-			<if test="nxCpType != null">`nx_cp_type` = #{nxCpType}, </if>
+			<if test="nxCpBizPurpose != null">`nx_cp_biz_purpose` = #{nxCpBizPurpose}, </if>
+			<if test="nxCpClaimStrategy != null">`nx_cp_claim_strategy` = #{nxCpClaimStrategy}, </if>
+			<if test="nxCpValidityType != null">`nx_cp_validity_type` = #{nxCpValidityType}, </if>
+			<if test="nxCpValidityDays != null">`nx_cp_validity_days` = #{nxCpValidityDays}, </if>
 			<if test="nxCpStartTimeZone != null">`nx_cp_start_time_zone` = #{nxCpStartTimeZone}, </if>
 			<if test="nxCpStopTimeZone != null">`nx_cp_stop_time_zone` = #{nxCpStopTimeZone}, </if>
-			<if test="nxCommunityCouponName != null">`nx_community_coupon_name` = #{nxCommunityCouponName}, </if>
 			<if test="nxCpStartDate != null">`nx_cp_start_date` = #{nxCpStartDate}, </if>
 			<if test="nxCpStopDate != null">`nx_cp_stop_date` = #{nxCpStopDate}, </if>
 			<if test="nxCpDownCount != null">`nx_cp_down_count` = #{nxCpDownCount}, </if>
@@ -306,18 +181,16 @@
 		</set>
 		where nx_community_coupon_id = #{nxCommunityCouponId}
 	</update>
-	
+
 	<delete id="delete">
 		delete from nx_community_coupon where nx_community_coupon_id = #{value}
 	</delete>
-	
+
 	<delete id="deleteBatch">
 		delete from nx_community_coupon where nx_community_coupon_id in
-		<foreach item="nxCommunity couponId" collection="array" open="(" separator="," close=")">
-			#{nxCommunity couponId}
+		<foreach item="nxCommunityCouponId" collection="array" open="(" separator="," close=")">
+			#{nxCommunityCouponId}
 		</foreach>
 	</delete>
-
-
 
 </mapper>

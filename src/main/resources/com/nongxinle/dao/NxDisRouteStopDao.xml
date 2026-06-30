@@ -42,6 +42,7 @@
             <if test="nxDrsDriverRouteId != null">`nx_drs_driver_route_id` = #{nxDrsDriverRouteId},</if>
             <if test="nxDrsStopSeq != null">`nx_drs_stop_seq` = #{nxDrsStopSeq},</if>
             <if test="nxDrsStopStatus != null">`nx_drs_stop_status` = #{nxDrsStopStatus},</if>
+            <if test="nxDrsPlannedDepartureAt != null">`nx_drs_planned_departure_at` = #{nxDrsPlannedDepartureAt},</if>
         </set>
         where nx_drs_id = #{nxDrsId}
     </update>

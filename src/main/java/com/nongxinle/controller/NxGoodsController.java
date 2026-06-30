@@ -76,6 +76,71 @@ public class NxGoodsController {
 
 
 
+    /**
+     * 获取农鑫商品分类和商品ID列表
+     * 接口: /nxgoods/gbGetNxGoodsCataGoods
+     */
+//    @Operation(summary = "获取商品分类树", description = "获取农鑫商品的一级和二级分类树结构，以及一级分类下包含的所有商品ID列表")
+    @RequestMapping(value = "/gbGetNxGoodsCataGoods", method = RequestMethod.POST)
+    public R gbGetNxGoodsCataGoods() {
+        // 获取分类（平铺数据：一级分类+二级分类）
+        List<NxGoodsEntity> nxGoodsEntities = nxGoodsService.getiBookCoverData();
+
+        Map<String, Object> mapR = new HashMap<>();
+
+        // 空值检查
+        if (nxGoodsEntities == null || nxGoodsEntities.isEmpty()) {
+            mapR.put("cataArr", nxGoodsEntities);
+            mapR.put("depGoodsArr", new ArrayList<>());
+            return R.ok().put("data", mapR);
+        }
+
+        // 按一级分类分组，填充 nxGoodsEntityList
+        Map<Integer, NxGoodsEntity> grandMap = new LinkedHashMap<>();
+        for (NxGoodsEntity entity : nxGoodsEntities) {
+            Integer parentId = entity.getNxGoodsId();
+            if (!grandMap.containsKey(parentId)) {
+                grandMap.put(parentId, entity);
+                entity.setNxGoodsEntityList(new ArrayList<>());
+            }
+            // 添加子分类到 nxGoodsEntityList
+            NxGoodsEntity subEntity = new NxGoodsEntity();
+            subEntity.setNxGoodsId(entity.getSubNxGoodsId());
+            subEntity.setNxGoodsName(entity.getSubNxGoodsName());
+            subEntity.setNxGoodsDetail(entity.getSubNxGoodsDetail());
+            subEntity.setNxGoodsFile(entity.getSubNxGoodsFile());
+            subEntity.setNxGoodsFatherId(entity.getSubNxGoodsFatherId());
+            subEntity.setNxGoodsSort(entity.getSubNxGoodsSort());
+            grandMap.get(parentId).getNxGoodsEntityList().add(subEntity);
+        }
+
+        // 转换为列表
+        List<NxGoodsEntity> groupedList = new ArrayList<>(grandMap.values());
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("isHidden", 0);
+        Integer nxGoodsId = groupedList.get(0).getNxGoodsId();
+        map.put("greatGrandId", nxGoodsId);
+
+        // 获取商品ID列表
+        List<Integer> nxGoodsIdsBySort = nxGoodsService.queryOnlyGoodsIds(map);
+
+        mapR.put("cataArr", groupedList);
+        mapR.put("nxGoodsIdsSort", nxGoodsIdsBySort);
+
+        return R.ok().put("data", mapR);
+    }
+
+    /**
+     * 兼容旧前端参数名 greatGrandId（同 gbDepGetNxFatherGoods 的 fatherId）
+     */
+    @RequestMapping(value = "/gbDepGetNxGoodsByGreatGrandId", method = RequestMethod.POST)
+    @ResponseBody
+    public R gbDepGetNxGoodsByGreatGrandId(Integer depId, Integer greatGrandId, Integer limit, Integer page, Integer disId) {
+        return gbDepGetNxFatherGoods(depId, greatGrandId, limit, page, disId);
+    }
+
+
     @RequestMapping(value = "/updateSorts", method = RequestMethod.POST)
     @ResponseBody
     public R updateSorts(@RequestBody Integer[] ids) {

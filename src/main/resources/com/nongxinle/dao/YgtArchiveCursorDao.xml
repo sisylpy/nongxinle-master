@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtArchiveCursorDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtArchiveCursorEntity">
+        select * from ygt_archive_cursor where ygt_archive_cursor_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtArchiveCursorEntity">
+        select * from ygt_archive_cursor
+        <where>
+            <if test="corpId != null and corpId != ''">and ygt_ac_corp_id = #{corpId}</if>
+            <if test="chatId != null and chatId != ''">and ygt_ac_chat_id = #{chatId}</if>
+        </where>
+        order by ygt_archive_cursor_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_archive_cursor</select>
+    <select id="queryByCorpAndChatId" resultType="com.nongxinle.community.yunguotuan.entity.YgtArchiveCursorEntity">
+        select * from ygt_archive_cursor
+        where ygt_ac_corp_id = #{corpId}
+        and ygt_ac_chat_id = #{chatId}
+        limit 1
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtArchiveCursorEntity" useGeneratedKeys="true" keyProperty="ygtArchiveCursorId">
+        insert into ygt_archive_cursor
+        (ygt_ac_corp_id, ygt_ac_chat_id, ygt_ac_last_seq, ygt_ac_last_pull_status, ygt_ac_last_error,
+         ygt_ac_last_pull_time, ygt_ac_last_success_time, ygt_ac_create_time, ygt_ac_update_time)
+        values
+        (#{ygtAcCorpId}, #{ygtAcChatId}, #{ygtAcLastSeq}, #{ygtAcLastPullStatus}, #{ygtAcLastError},
+         #{ygtAcLastPullTime}, #{ygtAcLastSuccessTime}, #{ygtAcCreateTime}, #{ygtAcUpdateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtArchiveCursorEntity">
+        update ygt_archive_cursor
+        <set>
+            <if test="ygtAcLastSeq != null">ygt_ac_last_seq = #{ygtAcLastSeq},</if>
+            <if test="ygtAcLastPullStatus != null">ygt_ac_last_pull_status = #{ygtAcLastPullStatus},</if>
+            <if test="ygtAcLastError != null">ygt_ac_last_error = #{ygtAcLastError},</if>
+            <if test="ygtAcLastPullTime != null">ygt_ac_last_pull_time = #{ygtAcLastPullTime},</if>
+            <if test="ygtAcLastSuccessTime != null">ygt_ac_last_success_time = #{ygtAcLastSuccessTime},</if>
+            ygt_ac_update_time = now()
+        </set>
+        where ygt_archive_cursor_id = #{ygtArchiveCursorId}
+    </update>
+    <delete id="delete">delete from ygt_archive_cursor where ygt_archive_cursor_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_archive_cursor where ygt_archive_cursor_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

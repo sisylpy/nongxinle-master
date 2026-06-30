@@ -6,6 +6,11 @@ import com.nongxinle.entity.NxDisShipmentTaskEntity;
 import com.nongxinle.entity.NxDepartmentEntity;
 import com.nongxinle.route.dispatch.strategy.StopAssignment;
 
+import static com.nongxinle.route.DisShipmentTaskStatus.ASSIGNED;
+import static com.nongxinle.route.DisShipmentTaskStatus.EXCEPTION;
+import static com.nongxinle.route.DisShipmentTaskStatus.IN_DELIVERY;
+import static com.nongxinle.route.DisShipmentTaskStatus.READY_TO_GO;
+
 /**
  * 沙盘 stop 时间窗唯一解析口径：今日 override → 客户常规 → 无窗。
  * sequencer / schedule preview / sections / primaryAction / debug 均消费本解析结果。
@@ -21,6 +26,18 @@ public final class DisRouteSandboxStopTimeWindowResolver {
                                                         NxDisShipmentTaskEntity task,
                                                         NxDepartmentEntity department,
                                                         NxDisSandboxDayTimeWindowEntity dayOverride) {
+        if (task == null && stop != null) {
+            task = stop.getShipmentTask();
+        }
+
+        // 已派 task 上的今日调整优先于 day 表（避免 task 已更新但 day 表/快照仍留旧值）
+        if (task != null && isOverrideFlag(task.getNxDstTimeWindowOverrideFlag())) {
+            SandboxStopResolvedTimeWindow fromTask = buildFromTask(task, true);
+            if (fromTask.hasWindow()) {
+                return fromTask;
+            }
+        }
+
         if (dayOverride != null && dayOverride.getNxDsdtwLatestDeliveryTimeS() != null) {
             return buildWindow(
                     dayOverride.getNxDsdtwEarliestDeliveryTimeS(),
@@ -33,13 +50,6 @@ public final class DisRouteSandboxStopTimeWindowResolver {
             SandboxStopResolvedTimeWindow fromStop = buildFromStopOrTask(stop, task, true);
             if (fromStop.hasWindow()) {
                 return fromStop;
-            }
-        }
-
-        if (task != null && isOverrideFlag(task.getNxDstTimeWindowOverrideFlag())) {
-            SandboxStopResolvedTimeWindow fromTask = buildFromTask(task, true);
-            if (fromTask.hasWindow()) {
-                return fromTask;
             }
         }
 
@@ -120,13 +130,17 @@ public final class DisRouteSandboxStopTimeWindowResolver {
         if (stop == null) {
             return null;
         }
+        NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        if (task != null && isOverrideFlag(task.getNxDstTimeWindowOverrideFlag())
+                && task.getNxDstEarliestDeliveryTimeS() != null) {
+            return task.getNxDstEarliestDeliveryTimeS();
+        }
         if (stop.getResolvedEarliestDeliveryTimeS() != null) {
             return stop.getResolvedEarliestDeliveryTimeS();
         }
         if (stop.getNxDrsEarliestDeliveryTimeS() != null) {
             return stop.getNxDrsEarliestDeliveryTimeS();
         }
-        NxDisShipmentTaskEntity task = stop.getShipmentTask();
         return task != null ? task.getNxDstEarliestDeliveryTimeS() : null;
     }
 
@@ -134,13 +148,17 @@ public final class DisRouteSandboxStopTimeWindowResolver {
         if (stop == null) {
             return null;
         }
+        NxDisShipmentTaskEntity task = stop.getShipmentTask();
+        if (task != null && isOverrideFlag(task.getNxDstTimeWindowOverrideFlag())
+                && task.getNxDstLatestDeliveryTimeS() != null) {
+            return task.getNxDstLatestDeliveryTimeS();
+        }
         if (stop.getResolvedLatestDeliveryTimeS() != null) {
             return stop.getResolvedLatestDeliveryTimeS();
         }
         if (stop.getNxDrsLatestDeliveryTimeS() != null) {
             return stop.getNxDrsLatestDeliveryTimeS();
         }
-        NxDisShipmentTaskEntity task = stop.getShipmentTask();
         return task != null ? task.getNxDstLatestDeliveryTimeS() : null;
     }
 
@@ -153,7 +171,23 @@ public final class DisRouteSandboxStopTimeWindowResolver {
         }
         return isOverrideFlag(stop.getNxDrsTimeWindowOverrideFlag())
                 || (stop.getShipmentTask() != null
-                && isOverrideFlag(stop.getShipmentTask().getNxDstTimeWindowOverrideFlag()));
+                && isActiveOverrideSourceTask(stop.getShipmentTask()));
+    }
+
+    /** 仅未送达的在途 task 可作为同店新单的 override 来源。 */
+    public static boolean isActiveOverrideSourceTask(NxDisShipmentTaskEntity task) {
+        if (task == null || !isOverrideFlag(task.getNxDstTimeWindowOverrideFlag())) {
+            return false;
+        }
+        String status = task.getNxDstStatus();
+        if (status == null || status.trim().isEmpty()) {
+            return false;
+        }
+        String normalized = status.trim().toUpperCase();
+        return ASSIGNED.equals(normalized)
+                || READY_TO_GO.equals(normalized)
+                || IN_DELIVERY.equals(normalized)
+                || EXCEPTION.equals(normalized);
     }
 
     private static SandboxStopResolvedTimeWindow buildFromStopOrTask(NxDisRouteStopEntity stop,

@@ -29,6 +29,10 @@
 		</where>
 	</select>
 
+	<select id="queryDeskByCurrentOrderId" resultType="com.nongxinle.entity.NxCommunityDeskEntity">
+		select * from nx_community_desk where nx_cd_current_order_id = #{value} limit 1
+	</select>
+
 	<resultMap id="subOrders" type="NxCommunityOrdersSubEntity">
 		 <id property="nxCommunityOrdersSubId" column="nx_community_orders_sub_id"/>
 		<result property="nxCosCommPurGoodsId" column="nx_COS_comm_pur_goods_id"/>
@@ -37,7 +41,6 @@
 		<result property="nxCosServiceType" column="nx_COS_service_type"/>
 		<result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
 		<result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
-		<result property="nxCosCucId" column="nx_COS_cuc_id"/>
 		<result property="nxCosHuaxianSubtotal" column="nx_cos_huaxian_subtotal"/>
 		<result property="nxCosStatus" column="nx_cos_status"/>
 		<result property="nxCosRemark" column="nx_COS_remark"/>
@@ -66,6 +69,7 @@
 		<result property="nxCdChairNum" column="nx_cd_chair_num"/>
 		<result property="nxCdCommunityId" column="nx_cd_community_id"/>
 		<result property="nxCdStatus" column="nx_cd_status"/>
+		<result property="nxCdCurrentOrderId" column="nx_cd_current_order_id"/>
 		<result property="nxCommunityDeskName" column="nx_community_desk_name"/>
 		<collection property="ordersSubEntities" resultMap="subOrders"/>
 	</resultMap>
@@ -90,7 +94,8 @@
 			`nx_cd_chair_num`, 
 			`nx_cd_community_id`, 
 			`nx_cd_type`, 
-			`nx_cd_status`
+			`nx_cd_status`,
+			`nx_cd_current_order_id`
 		)
 		values
 		(
@@ -100,7 +105,8 @@
 			#{nxCdChairNum}, 
 			#{nxCdCommunityId}, 
 			#{nxCdType}, 
-			#{nxCdStatus}
+			#{nxCdStatus},
+			#{nxCdCurrentOrderId}
 		)
 	</insert>
 	 
@@ -112,9 +118,22 @@
 			<if test="nxCdChairNum != null">`nx_cd_chair_num` = #{nxCdChairNum}, </if>
 			<if test="nxCdCommunityId != null">`nx_cd_community_id` = #{nxCdCommunityId}, </if>
 			<if test="nxCdType != null">`nx_cd_type` = #{nxCdType}, </if>
-			<if test="nxCdStatus != null">`nx_cd_status` = #{nxCdStatus}</if>
+			<if test="nxCdStatus != null">`nx_cd_status` = #{nxCdStatus}, </if>
+			<if test="nxCdCurrentOrderId != null">`nx_cd_current_order_id` = #{nxCdCurrentOrderId}</if>
 		</set>
 		where nx_community_desk_id = #{nxCommunityDeskId}
+	</update>
+
+	<update id="bindCurrentOrder">
+		update nx_community_desk
+		set nx_cd_current_order_id = #{orderId}, nx_cd_status = 1
+		where nx_community_desk_id = #{deskId}
+	</update>
+
+	<update id="releaseCurrentOrder">
+		update nx_community_desk
+		set nx_cd_current_order_id = null, nx_cd_status = 0
+		where nx_community_desk_id = #{deskId}
 	</update>
 	
 	<delete id="delete">

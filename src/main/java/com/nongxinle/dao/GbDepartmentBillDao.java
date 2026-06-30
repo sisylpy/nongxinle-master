@@ -47,5 +47,9 @@ public interface GbDepartmentBillDao extends BaseDao<GbDepartmentBillEntity> {
 
     GbDepartmentBillEntity queryBlockingPlatformCashBillByDep(Integer depId);
 
+    List<GbDepartmentBillEntity> queryPlatformCashBillsByParams(Map<String, Object> map);
+
+    List<GbDepartmentBillEntity> queryPlatformCashOutstandingBillsByDep(Integer depId);
+
     List<NxDistributerEntity> queryNxDistributer(Map<String, Object> map4);
 }

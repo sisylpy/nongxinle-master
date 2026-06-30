@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtMemberBenefitLogDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberBenefitLogEntity">
+        select * from ygt_member_benefit_log where ygt_member_benefit_log_id = #{value}
+    </select>
+    <select id="queryByJoinSourceAndCode" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberBenefitLogEntity">
+        select * from ygt_member_benefit_log
+        where ygt_mbl_join_source_id = #{joinSourceId}
+        and ygt_mbl_benefit_code = #{benefitCode}
+        limit 1
+    </select>
+    <select id="queryByJoinSourceId" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberBenefitLogEntity">
+        select * from ygt_member_benefit_log where ygt_mbl_join_source_id = #{joinSourceId}
+        order by ygt_member_benefit_log_id asc
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtMemberBenefitLogEntity">
+        select * from ygt_member_benefit_log
+        <where>
+            <if test="joinSourceId != null">and ygt_mbl_join_source_id = #{joinSourceId}</if>
+            <if test="customerUserId != null">and ygt_mbl_customer_user_id = #{customerUserId}</if>
+        </where>
+        order by ygt_member_benefit_log_id desc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_member_benefit_log</select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtMemberBenefitLogEntity" useGeneratedKeys="true" keyProperty="ygtMemberBenefitLogId">
+        insert into ygt_member_benefit_log
+        (ygt_mbl_join_source_id, ygt_mbl_customer_user_id, ygt_mbl_benefit_code,
+         ygt_mbl_benefit_name, ygt_mbl_discount_text, ygt_mbl_use_channel, ygt_mbl_status, ygt_mbl_create_time)
+        values
+        (#{ygtMblJoinSourceId}, #{ygtMblCustomerUserId}, #{ygtMblBenefitCode},
+         #{ygtMblBenefitName}, #{ygtMblDiscountText}, #{ygtMblUseChannel}, #{ygtMblStatus}, #{ygtMblCreateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtMemberBenefitLogEntity">
+        update ygt_member_benefit_log set ygt_mbl_status = #{ygtMblStatus}
+        where ygt_member_benefit_log_id = #{ygtMemberBenefitLogId}
+    </update>
+    <delete id="delete">delete from ygt_member_benefit_log where ygt_member_benefit_log_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_member_benefit_log where ygt_member_benefit_log_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

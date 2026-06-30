@@ -20,6 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.nongxinle.utils.aes.WXBizMsgCrypt;
+import com.nongxinle.utils.aes.AesException;
+import com.nongxinle.utils.aes.XMLParse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -186,8 +188,16 @@ public class QyWxControlloer {
             Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
             System.out.println("callbackdjapp回调信息：=========new" + dataMap);
 
-            if (dataMap.get("Event").equals("enter_agent")) {
-                System.out.println("Event====Event" + dataMap.get("Event"));
+            // 处理 suite_ticket 推送（无 Event 字段，避免 NPE）
+            String infoType = dataMap.get("InfoType");
+            if ("suite_ticket".equals(infoType)) {
+                String suiteTicket = dataMap.get("SuiteTicket");
+                System.out.println("收到suite_ticket: " + suiteTicket);
+                com.nongxinle.utils.Constant.DJ_SUITE_TICKET = suiteTicket;
+            }
+            String event = dataMap.get("Event");
+            if (event != null && event.equals("enter_agent")) {
+                System.out.println("Event====Event" + event);
                 System.out.println("Event !!!!");
             }
 
@@ -211,17 +221,9 @@ public class QyWxControlloer {
                               @RequestParam(name = "nonce") final String nonce,
                               @RequestParam(name = "echostr") final String echostr,
                               final HttpServletResponse response) throws Exception {
-        System.out.println("callbackdjapp------------GET");
-        System.out.println("CorpId== suiteid liziqiyecorpidsuiteid-");
-
-        String s = saveProviderAccessToken();
-        System.out.println("sssss=======" + s);
-        String s1 = transferCorpId(s);
-        System.out.println("s1 =================" + s1);
-        QywechatEnum qywechatEnum = QywechatEnum.DJAPP;
-        qywechatEnum.setCorpid(s1);
+        log.info("callbackdjapp GET verify start");
+        QywechatEnum qywechatEnum = QywechatEnum.DJPOST;
         WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
-        System.out.println("miwen========" + wxBizMsgCrypt);
         String sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
         PrintWriter out = response.getWriter();
         try {
@@ -234,7 +236,6 @@ public class QyWxControlloer {
         } catch (Exception e) {
             log.error("callbackdjappget验签报错！", e);
         }
-        log.info("callbackdjappget验签的echo是{}", sEchoStr);
         out.write(sEchoStr);
         out.flush();
 
@@ -247,26 +248,8 @@ public class QyWxControlloer {
                            @RequestParam(name = "timestamp") final String timestamp,
                            @RequestParam(name = "nonce") final String nonce,
                            @RequestParam(name = "echostr") final String echostr,
-                           final HttpServletResponse response) throws Exception {
-        System.out.println("callbackdj------GET");
-        QywechatEnum qywechatEnum = QywechatEnum.DJ;
-        WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
-        String sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
-        PrintWriter out = response.getWriter();
-        try {
-            //必须要返回解密之后的明文
-            if (StringUtils.isBlank(sEchoStr)) {
-                log.info("callbackdjget验签URL验证失败");
-            } else {
-                log.info("callbackdjget验签验证成功!");
-            }
-        } catch (Exception e) {
-            log.error("callbackdjget验签报错！", e);
-        }
-        log.info("callbackdjget验签的echo是{}", sEchoStr);
-        out.write(sEchoStr);
-        out.flush();
-
+                           final HttpServletResponse response) {
+        writeVerifyEcho(QywechatEnum.YGT, msgSignature, timestamp, nonce, echostr, response);
     }
 
 
@@ -278,24 +261,14 @@ public class QyWxControlloer {
                                 HttpServletResponse response) {
 
         System.out.println("callbackdj--------------------------------------POST");
-        QywechatEnum qywechatEnum = QywechatEnum.DJPOST;
         try {
             InputStream inputStream = request.getInputStream();
             String sPostData = IOUtils.toString(inputStream, "UTF-8");
-            QywechatInfo qywechatInfo = new QywechatInfo();
-            qywechatInfo.setMsgSignature(sMsgSignature);
-            qywechatInfo.setNonce(sNonce);
-            qywechatInfo.setQywechatEnum(qywechatEnum);
-            qywechatInfo.setTimestamp(sTimestamp);
-            qywechatInfo.setSPostData(sPostData);
-            System.out.println("DJororororoorororororoSUITEIDDjSUITEIDDjKH" + sPostData);
-            WXBizMsgCrypt msgCrypt = new WXBizMsgCrypt(qywechatInfo.getQywechatEnum());
-            String sMsg = msgCrypt.decryptMsg(qywechatInfo);
+            System.out.println("YGT callbackdj POST body=" + sPostData);
+            String sMsg = decryptYgtPost(sPostData, sMsgSignature, sTimestamp, sNonce);
             Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
-            if (dataMap.get("InfoType").equals("create_auth")) {
-                System.out.println("infotype====create_auth" + dataMap.get("InfoType"));
-                System.out.println("nothing to do !!!!");
-            }
+            System.out.println("callbackdj YGT回调信息：" + dataMap);
+            handleYgtSuiteCallback(dataMap);
 
             try {
                 PrintWriter writer = response.getWriter();
@@ -486,25 +459,8 @@ public class QyWxControlloer {
                            @RequestParam(name = "timestamp") final String timestamp,
                            @RequestParam(name = "nonce") final String nonce,
                            @RequestParam(name = "echostr") final String echostr,
-                           final HttpServletResponse response) throws Exception {
-        System.out.println("callback----------------------get");
-        QywechatEnum qywechatEnum = QywechatEnum.JXPPCUSTOMER;
-        WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
-        String sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
-        PrintWriter out = response.getWriter();
-        try {
-            //必须要返回解密之后的明文
-            if (StringUtils.isBlank(sEchoStr)) {
-                log.info("get验签URL验证失败");
-            } else {
-                log.info("get验签验证成功!");
-            }
-        } catch (Exception e) {
-            log.error("get验签报错！", e);
-        }
-        log.info("get验签的echo是{}", sEchoStr);
-        out.write(sEchoStr);
-        out.flush();
+                           final HttpServletResponse response) {
+        writeVerifyEcho(QywechatEnum.YGT, msgSignature, timestamp, nonce, echostr, response);
     }
 
 
@@ -520,34 +476,11 @@ public class QyWxControlloer {
         try {
             InputStream inputStream = request.getInputStream();
             String sPostData = IOUtils.toString(inputStream, "UTF-8");
-            Map<String, String> stringStringMap = MessageUtil.parseXml(sPostData);
-            String toUserName = stringStringMap.get("ToUserName");
-            System.out.println("toUserNametoUserName===" + toUserName);
-            QywechatEnum qywechatEnum = QywechatEnum.JXPPCUSTOMERBACK;
-            qywechatEnum.setCorpid(toUserName);
-            QywechatInfo qywechatInfo = new QywechatInfo();
-            qywechatInfo.setMsgSignature(sMsgSignature);
-            qywechatInfo.setNonce(sNonce);
-            qywechatInfo.setQywechatEnum(qywechatEnum);
-            qywechatInfo.setTimestamp(sTimestamp);
-            qywechatInfo.setSPostData(sPostData);
-            WXBizMsgCrypt msgCrypt = new WXBizMsgCrypt(qywechatInfo.getQywechatEnum());
-            String sMsg = msgCrypt.decryptMsg(qywechatInfo);
+            String sMsg = decryptYgtPost(sPostData, sMsgSignature, sTimestamp, sNonce);
             Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
-            System.out.println("callback回调信息：=========new" + dataMap);
+            System.out.println("callbackCustomer YGT回调信息：=========new" + dataMap);
 
-            if(dataMap.get("InfoType") != null){
-
-                if (dataMap.get("InfoType").equals("suite_ticket")) {
-                    saveSuiteToken(dataMap);
-                } else if (dataMap.get("InfoType").equals("create_auth")) {
-                    saveAuthToken(dataMap);
-                } else if (dataMap.get("InfoType").equals("cancel_auth")) {
-                    deleteCorp(dataMap);
-                } else {
-                    System.out.println("infotype!== null and else====" + dataMap.get("InfoType"));
-                }
-            }
+            handleYgtSuiteCallback(dataMap);
             if(dataMap.get("Event") != null){
                 System.out.println("Event====Event=====" + dataMap.get("Event"));
             }
@@ -656,25 +589,8 @@ public class QyWxControlloer {
                            @RequestParam(name = "timestamp") final String timestamp,
                            @RequestParam(name = "nonce") final String nonce,
                            @RequestParam(name = "echostr") final String echostr,
-                           final HttpServletResponse response) throws Exception {
-        System.out.println("callback----------------------get");
-        QywechatEnum qywechatEnum = QywechatEnum.JXPP;
-        WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
-        String sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
-        PrintWriter out = response.getWriter();
-        try {
-            //必须要返回解密之后的明文
-            if (StringUtils.isBlank(sEchoStr)) {
-                log.info("get验签URL验证失败");
-            } else {
-                log.info("get验签验证成功!");
-            }
-        } catch (Exception e) {
-            log.error("get验签报错！", e);
-        }
-        log.info("get验签的echo是{}", sEchoStr);
-        out.write(sEchoStr);
-        out.flush();
+                           final HttpServletResponse response) {
+        writeVerifyEcho(QywechatEnum.YGT, msgSignature, timestamp, nonce, echostr, response);
     }
 
 
@@ -690,34 +606,11 @@ public class QyWxControlloer {
         try {
             InputStream inputStream = request.getInputStream();
             String sPostData = IOUtils.toString(inputStream, "UTF-8");
-            Map<String, String> stringStringMap = MessageUtil.parseXml(sPostData);
-            String toUserName = stringStringMap.get("ToUserName");
-            System.out.println("toUserNametoUserName===" + toUserName);
-            QywechatEnum qywechatEnum = QywechatEnum.JXPP;
-            qywechatEnum.setCorpid(toUserName);
-            QywechatInfo qywechatInfo = new QywechatInfo();
-            qywechatInfo.setMsgSignature(sMsgSignature);
-            qywechatInfo.setNonce(sNonce);
-            qywechatInfo.setQywechatEnum(qywechatEnum);
-            qywechatInfo.setTimestamp(sTimestamp);
-            qywechatInfo.setSPostData(sPostData);
-            WXBizMsgCrypt msgCrypt = new WXBizMsgCrypt(qywechatInfo.getQywechatEnum());
-            String sMsg = msgCrypt.decryptMsg(qywechatInfo);
+            String sMsg = decryptYgtPost(sPostData, sMsgSignature, sTimestamp, sNonce);
             Map<String, String> dataMap = MessageUtil.parseXml(sMsg);
-            System.out.println("callback回调信息：=========new" + dataMap);
+            System.out.println("callback YGT回调信息：=========new" + dataMap);
 
-            if(dataMap.get("InfoType") != null){
-
-                if (dataMap.get("InfoType").equals("suite_ticket")) {
-                    saveSuiteToken(dataMap);
-                } else if (dataMap.get("InfoType").equals("create_auth")) {
-                    saveAuthToken(dataMap);
-                } else if (dataMap.get("InfoType").equals("cancel_auth")) {
-                    deleteCorp(dataMap);
-                } else {
-                    System.out.println("infotype!== null and else====" + dataMap.get("InfoType"));
-                }
-            }
+            handleYgtSuiteCallback(dataMap);
             if(dataMap.get("Event") != null){
                 System.out.println("Event====Event=====" + dataMap.get("Event"));
             }
@@ -1209,6 +1102,163 @@ public class QyWxControlloer {
 
     }
 
+    public void saveSuiteTokenYgt(Map<String, String> mapSuite) {
+        System.out.println("saveSuiteTokenYgt");
+        String suiteTokenUrl = Constant.THIRD_BUS_WECHAT_SUITE_TOKEN;
+        String suiteToken = "";
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("suite_id", Constant.SuiteIDYGT);
+            map.put("suite_secret", Constant.SuiteSecretYGT);
+            map.put("suite_ticket", mapSuite.get("SuiteTicket"));
+            String body = HttpRequest.post(suiteTokenUrl).body(JSONUtil.toJsonStr(map), ContentType.JSON.getValue()).execute().body();
+            System.out.println("saveSuiteTokenYgt response=" + body);
+            WeChatSuiteReturn weChat = JSONUtil.toBean(body, WeChatSuiteReturn.class);
+            if (weChat.getErrcode() == null || weChat.getErrcode() == 0) {
+                suiteToken = weChat.getSuite_access_token();
+                saveWxProperty(Constant.SUITE_TOKEN_YGT, suiteToken);
+            }
+            System.out.println("YGT suite token=" + suiteToken);
+        } catch (Exception e) {
+            System.out.println("saveSuiteTokenYgt failed");
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void saveAuthTokenYgt(Map<String, String> mapSuite) {
+        System.out.println("saveAuthTokenYgt");
+        String suiteToken = getWxProperty(Constant.SUITE_TOKEN_YGT);
+        String authTokenUrl = "https://qyapi.weixin.qq.com/cgi-bin/service/get_permanent_code?suite_access_token=" + suiteToken;
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("auth_code", mapSuite.get("AuthCode"));
+            String body = HttpRequest.post(authTokenUrl).body(JSONUtil.toJsonStr(map), ContentType.JSON.getValue()).execute().body();
+            System.out.println("saveAuthTokenYgt permanent_code response=" + body);
+            JSONObject corpInfo = JSONObject.parseObject(body);
+
+            String permanent_code = corpInfo.getString("permanent_code");
+            String auth_corp_info = corpInfo.getString("auth_corp_info");
+            JSONObject jsonObject = JSONObject.parseObject(auth_corp_info);
+
+            String corp_name = jsonObject.getString("corp_name");
+            String corpid = jsonObject.getString("corpid");
+            String corp_round_logo_url = jsonObject.getString("corp_round_logo_url");
+
+            Map<String, Object> mapCorp = new HashMap<>();
+            mapCorp.put("auth_corpid", corpid);
+            mapCorp.put("permanent_code", permanent_code);
+            String coprTokenUrl = "https://qyapi.weixin.qq.com/cgi-bin/service/get_corp_token?suite_access_token=" + suiteToken;
+            String bodyCorp = HttpRequest.post(coprTokenUrl).body(JSONUtil.toJsonStr(mapCorp), ContentType.JSON.getValue()).execute().body();
+            System.out.println("saveAuthTokenYgt corp token response=" + bodyCorp);
+            JSONObject corpInfoCorp = JSONObject.parseObject(bodyCorp);
+            String access_token = corpInfoCorp.getString("access_token");
+
+            QyGbDisCorpEntity qyGbDisCorpEntity = qyGbDisCorpService.queryQyCropByCropId(corpid);
+            if (qyGbDisCorpEntity == null) {
+                qyGbDisCorpEntity = new QyGbDisCorpEntity();
+                qyGbDisCorpEntity.setQyGbDisQyCorpId(corpid);
+                qyGbDisCorpEntity.setQyGbDisCorpName(corp_name);
+                qyGbDisCorpEntity.setQyGbDisCorpRoundLogoUrl(corp_round_logo_url);
+                qyGbDisCorpEntity.setQyGbDisCorpAccessToken(access_token);
+                qyGbDisCorpEntity.setQyGbDisCorpPermanentCode(permanent_code);
+                qyGbDisCorpEntity.setQyGbDisCorpJoinDate(formatWhatFullTime(0));
+                qyGbDisCorpService.save(qyGbDisCorpEntity);
+            } else {
+                qyGbDisCorpEntity.setQyGbDisCorpName(corp_name);
+                qyGbDisCorpEntity.setQyGbDisCorpRoundLogoUrl(corp_round_logo_url);
+                qyGbDisCorpEntity.setQyGbDisCorpAccessToken(access_token);
+                qyGbDisCorpEntity.setQyGbDisCorpPermanentCode(permanent_code);
+                qyGbDisCorpService.update(qyGbDisCorpEntity);
+            }
+            System.out.println("saveAuthTokenYgt ok corpId=" + corpid);
+        } catch (Exception e) {
+            System.out.println("saveAuthTokenYgt failed");
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void deleteCorpYgt(Map<String, String> mapSuite) {
+        deleteCorpSx(mapSuite);
+    }
+
+    private void handleYgtSuiteCallback(Map<String, String> dataMap) {
+        if (dataMap.get("InfoType") == null) {
+            return;
+        }
+        String infoType = dataMap.get("InfoType");
+        if ("suite_ticket".equals(infoType)) {
+            saveSuiteTokenYgt(dataMap);
+        } else if ("create_auth".equals(infoType)) {
+            saveAuthTokenYgt(dataMap);
+        } else if ("cancel_auth".equals(infoType)) {
+            deleteCorpYgt(dataMap);
+        } else {
+            log.info("YGT callback InfoType={}", infoType);
+        }
+    }
+
+    /**
+     * 优果优惠卷 POST 解密：按 ToUserName / SuiteID / 服务商 CorpID 依次尝试 receiveid。
+     * GET 验签用 CorpID，POST 指令回调 ToUserName 通常为 SuiteID（与 callbacksx 一致）。
+     */
+    private String decryptYgtPost(String sPostData, String msgSignature, String timestamp, String nonce)
+            throws AesException {
+        Object[] extracted = XMLParse.extract(sPostData);
+        String toUserName = extracted[2] != null ? extracted[2].toString() : null;
+
+        LinkedHashSet<String> receiveIds = new LinkedHashSet<>();
+        if (StringUtils.isNotBlank(toUserName)) {
+            receiveIds.add(toUserName);
+        }
+        receiveIds.add(Constant.SuiteIDYGT);
+        receiveIds.add(Constant.CorpID);
+
+        AesException lastCorpidError = null;
+        for (String receiveId : receiveIds) {
+            try {
+                WXBizMsgCrypt crypt = new WXBizMsgCrypt(
+                        Constant.TOKENYGT, Constant.EncodingAESKeyYGT, receiveId);
+                String msg = crypt.decryptPostData(msgSignature, timestamp, nonce, sPostData);
+                log.info("YGT POST解密成功 receiveId={}", receiveId);
+                return msg;
+            } catch (AesException e) {
+                if (e.getCode() == AesException.ValidateCorpidError) {
+                    lastCorpidError = e;
+                    log.info("YGT POST解密 receiveId={} 不匹配，继续尝试", receiveId);
+                    continue;
+                }
+                throw e;
+            }
+        }
+        if (lastCorpidError != null) {
+            throw lastCorpidError;
+        }
+        throw new IllegalStateException("YGT POST解密失败：receiveid 均不匹配");
+    }
+
+    private void writeVerifyEcho(QywechatEnum qywechatEnum, String msgSignature, String timestamp,
+                                 String nonce, String echostr, HttpServletResponse response) {
+        String sEchoStr = "";
+        try {
+            WXBizMsgCrypt wxBizMsgCrypt = new WXBizMsgCrypt(qywechatEnum);
+            sEchoStr = wxBizMsgCrypt.verifyURL(msgSignature, timestamp, nonce, echostr);
+            if (StringUtils.isBlank(sEchoStr)) {
+                log.info("{} GET验签URL验证失败", qywechatEnum.getName());
+            } else {
+                log.info("{} GET验签验证成功, echo={}", qywechatEnum.getName(), sEchoStr);
+            }
+        } catch (Exception e) {
+            log.error("{} GET验签报错", qywechatEnum.getName(), e);
+        }
+        try {
+            PrintWriter out = response.getWriter();
+            out.write(sEchoStr == null ? "" : sEchoStr);
+            out.flush();
+        } catch (IOException e) {
+            log.error("写入验签响应失败", e);
+        }
+    }
+
     private String saveProviderAccessToken() {
         String suteRul = "https://qyapi.weixin.qq.com/cgi-bin/service/get_provider_token";
 
@@ -1295,6 +1345,5 @@ public class QyWxControlloer {
     private String getWxProperty(String key) {
         return wxTokenManager.getWxProperty(key);
     }
-
 
 }

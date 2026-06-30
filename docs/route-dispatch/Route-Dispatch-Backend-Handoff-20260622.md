@@ -327,4 +327,76 @@ jcJieDan `apiRouteDispatch.js` 中 `getDriverLoadingToday` / `getDriverDeliveryT
 
 ---
 
-*最后更新：2026-06-23，不确定项归零 + 旧 HTTP 删除。*
+## 17. 测试前数据清理（disId=160）
+
+**仅测试环境、手动 SQL、不在代码里执行。**
+
+| 项 | 说明 |
+|----|------|
+| 测试 disId | **160** |
+| 测试订单 | 当前约 7 条 live order（如 `200244`–`200250`），**订单行自己在 `nx_department_orders` 删** |
+| 本脚本清什么 | **全部 `nx_dis_*` 派单运行表**（计划 / 司机路线 / 站点 / 任务 / 司机当日可派状态） |
+| 不删 | `nx_department` 客户、`nx_distributer_user` 司机账号、商品/供货商等基础资料 |
+| eligible 查询 | [`query_dis160_eligible_live_orders.sql`](../sql/patches/query_dis160_eligible_live_orders.sql) |
+| **派单表清空** | [`cleanup_dis160_route_dispatch_data.sql`](../sql/patches/cleanup_dis160_route_dispatch_data.sql) |
+
+**派单表清单（9 张，按删除顺序）：**
+
+| 顺序 | 表 | 内容 |
+|------|-----|------|
+| 1 | `nx_dis_route_stop_order` | 站点-订单快照（legacy） |
+| 2 | `nx_dis_route_unassigned_stop_order` | 未分派站点-订单 |
+| 3 | `nx_dis_shipment_task_item` | 装车任务明细 |
+| 4 | `nx_dis_route_stop` | 路线站点 |
+| 5 | `nx_dis_shipment_task` | 装车/配送任务 |
+| 6 | `nx_dis_driver_route` | 司机路线 |
+| 7 | `nx_dis_route_unassigned_stop` | 未分派站点 |
+| 8 | `nx_dis_route_plan` | 路线计划 |
+| 9 | `nx_dis_driver_duty` | 司机当日 ON_DUTY/OFF_DUTY（运行态） |
+
+**推荐操作顺序：** 先跑派单清空 SQL → 再删 7 条订单 → 重新下单 → 测司机派单。
+
+---
+
+## 18. 派单算法主原则 & 历史配送偏好读取服务 P1
+
+### 18.1 算法主原则（后续 H2 方向）
+
+派单不是单纯求最短路线。系统应先尊重历史配送事实：历史上谁经常给这个店送、老板曾经把这个店排第几个送，都是业务经验。自动沙盘应优先学习和沿用这些事实；**没有历史或历史不可用时**，再交给地图路线优化（`BalancedInsertion2OptRouteOptimizer`）。
+
+当前 P1 **不改变** optimizer 行为；4 店全给 1 司机仍是现有「路线成本 + 轻量均衡」的预期结果。
+
+### 18.2 P1 服务：`DisRouteDeliveryHistoryPreferenceService`
+
+| 项 | 说明 |
+|----|------|
+| 类型 | 只读；不写 DB |
+| 主历史源 | `nx_dis_shipment_task` |
+| 硬条件 | `status=DELIVERED` 且 `nx_dst_delivered_at IS NOT NULL` |
+| 顺序 | `COALESCE(nx_dst_manual_stop_seq, nx_dst_route_seq)` |
+| 人工权重 | `nx_dst_manual_locked=1` → 权重 ×2（可配置） |
+| 默认回看 | 180 天（`dis.route.dispatch.history.lookback-days`） |
+| compute 挂载 | `buildVirtualTasks` 之后、`runOptimization` 之前 |
+| 正式 HTTP | **不暴露**（`GET /dispatch/sandbox/today` 的 `pageViewModel` 不变） |
+| debug HTTP | `GET /sandbox/today` → `deliveryHistoryPreferences` |
+
+**输出字段（每 depFatherId）：** `preferredDriverUserId`、`preferredDriverName`、`deliveredTimes`、`recentDeliveredAt`、`avgStopSeq`、`manualLockedTimes`、`confidence`、`reason`；debug 另含 `historicalTop*`、`candidateDrivers[]`。
+
+**reason 码：** `HISTORY_DOMINANT_DRIVER` / `HISTORY_TIE_BROKEN_BY_RECENCY` / `INSUFFICIENT_HISTORY` / `NO_HISTORY` / `PREFERRED_DRIVER_NOT_ELIGIBLE` / `NO_ELIGIBLE_DRIVER` / `MULTIPLE_EQUAL_CANDIDATES`。
+
+**NO_HISTORY 输出口径：** `deliveredTimes=0`、`manualLockedTimes=0`、`totalDeliveredTimesAllDrivers=0`、`confidence=0`；`recentDeliveredAt` / `avgStopSeq` 为 null。
+
+**minDeliveredTimes（默认 1）：** 1 次真实 `DELIVERED` 即视为有效历史，`reason=HISTORY_DOMINANT_DRIVER`（或 tie 相关码）；`confidence` 由公式自然偏低（freq 项 ≈ 0.33），**不会**因仅 1 次而标 `INSUFFICIENT_HISTORY`。仅当 `deliveredTimes < minDeliveredTimes` 时才 `INSUFFICIENT_HISTORY`（默认 min=1 时不触发）。
+
+**注意：** 偏好仅对 **当前待分派** 客户（`virtualTasks` / 未 confirm 的 dep）计算；已 confirm/配送完成的客户若无新 live order，不会出现在 `preferencesByDepFatherId`。
+
+### 18.3 后续 H2（未实现）
+
+1. 按 `preferredDriverUserId` 做 dep → driver 预绑定  
+2. 按 `avgStopSeq` / `manual_stop_seq` 做路线内历史顺序种子  
+3. 无历史 stop 再进 optimizer  
+4. 历史司机不可派时 fallback 到路线优化  
+
+---
+
+*最后更新：2026-06-23，历史配送偏好 P1 + 算法主原则。*

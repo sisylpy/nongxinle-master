@@ -26,5 +26,8 @@ public interface NxDisDriverRouteDao {
 
     void updateLoadingGate(NxDisDriverRouteEntity entity);
 
+    void reopenForRedispatch(@Param("driverRouteId") Integer driverRouteId,
+                             @Param("routeStatus") String routeStatus);
+
     void deleteByPlanId(Integer planId);
 }

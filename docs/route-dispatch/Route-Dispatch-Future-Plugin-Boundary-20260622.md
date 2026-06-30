@@ -53,6 +53,8 @@
 | `DisRouteFeasibilityService` | 路线可执行性评估 | **Core** | 时间窗/顺序可行性 | ✅ 中 | 中 |
 | `DisRouteScheduleService` | 固定顺序排程 | **Core** | 通用 VRP 后处理 | ✅ 中 | 中 |
 | `RouteCostProvider` / `RouteOptimizer` | 路径优化插件 | **Core 插件口** | 已抽象 | ✅ 已有 | 低 |
+| `DisRouteDeliveryHistoryPreferenceService` | 历史 DELIVERED 偏好只读 | **Core 读模型** + **Adapter DAO** | 规则通用；查 `nx_dis_shipment_task` | ✅ P1 已落地 | 低 |
+| `DisRouteDeliveryHistoryPreferenceReadModelAssembler` | debug Map 序列化 | **Core** | 不进正式 pageViewModel | ✅ P1 | 低 |
 | `DisRouteSandboxComputeServiceImpl` | 沙盘合并、分区、eligible 过滤 | **Adapter** | 读 `NxDepartmentOrder`、disId | ❌ 暂留 Adapter | 高 |
 | `DisRouteSandboxTodayServiceImpl` | today 读模型 | **Adapter** | 绑定 Nx plan/task/stop | ❌ 暂留 Adapter | 高 |
 | `DisRouteSandboxConfirmServiceImpl` | 沙盘站点确认落库 | **Adapter** | 写 ShipmentTask + RouteStop | ❌ 暂留 Adapter | 高 |

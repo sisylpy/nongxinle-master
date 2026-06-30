@@ -38,5 +38,9 @@ public interface NxDisRoutePlanDao {
 
     List<DisRouteOrderSnapshotDto> queryEligibleLiveOrderSnapshots(@Param("disId") Integer disId,
                                                                  @Param("routeDate") String routeDate,
-                                                                 @Param("routeDateOnly") String routeDateOnly);
+                                                                 @Param("routeDateOnly") String routeDateOnly,
+                                                                 @Param("excludeDepartmentIds") List<Integer> excludeDepartmentIds);
+
+    int countEligibleLiveOrders(@Param("disId") Integer disId,
+                                @Param("excludeDepartmentIds") List<Integer> excludeDepartmentIds);
 }

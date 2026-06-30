@@ -1,7 +1,6 @@
 package com.nongxinle.route;
 
 import com.nongxinle.dto.route.DisRouteBatchContext;
-import com.nongxinle.dto.route.DisRoutePreviewRequest;
 import com.nongxinle.entity.NxDisRoutePlanEntity;
 
 import java.text.ParseException;
@@ -14,25 +13,7 @@ import java.util.Date;
  */
 public final class DisRouteBatchDefaults {
 
-    private static final String DATETIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
-
     private DisRouteBatchDefaults() {
-    }
-
-    public static DisRouteBatchContext resolve(DisRoutePreviewRequest request, String routeDate) {
-        String batchCode = normalizeBatchCode(request != null ? request.getBatchCode() : null);
-        DisRouteBatchContext context = new DisRouteBatchContext();
-        context.setBatchCode(batchCode);
-
-        if (DisRouteDispatchBatch.ADHOC.equals(batchCode)) {
-            requireAdhocTimes(request);
-            context.setBatchStartAt(parseDateTime(request.getBatchStartAt()));
-            context.setDefaultDepartAt(parseDateTime(request.getDefaultDepartAt()));
-            context.setBatchEndAt(parseDateTime(request.getBatchEndAt()));
-            return context;
-        }
-
-        return resolveForRouteDate(routeDate, batchCode);
     }
 
     public static DisRouteBatchContext fromPlan(NxDisRoutePlanEntity plan) {
@@ -117,16 +98,6 @@ public final class DisRouteBatchDefaults {
         return combine(parseRouteDateStart(routeDate.trim()), 6, 0);
     }
 
-    public static Date latestAllowedCheckInAt(Date defaultDepartAt) {
-        if (defaultDepartAt == null) {
-            return null;
-        }
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(defaultDepartAt);
-        calendar.add(Calendar.MINUTE, DisRouteBatchEligibility.CHECKIN_GRACE_MINUTES);
-        return calendar.getTime();
-    }
-
     private static String normalizeBatchCode(String raw) {
         if (raw == null || raw.trim().isEmpty()) {
             return DisRouteDispatchBatch.MORNING;
@@ -134,28 +105,8 @@ public final class DisRouteBatchDefaults {
         return raw.trim().toUpperCase();
     }
 
-    private static void requireAdhocTimes(DisRoutePreviewRequest request) {
-        if (request == null
-                || isBlank(request.getBatchStartAt())
-                || isBlank(request.getDefaultDepartAt())
-                || isBlank(request.getBatchEndAt())) {
-            throw new IllegalArgumentException(
-                    "ADHOC 批次须传 batchStartAt、defaultDepartAt、batchEndAt（格式 yyyy-MM-dd HH:mm:ss）");
-        }
-    }
-
     private static boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
-    }
-
-    private static Date parseDateTime(String value) {
-        try {
-            SimpleDateFormat format = new SimpleDateFormat(DATETIME_PATTERN);
-            format.setLenient(false);
-            return format.parse(value.trim());
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("日期时间格式无效，须为 yyyy-MM-dd HH:mm:ss: " + value);
-        }
     }
 
     static Date parseRouteDateStart(String routeDate) {

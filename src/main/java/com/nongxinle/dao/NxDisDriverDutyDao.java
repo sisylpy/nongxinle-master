@@ -12,10 +12,17 @@ public interface NxDisDriverDutyDao {
                                                @Param("driverUserId") Integer driverUserId,
                                                @Param("dutyDate") String dutyDate);
 
+    List<NxDisDriverDutyEntity> queryByDisDate(@Param("disId") Integer disId,
+                                               @Param("dutyDate") String dutyDate);
+
     List<DriverAvailableDto> queryOnDutyDrivers(@Param("disId") Integer disId,
                                                   @Param("dutyDate") String dutyDate);
 
     void save(NxDisDriverDutyEntity entity);
 
     void update(NxDisDriverDutyEntity entity);
+
+    void upsertCheckIn(NxDisDriverDutyEntity entity);
+
+    void upsertCheckOut(NxDisDriverDutyEntity entity);
 }

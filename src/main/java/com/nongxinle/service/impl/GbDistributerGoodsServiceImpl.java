@@ -6,7 +6,6 @@ import com.nongxinle.dao.GbDistributerPurchaseGoodsDao;
 import com.nongxinle.entity.*;
 import com.nongxinle.service.GbDepartmentOrdersService;
 import com.nongxinle.service.GbDistributerFatherGoodsService;
-import com.nongxinle.service.GbDistributerFoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +21,13 @@ import java.util.Map;
 import com.nongxinle.dao.GbDistributerGoodsDao;
 import com.nongxinle.service.GbDistributerGoodsService;
 
+import com.nongxinle.service.GbDistributerAliasService;
+import com.nongxinle.service.GbDistributerFatherGoodsService;
+import com.nongxinle.service.GbDistributerStandardService;
+import com.nongxinle.service.NxAliasService;
+import com.nongxinle.service.NxGoodsService;
+import com.nongxinle.service.NxStandardService;
+
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
 
 
@@ -32,9 +38,20 @@ public class GbDistributerGoodsServiceImpl implements GbDistributerGoodsService 
     @Autowired
     private GbDepartmentGoodsStockDao gbDepartmentGoodsStockDao;
     @Autowired
-    private GbDistributerFatherGoodsDao gbDistributerFatherGoodsService;
-    @Autowired
     private GbDistributerPurchaseGoodsDao gbDistributerPurchaseGoodsDao;
+
+    @Autowired
+    private NxGoodsService nxGoodsService;
+    @Autowired
+    private NxAliasService nxAliasService;
+    @Autowired
+    private NxStandardService nxStandardService;
+    @Autowired
+    private GbDistributerFatherGoodsService gbDistributerFatherGoodsService;
+    @Autowired
+    private GbDistributerAliasService gbDistributerAliasService;
+    @Autowired
+    private GbDistributerStandardService gbDistributerStandardService;
 
     @Override
     public GbDistributerGoodsEntity queryObject(Integer gbDistributerGoodsId) {
@@ -456,5 +473,317 @@ public class GbDistributerGoodsServiceImpl implements GbDistributerGoodsService 
 
     }
 
+
+
+
+    @Override
+    public GbDistributerGoodsEntity postDgnGbGoods(Integer gbDisId, Integer depId, Integer nxGoodsId) {
+
+        NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxGoodsId);
+        GbDistributerGoodsEntity cgnGoods = new GbDistributerGoodsEntity();
+        cgnGoods.setGbDgGoodsName(nxGoodsEntity.getNxGoodsName());
+        cgnGoods.setGbDgGoodsStandardname(nxGoodsEntity.getNxGoodsStandardname());
+        cgnGoods.setGbDgGoodsPy(nxGoodsEntity.getNxGoodsPy());
+        cgnGoods.setGbDgGoodsPinyin(nxGoodsEntity.getNxGoodsPinyin());
+        cgnGoods.setGbDgGoodsStandardWeight(nxGoodsEntity.getNxGoodsStandardWeight());
+        cgnGoods.setGbDgGoodsDetail(nxGoodsEntity.getNxGoodsDetail());
+        cgnGoods.setGbDgGoodsBrand(nxGoodsEntity.getNxGoodsBrand());
+        cgnGoods.setGbDgGoodsPlace(nxGoodsEntity.getNxGoodsPlace());
+        cgnGoods.setGbDgGoodsSort(nxGoodsEntity.getNxGoodsSort());
+        cgnGoods.setGbDgGoodsSonsSort(nxGoodsEntity.getNxGoodsSonsSort());
+        cgnGoods.setGbDgNxFatherImgLarge(nxGoodsEntity.getNxGoodsFileBig());
+        cgnGoods.setGbDgNxFatherImg(nxGoodsEntity.getNxGoodsFile());
+        cgnGoods.setGbDgNxGoodsFatherColor(nxGoodsEntity.getColor());
+        cgnGoods.setGbDgDistributerId(gbDisId);
+        cgnGoods.setGbDgGoodsStatus(0);
+        cgnGoods.setGbDgGoodsIsWeight(0);
+        cgnGoods.setGbDgGoodsIsHidden(0);
+        cgnGoods.setGbDgNxGoodsId(nxGoodsEntity.getNxGoodsId());
+        cgnGoods.setGbDgNxFatherId(nxGoodsEntity.getNxGoodsFatherId());
+        cgnGoods.setGbDgNxGrandId(nxGoodsEntity.getNxGoodsGrandId());
+        cgnGoods.setGbDgPullOff(0);
+        cgnGoods.setGbDgGoodsType(2);
+        cgnGoods.setGbDgGbSupplierId(-1);
+        cgnGoods.setGbDgNxDistributerId(-1);
+        cgnGoods.setGbDgNxDistributerGoodsId(-1);
+        cgnGoods.setGbDgNxDistributerGoodsPrice("0.1");
+        cgnGoods.setGbDgGbDepartmentId(depId);
+        cgnGoods.setGbDgControlFresh(0);
+        cgnGoods.setGbDgControlPrice(0);
+        cgnGoods.setGbDgGoodsInventoryType(1);
+        cgnGoods.setGbDgIsFranchisePrice(0);
+        cgnGoods.setGbDgIsSelfControl(0);
+        cgnGoods.setGbDgNxFatherImg(nxGoodsEntity.getNxGoodsFile());
+        cgnGoods.setGbDgNxFatherImgLarge(nxGoodsEntity.getNxGoodsFileBig());
+
+        GbDistributerGoodsEntity disGoods = saveDisGoods(cgnGoods);
+
+        //2.2
+        Map<String, Object> map = new HashMap<>();
+        map.put("goodsId", nxGoodsId);
+        List<NxAliasEntity> aliasEntities = nxAliasService.queryNxAliasList(map);
+        if (aliasEntities.size() > 0) {
+            for (NxAliasEntity aliasEntity : aliasEntities) {
+                GbDistributerAliasEntity disAlias = new GbDistributerAliasEntity();
+                disAlias.setGbDaDisGoodsId(disGoods.getGbDistributerGoodsId());
+                disAlias.setGbDaAliasName(aliasEntity.getNxAliasName());
+                gbDistributerAliasService.save(disAlias);
+            }
+        }
+
+        List<NxStandardEntity> nxStandardEntities = nxStandardService.queryGoodsStandardListByGoodId(nxGoodsId);
+        if (nxStandardEntities.size() > 0) {
+            for (NxStandardEntity standardEntity : nxStandardEntities) {
+                GbDistributerStandardEntity distributerStandardEntity = new GbDistributerStandardEntity();
+                distributerStandardEntity.setGbDsDisGoodsId(disGoods.getGbDistributerGoodsId());
+                distributerStandardEntity.setGbDsStandardName(standardEntity.getNxStandardName());
+                gbDistributerStandardService.save(distributerStandardEntity);
+            }
+        }
+
+        return disGoods;
+    }
+    private GbDistributerGoodsEntity saveDisGoods(GbDistributerGoodsEntity cgnGoods) {
+
+        Integer nxDgNxGoodsId = cgnGoods.getGbDgNxGoodsId();
+        NxGoodsEntity nxGoodsEntity = nxGoodsService.queryObject(nxDgNxGoodsId);
+
+        cgnGoods.setGbDgGoodsName(nxGoodsEntity.getNxGoodsName());
+        cgnGoods.setGbDgNxFatherImg(nxGoodsEntity.getNxGoodsFile());
+        cgnGoods.setGbDgGoodsStandardname(nxGoodsEntity.getNxGoodsStandardname());
+        cgnGoods.setGbDgGoodsDetail(nxGoodsEntity.getNxGoodsDetail());
+        cgnGoods.setGbDgGoodsPlace(nxGoodsEntity.getNxGoodsPlace());
+        cgnGoods.setGbDgGoodsBrand(nxGoodsEntity.getNxGoodsBrand());
+        cgnGoods.setGbDgGoodsStandardWeight(nxGoodsEntity.getNxGoodsStandardWeight());
+        cgnGoods.setGbDgGoodsPinyin(nxGoodsEntity.getNxGoodsPinyin());
+        cgnGoods.setGbDgGoodsPy(nxGoodsEntity.getNxGoodsPy());
+        cgnGoods.setGbDgPullOff(0);
+        cgnGoods.setGbDgGoodsStatus(1);
+        cgnGoods.setNxStandardEntities(nxGoodsEntity.getNxGoodsStandardEntities());
+        cgnGoods.setGbDgNxFatherId(nxGoodsEntity.getNxGoodsFatherId());
+        cgnGoods.setGbDgNxFatherName(nxGoodsEntity.getFatherGoods().getNxGoodsName());
+        cgnGoods.setGbDgNxFatherImg(nxGoodsEntity.getFatherGoods().getNxGoodsFile());
+        cgnGoods.setGbDgNxGrandName(nxGoodsEntity.getGrandGoods().getNxGoodsName());
+        cgnGoods.setGbDgNxGrandId(nxGoodsEntity.getGrandGoods().getNxGoodsId());
+        cgnGoods.setGbDgNxFatherImg(nxGoodsEntity.getNxGoodsFile());
+        cgnGoods.setGbDgNxFatherImgLarge(nxGoodsEntity.getNxGoodsFileBig());
+        cgnGoods.setGbDgGoodsSort(nxGoodsEntity.getNxGoodsSort());
+        cgnGoods.setGbDgGoodsSonsSort(nxGoodsEntity.getNxGoodsSonsSort());
+        cgnGoods.setGbDgIsFranchisePrice(0);
+        cgnGoods.setGbDgIsSelfControl(0);
+        cgnGoods.setGbDgGoodsIsHidden(0);
+        cgnGoods.setGbDgGoodsType(2);
+        cgnGoods.setGbDgGoodsIsWeight(0);
+        cgnGoods.setGbDgNxDistributerId(-1);
+        cgnGoods.setGbDgNxDistributerGoodsId(-1);
+        cgnGoods.setGbDgGoodsInventoryType(1);
+        cgnGoods.setGbDgGbSupplierId(-1);
+        cgnGoods.setGbDgNxDistributerGoodsPrice("0.1");
+        cgnGoods.setGbDgQuantityDays(nxGoodsEntity.getNxGoodsQuantityDays());
+
+
+        //queryGrandFatherId
+        NxGoodsEntity fatherEntity = nxGoodsService.queryObject(cgnGoods.getGbDgNxFatherId());
+        Integer grandFatherId = fatherEntity.getNxGoodsFatherId();
+        cgnGoods.setGbDgNxGrandId(grandFatherId);
+        NxGoodsEntity grandEntity = nxGoodsService.queryObject(grandFatherId);
+        cgnGoods.setGbDgNxGrandName(grandEntity.getNxGoodsName());
+
+        //queryGreatGrandFatherId
+        Integer nxGreatGrandFatherId = grandEntity.getNxGoodsFatherId();
+        if (nxGreatGrandFatherId.equals(1)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#20afb8");
+        }
+        if (nxGreatGrandFatherId.equals(2)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#f5c832");
+        }
+        if (nxGreatGrandFatherId.equals(3)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#3cc36e");
+        }
+        if (nxGreatGrandFatherId.equals(4)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#f09628");
+        }
+        if (nxGreatGrandFatherId.equals(5)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#1ebaee");
+        }
+        if (nxGreatGrandFatherId.equals(6)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#f05a32");
+        }
+        if (nxGreatGrandFatherId.equals(7)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#c0a6dd");
+        }
+        if (nxGreatGrandFatherId.equals(8)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#969696");
+        }
+        if (nxGreatGrandFatherId.equals(9)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#318666");
+        }
+        if (nxGreatGrandFatherId.equals(10)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#026bc2");
+        }
+        if (nxGreatGrandFatherId.equals(11)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#06eb6d");
+        }
+        if (nxGreatGrandFatherId.equals(12)) {
+            cgnGoods.setGbDgNxGoodsFatherColor("#0690eb");
+        }
+
+        cgnGoods.setGbDgNxGreatGrandId(nxGreatGrandFatherId);
+        cgnGoods.setGbDgNxGreatGrandName(nxGoodsService.queryObject(nxGreatGrandFatherId).getNxGoodsName());
+
+        Integer GbDgDistributerId = cgnGoods.getGbDgDistributerId();
+
+        // 3， 查询父类
+        Integer GbDgNxFatherId = cgnGoods.getGbDgNxFatherId();
+        Map<String, Object> map11 = new HashMap<>();
+        map11.put("disId", GbDgDistributerId);
+        map11.put("nxFatherId", GbDgNxFatherId);
+        System.out.println("faehrhrhehehemap" + map11);
+        List<GbDistributerGoodsEntity> nxDistributerGoodsEntities = this.queryDisGoodsByParams(map11);
+
+        if (nxDistributerGoodsEntities.size() > 0) {
+            //直接加disGoods和disStandard,不需要加disFatherGoods
+            //1，给父类商品的字段商品数量加1
+            GbDistributerGoodsEntity disGoodsEntity = nxDistributerGoodsEntities.get(0);
+            Integer nxDgDfgGoodsFatherId1 = disGoodsEntity.getGbDgDfgGoodsFatherId();
+            Integer nxDgDfgGoodsGrandId = disGoodsEntity.getGbDgDfgGoodsGrandId();
+            Integer nxDgDfgGoodsGreatId = disGoodsEntity.getGbDgDfgGoodsGreatId();
+
+            GbDistributerFatherGoodsEntity nxDistributerFatherGoodsEntity = gbDistributerFatherGoodsService.queryObject(nxDgDfgGoodsFatherId1);
+            Integer nxDfgGoodsAmount = nxDistributerFatherGoodsEntity.getGbDfgGoodsAmount();
+            nxDistributerFatherGoodsEntity.setGbDfgGoodsAmount(nxDfgGoodsAmount + 1);
+            gbDistributerFatherGoodsService.update(nxDistributerFatherGoodsEntity);
+
+            //2，保存disId商品
+            Integer nxDgDfgGoodsFatherId = disGoodsEntity.getGbDgDfgGoodsFatherId();
+            cgnGoods.setGbDgDfgGoodsFatherId(nxDgDfgGoodsFatherId);
+            cgnGoods.setGbDgDfgGoodsGrandId(nxDgDfgGoodsGrandId);
+            cgnGoods.setGbDgDfgGoodsGreatId(nxDgDfgGoodsGreatId);
+
+            System.out.println("cngnndg" + cgnGoods.getGbDgDfgGoodsGrandId());
+            //1 ，先保存disGoods
+            this.save(cgnGoods);
+            //
+        } else {
+            //添加fatherGoods的第一个级别
+            GbDistributerFatherGoodsEntity dgf = new GbDistributerFatherGoodsEntity();
+            dgf.setGbDfgDistributerId(cgnGoods.getGbDgDistributerId());
+            dgf.setGbDfgFatherGoodsName(cgnGoods.getGbDgNxFatherName());
+            dgf.setGbDfgFatherGoodsLevel(2);
+            dgf.setGbDfgGoodsAmount(1);
+            dgf.setGbDfgPriceAmount(0);
+            dgf.setGbDfgPriceTwoAmount(0);
+            dgf.setGbDfgPriceThreeAmount(0);
+            dgf.setGbDfgFatherGoodsColor(cgnGoods.getGbDgNxGoodsFatherColor());
+            dgf.setGbDfgNxGoodsId(cgnGoods.getGbDgNxFatherId());
+            dgf.setGbDfgFatherGoodsImg(cgnGoods.getGbDgNxFatherImg());
+            dgf.setGbDfgFatherGoodsImgLarge(cgnGoods.getGbDgNxFatherImgLarge());
+            dgf.setGbDfgFatherGoodsSort(nxGoodsEntity.getFatherGoods().getNxGoodsSort());
+            dgf.setGbDfgNxGoodsId(cgnGoods.getGbDgNxFatherId());
+            gbDistributerFatherGoodsService.save(dgf);
+            //更新disGoods的fatherGoodsId
+            Integer distributerFatherGoodsId = dgf.getGbDistributerFatherGoodsId();
+            cgnGoods.setGbDgDfgGoodsFatherId(distributerFatherGoodsId);
+
+            //todo
+//            cgnGoods.setGbDgDfgGoodsGrandId(dgf.getGbDfgFathersFatherId());
+////
+//            GbDistributerFatherGoodsEntity grandFather = gbDistributerFatherGoodsService.queryObject(dgf.getGbDfgFathersFatherId());
+//            cgnGoods.setGbDgDfgGoodsGreatId(grandFather.getGbDfgFathersFatherId());
+
+            System.out.println("zizin" + dgf.getGbDfgFathersFatherId());
+            this.save(cgnGoods);
+            //继续查询是否有GrandFather
+
+            String grandName = cgnGoods.getGbDgNxGrandName();
+            Map<String, Object> map2 = new HashMap<>();
+            map2.put("disId", GbDgDistributerId);
+            map2.put("fathersFatherName", grandName);
+            List<GbDistributerFatherGoodsEntity> grandGoodsFather = gbDistributerFatherGoodsService.queryHasDisFathersFather(map2);
+            if (grandGoodsFather.size() > 0) {
+                GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity = grandGoodsFather.get(0);
+                Integer nxDfgGoodsAmount = dgf.getGbDfgGoodsAmount();
+                dgf.setGbDfgGoodsAmount(nxDfgGoodsAmount + 1);
+                dgf.setGbDfgFathersFatherId(gbDistributerFatherGoodsEntity.getGbDistributerFatherGoodsId());
+                gbDistributerFatherGoodsService.update(dgf);
+
+                Integer nxDfgFathersFatherId = gbDistributerFatherGoodsEntity.getGbDistributerFatherGoodsId();
+                cgnGoods.setGbDgDfgGoodsGrandId(nxDfgFathersFatherId);
+                GbDistributerFatherGoodsEntity great = gbDistributerFatherGoodsService.queryObject(nxDfgFathersFatherId);
+                cgnGoods.setGbDgDfgGoodsGreatId(great.getGbDfgFathersFatherId());
+                this.update(cgnGoods);
+
+
+
+            } else {
+                //tianjiaGrand
+                GbDistributerFatherGoodsEntity grand = new GbDistributerFatherGoodsEntity();
+                String nxCgGrandFatherName = cgnGoods.getGbDgNxGrandName();
+                grand.setGbDfgFatherGoodsName(nxCgGrandFatherName);
+                grand.setGbDfgDistributerId(cgnGoods.getGbDgDistributerId());
+                grand.setGbDfgFatherGoodsLevel(1);
+                grand.setGbDfgGoodsAmount(1);
+                grand.setGbDfgFatherGoodsColor(cgnGoods.getGbDgNxGoodsFatherColor());
+                grand.setGbDfgNxGoodsId(cgnGoods.getGbDgNxGrandId());
+                NxGoodsEntity nxGrand = nxGoodsService.queryObject(cgnGoods.getGbDgNxGrandId());
+                grand.setGbDfgFatherGoodsImg(nxGrand.getNxGoodsFile());
+                grand.setGbDfgFatherGoodsImgLarge(nxGrand.getNxGoodsFileBig());
+                System.out.println("nxgoodsnxgoods====" + nxGrand.getNxGoodsId() + "sort==" + nxGrand.getNxGoodsSort());
+                grand.setGbDfgFatherGoodsSort(nxGrand.getNxGoodsSort());
+                gbDistributerFatherGoodsService.save(grand);
+
+                dgf.setGbDfgFathersFatherId(grand.getGbDistributerFatherGoodsId());
+                gbDistributerFatherGoodsService.update(dgf);
+
+                cgnGoods.setGbDgDfgGoodsGrandId(grand.getGbDistributerFatherGoodsId());
+                this.update(cgnGoods);
+
+                //查询是否有greatGrand
+                Map<String, Object> map3 = new HashMap<>();
+                map3.put("disId", GbDgDistributerId);
+                String greatGrandName = cgnGoods.getGbDgNxGreatGrandName();
+                map3.put("fathersFatherName", greatGrandName);
+                List<GbDistributerFatherGoodsEntity> greatGrandGoodsFather = gbDistributerFatherGoodsService.queryHasDisFathersFather(map3);
+
+                if (greatGrandGoodsFather.size() > 0) {
+                    GbDistributerFatherGoodsEntity gbDistributerFatherGoodsEntity = greatGrandGoodsFather.get(0);
+                    Integer disFatherId = gbDistributerFatherGoodsEntity.getGbDistributerFatherGoodsId();
+                    grand.setGbDfgFathersFatherId(disFatherId);
+                    Integer gbDfgGoodsAmount = grand.getGbDfgGoodsAmount();
+                    grand.setGbDfgGoodsAmount(gbDfgGoodsAmount + 1);
+                    gbDistributerFatherGoodsService.update(grand);
+
+                    cgnGoods.setGbDgDfgGoodsGreatId(disFatherId);
+                    this.update(cgnGoods);
+
+                } else {
+                    GbDistributerFatherGoodsEntity greatGrand = new GbDistributerFatherGoodsEntity();
+                    NxGoodsEntity greatGrandEntity = nxGoodsService.queryObject(cgnGoods.getGbDgNxGreatGrandId());
+                    String greatGrandName1 = cgnGoods.getGbDgNxGreatGrandName();
+                    greatGrand.setGbDfgFatherGoodsName(greatGrandName1);
+                    greatGrand.setGbDfgDistributerId(cgnGoods.getGbDgDistributerId());
+                    greatGrand.setGbDfgFatherGoodsImg(greatGrandEntity.getNxGoodsFile());
+                    greatGrand.setGbDfgFatherGoodsImgLarge(greatGrandEntity.getNxGoodsFileBig());
+                    greatGrand.setGbDfgDistributerId(cgnGoods.getGbDgDistributerId());
+                    greatGrand.setGbDfgFatherGoodsLevel(0);
+                    greatGrand.setGbDfgFathersFatherId(0);
+                    greatGrand.setGbDfgFatherGoodsColor(cgnGoods.getGbDgNxGoodsFatherColor());
+                    greatGrand.setGbDfgNxGoodsId(cgnGoods.getGbDgNxGreatGrandId());
+                    greatGrand.setGbDfgFatherGoodsSort(greatGrandEntity.getNxGoodsSort());
+                    greatGrand.setGbDfgGoodsAmount(1);
+                    gbDistributerFatherGoodsService.save(greatGrand);
+
+                    grand.setGbDfgFathersFatherId(greatGrand.getGbDistributerFatherGoodsId());
+                    gbDistributerFatherGoodsService.update(grand);
+
+                    cgnGoods.setGbDgDfgGoodsGreatId(greatGrand.getGbDistributerFatherGoodsId());
+                    this.update(cgnGoods);
+                }
+            }
+        }
+
+
+        return cgnGoods;
+    }
 
 }

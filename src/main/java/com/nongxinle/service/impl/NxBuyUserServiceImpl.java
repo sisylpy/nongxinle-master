@@ -1,7 +1,6 @@
 package com.nongxinle.service.impl;
 
 import com.nongxinle.entity.NxDistributerPurchaseBatchEntity;
-import com.nongxinle.entity.NxRestrauntUserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -62,10 +61,6 @@ public class NxBuyUserServiceImpl implements NxBuyUserService {
 		return nxBuyUserDao.queryBuyerPurchaseBatchDayWork(mapZero);
     }
 
-    @Override
-    public List<NxBuyUserEntity> queryAllNxBuyerUsers() {
 
-		return nxBuyUserDao.queryAllNxBuyerUsers();
-    }
 
 }

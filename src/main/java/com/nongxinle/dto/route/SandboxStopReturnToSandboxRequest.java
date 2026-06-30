@@ -15,4 +15,8 @@ public class SandboxStopReturnToSandboxRequest {
     private Integer disId;
     private String routeDate;
     private String batchCode;
+    /** 批量路线编辑：跳过每次撤销后的 Today 重建 */
+    private Boolean suppressTodayResponse;
+    /** 批量路线编辑：延迟到批次结束后再刷新计划排程 */
+    private Boolean deferPlanRefresh;
 }

@@ -44,6 +44,10 @@ public class NxCommunityOrdersEntity implements Serializable {
 	 */
 	private Integer nxCoStatus;
 	private Integer nxCoDeskId;
+	/** POS/miniapp 订单来源 */
+	private String nxCoOrderChannel;
+	/** POS 操作员工 */
+	private Integer nxCoPosOperatorId;
 	/**
 	 *  订单送达
 	 */
@@ -71,6 +75,8 @@ public class NxCommunityOrdersEntity implements Serializable {
 
 	private String nxCoTotal;
 	private String nxCoYouhuiTotal;
+	/** 当前订单绑定的用户券 ID */
+	private Integer nxCoUserCouponId;
 
 	/**
 	 * zidingdan

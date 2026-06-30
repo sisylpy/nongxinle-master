@@ -1,8 +1,12 @@
 package com.nongxinle.route;
 
+import com.nongxinle.dao.NxDisDriverRouteDao;
+import com.nongxinle.dao.NxDisShipmentTaskDao;
 import com.nongxinle.entity.NxDisDriverRouteEntity;
 import com.nongxinle.entity.NxDisRouteStopEntity;
 import com.nongxinle.entity.NxDisShipmentTaskEntity;
+
+import java.util.List;
 
 import static com.nongxinle.route.DisShipmentTaskStatus.CANCELLED;
 import static com.nongxinle.route.DisShipmentTaskStatus.CLOSED;
@@ -20,9 +24,37 @@ public final class DisRouteRouteExecutionHelper {
     private DisRouteRouteExecutionHelper() {
     }
 
-    /** 已出发 / 配送中 / 已完成 — 不再参与沙盘分配与路线重算。 */
+    /** 本趟路线已终结（活跃站全部送达），司机可再接沙盘/人工分派。 */
+    public static boolean isCompletedTerminalRoute(NxDisDriverRouteEntity route) {
+        if (route == null || hasPendingExecutionStops(route)) {
+            return false;
+        }
+        String status = resolveRouteStatus(route);
+        if (DisRouteDriverRouteStatus.COMPLETED.equals(status)
+                || DisRouteDriverRouteStatus.DELIVERED.equals(status)
+                || DisRouteDriverRouteStatus.CLOSED.equals(status)) {
+            return true;
+        }
+        return !hasActiveDispatchStop(route);
+    }
+
+    /** 本趟已无在途站、仅有新确认待装车站 —— 第二轮再派前的装车阶段（尚未进入装车门禁）。 */
+    public static boolean isRedispatchPreDepartRoute(NxDisDriverRouteEntity route) {
+        if (route == null || hasPendingExecutionStops(route)) {
+            return false;
+        }
+        if (DisRouteLoadingGateHelper.isRouteEnteredLoading(route)) {
+            return false;
+        }
+        return hasActiveDispatchStop(route);
+    }
+
+    /** 已出发 / 配送中 — 不再参与沙盘分配与路线重算（不含本趟已完成可再派）。 */
     public static boolean isExecutionRoute(NxDisDriverRouteEntity route) {
         if (route == null) {
+            return false;
+        }
+        if (isCompletedTerminalRoute(route) || isRedispatchPreDepartRoute(route)) {
             return false;
         }
         if (route.getNxDdrActualDepartAt() != null || route.getDepartedAt() != null) {
@@ -63,14 +95,22 @@ public final class DisRouteRouteExecutionHelper {
             return DisRouteDriverRouteStatus.IDLE;
         }
         String stored = normalizeRouteStatus(route.getNxDdrRouteStatus());
-        if (DisRouteDriverRouteStatus.IN_DELIVERY.equals(stored)
-                || DisRouteDriverRouteStatus.DELIVERED.equals(stored)
-                || DisRouteDriverRouteStatus.COMPLETED.equals(stored)
-                || DisRouteDriverRouteStatus.CLOSED.equals(stored)) {
-            return stored;
+        boolean redispatchPreDepart = isRedispatchPreDepartRoute(route);
+        if (!redispatchPreDepart) {
+            if (DisRouteDriverRouteStatus.IN_DELIVERY.equals(stored)
+                    || DisRouteDriverRouteStatus.DELIVERED.equals(stored)
+                    || DisRouteDriverRouteStatus.COMPLETED.equals(stored)
+                    || DisRouteDriverRouteStatus.CLOSED.equals(stored)) {
+                return stored;
+            }
+            if (route.getNxDdrActualDepartAt() != null || route.getDepartedAt() != null) {
+                return DisRouteDriverRouteStatus.IN_DELIVERY;
+            }
+        } else if (route.getNxDdrLoadingEnteredAt() != null) {
+            return DisRouteDriverRouteStatus.LOADING;
         }
-        if (route.getNxDdrActualDepartAt() != null || route.getDepartedAt() != null) {
-            return DisRouteDriverRouteStatus.IN_DELIVERY;
+        if (route.getNxDdrId() == null && hasOnlySandboxEphemeralStops(route)) {
+            return DisRouteDriverRouteStatus.IDLE;
         }
         String stopDerived = deriveRouteStatusFromStops(route);
         if (stopDerived != null) {
@@ -88,6 +128,24 @@ public final class DisRouteRouteExecutionHelper {
             return DisRouteDriverRouteStatus.READY_TO_DEPART;
         }
         return DisRouteDriverRouteStatus.LOADING;
+    }
+
+    private static boolean hasOnlySandboxEphemeralStops(NxDisDriverRouteEntity route) {
+        System.out.println("tsetifwarcurrrentsisysisy");
+        if (route == null || route.getStops() == null || route.getStops().isEmpty()) {
+            return false;
+        }
+        boolean found = false;
+        for (NxDisRouteStopEntity stop : route.getStops()) {
+            if (stop == null || isCancelledStop(stop)) {
+                continue;
+            }
+            found = true;
+            if (!DisRouteSandboxDispatchEligibilityHelper.isSandboxEphemeralStop(stop)) {
+                return false;
+            }
+        }
+        return found;
     }
 
     public static boolean isRouteDeparted(NxDisDriverRouteEntity route) {
@@ -147,6 +205,12 @@ public final class DisRouteRouteExecutionHelper {
         }
         if (dbRoute.getNxDdrDispatchEligible() != null) {
             target.setNxDdrDispatchEligible(dbRoute.getNxDdrDispatchEligible());
+        }
+        if (dbRoute.getNxDdrLoadingEnteredAt() != null) {
+            target.setNxDdrLoadingEnteredAt(dbRoute.getNxDdrLoadingEnteredAt());
+        }
+        if (dbRoute.getNxDdrLoadingEnteredOperatorUserId() != null) {
+            target.setNxDdrLoadingEnteredOperatorUserId(dbRoute.getNxDdrLoadingEnteredOperatorUserId());
         }
         if (dbRoute.getNxDdrPlanId() != null && target.getNxDdrPlanId() == null) {
             target.setNxDdrPlanId(dbRoute.getNxDdrPlanId());
@@ -213,6 +277,42 @@ public final class DisRouteRouteExecutionHelper {
         return hasActiveStop;
     }
 
+    /** 本趟路线活跃站全部 DELIVERED 时标记 COMPLETED（异常站取消后亦适用）。 */
+    public static boolean tryMarkRouteCompleted(NxDisDriverRouteDao routeDao,
+                                                NxDisShipmentTaskDao taskDao,
+                                                Integer driverRouteId) {
+        if (driverRouteId == null || routeDao == null || taskDao == null) {
+            return false;
+        }
+        List<NxDisShipmentTaskEntity> routeTasks = taskDao.queryByDriverRouteId(driverRouteId);
+        if (routeTasks == null || routeTasks.isEmpty()) {
+            return false;
+        }
+        boolean hasActive = false;
+        for (NxDisShipmentTaskEntity routeTask : routeTasks) {
+            if (routeTask == null || isCancelledStopTask(routeTask)) {
+                continue;
+            }
+            hasActive = true;
+            if (!DELIVERED.equals(routeTask.getNxDstStatus())) {
+                return false;
+            }
+        }
+        if (!hasActive) {
+            return false;
+        }
+        NxDisDriverRouteEntity routeUpdate = new NxDisDriverRouteEntity();
+        routeUpdate.setNxDdrId(driverRouteId);
+        routeUpdate.setNxDdrRouteStatus(DisRouteDriverRouteStatus.COMPLETED);
+        routeUpdate.setNxDdrDispatchEligible(0);
+        routeDao.updateExecution(routeUpdate);
+        return true;
+    }
+
+    private static boolean isCancelledStopTask(NxDisShipmentTaskEntity task) {
+        return task == null || CANCELLED.equals(task.getNxDstStatus()) || CLOSED.equals(task.getNxDstStatus());
+    }
+
     /** 读模型：是否仍有配送中/异常 stop（路线不可自动完成） */
     public static boolean hasPendingExecutionStops(NxDisDriverRouteEntity route) {
         if (route == null || route.getStops() == null) {
@@ -234,6 +334,49 @@ public final class DisRouteRouteExecutionHelper {
         return false;
     }
 
+    /** 参与 driver_route stopSeq 归一化/占位的活跃 task（不含已送达/关闭/取消历史单）。 */
+    public static boolean isRouteSeqActiveTask(NxDisShipmentTaskEntity task) {
+        if (task == null) {
+            return false;
+        }
+        String stopStatus = task.getNxDstStopStatus();
+        if (stopStatus != null && CANCELLED.equalsIgnoreCase(stopStatus.trim())) {
+            return false;
+        }
+        String status = task.getNxDstStatus();
+        if (status == null || status.trim().isEmpty()) {
+            return true;
+        }
+        String normalized = status.trim().toUpperCase();
+        return !DELIVERED.equals(normalized) && !CLOSED.equals(normalized) && !CANCELLED.equals(normalized);
+    }
+
+    /** 路线下是否仍有待分派/待送活跃站（不含已送达历史站）。 */
+    public static boolean hasActiveDispatchStop(NxDisDriverRouteEntity route) {
+        if (route == null || route.getStops() == null) {
+            return false;
+        }
+        for (NxDisRouteStopEntity stop : route.getStops()) {
+            if (stop == null || isCancelledStop(stop)) {
+                continue;
+            }
+            NxDisShipmentTaskEntity task = stop.getShipmentTask();
+            if (task == null) {
+                return true;
+            }
+            String status = task.getNxDstStatus();
+            if (status == null || status.trim().isEmpty()) {
+                return true;
+            }
+            String normalized = status.trim().toUpperCase();
+            if (DELIVERED.equals(normalized) || CLOSED.equals(normalized)) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public static boolean hasExecutionTaskStop(NxDisDriverRouteEntity route) {
         if (route == null || route.getStops() == null) {
             return false;
@@ -247,7 +390,7 @@ public final class DisRouteRouteExecutionHelper {
                 continue;
             }
             String status = task.getNxDstStatus();
-            if (IN_DELIVERY.equals(status) || DELIVERED.equals(status) || EXCEPTION.equals(status)) {
+            if (IN_DELIVERY.equals(status) || EXCEPTION.equals(status)) {
                 return true;
             }
         }

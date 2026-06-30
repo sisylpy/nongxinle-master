@@ -98,6 +98,16 @@
         <mvc:mapping path="*/*"/>
     </mvc:cors>
 
+    <!-- 市场后台 admin API：必须显式注册（@Configuration WebMvcConfigurer 在本项目可能不生效） -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/api/platform/admin/**"/>
+            <mvc:exclude-mapping path="/api/platform/admin/auth/login"/>
+            <mvc:exclude-mapping path="/api/platform/admin/auth/bootstrap"/>
+            <ref bean="platformMarketAdminAuthInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
 <!--    <mvc:interceptors>-->
 <!--        <mvc:interceptor>-->
 <!--            <mvc:mapping path="/**" />-->

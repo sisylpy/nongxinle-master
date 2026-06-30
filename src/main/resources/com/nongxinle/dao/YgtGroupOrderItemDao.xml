@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.YgtGroupOrderItemDao">
+    <select id="queryObject" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderItemEntity">
+        select * from ygt_group_order_item where ygt_group_order_item_id = #{value}
+    </select>
+    <select id="queryList" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderItemEntity">
+        select * from ygt_group_order_item
+        <where><if test="orderId != null">and ygt_goi_order_id = #{orderId}</if></where>
+        order by ygt_group_order_item_id asc
+        <if test="offset != null and limit != null">limit #{offset}, #{limit}</if>
+    </select>
+    <select id="queryTotal" resultType="int">select count(*) from ygt_group_order_item</select>
+    <select id="queryByOrderId" resultType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderItemEntity">
+        select * from ygt_group_order_item where ygt_goi_order_id = #{orderId} order by ygt_group_order_item_id asc
+    </select>
+    <select id="queryCampaignGoodsSummary" resultType="java.util.HashMap">
+        select
+            i.ygt_goi_campaign_goods_id as campaignGoodsId,
+            i.ygt_goi_nx_community_goods_id as nxCommunityGoodsId,
+            i.ygt_goi_goods_name_snapshot as goodsName,
+            i.ygt_goi_spec_snapshot as specSnapshot,
+            coalesce(i.ygt_goi_unit_snapshot, i.ygt_goi_unit) as unit,
+            sum(i.ygt_goi_quantity) as totalQuantity,
+            count(distinct i.ygt_goi_order_id) as orderCount,
+            count(distinct coalesce(o.ygt_go_external_user_id, o.ygt_go_member_identifier, o.ygt_go_from_user)) as confirmedCustomerCount,
+            sum(i.ygt_goi_amount) as totalAmount
+        from ygt_group_order_item i
+        inner join ygt_group_order o on o.ygt_group_order_id = i.ygt_goi_order_id
+        where o.ygt_go_campaign_id = #{campaignId}
+        and o.ygt_go_status = 'CONFIRMED'
+        group by i.ygt_goi_campaign_goods_id, i.ygt_goi_nx_community_goods_id, i.ygt_goi_goods_name_snapshot, i.ygt_goi_spec_snapshot, coalesce(i.ygt_goi_unit_snapshot, i.ygt_goi_unit)
+        order by i.ygt_goi_goods_name_snapshot asc
+    </select>
+    <insert id="save" parameterType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderItemEntity" useGeneratedKeys="true" keyProperty="ygtGroupOrderItemId">
+        insert into ygt_group_order_item
+        (ygt_goi_order_id, ygt_goi_campaign_id, ygt_goi_candidate_item_id, ygt_goi_campaign_goods_id, ygt_goi_nx_community_goods_id,
+         ygt_goi_goods_name_snapshot, ygt_goi_spec_snapshot, ygt_goi_quantity, ygt_goi_unit, ygt_goi_unit_snapshot, ygt_goi_price_snapshot,
+         ygt_goi_amount, ygt_goi_remark, ygt_goi_create_time)
+        values
+        (#{ygtGoiOrderId}, #{ygtGoiCampaignId}, #{ygtGoiCandidateItemId}, #{ygtGoiCampaignGoodsId}, #{ygtGoiNxCommunityGoodsId},
+         #{ygtGoiGoodsNameSnapshot}, #{ygtGoiSpecSnapshot}, #{ygtGoiQuantity}, #{ygtGoiUnit}, #{ygtGoiUnitSnapshot}, #{ygtGoiPriceSnapshot},
+         #{ygtGoiAmount}, #{ygtGoiRemark}, #{ygtGoiCreateTime})
+    </insert>
+    <update id="update" parameterType="com.nongxinle.community.yunguotuan.entity.YgtGroupOrderItemEntity">
+        update ygt_group_order_item set ygt_goi_remark = #{ygtGoiRemark}
+        where ygt_group_order_item_id = #{ygtGroupOrderItemId}
+    </update>
+    <delete id="delete">delete from ygt_group_order_item where ygt_group_order_item_id = #{value}</delete>
+    <delete id="deleteBatch">
+        delete from ygt_group_order_item where ygt_group_order_item_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

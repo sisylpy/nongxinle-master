@@ -87,17 +87,7 @@ public class CustomerGroupDiscoveryService {
             
             if (privateKeyPem != null && !privateKeyPem.trim().isEmpty()) {
                 // 添加版本12私钥（当前数据库中存储的是最新版本）
-                System.out.println("🔍 调试信息 - 私钥状态:");
-                System.out.println("  - 私钥长度: " + privateKeyPem.length() + " 字符");
-                System.out.println("  - 私钥开头: " + privateKeyPem.substring(0, Math.min(50, privateKeyPem.length())));
-                System.out.println("  - 私钥结尾: " + privateKeyPem.substring(Math.max(0, privateKeyPem.length() - 50)));
-                
-                // 🔥 临时调试：打印完整私钥内容
-                System.out.println("🔥 完整私钥内容:");
-                System.out.println("==================== 私钥开始 ====================");
-                System.out.println(privateKeyPem);
-                System.out.println("==================== 私钥结束 ====================");
-                
+                System.out.println("私钥已配置，长度=" + privateKeyPem.length() + "字符");
                 System.out.println("🔍 调试信息 - 准备调用 addPrivateKey(12, privateKeyPem)");
                 weworkFinanceSdkUtil.addPrivateKey(12, privateKeyPem);
                 System.out.println("🔍 调试信息 - addPrivateKey(12) 调用完成");

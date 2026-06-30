@@ -109,7 +109,6 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
   	private Integer nxCosSubDistributerId;
 
   	private Integer nxCosCommunityId;
-  	private Integer nxCosCucId;
 
   	private Integer nxCosGoodsSellType;
   	private Integer nxCosCommPurGoodsId;

@@ -9,18 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** 未分配客户：人工调度入口动作契约（Phase 2B）。 */
+/** 未分配客户 · 人工调度入口动作。 */
 public final class ManualDispatchPrimaryActionMaps {
 
     public static final String ACTION_TYPE_START_MANUAL_DISPATCH = "START_MANUAL_DISPATCH";
 
-    private static final String DRIVER_PANORAMA_PATH =
+    public static final String DRIVER_PANORAMA_PATH =
             "/api/nxdisroutedispatch/sandbox/manual-dispatch/driver-panorama";
-    private static final String EDIT_PAGE_PATH =
-            "/api/nxdisroutedispatch/sandbox/manual-dispatch/edit-page";
-    private static final String SIMULATE_PATH =
+    public static final String SIMULATE_PATH =
             "/api/nxdisroutedispatch/sandbox/manual-dispatch/simulate";
-    private static final String CONFIRM_PATH =
+    public static final String CONFIRM_PATH =
             "/api/nxdisroutedispatch/sandbox/manual-dispatch/confirm";
 
     private static final Set<String> REQUIRED_PAYLOAD_KEYS = new HashSet<String>(Arrays.asList(
@@ -37,11 +35,11 @@ public final class ManualDispatchPrimaryActionMaps {
         }
         Map<String, Object> action = new LinkedHashMap<String, Object>();
         action.put("actionType", ACTION_TYPE_START_MANUAL_DISPATCH);
-        action.put("action", ACTION_TYPE_START_MANUAL_DISPATCH);
         action.put("label", label != null ? label : "人工调度");
         action.put("enabled", Boolean.TRUE);
         action.put("disabledReason", "");
-        action.put("payload", compactManualDispatchPayload(payload));
+        action.put("toneClass", "stop-state-action");
+        action.put("payload", compactPayload(payload));
         return action;
     }
 
@@ -51,6 +49,7 @@ public final class ManualDispatchPrimaryActionMaps {
         action.put("label", "人工调度");
         action.put("enabled", Boolean.FALSE);
         action.put("disabledReason", reason != null ? reason : "暂不可人工调度");
+        action.put("toneClass", "stop-state-action");
         return action;
     }
 
@@ -73,36 +72,10 @@ public final class ManualDispatchPrimaryActionMaps {
         payload.put("driverPanoramaPath", DRIVER_PANORAMA_PATH);
         payload.put("simulatePath", SIMULATE_PATH);
         payload.put("confirmPath", CONFIRM_PATH);
-        return compactManualDispatchPayload(payload);
+        return compactPayload(payload);
     }
 
-    /** 正式 pageViewModel：enabled 才带 payload。 */
-    public static Map<String, Object> toPageActionMap(Map<String, Object> action) {
-        if (action == null || action.isEmpty()) {
-            return null;
-        }
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
-        map.put("actionType", action.get("actionType"));
-        map.put("label", action.get("label"));
-        Object enabled = action.get("enabled");
-        map.put("enabled", enabled);
-        if (Boolean.FALSE.equals(enabled)) {
-            Object reason = action.get("disabledReason");
-            if (reason != null && !String.valueOf(reason).trim().isEmpty()) {
-                map.put("disabledReason", String.valueOf(reason).trim());
-            }
-            return map;
-        }
-        map.put("disabledReason", "");
-        Object payload = action.get("payload");
-        if (payload instanceof Map) {
-            map.put("payload", compactManualDispatchPayload((Map<String, Object>) payload));
-        }
-        return map;
-    }
-
-    /** 保留合同必填字段；liveOrderIds 允许空数组；其余 null 字段剔除。 */
-    private static Map<String, Object> compactManualDispatchPayload(Map<String, Object> payload) {
+    private static Map<String, Object> compactPayload(Map<String, Object> payload) {
         Map<String, Object> compact = new LinkedHashMap<String, Object>();
         if (payload == null) {
             return compact;
@@ -116,15 +89,9 @@ public final class ManualDispatchPrimaryActionMaps {
                 } else if (value != null) {
                     compact.put(key, value);
                 }
-                continue;
+            } else if (value != null && !(value instanceof Collection && ((Collection<?>) value).isEmpty())) {
+                compact.put(key, value);
             }
-            if (value == null) {
-                continue;
-            }
-            if (value instanceof Collection && ((Collection<?>) value).isEmpty()) {
-                continue;
-            }
-            compact.put(key, value);
         }
         return compact;
     }

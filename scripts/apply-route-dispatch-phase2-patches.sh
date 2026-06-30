@@ -108,6 +108,7 @@ SHOW COLUMNS FROM nx_dis_shipment_task LIKE 'nx_dst_driver_route_id';
 SHOW COLUMNS FROM nx_dis_shipment_task LIKE 'nx_dst_route_seq';
 SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_route_status';
 SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_actual_depart_at';
+SHOW COLUMNS FROM nx_dis_driver_route LIKE 'nx_ddr_loading_entered_at';
 "
 }
 
@@ -124,6 +125,7 @@ main() {
   run_patch "Phase 2b-5 dispatch snapshot" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase2b5.sql"
   run_patch "Phase 3a.1 task delivery stop fields" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase3a1.sql"
   run_patch "Phase 3D driver route depart" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase3d.sql"
+  run_patch "Phase 3f route loading gate" "$PATCH_DIR/upgrade_nx_dis_route_dispatch_phase3f_route_loading_gate.sql"
   verify_columns
 
   log "全部完成。Phase 3a confirm / 3c return / 3D depart 依赖对应 SQL patch。"

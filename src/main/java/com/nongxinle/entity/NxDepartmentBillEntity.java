@@ -83,7 +83,6 @@ public class NxDepartmentBillEntity implements Serializable {
 
 	private List<NxDepartmentOrdersEntity>  nxDepartmentOrdersEntities;
 	private GbDepartmentEntity gbDepartmentEntity;
-	private NxRestrauntEntity nxRestrauntEntity;
 	private NxDepartmentEntity nxDepartmentEntity;
 
 

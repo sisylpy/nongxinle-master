@@ -141,7 +141,6 @@
 		<id property="nxCommunityOrdersSubId" column="spOs_nx_community_orders_sub_id"/>
 		<result property="nxCosServiceType" column="spOs_nx_COS_service_type"/>
 		<result property="nxCosSplicingOrdersId" column="spOs_nx_COS_splicing_orders_id"/>
-		<result property="nxCosCucId" column="spOs_nx_COS_cuc_id"/>
 		<result property="nxCosHuaxianSubtotal" column="spOs_nx_cos_huaxian_subtotal"/>
 		<result property="nxCosStatus" column="spOs_nx_COS_status"/>
 		<result property="nxCosRemark" column="spOs_nx_COS_remark"/>
@@ -172,7 +171,6 @@
 		<result property="nxCosServiceType" column="nx_COS_service_type"/>
         <result property="nxCosCommerceId" column="nx_COS_commerce_id"/>
         <result property="nxCosSplicingOrdersId" column="nx_COS_splicing_orders_id"/>
-		<result property="nxCosCucId" column="nx_COS_cuc_id"/>
 		<result property="nxCosHuaxianSubtotal" column="nx_cos_huaxian_subtotal"/>
 		<result property="nxCosStatus" column="nx_COS_status"/>
 		<result property="nxCosRemark" column="nx_COS_remark"/>
@@ -230,6 +228,10 @@
 		<result property="nxCoWeighNumber" column="nx_CO_weigh_number"/>
 		<result property="nxCoWxOutTradeNo" column="nx_CO_wx_out_trade_no"/>
 		<result property="nxCoTotal" column="nx_CO_total"/>
+		<result property="nxCoYouhuiTotal" column="nx_Co_youhui_total"/>
+		<result property="nxCoUserCouponId" column="nx_co_user_coupon_id"/>
+		<result property="nxCoOrderChannel" column="nx_co_order_channel"/>
+		<result property="nxCoPosOperatorId" column="nx_co_pos_operator_id"/>
 		<association property="nxCustomerEntity"  resultMap="nxCustomerEntity" />
 	</resultMap>
 
@@ -313,7 +315,10 @@
 		<result property="nxCoWeighNumber" column="nx_CO_weigh_number"/>
 		<result property="nxCoWxOutTradeNo" column="nx_CO_wx_out_trade_no"/>
 		<result property="nxCoTotal" column="nx_CO_total"/>
+		<result property="nxCoUserCouponId" column="nx_co_user_coupon_id"/>
 		<result property="nxCoDeliveryUserId" column="nx_CO_delivery_user_id"/>
+		<result property="nxCoOrderChannel" column="nx_co_order_channel"/>
+		<result property="nxCoPosOperatorId" column="nx_co_pos_operator_id"/>
 		<association property="orderUser" resultMap="nxCustomerUserEntity"/>
 	</resultMap>
 
@@ -435,11 +440,17 @@
 			<if test="status != null">
 				and o.nx_CO_status = #{status}
 			</if>
+			<if test="orderChannel != null">
+				and o.nx_co_order_channel = #{orderChannel}
+			</if>
 			<if test="dayuStatus != null">
 				and o.nx_CO_status &gt; #{dayuStatus}
 			</if>
 		</where>
           order by nx_community_orders_id DESC
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
 	</select>
 
     <select id="queryDeliveryOrders" resultType="com.nongxinle.entity.NxCommunityOrdersEntity">
@@ -536,6 +547,10 @@
 		<result property="nxCoWeighNumber" column="nx_CO_weigh_number"/>
 		<result property="nxCoWxOutTradeNo" column="nx_CO_wx_out_trade_no"/>
 		<result property="nxCoTotal" column="nx_CO_total"/>
+		<result property="nxCoYouhuiTotal" column="nx_Co_youhui_total"/>
+		<result property="nxCoUserCouponId" column="nx_co_user_coupon_id"/>
+		<result property="nxCoOrderChannel" column="nx_co_order_channel"/>
+		<result property="nxCoPosOperatorId" column="nx_co_pos_operator_id"/>
 		<association property="nxCustomerEntity" resultMap="customer"/>
  		<association property="deliveryUser" resultMap="deliveryUser"/>
 		<association property="deliveryAddress" resultMap="userAddress"/>
@@ -592,6 +607,10 @@
 		<result property="nxCoWeighNumber" column="nx_CO_weigh_number"/>
 		<result property="nxCoWxOutTradeNo" column="nx_CO_wx_out_trade_no"/>
 		<result property="nxCoTotal" column="nx_CO_total"/>
+		<result property="nxCoYouhuiTotal" column="nx_Co_youhui_total"/>
+		<result property="nxCoUserCouponId" column="nx_co_user_coupon_id"/>
+		<result property="nxCoOrderChannel" column="nx_co_order_channel"/>
+		<result property="nxCoPosOperatorId" column="nx_co_pos_operator_id"/>
 		<association property="deliveryUser" resultMap="deliveryUser"/>
 		<association property="deliveryAddress" resultMap="userAddress"/>
 		<collection property="nxCustomerUserCardEntities" resultMap="userCard"/>
@@ -790,6 +809,7 @@
 		<result property="nxCoWeighNumber" column="nx_CO_weigh_number"/>
 		<result property="nxCoWxOutTradeNo" column="nx_CO_wx_out_trade_no"/>
 		<result property="nxCoTotal" column="nx_CO_total"/>
+		<result property="nxCoUserCouponId" column="nx_co_user_coupon_id"/>
 		<result property="nxCoDeliveryUserId" column="nx_CO_delivery_user_id"/>
 		<association property="deliveryUser" resultMap="deliveryUser"/>
 		<association property="deliveryAddress" resultMap="userAddress"/>
@@ -1036,7 +1056,10 @@
 		 	`nx_CO_service_type`,
 		 	`nx_CO_delivery_address_id`,
 		 	`nx_CO_delivery_fee`,
-		 	`nx_CO_desk_id`
+		 	`nx_CO_desk_id`,
+		 	`nx_co_order_channel`,
+		 	`nx_co_pos_operator_id`,
+		 	`nx_co_user_coupon_id`
 
 
 		)
@@ -1073,7 +1096,10 @@
 		 	#{nxCoServiceType},
 		 	#{nxCoDeliveryAddressId},
 		 	#{nxCoDeliveryFee},
-		 	#{nxCoDeskId}
+		 	#{nxCoDeskId},
+		 	#{nxCoOrderChannel},
+		 	#{nxCoPosOperatorId},
+		 	#{nxCoUserCouponId}
 		 			)
 	</insert>
 
@@ -1111,6 +1137,9 @@
             <if test="nxCoDeliveryAddressId != null">`nx_CO_delivery_address_id` = #{nxCoDeliveryAddressId}, </if>
             <if test="nxCoDeliveryFee != null">`nx_CO_delivery_fee` = #{nxCoDeliveryFee}, </if>
             <if test="nxCoDeskId != null">`nx_CO_desk_id` = #{nxCoDeskId}, </if>
+            <if test="nxCoOrderChannel != null">`nx_co_order_channel` = #{nxCoOrderChannel}, </if>
+            <if test="nxCoPosOperatorId != null">`nx_co_pos_operator_id` = #{nxCoPosOperatorId}, </if>
+            <if test="nxCoUserCouponId != null">`nx_co_user_coupon_id` = #{nxCoUserCouponId}, </if>
             <if test="nxCoAmount != null">`nx_CO_amount` = #{nxCoAmount}</if>
 		</set>
 		where nx_community_orders_id = #{nxCommunityOrdersId}

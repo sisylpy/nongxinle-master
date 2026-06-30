@@ -278,6 +278,9 @@ public class PinYin4jUtils {
         }
         // 获取所有的拼音
         String[] pinyingStr = PinyinHelper.toHanyuPinyinStringArray(src);
+        if (pinyingStr == null || pinyingStr.length == 0) {
+            return new char[0];
+        }
         // 创建返回对象
         int polyphoneSize = pinyingStr.length;
         char[] headChars = new char[polyphoneSize];
@@ -396,6 +399,11 @@ public class PinYin4jUtils {
         for (char ch : chars) {
 
             char[] chs = getHeadByChar(ch, isCapital);
+            if (chs.length == 0) {
+                headString[i] = "";
+                i++;
+                continue;
+            }
             StringBuffer sb = new StringBuffer();
             if (null != separator) {
                 int j = 1;

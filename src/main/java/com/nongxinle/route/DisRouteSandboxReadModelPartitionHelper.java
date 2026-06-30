@@ -15,6 +15,7 @@ import static com.nongxinle.route.DisRouteSandboxStopSource.CONFIRMED;
 import static com.nongxinle.route.DisRouteSandboxStopSource.SANDBOX_SUGGESTED;
 import static com.nongxinle.route.DisShipmentTaskStatus.ASSIGNED;
 import static com.nongxinle.route.DisShipmentTaskStatus.CANCELLED;
+import static com.nongxinle.route.DisShipmentTaskStatus.CLOSED;
 import static com.nongxinle.route.DisShipmentTaskStatus.DELIVERED;
 import static com.nongxinle.route.DisShipmentTaskStatus.EXCEPTION;
 import static com.nongxinle.route.DisShipmentTaskStatus.IN_DELIVERY;
@@ -61,11 +62,27 @@ public final class DisRouteSandboxReadModelPartitionHelper {
             }
             ensureRouteMetricsCanonical(route);
             if (DisRouteRouteExecutionHelper.isExecutionRoute(route)) {
-                peelSandboxEphemeralStops(route);
+                List<NxDisRouteStopEntity> peeled = peelSandboxEphemeralStops(route);
+                boolean completedReassignable = route.getStops() != null && !route.getStops().isEmpty();
+                if (completedReassignable) {
+                    for (NxDisRouteStopEntity remainingStop : route.getStops()) {
+                        NxDisShipmentTaskEntity task = remainingStop != null
+                                ? remainingStop.getShipmentTask() : null;
+                        String status = task != null ? task.getNxDstStatus() : null;
+                        if (!DELIVERED.equals(status) && !CLOSED.equals(status) && !CANCELLED.equals(status)) {
+                            completedReassignable = false;
+                            break;
+                        }
+                    }
+                }
                 applyExecutionRouteReadOnlyOverlay(route);
                 executionRoutes.add(route);
+                if (completedReassignable && !peeled.isEmpty()) {
+                    sandboxRoutes.add(buildFreshSandboxRoute(route, peeled));
+                }
                 continue;
             }
+            boolean routeInLoadingPhase = DisRouteLoadingGateHelper.isRouteEnteredLoading(route);
 
             List<NxDisRouteStopEntity> sandboxStops = new ArrayList<NxDisRouteStopEntity>();
             List<NxDisRouteStopEntity> loadingStops = new ArrayList<NxDisRouteStopEntity>();
@@ -82,6 +99,9 @@ public final class DisRouteSandboxReadModelPartitionHelper {
                         applyLoadingStopScope(stop);
                         loadingStops.add(stop);
                     } else {
+                        if (routeInLoadingPhase && isEphemeralSandboxStop(stop)) {
+                            continue;
+                        }
                         if (stop.getStopSource() == null) {
                             stop.setStopSource(isEphemeralSandboxStop(stop)
                                     ? SANDBOX_SUGGESTED : UNASSIGNED);
@@ -102,7 +122,7 @@ public final class DisRouteSandboxReadModelPartitionHelper {
                 applyLoadingRouteScope(loadingRoute);
                 loadingRoutes.add(loadingRoute);
             }
-            if (!sandboxStops.isEmpty()) {
+            if (!routeInLoadingPhase && !sandboxStops.isEmpty()) {
                 NxDisDriverRouteEntity sandboxRoute = copyRouteWithStops(route, sandboxStops);
                 sandboxRoute.setRouteScope(ROUTE_SCOPE_SANDBOX);
                 sandboxRoute.setSandboxEligible(true);
@@ -113,6 +133,28 @@ public final class DisRouteSandboxReadModelPartitionHelper {
         plan.setDriverRoutes(sandboxRoutes);
         plan.setLoadingDriverRoutes(loadingRoutes);
         plan.setExecutionDriverRoutes(executionRoutes);
+    }
+
+    private static NxDisDriverRouteEntity buildFreshSandboxRoute(NxDisDriverRouteEntity source,
+                                                                  List<NxDisRouteStopEntity> stops) {
+        NxDisDriverRouteEntity sandboxRoute = new NxDisDriverRouteEntity();
+        sandboxRoute.setNxDdrDriverUserId(source.getNxDdrDriverUserId());
+        sandboxRoute.setNxDdrRouteSeq(source.getNxDdrRouteSeq());
+        sandboxRoute.setDriverName(source.getDriverName());
+        sandboxRoute.setDriverPhone(source.getDriverPhone());
+        sandboxRoute.setStops(new ArrayList<NxDisRouteStopEntity>(stops));
+        sandboxRoute.setNxDdrStopCount(stops.size());
+        sandboxRoute.setTotalStopCount(stops.size());
+        sandboxRoute.setSuggestedStopCount(stops.size());
+        sandboxRoute.setConfirmedStopCount(0);
+        sandboxRoute.setRouteScope(ROUTE_SCOPE_SANDBOX);
+        sandboxRoute.setSandboxEligible(true);
+        for (NxDisRouteStopEntity stop : stops) {
+            if (stop != null) {
+                stop.setStopScope(STOP_SCOPE_SANDBOX);
+            }
+        }
+        return sandboxRoute;
     }
 
     private static void mergeExecutionRoute(List<NxDisDriverRouteEntity> executionRoutes,
@@ -301,7 +343,7 @@ public final class DisRouteSandboxReadModelPartitionHelper {
         stop.setStopScope(STOP_SCOPE_LOADING);
         stop.setStopSource(CONFIRMED);
         stop.setCanConfirmCustomer(false);
-        stop.setConfirmCustomerBlockedReason("客户已确认，请前往司机装车页");
+        stop.setConfirmCustomerBlockedReason("请通过编辑路线确认分派");
     }
 
     public static void applyExecutionStopReadOnlyOverlay(NxDisRouteStopEntity stop) {
@@ -318,10 +360,8 @@ public final class DisRouteSandboxReadModelPartitionHelper {
         stop.setMoveBlockedReason("司机已出发，不能改派");
         stop.setCanUnlock(false);
         stop.setUnlockBlockedReason("司机已出发，不能解锁");
-        stop.setCanReturnToSandbox(false);
-        stop.setReturnToSandboxBlockedReason("司机已出发，不能返回沙盘");
         stop.setCanConfirmCustomer(false);
-        stop.setConfirmCustomerBlockedReason("司机已出发，不能返回沙盘");
+        stop.setConfirmCustomerBlockedReason("请通过编辑路线确认分派");
         if (task != null) {
             task.setCanAssign(false);
             task.setAssignBlockedReason("司机已出发，不能改派");
@@ -331,10 +371,8 @@ public final class DisRouteSandboxReadModelPartitionHelper {
             task.setMoveBlockedReason("司机已出发，不能改派");
             task.setCanUnlock(false);
             task.setUnlockBlockedReason("司机已出发，不能解锁");
-            task.setCanReturnToSandbox(false);
-            task.setReturnToSandboxBlockedReason("司机已出发，不能返回沙盘");
             task.setCanConfirmCustomer(false);
-            task.setConfirmCustomerBlockedReason("司机已出发，不能返回沙盘");
+            task.setConfirmCustomerBlockedReason("请通过编辑路线确认分派");
         }
     }
 
@@ -469,11 +507,6 @@ public final class DisRouteSandboxReadModelPartitionHelper {
             return SIMULATED.equals(status) || UNASSIGNED.equals(status);
         }
         return stop.getNxDrsShipmentTaskId() == null;
-    }
-
-    /** @deprecated 使用 {@link DisRouteLoadingGateHelper#isLoadingScopeStop} */
-    private static boolean isLoadingStop(NxDisRouteStopEntity stop) {
-        return isLoadingScopeStop(stop, null);
     }
 
     private static boolean isLoadingScopeStop(NxDisRouteStopEntity stop, NxDisDriverRouteEntity route) {

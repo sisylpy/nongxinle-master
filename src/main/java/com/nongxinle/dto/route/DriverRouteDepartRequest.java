@@ -15,6 +15,8 @@ public class DriverRouteDepartRequest {
     private String routeDate;
     private String batchCode;
     private Integer driverUserId;
+    /** 可选：直接指定司机路线 ID */
+    private Integer driverRouteId;
     /** yyyy-MM-dd HH:mm:ss，空则取服务器当前时间 */
     private String departAt;
     private String remark;

@@ -74,6 +74,8 @@ public class Constant {
     public static final String SuiteIDCUSTOMER = "ww3e0009db138d780f"; //客服的 id
     public static final String SuiteIDRX = "wwe01d611c376073f4";
     public static final String SuiteIDSX = "ww2eeda7e648715801";
+    /** 优果优惠卷 - 提供群优惠（云果团客户群） */
+    public static final String SuiteIDYGT = "ww9bc60d9d0d76c3a0";
     /**
      * 服务商身份的调用凭证
      */
@@ -85,6 +87,7 @@ public class Constant {
     public static final String SuiteSecret = "lPCoj03327th5Froa3vMA2KmsO-T4zJ6WpMF0EzUe-c";
     public static final String SuiteSecretRx = "fYaHS_9zDKidYlu9v4WlsQBmgabwed3V5GPAGwQ832k";
     public static final String SuiteSecretSx = "kEEiUQvIl8zyeH0oQZeK_f97hPo_InVCqsOSMRWboK0";
+    public static final String SuiteSecretYGT = "Exoi11dg38-QM1-CZhgXD9hsO1RO816lVSOMWfCo0R8";
 
     // 回调相关
     /**
@@ -94,6 +97,7 @@ public class Constant {
     public static final String TOKENCUSTOMER= "m7oM";
     public static final String TOKENRX = "tMPGGtq";
     public static final String TOKENSX = "jPk2ATwy5yUfSRHIqr";
+    public static final String TOKENYGT = "xYG9abq";
     public static final String LSCGTOKEN = "pei";
 
 
@@ -104,6 +108,7 @@ public class Constant {
     public static final String EncodingAESKeyCustomer = "UhWNWfrpC4NmpeYQOfDntXSI1iyev3YfCqO7vBT3g8s";
     public static final String EncodingAESKeyRx = "xBDXXGyqKjOSWjG6D671NT4DbuehgeyyEkAYby2mxm6";
     public static final String EncodingAESKeySx = "BaTvU0Mrqm1adPgzitl2AGNroOIH4vXKGDMyqmJMg0o";
+    public static final String EncodingAESKeyYGT = "opfuII64RJU5jDsZJo9hot3N3eNpVPXqyGoXjrBWnC7";
     public static final String LSCGEncodingAESKey = "Oqr4iCoPG8HT3hKCf2e3rrOa9POQeNIWr9G17flhKti";
 
     // 获取第三方应用凭证
@@ -113,6 +118,7 @@ public class Constant {
     public static final  String SUITE_TOKEN = "SUITE_TOKEN";
     public static final  String SUITE_TOKEN_RX = "SUITE_TOKEN_RX";
     public static final  String SUITE_TOKEN_SX = "SUITE_TOKEN_SX";
+    public static final  String SUITE_TOKEN_YGT = "SUITE_TOKEN_YGT";
 
 
 //    daijian
@@ -121,6 +127,10 @@ public class Constant {
     public static final String EncodingAESKeyDj = "P6HTN9ORtVn167v1O3pykoOYOhf1s5Cb4OHCy3trn3s";
     public static final String CORPIDDjTRS = "ww8bb9f761c253a58d";
     public static final String MOBANID = "dk79f21376ebff6142";
+    // jcyc 代开发应用 SuiteId（从 suite_ticket 推送自动填充）
+    public static final String SUITEID_JXCY = "dk65ecd8d65fd5a312";
+    // 动态填充，由 suite_ticket 回调更新
+    public static String DJ_SUITE_TICKET = null;
 
 
     //    daijianDinghuo

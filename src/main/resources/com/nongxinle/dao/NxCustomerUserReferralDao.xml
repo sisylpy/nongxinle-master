@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerUserReferralDao">
+
+    <resultMap id="referralWithInvitee" type="com.nongxinle.entity.NxCustomerUserReferralEntity">
+        <id property="nxCustomerUserReferralId" column="nx_customer_user_referral_id"/>
+        <result property="inviteeUserId" column="invitee_user_id"/>
+        <result property="promotionCodeId" column="promotion_code_id"/>
+        <result property="promotionCodeSnapshot" column="promotion_code_snapshot"/>
+        <result property="sourceOwnerType" column="source_owner_type"/>
+        <result property="sourceOwnerId" column="source_owner_id"/>
+        <result property="promoterId" column="promoter_id"/>
+        <result property="communityId" column="community_id"/>
+        <result property="commerceId" column="commerce_id"/>
+        <result property="shareEntry" column="share_entry"/>
+        <result property="qualificationStatus" column="qualification_status"/>
+        <result property="invalidReason" column="invalid_reason"/>
+        <result property="rewardQualified" column="reward_qualified"/>
+        <result property="rewardRuleId" column="reward_rule_id"/>
+        <result property="campaignId" column="campaign_id"/>
+        <result property="bindTime" column="bind_time"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="subReferralCount" column="sub_referral_count"/>
+        <association property="inviteeUser" javaType="com.nongxinle.entity.NxCustomerUserEntity">
+            <id property="nxCuUserId" column="invitee_nx_CU_user_id"/>
+            <result property="nxCuWxNickName" column="invitee_nx_CU_wx_nick_name"/>
+            <result property="nxCuWxAvatarUrl" column="invitee_nx_CU_wx_avatar_url"/>
+            <result property="nxCuWxPhoneNumber" column="invitee_nx_CU_wx_phone_number"/>
+            <result property="nxCuJoinDate" column="invitee_nx_CU_join_date"/>
+        </association>
+        <association property="viaDirectFriend" javaType="com.nongxinle.entity.NxCustomerUserEntity">
+            <id property="nxCuUserId" column="via_nx_CU_user_id"/>
+            <result property="nxCuWxNickName" column="via_nx_CU_wx_nick_name"/>
+            <result property="nxCuWxAvatarUrl" column="via_nx_CU_wx_avatar_url"/>
+        </association>
+    </resultMap>
+
+    <sql id="qualifiedCustomerUserDirect">
+        source_owner_type = 'CUSTOMER_USER'
+        and source_owner_id = #{sourceOwnerId}
+        and qualification_status = 'QUALIFIED'
+    </sql>
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCustomerUserReferralEntity">
+        select * from nx_customer_user_referral where nx_customer_user_referral_id = #{value}
+    </select>
+
+    <select id="queryByInviteeUserId" resultType="com.nongxinle.entity.NxCustomerUserReferralEntity">
+        select * from nx_customer_user_referral where invitee_user_id = #{value} limit 1
+    </select>
+
+    <insert id="save" parameterType="com.nongxinle.entity.NxCustomerUserReferralEntity"
+            useGeneratedKeys="true" keyProperty="nxCustomerUserReferralId">
+        insert into nx_customer_user_referral
+        (invitee_user_id, promotion_code_id, promotion_code_snapshot, source_owner_type, source_owner_id,
+         promoter_id, community_id, commerce_id, share_entry, qualification_status, invalid_reason,
+         reward_qualified, reward_rule_id, campaign_id, bind_time)
+        values
+        (#{inviteeUserId}, #{promotionCodeId}, #{promotionCodeSnapshot}, #{sourceOwnerType}, #{sourceOwnerId},
+         #{promoterId}, #{communityId}, #{commerceId}, #{shareEntry}, #{qualificationStatus}, #{invalidReason},
+         #{rewardQualified}, #{rewardRuleId}, #{campaignId}, #{bindTime})
+    </insert>
+
+    <select id="countDirectBySourceOwner" resultType="int">
+        select count(*) from nx_customer_user_referral
+        where <include refid="qualifiedCustomerUserDirect"/>
+    </select>
+
+    <select id="countLevel2BySourceOwner" resultType="int">
+        select count(*)
+        from nx_customer_user_referral r2
+        where r2.qualification_status = 'QUALIFIED'
+          and r2.source_owner_type = 'CUSTOMER_USER'
+          and r2.source_owner_id in (
+            select r1.invitee_user_id from nx_customer_user_referral r1
+            where <include refid="qualifiedCustomerUserDirect"/>
+        )
+    </select>
+
+    <select id="countUnreadDirectInDisplayWindow" resultType="int">
+        select count(*)
+        from nx_customer_user_referral r
+        where r.source_owner_type = 'CUSTOMER_USER'
+          and r.source_owner_id = #{sourceOwnerId}
+          and r.qualification_status = 'QUALIFIED'
+          and r.nx_customer_user_referral_id &gt; #{lastReadReferralId}
+          and r.bind_time &gt;= #{displaySince}
+    </select>
+
+    <select id="queryLatestUnreadDirectInWindow" resultMap="referralWithInvitee">
+        select r.*,
+               u.nx_CU_user_id as invitee_nx_CU_user_id,
+               u.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               u.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               u.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               u.nx_CU_join_date as invitee_nx_CU_join_date,
+               0 as sub_referral_count
+        from nx_customer_user_referral r
+        inner join nx_customer_user u on u.nx_CU_user_id = r.invitee_user_id
+        where r.source_owner_type = 'CUSTOMER_USER'
+          and r.source_owner_id = #{sourceOwnerId}
+          and r.qualification_status = 'QUALIFIED'
+          and r.nx_customer_user_referral_id &gt; #{lastReadReferralId}
+          and r.bind_time &gt;= #{displaySince}
+        order by r.bind_time desc, r.nx_customer_user_referral_id desc
+        limit 1
+    </select>
+
+    <select id="queryMaxDirectReferralIdBySourceOwner" resultType="java.lang.Integer">
+        select max(nx_customer_user_referral_id)
+        from nx_customer_user_referral
+        where source_owner_type = 'CUSTOMER_USER'
+          and source_owner_id = #{sourceOwnerId}
+          and qualification_status = 'QUALIFIED'
+    </select>
+
+    <select id="queryDirectList" resultMap="referralWithInvitee">
+        select r.*,
+               u.nx_CU_user_id as invitee_nx_CU_user_id,
+               u.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               u.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               u.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               u.nx_CU_join_date as invitee_nx_CU_join_date,
+               (select count(*) from nx_customer_user_referral r2
+                where r2.source_owner_type = 'CUSTOMER_USER'
+                  and r2.source_owner_id = r.invitee_user_id
+                  and r2.qualification_status = 'QUALIFIED') as sub_referral_count
+        from nx_customer_user_referral r
+        inner join nx_customer_user u on u.nx_CU_user_id = r.invitee_user_id
+        where r.source_owner_type = 'CUSTOMER_USER'
+          and r.source_owner_id = #{sourceOwnerId}
+          and r.qualification_status = 'QUALIFIED'
+        order by r.bind_time desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryLevel2List" resultMap="referralWithInvitee">
+        select r2.*,
+               invitee.nx_CU_user_id as invitee_nx_CU_user_id,
+               invitee.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               invitee.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               invitee.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               invitee.nx_CU_join_date as invitee_nx_CU_join_date,
+               via.nx_CU_user_id as via_nx_CU_user_id,
+               via.nx_CU_wx_nick_name as via_nx_CU_wx_nick_name,
+               via.nx_CU_wx_avatar_url as via_nx_CU_wx_avatar_url
+        from nx_customer_user_referral r1
+        inner join nx_customer_user_referral r2
+            on r2.source_owner_type = 'CUSTOMER_USER'
+           and r2.source_owner_id = r1.invitee_user_id
+           and r2.qualification_status = 'QUALIFIED'
+        inner join nx_customer_user invitee on invitee.nx_CU_user_id = r2.invitee_user_id
+        inner join nx_customer_user via on via.nx_CU_user_id = r1.invitee_user_id
+        where r1.source_owner_type = 'CUSTOMER_USER'
+          and r1.source_owner_id = #{sourceOwnerId}
+          and r1.qualification_status = 'QUALIFIED'
+        order by r2.bind_time desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countByPromoter" resultType="int">
+        select count(*) from nx_customer_user_referral
+        where source_owner_type = 'EXTERNAL_PROMOTER'
+          and source_owner_id = #{promoterId}
+    </select>
+
+    <select id="queryByPromoter" resultMap="referralWithInvitee">
+        select r.*,
+               u.nx_CU_user_id as invitee_nx_CU_user_id,
+               u.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               u.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               u.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               u.nx_CU_join_date as invitee_nx_CU_join_date,
+               0 as sub_referral_count
+        from nx_customer_user_referral r
+        inner join nx_customer_user u on u.nx_CU_user_id = r.invitee_user_id
+        where r.source_owner_type = 'EXTERNAL_PROMOTER'
+          and r.source_owner_id = #{promoterId}
+        order by r.bind_time desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="countQualifiedBySourceOwner" resultType="int">
+        select count(*) from nx_customer_user_referral
+        where source_owner_type = #{sourceOwnerType}
+          and source_owner_id = #{sourceOwnerId}
+          and qualification_status = 'QUALIFIED'
+    </select>
+
+    <select id="countBySourceOwner" resultType="int">
+        select count(*) from nx_customer_user_referral
+        where source_owner_type = #{sourceOwnerType}
+          and source_owner_id = #{sourceOwnerId}
+    </select>
+
+    <select id="queryBySourceOwner" resultMap="referralWithInvitee">
+        select r.*,
+               u.nx_CU_user_id as invitee_nx_CU_user_id,
+               u.nx_CU_wx_nick_name as invitee_nx_CU_wx_nick_name,
+               u.nx_CU_wx_avatar_url as invitee_nx_CU_wx_avatar_url,
+               u.nx_CU_wx_phone_number as invitee_nx_CU_wx_phone_number,
+               u.nx_CU_join_date as invitee_nx_CU_join_date,
+               0 as sub_referral_count
+        from nx_customer_user_referral r
+        inner join nx_customer_user u on u.nx_CU_user_id = r.invitee_user_id
+        where r.source_owner_type = #{sourceOwnerType}
+          and r.source_owner_id = #{sourceOwnerId}
+        order by r.bind_time desc
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <delete id="deleteBySourceOwner">
+        delete from nx_customer_user_referral
+        where source_owner_type = #{sourceOwnerType}
+          and source_owner_id = #{sourceOwnerId}
+    </delete>
+
+    <delete id="deleteByPromoter">
+        delete from nx_customer_user_referral
+        where (source_owner_type = #{sourceOwnerType} and source_owner_id = #{sourceOwnerId})
+           or promoter_id = #{sourceOwnerId}
+    </delete>
+
+</mapper>

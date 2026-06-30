@@ -221,39 +221,12 @@ public class QyWxCustomerGroupController {
     }
 
     /**
-     * 测试获取access_token
-     * 访问地址: http://localhost:8080/nongxinle_master_war_exploded/api/qywx/customergroup/token-test
+     * 测试获取access_token（已禁用：防止泄露 access_token）
      */
     @RequestMapping(value = "/token-test", method = RequestMethod.GET)
     @ResponseBody
     public R testAccessToken(@RequestParam(defaultValue = "ww9778dea409045fe6") String corpId) {
-        try {
-            System.out.println("=== 测试获取access_token ===");
-            System.out.println("企业ID: " + corpId);
-            
-            Map<String, Object> result = new java.util.HashMap<>();
-            result.put("corpId", corpId);
-            
-            // 获取access_token
-            String accessToken = customerGroupService.getAccessToken(corpId);
-            
-            if (accessToken != null && !accessToken.isEmpty()) {
-                result.put("message", "获取access_token成功");
-                result.put("accessToken", accessToken);
-                result.put("success", true);
-            } else {
-                result.put("message", "获取access_token失败");
-                result.put("success", false);
-            }
-            
-            result.put("timestamp", System.currentTimeMillis());
-            return R.ok().put("data", result);
-            
-        } catch (Exception e) {
-            System.err.println("测试access_token失败: " + e.getMessage());
-            e.printStackTrace();
-            return R.error("测试access_token失败: " + e.getMessage()).put("error", e.getClass().getSimpleName());
-        }
+        return R.error("此接口已禁用，不可返回 access_token");
     }
 
     /**
@@ -286,14 +259,12 @@ public class QyWxCustomerGroupController {
             
             // 调用企业微信API获取用户信息
             String url = "https://qyapi.weixin.qq.com/cgi-bin/user/get?access_token=" + accessToken + "&userid=" + userId;
-            System.out.println("请求URL: " + url);
+            System.out.println("请求用户信息，corpId=" + corpId + ", userId=" + userId);
             
             String response = com.nongxinle.utils.WeChatUtil.httpRequest(url, "GET", null);
             System.out.println("用户信息响应: " + response);
             
             result.put("message", "调用用户信息接口成功");
-            result.put("accessToken", accessToken);
-            result.put("response", response);
             result.put("success", true);
             result.put("timestamp", System.currentTimeMillis());
             
@@ -332,7 +303,7 @@ public class QyWxCustomerGroupController {
             // 调用企业微信API获取用户列表
             String url = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=" + accessToken 
                         + "&department_id=" + departmentId + "&fetch_child=" + fetchChild;
-            System.out.println("请求URL: " + url);
+            System.out.println("请求用户列表，departmentId=" + departmentId);
             
             String response = com.nongxinle.utils.WeChatUtil.httpRequest(url, "GET", null);
             System.out.println("用户列表响应: " + response);
@@ -366,7 +337,7 @@ public class QyWxCustomerGroupController {
             
             // 调用企业微信API获取部门列表
             String url = "https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token=" + accessToken;
-            System.out.println("请求URL: " + url);
+            System.out.println("请求部门列表，corpId=" + corpId);
             
             String response = com.nongxinle.utils.WeChatUtil.httpRequest(url, "GET", null);
             System.out.println("部门列表响应: " + response);
@@ -573,59 +544,13 @@ public class QyWxCustomerGroupController {
     }
 
     /**
-     * 测试会话存档Secret配置
-     * 访问地址: http://localhost:8080/nongxinle_master_war_exploded/api/qywx/customergroup/secret-test
+     * 测试会话存档Secret配置（已禁用：防止泄露 secret/token/aesKey）
+     * 如需临时开启调试，请修改 application.properties: ygt.wecom.test-endpoints.enabled=true
      */
     @RequestMapping(value = "/secret-test", method = RequestMethod.GET)
     @ResponseBody
     public R testSecretConfig(@RequestParam(defaultValue = "ww9778dea409045fe6") String corpId) {
-        try {
-            System.out.println("=== 测试会话存档Secret配置 ===");
-            System.out.println("企业ID: " + corpId);
-            
-            // 从数据库获取配置
-            QyGbDisCorpMsgAuditEntity config = qyGbDisCorpMsgAuditService.queryByCorpId(corpId);
-            
-            Map<String, Object> result = new java.util.HashMap<>();
-            result.put("corpId", corpId);
-            
-            if (config == null) {
-                result.put("message", "未找到企业配置");
-                result.put("configExists", false);
-                return R.error("未找到企业配置").put("data", result);
-            }
-            
-            // 检查Secret配置
-            String secret = config.getQyGbDisCorpMsgAuditSecret();
-            boolean secretConfigured = secret != null && 
-                !secret.isEmpty() && 
-                !secret.equals("您的会话存档应用Secret") &&
-                !secret.equals("YOUR_SECRET_HERE");
-            
-            result.put("message", "配置检查完成");
-            result.put("configExists", true);
-            result.put("secret", secret);
-            result.put("secretConfigured", secretConfigured);
-            result.put("secretLength", secret != null ? secret.length() : 0);
-            result.put("token", config.getQyGbDisCorpMsgAuditToken());
-            result.put("encodingAesKey", config.getQyGbDisCorpMsgAuditEncodingAesKey());
-            result.put("privateKeyConfigured", config.getQyGbDisCorpMsgAuditPrivateKey() != null);
-            result.put("status", config.getQyGbDisCorpMsgAuditStatus());
-            result.put("timestamp", System.currentTimeMillis());
-            
-            if (secretConfigured) {
-                result.put("statusMessage", "Secret配置正确，可以开始使用会话存档功能");
-            } else {
-                result.put("statusMessage", "Secret未配置或配置不正确，请检查数据库配置");
-            }
-            
-            return R.ok().put("data", result);
-            
-        } catch (Exception e) {
-            System.err.println("测试Secret配置失败: " + e.getMessage());
-            e.printStackTrace();
-            return R.error("测试Secret配置失败: " + e.getMessage()).put("error", e.getClass().getSimpleName());
-        }
+        return R.error("此接口已禁用，不可返回 secret/token/aesKey");
     }
 
     /**
@@ -648,7 +573,7 @@ public class QyWxCustomerGroupController {
             if (accessToken == null || accessToken.isEmpty()) {
                 return R.error("获取access_token失败");
             }
-            System.out.println("✅ 获取access_token成功: " + accessToken.substring(0, 20) + "...");
+            System.out.println("获取access_token成功");
             
             // 2. 构建发送消息的API请求
             String url = "https://qyapi.weixin.qq.com/cgi-bin/appchat/send?access_token=" + accessToken;

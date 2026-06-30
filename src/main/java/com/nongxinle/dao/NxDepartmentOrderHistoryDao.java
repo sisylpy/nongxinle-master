@@ -12,11 +12,15 @@ import com.nongxinle.entity.NxDepartmentOrderHistoryEntity;
 import com.nongxinle.entity.NxDistributerFatherGoodsEntity;
 import com.nongxinle.entity.NxDistributerGoodsEntity;
 
+import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 import java.util.Map;
 
 
 public interface NxDepartmentOrderHistoryDao extends BaseDao<NxDepartmentOrderHistoryEntity> {
+
+    List<NxDepartmentOrderHistoryEntity> queryByOrderIds(@Param("orderIds") List<Integer> orderIds);
 
     List<NxDepartmentOrderHistoryEntity> queryDisHistoryOrdersByParams(Map<String, Object> map);
 

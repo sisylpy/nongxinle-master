@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nongxinle.dao.NxCustomerReferralRewardRuleDao">
+
+    <select id="queryObject" resultType="com.nongxinle.entity.NxCustomerReferralRewardRuleEntity">
+        select * from nx_customer_referral_reward_rule where nx_customer_referral_reward_rule_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.nongxinle.entity.NxCustomerReferralRewardRuleEntity">
+        select * from nx_customer_referral_reward_rule
+        <where>
+            <if test="communityId != null">
+                and community_id = #{communityId}
+            </if>
+            <if test="ruleCode != null">
+                and rule_code = #{ruleCode}
+            </if>
+            <if test="rewardTarget != null">
+                and reward_target = #{rewardTarget}
+            </if>
+            <if test="enabled != null">
+                and enabled = #{enabled}
+            </if>
+        </where>
+        order by priority desc, nx_customer_referral_reward_rule_id desc
+    </select>
+
+    <select id="queryActiveRuleMatches" resultType="com.nongxinle.entity.NxCustomerReferralRewardRuleEntity">
+        select * from nx_customer_referral_reward_rule
+        where community_id = #{communityId}
+          and rule_code = #{ruleCode}
+          and reward_target = #{rewardTarget}
+          and enabled = 1
+          and (rule_status is null or rule_status = 1)
+          and (trigger_type is null or trigger_type = #{triggerType})
+          <if test="beneficiaryType != null">
+          and (beneficiary_type is null or beneficiary_type = #{beneficiaryType})
+          </if>
+          and (effective_start_at is null or effective_start_at &lt;= #{now})
+          and (effective_end_at is null or effective_end_at &gt;= #{now})
+        order by priority desc, nx_customer_referral_reward_rule_id asc
+    </select>
+
+    <select id="countOverlappingRule" resultType="int">
+        select count(*) from nx_customer_referral_reward_rule
+        where community_id = #{communityId}
+          and rule_code = #{ruleCode}
+          and reward_target = #{rewardTarget}
+          and trigger_type = #{triggerType}
+          and beneficiary_type = #{beneficiaryType}
+          and enabled = 1
+          and (rule_status is null or rule_status = 1)
+          <if test="excludeRuleId != null">
+              and nx_customer_referral_reward_rule_id != #{excludeRuleId}
+          </if>
+          and (
+            (effective_start_at is null and effective_end_at is null)
+            or (#{effectiveStartAt} is null and #{effectiveEndAt} is null)
+            or (
+              (effective_start_at is null or effective_start_at &lt;= IFNULL(#{effectiveEndAt}, '9999-12-31 23:59:59'))
+              and (effective_end_at is null or effective_end_at &gt;= IFNULL(#{effectiveStartAt}, '1970-01-01 00:00:00'))
+            )
+          )
+    </select>
+
+</mapper>
