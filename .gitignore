@@ -79,3 +79,4 @@ src/main/webapp/numberRecord/
 *.sql
 out/
 stockImagesMac/
+.workbuddy/
