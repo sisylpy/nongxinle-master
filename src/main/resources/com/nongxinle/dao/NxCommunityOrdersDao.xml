@@ -456,6 +456,20 @@
     <select id="queryDeliveryOrders" resultType="com.nongxinle.entity.NxCommunityOrdersEntity">
         select * from nx_community_orders where nx_CO_delivery_user_id = #{deliveryUserId} and nx_CO_status = #{status}
     </select>
+
+    <update id="updateDeliveryUserIdByOrderId">
+        update nx_community_orders
+        set nx_CO_delivery_user_id = #{deliveryUserId}
+        where nx_community_orders_id = #{orderId}
+    </update>
+
+    <update id="clearDeliveryUserIdByStopId">
+        update nx_community_orders o
+        inner join nx_community_dispatch_stop_item i
+            on i.nx_cdsi_community_order_id = o.nx_community_orders_id
+        set o.nx_CO_delivery_user_id = null
+        where i.nx_cdsi_stop_id = #{value}
+    </update>
 	<select id="queryOrderByTradeNo" resultType="com.nongxinle.entity.NxCommunityOrdersEntity">
 		select * from nx_community_orders as nco where nco.nx_CO_wx_out_trade_no = #{ordersSn}
 	</select>

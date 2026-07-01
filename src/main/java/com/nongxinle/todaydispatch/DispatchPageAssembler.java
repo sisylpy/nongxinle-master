@@ -147,7 +147,7 @@ public class DispatchPageAssembler {
         header.put("scheduleBannerLine", buildScheduleBanner(result));
         header.put("operationHint", loadingPage
                 ? "点击站点可调整时间窗"
-                : "点击站点可调整时间窗；确认分派后进入装车");
+                : "点击站点可调整时间窗；编辑路线确认后进入装车");
         header.put("statusLabel", loadingPage ? "装车中" : "分派中");
         header.put("statusTone", "info");
         header.put("heroImageType", DisRouteSandboxPageHeroImage.SANDBOX);

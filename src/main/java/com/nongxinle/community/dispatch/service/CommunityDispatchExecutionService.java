@@ -3,6 +3,7 @@ package com.nongxinle.community.dispatch.service;
 import com.nongxinle.community.dispatch.constants.CommunityDispatchConstants;
 import com.nongxinle.community.dispatch.dto.CommunityDeliveryCompleteRequest;
 import com.nongxinle.community.dispatch.dto.CommunityDriverDepartRequest;
+import com.nongxinle.dispatch.adapter.community.CommunityDispatchPageViewAdapter;
 import com.nongxinle.dao.*;
 import com.nongxinle.entity.*;
 import com.nongxinle.utils.NxCommunityTypeUtils;
@@ -83,7 +84,8 @@ public class CommunityDispatchExecutionService {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("pageViewModel", communityDispatchPageAssembler.assemble(
                 communityDispatchComputeService.computeDriverDelivery(
-                        route.getNxCddrCommunityId(), routeDate, driverUserId)));
+                        route.getNxCddrCommunityId(), routeDate, driverUserId),
+                CommunityDispatchPageViewAdapter.AdapterOptions.driverDelivery()));
         return data;
     }
 
@@ -163,8 +165,8 @@ public class CommunityDispatchExecutionService {
 
         int pending = nxCommunityDispatchStopDao.countActiveByDriverRouteId(route.getNxCommunityDispatchDriverRouteId());
         if (pending == 0) {
-            route.setNxCddrRouteStatus(CommunityDispatchConstants.ROUTE_STATUS_COMPLETED);
-            nxCommunityDispatchDriverRouteDao.update(route);
+            communityDispatchComputeService.releaseRouteToIdleIfFullyDelivered(
+                    route.getNxCommunityDispatchDriverRouteId());
         }
 
         String routeDate = request != null && request.getRouteDate() != null
@@ -172,7 +174,8 @@ public class CommunityDispatchExecutionService {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("pageViewModel", communityDispatchPageAssembler.assemble(
                 communityDispatchComputeService.computeDriverDelivery(
-                        stop.getNxCdsCommunityId(), routeDate, driverUserId)));
+                        stop.getNxCdsCommunityId(), routeDate, driverUserId),
+                CommunityDispatchPageViewAdapter.AdapterOptions.driverDelivery()));
         return data;
     }
 

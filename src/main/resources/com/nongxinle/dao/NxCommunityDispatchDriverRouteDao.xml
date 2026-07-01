@@ -36,4 +36,13 @@
         </set>
         where nx_community_dispatch_driver_route_id = #{nxCommunityDispatchDriverRouteId}
     </update>
+
+    <update id="clearLoadingGate">
+        update nx_community_dispatch_driver_route
+        set nx_cddr_loading_entered_at = null,
+            nx_cddr_actual_depart_at = null,
+            nx_cddr_route_status = #{routeStatus},
+            nx_cddr_stop_count = #{stopCount}
+        where nx_community_dispatch_driver_route_id = #{routeId}
+    </update>
 </mapper>

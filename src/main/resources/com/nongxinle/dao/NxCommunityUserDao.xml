@@ -21,6 +21,13 @@
 		select * from nx_community_user where nx_COU_wx_open_id = #{openId} and nx_COU_role_id = #{roleId}
 	</select>
 
+    <select id="queryDriverByOpenId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+        select * from nx_community_user
+        where nx_COU_wx_open_id = #{openId}
+          and (nx_COU_admin = 5 or nx_COU_role_id = 5)
+        limit 1
+    </select>
+
 	<resultMap id="commerce" type="NxECommerceEntity">
 		<id property="nxECommerceId" column="nx_e_commerce_id"/>
 		<result property="nxECommerceGbDisId" column="nx_e_commerce_gb_dis_id"/>
@@ -114,6 +121,13 @@
     <select id="getAdmainUserByComId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
 		select * from nx_community_user where nx_COU_community_id = #{commId} and nx_COU_admin = 1
 	</select>
+
+    <select id="getDriverUsersByComId" resultType="com.nongxinle.entity.NxCommunityUserEntity">
+        select * from nx_community_user
+        where nx_COU_community_id = #{commId}
+          and (nx_COU_admin = 5 or nx_COU_role_id = 5)
+        order by nx_community_user_id
+    </select>
     <select id="queryUserByPhone" resultType="com.nongxinle.entity.NxCommunityUserEntity">
 		select * from nx_community_user where nx_COU_wx_phone = #{nxCouWxPhone}
 	</select>

@@ -74,17 +74,6 @@ public class CommunityDispatchController {
         }
     }
 
-    @RequestMapping(value = "/sandbox/stops/{stopId}/return-to-sandbox", method = RequestMethod.POST)
-    @ResponseBody
-    public R returnSandboxStop(@PathVariable Integer stopId,
-                               @RequestBody(required = false) CommunitySandboxStopReturnRequest request) {
-        try {
-            return R.ok().put("data", communityDispatchFacade.returnStopToSandbox(stopId, request));
-        } catch (Exception e) {
-            return R.error(formatError(e));
-        }
-    }
-
     @RequestMapping(value = "/driver-terminal/loading/today", method = RequestMethod.GET)
     @ResponseBody
     public R getDriverTerminalLoadingToday(@RequestParam Integer communityId,
@@ -106,6 +95,28 @@ public class CommunityDispatchController {
         try {
             return R.ok().put("data", communityDispatchFacade.buildDriverDeliveryPage(
                     communityId, normalizeRouteDate(routeDate), driverUserId));
+        } catch (Exception e) {
+            return R.error(formatError(e));
+        }
+    }
+
+    @RequestMapping(value = "/drivers/{driverUserId}/duty/on", method = RequestMethod.POST)
+    @ResponseBody
+    public R driverCheckIn(@PathVariable Integer driverUserId,
+                           @RequestBody CommunityDriverDutyRequest request) {
+        try {
+            return R.ok().put("data", communityDispatchFacade.driverCheckIn(driverUserId, request));
+        } catch (Exception e) {
+            return R.error(formatError(e));
+        }
+    }
+
+    @RequestMapping(value = "/drivers/{driverUserId}/duty/off", method = RequestMethod.POST)
+    @ResponseBody
+    public R driverCheckOut(@PathVariable Integer driverUserId,
+                            @RequestBody CommunityDriverDutyRequest request) {
+        try {
+            return R.ok().put("data", communityDispatchFacade.driverCheckOut(driverUserId, request));
         } catch (Exception e) {
             return R.error(formatError(e));
         }
@@ -134,6 +145,56 @@ public class CommunityDispatchController {
                                      @RequestBody(required = false) CommunityDeliveryCompleteRequest request) {
         try {
             return R.ok().put("data", communityDispatchFacade.completeStopNow(stopId, request));
+        } catch (Exception e) {
+            return R.error(formatError(e));
+        }
+    }
+
+    @RequestMapping(value = "/loading/stops/{stopId}/return-to-sandbox", method = RequestMethod.POST)
+    @ResponseBody
+    public R returnLoadingStopToSandbox(@PathVariable Integer stopId,
+                                        @RequestBody CommunityLoadingStopRemoveRequest request) {
+        try {
+            return R.ok().put("data", communityDispatchFacade.returnLoadingStopToSandbox(stopId, request));
+        } catch (Exception e) {
+            return R.error(formatError(e));
+        }
+    }
+
+    @RequestMapping(value = "/sandbox/driver-route-edit/page", method = RequestMethod.POST)
+    @ResponseBody
+    public R buildDriverRouteEditPage(@RequestBody CommunityDriverRouteEditPageRequest request) {
+        try {
+            if (request != null && (request.getRouteDate() == null || request.getRouteDate().trim().isEmpty())) {
+                request.setRouteDate(normalizeRouteDate(null));
+            }
+            return R.ok().put("data", communityDispatchFacade.buildDriverRouteEditPage(request));
+        } catch (Exception e) {
+            return R.error(formatError(e));
+        }
+    }
+
+    @RequestMapping(value = "/sandbox/driver-route-edit/preview", method = RequestMethod.POST)
+    @ResponseBody
+    public R previewDriverRouteEdit(@RequestBody CommunityDriverRouteEditPageRequest request) {
+        try {
+            if (request != null && (request.getRouteDate() == null || request.getRouteDate().trim().isEmpty())) {
+                request.setRouteDate(normalizeRouteDate(null));
+            }
+            return R.ok().put("data", communityDispatchFacade.previewDriverRouteEdit(request));
+        } catch (Exception e) {
+            return R.error(formatError(e));
+        }
+    }
+
+    @RequestMapping(value = "/sandbox/driver-route-edit/confirm", method = RequestMethod.POST)
+    @ResponseBody
+    public R confirmDriverRouteEdit(@RequestBody CommunityDriverRouteEditConfirmRequest request) {
+        try {
+            if (request != null && (request.getRouteDate() == null || request.getRouteDate().trim().isEmpty())) {
+                request.setRouteDate(normalizeRouteDate(null));
+            }
+            return R.ok().put("data", communityDispatchFacade.confirmDriverRouteEdit(request));
         } catch (Exception e) {
             return R.error(formatError(e));
         }

@@ -28,4 +28,14 @@ public class CommunityDispatchSandboxResult {
     private Map<Integer, List<NxCommunityOrdersEntity>> simulatedStopGroups = new LinkedHashMap<>();
     /** addressId -> suggested driverUserId，仅展示 */
     private Map<Integer, Integer> simulatedDriverByAddress = new LinkedHashMap<>();
+    /** 分派中页合并视图：已确认站 + 本轮模拟站，按司机分组 */
+    private List<NxCommunityDispatchDriverRouteEntity> suggestedRoutes = new ArrayList<>();
+    /** 真正无法模拟分派的客户（无司机 / 无建议司机） */
+    private Map<Integer, List<NxCommunityOrdersEntity>> unassignedStopGroups = new LinkedHashMap<>();
+
+    /** 分派中页展示用路线；装车/配送页仍读 confirmedRoutes。 */
+    public List<NxCommunityDispatchDriverRouteEntity> resolveSandboxRoutes() {
+        return suggestedRoutes != null
+                ? suggestedRoutes : new ArrayList<NxCommunityDispatchDriverRouteEntity>();
+    }
 }

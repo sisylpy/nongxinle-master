@@ -1,9 +1,10 @@
 package com.nongxinle.community.dispatch.service;
 
 import com.nongxinle.community.dispatch.constants.CommunityDispatchConstants;
+import com.nongxinle.community.dispatch.dto.CommunityLoadingStopRemoveRequest;
 import com.nongxinle.community.dispatch.dto.CommunitySandboxStopConfirmRequest;
-import com.nongxinle.community.dispatch.dto.CommunitySandboxStopReturnRequest;
 import com.nongxinle.dao.*;
+import com.nongxinle.dispatch.adapter.community.CommunityDispatchOrderServiceTimeHelper;
 import com.nongxinle.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class CommunityDispatchConfirmService {
     private NxCommunityDao nxCommunityDao;
     @Autowired
     private NxCommunityUserDao nxCommunityUserDao;
+    @Autowired
+    private CommunityDriverDutyService communityDriverDutyService;
 
     @Transactional
     public Map<String, Object> confirmStop(CommunitySandboxStopConfirmRequest request) {
@@ -55,9 +58,14 @@ public class CommunityDispatchConfirmService {
         }
 
         NxCommunityUserEntity driver = nxCommunityUserDao.queryObject(request.getDriverUserId());
-        if (driver == null || !Integer.valueOf(CommunityDispatchConstants.DRIVER_ROLE_ID).equals(driver.getNxCouRoleId())) {
+        if (driver == null || !CommunityDispatchConstants.isCommunityDriverUser(driver)) {
             throw new IllegalArgumentException("司机无效");
         }
+        communityDriverDutyService.requireDriverOnDuty(
+                request.getCommunityId(),
+                request.getDriverUserId(),
+                routeDate,
+                driver.getNxCouWxNickName());
 
         for (NxCommunityOrdersEntity order : selectedOrders) {
             assertOrderCanConfirm(order.getNxCommunityOrdersId());
@@ -85,7 +93,8 @@ public class CommunityDispatchConfirmService {
         stop.setNxCdsStopStatus(CommunityDispatchConstants.STOP_STATUS_LOADING);
         stop.setNxCdsRouteSeq(nextSeq);
         stop.setNxCdsServiceDate(firstOrder.getNxCoServiceDate());
-        stop.setNxCdsServiceTime(firstOrder.getNxCoServiceTime());
+        stop.setNxCdsServiceTime(
+                CommunityDispatchOrderServiceTimeHelper.resolveServiceTimeRaw(firstOrder));
         stop.setNxCdsAssignedDriverUserId(request.getDriverUserId());
         stop.setNxCdsOrderCount(selectedOrders.size());
         stop.setNxCdsConfirmedAt(now);
@@ -101,6 +110,7 @@ public class CommunityDispatchConfirmService {
 
             bindOrderDispatch(order, request.getCommunityId(), stop.getNxCommunityDispatchStopId(),
                     request.getDriverUserId(), routeDate);
+            bindOrderDeliveryUser(order.getNxCommunityOrdersId(), request.getDriverUserId());
         }
 
         route.setNxCddrStopCount(nxCommunityDispatchStopDao.countActiveByDriverRouteId(
@@ -110,40 +120,116 @@ public class CommunityDispatchConfirmService {
         return rebuildConfirmResponse(request.getCommunityId(), routeDate);
     }
 
+    /** 路线编辑移除站点：取消 stop、订单回到 eligible 池（无独立「退回沙箱」入口）。 */
     @Transactional
-    public Map<String, Object> returnStopToSandbox(Integer stopId, CommunitySandboxStopReturnRequest request) {
+    public void removeStopFromRoute(Integer stopId) {
+        NxCommunityDispatchStopEntity stop = requireRemovableStop(stopId);
+        cancelStopAndReleaseOrders(stop);
+    }
+
+    /**
+     * 装车中移除单店：立即取消站点并释放订单到待分派池；路线无站时撤销装车门禁。
+     */
+    @Transactional
+    public Map<String, Object> returnStopToSandbox(Integer stopId, CommunityLoadingStopRemoveRequest request) {
+        if (request == null || request.getCommunityId() == null) {
+            throw new IllegalArgumentException("communityId 不能为空");
+        }
+        NxCommunityDispatchStopEntity stop = requireRemovableStop(stopId);
+        if (!request.getCommunityId().equals(stop.getNxCdsCommunityId())) {
+            throw new IllegalArgumentException("站点不属于该社区");
+        }
+        Integer driverRouteId = stop.getNxCdsDriverRouteId();
+        cancelStopAndReleaseOrders(stop);
+
+        boolean exitedLoading = false;
+        if (driverRouteId != null) {
+            NxCommunityDispatchDriverRouteEntity route =
+                    nxCommunityDispatchDriverRouteDao.queryObject(driverRouteId);
+            if (route != null) {
+                int activeCount = nxCommunityDispatchStopDao.countActiveByDriverRouteId(
+                        route.getNxCommunityDispatchDriverRouteId());
+                exitedLoading = activeCount <= 0
+                        || CommunityDispatchConstants.ROUTE_STATUS_IDLE.equals(route.getNxCddrRouteStatus());
+            }
+        }
+
+        String routeDate = normalizeRouteDate(request.getRouteDate());
+        Map<String, Object> data = new LinkedHashMap<String, Object>();
+        data.put("deliveryStopId", stopId);
+        data.put("exitedLoading", exitedLoading);
+        if (Boolean.TRUE.equals(request.getSuppressTodayResponse())) {
+            return data;
+        }
+        data.put("pageViewModel", communityDispatchPageAssembler.assemble(
+                communityDispatchComputeService.computeLoading(request.getCommunityId(), routeDate)));
+        return data;
+    }
+
+    private NxCommunityDispatchStopEntity requireRemovableStop(Integer stopId) {
+        if (stopId == null) {
+            throw new IllegalArgumentException("stopId 不能为空");
+        }
         NxCommunityDispatchStopEntity stop = nxCommunityDispatchStopDao.queryObject(stopId);
         if (stop == null) {
             throw new IllegalArgumentException("站点不存在");
         }
         if (CommunityDispatchConstants.STOP_STATUS_DELIVERED.equals(stop.getNxCdsStopStatus())) {
-            throw new IllegalArgumentException("已送达站点不能退回沙箱");
+            throw new IllegalArgumentException("已送达站点不能移除");
         }
+        if (CommunityDispatchConstants.STOP_STATUS_IN_DELIVERY.equals(stop.getNxCdsStopStatus())) {
+            throw new IllegalArgumentException("配送中站点不能移除");
+        }
+        if (stop.getNxCdsDriverRouteId() != null) {
+            NxCommunityDispatchDriverRouteEntity route = nxCommunityDispatchDriverRouteDao.queryObject(
+                    stop.getNxCdsDriverRouteId());
+            if (route != null) {
+                if (CommunityDispatchConstants.ROUTE_STATUS_IN_DELIVERY.equals(route.getNxCddrRouteStatus())
+                        || route.getNxCddrActualDepartAt() != null) {
+                    throw new IllegalArgumentException("配送中路线不能移除门店");
+                }
+            }
+        }
+        return stop;
+    }
+
+    private void cancelStopAndReleaseOrders(NxCommunityDispatchStopEntity stop) {
+        Integer stopId = stop.getNxCommunityDispatchStopId();
         stop.setNxCdsStopStatus(CommunityDispatchConstants.STOP_STATUS_CANCELLED);
         nxCommunityDispatchStopDao.update(stop);
 
+        nxCommunityOrdersDao.clearDeliveryUserIdByStopId(stopId);
         nxCommunityOrderDispatchDao.resetToUnassignedByStopId(stopId);
 
         nxCommunityDispatchStopItemDao.deleteByStopId(stopId);
 
         if (stop.getNxCdsDriverRouteId() != null) {
-            NxCommunityDispatchDriverRouteEntity route = nxCommunityDispatchDriverRouteDao.queryObject(stop.getNxCdsDriverRouteId());
+            NxCommunityDispatchDriverRouteEntity route = nxCommunityDispatchDriverRouteDao.queryObject(
+                    stop.getNxCdsDriverRouteId());
             if (route != null) {
-                int activeCount = nxCommunityDispatchStopDao.countActiveByDriverRouteId(route.getNxCommunityDispatchDriverRouteId());
-                route.setNxCddrStopCount(activeCount);
+                int activeCount = nxCommunityDispatchStopDao.countActiveByDriverRouteId(
+                        route.getNxCommunityDispatchDriverRouteId());
                 if (activeCount == 0) {
-                    route.setNxCddrRouteStatus(CommunityDispatchConstants.ROUTE_STATUS_IDLE);
-                    route.setNxCddrLoadingEnteredAt(null);
+                    clearLoadingGate(route.getNxCommunityDispatchDriverRouteId());
+                } else {
+                    NxCommunityDispatchDriverRouteEntity update = new NxCommunityDispatchDriverRouteEntity();
+                    update.setNxCommunityDispatchDriverRouteId(route.getNxCommunityDispatchDriverRouteId());
+                    update.setNxCddrStopCount(activeCount);
+                    nxCommunityDispatchDriverRouteDao.update(update);
                 }
-                nxCommunityDispatchDriverRouteDao.update(route);
             }
         }
+    }
 
-        String routeDate = request != null && request.getRouteDate() != null
-                ? request.getRouteDate() : formatWhatDay(0);
-        Integer communityId = request != null && request.getCommunityId() != null
-                ? request.getCommunityId() : stop.getNxCdsCommunityId();
-        return rebuildReturnToSandboxResponse(communityId, routeDate);
+    private void clearLoadingGate(Integer driverRouteId) {
+        if (driverRouteId == null) {
+            return;
+        }
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("routeId", driverRouteId);
+        map.put("routeStatus", CommunityDispatchConstants.ROUTE_STATUS_IDLE);
+        map.put("stopCount", 0);
+        nxCommunityDispatchDriverRouteDao.clearLoadingGate(map);
     }
 
     private Map<String, Object> rebuildConfirmResponse(Integer communityId, String routeDate) {
@@ -153,19 +239,6 @@ public class CommunityDispatchConfirmService {
         data.put("enteredLoading", true);
         data.put("nextPage", CommunityDispatchConstants.PAGE_MODE_LOADING);
         return data;
-    }
-
-    private Map<String, Object> rebuildReturnToSandboxResponse(Integer communityId, String routeDate) {
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("pageViewModel", communityDispatchPageAssembler.assemble(
-                communityDispatchComputeService.computeSandbox(communityId, routeDate)));
-        data.put("enteredLoading", false);
-        data.put("nextPage", CommunityDispatchConstants.PAGE_MODE_SANDBOX);
-        return data;
-    }
-
-    private Map<String, Object> rebuildSandboxResponse(Integer communityId, String routeDate) {
-        return rebuildConfirmResponse(communityId, routeDate);
     }
 
     private NxCommunityDispatchPlanEntity resolveOrCreatePlan(Integer communityId, String routeDate) {
@@ -320,6 +393,16 @@ public class CommunityDispatchConfirmService {
         existing.setNxCodAssignedDriverUserId(driverUserId);
         existing.setNxCodRouteDate(routeDate);
         nxCommunityOrderDispatchDao.update(existing);
+    }
+
+    private void bindOrderDeliveryUser(Integer orderId, Integer driverUserId) {
+        if (orderId == null || driverUserId == null) {
+            return;
+        }
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("orderId", orderId);
+        map.put("deliveryUserId", driverUserId);
+        nxCommunityOrdersDao.updateDeliveryUserIdByOrderId(map);
     }
 
     private String buildCustomerLabel(NxCommunityOrdersEntity order) {

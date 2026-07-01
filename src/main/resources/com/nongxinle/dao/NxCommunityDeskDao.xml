@@ -60,6 +60,8 @@
 		<result property="nxCosCommunityGoodsFatherId" column="nx_COS_community_goods_father_id"/>
 		<result property="nxCosCommunityGoodsId" column="nx_COS_community_goods_id"/>
 		<result property="nxCosPurchaseUserId" column="nx_COS_purchase_usr_id"/>
+		<result property="nxCosOrdersId" column="nx_COS_orders_id"/>
+		<result property="nxCoWeighNumber" column="nx_CO_weigh_number"/>
 		<association property="customerUserEntity" resultMap="com.nongxinle.dao.NxCommunitySplicingOrdersDao.customerUser"/>
 	</resultMap>
 

@@ -30,12 +30,16 @@ public interface NxCommunityUserService {
 
     NxCommunityUserEntity queryComUserByOpenId(Map<String, Object> map);
 
+    NxCommunityUserEntity queryDriverByOpenId(String openId);
+
 	NxCommunityUserEntity queryComUserInfo(Map<String, Object> map);
 
     List<NxCommunityUserEntity> queryCommunityRoleUsers(Map<String, Object> map);
 
 
     List<NxCommunityUserEntity> getAdmainUserByComId(Integer comId);
+
+    List<NxCommunityUserEntity> getDriverUsersByComId(Integer comId);
 
     NxCommunityUserEntity queryUserByPhone(String nxCouWxPhone);
 

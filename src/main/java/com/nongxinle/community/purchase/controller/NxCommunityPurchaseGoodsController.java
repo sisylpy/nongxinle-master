@@ -52,13 +52,16 @@ public class NxCommunityPurchaseGoodsController {
 	 */
 	@RequestMapping(value = "/commGetTypePrepareOutCata", method = RequestMethod.POST)
 	@ResponseBody
-	public R commGetTypePrepareOutCata(Integer commId, Integer equalStatus) {
-		logger.info("[commGetTypePrepareOutCata] 开始查询，参数: commId={}, equalStatus={}", commId, equalStatus);
+	public R commGetTypePrepareOutCata(Integer commId, Integer equalStatus, Integer subCosStatus) {
+		logger.info("[commGetTypePrepareOutCata] 开始查询，参数: commId={}, equalStatus={}, subCosStatus={}", commId, equalStatus, subCosStatus);
 		try {
 			Map<String, Object> map = new HashMap<>();
 			map.put("commId", commId);
 			if (equalStatus != null) {
 				map.put("equalStatus", equalStatus);
+			}
+			if (subCosStatus != null) {
+				map.put("subCosStatus", subCosStatus);
 			}
 			logger.info("[commGetTypePrepareOutCata] 查询条件 map: {}", map);
 
@@ -81,15 +84,19 @@ public class NxCommunityPurchaseGoodsController {
 	@ResponseBody
 	public R commGetTypePreparePurGoodsPage(Integer commId,
 											Integer equalStatus,
+											Integer subCosStatus,
 											Integer page,
 											Integer limit) {
-		logger.info("[commGetTypePreparePurGoodsPage] 开始查询，参数: commId={}, equalStatus={}, dayuStatus={}, page={}, limit={}",
-				commId, equalStatus, page, limit);
+		logger.info("[commGetTypePreparePurGoodsPage] 开始查询，参数: commId={}, equalStatus={}, subCosStatus={}, page={}, limit={}",
+				commId, equalStatus, subCosStatus, page, limit);
 
 		Map<String, Object> map = new HashMap<>();
 		map.put("commId", commId);
 		if (equalStatus != null) {
 			map.put("equalStatus", equalStatus);
+		}
+		if (subCosStatus != null) {
+			map.put("subCosStatus", subCosStatus);
 		}
 
 		if (page != null && limit != null) {
@@ -107,6 +114,9 @@ public class NxCommunityPurchaseGoodsController {
 		mapCount.put("commId", commId);
 		if (equalStatus != null) {
 			mapCount.put("equalStatus", equalStatus);
+		}
+		if (subCosStatus != null) {
+			mapCount.put("subCosStatus", subCosStatus);
 		}
 
 		Integer total = nxComPurchaseGoodsService.queryCommPurchaseGoodsCount(mapCount);

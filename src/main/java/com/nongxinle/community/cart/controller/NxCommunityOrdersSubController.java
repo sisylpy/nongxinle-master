@@ -224,16 +224,23 @@ public class NxCommunityOrdersSubController {
         nxCommunityOrdersSubService.update(subEntity);
 
         Integer nxCosOrdersId = subEntity.getNxCosOrdersId();
-        Map<String, Object> map = new HashMap<>();
-        map.put("orderId", nxCosOrdersId);
-        map.put("status", 1);
-        System.out.println("orderid=" + subEntity.getNxCommunityOrdersSubId() + "ordsusssnummmmmmmmmmm" + map);
-        List<NxCommunityOrdersSubEntity> subEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
-        System.out.println("sisisisiisisisisiziziz" + subEntities.size());
-        if (subEntities.size() == 0) {
+        if (nxCosOrdersId != null) {
             NxCommunityOrdersEntity nxCommunityOrdersEntity = nxCommunityOrdersService.queryObject(nxCosOrdersId);
-            nxCommunityOrdersEntity.setNxCoStatus(3);
-            nxCommunityOrdersService.update(nxCommunityOrdersEntity);
+            if (nxCommunityOrdersEntity != null) {
+                Integer finished = nxCommunityOrdersEntity.getNxCoSubFinished();
+                if (finished == null) {
+                    finished = 0;
+                }
+                nxCommunityOrdersEntity.setNxCoSubFinished(finished + 1);
+                Map<String, Object> map = new HashMap<>();
+                map.put("orderId", nxCosOrdersId);
+                map.put("status", 1);
+                List<NxCommunityOrdersSubEntity> subEntities = nxCommunityOrdersSubService.querySubOrdersByParams(map);
+                if (subEntities.size() == 0) {
+                    nxCommunityOrdersEntity.setNxCoStatus(3);
+                }
+                nxCommunityOrdersService.update(nxCommunityOrdersEntity);
+            }
         }
         return R.ok();
     }

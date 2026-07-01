@@ -92,6 +92,16 @@ public class NxCommunityUserServiceImpl implements NxCommunityUserService {
     }
 
     @Override
+    public List<NxCommunityUserEntity> getDriverUsersByComId(Integer comId) {
+        return nxCommunityUserDao.getDriverUsersByComId(comId);
+    }
+
+    @Override
+    public NxCommunityUserEntity queryDriverByOpenId(String openId) {
+        return nxCommunityUserDao.queryDriverByOpenId(openId);
+    }
+
+    @Override
     public NxCommunityUserEntity queryUserByPhone(String nxCouWxPhone) {
 
 		return nxCommunityUserDao.queryUserByPhone(nxCouWxPhone);

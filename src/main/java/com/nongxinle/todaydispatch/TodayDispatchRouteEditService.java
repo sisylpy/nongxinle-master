@@ -116,7 +116,7 @@ public class TodayDispatchRouteEditService {
         vm.put("actions", buildActions(route, blocking, loadingPage));
         vm.put("pageTitle", manualMode ? "调整送货顺序" : "编辑司机路线");
         vm.put("manualDispatchMode", manualMode);
-        vm.put("removeStopMode", loadingPage ? "RETURN_TO_SANDBOX" : "LOCAL");
+        vm.put("removeStopMode", loadingPage ? "REMOTE" : "LOCAL");
         putIfNotNull(vm, "routeDate", dispatchResult.getRouteDate());
         putIfNotNull(vm, "batchCode", dispatchResult.getBatchCode());
         return vm;
@@ -170,7 +170,7 @@ public class TodayDispatchRouteEditService {
             dto.put("removeConfirmTitle", "移除门店");
             String customerName = stop.getCustomerName() != null && !stop.getCustomerName().trim().isEmpty()
                     ? stop.getCustomerName().trim() : "该门店";
-            dto.put("removeConfirmMessage", customerName + " 将从装车路线移除并回到沙盘，是否确认？");
+            dto.put("removeConfirmMessage", customerName + " 将从装车路线移除，是否确认？");
         }
         if ("warn".equals(stop.getArrivalStatusTone())) {
             putIfNotNull(dto, "constraintHint", stop.getArrivalStatusLabel());

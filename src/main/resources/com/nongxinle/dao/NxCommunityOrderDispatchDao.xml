@@ -18,7 +18,10 @@
             on d.nx_cod_community_order_id = o.nx_community_orders_id
            and d.nx_cod_dispatch_status in ('ASSIGNED', 'LOADING', 'IN_DELIVERY', 'DELIVERED', 'EXCEPTION')
         where o.nx_CO_community_id = #{communityId}
-          and o.nx_CO_service_type = 1
+          and (
+            o.nx_CO_service_type = 1
+            or (o.nx_CO_service_type is null and o.nx_CO_delivery_address_id is not null)
+          )
           and o.nx_CO_status &gt;= 2
           and o.nx_CO_status not in (5, 99)
           and o.nx_CO_delivery_address_id is not null

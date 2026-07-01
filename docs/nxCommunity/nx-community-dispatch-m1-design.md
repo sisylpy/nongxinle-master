@@ -10,7 +10,8 @@
 - **不改** `getIsDeliveryOrders`、`getDeliverRoute`、`deliverySavePindin` 等旧接口。
 - 派单状态与 `nxCoStatus`（支付/打印/核销）**分离**，扩展表 `nx_community_order_dispatch`。
 - 司机身份: `NxCommunityUserEntity`，`nxCouRoleId = 5`。
-- 沙箱仅展示/模拟；**确认分配**后才写入正式派单表。
+- 沙箱仅展示/模拟；**编辑路线确认**后写入正式派单表。
+- **无站点操作按钮**：分派中/装车中列表 timeline 不展示 per-stop 操作按钮；调整路线请进「编辑路线」。
 
 ## 2. 表结构
 
@@ -29,9 +30,9 @@ DDL: `docs/sql/patches/upgrade_nx_community_dispatch_m1.sql`
 
 ### 3.1 订单派单 (`nx_cod_dispatch_status`)
 
-`UNASSIGNED` / `CANCELLED`（退回沙箱后）→ confirm upsert 同一条记录 → `LOADING` → `IN_DELIVERY` → `DELIVERED` / `EXCEPTION`
+`UNASSIGNED` / `CANCELLED` → confirm upsert 同一条记录 → `LOADING` → `IN_DELIVERY` → `DELIVERED` / `EXCEPTION`
 
-**当前态表（非历史）**：`nx_community_order_dispatch` 每订单最多一行（`uk_cod_order`）；confirm 时 insert 或 update，return-to-sandbox 置 `UNASSIGNED` 并解绑 stop/driver，不新增第二行。
+**当前态表（非历史）**：`nx_community_order_dispatch` 每订单最多一行（`uk_cod_order`）；confirm 时 insert 或 update。路线编辑确认时移除的站点，dispatch 行置 `UNASSIGNED` 并解绑 stop/driver，订单回到 eligible 池。
 
 沙箱模拟 **不落库** `SIMULATED`；pageViewModel 用 `simulated: true` 标记。
 
@@ -84,7 +85,7 @@ DDL: `docs/sql/patches/upgrade_nx_community_dispatch_m1.sql`
 | GET | `/dispatch/sandbox/today` | P2 |
 | GET | `/drivers/available` | P2 |
 | POST | `/sandbox/stops/confirm` | P3 |
-| POST | `/sandbox/stops/{stopId}/return-to-sandbox` | P3 |
+| POST | `/sandbox/driver-route-edit/{page,preview,confirm}` | P3 |
 | GET | `/dispatch/loading/today` | P4 |
 | GET | `/driver-terminal/loading/today` | P4 |
 | POST | `/drivers/{driverUserId}/depart-now` | P4 |
@@ -117,8 +118,7 @@ com.nongxinle.dao.NxCommunityDispatch*Dao
 
 ## 8. M1 已知风险点
 
-1. ~~**return-to-sandbox 与 uk_cod_order**~~：已改为当前态 upsert；return 置 `UNASSIGNED` 解绑，confirm 更新同一条记录。
-2. ~~**complete 无二次校验**~~：已加 stop/route/dispatch/订单全量校验，失败整单拒绝。
-3. **driver_duty 未接入**：`nx_community_dispatch_driver_duty` 已建表，沙箱/派单未过滤值班状态。
-4. **沙箱算法极简**：按地址分组 + 司机轮询，无路线优化与地图 polyline。
-5. **无集成测试 / curl 自动化**：M1 仅编译 + 建表自检，接口需手工验收。
+1. ~~**complete 无二次校验**~~：已加 stop/route/dispatch/订单全量校验，失败整单拒绝。
+2. **driver_duty 未接入**：`nx_community_dispatch_driver_duty` 已建表，沙箱/派单未过滤值班状态。
+3. **沙箱算法极简**：按地址分组 + 司机轮询，无路线优化与地图 polyline。
+4. **无集成测试 / curl 自动化**：M1 仅编译 + 建表自检，接口需手工验收。

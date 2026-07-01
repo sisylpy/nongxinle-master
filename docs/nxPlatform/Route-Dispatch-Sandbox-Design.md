@@ -626,7 +626,11 @@ live order → sandbox compute（自动）→ suggestedDriver → confirm-loadin
 - [ ] time-window / duty 变更后 bump
 - [ ] 小程序可选轮询 version
 
-### Phase 3c — 返回沙盘（return-to-sandbox）
+### Phase 3c — 撤销派车确认（return-to-sandbox API）
+
+> **列表页约定（2026-06）**：分派中 / 装车中 **司机路线 timeline 不展示** 站点级「确认分派」「返回沙盘/退回沙箱」按钮。  
+> 调整路线、移除门店、确认派单，统一在 **编辑路线** 页完成。  
+> 下列 HTTP 接口仍供装车路线编辑「立即移除」使用，**不是**列表页按钮契约。
 
 **业务定义**：撤销的是「派车确认关系」（task ↔ 司机 ↔ 装车确认），**不是**订单，**不是**配送单。
 
@@ -642,7 +646,7 @@ live order → sandbox compute（自动）→ suggestedDriver → confirm-loadin
 **禁止**：本店或同趟 `IN_DELIVERY` / `DELIVERED` / `CLOSED`  
 **不作阻断**：`billId`、`historyOrderId`、是否已打印
 
-读模型：`canReturnToSandbox`、`returnToSandboxActionLabel`（「返回沙盘」）、`returnToSandboxWarning`、`returnToSandboxConfirmMessage`
+读模型：`canReturnToSandbox` 等字段**不再**用于 timeline `primaryAction`；装车编辑页 `removeStopMode=REMOTE`。
 
 实现：`DisRouteSandboxReturnServiceImpl`、`DisRouteReturnToSandboxPolicy`（2026-06 ✅）
 

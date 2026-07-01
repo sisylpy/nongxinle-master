@@ -10,4 +10,6 @@ public interface NxCommunityDispatchDriverRouteDao extends BaseDao<NxCommunityDi
     NxCommunityDispatchDriverRouteEntity queryByPlanAndDriver(Map<String, Object> map);
 
     List<NxCommunityDispatchDriverRouteEntity> queryByPlanId(Integer planId);
+
+    int clearLoadingGate(Map<String, Object> map);
 }

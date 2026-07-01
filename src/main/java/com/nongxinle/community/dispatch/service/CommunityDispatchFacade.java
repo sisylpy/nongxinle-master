@@ -2,14 +2,15 @@ package com.nongxinle.community.dispatch.service;
 
 import com.nongxinle.community.dispatch.dto.*;
 import com.nongxinle.community.dispatch.model.CommunityDispatchSandboxResult;
-import com.nongxinle.dao.NxCommunityUserDao;
+import com.nongxinle.dispatch.adapter.community.CommunityDispatchPageViewAdapter;
+import com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity;
 import com.nongxinle.entity.NxCommunityUserEntity;
+import com.nongxinle.community.dispatch.constants.CommunityDispatchConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-import static com.nongxinle.community.dispatch.constants.CommunityDispatchConstants.DRIVER_ROLE_ID;
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
 
 @Service
@@ -24,7 +25,9 @@ public class CommunityDispatchFacade {
     @Autowired
     private CommunityDispatchExecutionService communityDispatchExecutionService;
     @Autowired
-    private NxCommunityUserDao nxCommunityUserDao;
+    private CommunityDriverDutyService communityDriverDutyService;
+    @Autowired
+    private CommunityDispatchRouteEditService communityDispatchRouteEditService;
 
     public Map<String, Object> buildSandboxPage(Integer communityId, String routeDate) {
         CommunityDispatchSandboxResult result = communityDispatchComputeService.computeSandbox(communityId, routeDate);
@@ -53,39 +56,65 @@ public class CommunityDispatchFacade {
     public Map<String, Object> buildDriverLoadingPage(Integer communityId, String routeDate, Integer driverUserId) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("pageViewModel", communityDispatchPageAssembler.assemble(
-                communityDispatchComputeService.computeDriverLoading(communityId, routeDate, driverUserId)));
+                communityDispatchComputeService.computeDriverLoading(communityId, routeDate, driverUserId),
+                CommunityDispatchPageViewAdapter.AdapterOptions.driverLoading()));
         return data;
     }
 
     public Map<String, Object> buildDriverDeliveryPage(Integer communityId, String routeDate, Integer driverUserId) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("pageViewModel", communityDispatchPageAssembler.assemble(
-                communityDispatchComputeService.computeDriverDelivery(communityId, routeDate, driverUserId)));
+                communityDispatchComputeService.computeDriverDelivery(communityId, routeDate, driverUserId),
+                CommunityDispatchPageViewAdapter.AdapterOptions.driverDelivery()));
         return data;
     }
 
-    public List<Map<String, Object>> listAvailableDrivers(Integer communityId, String routeDate) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("commId", communityId);
-        map.put("roleId", DRIVER_ROLE_ID);
-        List<NxCommunityUserEntity> drivers = nxCommunityUserDao.queryCommunityRoleUsers(map);
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (NxCommunityUserEntity driver : drivers) {
-            Map<String, Object> item = new LinkedHashMap<>();
+    public Map<String, Object> listAvailableDrivers(Integer communityId, String routeDate) {
+        if (routeDate == null || routeDate.trim().isEmpty()) {
+            routeDate = formatWhatDay(0);
+        }
+        List<NxCommunityUserEntity> onDuty = communityDriverDutyService.listOnDutyDriverUsers(
+                communityId, routeDate);
+        List<Map<String, Object>> drivers = new ArrayList<Map<String, Object>>();
+        for (NxCommunityUserEntity driver : onDuty) {
+            Map<String, Object> item = new LinkedHashMap<String, Object>();
             item.put("driverUserId", driver.getNxCommunityUserId());
             item.put("driverName", driver.getNxCouWxNickName());
             item.put("driverPhone", driver.getNxCouWxPhone());
-            list.add(item);
+            item.put("dutyStatus", CommunityDispatchConstants.DUTY_ON);
+            drivers.add(item);
         }
-        return list;
+        Map<String, Object> data = new LinkedHashMap<String, Object>();
+        data.put("routeDate", routeDate);
+        data.put("drivers", drivers);
+        data.put("driverCards", communityDriverDutyService.buildDriverDutyCards(communityId, routeDate));
+        return data;
+    }
+
+    public NxCommunityDispatchDriverDutyEntity driverCheckIn(Integer driverUserId,
+                                                             CommunityDriverDutyRequest request) {
+        if (request == null) {
+            request = new CommunityDriverDutyRequest();
+        }
+        if (request.getDriverUserId() == null) {
+            request.setDriverUserId(driverUserId);
+        }
+        return communityDriverDutyService.checkIn(request);
+    }
+
+    public NxCommunityDispatchDriverDutyEntity driverCheckOut(Integer driverUserId,
+                                                              CommunityDriverDutyRequest request) {
+        if (request == null) {
+            request = new CommunityDriverDutyRequest();
+        }
+        if (request.getDriverUserId() == null) {
+            request.setDriverUserId(driverUserId);
+        }
+        return communityDriverDutyService.checkOut(request);
     }
 
     public Map<String, Object> confirmStop(CommunitySandboxStopConfirmRequest request) {
         return communityDispatchConfirmService.confirmStop(request);
-    }
-
-    public Map<String, Object> returnStopToSandbox(Integer stopId, CommunitySandboxStopReturnRequest request) {
-        return communityDispatchConfirmService.returnStopToSandbox(stopId, request);
     }
 
     public Map<String, Object> departNow(Integer driverUserId, CommunityDriverDepartRequest request) {
@@ -94,5 +123,22 @@ public class CommunityDispatchFacade {
 
     public Map<String, Object> completeStopNow(Integer stopId, CommunityDeliveryCompleteRequest request) {
         return communityDispatchExecutionService.completeStopNow(stopId, request);
+    }
+
+    public Map<String, Object> buildDriverRouteEditPage(CommunityDriverRouteEditPageRequest request) {
+        return communityDispatchRouteEditService.buildPage(request);
+    }
+
+    public Map<String, Object> previewDriverRouteEdit(CommunityDriverRouteEditPageRequest request) {
+        return communityDispatchRouteEditService.preview(request);
+    }
+
+    public Map<String, Object> confirmDriverRouteEdit(CommunityDriverRouteEditConfirmRequest request) {
+        return communityDispatchRouteEditService.confirm(request);
+    }
+
+    public Map<String, Object> returnLoadingStopToSandbox(Integer stopId,
+                                                        CommunityLoadingStopRemoveRequest request) {
+        return communityDispatchConfirmService.returnStopToSandbox(stopId, request);
     }
 }

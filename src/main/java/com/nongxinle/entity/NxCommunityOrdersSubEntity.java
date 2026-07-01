@@ -77,6 +77,8 @@ public class NxCommunityOrdersSubEntity implements Serializable, Comparable {
 	 * 订单id
 	 */
 	private Integer nxCosOrdersId;
+	/** 关联主单取餐号（查询 join 填充，非持久化字段） */
+	private String nxCoWeighNumber;
 
 	private Integer nxCosGoodsType;
 	private Integer nxCosGoodsIndex;

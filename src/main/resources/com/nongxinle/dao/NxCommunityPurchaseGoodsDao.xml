@@ -335,6 +335,10 @@
 			COUNT(DISTINCT cpg.nx_community_purchase_goods_id) as order_count
 		from nx_community_father_goods as cfg
 		left join nx_community_purchase_goods as cpg on cpg.nx_cpg_com_goods_father_id = cfg.nx_community_father_goods_id
+		<if test="subCosStatus != null">
+		inner join nx_community_orders_sub as sub_filter on sub_filter.nx_COS_comm_pur_goods_id = cpg.nx_community_purchase_goods_id
+			and sub_filter.nx_COS_status = #{subCosStatus}
+		</if>
 		<where>
 			<if test="commId != null">
 				and cfg.nx_cfg_community_id = #{commId}
@@ -356,8 +360,12 @@
 
 	<!-- 查询社区采购商品总数（用于分页） -->
 	<select id="queryCommPurchaseGoodsCount" resultType="int">
-		select count(*)
+		select count(distinct cpg.nx_community_purchase_goods_id)
 		from nx_community_purchase_goods as cpg
+		<if test="subCosStatus != null">
+		inner join nx_community_orders_sub as sub_count on sub_count.nx_COS_comm_pur_goods_id = cpg.nx_community_purchase_goods_id
+			and sub_count.nx_COS_status = #{subCosStatus}
+		</if>
 		<where>
 			<if test="commId != null">
 				and cpg.nx_cpg_community_id = #{commId}
@@ -386,10 +394,15 @@
 			cpg.nx_cpg_com_goods_father_id,
 			dg.*,
 		    sub.*,
-		    cust.*
+		    cust.*,
+		    co.nx_CO_weigh_number
 		from nx_community_purchase_goods as cpg
 		left join nx_community_goods as dg on dg.nx_community_goods_id = cpg.nx_cpg_com_goods_id
 		left join nx_community_orders_sub as sub on sub.nx_COS_comm_pur_goods_id = cpg.nx_community_purchase_goods_id
+		<if test="subCosStatus != null">
+			and sub.nx_COS_status = #{subCosStatus}
+		</if>
+		left join nx_community_orders as co on co.nx_community_orders_id = sub.nx_COS_orders_id
 		 left join nx_customer_user as cust on cust.nx_CU_user_id = sub.nx_COS_order_user_id
 		<where>
 			<if test="commId != null">
@@ -400,6 +413,9 @@
 			</if>
 			<if test="dayuStatus != null">
 				and cpg.nx_cpg_status &gt; #{dayuStatus}
+			</if>
+			<if test="subCosStatus != null">
+				and sub.nx_community_orders_sub_id is not null
 			</if>
 		</where>
 		order by cpg.nx_cpg_com_goods_father_id, cpg.nx_cpg_purchase_date desc

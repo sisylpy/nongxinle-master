@@ -26,6 +26,10 @@ public interface NxCommunityOrdersDao extends BaseDao<NxCommunityOrdersEntity> {
 
     List<NxCommunityOrdersEntity> queryDeliveryOrders(Map<String, Object> map);
 
+    int updateDeliveryUserIdByOrderId(Map<String, Object> map);
+
+    int clearDeliveryUserIdByStopId(Integer stopId);
+
     NxCommunityOrdersEntity queryOrderByTradeNo(String ordersSn);
 
     List<NxCommunityOrdersEntity> queryOrderWithUserInfo(Map<String, Object> mapU);

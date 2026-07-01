@@ -23,6 +23,7 @@ import com.nongxinle.service.*;
 import com.nongxinle.community.ecommerce.service.NxECommerceCommunityService;
 import com.nongxinle.community.coupon.service.NxCommunityCouponService;
 import com.nongxinle.community.coupon.service.NxCustomerUserCouponService;
+import com.nongxinle.community.dispatch.constants.CommunityDispatchConstants;
 import com.nongxinle.community.coupon.service.CouponApplyService;
 import com.nongxinle.community.pos.service.NxCommunityDeskService;
 import com.nongxinle.community.cart.service.NxCommunityOrdersSubService;
@@ -1398,6 +1399,7 @@ public class NxCommunityOrdersController {
         BigDecimal multiply = new BigDecimal(nxOrders.getNxCoServiceHour()).multiply(new BigDecimal(60));
         BigDecimal add = multiply.add(new BigDecimal(nxOrders.getNxCoServiceMinute()));
         nxOrders.setNxCoServiceTime(add.toString());
+        normalizeDeliveryServiceType(nxOrders);
         nxOrders.setNxCoDate(formatWhatYearDayTime(0));
 //        nxCommunityOrdersService.justSaveWithUserGoods(nxOrders);
         nxCommunityOrdersService.justSave(nxOrders);
@@ -1453,6 +1455,7 @@ public class NxCommunityOrdersController {
         BigDecimal multiply = new BigDecimal(nxOrders.getNxCoServiceHour()).multiply(new BigDecimal(60));
         BigDecimal add = multiply.add(new BigDecimal(nxOrders.getNxCoServiceMinute()));
         nxOrders.setNxCoServiceTime(add.toString());
+        normalizeDeliveryServiceType(nxOrders);
         nxOrders.setNxCoDate(formatWhatYearDayTime(0));
 //        nxCommunityOrdersService.justSaveWithUserGoods(nxOrders);
 
@@ -1556,12 +1559,22 @@ public class NxCommunityOrdersController {
         NxCommunityOrdersEntity nxOrders = nxCommunityOrdersService.queryObject(orderId);
 
         MyWxQingqingxiangPayConfig config = new MyWxQingqingxiangPayConfig();
-        String tradeNo = CommonUtils.generateOutTradeNo();
+        String tradeNo = nxOrders.getNxCoWxOutTradeNo();
+        if (tradeNo == null || tradeNo.trim().isEmpty()) {
+            tradeNo = CommonUtils.generateOutTradeNo();
+        }
 
 //        // 实际支付金额（单位：分）
         Double amountYuan = Double.parseDouble(nxOrders.getNxCoTotal());
         int totalFee = (int) (amountYuan * 100);
-        System.out.println("tororor" + totalFee);
+        System.out.println("customerCashPayMixDesk orderId=" + orderId + " totalFee=" + totalFee);
+
+        // 先落库商户单号，再调微信下单
+        nxOrders.setNxCoStatus(1);
+        nxOrders.setNxCoPaymentStatus(0);
+        nxOrders.setNxCoWxOutTradeNo(tradeNo);
+        nxCommunityOrdersService.update(nxOrders);
+        System.out.println("customerCashPayMixDesk persisted tradeNo=" + tradeNo);
 
         try {
             // 构造请求 JSON
@@ -1612,12 +1625,6 @@ public class NxCommunityOrdersController {
             resultMap.put("signType", "RSA");
             resultMap.put("paySign", paySign);
             resultMap.put("orderId", nxOrders.getNxCommunityOrdersId());
-
-            // 更新订单状态
-            nxOrders.setNxCoStatus(1);
-            nxOrders.setNxCoPaymentStatus(0);
-            nxOrders.setNxCoWxOutTradeNo(tradeNo);
-            nxCommunityOrdersService.update(nxOrders);
 
             return R.ok().put("map", resultMap);
 
@@ -1709,14 +1716,39 @@ public class NxCommunityOrdersController {
     @RequestMapping(value = "/customerCashPayMix", method = RequestMethod.POST)
     public R customerCashPayMix(Integer orderId, String openId) {
 
+        if (orderId == null) {
+            return R.error("orderId 不能为空");
+        }
+        if (openId == null || openId.trim().isEmpty()) {
+            return R.error("openId 不能为空");
+        }
+
         NxCommunityOrdersEntity nxOrders = nxCommunityOrdersService.queryObject(orderId);
+        if (nxOrders == null) {
+            return R.error("订单不存在");
+        }
+        if (nxOrders.getNxCoPaymentStatus() != null && nxOrders.getNxCoPaymentStatus() == 1) {
+            return R.error("订单已支付");
+        }
+
         MyWxQingqingxiangPayConfig config = new MyWxQingqingxiangPayConfig();
         String nxRbTotal = nxOrders.getNxCoTotal();
         Double aDouble = Double.parseDouble(nxRbTotal) * 100;
         int i = aDouble.intValue();
-        System.out.println("dfdafkdaksfas" + nxOrders.getNxCoTotal());
+        System.out.println("customerCashPayMix orderId=" + orderId + " total=" + nxOrders.getNxCoTotal());
         String s1 = String.valueOf(i);
-        String tradeNo = CommonUtils.generateOutTradeNo();
+
+        // 待支付订单复用已有商户单号，避免重复点支付导致回调 out_trade_no 与库中不一致
+        String tradeNo = nxOrders.getNxCoWxOutTradeNo();
+        if (tradeNo == null || tradeNo.trim().isEmpty()) {
+            tradeNo = CommonUtils.generateOutTradeNo();
+        }
+        nxOrders.setNxCoStatus(1);
+        nxOrders.setNxCoPaymentStatus(0);
+        nxOrders.setNxCoWxOutTradeNo(tradeNo);
+        nxCommunityOrdersService.update(nxOrders);
+        System.out.println("customerCashPayMix persisted tradeNo=" + tradeNo);
+
         SortedMap<String, String> params = new TreeMap<>();
         params.put("appid", config.getAppID());
         params.put("mch_id", config.getMchID());
@@ -1745,11 +1777,6 @@ public class NxCommunityOrdersController {
             reMap.put("timeStamp", tString);
             String s = WxPayUtils.creatSign(reMap, config.getKey());
             reMap.put("paySign", s);
-
-            nxOrders.setNxCoStatus(1);
-            nxOrders.setNxCoPaymentStatus(0);
-            nxOrders.setNxCoWxOutTradeNo(tradeNo);
-            nxCommunityOrdersService.update(nxOrders);
 
             if (nxOrders.getNxCoType() == 0) {
                 Map<String, Object> map = new HashMap<>();
@@ -1900,10 +1927,8 @@ public class NxCommunityOrdersController {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return R.error("支付下单失败");
         }
-
-
-        return R.ok();
 
     }
 
@@ -2003,6 +2028,9 @@ public class NxCommunityOrdersController {
 
                 String ordersSn = notifyMap.get("out_trade_no");// 商户订单号
                 NxCommunityOrdersEntity billEntity = nxCommunityOrdersService.queryOrderByTradeNo(ordersSn);
+                if (billEntity == null) {
+                    System.err.println("nxorders/notify 未找到订单 out_trade_no=" + ordersSn);
+                } else {
                 billEntity.setNxCoStatus(2);
                 billEntity.setNxCoPaymentStatus(1);
                 nxCommunityOrdersService.update(billEntity);
@@ -2042,6 +2070,8 @@ public class NxCommunityOrdersController {
 
                         }
                     }
+                }
+
                 }
 
             }
@@ -2089,6 +2119,9 @@ public class NxCommunityOrdersController {
 
                 String ordersSn = notifyMap.get("out_trade_no");// 商户订单号
                 NxCommunityOrdersEntity billEntity = nxCommunityOrdersService.queryOrderByTradeNo(ordersSn);
+                if (billEntity == null) {
+                    System.err.println("nxorders/notifyDesk 未找到订单 out_trade_no=" + ordersSn);
+                } else {
                 billEntity.setNxCoStatus(2);
                 billEntity.setNxCoPaymentStatus(1);
                 nxCommunityOrdersService.update(billEntity);
@@ -2208,6 +2241,8 @@ public class NxCommunityOrdersController {
                         }
 
                     }
+                }
+
                 }
 
             }
@@ -2467,6 +2502,18 @@ public class NxCommunityOrdersController {
             return;
         }
         couponApplyService.unlockLockedCouponForOrder(order.getNxCommunityOrdersId(), null);
+    }
+
+    /** 有配送地址的订单一律视为外送，避免 serviceType 漏传导致不进派单池。 */
+    private void normalizeDeliveryServiceType(NxCommunityOrdersEntity order) {
+        if (order == null) {
+            return;
+        }
+        if (order.getNxCoDeliveryAddressId() != null) {
+            order.setNxCoServiceType(CommunityDispatchConstants.ORDER_SERVICE_TYPE_DELIVERY);
+        } else if (order.getNxCoServiceType() == null) {
+            order.setNxCoServiceType(0);
+        }
     }
 
 

@@ -27,6 +27,10 @@ public class CommunityDispatchComputeService {
     private NxCommunityDao nxCommunityDao;
     @Autowired
     private NxCommunityUserDao nxCommunityUserDao;
+    @Autowired
+    private NxCustomerUserAddressDao nxCustomerUserAddressDao;
+    @Autowired
+    private CommunityDriverDutyService communityDriverDutyService;
 
     public CommunityDispatchSandboxResult computeSandbox(Integer communityId, String routeDate) {
         if (routeDate == null || routeDate.trim().isEmpty()) {
@@ -49,10 +53,7 @@ public class CommunityDispatchComputeService {
         List<NxCommunityOrdersEntity> eligible = nxCommunityOrderDispatchDao.queryEligibleDeliveryOrders(eligibleMap);
         result.setEligibleOrders(eligible);
 
-        Map<String, Object> driverMap = new HashMap<>();
-        driverMap.put("commId", communityId);
-        driverMap.put("roleId", DRIVER_ROLE_ID);
-        result.setAvailableDrivers(nxCommunityUserDao.queryCommunityRoleUsers(driverMap));
+        result.setAvailableDrivers(communityDriverDutyService.listOnDutyDriverUsers(communityId, routeDate));
 
         Map<String, Object> planMap = new HashMap<>();
         planMap.put("communityId", communityId);
@@ -80,14 +81,18 @@ public class CommunityDispatchComputeService {
             removeAssignedOrders(eligible, activeStops);
         }
 
+        reconcileFullyDeliveredRoutes(result);
         buildSimulatedGroups(result, eligible);
+        CommunityDispatchSandboxRouteBuilder.buildSuggestedRoutes(result, nxCustomerUserAddressDao);
+        enrichRouteDriverUsers(result);
         return result;
     }
 
     public CommunityDispatchSandboxResult computeLoading(Integer communityId, String routeDate) {
         CommunityDispatchSandboxResult base = loadPersistedRoutes(communityId, routeDate,
                 CommunityDispatchConstants.PAGE_MODE_LOADING);
-        base.getConfirmedRoutes().removeIf(route -> !isLoadingRoute(route));
+        reconcileEmptyLoadingRoutes(base);
+        base.getConfirmedRoutes().removeIf(route -> !isLoadingRoute(route) || !hasActiveCustomerStops(route));
         return base;
     }
 
@@ -96,6 +101,17 @@ public class CommunityDispatchComputeService {
                 CommunityDispatchConstants.PAGE_MODE_DELIVERY);
         base.getConfirmedRoutes().removeIf(route -> !isDeliveryRoute(route));
         return base;
+    }
+
+    /** 本趟全部送达后释放司机路线，便于回到分派沙盘接单。 */
+    public void releaseRouteToIdleIfFullyDelivered(Integer driverRouteId) {
+        if (driverRouteId == null) {
+            return;
+        }
+        if (nxCommunityDispatchStopDao.countActiveByDriverRouteId(driverRouteId) > 0) {
+            return;
+        }
+        releaseRouteToIdle(driverRouteId);
     }
 
     public CommunityDispatchSandboxResult computeDriverLoading(Integer communityId, String routeDate,
@@ -149,7 +165,40 @@ public class CommunityDispatchComputeService {
         }
         result.setConfirmedRoutes(routes);
         result.setConfirmedStops(activeStops);
+        result.setAvailableDrivers(communityDriverDutyService.listOnDutyDriverUsers(communityId, routeDate));
+        reconcileFullyDeliveredRoutes(result);
+        enrichRouteDriverUsers(result);
         return result;
+    }
+
+    private void enrichRouteDriverUsers(CommunityDispatchSandboxResult result) {
+        List<NxCommunityUserEntity> drivers = result.getAvailableDrivers();
+        if (drivers == null) {
+            drivers = new ArrayList<>();
+            result.setAvailableDrivers(drivers);
+        }
+        Set<Integer> knownIds = new HashSet<>();
+        for (NxCommunityUserEntity driver : drivers) {
+            if (driver != null && driver.getNxCommunityUserId() != null) {
+                knownIds.add(driver.getNxCommunityUserId());
+            }
+        }
+        if (result.getConfirmedRoutes() == null) {
+            return;
+        }
+        for (NxCommunityDispatchDriverRouteEntity route : result.getConfirmedRoutes()) {
+            if (route == null || route.getNxCddrDriverUserId() == null) {
+                continue;
+            }
+            if (knownIds.contains(route.getNxCddrDriverUserId())) {
+                continue;
+            }
+            NxCommunityUserEntity user = nxCommunityUserDao.queryObject(route.getNxCddrDriverUserId());
+            if (user != null) {
+                drivers.add(user);
+                knownIds.add(user.getNxCommunityUserId());
+            }
+        }
     }
 
     private void removeAssignedOrders(List<NxCommunityOrdersEntity> eligible,
@@ -194,17 +243,108 @@ public class CommunityDispatchComputeService {
     }
 
     private boolean isLoadingRoute(NxCommunityDispatchDriverRouteEntity route) {
+        if (route == null) {
+            return false;
+        }
         if (CommunityDispatchConstants.ROUTE_STATUS_LOADING.equals(route.getNxCddrRouteStatus())) {
-            return true;
+            return hasActiveCustomerStops(route);
         }
         return route.getNxCddrLoadingEnteredAt() != null
                 && route.getNxCddrActualDepartAt() == null
-                && !CommunityDispatchConstants.ROUTE_STATUS_IN_DELIVERY.equals(route.getNxCddrRouteStatus());
+                && !CommunityDispatchConstants.ROUTE_STATUS_IN_DELIVERY.equals(route.getNxCddrRouteStatus())
+                && hasActiveCustomerStops(route);
+    }
+
+    private boolean hasActiveCustomerStops(NxCommunityDispatchDriverRouteEntity route) {
+        return route != null && route.getStops() != null && !route.getStops().isEmpty();
+    }
+
+    /** 修复历史脏数据：无站点但仍占装车门禁的路线，退回可分配状态。 */
+    private void reconcileEmptyLoadingRoutes(CommunityDispatchSandboxResult result) {
+        if (result.getConfirmedRoutes() == null) {
+            return;
+        }
+        for (NxCommunityDispatchDriverRouteEntity route : result.getConfirmedRoutes()) {
+            if (route == null || route.getNxCommunityDispatchDriverRouteId() == null) {
+                continue;
+            }
+            if (hasActiveCustomerStops(route)) {
+                continue;
+            }
+            if (!CommunityDispatchConstants.ROUTE_STATUS_LOADING.equals(route.getNxCddrRouteStatus())
+                    && route.getNxCddrLoadingEnteredAt() == null) {
+                continue;
+            }
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("routeId", route.getNxCommunityDispatchDriverRouteId());
+            map.put("routeStatus", CommunityDispatchConstants.ROUTE_STATUS_IDLE);
+            map.put("stopCount", 0);
+            nxCommunityDispatchDriverRouteDao.clearLoadingGate(map);
+            route.setNxCddrRouteStatus(CommunityDispatchConstants.ROUTE_STATUS_IDLE);
+            route.setNxCddrLoadingEnteredAt(null);
+            route.setNxCddrStopCount(0);
+            route.setStops(new ArrayList<NxCommunityDispatchStopEntity>());
+        }
     }
 
     private boolean isDeliveryRoute(NxCommunityDispatchDriverRouteEntity route) {
-        return CommunityDispatchConstants.ROUTE_STATUS_IN_DELIVERY.equals(route.getNxCddrRouteStatus())
-                || route.getNxCddrActualDepartAt() != null;
+        if (route == null) {
+            return false;
+        }
+        if (!CommunityDispatchConstants.ROUTE_STATUS_IN_DELIVERY.equals(route.getNxCddrRouteStatus())) {
+            return false;
+        }
+        return hasUndeliveredStops(route);
+    }
+
+    /** 修复历史脏数据：已全部送达但仍占配送中的路线，释放回 IDLE。 */
+    private void reconcileFullyDeliveredRoutes(CommunityDispatchSandboxResult result) {
+        if (result.getConfirmedRoutes() == null) {
+            return;
+        }
+        for (NxCommunityDispatchDriverRouteEntity route : result.getConfirmedRoutes()) {
+            if (route == null || route.getNxCommunityDispatchDriverRouteId() == null) {
+                continue;
+            }
+            if (hasUndeliveredStops(route)) {
+                continue;
+            }
+            String status = route.getNxCddrRouteStatus();
+            if (!CommunityDispatchConstants.ROUTE_STATUS_IN_DELIVERY.equals(status)
+                    && !CommunityDispatchConstants.ROUTE_STATUS_COMPLETED.equals(status)
+                    && route.getNxCddrActualDepartAt() == null) {
+                continue;
+            }
+            releaseRouteToIdle(route.getNxCommunityDispatchDriverRouteId());
+            route.setNxCddrRouteStatus(CommunityDispatchConstants.ROUTE_STATUS_IDLE);
+            route.setNxCddrLoadingEnteredAt(null);
+            route.setNxCddrActualDepartAt(null);
+            route.setNxCddrStopCount(0);
+        }
+    }
+
+    private boolean hasUndeliveredStops(NxCommunityDispatchDriverRouteEntity route) {
+        if (route.getStops() == null || route.getStops().isEmpty()) {
+            return false;
+        }
+        for (NxCommunityDispatchStopEntity stop : route.getStops()) {
+            if (stop == null
+                    || CommunityDispatchConstants.STOP_STATUS_CANCELLED.equals(stop.getNxCdsStopStatus())) {
+                continue;
+            }
+            if (!CommunityDispatchConstants.STOP_STATUS_DELIVERED.equals(stop.getNxCdsStopStatus())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void releaseRouteToIdle(Integer driverRouteId) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("routeId", driverRouteId);
+        map.put("routeStatus", CommunityDispatchConstants.ROUTE_STATUS_IDLE);
+        map.put("stopCount", 0);
+        nxCommunityDispatchDriverRouteDao.clearLoadingGate(map);
     }
 
     private void filterRoutesByDriver(CommunityDispatchSandboxResult result, Integer driverUserId) {

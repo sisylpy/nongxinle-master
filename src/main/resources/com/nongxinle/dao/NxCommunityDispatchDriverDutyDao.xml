@@ -2,11 +2,30 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.nongxinle.dao.NxCommunityDispatchDriverDutyDao">
 
-    <select id="queryOnDutyDrivers" resultType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
+    <select id="queryByCommunityDriverDate" resultType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
+        select * from nx_community_dispatch_driver_duty
+        where nx_cdd_community_id = #{communityId}
+          and nx_cdd_driver_user_id = #{driverUserId}
+          and nx_cdd_route_date = #{routeDate}
+        limit 1
+    </select>
+
+    <select id="queryByCommunityDate" resultType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
         select * from nx_community_dispatch_driver_duty
         where nx_cdd_community_id = #{communityId}
           and nx_cdd_route_date = #{routeDate}
-          and nx_cdd_status = 'ON_DUTY'
+    </select>
+
+    <select id="queryOnDutyDriverUsers" resultMap="com.nongxinle.dao.NxCommunityUserDao.comUser">
+        select u.*
+        from nx_community_dispatch_driver_duty d
+                 inner join nx_community_user u on u.nx_community_user_id = d.nx_cdd_driver_user_id
+        where d.nx_cdd_community_id = #{communityId}
+          and d.nx_cdd_route_date = #{routeDate}
+          and d.nx_cdd_status = 'ON_DUTY'
+          and u.nx_COU_community_id = #{communityId}
+          and (u.nx_COU_admin = 5 or u.nx_COU_role_id = 5)
+        order by u.nx_community_user_id
     </select>
 
     <insert id="save" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity" useGeneratedKeys="true"
@@ -27,4 +46,27 @@
         </set>
         where nx_community_dispatch_driver_duty_id = #{nxCommunityDispatchDriverDutyId}
     </update>
+
+    <insert id="upsertCheckIn" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
+        insert into nx_community_dispatch_driver_duty
+        (nx_cdd_community_id, nx_cdd_driver_user_id, nx_cdd_route_date, nx_cdd_status,
+         nx_cdd_checked_in_at, nx_cdd_checked_out_at)
+        values (#{nxCddCommunityId}, #{nxCddDriverUserId}, #{nxCddRouteDate}, #{nxCddStatus},
+                #{nxCddCheckedInAt}, #{nxCddCheckedOutAt})
+        on duplicate key update
+            nx_cdd_status = values(nx_cdd_status),
+            nx_cdd_checked_in_at = coalesce(nx_cdd_checked_in_at, values(nx_cdd_checked_in_at)),
+            nx_cdd_checked_out_at = null
+    </insert>
+
+    <insert id="upsertCheckOut" parameterType="com.nongxinle.entity.NxCommunityDispatchDriverDutyEntity">
+        insert into nx_community_dispatch_driver_duty
+        (nx_cdd_community_id, nx_cdd_driver_user_id, nx_cdd_route_date, nx_cdd_status,
+         nx_cdd_checked_in_at, nx_cdd_checked_out_at)
+        values (#{nxCddCommunityId}, #{nxCddDriverUserId}, #{nxCddRouteDate}, #{nxCddStatus},
+                #{nxCddCheckedInAt}, #{nxCddCheckedOutAt})
+        on duplicate key update
+            nx_cdd_status = values(nx_cdd_status),
+            nx_cdd_checked_out_at = values(nx_cdd_checked_out_at)
+    </insert>
 </mapper>

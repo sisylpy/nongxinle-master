@@ -29,6 +29,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 
 import static com.nongxinle.utils.DateUtils.formatWhatDay;
+import static com.nongxinle.community.dispatch.constants.CommunityDispatchConstants.DRIVER_ROLE_ID;
+import static com.nongxinle.community.dispatch.constants.CommunityDispatchConstants.USER_ADMIN_DRIVER;
 
 
 @RestController
@@ -151,6 +153,13 @@ public class NxCommunityUserController {
 		return R.ok().put("data", userEntities);
 	}
 
+	@RequestMapping(value = "/getComDrivers/{comId}")
+	@ResponseBody
+	public R getComDrivers(@PathVariable Integer comId) {
+		List<NxCommunityUserEntity> drivers = nxCommunityUserService.getDriverUsersByComId(comId);
+		return R.ok().put("data", drivers);
+	}
+
 
 	/**
 	 * driver员工扫描
@@ -167,74 +176,73 @@ public class NxCommunityUserController {
 	@RequestMapping(value = "/comUserDriverSave", method = RequestMethod.POST)
 	@ResponseBody
 	public R comUserDriverSave (@RequestBody NxCommunityUserEntity user) {
+		try {
+			if (user == null) {
+				return R.error(-1, "请求参数不能为空");
+			}
+			if (user.getNxCouCommunityId() == null) {
+				return R.error(-1, "商城ID不能为空");
+			}
+			String openId = resolveLiziDriverOpenId(user.getNxCouCode());
 
-		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiziDriverAppID() + "&secret=" +
-				myAPPIDConfig.getLiziDriverScreat() + "&js_code=" + user.getNxCouCode() +
-				"&grant_type=authorization_code";
-		// 发送请求，返回Json字符串
-		String str = WeChatUtil.httpRequest(url, "GET", null);
-		// 转成Json对象 获取openid
-		JSONObject jsonObject = JSONObject.parseObject(str);
+			NxCommunityUserEntity existingDriver = nxCommunityUserService.queryDriverByOpenId(openId);
+			if (existingDriver != null) {
+				if (!user.getNxCouCommunityId().equals(existingDriver.getNxCouCommunityId())) {
+					return R.error(-1, "该微信已是其他商城司机，请直接登录");
+				}
+				return R.error(-1, "用户已存在，请直接登录");
+			}
 
-		// 我们需要的openid，在一个小程序中，openid是唯一的
-		String openId = jsonObject.get("openid").toString();
+			Map<String, Object> openMap = new HashMap<>();
+			openMap.put("openId", openId);
+			NxCommunityUserEntity existingAny = nxCommunityUserService.queryComUserInfo(openMap);
+			if (existingAny != null) {
+				if (user.getNxCouCommunityId().equals(existingAny.getNxCouCommunityId())) {
+					promoteCommunityUserToDriver(existingAny, user);
+					nxCommunityUserService.update(existingAny);
+					return R.ok().put("data", loadDriverUserForResponse(existingAny.getNxCommunityUserId()));
+				}
+				return R.error(-1, "该微信已绑定商城账号，请联系管理员");
+			}
 
-		Map<String, Object> map1 = new HashMap<>();
-		map1.put("openId", openId);
-		map1.put("roleId", user.getNxCouRoleId());
-		NxCommunityUserEntity nxCommunityUserEntity = nxCommunityUserService.queryComUserByOpenId(map1);
-		if(nxCommunityUserEntity != null){
-			return R.error(-1,"请直接登陆");
-		}else{
-			//添加新用户
 			user.setNxCouWxOpenId(openId);
 			user.setNxCouDeviceId("-1");
 			user.setNxCouUrlIsChange(0);
+			user.setNxCouAdmin(USER_ADMIN_DRIVER);
+			if (user.getNxCouRoleId() == null) {
+				user.setNxCouRoleId(DRIVER_ROLE_ID);
+			}
 			nxCommunityUserService.save(user);
-			Integer communityUserId = user.getNxCommunityUserId();
-			Map<String, Object> map2 = new HashMap<>();
-			map2.put("userId", communityUserId);
-			map2.put("roleId", 5 );
-			NxCommunityUserEntity nxCommunityUserEntity1 = nxCommunityUserService.queryComUserInfo(map2);
-			return R.ok().put("data",nxCommunityUserEntity1);
+			return R.ok().put("data", loadDriverUserForResponse(user.getNxCommunityUserId()));
+		} catch (RRException e) {
+			return R.error(-1, e.getMessage());
+		} catch (Exception e) {
+			System.out.println("========== comUserDriverSave 发生异常 ==========");
+			e.printStackTrace();
+			return R.error(-1, "注册失败: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
 		}
 	}
 
 	@RequestMapping(value = "/driverUserLogin", method = RequestMethod.POST)
 	@ResponseBody
 	public R driverLogin (@RequestBody NxCommunityUserEntity communityUserEntity ) {
-		System.out.println(communityUserEntity);
+		try {
+			if (communityUserEntity == null) {
+				return R.error(-1, "请求参数不能为空");
+			}
+			String openid = resolveLiziDriverOpenId(communityUserEntity.getNxCouCode());
+			NxCommunityUserEntity nxCommunityUserEntity = nxCommunityUserService.queryDriverByOpenId(openid);
 
-		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
-		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiziDriverAppID() + "&secret=" +
-				myAPPIDConfig.getLiziDriverScreat() + "&js_code=" + communityUserEntity.getNxCouCode() +
-				"&grant_type=authorization_code";
-		// 发送请求，返回Json字符串
-		String str = WeChatUtil.httpRequest(url, "GET", null);
-		// 转成Json对象 获取openid
-		JSONObject jsonObject = JSONObject.parseObject(str);
-
-		// 我们需要的openid，在一个小程序中，openid是唯一的
-		String openid = jsonObject.get("openid").toString();
-		Map<String, Object> map = new HashMap<>();
-		map.put("openId", openid);
-		map.put("roleId", 5);
-		System.out.println(map);
-		NxCommunityUserEntity nxCommunityUserEntity = nxCommunityUserService.queryComUserByOpenId(map);
-
-		if(nxCommunityUserEntity != null){
-			Integer communityUserId = nxCommunityUserEntity.getNxCommunityUserId();
-			Map<String, Object> map1 = new HashMap<>();
-			map1.put("userId", communityUserId);
-			map1.put("roleId", 5 );
-			NxCommunityUserEntity nxCommunityUserEntity1 = nxCommunityUserService.queryComUserInfo(map1);
-
-			System.out.println(nxCommunityUserEntity1);
-			System.out.println("logingngigign");
-			return R.ok().put("data", nxCommunityUserEntity1);
-		}else {
-			return R.error(-1,"用户不存在");
+			if (nxCommunityUserEntity != null) {
+				return R.ok().put("data", loadDriverUserForResponse(nxCommunityUserEntity.getNxCommunityUserId()));
+			}
+			return R.error(-1, "用户不存在，请先注册");
+		} catch (RRException e) {
+			return R.error(-1, e.getMessage());
+		} catch (Exception e) {
+			System.out.println("========== driverUserLogin 发生异常 ==========");
+			e.printStackTrace();
+			return R.error(-1, "登录失败: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
 		}
 	}
 
@@ -393,5 +401,65 @@ public class NxCommunityUserController {
 
 	   }
    }
+
+	private String resolveLiziDriverOpenId(String code) {
+		if (code == null || code.trim().isEmpty()) {
+			throw new RRException("微信登录code不能为空");
+		}
+		MyAPPIDConfig myAPPIDConfig = new MyAPPIDConfig();
+		String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + myAPPIDConfig.getLiziDriverAppID() + "&secret=" +
+				myAPPIDConfig.getLiziDriverScreat() + "&js_code=" + code + "&grant_type=authorization_code";
+		String str = WeChatUtil.httpRequest(url, "GET", null);
+		if (str == null || str.trim().isEmpty()) {
+			throw new RRException("微信API返回空响应");
+		}
+		JSONObject jsonObject = JSONObject.parseObject(str);
+		if (jsonObject.containsKey("errcode")) {
+			throw new RRException("微信登录失败: " + jsonObject.getString("errmsg"));
+		}
+		if (!jsonObject.containsKey("openid") || jsonObject.get("openid") == null) {
+			throw new RRException("获取openid失败，请检查微信配置");
+		}
+		return jsonObject.get("openid").toString();
+	}
+
+	private void promoteCommunityUserToDriver(NxCommunityUserEntity existingAny, NxCommunityUserEntity incoming) {
+		existingAny.setNxCouAdmin(USER_ADMIN_DRIVER);
+		existingAny.setNxCouRoleId(DRIVER_ROLE_ID);
+		if (incoming.getNxCouWxNickName() != null && !incoming.getNxCouWxNickName().trim().isEmpty()) {
+			existingAny.setNxCouWxNickName(incoming.getNxCouWxNickName());
+		}
+		if (incoming.getNxCouWxAvartraUrl() != null && !incoming.getNxCouWxAvartraUrl().trim().isEmpty()) {
+			existingAny.setNxCouWxAvartraUrl(incoming.getNxCouWxAvartraUrl());
+			existingAny.setNxCouUrlIsChange(0);
+		}
+	}
+
+	private NxCommunityUserEntity loadDriverUserForResponse(Integer userId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("userId", userId);
+		NxCommunityUserEntity user = nxCommunityUserService.queryComUserInfo(map);
+		sanitizeCommunityUserForJson(user);
+		return user;
+	}
+
+	private void sanitizeCommunityUserForJson(NxCommunityUserEntity user) {
+		if (user == null || user.getNxCommunityEntity() == null) {
+			return;
+		}
+		NxCommunityEntity communityEntity = user.getNxCommunityEntity();
+		communityEntity.setNxCommunityUserEntity(null);
+		if (communityEntity.getNxECommerceCommunityEntity() != null) {
+			communityEntity.getNxECommerceCommunityEntity().setNxCommunityEntity(null);
+			if (communityEntity.getNxECommerceCommunityEntity().getNxECommerceEntity() != null) {
+				communityEntity.getNxECommerceCommunityEntity().getNxECommerceEntity().setNxECommerceCommunityEntity(null);
+				communityEntity.getNxECommerceCommunityEntity().getNxECommerceEntity().setNxECommerceCommunityEntities(null);
+			}
+		}
+		if (communityEntity.getNxECommerceEntity() != null) {
+			communityEntity.getNxECommerceEntity().setNxECommerceCommunityEntity(null);
+			communityEntity.getNxECommerceEntity().setNxECommerceCommunityEntities(null);
+		}
+	}
 	
 }
